@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ListOrdered, 
@@ -9,7 +9,8 @@ import {
   GripVertical, 
   EyeOff,
   Wand2,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react';
 import { CreatePollRequest, PollType } from '../types';
 import { createPoll } from '../services/api';
@@ -70,7 +71,6 @@ const CreatePoll: React.FC = () => {
       };
 
       const result = await createPoll(payload);
-      // Navigate to the new poll
       navigate(`/poll/${result.id}?admin=${result.adminKey}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -80,72 +80,68 @@ const CreatePoll: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">VoteGenerator</h1>
-        <p className="text-slate-500">Create a free poll in seconds</p>
-      </div>
-
+    <div className="max-w-3xl mx-auto px-4 py-8 font-inter">
+      {/* Poll Type Selection */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
-        
-        {/* Poll Type Selection */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Poll Type</h2>
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">POLL TYPE</h2>
+            <div className="text-slate-400 hover:text-slate-600 cursor-help">
+               <HelpCircle className="w-4 h-4" />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Ranked Choice - Selected Style */}
             <button
               onClick={() => setPollType(PollType.RANKED)}
-              className={`p-4 rounded-lg border-2 text-left transition-all relative ${
+              className={`p-4 rounded-lg border text-left transition-all relative ${
                 pollType === PollType.RANKED 
-                  ? 'border-indigo-600 bg-indigo-50' 
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-1 ring-indigo-600' 
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <ListOrdered className={`w-5 h-5 ${pollType === PollType.RANKED ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <ListOrdered className={`w-5 h-5 ${pollType === PollType.RANKED ? 'text-indigo-700' : 'text-slate-400'}`} />
                 <span className={`font-semibold ${pollType === PollType.RANKED ? 'text-indigo-900' : 'text-slate-700'}`}>Ranked Choice</span>
               </div>
-              <p className="text-sm text-slate-500">Voters drag options to rank from favorite to least favorite</p>
+              <p className="text-sm text-slate-500 leading-snug">Voters drag options to rank from favorite to least favorite</p>
             </button>
 
+            {/* Multiple Choice */}
             <button
               onClick={() => setPollType(PollType.MULTIPLE)}
-              className={`p-4 rounded-lg border-2 text-left transition-all relative ${
+              className={`p-4 rounded-lg border text-left transition-all relative ${
                 pollType === PollType.MULTIPLE 
-                  ? 'border-indigo-600 bg-indigo-50' 
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-1 ring-indigo-600' 
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <CheckSquare className={`w-5 h-5 ${pollType === PollType.MULTIPLE ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <CheckSquare className={`w-5 h-5 ${pollType === PollType.MULTIPLE ? 'text-indigo-700' : 'text-slate-400'}`} />
                 <span className={`font-semibold ${pollType === PollType.MULTIPLE ? 'text-indigo-900' : 'text-slate-700'}`}>Multiple Choice</span>
               </div>
-              <p className="text-sm text-slate-500">Voters pick one option (or multiple if you allow it)</p>
+              <p className="text-sm text-slate-500 leading-snug">Voters pick one option (or multiple if you allow it)</p>
             </button>
             
-            <div className="p-4 rounded-lg border border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed">
-               <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ImageIcon className="w-5 h-5 text-slate-400" />
-                    <span className="font-semibold text-slate-500">Image Poll</span>
-                  </div>
-                  <span className="text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Soon</span>
+            {/* Image Poll - Disabled/Soon */}
+            <div className="p-4 rounded-lg border border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed relative select-none">
+               <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full border border-slate-200">Soon</span>
+               <div className="flex items-center gap-2 mb-1">
+                  <ImageIcon className="w-5 h-5 text-slate-300" />
+                  <span className="font-semibold text-slate-400">Image Poll</span>
                </div>
-               <p className="text-sm text-slate-400">Voters choose between images (logos, designs, photos)</p>
+               <p className="text-sm text-slate-400 leading-snug">Voters choose between images (logos, designs, photos)</p>
             </div>
 
-            <div className="p-4 rounded-lg border border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed">
-               <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-5 h-5 text-slate-400" />
-                    <span className="font-semibold text-slate-500">Meeting Poll</span>
-                  </div>
-                  <span className="text-[10px] font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Soon</span>
+            {/* Meeting Poll - Disabled/Soon */}
+            <div className="p-4 rounded-lg border border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed relative select-none">
+               <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full border border-slate-200">Soon</span>
+               <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-5 h-5 text-slate-300" />
+                  <span className="font-semibold text-slate-400">Meeting Poll</span>
                </div>
-               <p className="text-sm text-slate-400">Voters mark which times work for them</p>
+               <p className="text-sm text-slate-400 leading-snug">Voters mark which times work for them</p>
             </div>
           </div>
         </section>
@@ -153,13 +149,13 @@ const CreatePoll: React.FC = () => {
         {/* Question Input */}
         <section className="mb-6">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            Your Question
+            YOUR QUESTION
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-4 text-lg font-medium border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
+            className="w-full p-4 text-lg font-bold border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow placeholder:font-normal"
             placeholder="e.g., Where should we go for lunch?"
           />
         </section>
@@ -167,7 +163,7 @@ const CreatePoll: React.FC = () => {
         {/* Details Input */}
         <section className="mb-8">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            Details <span className="font-normal text-slate-400">(Optional)</span>
+            DETAILS <span className="font-normal text-slate-400">(OPTIONAL)</span>
           </label>
           <textarea
             value={description}
@@ -181,10 +177,10 @@ const CreatePoll: React.FC = () => {
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Options to Rank
+              OPTIONS TO RANK
             </label>
             <span className="text-xs text-slate-400">
-              {options.filter(o => o.length > 0).length} of {MAX_OPTIONS} max
+              {options.filter(o => o.trim().length > 0).length} of {MAX_OPTIONS} max
             </span>
           </div>
 
@@ -199,12 +195,11 @@ const CreatePoll: React.FC = () => {
                     type="text"
                     value={opt}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    className="w-full p-3 pl-4 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="w-full p-3 pl-4 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none placeholder:text-slate-300 font-medium text-slate-700"
                     placeholder={`Option ${idx + 1}`}
                   />
-                  {/* Visual handle icon to suggest drag functionality implies order matters in ranked */}
                   {pollType === PollType.RANKED && (
-                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300">
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 cursor-grab active:cursor-grabbing">
                         <GripVertical className="w-4 h-4" />
                      </div>
                   )}
@@ -216,9 +211,9 @@ const CreatePoll: React.FC = () => {
           <button
             onClick={addOption}
             disabled={options.length >= MAX_OPTIONS}
-            className="mt-4 flex items-center gap-2 text-indigo-600 font-medium hover:text-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-4 flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm ml-8"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Add another option
           </button>
         </section>
@@ -226,36 +221,36 @@ const CreatePoll: React.FC = () => {
         {/* Settings */}
         <section className="mb-8 pt-6 border-t border-slate-100">
           <div className="space-y-4">
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <div className="relative flex items-center">
+            <label className="flex items-start gap-3 cursor-pointer group select-none">
+              <div className="relative flex items-center pt-0.5">
                 <input 
                   type="checkbox" 
                   checked={hideResults}
                   onChange={(e) => setHideResults(e.target.checked)}
-                  className="w-5 h-5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 mt-0.5" 
+                  className="w-5 h-5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
                 />
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2 text-slate-700 font-medium group-hover:text-slate-900">
+                <div className="flex items-center gap-2 text-slate-700 font-bold group-hover:text-slate-900">
                   <EyeOff className="w-4 h-4 text-slate-500" />
                   Hide results until you reveal them
                 </div>
-                <p className="text-sm text-slate-500 mt-0.5">Voters won't see results immediately after voting.</p>
+                <p className="text-sm text-slate-500 mt-0.5">Voters see results right after they vote.</p>
               </div>
             </label>
 
             {pollType === PollType.MULTIPLE && (
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <div className="relative flex items-center">
+              <label className="flex items-start gap-3 cursor-pointer group select-none">
+                <div className="relative flex items-center pt-0.5">
                   <input 
                     type="checkbox" 
                     checked={allowMultiple}
                     onChange={(e) => setAllowMultiple(e.target.checked)}
-                    className="w-5 h-5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 mt-0.5" 
+                    className="w-5 h-5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
                   />
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 text-slate-700 font-medium group-hover:text-slate-900">
+                  <div className="flex items-center gap-2 text-slate-700 font-bold group-hover:text-slate-900">
                     <CheckSquare className="w-4 h-4 text-slate-500" />
                     Allow multiple selections
                   </div>
@@ -278,7 +273,7 @@ const CreatePoll: React.FC = () => {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-wait"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-wait"
         >
           {loading ? (
             <span className="flex items-center gap-2">Creating...</span>

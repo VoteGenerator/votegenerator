@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, ChevronRight, Play, RotateCcw, Sparkles, XCircle } from 'lucide-react';
-import type { RunoffResult, RunoffRound, RoundStanding } from '../types';
+import type { RunoffResult } from '../types';
 import confetti from 'canvas-confetti';
 
 interface VoteGeneratorResultsProps {

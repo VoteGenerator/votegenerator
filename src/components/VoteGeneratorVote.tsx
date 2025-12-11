@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Poll, PollOption } from '../types';
-import { Reorder, useDragControls } from 'framer-motion';
+import { Reorder } from 'framer-motion';
 import { motion } from 'framer-motion';
-import { GripVertical, CheckCircle, Loader2, Info, ArrowUpDown } from 'lucide-react';
+import { GripVertical, CheckCircle, Loader2, ArrowUpDown } from 'lucide-react';
 import { submitVote, markAsVoted } from '../services/voteGeneratorService';
 import { trackEvent } from '../services/analyticsService';
 

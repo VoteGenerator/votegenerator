@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { 
-    Link2, Copy, Check, Users, BarChart2, RefreshCw, Share2, 
-    Eye, EyeOff, Clock, Settings, ExternalLink, MessageSquare,
-    Twitter, Send, Mail
+    Copy, Check, Users, BarChart2, RefreshCw, Share2, 
+    Clock, Settings, Twitter, Send, Mail
 } from 'lucide-react';
 import type { AdminPollData, RunoffResult } from '../types';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -17,7 +15,6 @@ interface VoteGeneratorAdminProps {
 
 const VoteGeneratorAdmin: React.FC<VoteGeneratorAdminProps> = ({ poll, runoffResult, onRefresh }) => {
     const [copied, setCopied] = useState(false);
-    const [showResults, setShowResults] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<'results' | 'votes' | 'settings'>('results');
 
@@ -231,7 +228,7 @@ const VoteGeneratorAdmin: React.FC<VoteGeneratorAdminProps> = ({ poll, runoffRes
                                         </span>
                                     </div>
                                     <div className="text-slate-500 text-xs">
-                                        Ranking: {vote.rankedOptionIds.map((id, i) => {
+                                        Ranking: {vote.rankedOptionIds.map((id) => {
                                             const option = poll.options.find(o => o.id === id);
                                             return option?.text || 'Unknown';
                                         }).join(' → ')}

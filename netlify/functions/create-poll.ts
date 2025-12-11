@@ -6,8 +6,8 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
-    pollType: 'ranked' | 'multiple';
-    options: { id: string; text: string }[];
+    pollType: string;
+    options: { id: string; text: string; imageUrl?: string }[];
     settings: {
         hideResults: boolean;
         allowMultiple: boolean;
@@ -25,7 +25,6 @@ export const handler: Handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
-    // Handle CORS preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
@@ -39,7 +38,6 @@ export const handler: Handler = async (event) => {
     }
 
     try {
-        // Get poll ID from query params
         const pollId = event.queryStringParameters?.id;
         const adminKey = event.queryStringParameters?.admin;
 
@@ -51,9 +49,8 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Fetch from Netlify Blobs
-        const store = getStore('votegenerator-polls');
-        const poll: Poll | null = await store.get(pollId, { type: 'json' });
+        const store = getStore('polls');
+        const poll = await store.get(pollId, { type: 'json' }) as Poll | null;
 
         if (!poll) {
             return {
@@ -63,11 +60,9 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Check if this is an admin request
         const isAdmin = adminKey && adminKey === poll.adminKey;
 
         if (isAdmin) {
-            // Admin gets everything including votes and adminKey
             return {
                 statusCode: 200,
                 headers,
@@ -77,7 +72,6 @@ export const handler: Handler = async (event) => {
                 })
             };
         } else {
-            // Public voter view - strip sensitive data
             const publicPoll = {
                 id: poll.id,
                 title: poll.title,
@@ -105,7 +99,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to fetch poll' })
+            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
         };
     }
 };

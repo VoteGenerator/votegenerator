@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface Vote {
     id: string;
@@ -12,7 +13,7 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
-    pollType: string;
+    pollType: 'ranked' | 'multiple';
     options: { id: string; text: string }[];
     settings: {
         hideResults: boolean;
@@ -23,51 +24,176 @@ interface Poll {
     voteCount: number;
 }
 
-interface RoundStanding {
+interface OptionStanding {
     optionId: string;
     optionText: string;
     voteCount: number;
     percentage: number;
-    isEliminated: boolean;
-    isWinner: boolean;
-}
-
-interface VoteRedistribution {
-    fromOptionId: string;
-    toOptionId: string;
-    count: number;
 }
 
 interface RunoffRound {
     roundNumber: number;
-    standings: RoundStanding[];
-    eliminated?: string;
-    redistributedVotes?: VoteRedistribution[];
+    standings: (OptionStanding & { isEliminated: boolean; isWinner: boolean })[];
+    eliminatedId?: string;
+    eliminatedText?: string;
     isComplete: boolean;
     winnerId?: string;
 }
 
-interface RunoffResult {
+interface RankedResults {
+    type: 'ranked';
     rounds: RunoffRound[];
     winner: { id: string; text: string } | null;
     totalVotes: number;
 }
 
-interface SimpleResult {
-    standings: { optionId: string; optionText: string; voteCount: number; percentage: number }[];
-    totalVotes: number;
+interface MultipleResults {
+    type: 'multiple';
+    standings: OptionStanding[];
     winner: { id: string; text: string } | null;
+    totalVotes: number;
+}
+
+/**
+ * Calculate instant-runoff voting results for ranked choice
+ */
+function calculateRankedResults(poll: Poll): RankedResults {
+    const { votes, options } = poll;
+    const totalVotes = votes.length;
+
+    if (totalVotes === 0) {
+        return {
+            type: 'ranked',
+            rounds: [],
+            winner: null,
+            totalVotes: 0
+        };
+    }
+
+    const rounds: RunoffRound[] = [];
+    const eliminatedIds = new Set<string>();
+    
+    // Copy votes for manipulation (each vote tracks current position)
+    const activeVotes = votes
+        .filter(v => v.rankedOptionIds && v.rankedOptionIds.length > 0)
+        .map(v => ({
+            rankings: [...v.rankedOptionIds!],
+            currentIndex: 0
+        }));
+
+    let roundNumber = 1;
+    const maxRounds = options.length; // Safety limit
+
+    while (roundNumber <= maxRounds) {
+        // Count first-choice votes (skipping eliminated candidates)
+        const voteCounts = new Map<string, number>();
+        options.forEach(o => {
+            if (!eliminatedIds.has(o.id)) {
+                voteCounts.set(o.id, 0);
+            }
+        });
+
+        for (const vote of activeVotes) {
+            // Find first non-eliminated choice
+            while (vote.currentIndex < vote.rankings.length) {
+                const choiceId = vote.rankings[vote.currentIndex];
+                if (!eliminatedIds.has(choiceId)) {
+                    voteCounts.set(choiceId, (voteCounts.get(choiceId) || 0) + 1);
+                    break;
+                }
+                vote.currentIndex++;
+            }
+        }
+
+        // Calculate standings for this round
+        const activeOptions = options.filter(o => !eliminatedIds.has(o.id));
+        const standings = activeOptions.map(option => {
+            const count = voteCounts.get(option.id) || 0;
+            return {
+                optionId: option.id,
+                optionText: option.text,
+                voteCount: count,
+                percentage: totalVotes > 0 ? Math.round((count / totalVotes) * 1000) / 10 : 0,
+                isEliminated: false,
+                isWinner: false
+            };
+        }).sort((a, b) => b.voteCount - a.voteCount);
+
+        // Check for winner (>50%)
+        const leader = standings[0];
+        if (leader && leader.percentage > 50) {
+            leader.isWinner = true;
+            rounds.push({
+                roundNumber,
+                standings,
+                isComplete: true,
+                winnerId: leader.optionId
+            });
+            
+            return {
+                type: 'ranked',
+                rounds,
+                winner: { id: leader.optionId, text: leader.optionText },
+                totalVotes
+            };
+        }
+
+        // Check if only one candidate remains
+        if (standings.length === 1) {
+            standings[0].isWinner = true;
+            rounds.push({
+                roundNumber,
+                standings,
+                isComplete: true,
+                winnerId: standings[0].optionId
+            });
+
+            return {
+                type: 'ranked',
+                rounds,
+                winner: { id: standings[0].optionId, text: standings[0].optionText },
+                totalVotes
+            };
+        }
+
+        // Find candidate(s) with lowest votes to eliminate
+        const minVotes = Math.min(...standings.map(s => s.voteCount));
+        const toEliminate = standings.filter(s => s.voteCount === minVotes);
+        
+        // Eliminate the last one (or random if tied at bottom)
+        const eliminated = toEliminate[toEliminate.length - 1];
+        eliminated.isEliminated = true;
+        eliminatedIds.add(eliminated.optionId);
+
+        rounds.push({
+            roundNumber,
+            standings,
+            eliminatedId: eliminated.optionId,
+            eliminatedText: eliminated.optionText,
+            isComplete: false
+        });
+
+        roundNumber++;
+    }
+
+    // Fallback - no clear winner after all rounds
+    return {
+        type: 'ranked',
+        rounds,
+        winner: null,
+        totalVotes
+    };
 }
 
 /**
  * Calculate simple multiple choice results
  */
-function calculateSimpleResults(poll: Poll): SimpleResult {
+function calculateMultipleResults(poll: Poll): MultipleResults {
     const { votes, options } = poll;
     const totalVotes = votes.length;
 
     // Count votes per option
-    const voteCounts: Map<string, number> = new Map();
+    const voteCounts = new Map<string, number>();
     options.forEach(o => voteCounts.set(o.id, 0));
 
     for (const vote of votes) {
@@ -83,145 +209,19 @@ function calculateSimpleResults(poll: Poll): SimpleResult {
         optionId: option.id,
         optionText: option.text,
         voteCount: voteCounts.get(option.id) || 0,
-        percentage: totalVotes > 0 ? Math.round(((voteCounts.get(option.id) || 0) / totalVotes) * 100) : 0
+        percentage: totalVotes > 0 ? Math.round(((voteCounts.get(option.id) || 0) / totalVotes) * 1000) / 10 : 0
     })).sort((a, b) => b.voteCount - a.voteCount);
 
     const winner = standings.length > 0 && standings[0].voteCount > 0
         ? { id: standings[0].optionId, text: standings[0].optionText }
         : null;
 
-    return { standings, totalVotes, winner };
-}
-
-/**
- * Calculate Instant Runoff Voting results
- */
-function calculateRunoff(poll: Poll): RunoffResult {
-    const { votes, options } = poll;
-    const totalVotes = votes.length;
-    
-    if (totalVotes === 0) {
-        return { rounds: [], winner: null, totalVotes: 0 };
-    }
-
-    const majorityThreshold = Math.floor(totalVotes / 2) + 1;
-    let activeOptionIds = new Set(options.map(o => o.id));
-    
-    const ballots = votes.map(vote => ({
-        currentPreferences: [...(vote.rankedOptionIds || [])]
-    }));
-    
-    const rounds: RunoffRound[] = [];
-    let roundNumber = 0;
-    
-    while (activeOptionIds.size > 1) {
-        roundNumber++;
-        
-        // Count first-choice votes
-        const voteCounts: Map<string, number> = new Map();
-        activeOptionIds.forEach(id => voteCounts.set(id, 0));
-        
-        for (const ballot of ballots) {
-            const topChoice = ballot.currentPreferences.find(id => activeOptionIds.has(id));
-            if (topChoice) {
-                voteCounts.set(topChoice, (voteCounts.get(topChoice) || 0) + 1);
-            }
-        }
-        
-        // Build standings
-        const standings: RoundStanding[] = options.map(option => {
-            const count = voteCounts.get(option.id) || 0;
-            const isActive = activeOptionIds.has(option.id);
-            return {
-                optionId: option.id,
-                optionText: option.text,
-                voteCount: count,
-                percentage: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,
-                isEliminated: !isActive,
-                isWinner: false
-            };
-        });
-        
-        standings.sort((a, b) => b.voteCount - a.voteCount);
-        
-        // Check for winner
-        const leader = standings.find(s => !s.isEliminated);
-        if (leader && leader.voteCount >= majorityThreshold) {
-            leader.isWinner = true;
-            rounds.push({
-                roundNumber,
-                standings,
-                isComplete: true,
-                winnerId: leader.optionId
-            });
-            
-            const winnerOption = options.find(o => o.id === leader.optionId)!;
-            return {
-                rounds,
-                winner: { id: winnerOption.id, text: winnerOption.text },
-                totalVotes
-            };
-        }
-        
-        // Check if only 2 left
-        const activeCandidates = standings.filter(s => !s.isEliminated);
-        if (activeCandidates.length <= 2) {
-            const winner = activeCandidates[0];
-            if (winner) {
-                winner.isWinner = true;
-                rounds.push({
-                    roundNumber,
-                    standings,
-                    isComplete: true,
-                    winnerId: winner.optionId
-                });
-                
-                const winnerOption = options.find(o => o.id === winner.optionId)!;
-                return {
-                    rounds,
-                    winner: { id: winnerOption.id, text: winnerOption.text },
-                    totalVotes
-                };
-            }
-        }
-        
-        // Eliminate lowest
-        const activeStandings = standings.filter(s => activeOptionIds.has(s.optionId));
-        const minVotes = Math.min(...activeStandings.map(s => s.voteCount));
-        const toEliminate = activeStandings.filter(s => s.voteCount === minVotes);
-        
-        const eliminatedOption = toEliminate.sort((a, b) => 
-            a.optionText.localeCompare(b.optionText)
-        )[0];
-        
-        activeOptionIds.delete(eliminatedOption.optionId);
-        
-        const eliminatedStanding = standings.find(s => s.optionId === eliminatedOption.optionId);
-        if (eliminatedStanding) {
-            eliminatedStanding.isEliminated = true;
-        }
-        
-        rounds.push({
-            roundNumber,
-            standings,
-            eliminated: eliminatedOption.optionId,
-            isComplete: false
-        });
-        
-        if (roundNumber > 50) break;
-    }
-    
-    // Last standing wins
-    const lastStanding = options.find(o => activeOptionIds.has(o.id));
-    if (lastStanding) {
-        return {
-            rounds,
-            winner: { id: lastStanding.id, text: lastStanding.text },
-            totalVotes
-        };
-    }
-    
-    return { rounds, winner: null, totalVotes };
+    return {
+        type: 'multiple',
+        standings,
+        winner,
+        totalVotes
+    };
 }
 
 export const handler: Handler = async (event) => {
@@ -232,6 +232,7 @@ export const handler: Handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
+    // Handle CORS preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
@@ -256,14 +257,8 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get poll
-        const { getStore } = await import('@netlify/blobs');
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        
+        // Fetch poll from Netlify Blobs
+        const store = getStore('votegenerator-polls');
         const poll: Poll | null = await store.get(pollId, { type: 'json' });
 
         if (!poll) {
@@ -274,64 +269,48 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Check access
+        // Check permissions
         const isAdmin = adminKey && adminKey === poll.adminKey;
-        
+
+        // If results are hidden and not admin, deny access
         if (poll.settings.hideResults && !isAdmin) {
             return {
                 statusCode: 403,
                 headers,
                 body: JSON.stringify({ 
                     error: 'Results are hidden',
-                    message: 'The poll creator will reveal results when voting is complete.'
-                })
-            };
-        }
-
-        if (poll.votes.length === 0) {
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: poll.pollType,
-                    totalVotes: 0,
-                    message: 'No votes yet'
+                    message: 'The poll creator has hidden results until they choose to reveal them.'
                 })
             };
         }
 
         // Calculate results based on poll type
+        let results: RankedResults | MultipleResults;
+        
         if (poll.pollType === 'ranked') {
-            const runoffResult = calculateRunoff(poll);
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: 'ranked',
-                    ...runoffResult
-                })
-            };
+            results = calculateRankedResults(poll);
         } else {
-            const simpleResult = calculateSimpleResults(poll);
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: poll.pollType,
-                    ...simpleResult
-                })
-            };
+            results = calculateMultipleResults(poll);
         }
 
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                pollId: poll.id,
+                title: poll.title,
+                pollType: poll.pollType,
+                results,
+                isAdmin
+            })
+        };
+
     } catch (error) {
-        console.error('Error calculating results:', error);
+        console.error('Error fetching results:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
+            body: JSON.stringify({ error: 'Failed to fetch results' })
         };
     }
 };

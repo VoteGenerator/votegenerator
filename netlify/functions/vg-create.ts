@@ -1,20 +1,21 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CreatePollRequest {
     title: string;
     description?: string;
     options: string[];
-    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
+    pollType: 'ranked' | 'multiple';
     settings: {
         hideResults: boolean;
-        allowMultiple?: boolean; // For multiple choice - can pick more than one
+        allowMultiple?: boolean;
     };
 }
 
 interface PollOption {
     id: string;
     text: string;
-    imageUrl?: string; // For image polls
 }
 
 interface Poll {
@@ -22,7 +23,7 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
-    pollType: string;
+    pollType: 'ranked' | 'multiple';
     options: PollOption[];
     settings: {
         hideResults: boolean;
@@ -33,7 +34,7 @@ interface Poll {
     voteCount: number;
 }
 
-// Generate a short, readable ID (8 characters)
+// Generate short, readable poll IDs
 const generateShortId = (): string => {
     const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
     let result = '';
@@ -43,28 +44,12 @@ const generateShortId = (): string => {
     return result;
 };
 
-// Generate admin key (16 characters)
+// Generate admin key for poll management
 const generateAdminKey = (): string => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 16; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-};
-
-// Generate option ID (8 characters)
-const generateOptionId = (): string => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    return uuidv4().replace(/-/g, '').substring(0, 16);
 };
 
 export const handler: Handler = async (event) => {
-    // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -72,7 +57,7 @@ export const handler: Handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
-    // Handle preflight
+    // Handle CORS preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
@@ -93,7 +78,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Please add a title for your poll' })
+                body: JSON.stringify({ error: 'Title is required' })
             };
         }
 
@@ -101,7 +86,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Please add at least 2 options' })
+                body: JSON.stringify({ error: 'At least 2 options are required' })
             };
         }
 
@@ -113,20 +98,20 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Clean up options
+        // Sanitize options
         const validOptions = body.options
             .map(opt => (typeof opt === 'string' ? opt.trim() : ''))
-            .filter(opt => opt.length > 0 && opt.length <= 200);
+            .filter(opt => opt.length > 0);
 
         if (validOptions.length < 2) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Please add at least 2 valid options' })
+                body: JSON.stringify({ error: 'At least 2 valid options are required' })
             };
         }
 
-        // Create poll
+        // Create poll object
         const pollId = generateShortId();
         const adminKey = generateAdminKey();
 
@@ -134,55 +119,46 @@ export const handler: Handler = async (event) => {
             id: pollId,
             adminKey: adminKey,
             title: body.title.trim().substring(0, 200),
-            description: body.description?.trim().substring(0, 500) || undefined,
+            description: body.description?.trim().substring(0, 1000) || undefined,
             pollType: body.pollType || 'ranked',
-            options: validOptions.map(text => ({
-                id: generateOptionId(),
-                text: text
+            options: validOptions.map((text, index) => ({
+                id: `opt_${index}_${Date.now().toString(36)}`,
+                text: text.substring(0, 200)
             })),
             settings: {
-                hideResults: Boolean(body.settings?.hideResults),
-                allowMultiple: Boolean(body.settings?.allowMultiple)
+                hideResults: body.settings?.hideResults ?? false,
+                allowMultiple: body.settings?.allowMultiple ?? false
             },
             votes: [],
             createdAt: new Date().toISOString(),
             voteCount: 0
         };
 
-        // Store using Netlify Blobs
-        const { getStore } = await import('@netlify/blobs');
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        
+        // Save to Netlify Blobs
+        const store = getStore('votegenerator-polls');
         await store.setJSON(pollId, poll);
 
-        console.log(`Poll created: ${pollId}, type: ${poll.pollType}`);
+        console.log(`Poll created: ${pollId}`);
 
+        // Return poll info (including adminKey for creator)
         return {
             statusCode: 201,
             headers,
             body: JSON.stringify({
-                id: pollId,
-                adminKey: adminKey
+                success: true,
+                pollId: poll.id,
+                adminKey: poll.adminKey,
+                pollUrl: `/poll/${poll.id}`,
+                adminUrl: `/poll/${poll.id}?admin=${poll.adminKey}`
             })
         };
 
     } catch (error) {
         console.error('Error creating poll:', error);
-        
-        // More helpful error message
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ 
-                error: 'Something went wrong. Please try again.',
-                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-            })
+            body: JSON.stringify({ error: 'Failed to create poll' })
         };
     }
 };

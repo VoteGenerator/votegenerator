@@ -1,8 +1,46 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image, Calendar } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 import { trackEvent } from '../services/analyticsService';
+
+// Poll type definitions with user-friendly descriptions
+const POLL_TYPES = [
+    {
+        id: 'ranked',
+        name: 'Ranked Choice',
+        icon: ListOrdered,
+        description: 'Voters drag options to rank from favorite to least favorite',
+        bestFor: 'Best for: Finding the option everyone can agree on',
+        example: 'e.g., "Where should we go for team dinner?"'
+    },
+    {
+        id: 'multiple',
+        name: 'Multiple Choice',
+        icon: CheckSquare,
+        description: 'Voters pick one option (or multiple if you allow it)',
+        bestFor: 'Best for: Quick decisions with clear favorites',
+        example: 'e.g., "What day works for the meeting?"'
+    },
+    {
+        id: 'image',
+        name: 'Image Poll',
+        icon: Image,
+        description: 'Voters choose between images (logos, designs, photos)',
+        bestFor: 'Best for: Visual comparisons like logo or design votes',
+        example: 'e.g., "Which logo design do you prefer?"',
+        comingSoon: true
+    },
+    {
+        id: 'meeting',
+        name: 'Meeting Poll',
+        icon: Calendar,
+        description: 'Voters mark which times work for them',
+        bestFor: 'Best for: Scheduling meetings across time zones',
+        example: 'e.g., "When can everyone meet?"',
+        comingSoon: true
+    }
+];
 
 const PLACEHOLDER_QUESTIONS = [
     "Where should we eat lunch?",
@@ -16,9 +54,12 @@ const VoteGeneratorCreate: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
+    const [pollType, setPollType] = useState<string>('ranked');
     const [hideResults, setHideResults] = useState(false);
+    const [allowMultiple, setAllowMultiple] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPollTypeInfo, setShowPollTypeInfo] = useState(false);
     const [placeholderQuestion] = useState(() => 
         PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
     );
@@ -30,14 +71,12 @@ const VoteGeneratorCreate: React.FC = () => {
         newOptions[index] = value;
         setOptions(newOptions);
         
-        // Auto-add new line if typing in the last non-empty field
         if (index === options.length - 1 && value.trim() !== '' && options.length < 20) {
             setOptions([...newOptions, '']);
         }
     };
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-        // Press Enter to move to next option
         if (e.key === 'Enter') {
             e.preventDefault();
             const nextInput = document.querySelector<HTMLInputElement>(
@@ -53,7 +92,6 @@ const VoteGeneratorCreate: React.FC = () => {
             }
         }
         
-        // Backspace on empty field removes it
         if (e.key === 'Backspace' && options[index] === '' && options.length > 2) {
             e.preventDefault();
             removeOption(index);
@@ -78,16 +116,15 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const handleCreate = async () => {
-        // Validation
         const validOptions = options.filter(o => o.trim() !== '');
         
         if (!title.trim()) {
-            setError('Please add a question or title');
+            setError('Please add a title or question for your poll');
             return;
         }
         
         if (validOptions.length < 2) {
-            setError('Please add at least 2 options');
+            setError('Please add at least 2 options for people to choose from');
             return;
         }
 
@@ -98,29 +135,31 @@ const VoteGeneratorCreate: React.FC = () => {
             const result = await createPoll({ 
                 title: title.trim(), 
                 description: description.trim() || undefined, 
-                options: validOptions, 
+                options: validOptions,
+                pollType: pollType as 'ranked' | 'multiple',
                 settings: { 
                     hideResults, 
-                    allowGuestOptions: false 
+                    allowMultiple
                 } 
             });
             
             trackEvent('votegenerator_poll_created', { 
                 optionCount: validOptions.length,
+                pollType,
                 hasDescription: !!description.trim(),
                 hideResults
             });
             
-            // Navigate to admin view
             window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
         } catch (e) {
             console.error('Failed to create poll:', e);
-            setError(e instanceof Error ? e.message : 'Failed to create poll. Please try again.');
+            setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
             setIsCreating(false);
         }
     };
 
     const validOptionCount = options.filter(o => o.trim() !== '').length;
+    const selectedPollType = POLL_TYPES.find(t => t.id === pollType);
 
     return (
         <div className="max-w-2xl mx-auto px-4">
@@ -143,11 +182,11 @@ const VoteGeneratorCreate: React.FC = () => {
                     VoteGenerator
                 </h1>
                 <p className="text-lg text-slate-500 max-w-md mx-auto">
-                    Create a ranked-choice poll in seconds. <br/>Find what everyone can agree on.
+                    Create a free poll in seconds. <br/>Share a link. Get answers.
                 </p>
             </motion.div>
 
-            {/* Main Form Card */}
+            {/* Main Form */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -155,10 +194,78 @@ const VoteGeneratorCreate: React.FC = () => {
                 className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100"
             >
                 <div className="space-y-6">
-                    {/* Title Input */}
+                    {/* Poll Type Selection */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
+                                Poll Type
+                            </label>
+                            <button 
+                                type="button"
+                                onClick={() => setShowPollTypeInfo(!showPollTypeInfo)}
+                                className="text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
+                                <HelpCircle size={18} />
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            {POLL_TYPES.map((type) => {
+                                const Icon = type.icon;
+                                const isSelected = pollType === type.id;
+                                const isDisabled = type.comingSoon;
+                                
+                                return (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => !isDisabled && setPollType(type.id)}
+                                        disabled={isDisabled}
+                                        className={`relative p-4 rounded-xl border-2 text-left transition-all ${
+                                            isSelected
+                                                ? 'border-indigo-500 bg-indigo-50'
+                                                : isDisabled
+                                                ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
+                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {isDisabled && (
+                                            <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                                                Soon
+                                            </span>
+                                        )}
+                                        <Icon size={20} className={isSelected ? 'text-indigo-600' : 'text-slate-400'} />
+                                        <span className={`block font-bold mt-1 ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                            {type.name}
+                                        </span>
+                                        <span className="text-xs text-slate-500 block mt-0.5">
+                                            {type.description}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Poll Type Info Tooltip */}
+                        <AnimatePresence>
+                            {showPollTypeInfo && selectedPollType && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100"
+                                >
+                                    <p className="text-sm text-indigo-800 font-medium">{selectedPollType.bestFor}</p>
+                                    <p className="text-sm text-indigo-600 mt-1">{selectedPollType.example}</p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Title */}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            Question / Title
+                            Your Question
                         </label>
                         <input 
                             type="text" 
@@ -171,25 +278,25 @@ const VoteGeneratorCreate: React.FC = () => {
                         />
                     </div>
                     
-                    {/* Description (collapsible) */}
+                    {/* Description */}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            Description <span className="font-normal text-slate-400">(optional)</span>
+                            Details <span className="font-normal text-slate-400">(optional)</span>
                         </label>
                         <textarea 
                             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all h-20 resize-none placeholder:text-slate-300"
-                            placeholder="Add context, deadline, or instructions..."
+                            placeholder="Add extra info, deadline, or instructions..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             maxLength={500}
                         />
                     </div>
 
-                    {/* Options List */}
+                    {/* Options */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                Options
+                                {pollType === 'ranked' ? 'Options to Rank' : 'Answer Choices'}
                             </label>
                             <span className="text-sm text-slate-400">
                                 {validOptionCount} of 20 max
@@ -228,7 +335,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                 onClick={() => removeOption(i)}
                                                 className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                                                 tabIndex={-1}
-                                                aria-label="Remove option"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -249,7 +355,28 @@ const VoteGeneratorCreate: React.FC = () => {
                     </div>
 
                     {/* Settings */}
-                    <div className="pt-4 border-t border-slate-100">
+                    <div className="pt-4 border-t border-slate-100 space-y-3">
+                        {/* Multiple Choice - Allow Multiple Selections */}
+                        {pollType === 'multiple' && (
+                            <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                <input 
+                                    type="checkbox" 
+                                    checked={allowMultiple}
+                                    onChange={e => setAllowMultiple(e.target.checked)}
+                                    className="w-5 h-5 mt-0.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                                />
+                                <div className="flex-1">
+                                    <span className="font-bold text-slate-700">Allow multiple selections</span>
+                                    <span className="text-sm text-slate-500 block mt-1">
+                                        {allowMultiple 
+                                            ? "Voters can pick more than one option"
+                                            : "Voters can only pick one option"}
+                                    </span>
+                                </div>
+                            </label>
+                        )}
+
+                        {/* Hide Results */}
                         <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
                             <input 
                                 type="checkbox" 
@@ -260,18 +387,18 @@ const VoteGeneratorCreate: React.FC = () => {
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                     {hideResults ? <EyeOff size={16} className="text-amber-500" /> : <Eye size={16} className="text-slate-400" />}
-                                    <span className="font-bold text-slate-700">Hide results from voters</span>
+                                    <span className="font-bold text-slate-700">Hide results until you reveal them</span>
                                 </div>
                                 <span className="text-sm text-slate-500 block mt-1">
                                     {hideResults 
-                                        ? "Only you can see results until you choose to reveal them."
-                                        : "Voters will see results after they vote."}
+                                        ? "Only you can see results. Share when you're ready."
+                                        : "Voters see results right after they vote."}
                                 </span>
                             </div>
                         </label>
                     </div>
 
-                    {/* Error Message */}
+                    {/* Error */}
                     <AnimatePresence>
                         {error && (
                             <motion.div
@@ -286,7 +413,7 @@ const VoteGeneratorCreate: React.FC = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Submit Button */}
+                    {/* Submit */}
                     <button 
                         onClick={handleCreate}
                         disabled={isCreating || validOptionCount < 2 || !title.trim()}
@@ -308,7 +435,7 @@ const VoteGeneratorCreate: React.FC = () => {
                 </div>
             </motion.div>
             
-            {/* Feature Pills */}
+            {/* Features */}
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -316,21 +443,21 @@ const VoteGeneratorCreate: React.FC = () => {
                 className="mt-8 grid md:grid-cols-3 gap-4 text-center"
             >
                 <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <strong className="block text-indigo-900 mb-1">🗳️ Ranked Choice</strong>
+                    <strong className="block text-indigo-900 mb-1">🆓 100% Free</strong>
                     <span className="text-indigo-700 text-sm">
-                        Finds the option everyone can agree on
+                        No hidden costs or limits
                     </span>
                 </div>
                 <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                    <strong className="block text-emerald-900 mb-1">🔓 No Login</strong>
+                    <strong className="block text-emerald-900 mb-1">🔓 No Sign Up</strong>
                     <span className="text-emerald-700 text-sm">
-                        Share a link. Guests vote instantly.
+                        Just create and share the link
                     </span>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                    <strong className="block text-purple-900 mb-1">📱 Mobile First</strong>
+                    <strong className="block text-purple-900 mb-1">📱 Works Everywhere</strong>
                     <span className="text-purple-700 text-sm">
-                        Drag-to-rank works beautifully on phones
+                        Phone, tablet, or computer
                     </span>
                 </div>
             </motion.div>
@@ -343,8 +470,8 @@ const VoteGeneratorCreate: React.FC = () => {
                 className="mt-8 text-center text-slate-500 text-sm"
             >
                 <p>
-                    <strong>How it works:</strong> Voters rank all options from favorite to least favorite. 
-                    We use instant-runoff voting to find the winner everyone can live with.
+                    <strong>How it works:</strong> Create your poll above, share the link with your group, 
+                    and watch the votes come in. It's that simple!
                 </p>
             </motion.div>
         </div>

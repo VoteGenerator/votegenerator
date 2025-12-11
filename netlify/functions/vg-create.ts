@@ -1,22 +1,20 @@
 import { Handler } from '@netlify/functions';
-import { v4 as uuidv4 } from 'uuid';
-
-// In production, replace with your actual database (FaunaDB, Supabase, etc.)
-// This example uses Netlify Blobs or you could use KV store
 
 interface CreatePollRequest {
     title: string;
     description?: string;
     options: string[];
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
     settings: {
         hideResults: boolean;
-        allowGuestOptions: boolean;
+        allowMultiple?: boolean; // For multiple choice - can pick more than one
     };
 }
 
 interface PollOption {
     id: string;
     text: string;
+    imageUrl?: string; // For image polls
 }
 
 interface Poll {
@@ -24,19 +22,20 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
+    pollType: string;
     options: PollOption[];
     settings: {
         hideResults: boolean;
-        allowGuestOptions: boolean;
+        allowMultiple: boolean;
     };
     votes: any[];
     createdAt: string;
     voteCount: number;
 }
 
-// Helper to generate short IDs
+// Generate a short, readable ID (8 characters)
 const generateShortId = (): string => {
-    const chars = 'abcdefghijkmnpqrstuvwxyz23456789'; // Removed confusing chars
+    const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
     let result = '';
     for (let i = 0; i < 8; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -44,8 +43,24 @@ const generateShortId = (): string => {
     return result;
 };
 
+// Generate admin key (16 characters)
 const generateAdminKey = (): string => {
-    return uuidv4().replace(/-/g, '').substring(0, 16);
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+};
+
+// Generate option ID (8 characters)
+const generateOptionId = (): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
 };
 
 export const handler: Handler = async (event) => {
@@ -78,7 +93,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Title is required' })
+                body: JSON.stringify({ error: 'Please add a title for your poll' })
             };
         }
 
@@ -86,7 +101,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'At least 2 options are required' })
+                body: JSON.stringify({ error: 'Please add at least 2 options' })
             };
         }
 
@@ -98,7 +113,7 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Sanitize and validate options
+        // Clean up options
         const validOptions = body.options
             .map(opt => (typeof opt === 'string' ? opt.trim() : ''))
             .filter(opt => opt.length > 0 && opt.length <= 200);
@@ -107,11 +122,11 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'At least 2 valid options are required' })
+                body: JSON.stringify({ error: 'Please add at least 2 valid options' })
             };
         }
 
-        // Create poll object
+        // Create poll
         const pollId = generateShortId();
         const adminKey = generateAdminKey();
 
@@ -120,29 +135,31 @@ export const handler: Handler = async (event) => {
             adminKey: adminKey,
             title: body.title.trim().substring(0, 200),
             description: body.description?.trim().substring(0, 500) || undefined,
+            pollType: body.pollType || 'ranked',
             options: validOptions.map(text => ({
-                id: uuidv4().substring(0, 8),
+                id: generateOptionId(),
                 text: text
             })),
             settings: {
                 hideResults: Boolean(body.settings?.hideResults),
-                allowGuestOptions: Boolean(body.settings?.allowGuestOptions)
+                allowMultiple: Boolean(body.settings?.allowMultiple)
             },
             votes: [],
             createdAt: new Date().toISOString(),
             voteCount: 0
         };
 
-        // Store poll in database
-        // For this example, using Netlify Blobs
-        // In production, use FaunaDB, Supabase, Upstash, etc.
-        
+        // Store using Netlify Blobs
         const { getStore } = await import('@netlify/blobs');
-        const store = getStore('votegenerator-polls');
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         await store.setJSON(pollId, poll);
 
-        // Return success with IDs (never expose full adminKey in logs)
-        console.log(`Poll created: ${pollId}`);
+        console.log(`Poll created: ${pollId}, type: ${poll.pollType}`);
 
         return {
             statusCode: 201,
@@ -155,10 +172,17 @@ export const handler: Handler = async (event) => {
 
     } catch (error) {
         console.error('Error creating poll:', error);
+        
+        // More helpful error message
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to create poll' })
+            body: JSON.stringify({ 
+                error: 'Something went wrong. Please try again.',
+                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+            })
         };
     }
 };

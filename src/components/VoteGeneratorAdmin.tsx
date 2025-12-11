@@ -265,16 +265,68 @@ const VoteGeneratorAdmin: React.FC<VoteGeneratorAdminProps> = ({ poll, runoffRes
                             </div>
                         </div>
 
-                        {/* Future: Premium Features Upsell */}
-                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
-                            <div className="text-4xl mb-2">✨</div>
-                            <h4 className="font-bold text-slate-700 mb-1">Want to remove ads?</h4>
-                            <p className="text-slate-500 text-sm mb-4">
-                                Add your logo and remove all VoteGenerator branding.
+                        {/* Premium Upgrade Options */}
+                        <div className="mt-6 pt-6 border-t border-slate-100">
+                            <div className="text-center mb-4">
+                                <span className="text-2xl">✨</span>
+                                <h4 className="font-bold text-slate-800 text-lg mt-2">Make it yours</h4>
+                                <p className="text-slate-500 text-sm">One-time payment for this poll</p>
+                            </div>
+
+                            <div className="grid gap-3">
+                                {/* Tier 1: Remove Ads */}
+                                <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="font-bold text-slate-700 block">Remove Ads</span>
+                                            <span className="text-sm text-slate-500">
+                                                Clean, ad-free experience for all voters
+                                            </span>
+                                        </div>
+                                        <button className="px-4 py-2 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap">
+                                            $3
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tier 2: Remove Ads + Logo */}
+                                <div className="border-2 border-indigo-300 bg-indigo-50 rounded-xl p-4 relative">
+                                    <div className="absolute -top-2 left-4 bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+                                        POPULAR
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="font-bold text-slate-700 block">Branded Poll</span>
+                                            <span className="text-sm text-slate-500">
+                                                No ads + add your company logo
+                                            </span>
+                                        </div>
+                                        <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm transition-colors whitespace-nowrap">
+                                            $7
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tier 3: Full White Label */}
+                                <div className="border-2 border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="font-bold text-slate-700 block">White Label</span>
+                                            <span className="text-sm text-slate-500">
+                                                No ads + your logo + custom link like<br/>
+                                                <code className="text-indigo-600 text-xs">votegenerator.com/your-company</code>
+                                            </span>
+                                        </div>
+                                        <button className="px-4 py-2 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 font-bold rounded-lg text-sm transition-colors whitespace-nowrap">
+                                            $15
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p className="text-center text-slate-400 text-xs mt-4">
+                                Secure payment via Stripe • Instant activation
                             </p>
-                            <button className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 text-white font-bold rounded-lg text-sm">
-                                Upgrade This Poll — $5
-                            </button>
                         </div>
                     </div>
                 </div>

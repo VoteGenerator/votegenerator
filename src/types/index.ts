@@ -2,19 +2,28 @@
 export interface PollOption {
     id: string;
     text: string;
+    imageUrl?: string; // For image polls
 }
 
 export interface PollSettings {
     hideResults: boolean;
-    allowGuestOptions: boolean;
+    allowMultiple: boolean;
+}
+
+export interface PremiumFeatures {
+    removeAds: boolean;
+    customLogo?: string;
+    customSlug?: string; // e.g., votegenerator.com/custom-url
 }
 
 export interface Poll {
     id: string;
     title: string;
     description?: string;
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
     options: PollOption[];
     settings: PollSettings;
+    premium?: PremiumFeatures;
     createdAt: string;
     voteCount: number;
 }

@@ -5,10 +5,11 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
-    options: { id: string; text: string }[];
+    pollType: string;
+    options: { id: string; text: string; imageUrl?: string }[];
     settings: {
         hideResults: boolean;
-        allowGuestOptions: boolean;
+        allowMultiple: boolean;
     };
     votes: any[];
     createdAt: string;
@@ -47,25 +48,29 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Fetch from database
+        // Fetch from Netlify Blobs
         const { getStore } = await import('@netlify/blobs');
-        const store = getStore('votegenerator-polls');
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         const poll: Poll | null = await store.get(pollId, { type: 'json' });
 
         if (!poll) {
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ error: 'Poll not found. It may have expired or the link is incorrect.' })
             };
         }
 
-        // Check if this is an admin request
+        // Check if admin
         const isAdmin = adminKey && adminKey === poll.adminKey;
 
-        // Build response based on access level
         if (isAdmin) {
-            // Admin gets everything including votes and adminKey
+            // Admin gets everything
             return {
                 statusCode: 200,
                 headers,
@@ -75,15 +80,16 @@ export const handler: Handler = async (event) => {
                 })
             };
         } else {
-            // Public voter view - strip sensitive data
+            // Public view - hide sensitive data
             const publicPoll = {
                 id: poll.id,
                 title: poll.title,
                 description: poll.description,
+                pollType: poll.pollType,
                 options: poll.options,
                 settings: {
                     hideResults: poll.settings.hideResults,
-                    allowGuestOptions: poll.settings.allowGuestOptions
+                    allowMultiple: poll.settings.allowMultiple
                 },
                 createdAt: poll.createdAt,
                 voteCount: poll.voteCount,
@@ -102,7 +108,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to fetch poll' })
+            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
         };
     }
 };

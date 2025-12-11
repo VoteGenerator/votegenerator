@@ -1,18 +1,16 @@
 import { Handler } from '@netlify/functions';
-import { v4 as uuidv4 } from 'uuid';
 
 interface VoteRequest {
     pollId: string;
-    rankedOptionIds: string[];
+    rankedOptionIds?: string[];  // For ranked choice
+    selectedOptionIds?: string[]; // For multiple choice
 }
 
 interface Vote {
     id: string;
-    rankedOptionIds: string[];
+    rankedOptionIds?: string[];
+    selectedOptionIds?: string[];
     timestamp: string;
-    // We don't store IP addresses for privacy
-    // Instead we use a hash for basic duplicate detection
-    voterHash?: string;
 }
 
 interface Poll {
@@ -20,25 +18,25 @@ interface Poll {
     adminKey: string;
     title: string;
     description?: string;
+    pollType: string;
     options: { id: string; text: string }[];
     settings: {
         hideResults: boolean;
-        allowGuestOptions: boolean;
+        allowMultiple: boolean;
     };
     votes: Vote[];
     createdAt: string;
     voteCount: number;
 }
 
-// Simple hash function for voter fingerprinting (optional)
-const simpleHash = (str: string): string => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+// Simple ID generator
+const generateVoteId = (): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 12; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return Math.abs(hash).toString(36);
+    return result;
 };
 
 export const handler: Handler = async (event) => {
@@ -64,7 +62,6 @@ export const handler: Handler = async (event) => {
     try {
         const body: VoteRequest = JSON.parse(event.body || '{}');
 
-        // Validation
         if (!body.pollId || typeof body.pollId !== 'string') {
             return {
                 statusCode: 400,
@@ -73,17 +70,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        if (!Array.isArray(body.rankedOptionIds) || body.rankedOptionIds.length === 0) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Ranked options are required' })
-            };
-        }
-
-        // Fetch poll from database
+        // Get poll from storage
         const { getStore } = await import('@netlify/blobs');
-        const store = getStore('votegenerator-polls');
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         const poll: Poll | null = await store.get(body.pollId, { type: 'json' });
 
         if (!poll) {
@@ -94,52 +88,74 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Validate that all option IDs exist in the poll
+        // Validate vote based on poll type
         const validOptionIds = new Set(poll.options.map(o => o.id));
-        const invalidIds = body.rankedOptionIds.filter(id => !validOptionIds.has(id));
-        
-        if (invalidIds.length > 0) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Invalid option IDs provided' })
-            };
-        }
 
-        // Check for duplicate option IDs in ranking
-        const uniqueIds = new Set(body.rankedOptionIds);
-        if (uniqueIds.size !== body.rankedOptionIds.length) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Duplicate options in ranking' })
-            };
+        if (poll.pollType === 'ranked') {
+            if (!Array.isArray(body.rankedOptionIds) || body.rankedOptionIds.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Please rank your choices' })
+                };
+            }
+
+            const invalidIds = body.rankedOptionIds.filter(id => !validOptionIds.has(id));
+            if (invalidIds.length > 0) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Invalid options selected' })
+                };
+            }
+        } else {
+            // Multiple choice
+            if (!Array.isArray(body.selectedOptionIds) || body.selectedOptionIds.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Please select at least one option' })
+                };
+            }
+
+            const invalidIds = body.selectedOptionIds.filter(id => !validOptionIds.has(id));
+            if (invalidIds.length > 0) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Invalid options selected' })
+                };
+            }
+
+            // Check if multiple selections allowed
+            if (!poll.settings.allowMultiple && body.selectedOptionIds.length > 1) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Only one selection allowed for this poll' })
+                };
+            }
         }
 
         // Create vote record
-        // Note: We intentionally don't do IP-based duplicate checking
-        // This allows multiple people on the same network to vote
-        // Client-side localStorage handles same-browser duplicate prevention
         const vote: Vote = {
-            id: uuidv4().substring(0, 12),
-            rankedOptionIds: body.rankedOptionIds,
+            id: generateVoteId(),
             timestamp: new Date().toISOString()
         };
 
-        // Optional: Create a voter hash from headers for soft duplicate detection
-        // This isn't enforced but could be used for analytics
-        const userAgent = event.headers['user-agent'] || '';
-        const acceptLang = event.headers['accept-language'] || '';
-        vote.voterHash = simpleHash(userAgent + acceptLang + body.pollId);
+        if (poll.pollType === 'ranked') {
+            vote.rankedOptionIds = body.rankedOptionIds;
+        } else {
+            vote.selectedOptionIds = body.selectedOptionIds;
+        }
 
-        // Update poll with new vote
+        // Save vote
         poll.votes.push(vote);
         poll.voteCount = poll.votes.length;
 
-        // Save updated poll
         await store.setJSON(body.pollId, poll);
 
-        console.log(`Vote recorded for poll ${body.pollId}. Total votes: ${poll.voteCount}`);
+        console.log(`Vote recorded for poll ${body.pollId}. Total: ${poll.voteCount}`);
 
         return {
             statusCode: 200,
@@ -155,7 +171,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to submit vote' })
+            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
         };
     }
 };

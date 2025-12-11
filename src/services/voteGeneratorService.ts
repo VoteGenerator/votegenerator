@@ -8,8 +8,9 @@ const API_BASE = '/.netlify/functions';
 export const createPoll = async (data: { 
     title: string; 
     description?: string; 
-    options: string[]; 
-    settings: { hideResults: boolean; allowGuestOptions: boolean } 
+    options: string[];
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
+    settings: { hideResults: boolean; allowMultiple?: boolean } 
 }): Promise<{ id: string; adminKey: string }> => {
     const res = await fetch(`${API_BASE}/vg-create`, {
         method: 'POST',

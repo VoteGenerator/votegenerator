@@ -1,0 +1,55 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+  targetPort = 3000
+
+# SPA fallback - redirect all routes to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin", "user"]}
+
+# But make sure API functions work
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Nice URL for voting - /vote/abc123 -> /#id=abc123
+[[redirects]]
+  from = "/vote/:id"
+  to = "/#id=:id"
+  status = 302
+
+# Nice URL for admin - /vote/abc123?admin=key -> /#id=abc123&admin=key
+[[redirects]]
+  from = "/poll/:id"
+  to = "/#id=:id"
+  status = 302
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Blobs configuration for data storage
+[functions]
+  node_bundler = "esbuild"
+
+# Environment variables (set in Netlify dashboard for production)
+# BLOB_STORE_NAME = "votegenerator-polls"

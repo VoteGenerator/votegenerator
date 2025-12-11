@@ -82,7 +82,6 @@ const CreatePoll: React.FC = () => {
     <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8 text-center">
-        {/* Title removed to match screenshot exactly, or can be kept if desired. Keeping minimal as per screenshot focus on form. */}
         <h1 className="text-3xl font-bold text-slate-900 mb-2">VoteGenerator</h1>
         <p className="text-slate-500">Create a free poll in seconds</p>
       </div>
@@ -203,7 +202,6 @@ const CreatePoll: React.FC = () => {
                     className="w-full p-3 pl-4 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none placeholder:text-slate-300"
                     placeholder={`Option ${idx + 1}`}
                   />
-                  {/* Visual handle icon to suggest drag functionality implies order matters in ranked */}
                   {pollType === PollType.RANKED && (
                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300">
                         <GripVertical className="w-4 h-4" />

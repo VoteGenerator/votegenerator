@@ -11,12 +11,19 @@ export const createPoll = async (data: CreatePollRequest): Promise<PollResponse>
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to create poll');
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create poll');
+    }
+    return result;
+  } else {
+    // Handle non-JSON response (likely a 404 or 500 HTML page from Netlify)
+    const text = await response.text();
+    console.error('API Error (Non-JSON):', text);
+    throw new Error(`Server error: ${response.status} ${response.statusText}. Check your netlify.toml and function logs.`);
   }
-
-  return response.json();
 };
 
 export const getPoll = async (id: string, adminKey?: string): Promise<PollData> => {
@@ -31,10 +38,16 @@ export const getPoll = async (id: string, adminKey?: string): Promise<PollData> 
     },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to fetch poll');
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to fetch poll');
+    }
+    return result;
+  } else {
+    const text = await response.text();
+    console.error('API Error (Non-JSON):', text);
+    throw new Error(`Server error: ${response.status} ${response.statusText}. Check your netlify.toml and function logs.`);
   }
-
-  return response.json();
 };

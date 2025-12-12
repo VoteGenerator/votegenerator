@@ -111,19 +111,30 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const handleCreate = async () => {
+        setError(null);
+        
+        // Filter out empty options
         const validOptions = options.filter(o => o.trim() !== '');
         
+        // Check for empty title
         if (!title.trim()) {
-            setError('Please add a title or question for your poll');
+            setError('Please add a title or question for your poll.');
             return;
         }
         
+        // Check for minimum options
         if (validOptions.length < 2) {
-            setError('Please add at least 2 options for people to choose from');
+            setError('Please add at least 2 options for people to choose from.');
             return;
         }
 
-        setError(null);
+        // Check for duplicates (case insensitive)
+        const uniqueValues = new Set(validOptions.map(o => o.toLowerCase().trim()));
+        if (uniqueValues.size !== validOptions.length) {
+            setError('Duplicate options found. Please ensure all choices are unique.');
+            return;
+        }
+
         setIsCreating(true);
         
         try {
@@ -395,7 +406,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
                             >
-                                <AlertCircle size={20} />
+                                <AlertCircle size={20} className="shrink-0" />
                                 <span className="font-medium">{error}</span>
                             </motion.div>
                         )}

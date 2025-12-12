@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ExternalLink, ArrowRight } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -16,7 +16,10 @@ type ViewState =
 
 const VoteGeneratorApp: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
-    const [copied, setCopied] = useState(false);
+    const [copiedAdmin, setCopiedAdmin] = useState(false);
+    const [copiedShare, setCopiedShare] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
@@ -27,7 +30,7 @@ const VoteGeneratorApp: React.FC = () => {
         };
     }, []);
 
-    const loadView = useCallback(async () => {
+    const loadView = useCallback(async (silent = false) => {
         const { pollId, adminKey } = parseHash();
 
         if (!pollId) {
@@ -35,12 +38,13 @@ const VoteGeneratorApp: React.FC = () => {
             return;
         }
 
-        setViewState({ type: 'loading' });
+        if (!silent) setViewState({ type: 'loading' });
 
         try {
             let poll: Poll;
             let isAdmin = false;
 
+            // If we have an admin key, try to fetch as admin
             if (adminKey) {
                 poll = await getPollAsAdmin(pollId, adminKey);
                 isAdmin = true;
@@ -48,7 +52,7 @@ const VoteGeneratorApp: React.FC = () => {
                 poll = await getPoll(pollId);
             }
 
-            // Determine if we should show results or voting
+            // Logic to determine what to show (Vote vs Results)
             const userVoted = hasVoted(pollId);
             const showResults = isAdmin || (userVoted && !poll.settings.hideResults);
 
@@ -56,9 +60,10 @@ const VoteGeneratorApp: React.FC = () => {
                 const results = await getResults(pollId, adminKey || undefined);
                 setViewState({ type: 'results', poll, results, isAdmin });
             } else if (userVoted && poll.settings.hideResults) {
-                 // Voted but results hidden
+                 // Voted but results are hidden
                  setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
             } else {
+                // User hasn't voted yet, or results are not force-shown
                 setViewState({ type: 'vote', poll });
             }
 
@@ -72,59 +77,92 @@ const VoteGeneratorApp: React.FC = () => {
     }, [parseHash]);
 
     useEffect(() => {
+        // Initial Load
         loadView();
+
         const handleHashChange = () => loadView();
         window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
+        
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+            window.clearInterval(pollInterval.current);
+        };
     }, [loadView]);
+
+    // Auto-refresh logic for results view
+    useEffect(() => {
+        window.clearInterval(pollInterval.current);
+
+        if (viewState.type === 'results') {
+            // Refresh every 8 seconds
+            pollInterval.current = window.setInterval(() => {
+               loadView(true); // silent reload
+            }, 8000);
+        }
+
+        return () => window.clearInterval(pollInterval.current);
+    }, [viewState.type, loadView]);
+
 
     const handleVoteSuccess = async () => {
         const { pollId } = parseHash();
         if(!pollId) return;
         
-        const poll = await getPoll(pollId);
-        if(!poll.settings.hideResults) {
-            const results = await getResults(pollId);
-            setViewState({ type: 'results', poll, results });
-        } else {
-             setViewState({ type: 'error', message: "Vote submitted! Results are currently hidden." });
-        }
+        // Reload to switch to results view
+        loadView(); 
     };
 
-    const copyLink = () => {
-        const { pollId } = parseHash();
-        // Construct vote URL (without admin key)
-        const url = `${window.location.origin}/#id=${pollId}`;
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleManualRefresh = async () => {
+        setIsRefreshing(true);
+        await loadView(true);
+        setTimeout(() => setIsRefreshing(false), 500);
+    };
+
+    const copyToClipboard = (text: string, isAdminType: boolean) => {
+        navigator.clipboard.writeText(text);
+        if (isAdminType) {
+            setCopiedAdmin(true);
+            setTimeout(() => setCopiedAdmin(false), 2000);
+        } else {
+            setCopiedShare(true);
+            setTimeout(() => setCopiedShare(false), 2000);
+        }
     };
 
     const goHome = () => {
         window.location.hash = '';
     };
 
+    const getShareUrl = () => {
+        const { pollId } = parseHash();
+        return `${window.location.origin}/#id=${pollId}`;
+    };
+
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen pb-10">
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
-                <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+                <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
                     <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
                         <button 
                             onClick={goHome}
-                            className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-bold transition-colors"
+                            className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 font-bold transition-colors"
                         >
                             <Home size={20} />
-                            VoteGenerator
+                            <span className="hidden sm:inline">VoteGenerator</span>
                         </button>
                         
-                        <button
-                            onClick={copyLink}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            {copied ? <Check size={16} /> : <Share2 size={16} />}
-                            {copied ? 'Copied!' : 'Share Poll'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                             {(viewState.type === 'results' || viewState.type === 'vote') && (
+                                <button
+                                    onClick={() => copyToClipboard(getShareUrl(), false)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    {copiedShare ? <Check size={16} /> : <Share2 size={16} />}
+                                    {copiedShare ? 'Copied!' : 'Share Poll'}
+                                </button>
+                             )}
+                        </div>
                     </div>
                 </header>
             )}
@@ -161,20 +199,115 @@ const VoteGeneratorApp: React.FC = () => {
 
                     {viewState.type === 'results' && (
                         <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <div className="max-w-3xl mx-auto px-4 py-10">
+                            <div className="max-w-3xl mx-auto px-4 py-8">
+                                
+                                {/* Admin Hub */}
                                 {viewState.isAdmin && (
-                                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 text-amber-800 text-sm">
-                                        <AlertTriangle size={20} className="shrink-0" />
-                                        <div>
-                                            <strong>Admin Mode:</strong> You are viewing these results because you created the poll. 
-                                            <div className="mt-1 flex items-center gap-2 cursor-pointer hover:underline" onClick={copyLink}>
-                                                <Copy size={14} /> Copy link for voters (excludes admin key)
+                                    <div className="bg-white rounded-3xl shadow-xl border border-indigo-100 p-6 md:p-8 mb-8 overflow-hidden relative">
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500"></div>
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                            <ShieldCheck className="text-indigo-600" size={28}/> 
+                                            Admin Hub
+                                        </h2>
+                                        
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {/* Admin Link Section */}
+                                            <div className="p-5 bg-amber-50 rounded-2xl border border-amber-100 flex flex-col">
+                                                <div className="font-bold text-amber-900 mb-2 flex items-center gap-2">
+                                                    <Key size={18}/> Admin Link (Private)
+                                                </div>
+                                                <p className="text-sm text-amber-800/80 mb-4 flex-1">
+                                                    <span className="font-bold text-amber-900">Important:</span> Save this link! It is the only way to manage your poll. If you lose it, you cannot access admin features again.
+                                                </p>
+                                                <div className="flex gap-2 bg-white rounded-lg p-1 border border-amber-200">
+                                                    <input 
+                                                        readOnly 
+                                                        value={window.location.href} 
+                                                        className="text-xs text-slate-500 px-2 py-2 w-full outline-none bg-transparent font-mono truncate" 
+                                                        onClick={(e) => e.currentTarget.select()}
+                                                    />
+                                                    <button 
+                                                        onClick={() => copyToClipboard(window.location.href, true)}
+                                                        className="bg-amber-100 hover:bg-amber-200 text-amber-900 p-2 rounded-md transition-colors"
+                                                        title="Copy Admin Link"
+                                                    >
+                                                        {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>}
+                                                    </button>
+                                                </div>
                                             </div>
+
+                                            {/* Voter Link Section */}
+                                            <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col">
+                                                <div className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                                    <Share2 size={18}/> Voter Link (Public)
+                                                </div>
+                                                <p className="text-sm text-indigo-800/80 mb-4 flex-1">
+                                                    Share this link with your participants. It does not contain admin powers.
+                                                </p>
+                                                <div className="flex gap-2 bg-white rounded-lg p-1 border border-indigo-200">
+                                                    <input 
+                                                        readOnly 
+                                                        value={getShareUrl()} 
+                                                        className="text-xs text-slate-500 px-2 py-2 w-full outline-none bg-transparent font-mono truncate" 
+                                                        onClick={(e) => e.currentTarget.select()}
+                                                    />
+                                                    <button 
+                                                        onClick={() => copyToClipboard(getShareUrl(), false)}
+                                                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-900 p-2 rounded-md transition-colors"
+                                                        title="Copy Share Link"
+                                                    >
+                                                        {copiedShare ? <Check size={16}/> : <Copy size={16}/>}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Troubleshooting Tip */}
+                                        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-500">
+                                            <div className="flex items-start gap-2 max-w-lg bg-slate-50 p-2 rounded-lg">
+                                                <Info size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                                                <span>
+                                                    If your page is blank or data seems missing, try opening this link in <strong>Incognito Mode</strong> or clearing your browser cache. Some browsers may cache the initial empty state.
+                                                </span>
+                                            </div>
+                                            <button 
+                                                onClick={handleManualRefresh}
+                                                className="flex items-center gap-2 text-indigo-600 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors font-medium whitespace-nowrap"
+                                                disabled={isRefreshing}
+                                            >
+                                                <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                                                Refresh Results
+                                            </button>
                                         </div>
                                     </div>
                                 )}
-                                <h1 className="text-3xl font-bold text-slate-900 mb-8 text-center">{viewState.poll.title}</h1>
+
+                                {!viewState.isAdmin && (
+                                     <div className="flex justify-end mb-4">
+                                         <button 
+                                            onClick={handleManualRefresh}
+                                            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
+                                            disabled={isRefreshing}
+                                        >
+                                            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                                            {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
+                                        </button>
+                                     </div>
+                                )}
+
+                                <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 text-center font-serif">{viewState.poll.title}</h1>
+                                {viewState.poll.description && <p className="text-slate-500 text-center mb-8 max-w-2xl mx-auto">{viewState.poll.description}</p>}
+                                
                                 <VoteGeneratorResults poll={viewState.poll} results={viewState.results} />
+                                
+                                <div className="mt-12 text-center">
+                                    <button 
+                                        onClick={goHome} 
+                                        className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                    >
+                                        Create your own poll <ArrowRight size={14}/>
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     )}

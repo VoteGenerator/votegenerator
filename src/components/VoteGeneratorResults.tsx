@@ -9,7 +9,7 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
-    const { winnerId, rounds, totalVotes, voters, simpleCounts, votes } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, votes } = results;
     const [viewMode, setViewMode] = useState<'chart' | 'grid'>('chart');
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';

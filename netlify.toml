@@ -1,0 +1,45 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+  targetPort = 3000
+
+# Nice URL for voting - /vote/abc123 -> /#id=abc123
+[[redirects]]
+  from = "/vote/:id"
+  to = "/#id=:id"
+  status = 302
+
+# Nice URL for admin - /poll/abc123 -> /#id=abc123
+[[redirects]]
+  from = "/poll/:id"
+  to = "/#id=:id"
+  status = 302
+
+# SPA fallback - redirect all routes to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Functions configuration
+[functions]
+  node_bundler = "esbuild"

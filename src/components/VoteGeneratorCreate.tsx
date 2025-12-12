@@ -538,7 +538,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         <div className="flex items-start gap-2 text-[10px] text-slate-400 bg-white p-2 rounded border border-slate-100">
                                                             <Lock size={12} className="mt-0.5 shrink-0" />
                                                             <span>
-                                                                Note: Browser/VPN checks are good for casual polls but not 100% hack-proof against tech-savvy users. Use <strong>Access Codes</strong> for strict elections.
+                                                                Note: Browser/VPN checks are good for casual polls but not 100% hack-proof against tech-savvy users. Use <strong>Access Codes</strong> for strict control.
                                                             </span>
                                                         </div>
                                                     )}

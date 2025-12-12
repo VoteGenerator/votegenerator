@@ -48,4 +48,5 @@ export interface RunoffResult {
     voters?: string[]; // List of names if available
     usedCodes?: string[]; // List of codes that have already voted
     simpleCounts?: Record<string, number>; // Flat counts for multiple choice or first round
+    votes: Vote[]; // The raw votes for the grid view
 }

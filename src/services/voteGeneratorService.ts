@@ -232,7 +232,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     });
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], simpleCounts: {} };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], simpleCounts: {}, votes: [] };
     }
 
     // Instant Runoff Calculation
@@ -319,6 +319,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         totalVotes: votes.length,
         voters,
         usedCodes,
-        simpleCounts
+        simpleCounts,
+        votes: votes // Return the raw votes to be used in Grid view
     };
 };

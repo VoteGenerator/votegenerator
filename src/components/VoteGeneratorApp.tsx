@@ -427,7 +427,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                              {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
                                                          </button>
                                                          <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                                                             <Printer size={14}/> Print Results Report
+                                                             <Printer size={14}/> Download PDF
                                                          </button>
                                                      </div>
                                                 </div>

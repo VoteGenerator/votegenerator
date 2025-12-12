@@ -1,5 +1,5 @@
 import React from 'react';
-import VoteGeneratorApp from './VoteGeneratorApp';
+import VoteGeneratorApp from './components/VoteGeneratorApp';
 
 const App: React.FC = () => {
   return (

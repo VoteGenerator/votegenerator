@@ -51,6 +51,7 @@ export const createPoll = async (data: {
         allowMultiple: boolean;
         requireNames: boolean;
         allowComments?: boolean;
+        publicComments?: boolean;
         blockVpn?: boolean;
         deadline?: string;
         maxVotes?: number;

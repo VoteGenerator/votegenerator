@@ -9,8 +9,9 @@ export interface PollSettings {
     hideResults: boolean;
     allowMultiple: boolean;
     requireNames: boolean;
-    allowComments?: boolean; // New
-    blockVpn?: boolean; // New
+    allowComments?: boolean; 
+    publicComments?: boolean; // New: Controls if voters can see comments
+    blockVpn?: boolean;
     deadline?: string; // ISO Date string
     maxVotes?: number; // Auto-close trigger
     security: 'browser' | 'code' | 'none';
@@ -36,7 +37,7 @@ export interface Vote {
     votedAt: string;
     voterName?: string;
     usedCode?: string; // The code used to cast this vote
-    comment?: string; // New
+    comment?: string;
 }
 
 export interface RoundLog {
@@ -52,7 +53,7 @@ export interface RunoffResult {
     totalVotes: number;
     voters?: string[]; // List of names if available
     usedCodes?: string[]; // List of codes that have already voted
-    comments?: { name: string; text: string; date: string }[]; // New
+    comments?: { name: string; text: string; date: string }[]; 
     simpleCounts?: Record<string, number>; // Flat counts for multiple choice or first round
     votes: Vote[]; // The raw votes for the grid view
 }

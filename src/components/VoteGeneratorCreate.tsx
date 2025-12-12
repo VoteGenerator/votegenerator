@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -65,6 +65,7 @@ const VoteGeneratorCreate: React.FC = () => {
     const [allowMultiple, setAllowMultiple] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
     const [allowComments, setAllowComments] = useState(false);
+    const [publicComments, setPublicComments] = useState(true);
     const [blockVpn, setBlockVpn] = useState(false);
     const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
     const [voterCount, setVoterCount] = useState<number>(10);
@@ -179,6 +180,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     allowMultiple,
                     requireNames,
                     allowComments,
+                    publicComments,
                     blockVpn,
                     security,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined,
@@ -425,17 +427,41 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                             </label>
                             
-                            {/* Allow Comments */}
-                            <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
-                                <div className="flex-1 flex items-center gap-2">
-                                    <MessageSquare size={18} className="text-slate-400" />
-                                    <div className="font-bold text-slate-700">Allow comments</div>
-                                </div>
-                                <div className="relative">
-                                    <input type="checkbox" checked={allowComments} onChange={e => setAllowComments(e.target.checked)} className="sr-only peer" />
-                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </div>
-                            </label>
+                            {/* Allow Comments Group */}
+                            <div className="p-3 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors -mx-3 border border-transparent hover:border-slate-100">
+                                <label className="flex items-center justify-between cursor-pointer group mb-2">
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <MessageSquare size={18} className="text-slate-400" />
+                                        <div className="font-bold text-slate-700">Allow comments</div>
+                                    </div>
+                                    <div className="relative">
+                                        <input type="checkbox" checked={allowComments} onChange={e => setAllowComments(e.target.checked)} className="sr-only peer" />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </div>
+                                </label>
+                                
+                                {/* Sub-setting for Comment Visibility */}
+                                <AnimatePresence>
+                                    {allowComments && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden pl-7"
+                                        >
+                                            <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 py-1">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={publicComments} 
+                                                    onChange={e => setPublicComments(e.target.checked)}
+                                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                Show comments to everyone (if unchecked, only admin sees them)
+                                            </label>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
 
                             {/* Hide Results */}
                             <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
@@ -491,7 +517,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         </p>
                                                     )}
 
-                                                    <div className="grid grid-cols-3 gap-2">
+                                                    <div className="grid grid-cols-3 gap-2 mb-3">
                                                         {(['browser', 'code', 'none'] as const).map(sec => (
                                                             <button
                                                                 key={sec}
@@ -506,6 +532,16 @@ const VoteGeneratorCreate: React.FC = () => {
                                                             </button>
                                                         ))}
                                                     </div>
+
+                                                    {/* Security Disclaimer */}
+                                                    {security !== 'code' && (
+                                                        <div className="flex items-start gap-2 text-[10px] text-slate-400 bg-white p-2 rounded border border-slate-100">
+                                                            <Lock size={12} className="mt-0.5 shrink-0" />
+                                                            <span>
+                                                                Note: Browser/VPN checks are good for casual polls but not 100% hack-proof against tech-savvy users. Use <strong>Access Codes</strong> for strict elections.
+                                                            </span>
+                                                        </div>
+                                                    )}
 
                                                     {/* If Codes Selected */}
                                                     {security === 'code' && (
@@ -534,7 +570,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         <Globe size={18} className="text-slate-400" />
                                                         <div>
                                                             <div className="font-bold text-slate-700 text-xs uppercase">Block VPN / Proxies</div>
-                                                            <div className="text-[10px] text-slate-500 font-normal">Experimental check</div>
+                                                            <div className="text-[10px] text-slate-500 font-normal">Helps prevent bots & anonymous proxies</div>
                                                         </div>
                                                     </div>
                                                     <div className="relative">

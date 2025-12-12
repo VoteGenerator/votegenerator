@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Lock } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -19,15 +19,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
     // FIX: Ensure Bar Chart displays First Preference Votes (1 vote per person) for Ranked Polls.
-    // Use rounds[0] if available, otherwise fallback to manually calculating first preferences from raw votes
-    // to avoid the bug where simpleCounts (frequency of appearance) is used.
     const barChartData = (() => {
         if (!isRanked) return simpleCounts || {};
-        
-        // If we have rounds, use the first round (First preferences)
         if (rounds.length > 0) return rounds[0].counts;
-
-        // Fallback: Calculate first preferences manually from raw votes to guarantee accuracy
+        
+        // Fallback: Calculate first preferences manually
         const firstPrefs: Record<string, number> = {};
         poll.options.forEach(o => firstPrefs[o.id] = 0);
         
@@ -70,6 +66,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         return CHART_COLORS[index % CHART_COLORS.length];
     };
 
+    // Determine if comments should be shown
+    const shouldShowComments = comments && comments.length > 0 && (poll.isAdmin || (poll.settings.allowComments && poll.settings.publicComments));
+
     if (totalVotes === 0) {
         return (
             <div className="text-center py-10 bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
@@ -92,7 +91,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     // Prepare data for Pie Chart
     const pieData = (() => {
-        const counts = barChartData; // Use the corrected first-pref data
+        const counts = barChartData; 
         const total = Object.values(counts).reduce((a,b) => a+b, 0);
         let currentAngle = 0;
         
@@ -444,14 +443,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
             </AnimatePresence>
 
             {/* --- COMMENTS SECTION --- */}
-            {comments && comments.length > 0 && (
+            {shouldShowComments && (
                 <div className="mt-8 bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
                     <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                         <MessageSquare size={24} className="text-indigo-500" />
-                        Comments ({comments.length})
+                        Comments ({comments!.length})
                     </h3>
                     <div className="grid md:grid-cols-2 gap-4">
-                        {comments.map((comment, i) => (
+                        {comments!.map((comment, i) => (
                             <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                                 <div className="flex items-start gap-3">
                                     <Quote size={20} className="text-slate-300 shrink-0" />
@@ -461,6 +460,33 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                             <span className="font-bold text-slate-500">{comment.name}</span>
                                             <span>•</span>
                                             <span>{new Date(comment.date).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            
+            {/* Private Comments Notice (For Admin) */}
+            {poll.isAdmin && comments && comments.length > 0 && !shouldShowComments && (
+                <div className="mt-8 bg-amber-50 rounded-3xl border border-amber-100 p-6 md:p-8">
+                     <h3 className="text-xl font-bold text-amber-800 mb-2 flex items-center gap-2">
+                        <Lock size={20} />
+                        Private Comments ({comments.length})
+                    </h3>
+                    <p className="text-sm text-amber-700 mb-4">These comments are only visible to you (Admin).</p>
+                    
+                    <div className="grid md:grid-cols-2 gap-4 opacity-75">
+                         {comments.map((comment, i) => (
+                            <div key={i} className="p-4 bg-white rounded-xl border border-amber-100">
+                                <div className="flex items-start gap-3">
+                                    <Quote size={20} className="text-amber-200 shrink-0" />
+                                    <div>
+                                        <p className="text-slate-700 italic text-sm mb-2">"{comment.text}"</p>
+                                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                                            <span className="font-bold text-slate-500">{comment.name}</span>
                                         </div>
                                     </div>
                                 </div>

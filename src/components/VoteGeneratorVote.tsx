@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, Shuffle } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock } from 'lucide-react';
 import { Poll, PollOption } from '../types';
-import { submitVote } from '../services/voteGeneratorService';
+import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
 interface Props {
     poll: Poll;
@@ -10,7 +10,6 @@ interface Props {
 }
 
 const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
-    // Helper to shuffle array (Fisher-Yates)
     const shuffle = <T,>(array: T[]): T[] => {
         const newArr = [...array];
         for (let i = newArr.length - 1; i > 0; i--) {
@@ -20,8 +19,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         return newArr;
     };
 
-    // For Ranked: Items is the ordered list of options. 
-    // We shuffle them initially to prevent order bias from the default sorting.
     const [items, setItems] = useState<PollOption[]>(() => {
         if (poll.pollType === 'ranked') {
             return shuffle(poll.options);
@@ -29,10 +26,14 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         return poll.options;
     });
     
-    // For Multiple Choice: Set of selected IDs
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    
+    const [voterName, setVoterName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Check Deadline
+    const isExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
+    // Check if security allows (If browser check is on, hasVoted will return true if they already voted)
+    const alreadyVoted = poll.settings.security !== 'none' && hasVoted(poll.id);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -41,7 +42,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 ? items.map(i => i.id) 
                 : Array.from(selectedIds);
             
-            await submitVote(poll.id, choices);
+            await submitVote(poll.id, choices, voterName.trim() || undefined);
             onVoteSuccess();
         } catch (error) {
             console.error(error);
@@ -63,7 +64,26 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         setSelectedIds(newSet);
     };
 
-    const canSubmit = poll.pollType === 'ranked' ? true : selectedIds.size > 0;
+    const canSubmit = (poll.pollType === 'ranked' ? true : selectedIds.size > 0) 
+                      && (!poll.settings.requireNames || voterName.trim().length > 0);
+
+    if (isExpired) {
+        return (
+            <div className="max-w-2xl mx-auto px-4 pt-20 text-center">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={32} className="text-slate-400" />
+                </div>
+                <h1 className="text-3xl font-black text-slate-800 mb-2">Poll Closed</h1>
+                <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
+                <button 
+                    onClick={onVoteSuccess} // Just go to results
+                    className="text-indigo-600 font-bold hover:underline"
+                >
+                    View Results
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
@@ -81,7 +101,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             {poll.description}
                         </p>
                     )}
-                    <div className="mt-4 flex flex-col items-start gap-2">
+                    
+                    <div className="flex flex-wrap gap-2 mt-4">
                         <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
                             {poll.pollType === 'ranked' ? (
                                 <>Drag options to rank them order of preference</>
@@ -89,12 +110,17 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 <>Select {poll.settings.allowMultiple ? 'options' : 'an option'}</>
                             )}
                         </div>
-                        {poll.pollType === 'ranked' && (
-                             <p className="text-xs text-slate-400 italic flex items-center gap-1 ml-1">
-                                <Shuffle size={12} /> Options are randomized to prevent order bias.
-                             </p>
+                        {poll.settings.deadline && (
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
+                                <Clock size={14} /> Ends: {new Date(poll.settings.deadline).toLocaleDateString()}
+                            </div>
                         )}
                     </div>
+                    {poll.pollType === 'ranked' && (
+                            <p className="text-xs text-slate-400 italic flex items-center gap-1 ml-1 mt-2">
+                            <Shuffle size={12} /> Options are randomized to prevent order bias.
+                            </p>
+                    )}
                 </div>
 
                 <div className="p-6 md:p-8">
@@ -142,22 +168,51 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || !canSubmit}
-                        className="w-full mt-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="animate-spin" size={24} />
-                                Submitting...
-                            </>
-                        ) : (
-                            <>
-                                Submit Vote <ArrowRight size={24} />
-                            </>
-                        )}
-                    </button>
+                    {/* Name Input if Required */}
+                    {poll.settings.requireNames && (
+                        <div className="mt-8 pt-6 border-t border-slate-100">
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Your Name <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                <input 
+                                    type="text" 
+                                    value={voterName}
+                                    onChange={(e) => setVoterName(e.target.value)}
+                                    className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium"
+                                    placeholder="Enter your name"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {alreadyVoted ? (
+                        <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-center border border-amber-200">
+                            <strong>You have already voted.</strong><br/>
+                            <span className="text-sm">Based on your browser settings, duplicate voting is not allowed.</span>
+                            <div className="mt-2">
+                                <button onClick={onVoteSuccess} className="text-indigo-600 underline text-sm font-bold">See Results</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || !canSubmit}
+                            className="w-full mt-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={24} />
+                                    Submitting...
+                                </>
+                            ) : (
+                                <>
+                                    Submit Vote <ArrowRight size={24} />
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             </motion.div>
         </div>

@@ -1,7 +1,6 @@
-import { Poll, RunoffResult, RoundLog } from '../types';
+import { Poll, PollOption, RunoffResult, RoundLog, Vote } from '../types';
 
 // --- Local Storage Fallback Helpers ---
-// This ensures the app works immediately for the user even without the Netlify Backend running.
 const LS_PREFIX = 'votegenerator_';
 
 const generateId = (len: number = 8) => {
@@ -40,7 +39,13 @@ export const createPoll = async (data: {
     description?: string;
     options: string[];
     pollType: 'ranked' | 'multiple';
-    settings: { hideResults: boolean; allowMultiple: boolean };
+    settings: { 
+        hideResults: boolean; 
+        allowMultiple: boolean;
+        requireNames: boolean;
+        deadline?: string;
+        security: 'browser' | 'none';
+    };
 }): Promise<{ id: string; adminKey: string }> => {
     try {
         // 1. Try actual API
@@ -53,8 +58,6 @@ export const createPoll = async (data: {
         if (response.ok) {
             return await response.json();
         }
-        
-        // If 404/500, throw to catch block to trigger fallback
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
         console.warn('Backend unavailable, falling back to LocalStorage mode.');
@@ -72,7 +75,6 @@ export const createPoll = async (data: {
             votes: []
         };
         saveLocalPoll(poll);
-        // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 800)); 
         return { id, adminKey };
     }
@@ -87,7 +89,6 @@ export const getPoll = async (id: string): Promise<Poll> => {
         const polls = getLocalPolls();
         const poll = polls[id];
         if (!poll) throw new Error('Poll not found');
-        // Strip sensitive data for public view
         const { adminKey, votes, ...publicPoll } = poll;
         return { ...publicPoll, isAdmin: false };
     }
@@ -106,11 +107,11 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[]): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices })
+            body: JSON.stringify({ pollId, choices, voterName })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
@@ -119,36 +120,34 @@ export const submitVote = async (pollId: string, choices: string[]): Promise<voi
         const polls = getLocalPolls();
         if (!polls[pollId]) throw new Error('Poll not found');
         
-        saveLocalVote(pollId, { choices, createdAt: new Date().toISOString() });
+        saveLocalVote(pollId, { choices, voterName, createdAt: new Date().toISOString() });
         
-        // Update vote count on poll object for simpler display logic
+        // Update vote count
         polls[pollId].voteCount = (polls[pollId].voteCount || 0) + 1;
         saveLocalPoll(polls[pollId]);
         
-        // Mark as voted in session
-        sessionStorage.setItem(`voted_${pollId}`, 'true');
+        // Mark as voted (Local Persistence)
+        // Use localStorage instead of sessionStorage for better "Browser Check" simulation
+        localStorage.setItem(`${LS_PREFIX}has_voted_${pollId}`, 'true');
+        
         await new Promise(resolve => setTimeout(resolve, 600));
     }
 };
 
 export const hasVoted = (pollId: string): boolean => {
-    return sessionStorage.getItem(`voted_${pollId}`) === 'true';
+    // Check local storage flag
+    return localStorage.getItem(`${LS_PREFIX}has_voted_${pollId}`) === 'true';
 };
 
 // --- RCV Calculation Logic (Client Side for Demo) ---
 
 export const getResults = async (pollId: string, adminKey?: string): Promise<RunoffResult> => {
-    // In a real app, the backend calculates this. For this demo, we do it client-side
-    // based on the votes we can fetch (or local storage).
-    
     let votes: any[] = [];
     
     try {
-        // Attempt to fetch raw votes from backend (admin only typically, or public endpoint)
-        // For this demo, we'll assume we get raw votes or fallback to local
         const response = await fetch(`/.netlify/functions/get-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
         if(response.ok) {
-            votes = await response.json(); // Expecting array of { choices: [] }
+            votes = await response.json(); 
         } else {
             throw new Error();
         }
@@ -156,20 +155,20 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         votes = getLocalVotes(pollId);
     }
 
+    // Extract voter names if they exist
+    const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
+
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0 };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [] };
     }
 
     // Instant Runoff Calculation
-    // Votes structure: [{ choices: ['opt1', 'opt2'] }, ...]
-    
     const rounds: RoundLog[] = [];
     let remainingVotes = votes.map(v => ({ 
-        choices: v.choices.filter((c: string) => !!c) // deep copy & cleanup
+        choices: v.choices.filter((c: string) => !!c)
     }));
     
     let activeOptionIds = new Set<string>();
-    // Collect all unique option IDs mentioned
     votes.forEach(v => v.choices.forEach((c: string) => activeOptionIds.add(c)));
     
     let winnerId: string | null = null;
@@ -177,11 +176,8 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
 
     while (!winnerId && activeOptionIds.size > 0) {
         const roundCounts: Record<string, number> = {};
-        
-        // Initialize counts
         activeOptionIds.forEach(id => roundCounts[id] = 0);
         
-        // Count first preferences
         remainingVotes.forEach(vote => {
             if (vote.choices.length > 0) {
                 const firstChoice = vote.choices[0];
@@ -193,7 +189,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
 
         const totalActiveVotes = Object.values(roundCounts).reduce((a, b) => a + b, 0);
         
-        // Find winner (>50%)
         let roundWinner: string | null = null;
         let minVotes = Infinity;
         let loserId: string | null = null;
@@ -205,9 +200,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 loserId = id;
             }
         });
-        
-        // Tie-breaker for loser: naive approach (pick first found)
-        // In real RCV, there are specific tie-breaking rules.
         
         if (roundWinner) {
             winnerId = roundWinner;
@@ -221,8 +213,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
         
         if (activeOptionIds.size <= 1) {
-            // Only one left (or 0)
-             winnerId = loserId; // technically the last one standing
+             winnerId = loserId; 
              rounds.push({
                 roundNumber: roundNum,
                 counts: roundCounts,
@@ -232,7 +223,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
             break;
         }
 
-        // Eliminate loser
         activeOptionIds.delete(loserId!);
         
         rounds.push({
@@ -242,20 +232,18 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
             winnerId: null
         });
 
-        // Redistribute votes (remove eliminated ID from all ballots)
         remainingVotes.forEach(vote => {
             vote.choices = vote.choices.filter((id: string) => id !== loserId);
         });
 
         roundNum++;
-        
-        // Safety break
         if(roundNum > 20) break;
     }
 
     return {
         winnerId,
         rounds,
-        totalVotes: votes.length
+        totalVotes: votes.length,
+        voters
     };
 };

@@ -7,6 +7,9 @@ export interface PollOption {
 export interface PollSettings {
     hideResults: boolean;
     allowMultiple: boolean;
+    requireNames: boolean;
+    deadline?: string; // ISO Date string
+    security: 'browser' | 'none'; // 'browser' = strict local storage check, 'none' = allow multiples
 }
 
 export interface Poll {
@@ -26,6 +29,7 @@ export interface Vote {
     pollId: string;
     choices: string[]; 
     votedAt: string;
+    voterName?: string;
 }
 
 export interface RoundLog {
@@ -39,4 +43,5 @@ export interface RunoffResult {
     winnerId: string | null;
     rounds: RoundLog[];
     totalVotes: number;
+    voters?: string[]; // List of names if available
 }

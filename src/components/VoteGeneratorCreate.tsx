@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -53,8 +53,6 @@ const VoteGeneratorCreate: React.FC = () => {
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
     const [pollType, setPollType] = useState<string>('ranked');
-    const [hideResults, setHideResults] = useState(false);
-    const [allowMultiple, setAllowMultiple] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPollTypeInfo, setShowPollTypeInfo] = useState(false);
@@ -62,6 +60,14 @@ const VoteGeneratorCreate: React.FC = () => {
         PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
     );
     
+    // Settings State
+    const [hideResults, setHideResults] = useState(false);
+    const [allowMultiple, setAllowMultiple] = useState(false);
+    const [requireNames, setRequireNames] = useState(false);
+    const [security, setSecurity] = useState<'browser' | 'none'>('browser');
+    const [deadline, setDeadline] = useState<string>('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
+
     const lastInputRef = useRef<HTMLInputElement>(null);
 
     // Real-time duplicate detection
@@ -90,10 +96,8 @@ const VoteGeneratorCreate: React.FC = () => {
         newOptions[index] = value;
         setOptions(newOptions);
         
-        // Clear global error if user is fixing duplicates
         if (error && error.includes('Duplicate')) setError(null);
 
-        // Auto-add input field if typing in the last one
         if (index === options.length - 1 && value.trim() !== '' && options.length < 20) {
             setOptions([...newOptions, '']);
         }
@@ -136,23 +140,18 @@ const VoteGeneratorCreate: React.FC = () => {
 
     const handleCreate = async () => {
         setError(null);
-        
-        // Filter out empty options
         const validOptions = options.filter(o => o.trim() !== '');
         
-        // Check for empty title
         if (!title.trim()) {
             setError('Please add a title or question for your poll.');
             return;
         }
         
-        // Check for minimum options
         if (validOptions.length < 2) {
             setError('Please add at least 2 options for people to choose from.');
             return;
         }
 
-        // Final check for duplicates (though UI prevents it, safe to keep logic)
         if (hasDuplicates) {
             setError('Please resolve the duplicate options highlighted in red before creating.');
             return;
@@ -168,11 +167,13 @@ const VoteGeneratorCreate: React.FC = () => {
                 pollType: pollType as 'ranked' | 'multiple',
                 settings: { 
                     hideResults, 
-                    allowMultiple
+                    allowMultiple,
+                    requireNames,
+                    security,
+                    deadline: deadline ? new Date(deadline).toISOString() : undefined
                 } 
             });
             
-            // Redirect to the new poll
             window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
         } catch (e) {
             console.error('Failed to create poll:', e);
@@ -268,21 +269,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                 );
                             })}
                         </div>
-
-                        {/* Poll Type Info Tooltip */}
-                        <AnimatePresence>
-                            {showPollTypeInfo && selectedPollType && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden"
-                                >
-                                    <p className="text-sm text-indigo-800 font-medium">{selectedPollType.bestFor}</p>
-                                    <p className="text-sm text-indigo-600 mt-1">{selectedPollType.example}</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
                     </div>
 
                     {/* Title */}
@@ -398,48 +384,111 @@ const VoteGeneratorCreate: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Settings */}
-                    <div className="pt-6 border-t border-slate-100 space-y-3">
-                        {/* Multiple Choice - Allow Multiple Selections */}
-                        {pollType === 'multiple' && (
-                            <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3 border border-transparent hover:border-slate-100">
-                                <input 
-                                    type="checkbox" 
-                                    checked={allowMultiple}
-                                    onChange={e => setAllowMultiple(e.target.checked)}
-                                    className="w-5 h-5 mt-0.5 accent-indigo-600 cursor-pointer"
-                                />
-                                <div className="flex-1">
-                                    <span className="font-bold text-slate-700">Allow multiple selections</span>
-                                    <span className="text-sm text-slate-500 block mt-1">
-                                        {allowMultiple 
-                                            ? "Voters can pick more than one option"
-                                            : "Voters can only pick one option"}
-                                    </span>
+                    {/* Settings Section */}
+                    <div className="pt-6 border-t border-slate-100">
+                         <h3 className="text-lg font-bold text-slate-800 mb-4">Settings</h3>
+                         
+                         <div className="space-y-4">
+                             {/* Allow Multiple */}
+                            {pollType === 'multiple' && (
+                                <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                    <div className="flex-1">
+                                        <div className="font-bold text-slate-700">Allow multiple selections</div>
+                                    </div>
+                                    <div className="relative">
+                                        <input type="checkbox" checked={allowMultiple} onChange={e => setAllowMultiple(e.target.checked)} className="sr-only peer" />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </div>
+                                </label>
+                            )}
+
+                            {/* Require Names */}
+                            <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                <div className="flex-1 flex items-center gap-2">
+                                    <User size={18} className="text-slate-400" />
+                                    <div className="font-bold text-slate-700">Require participant names</div>
+                                </div>
+                                <div className="relative">
+                                    <input type="checkbox" checked={requireNames} onChange={e => setRequireNames(e.target.checked)} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </div>
                             </label>
-                        )}
 
-                        {/* Hide Results */}
-                        <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3 border border-transparent hover:border-slate-100">
-                            <input 
-                                type="checkbox" 
-                                checked={hideResults}
-                                onChange={e => setHideResults(e.target.checked)}
-                                className="w-5 h-5 mt-0.5 accent-indigo-600 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-700">Hide results until you reveal them</span>
-                                    {hideResults ? <EyeOff size={16} className="text-amber-500" /> : <Eye size={16} className="text-slate-400" />}
-                                </div>
-                                <span className="text-sm text-slate-500 block mt-1">
-                                    {hideResults 
-                                        ? "Only admin (you) can see results initially."
-                                        : "Voters see live results immediately after voting."}
-                                </span>
+                            {/* Advanced Dropdown */}
+                            <div className="pt-2">
+                                <button 
+                                    onClick={() => setShowAdvanced(!showAdvanced)}
+                                    className="flex items-center gap-2 text-indigo-600 font-medium text-sm hover:text-indigo-700"
+                                >
+                                    {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    {showAdvanced ? 'Hide advanced settings' : 'Show advanced settings'}
+                                </button>
+
+                                <AnimatePresence>
+                                    {showAdvanced && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="space-y-5 pt-5 pb-2">
+                                                {/* Deadline */}
+                                                <div>
+                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
+                                                        <Clock size={16} className="text-slate-400" /> Close poll on a scheduled date
+                                                    </div>
+                                                    <input 
+                                                        type="datetime-local" 
+                                                        value={deadline}
+                                                        onChange={(e) => setDeadline(e.target.value)}
+                                                        className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
+                                                    />
+                                                </div>
+
+                                                {/* Security Dropdown */}
+                                                <div>
+                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
+                                                        <Shield size={16} className="text-slate-400" /> Voting security
+                                                    </div>
+                                                    <div className="relative">
+                                                        <select 
+                                                            value={security}
+                                                            onChange={(e) => setSecurity(e.target.value as 'browser' | 'none')}
+                                                            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none appearance-none bg-white text-slate-700 font-medium"
+                                                        >
+                                                            <option value="browser">One vote per browser (Recommended)</option>
+                                                            <option value="none">Unlimited votes (Testing only)</option>
+                                                        </select>
+                                                        <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" size={16} />
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 mt-2 ml-1">
+                                                        {security === 'browser' 
+                                                            ? 'Strictly limits voting to one per browser session.' 
+                                                            : 'Allows users to vote multiple times. Useful for kiosks or shared devices.'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Hide Results */}
+                                                 <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        {hideResults ? <EyeOff size={18} className="text-amber-500" /> : <Eye size={18} className="text-slate-400" />}
+                                                        <div>
+                                                            <div className="font-bold text-slate-700">Hide results from voters</div>
+                                                            <div className="text-xs text-slate-400 font-normal">Only admin sees results</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="sr-only peer" />
+                                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-                        </label>
+                         </div>
                     </div>
 
                     {/* Error */}
@@ -476,33 +525,6 @@ const VoteGeneratorCreate: React.FC = () => {
                             </>
                         )}
                     </button>
-                </div>
-            </motion.div>
-            
-            {/* Features */}
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-8 grid md:grid-cols-3 gap-4 text-center"
-            >
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">🆓 100% Free</strong>
-                    <span className="text-slate-500 text-sm">
-                        No hidden costs or limits
-                    </span>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">🔓 No Sign Up</strong>
-                    <span className="text-slate-500 text-sm">
-                        Just create and share link
-                    </span>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">📱 Modern</strong>
-                    <span className="text-slate-500 text-sm">
-                        Ranked Choice Voting
-                    </span>
                 </div>
             </motion.div>
         </div>

@@ -9,7 +9,7 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
-    const { winnerId, rounds, totalVotes } = results;
+    const { winnerId, rounds, totalVotes, voters } = results;
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
@@ -128,6 +128,25 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                             );
                         })}
                     </div>
+                </div>
+            )}
+
+            {/* Participants List */}
+            {voters && voters.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
+                     <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        Participants
+                        <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-normal">
+                            {voters.length}
+                        </span>
+                     </h3>
+                     <div className="flex flex-wrap gap-2">
+                         {voters.map((name, i) => (
+                             <div key={i} className="px-3 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-100">
+                                 {name}
+                             </div>
+                         ))}
+                     </div>
                 </div>
             )}
         </div>

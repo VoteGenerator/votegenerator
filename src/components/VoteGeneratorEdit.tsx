@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2, Check } from 'lucide-react';
 import { Poll } from '../types';
 import { updatePoll } from '../services/voteGeneratorService';
 
@@ -187,6 +187,11 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                                 onChange={(e) => setDeadline(e.target.value)}
                                 className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
                             />
+                             {deadline && (
+                                <p className="text-emerald-600 text-xs mt-1 font-bold flex items-center gap-1">
+                                    <Check size={12} /> Selected: {new Date(deadline).toLocaleString()}
+                                </p>
+                            )}
                         </div>
 
                          {/* Max Votes */}

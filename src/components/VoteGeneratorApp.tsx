@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Printer, Settings } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Printer, Settings, Clock, RotateCcw } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -125,6 +125,12 @@ const VoteGeneratorApp: React.FC = () => {
     const handleEditPoll = () => {
         if(viewState.type === 'results' && viewState.isAdmin) {
              setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
+        }
+    };
+
+    const handleVoteAgain = () => {
+        if(viewState.type === 'results') {
+            setViewState({ type: 'vote', poll: viewState.poll });
         }
     };
 
@@ -355,6 +361,21 @@ const VoteGeneratorApp: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        {/* Deadline Info */}
+                                        {viewState.poll.settings.deadline && (
+                                            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-3">
+                                                <div className="bg-white p-2 rounded-full shadow-sm">
+                                                    <Clock size={20} className="text-blue-500" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-blue-900 text-sm">Poll Closes On</div>
+                                                    <div className="text-lg font-bold text-blue-700">
+                                                        {new Date(viewState.poll.settings.deadline).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Generated Codes Section (If Security is Code) */}
                                         {viewState.poll.allowedCodes && viewState.poll.allowedCodes.length > 0 && (
                                             <div className="mt-6 p-5 bg-purple-50 rounded-2xl border border-purple-100">
@@ -464,8 +485,24 @@ const VoteGeneratorApp: React.FC = () => {
                                     results={viewState.results}
                                     onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
                                 />
+
+                                {/* Vote Again Button for Non-Admin with Security 'none' */}
+                                {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (
+                                    <div className="mt-8 flex flex-col items-center justify-center print:hidden">
+                                        <button
+                                            onClick={handleVoteAgain}
+                                            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                        >
+                                            <RotateCcw size={18} />
+                                            Vote Again
+                                        </button>
+                                        <p className="text-slate-400 text-xs mt-2">
+                                            Multiple votes are allowed for this poll.
+                                        </p>
+                                    </div>
+                                )}
                                 
-                                {!viewState.isAdmin && (
+                                {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (
                                     <div className="mt-12 text-center print:hidden">
                                         <button 
                                             onClick={goHome} 

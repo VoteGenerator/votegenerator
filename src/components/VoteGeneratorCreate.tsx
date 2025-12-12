@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Info, Hash } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Info, Hash, Check } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -421,6 +421,21 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                             </label>
 
+                            {/* Hide Results */}
+                            <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                <div className="flex-1 flex items-center gap-2">
+                                    {hideResults ? <EyeOff size={18} className="text-amber-500" /> : <Eye size={18} className="text-slate-400" />}
+                                    <div>
+                                        <div className="font-bold text-slate-700">Hide results from voters</div>
+                                        <div className="text-xs text-slate-500 font-normal">Only admin sees results</div>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </div>
+                            </label>
+
                             {/* Advanced Dropdown */}
                             <div className="pt-2">
                                 <button 
@@ -433,131 +448,106 @@ const VoteGeneratorCreate: React.FC = () => {
 
                                 <AnimatePresence>
                                     {showAdvanced && (
-                                        <motion.div 
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="space-y-5 pt-5 pb-2">
-                                                {/* Deadline */}
-                                                <div>
-                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
-                                                        <Clock size={16} className="text-slate-400" /> Close poll on a scheduled date
-                                                    </div>
-                                                    <input 
-                                                        type="datetime-local" 
-                                                        value={deadline}
-                                                        onChange={(e) => setDeadline(e.target.value)}
-                                                        className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
-                                                    />
-                                                    <p className="text-xs text-slate-400 mt-2 ml-1 flex items-center gap-1">
-                                                        <Info size={12}/> Timezone: {userTimeZone}
-                                                    </p>
-                                                </div>
-                                                
-                                                {/* Auto-close Trigger (Max Votes) */}
-                                                <div>
-                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
-                                                        <Hash size={16} className="text-slate-400" /> Close automatically after X votes
-                                                    </div>
-                                                    <input 
-                                                        type="number"
-                                                        min={1} 
-                                                        value={maxVotes}
-                                                        onChange={(e) => setMaxVotes(e.target.value === '' ? '' : parseInt(e.target.value))}
-                                                        className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
-                                                        placeholder="e.g. 100"
-                                                    />
-                                                    <p className="text-xs text-slate-400 mt-2 ml-1">
-                                                        Poll will lock automatically once this vote count is reached.
-                                                    </p>
-                                                </div>
-
-                                                {/* Security Dropdown */}
-                                                <div>
-                                                    <div className="flex items-center justify-between font-bold text-slate-700 mb-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <Shield size={16} className="text-slate-400" /> Voting security
-                                                        </div>
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => setShowSecurityInfo(!showSecurityInfo)}
-                                                            className="text-xs font-normal text-indigo-600 hover:underline"
-                                                        >
-                                                            {showSecurityInfo ? "Hide info" : "Learn more"}
+                                            <div className="pt-4 space-y-6">
+                                                {/* Security Settings */}
+                                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                            <Shield size={16} className="text-slate-500" /> 
+                                                            Vote Security
+                                                        </h4>
+                                                        <button onClick={() => setShowSecurityInfo(!showSecurityInfo)} className="text-slate-400 hover:text-indigo-600">
+                                                            <HelpCircle size={14} />
                                                         </button>
                                                     </div>
 
-                                                    <div className="relative">
-                                                        <select 
-                                                            value={security}
-                                                            onChange={(e) => setSecurity(e.target.value as 'browser' | 'code' | 'none')}
-                                                            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none appearance-none bg-white text-slate-700 font-medium"
-                                                        >
-                                                            <option value="browser">One vote per browser session</option>
-                                                            <option value="code">One vote per unique code</option>
-                                                            <option value="none">None (Multiple votes per person)</option>
-                                                        </select>
-                                                        <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" size={16} />
+                                                    {showSecurityInfo && (
+                                                        <p className="text-xs text-slate-500 mb-3 bg-white p-2 rounded border border-slate-100">
+                                                            <strong>Browser Check:</strong> Good for casual polls. Checks cookies/local storage.<br/>
+                                                            <strong>Access Codes:</strong> Best for strict control. You generate codes to give to people.<br/>
+                                                            <strong>None:</strong> Allow multiple votes from same person.
+                                                        </p>
+                                                    )}
+
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {(['browser', 'code', 'none'] as const).map(sec => (
+                                                            <button
+                                                                key={sec}
+                                                                onClick={() => setSecurity(sec)}
+                                                                className={`py-2 px-1 rounded-lg text-xs font-bold capitalize transition-all border ${
+                                                                    security === sec 
+                                                                        ? 'bg-white border-indigo-500 text-indigo-700 shadow-sm ring-1 ring-indigo-500'
+                                                                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                                }`}
+                                                            >
+                                                                {sec === 'browser' ? 'Browser Check' : sec === 'code' ? 'Access Codes' : 'No Security'}
+                                                            </button>
+                                                        ))}
                                                     </div>
 
-                                                    {/* Security Info Panel */}
-                                                    <AnimatePresence>
-                                                        {showSecurityInfo && (
-                                                            <motion.div 
-                                                                initial={{ height: 0, opacity: 0 }}
-                                                                animate={{ height: 'auto', opacity: 1 }}
-                                                                exit={{ height: 0, opacity: 0 }}
-                                                                className="overflow-hidden"
-                                                            >
-                                                                <div className="mt-3 bg-indigo-50 p-4 rounded-xl text-sm space-y-2 text-indigo-900 border border-indigo-100">
-                                                                    <p><strong>Browser Session:</strong> Checks a cookie in your browser. Good for casual polls. (Determined users can clear cache to vote again).</p>
-                                                                    <p><strong>Unique Code:</strong> Most secure. You will get a list of codes to distribute. Each voter needs one code to vote once.</p>
-                                                                    <p><strong>None:</strong> Unlimited votes. Good for testing or shared kiosks.</p>
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-
-                                                    {/* Voter Count for Unique Code */}
+                                                    {/* If Codes Selected */}
                                                     {security === 'code' && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: -10 }} 
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            className="mt-3"
-                                                        >
-                                                            <label className="block text-sm font-bold text-slate-700 mb-1">
-                                                                How many voters do you expect?
+                                                        <div className="mt-3">
+                                                            <label className="text-xs font-bold text-slate-700 block mb-1">
+                                                                How many voters?
                                                             </label>
                                                             <input 
-                                                                type="number"
-                                                                min={1}
-                                                                max={500}
+                                                                type="number" 
+                                                                min={1} 
+                                                                max={100}
                                                                 value={voterCount}
-                                                                onChange={(e) => setVoterCount(parseInt(e.target.value) || 0)}
-                                                                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none"
-                                                                placeholder="e.g. 50"
+                                                                onChange={(e) => setVoterCount(parseInt(e.target.value) || 1)}
+                                                                className="w-full p-2 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500"
                                                             />
-                                                            <p className="text-xs text-slate-500 mt-1">We will generate this many unique codes for you to distribute.</p>
-                                                        </motion.div>
+                                                            <p className="text-[10px] text-slate-400 mt-1">
+                                                                We'll generate {voterCount} unique codes for you to distribute.
+                                                            </p>
+                                                        </div>
                                                     )}
                                                 </div>
-
-                                                {/* Hide Results */}
-                                                 <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
-                                                    <div className="flex-1 flex items-center gap-2">
-                                                        {hideResults ? <EyeOff size={18} className="text-amber-500" /> : <Eye size={18} className="text-slate-400" />}
-                                                        <div>
-                                                            <div className="font-bold text-slate-700">Hide results from voters</div>
-                                                            <div className="text-xs text-slate-400 font-normal">Only admin sees results</div>
-                                                        </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    {/* Deadline */}
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                                                            <Clock size={12} /> Close poll on date
+                                                        </label>
+                                                        <input 
+                                                            type="datetime-local" 
+                                                            className="w-full p-2 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500"
+                                                            value={deadline}
+                                                            onChange={(e) => setDeadline(e.target.value)}
+                                                        />
+                                                        {deadline && (
+                                                            <p className="text-emerald-600 text-[10px] mt-1 font-bold flex items-center gap-1 animate-pulse">
+                                                                <Check size={10} strokeWidth={3} /> Selected: {new Date(deadline).toLocaleDateString()}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-[10px] text-slate-400 mt-1">Timezone: {userTimeZone}</p>
                                                     </div>
-                                                    <div className="relative">
-                                                        <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="sr-only peer" />
-                                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                    
+                                                    {/* Max Votes */}
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                                                            <Hash size={12} /> Vote Limit
+                                                        </label>
+                                                        <input 
+                                                            type="number" 
+                                                            min={1}
+                                                            placeholder="Unlimited"
+                                                            className="w-full p-2 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500"
+                                                            value={maxVotes}
+                                                            onChange={(e) => setMaxVotes(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                                        />
+                                                        <p className="text-[10px] text-slate-400 mt-1">Auto-close after X votes</p>
                                                     </div>
-                                                </label>
+                                                </div>
                                             </div>
                                         </motion.div>
                                     )}
@@ -575,7 +565,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
                             >
-                                <AlertCircle size={20} className="shrink-0" />
+                                <AlertCircle size={20} />
                                 <span className="font-medium">{error}</span>
                             </motion.div>
                         )}
@@ -600,6 +590,33 @@ const VoteGeneratorCreate: React.FC = () => {
                             </>
                         )}
                     </button>
+                </div>
+            </motion.div>
+            
+            {/* Features */}
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="mt-8 grid md:grid-cols-3 gap-4 text-center"
+            >
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <strong className="block text-indigo-900 mb-1">🆓 100% Free</strong>
+                    <span className="text-slate-500 text-sm">
+                        No hidden costs or limits
+                    </span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <strong className="block text-indigo-900 mb-1">🔓 No Sign Up</strong>
+                    <span className="text-slate-500 text-sm">
+                        Just create and share link
+                    </span>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <strong className="block text-indigo-900 mb-1">📱 Modern</strong>
+                    <span className="text-slate-500 text-sm">
+                        Ranked Choice Voting
+                    </span>
                 </div>
             </motion.div>
         </div>

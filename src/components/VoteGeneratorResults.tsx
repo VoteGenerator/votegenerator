@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, Check, LayoutGrid, PieChart, Settings, GitMerge } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -17,6 +17,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const [viewMode, setViewMode] = useState<'bar' | 'rounds' | 'pie' | 'grid'>(isRanked ? 'rounds' : 'bar');
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
+
+    // FIX: For Ranked polls, the Bar Chart should show "First Preference" votes (Round 1), 
+    // NOT the simpleCounts which counts every occurrence of an option in the ranking stack.
+    const barChartData = isRanked && rounds.length > 0 ? rounds[0].counts : (simpleCounts || {});
 
     const CHART_COLORS = [
         '#6366f1', // Indigo 500
@@ -180,7 +184,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                 )}
 
                 {/* --- BAR VIEW --- */}
-                {viewMode === 'bar' && simpleCounts && (
+                {viewMode === 'bar' && (
                      <motion.div 
                         key="bar"
                         initial={{ opacity: 0, y: 10 }}
@@ -194,7 +198,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </h3>
                         
                         <div className="space-y-4">
-                            {Object.entries(simpleCounts)
+                            {Object.entries(barChartData)
                                 .sort(([, a], [, b]) => b - a)
                                 .map(([id, count]) => {
                                     const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
@@ -396,7 +400,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                         ) : (
                                                             isSelected ? (
                                                                 <div className="flex justify-center">
-                                                                    <Check className="text-emerald-500" size={20} strokeWidth={3} />
+                                                                    {/* Use simple text checkmark for table performance if needed, but icon is fine */}
+                                                                    <div className="w-5 h-5 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center">✓</div>
                                                                 </div>
                                                             ) : (
                                                                 <span className="text-slate-300">-</span>
@@ -409,9 +414,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                     ))}
                                     {/* Footer Row with Totals */}
                                     <tr className="bg-slate-50 font-bold text-slate-700 border-t border-slate-200">
-                                        <td className="p-4 sticky left-0 bg-slate-50">Total</td>
+                                        <td className="p-4 sticky left-0 bg-slate-50">Total (1st Pref/Votes)</td>
                                         {poll.options.map(opt => {
-                                            const count = simpleCounts ? (simpleCounts[opt.id] || 0) : '-';
+                                            const count = barChartData ? (barChartData[opt.id] || 0) : '-';
                                             return (
                                                 <td key={opt.id} className="p-4 text-center border-l border-slate-200">
                                                     {count}

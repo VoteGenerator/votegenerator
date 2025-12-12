@@ -526,7 +526,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         />
                                                         {deadline && (
                                                             <p className="text-emerald-600 text-[10px] mt-1 font-bold flex items-center gap-1 animate-pulse">
-                                                                <Check size={10} strokeWidth={3} /> Selected: {new Date(deadline).toLocaleDateString()}
+                                                                <Check size={10} strokeWidth={3} /> Selected: {new Date(deadline).toLocaleDateString()} {new Date(deadline).toLocaleTimeString()}
                                                             </p>
                                                         )}
                                                         <p className="text-[10px] text-slate-400 mt-1">Timezone: {userTimeZone}</p>

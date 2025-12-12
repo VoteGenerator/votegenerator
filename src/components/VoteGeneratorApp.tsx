@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Printer, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, ChevronRight, Users, Globe } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Printer, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -409,8 +409,10 @@ const VoteGeneratorApp: React.FC = () => {
                                                             </span>
                                                         )}
                                                         {viewState.poll.allowedCodes && (
-                                                            <span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 cursor-pointer hover:bg-purple-100">
-                                                                <Key size={12}/> {viewState.poll.allowedCodes.length} Codes
+                                                            <span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 cursor-pointer hover:bg-purple-100 transition-colors select-none">
+                                                                <Key size={12}/> 
+                                                                {viewState.poll.allowedCodes.length} Codes 
+                                                                {copiedCodes && <span className="font-bold ml-1 text-emerald-600">(Copied)</span>}
                                                             </span>
                                                         )}
                                                     </div>

@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface CreatePollRequest {
     title: string;
@@ -7,14 +8,14 @@ interface CreatePollRequest {
     pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
     settings: {
         hideResults: boolean;
-        allowMultiple?: boolean; // For multiple choice - can pick more than one
+        allowMultiple?: boolean;
     };
 }
 
 interface PollOption {
     id: string;
     text: string;
-    imageUrl?: string; // For image polls
+    imageUrl?: string;
 }
 
 interface Poll {
@@ -33,7 +34,6 @@ interface Poll {
     voteCount: number;
 }
 
-// Generate a short, readable ID (8 characters)
 const generateShortId = (): string => {
     const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
     let result = '';
@@ -43,7 +43,6 @@ const generateShortId = (): string => {
     return result;
 };
 
-// Generate admin key (16 characters)
 const generateAdminKey = (): string => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -53,7 +52,6 @@ const generateAdminKey = (): string => {
     return result;
 };
 
-// Generate option ID (8 characters)
 const generateOptionId = (): string => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -64,7 +62,6 @@ const generateOptionId = (): string => {
 };
 
 export const handler: Handler = async (event) => {
-    // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -72,7 +69,6 @@ export const handler: Handler = async (event) => {
         'Content-Type': 'application/json'
     };
 
-    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
@@ -97,23 +93,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        if (!Array.isArray(body.options) || body.options.length < 2) {
-            return {
+        if (!Array.isArray(body.options)) {
+             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Please add at least 2 options' })
+                body: JSON.stringify({ error: 'Options must be an array' })
             };
         }
 
-        if (body.options.length > 20) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Maximum 20 options allowed' })
-            };
-        }
-
-        // Clean up options
         const validOptions = body.options
             .map(opt => (typeof opt === 'string' ? opt.trim() : ''))
             .filter(opt => opt.length > 0 && opt.length <= 200);
@@ -123,6 +110,14 @@ export const handler: Handler = async (event) => {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({ error: 'Please add at least 2 valid options' })
+            };
+        }
+        
+        if (validOptions.length > 20) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Maximum 20 options allowed' })
             };
         }
 
@@ -149,17 +144,10 @@ export const handler: Handler = async (event) => {
             voteCount: 0
         };
 
-        // Store using Netlify Blobs
-        const { getStore } = await import('@netlify/blobs');
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        
+        // FIX: Use simple getStore call. Netlify injects credentials automatically.
+        // Also removed the dynamic import which can cause issues in some bundlers.
+        const store = getStore('polls');
         await store.setJSON(pollId, poll);
-
-        console.log(`Poll created: ${pollId}, type: ${poll.pollType}`);
 
         return {
             statusCode: 201,
@@ -173,7 +161,6 @@ export const handler: Handler = async (event) => {
     } catch (error) {
         console.error('Error creating poll:', error);
         
-        // More helpful error message
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         
         return {
@@ -181,7 +168,7 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({ 
                 error: 'Something went wrong. Please try again.',
-                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+                details: errorMessage // Include details for easier debugging
             })
         };
     }

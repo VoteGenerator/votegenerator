@@ -83,8 +83,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         return Object.entries(counts)
             .sort(([, a], [, b]) => b - a)
             .map(([id, count]) => {
-                const percentage = (count / total) * 100;
-                const angle = (count / total) * 360;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                const angle = total > 0 ? (count / total) * 360 : 0;
                 const startAngle = currentAngle;
                 currentAngle += angle;
                 return {

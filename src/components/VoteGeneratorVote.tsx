@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2 } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, Shuffle } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote } from '../services/voteGeneratorService';
 
@@ -10,8 +10,24 @@ interface Props {
 }
 
 const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
-    // For Ranked: Items is the ordered list of options
-    const [items, setItems] = useState<PollOption[]>(poll.options);
+    // Helper to shuffle array (Fisher-Yates)
+    const shuffle = <T,>(array: T[]): T[] => {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    };
+
+    // For Ranked: Items is the ordered list of options. 
+    // We shuffle them initially to prevent order bias from the default sorting.
+    const [items, setItems] = useState<PollOption[]>(() => {
+        if (poll.pollType === 'ranked') {
+            return shuffle(poll.options);
+        }
+        return poll.options;
+    });
     
     // For Multiple Choice: Set of selected IDs
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -65,11 +81,18 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             {poll.description}
                         </p>
                     )}
-                    <div className="mt-4 flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
-                        {poll.pollType === 'ranked' ? (
-                            <>Drag options to rank them order of preference</>
-                        ) : (
-                            <>Select {poll.settings.allowMultiple ? 'options' : 'an option'}</>
+                    <div className="mt-4 flex flex-col items-start gap-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
+                            {poll.pollType === 'ranked' ? (
+                                <>Drag options to rank them order of preference</>
+                            ) : (
+                                <>Select {poll.settings.allowMultiple ? 'options' : 'an option'}</>
+                            )}
+                        </div>
+                        {poll.pollType === 'ranked' && (
+                             <p className="text-xs text-slate-400 italic flex items-center gap-1 ml-1">
+                                <Shuffle size={12} /> Options are randomized to prevent order bias.
+                             </p>
                         )}
                     </div>
                 </div>

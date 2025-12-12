@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -64,11 +64,35 @@ const VoteGeneratorCreate: React.FC = () => {
     
     const lastInputRef = useRef<HTMLInputElement>(null);
 
+    // Real-time duplicate detection
+    const getDuplicateIndices = () => {
+        const normalized = options.map(o => o.trim().toLowerCase());
+        const duplicates = new Set<number>();
+        const seen = new Map<string, number>();
+
+        normalized.forEach((opt, index) => {
+            if (opt === '') return;
+            if (seen.has(opt)) {
+                duplicates.add(index);
+                duplicates.add(seen.get(opt)!);
+            } else {
+                seen.set(opt, index);
+            }
+        });
+        return duplicates;
+    };
+
+    const duplicateIndices = getDuplicateIndices();
+    const hasDuplicates = duplicateIndices.size > 0;
+
     const handleOptionChange = (index: number, value: string) => {
         const newOptions = [...options];
         newOptions[index] = value;
         setOptions(newOptions);
         
+        // Clear global error if user is fixing duplicates
+        if (error && error.includes('Duplicate')) setError(null);
+
         // Auto-add input field if typing in the last one
         if (index === options.length - 1 && value.trim() !== '' && options.length < 20) {
             setOptions([...newOptions, '']);
@@ -128,10 +152,9 @@ const VoteGeneratorCreate: React.FC = () => {
             return;
         }
 
-        // Check for duplicates (case insensitive)
-        const uniqueValues = new Set(validOptions.map(o => o.toLowerCase().trim()));
-        if (uniqueValues.size !== validOptions.length) {
-            setError('Duplicate options found. Please ensure all choices are unique.');
+        // Final check for duplicates (though UI prevents it, safe to keep logic)
+        if (hasDuplicates) {
+            setError('Please resolve the duplicate options highlighted in red before creating.');
             return;
         }
 
@@ -304,44 +327,66 @@ const VoteGeneratorCreate: React.FC = () => {
                         
                         <div className="space-y-3">
                             <AnimatePresence mode="popLayout">
-                                {options.map((opt, i) => (
-                                    <motion.div 
-                                        key={i}
-                                        layout
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        className="flex items-center gap-3 group"
-                                    >
-                                        <span className="text-slate-300 font-bold w-6 text-right text-sm">
-                                            {i + 1}.
-                                        </span>
-                                        <div className="relative flex-1">
-                                            <input 
-                                                ref={i === options.length - 1 ? lastInputRef : undefined}
-                                                type="text" 
-                                                data-option-index={i}
-                                                className="w-full p-3 pl-4 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium placeholder:text-slate-300"
-                                                placeholder={`Option ${i + 1}`}
-                                                value={opt}
-                                                onChange={(e) => handleOptionChange(i, e.target.value)}
-                                                onKeyDown={(e) => handleKeyDown(i, e)}
-                                                maxLength={200}
-                                            />
-                                        </div>
-                                        {options.length > 2 && (
-                                            <button 
-                                                onClick={() => removeOption(i)}
-                                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                                tabIndex={-1}
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                ))}
+                                {options.map((opt, i) => {
+                                    const isDuplicate = duplicateIndices.has(i);
+                                    return (
+                                        <motion.div 
+                                            key={i}
+                                            layout
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="flex items-center gap-3 group"
+                                        >
+                                            <span className="text-slate-300 font-bold w-6 text-right text-sm">
+                                                {i + 1}.
+                                            </span>
+                                            <div className="relative flex-1">
+                                                <input 
+                                                    ref={i === options.length - 1 ? lastInputRef : undefined}
+                                                    type="text" 
+                                                    data-option-index={i}
+                                                    className={`w-full p-3 pl-4 border-2 rounded-xl outline-none transition-all font-medium placeholder:text-slate-300 ${
+                                                        isDuplicate 
+                                                            ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-100 text-red-900' 
+                                                            : 'border-slate-200 focus:border-indigo-500'
+                                                    }`}
+                                                    placeholder={`Option ${i + 1}`}
+                                                    value={opt}
+                                                    onChange={(e) => handleOptionChange(i, e.target.value)}
+                                                    onKeyDown={(e) => handleKeyDown(i, e)}
+                                                    maxLength={200}
+                                                />
+                                                {isDuplicate && (
+                                                    <div className="absolute right-3 top-3.5 text-red-500 animate-pulse">
+                                                        <AlertTriangle size={18} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {options.length > 2 && (
+                                                <button 
+                                                    onClick={() => removeOption(i)}
+                                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    tabIndex={-1}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </motion.div>
+                                    );
+                                })}
                             </AnimatePresence>
                         </div>
+                        
+                        {hasDuplicates && (
+                            <motion.p 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-red-500 text-sm mt-2 ml-10 font-medium flex items-center gap-1"
+                            >
+                                <AlertTriangle size={14} /> Duplicate options detected. Please make them unique.
+                            </motion.p>
+                        )}
 
                         {options.length < 20 && (
                             <button
@@ -415,7 +460,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     {/* Submit */}
                     <button 
                         onClick={handleCreate}
-                        disabled={isCreating || validOptionCount < 2 || !title.trim()}
+                        disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates}
                         className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg transform active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
                     >
                         {isCreating ? (

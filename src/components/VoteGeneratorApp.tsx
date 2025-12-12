@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Lock } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
-import { getPoll, getPollAsAdmin, getResults, hasVoted } from '../services/voteGeneratorService';
+import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
 type ViewState = 
@@ -20,6 +20,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [copiedShare, setCopiedShare] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -119,6 +120,64 @@ const VoteGeneratorApp: React.FC = () => {
         setTimeout(() => setIsRefreshing(false), 500);
     };
 
+    const handleExportCSV = async () => {
+        if (viewState.type !== 'results' || !viewState.isAdmin) return;
+        
+        const { pollId, adminKey } = parseHash();
+        if (!pollId || !adminKey) return;
+
+        setIsExporting(true);
+        try {
+            const votes = await getRawVotes(pollId, adminKey);
+            
+            if (votes.length === 0) {
+                alert("No votes to export yet.");
+                setIsExporting(false);
+                return;
+            }
+
+            // Generate CSV content
+            const headers = ['Date', 'Time', 'Voter Name', 'Access Code', 'Choices (Ranked/Selected)'];
+            const csvRows = [headers.join(',')];
+
+            votes.forEach(vote => {
+                const date = new Date(vote.votedAt);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString();
+                
+                // Map choice IDs to text
+                const choiceTexts = vote.choices.map(id => {
+                    const option = viewState.poll.options.find(o => o.id === id);
+                    return option ? option.text.replace(/,/g, ' ') : 'Unknown'; // simple escape for commas
+                });
+
+                const row = [
+                    dateStr,
+                    timeStr,
+                    `"${vote.voterName || 'Anonymous'}"`,
+                    `"${vote.usedCode || ''}"`,
+                    `"${choiceTexts.join('; ')}"` 
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `poll_${pollId}_results.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+        } catch (e) {
+            console.error("Export failed", e);
+            alert("Failed to export data.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const copyToClipboard = (text: string, type: 'admin' | 'share' | 'codes') => {
         navigator.clipboard.writeText(text);
         if (type === 'admin') {
@@ -209,10 +268,22 @@ const VoteGeneratorApp: React.FC = () => {
                                 {viewState.isAdmin && (
                                     <div className="bg-white rounded-3xl shadow-xl border border-indigo-100 p-6 md:p-8 mb-8 overflow-hidden relative">
                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500"></div>
-                                        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                            <ShieldCheck className="text-indigo-600" size={28}/> 
-                                            Admin Hub
-                                        </h2>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                                <ShieldCheck className="text-indigo-600" size={28}/> 
+                                                Admin Hub
+                                            </h2>
+                                            
+                                            {/* Export Button */}
+                                            <button 
+                                                onClick={handleExportCSV}
+                                                disabled={isExporting}
+                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm disabled:opacity-70 disabled:cursor-wait"
+                                            >
+                                                {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>}
+                                                Export CSV
+                                            </button>
+                                        </div>
                                         
                                         <div className="grid md:grid-cols-2 gap-6">
                                             {/* Admin Link Section */}
@@ -220,9 +291,14 @@ const VoteGeneratorApp: React.FC = () => {
                                                 <div className="font-bold text-amber-900 mb-2 flex items-center gap-2">
                                                     <Key size={18}/> Admin Link (Private)
                                                 </div>
-                                                <p className="text-sm text-amber-800/80 mb-4 flex-1">
-                                                    <span className="font-bold text-amber-900">Important:</span> Save this link! It is the only way to manage your poll.
-                                                </p>
+                                                <div className="bg-amber-100/50 p-2 rounded-lg mb-4 flex-1">
+                                                    <p className="text-xs text-amber-900 font-bold mb-1 flex items-center gap-1">
+                                                        <AlertTriangle size={12}/> WARNING: SAVE THIS LINK
+                                                    </p>
+                                                    <p className="text-xs text-amber-800/90 leading-relaxed">
+                                                        We do not require logins, so this link is your <strong>only</strong> key. If you lose it, you lose admin access forever. We cannot recover it for you.
+                                                    </p>
+                                                </div>
                                                 <div className="flex gap-2 bg-white rounded-lg p-1 border border-amber-200">
                                                     <input 
                                                         readOnly 
@@ -280,15 +356,28 @@ const VoteGeneratorApp: React.FC = () => {
                                                         {copiedCodes ? <Check size={14}/> : <Copy size={14}/>} Copy All
                                                     </button>
                                                 </div>
-                                                <div className="text-xs text-purple-800 mb-3">
-                                                    Distribute one code to each voter. Each code can only be used once.
+                                                <div className="text-xs text-purple-800 mb-3 flex items-center justify-between">
+                                                    <span>Distribute one code to each voter. Codes are crossed off when used.</span>
+                                                    <span className="text-purple-600 font-semibold bg-purple-100 px-2 py-0.5 rounded text-[10px] uppercase">
+                                                        {viewState.results.usedCodes?.length || 0} used / {viewState.poll.allowedCodes.length} total
+                                                    </span>
                                                 </div>
-                                                <div className="max-h-32 overflow-y-auto bg-white rounded-lg border border-purple-200 p-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                                    {viewState.poll.allowedCodes.map(code => (
-                                                        <div key={code} className="font-mono text-xs text-slate-600 bg-slate-50 p-1 text-center rounded">
-                                                            {code}
-                                                        </div>
-                                                    ))}
+                                                <div className="max-h-48 overflow-y-auto bg-white rounded-lg border border-purple-200 p-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                                    {viewState.poll.allowedCodes.map(code => {
+                                                        const isUsed = viewState.results.usedCodes?.includes(code);
+                                                        return (
+                                                            <div 
+                                                                key={code} 
+                                                                className={`font-mono text-xs p-1.5 text-center rounded border transition-colors ${
+                                                                    isUsed 
+                                                                        ? 'bg-slate-100 text-slate-400 border-slate-200 line-through' 
+                                                                        : 'bg-purple-50 text-slate-700 border-purple-100 font-medium'
+                                                                }`}
+                                                            >
+                                                                {code}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         )}
@@ -331,14 +420,16 @@ const VoteGeneratorApp: React.FC = () => {
                                 
                                 <VoteGeneratorResults poll={viewState.poll} results={viewState.results} />
                                 
-                                <div className="mt-12 text-center">
-                                    <button 
-                                        onClick={goHome} 
-                                        className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
-                                    >
-                                        Create your own poll <ArrowRight size={14}/>
-                                    </button>
-                                </div>
+                                {!viewState.isAdmin && (
+                                    <div className="mt-12 text-center">
+                                        <button 
+                                            onClick={goHome} 
+                                            className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                        >
+                                            Create your own poll <ArrowRight size={14}/>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )}

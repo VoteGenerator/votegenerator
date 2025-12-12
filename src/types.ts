@@ -46,4 +46,5 @@ export interface RunoffResult {
     rounds: RoundLog[];
     totalVotes: number;
     voters?: string[]; // List of names if available
+    usedCodes?: string[]; // List of codes that have already voted
 }

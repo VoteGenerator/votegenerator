@@ -1,4 +1,4 @@
-import { Poll, RunoffResult, RoundLog } from '../types';
+import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
 // --- Local Storage Fallback Helpers ---
 const LS_PREFIX = 'votegenerator_';
@@ -153,10 +153,11 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
         }
         
         saveLocalVote(pollId, { 
+            pollId,
             choices, 
             voterName, 
             usedCode: code,
-            createdAt: new Date().toISOString() 
+            votedAt: new Date().toISOString() 
         });
         
         // Update vote count
@@ -173,6 +174,30 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
 export const hasVoted = (pollId: string): boolean => {
     // Check local storage flag
     return localStorage.getItem(`${LS_PREFIX}has_voted_${pollId}`) === 'true';
+};
+
+// --- Admin Services ---
+
+export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vote[]> => {
+    try {
+        // Attempt to fetch raw votes from backend
+        const response = await fetch(`/.netlify/functions/get-results?id=${pollId}&admin=${adminKey}&raw=true`);
+        if(response.ok) {
+            return await response.json();
+        }
+        // If not available or fails, fall through to local
+        throw new Error('API_UNAVAILABLE');
+    } catch {
+        const votes = getLocalVotes(pollId);
+        // Ensure data shape matches Vote interface (legacy data migration might be needed in real app)
+        return votes.map(v => ({
+            pollId: v.pollId || pollId,
+            choices: v.choices,
+            votedAt: v.votedAt || v.createdAt || new Date().toISOString(),
+            voterName: v.voterName,
+            usedCode: v.usedCode
+        }));
+    }
 };
 
 // --- RCV Calculation Logic (Client Side for Demo) ---
@@ -193,9 +218,11 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
 
     // Extract voter names if they exist
     const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
+    // Extract used codes
+    const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [] };
     }
 
     // Instant Runoff Calculation
@@ -280,6 +307,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         winnerId,
         rounds,
         totalVotes: votes.length,
-        voters
+        voters,
+        usedCodes
     };
 };

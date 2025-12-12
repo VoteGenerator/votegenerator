@@ -407,6 +407,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                      </div>
                                                      <div className="flex gap-2">
                                                          <button onClick={shareToWhatsapp} className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
+                                                         <button onClick={shareToSms} className="flex-1 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
                                                          <button onClick={shareToEmail} className="flex-1 py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
                                                      </div>
                                                 </div>

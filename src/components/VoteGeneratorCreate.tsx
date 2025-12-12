@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Info } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -64,11 +64,16 @@ const VoteGeneratorCreate: React.FC = () => {
     const [hideResults, setHideResults] = useState(false);
     const [allowMultiple, setAllowMultiple] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
-    const [security, setSecurity] = useState<'browser' | 'none'>('browser');
+    const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
+    const [voterCount, setVoterCount] = useState<number>(10);
     const [deadline, setDeadline] = useState<string>('');
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
     const lastInputRef = useRef<HTMLInputElement>(null);
+
+    // Get Timezone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // Real-time duplicate detection
     const getDuplicateIndices = () => {
@@ -165,6 +170,7 @@ const VoteGeneratorCreate: React.FC = () => {
                 description: description.trim() || undefined, 
                 options: validOptions,
                 pollType: pollType as 'ranked' | 'multiple',
+                voterCount: security === 'code' ? voterCount : undefined,
                 settings: { 
                     hideResults, 
                     allowMultiple,
@@ -443,29 +449,79 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         onChange={(e) => setDeadline(e.target.value)}
                                                         className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
                                                     />
+                                                    <p className="text-xs text-slate-400 mt-2 ml-1 flex items-center gap-1">
+                                                        <Info size={12}/> Timezone: {userTimeZone}
+                                                    </p>
                                                 </div>
 
                                                 {/* Security Dropdown */}
                                                 <div>
-                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
-                                                        <Shield size={16} className="text-slate-400" /> Voting security
+                                                    <div className="flex items-center justify-between font-bold text-slate-700 mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Shield size={16} className="text-slate-400" /> Voting security
+                                                        </div>
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setShowSecurityInfo(!showSecurityInfo)}
+                                                            className="text-xs font-normal text-indigo-600 hover:underline"
+                                                        >
+                                                            {showSecurityInfo ? "Hide info" : "Learn more"}
+                                                        </button>
                                                     </div>
+
                                                     <div className="relative">
                                                         <select 
                                                             value={security}
-                                                            onChange={(e) => setSecurity(e.target.value as 'browser' | 'none')}
+                                                            onChange={(e) => setSecurity(e.target.value as 'browser' | 'code' | 'none')}
                                                             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none appearance-none bg-white text-slate-700 font-medium"
                                                         >
-                                                            <option value="browser">One vote per browser (Recommended)</option>
-                                                            <option value="none">Unlimited votes (Testing only)</option>
+                                                            <option value="browser">One vote per browser session</option>
+                                                            <option value="code">One vote per unique code</option>
+                                                            <option value="none">None (Multiple votes per person)</option>
                                                         </select>
                                                         <ChevronDown className="absolute right-4 top-4 text-slate-400 pointer-events-none" size={16} />
                                                     </div>
-                                                    <p className="text-xs text-slate-500 mt-2 ml-1">
-                                                        {security === 'browser' 
-                                                            ? 'Strictly limits voting to one per browser session.' 
-                                                            : 'Allows users to vote multiple times. Useful for kiosks or shared devices.'}
-                                                    </p>
+
+                                                    {/* Security Info Panel */}
+                                                    <AnimatePresence>
+                                                        {showSecurityInfo && (
+                                                            <motion.div 
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="mt-3 bg-indigo-50 p-4 rounded-xl text-sm space-y-2 text-indigo-900 border border-indigo-100">
+                                                                    <p><strong>Browser Session:</strong> Checks a cookie in your browser. Good for casual polls. (Determined users can clear cache to vote again).</p>
+                                                                    <p><strong>Unique Code:</strong> Most secure. You will get a list of codes to distribute. Each voter needs one code to vote once.</p>
+                                                                    <p><strong>None:</strong> Unlimited votes. Good for testing or shared kiosks.</p>
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+
+                                                    {/* Voter Count for Unique Code */}
+                                                    {security === 'code' && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: -10 }} 
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            className="mt-3"
+                                                        >
+                                                            <label className="block text-sm font-bold text-slate-700 mb-1">
+                                                                How many voters do you expect?
+                                                            </label>
+                                                            <input 
+                                                                type="number"
+                                                                min={1}
+                                                                max={500}
+                                                                value={voterCount}
+                                                                onChange={(e) => setVoterCount(parseInt(e.target.value) || 0)}
+                                                                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none"
+                                                                placeholder="e.g. 50"
+                                                            />
+                                                            <p className="text-xs text-slate-500 mt-1">We will generate this many unique codes for you to distribute.</p>
+                                                        </motion.div>
+                                                    )}
                                                 </div>
 
                                                 {/* Hide Results */}

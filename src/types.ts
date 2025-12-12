@@ -9,7 +9,7 @@ export interface PollSettings {
     allowMultiple: boolean;
     requireNames: boolean;
     deadline?: string; // ISO Date string
-    security: 'browser' | 'none'; // 'browser' = strict local storage check, 'none' = allow multiples
+    security: 'browser' | 'code' | 'none'; // Added 'code'
 }
 
 export interface Poll {
@@ -20,6 +20,7 @@ export interface Poll {
     pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
     options: PollOption[];
     settings: PollSettings;
+    allowedCodes?: string[]; // List of valid codes if security is 'code'
     createdAt: string;
     voteCount: number;
     isAdmin?: boolean;
@@ -30,6 +31,7 @@ export interface Vote {
     choices: string[]; 
     votedAt: string;
     voterName?: string;
+    usedCode?: string; // The code used to cast this vote
 }
 
 export interface RoundLog {

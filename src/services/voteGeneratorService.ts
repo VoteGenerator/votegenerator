@@ -10,6 +10,11 @@ const generateId = (len: number = 8) => {
     return result;
 };
 
+// Generate a simple numeric code for ease of typing (e.g., 6 digits)
+const generateAccessCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
 const getLocalPolls = (): Record<string, any> => {
     const data = localStorage.getItem(`${LS_PREFIX}polls`);
     return data ? JSON.parse(data) : {};
@@ -44,8 +49,9 @@ export const createPoll = async (data: {
         allowMultiple: boolean;
         requireNames: boolean;
         deadline?: string;
-        security: 'browser' | 'none';
+        security: 'browser' | 'code' | 'none';
     };
+    voterCount?: number; // Needed if security is 'code'
 }): Promise<{ id: string; adminKey: string }> => {
     try {
         // 1. Try actual API
@@ -65,10 +71,22 @@ export const createPoll = async (data: {
         // 2. Fallback to LocalStorage (Demo Mode)
         const id = generateId(8);
         const adminKey = generateId(16);
+        
+        let allowedCodes: string[] = [];
+        if (data.settings.security === 'code' && data.voterCount) {
+            // Generate unique codes
+            const codes = new Set<string>();
+            while(codes.size < data.voterCount) {
+                codes.add(generateAccessCode());
+            }
+            allowedCodes = Array.from(codes);
+        }
+
         const poll = {
             id,
             adminKey,
             ...data,
+            allowedCodes: allowedCodes.length > 0 ? allowedCodes : undefined,
             options: data.options.map(text => ({ id: generateId(6), text })),
             createdAt: new Date().toISOString(),
             voteCount: 0,
@@ -89,7 +107,9 @@ export const getPoll = async (id: string): Promise<Poll> => {
         const polls = getLocalPolls();
         const poll = polls[id];
         if (!poll) throw new Error('Poll not found');
-        const { adminKey, votes, ...publicPoll } = poll;
+        // Strip sensitive data for public view (IMPORTANT: don't send allowedCodes to public)
+        const { adminKey, votes, allowedCodes, ...publicPoll } = poll;
+        // We might want to send a flag saying "requiresCode: true" but the settings.security handles that
         return { ...publicPoll, isAdmin: false };
     }
 };
@@ -107,27 +127,43 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[], voterName?: string): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices, voterName })
+            body: JSON.stringify({ pollId, choices, voterName, code })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
         // Local fallback
         const polls = getLocalPolls();
-        if (!polls[pollId]) throw new Error('Poll not found');
+        const poll = polls[pollId];
+        if (!poll) throw new Error('Poll not found');
+
+        // Security Checks
+        if (poll.settings.security === 'code') {
+            if (!code) throw new Error('Access code required');
+            if (!poll.allowedCodes.includes(code)) throw new Error('Invalid access code');
+            
+            // Check if code used
+            const existingVotes = getLocalVotes(pollId);
+            const codeUsed = existingVotes.some((v: any) => v.usedCode === code);
+            if (codeUsed) throw new Error('This access code has already been used');
+        }
         
-        saveLocalVote(pollId, { choices, voterName, createdAt: new Date().toISOString() });
+        saveLocalVote(pollId, { 
+            choices, 
+            voterName, 
+            usedCode: code,
+            createdAt: new Date().toISOString() 
+        });
         
         // Update vote count
         polls[pollId].voteCount = (polls[pollId].voteCount || 0) + 1;
         saveLocalPoll(polls[pollId]);
         
         // Mark as voted (Local Persistence)
-        // Use localStorage instead of sessionStorage for better "Browser Check" simulation
         localStorage.setItem(`${LS_PREFIX}has_voted_${pollId}`, 'true');
         
         await new Promise(resolve => setTimeout(resolve, 600));

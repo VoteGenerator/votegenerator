@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, Download } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -18,6 +18,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [copiedShare, setCopiedShare] = useState(false);
+    const [copiedCodes, setCopiedCodes] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
@@ -118,14 +119,17 @@ const VoteGeneratorApp: React.FC = () => {
         setTimeout(() => setIsRefreshing(false), 500);
     };
 
-    const copyToClipboard = (text: string, isAdminType: boolean) => {
+    const copyToClipboard = (text: string, type: 'admin' | 'share' | 'codes') => {
         navigator.clipboard.writeText(text);
-        if (isAdminType) {
+        if (type === 'admin') {
             setCopiedAdmin(true);
             setTimeout(() => setCopiedAdmin(false), 2000);
-        } else {
+        } else if (type === 'share') {
             setCopiedShare(true);
             setTimeout(() => setCopiedShare(false), 2000);
+        } else {
+            setCopiedCodes(true);
+            setTimeout(() => setCopiedCodes(false), 2000);
         }
     };
 
@@ -155,7 +159,7 @@ const VoteGeneratorApp: React.FC = () => {
                         <div className="flex items-center gap-2">
                              {(viewState.type === 'results' || viewState.type === 'vote') && (
                                 <button
-                                    onClick={() => copyToClipboard(getShareUrl(), false)}
+                                    onClick={() => copyToClipboard(getShareUrl(), 'share')}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
                                 >
                                     {copiedShare ? <Check size={16} /> : <Share2 size={16} />}
@@ -217,7 +221,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                     <Key size={18}/> Admin Link (Private)
                                                 </div>
                                                 <p className="text-sm text-amber-800/80 mb-4 flex-1">
-                                                    <span className="font-bold text-amber-900">Important:</span> Save this link! It is the only way to manage your poll. If you lose it, you cannot access admin features again.
+                                                    <span className="font-bold text-amber-900">Important:</span> Save this link! It is the only way to manage your poll.
                                                 </p>
                                                 <div className="flex gap-2 bg-white rounded-lg p-1 border border-amber-200">
                                                     <input 
@@ -227,7 +231,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                         onClick={(e) => e.currentTarget.select()}
                                                     />
                                                     <button 
-                                                        onClick={() => copyToClipboard(window.location.href, true)}
+                                                        onClick={() => copyToClipboard(window.location.href, 'admin')}
                                                         className="bg-amber-100 hover:bg-amber-200 text-amber-900 p-2 rounded-md transition-colors"
                                                         title="Copy Admin Link"
                                                     >
@@ -252,7 +256,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                         onClick={(e) => e.currentTarget.select()}
                                                     />
                                                     <button 
-                                                        onClick={() => copyToClipboard(getShareUrl(), false)}
+                                                        onClick={() => copyToClipboard(getShareUrl(), 'share')}
                                                         className="bg-indigo-100 hover:bg-indigo-200 text-indigo-900 p-2 rounded-md transition-colors"
                                                         title="Copy Share Link"
                                                     >
@@ -262,12 +266,39 @@ const VoteGeneratorApp: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        {/* Generated Codes Section (If Security is Code) */}
+                                        {viewState.poll.allowedCodes && viewState.poll.allowedCodes.length > 0 && (
+                                            <div className="mt-6 p-5 bg-purple-50 rounded-2xl border border-purple-100">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="font-bold text-purple-900 flex items-center gap-2">
+                                                        <Key size={18}/> Access Codes ({viewState.poll.allowedCodes.length})
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')}
+                                                        className="flex items-center gap-1 text-xs font-bold text-purple-700 hover:text-purple-900 bg-white px-2 py-1 rounded border border-purple-200"
+                                                    >
+                                                        {copiedCodes ? <Check size={14}/> : <Copy size={14}/>} Copy All
+                                                    </button>
+                                                </div>
+                                                <div className="text-xs text-purple-800 mb-3">
+                                                    Distribute one code to each voter. Each code can only be used once.
+                                                </div>
+                                                <div className="max-h-32 overflow-y-auto bg-white rounded-lg border border-purple-200 p-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                                    {viewState.poll.allowedCodes.map(code => (
+                                                        <div key={code} className="font-mono text-xs text-slate-600 bg-slate-50 p-1 text-center rounded">
+                                                            {code}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Troubleshooting Tip */}
                                         <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-500">
                                             <div className="flex items-start gap-2 max-w-lg bg-slate-50 p-2 rounded-lg">
                                                 <Info size={14} className="mt-0.5 shrink-0 text-slate-400" />
                                                 <span>
-                                                    If your page is blank or data seems missing, try opening this link in <strong>Incognito Mode</strong> or clearing your browser cache. Some browsers may cache the initial empty state.
+                                                    If your page is blank or data seems missing, try opening this link in <strong>Incognito Mode</strong> or clearing your browser cache.
                                                 </span>
                                             </div>
                                             <button 

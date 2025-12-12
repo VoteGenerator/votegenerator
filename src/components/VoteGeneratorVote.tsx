@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -28,26 +28,36 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [voterName, setVoterName] = useState('');
+    const [accessCode, setAccessCode] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Check Deadline
     const isExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
+    
     // Check if security allows (If browser check is on, hasVoted will return true if they already voted)
-    const alreadyVoted = poll.settings.security !== 'none' && hasVoted(poll.id);
+    // Note: If security is 'code', we check code validity on server/submit, not localStorage upfront (though we could)
+    const alreadyVotedBrowser = poll.settings.security === 'browser' && hasVoted(poll.id);
 
     const handleSubmit = async () => {
+        setErrorMessage(null);
         setIsSubmitting(true);
         try {
             const choices = poll.pollType === 'ranked' 
                 ? items.map(i => i.id) 
                 : Array.from(selectedIds);
             
-            await submitVote(poll.id, choices, voterName.trim() || undefined);
+            await submitVote(
+                poll.id, 
+                choices, 
+                voterName.trim() || undefined,
+                accessCode.trim() || undefined
+            );
             onVoteSuccess();
         } catch (error) {
             console.error(error);
             setIsSubmitting(false);
-            alert("Failed to submit vote. Please try again.");
+            setErrorMessage(error instanceof Error ? error.message : "Failed to submit vote");
         }
     };
 
@@ -65,7 +75,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     };
 
     const canSubmit = (poll.pollType === 'ranked' ? true : selectedIds.size > 0) 
-                      && (!poll.settings.requireNames || voterName.trim().length > 0);
+                      && (!poll.settings.requireNames || voterName.trim().length > 0)
+                      && (poll.settings.security !== 'code' || accessCode.trim().length > 0);
 
     if (isExpired) {
         return (
@@ -113,6 +124,11 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         {poll.settings.deadline && (
                             <div className="flex items-center gap-2 text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
                                 <Clock size={14} /> Ends: {new Date(poll.settings.deadline).toLocaleDateString()}
+                            </div>
+                        )}
+                        {poll.settings.security === 'code' && (
+                            <div className="flex items-center gap-2 text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full w-fit">
+                                <Key size={14} /> Access Code Required
                             </div>
                         )}
                     </div>
@@ -168,26 +184,57 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
-                    {/* Name Input if Required */}
-                    {poll.settings.requireNames && (
-                        <div className="mt-8 pt-6 border-t border-slate-100">
-                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                Your Name <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-3.5 text-slate-400" size={20} />
-                                <input 
-                                    type="text" 
-                                    value={voterName}
-                                    onChange={(e) => setVoterName(e.target.value)}
-                                    className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium"
-                                    placeholder="Enter your name"
-                                />
+                    {/* Inputs Area */}
+                    <div className="space-y-4 mt-8 pt-6 border-t border-slate-100">
+                        
+                        {/* Access Code Input */}
+                        {poll.settings.security === 'code' && (
+                             <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    Access Code <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <input 
+                                        type="text" 
+                                        value={accessCode}
+                                        onChange={(e) => setAccessCode(e.target.value)}
+                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium font-mono"
+                                        placeholder="Enter your unique code"
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">This poll requires a unique code from the organizer.</p>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Name Input if Required */}
+                        {poll.settings.requireNames && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    Your Name <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <input 
+                                        type="text" 
+                                        value={voterName}
+                                        onChange={(e) => setVoterName(e.target.value)}
+                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium"
+                                        placeholder="Enter your name"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Error Message */}
+                    {errorMessage && (
+                         <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-200 text-center">
+                            {errorMessage}
+                         </div>
                     )}
 
-                    {alreadyVoted ? (
+                    {alreadyVotedBrowser ? (
                         <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-center border border-amber-200">
                             <strong>You have already voted.</strong><br/>
                             <span className="text-sm">Based on your browser settings, duplicate voting is not allowed.</span>

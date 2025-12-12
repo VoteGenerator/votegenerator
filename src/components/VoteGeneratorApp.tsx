@@ -4,8 +4,8 @@ import { Loader2, AlertTriangle, Home, Share2, Copy, Check } from 'lucide-react'
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
-import { getPoll, getPollAsAdmin, getResults, hasVoted } from './services/voteGeneratorService';
-import { Poll, RunoffResult } from './types';
+import { getPoll, getPollAsAdmin, getResults, hasVoted } from '../services/voteGeneratorService';
+import { Poll, RunoffResult } from '../types';
 
 type ViewState = 
     | { type: 'create' }

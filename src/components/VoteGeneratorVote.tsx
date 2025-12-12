@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Check, GripVertical, ArrowRight, Loader2 } from 'lucide-react';
-import { Poll, PollOption } from './types';
-import { submitVote } from './services/voteGeneratorService';
+import { Poll, PollOption } from '../types';
+import { submitVote } from '../services/voteGeneratorService';
 
 interface Props {
     poll: Poll;

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar } from 'lucide-react';
-import { createPoll } from './services/voteGeneratorService';
+import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
     {

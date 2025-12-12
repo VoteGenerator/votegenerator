@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Users, AlertCircle } from 'lucide-react';
-import { RunoffResult, Poll } from './types';
+import { RunoffResult, Poll } from '../types';
 
 interface Props {
     poll: Poll;

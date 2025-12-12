@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2 } from 'lucide-react';
 import { Poll } from '../types';
 import { updatePoll } from '../services/voteGeneratorService';
 

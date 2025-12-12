@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key, Users } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key, Users, MessageSquare } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -29,6 +29,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [voterName, setVoterName] = useState('');
     const [accessCode, setAccessCode] = useState('');
+    const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -40,8 +41,25 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     // Check if security allows (If browser check is on, hasVoted will return true if they already voted)
     const alreadyVotedBrowser = poll.settings.security === 'browser' && hasVoted(poll.id);
 
+    const checkVpnLikelihood = (): boolean => {
+        if (!poll.settings.blockVpn) return false;
+        
+        // Simple heuristic checks for bots/proxies/VPNs (Not 100% accurate client-side)
+        const isHeadless = navigator.webdriver;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const isGenericTimezone = timezone === 'UTC' || timezone === 'Etc/GMT';
+        
+        return !!isHeadless || isGenericTimezone;
+    };
+
     const handleSubmit = async () => {
         setErrorMessage(null);
+
+        if (checkVpnLikelihood()) {
+            setErrorMessage("Vote blocked: VPN or Proxy detected. Please disable it to vote.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const choices = poll.pollType === 'ranked' 
@@ -52,7 +70,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 poll.id, 
                 choices, 
                 voterName.trim() || undefined,
-                accessCode.trim() || undefined
+                accessCode.trim() || undefined,
+                comment.trim() || undefined
             );
             onVoteSuccess();
         } catch (error) {
@@ -154,9 +173,17 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     {poll.pollType === 'ranked' ? (
                         <Reorder.Group axis="y" values={items} onReorder={setItems} className="space-y-3">
                             {items.map((item, index) => (
-                                <Reorder.Item key={item.id} value={item}>
-                                    <div className="flex items-center gap-4 p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm hover:border-indigo-200 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group select-none">
-                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                <Reorder.Item 
+                                    key={item.id} 
+                                    value={item}
+                                    whileDrag={{ scale: 1.05, boxShadow: "0px 10px 20px rgba(0,0,0,0.15)" }}
+                                    className="relative z-0"
+                                >
+                                    <div className="flex items-center gap-4 p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm hover:border-indigo-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group select-none overflow-hidden relative">
+                                        {/* Gradient Accent on drag or hover */}
+                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        
+                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors ml-2">
                                             {index + 1}
                                         </div>
                                         <span className="flex-1 font-medium text-slate-800 text-lg">
@@ -232,6 +259,25 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                         onChange={(e) => setVoterName(e.target.value)}
                                         className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium"
                                         placeholder="Enter your name"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Comment Input */}
+                        {poll.settings.allowComments && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    Comment <span className="text-slate-400 font-normal">(optional)</span>
+                                </label>
+                                <div className="relative">
+                                    <MessageSquare className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <textarea 
+                                        value={comment}
+                                        onChange={(e) => setComment(e.target.value)}
+                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium resize-none"
+                                        placeholder="Add a comment..."
+                                        rows={2}
                                     />
                                 </div>
                             </div>

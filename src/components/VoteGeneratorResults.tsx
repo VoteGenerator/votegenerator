@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, votes } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, votes, comments } = results;
     const isRanked = poll.pollType === 'ranked';
     
     // Determine default view based on poll type
@@ -18,9 +18,29 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    // FIX: For Ranked polls, the Bar Chart should show "First Preference" votes (Round 1), 
-    // NOT the simpleCounts which counts every occurrence of an option in the ranking stack.
-    const barChartData = isRanked && rounds.length > 0 ? rounds[0].counts : (simpleCounts || {});
+    // FIX: Ensure Bar Chart displays First Preference Votes (1 vote per person) for Ranked Polls.
+    // Use rounds[0] if available, otherwise fallback to manually calculating first preferences from raw votes
+    // to avoid the bug where simpleCounts (frequency of appearance) is used.
+    const barChartData = (() => {
+        if (!isRanked) return simpleCounts || {};
+        
+        // If we have rounds, use the first round (First preferences)
+        if (rounds.length > 0) return rounds[0].counts;
+
+        // Fallback: Calculate first preferences manually from raw votes to guarantee accuracy
+        const firstPrefs: Record<string, number> = {};
+        poll.options.forEach(o => firstPrefs[o.id] = 0);
+        
+        votes.forEach(v => {
+            if (v.choices && v.choices.length > 0) {
+                const firstChoice = v.choices[0];
+                if (firstPrefs[firstChoice] !== undefined) {
+                    firstPrefs[firstChoice]++;
+                }
+            }
+        });
+        return firstPrefs;
+    })();
 
     const CHART_COLORS = [
         '#6366f1', // Indigo 500
@@ -71,16 +91,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     }
 
     // Prepare data for Pie Chart
-    // For RCV: Use First Round Votes (rounds[0].counts)
-    // For Multiple: Use simpleCounts
     const pieData = (() => {
-        let counts: Record<string, number> = {};
-        if (isRanked && rounds.length > 0) {
-            counts = rounds[0].counts;
-        } else if (simpleCounts) {
-            counts = simpleCounts;
-        }
-        
+        const counts = barChartData; // Use the corrected first-pref data
         const total = Object.values(counts).reduce((a,b) => a+b, 0);
         let currentAngle = 0;
         
@@ -430,6 +442,33 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* --- COMMENTS SECTION --- */}
+            {comments && comments.length > 0 && (
+                <div className="mt-8 bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <MessageSquare size={24} className="text-indigo-500" />
+                        Comments ({comments.length})
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        {comments.map((comment, i) => (
+                            <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="flex items-start gap-3">
+                                    <Quote size={20} className="text-slate-300 shrink-0" />
+                                    <div>
+                                        <p className="text-slate-700 italic text-sm mb-2">"{comment.text}"</p>
+                                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                                            <span className="font-bold text-slate-500">{comment.name}</span>
+                                            <span>•</span>
+                                            <span>{new Date(comment.date).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

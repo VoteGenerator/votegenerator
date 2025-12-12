@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -64,6 +64,8 @@ const VoteGeneratorCreate: React.FC = () => {
     const [hideResults, setHideResults] = useState(false);
     const [allowMultiple, setAllowMultiple] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
+    const [allowComments, setAllowComments] = useState(false);
+    const [blockVpn, setBlockVpn] = useState(false);
     const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
     const [voterCount, setVoterCount] = useState<number>(10);
     const [deadline, setDeadline] = useState<string>('');
@@ -176,6 +178,8 @@ const VoteGeneratorCreate: React.FC = () => {
                     hideResults, 
                     allowMultiple,
                     requireNames,
+                    allowComments,
+                    blockVpn,
                     security,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined,
                     maxVotes: maxVotes === '' ? undefined : Number(maxVotes)
@@ -420,6 +424,18 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </div>
                             </label>
+                            
+                            {/* Allow Comments */}
+                            <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                                <div className="flex-1 flex items-center gap-2">
+                                    <MessageSquare size={18} className="text-slate-400" />
+                                    <div className="font-bold text-slate-700">Allow comments</div>
+                                </div>
+                                <div className="relative">
+                                    <input type="checkbox" checked={allowComments} onChange={e => setAllowComments(e.target.checked)} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </div>
+                            </label>
 
                             {/* Hide Results */}
                             <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
@@ -512,6 +528,21 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     )}
                                                 </div>
                                                 
+                                                {/* Block VPN Settings */}
+                                                <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        <Globe size={18} className="text-slate-400" />
+                                                        <div>
+                                                            <div className="font-bold text-slate-700 text-xs uppercase">Block VPN / Proxies</div>
+                                                            <div className="text-[10px] text-slate-500 font-normal">Experimental check</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <input type="checkbox" checked={blockVpn} onChange={e => setBlockVpn(e.target.checked)} className="sr-only peer" />
+                                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                    </div>
+                                                </label>
+
                                                 <div className="grid grid-cols-2 gap-4">
                                                     {/* Deadline */}
                                                     <div>
@@ -526,7 +557,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         />
                                                         {deadline && (
                                                             <p className="text-emerald-600 text-[10px] mt-1 font-bold flex items-center gap-1 animate-pulse">
-                                                                <Check size={10} strokeWidth={3} /> Selected: {new Date(deadline).toLocaleDateString()} {new Date(deadline).toLocaleTimeString()}
+                                                                <Check size={10} strokeWidth={3} /> Selected: {new Date(deadline).toLocaleDateString()}
                                                             </p>
                                                         )}
                                                         <p className="text-[10px] text-slate-400 mt-1">Timezone: {userTimeZone}</p>

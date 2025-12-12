@@ -1,3 +1,4 @@
+
 // ... imports
 import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
@@ -49,6 +50,8 @@ export const createPoll = async (data: {
         hideResults: boolean; 
         allowMultiple: boolean;
         requireNames: boolean;
+        allowComments?: boolean;
+        blockVpn?: boolean;
         deadline?: string;
         maxVotes?: number;
         security: 'browser' | 'code' | 'none';
@@ -133,7 +136,6 @@ export const getPoll = async (id: string): Promise<Poll> => {
         if (!poll) throw new Error('Poll not found');
         // Strip sensitive data for public view (IMPORTANT: don't send allowedCodes to public)
         const { adminKey, votes, allowedCodes, ...publicPoll } = poll;
-        // We might want to send a flag saying "requiresCode: true" but the settings.security handles that
         return { ...publicPoll, isAdmin: false };
     }
 };
@@ -151,11 +153,11 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices, voterName, code })
+            body: JSON.stringify({ pollId, choices, voterName, code, comment })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
@@ -181,6 +183,7 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
             choices, 
             voterName, 
             usedCode: code,
+            comment,
             votedAt: new Date().toISOString() 
         });
         
@@ -209,17 +212,16 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
         if(response.ok) {
             return await response.json();
         }
-        // If not available or fails, fall through to local
         throw new Error('API_UNAVAILABLE');
     } catch {
         const votes = getLocalVotes(pollId);
-        // Ensure data shape matches Vote interface (legacy data migration might be needed in real app)
         return votes.map(v => ({
             pollId: v.pollId || pollId,
             choices: v.choices,
             votedAt: v.votedAt || v.createdAt || new Date().toISOString(),
             voterName: v.voterName,
-            usedCode: v.usedCode
+            usedCode: v.usedCode,
+            comment: v.comment
         }));
     }
 };
@@ -240,9 +242,16 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         votes = getLocalVotes(pollId);
     }
 
-    // Extract voter names if they exist
+    // Extract voter names/comments
     const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
-    // Extract used codes
+    const comments = votes
+        .filter((v: any) => !!v.comment)
+        .map((v: any) => ({
+            name: v.voterName || 'Anonymous',
+            text: v.comment,
+            date: v.votedAt
+        }));
+        
     const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
     
     // Calculate simple counts (Frequency of each option selected)
@@ -256,7 +265,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     });
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], simpleCounts: {}, votes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, votes: [] };
     }
 
     // Instant Runoff Calculation
@@ -271,6 +280,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     let winnerId: string | null = null;
     let roundNum = 1;
 
+    // Safety: ensure we always have at least one round in rounds[] if there are votes,
+    // to avoid bar chart confusion.
+    
     while (!winnerId && activeOptionIds.size > 0) {
         const roundCounts: Record<string, number> = {};
         activeOptionIds.forEach(id => roundCounts[id] = 0);
@@ -291,7 +303,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         let loserId: string | null = null;
 
         Object.entries(roundCounts).forEach(([id, count]) => {
-            if (count > totalActiveVotes / 2) roundWinner = id;
+            if (totalActiveVotes > 0 && count > totalActiveVotes / 2) roundWinner = id;
             if (count < minVotes) {
                 minVotes = count;
                 loserId = id;
@@ -343,7 +355,8 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         totalVotes: votes.length,
         voters,
         usedCodes,
+        comments,
         simpleCounts,
-        votes: votes // Return the raw votes to be used in Grid view
+        votes: votes 
     };
 };

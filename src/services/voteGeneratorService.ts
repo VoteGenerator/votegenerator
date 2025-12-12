@@ -49,6 +49,7 @@ export const createPoll = async (data: {
         allowMultiple: boolean;
         requireNames: boolean;
         deadline?: string;
+        maxVotes?: number;
         security: 'browser' | 'code' | 'none';
     };
     voterCount?: number; // Needed if security is 'code'

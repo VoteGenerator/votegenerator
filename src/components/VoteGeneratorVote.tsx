@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key, Users } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -32,11 +32,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Check Deadline
-    const isExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
+    // Check Closing Triggers
+    const isDeadlineExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
+    const isMaxVotesReached = poll.settings.maxVotes && poll.voteCount >= poll.settings.maxVotes;
+    const isClosed = isDeadlineExpired || isMaxVotesReached;
     
     // Check if security allows (If browser check is on, hasVoted will return true if they already voted)
-    // Note: If security is 'code', we check code validity on server/submit, not localStorage upfront (though we could)
     const alreadyVotedBrowser = poll.settings.security === 'browser' && hasVoted(poll.id);
 
     const handleSubmit = async () => {
@@ -78,14 +79,19 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                       && (!poll.settings.requireNames || voterName.trim().length > 0)
                       && (poll.settings.security !== 'code' || accessCode.trim().length > 0);
 
-    if (isExpired) {
+    if (isClosed) {
         return (
             <div className="max-w-2xl mx-auto px-4 pt-20 text-center">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Lock size={32} className="text-slate-400" />
                 </div>
                 <h1 className="text-3xl font-black text-slate-800 mb-2">Poll Closed</h1>
-                <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
+                {isDeadlineExpired && (
+                     <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
+                )}
+                {isMaxVotesReached && (
+                     <p className="text-slate-500 mb-8">This poll has reached the maximum number of votes allowed.</p>
+                )}
                 <button 
                     onClick={onVoteSuccess} // Just go to results
                     className="text-indigo-600 font-bold hover:underline"
@@ -124,6 +130,11 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         {poll.settings.deadline && (
                             <div className="flex items-center gap-2 text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
                                 <Clock size={14} /> Ends: {new Date(poll.settings.deadline).toLocaleDateString()}
+                            </div>
+                        )}
+                        {poll.settings.maxVotes && (
+                             <div className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-200 px-3 py-1 rounded-full w-fit">
+                                <Users size={14} /> Cap: {poll.settings.maxVotes} votes
                             </div>
                         )}
                         {poll.settings.security === 'code' && (

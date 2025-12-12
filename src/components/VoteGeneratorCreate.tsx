@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Info } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Info, Hash } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -67,6 +67,7 @@ const VoteGeneratorCreate: React.FC = () => {
     const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
     const [voterCount, setVoterCount] = useState<number>(10);
     const [deadline, setDeadline] = useState<string>('');
+    const [maxVotes, setMaxVotes] = useState<number | ''>('');
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
@@ -176,7 +177,8 @@ const VoteGeneratorCreate: React.FC = () => {
                     allowMultiple,
                     requireNames,
                     security,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined
+                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
+                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes)
                 } 
             });
             
@@ -451,6 +453,24 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     />
                                                     <p className="text-xs text-slate-400 mt-2 ml-1 flex items-center gap-1">
                                                         <Info size={12}/> Timezone: {userTimeZone}
+                                                    </p>
+                                                </div>
+                                                
+                                                {/* Auto-close Trigger (Max Votes) */}
+                                                <div>
+                                                    <div className="flex items-center gap-2 font-bold text-slate-700 mb-2">
+                                                        <Hash size={16} className="text-slate-400" /> Close automatically after X votes
+                                                    </div>
+                                                    <input 
+                                                        type="number"
+                                                        min={1} 
+                                                        value={maxVotes}
+                                                        onChange={(e) => setMaxVotes(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                                        className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
+                                                        placeholder="e.g. 100"
+                                                    />
+                                                    <p className="text-xs text-slate-400 mt-2 ml-1">
+                                                        Poll will lock automatically once this vote count is reached.
                                                     </p>
                                                 </div>
 

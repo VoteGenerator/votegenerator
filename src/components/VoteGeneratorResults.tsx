@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, Check, LayoutGrid } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, Check, LayoutGrid, PieChart } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -10,18 +10,37 @@ interface Props {
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
     const { winnerId, rounds, totalVotes, simpleCounts, votes } = results;
-    const [viewMode, setViewMode] = useState<'chart' | 'grid'>('chart');
+    // Determine default view based on poll type
+    const [viewMode, setViewMode] = useState<'chart' | 'pie' | 'grid'>('chart');
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
+    const CHART_COLORS = [
+        '#6366f1', // Indigo 500
+        '#a855f7', // Purple 500
+        '#ec4899', // Pink 500
+        '#06b6d4', // Cyan 500
+        '#84cc16', // Lime 500
+        '#f97316', // Orange 500
+        '#ef4444', // Red 500
+        '#14b8a6', // Teal 500
+        '#3b82f6', // Blue 500
+        '#eab308'  // Yellow 500
+    ];
+
     // Get color for bars (consistent per option)
-    const getBarColor = (id: string) => {
+    const getBarColorClass = (id: string) => {
         const index = poll.options.findIndex(o => o.id === id);
         const colors = [
-            'bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 
-            'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-lime-500'
+            'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 
+            'bg-lime-500', 'bg-orange-500', 'bg-red-500', 'bg-teal-500', 'bg-blue-500', 'bg-yellow-500'
         ];
         return colors[index % colors.length];
+    };
+
+    const getHexColor = (id: string) => {
+        const index = poll.options.findIndex(o => o.id === id);
+        return CHART_COLORS[index % CHART_COLORS.length];
     };
 
     if (totalVotes === 0) {
@@ -38,6 +57,42 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
 
     const isRanked = poll.pollType === 'ranked';
 
+    // Prepare data for Pie Chart
+    // For RCV: Use First Round Votes (rounds[0].counts)
+    // For Multiple: Use simpleCounts
+    const pieData = (() => {
+        let counts: Record<string, number> = {};
+        if (isRanked && rounds.length > 0) {
+            counts = rounds[0].counts;
+        } else if (simpleCounts) {
+            counts = simpleCounts;
+        }
+        
+        const total = Object.values(counts).reduce((a,b) => a+b, 0);
+        let currentAngle = 0;
+        
+        return Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .map(([id, count]) => {
+                const percentage = (count / total) * 100;
+                const angle = (count / total) * 360;
+                const startAngle = currentAngle;
+                currentAngle += angle;
+                return {
+                    id,
+                    count,
+                    percentage,
+                    color: getHexColor(id),
+                    startAngle,
+                    angle
+                };
+            });
+    })();
+
+    // Simple Conic Gradient for Pie Chart
+    const pieGradient = pieData.map(d => `${d.color} ${d.startAngle}deg ${d.startAngle + d.angle}deg`).join(', ');
+
+
     return (
         <div className="space-y-6 print:space-y-4">
             {/* View Mode Toggle */}
@@ -51,7 +106,17 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                                 : 'text-slate-500 hover:bg-slate-50'
                         }`}
                     >
-                        <BarChart size={16} /> Summary
+                        <BarChart size={16} /> {isRanked ? 'Rounds' : 'Bar'}
+                    </button>
+                     <button
+                        onClick={() => setViewMode('pie')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                            viewMode === 'pie' 
+                                ? 'bg-indigo-50 text-indigo-700 shadow-sm' 
+                                : 'text-slate-500 hover:bg-slate-50'
+                        }`}
+                    >
+                        <PieChart size={16} /> Pie
                     </button>
                     <button
                         onClick={() => setViewMode('grid')}
@@ -67,7 +132,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
             </div>
 
             <AnimatePresence mode="wait">
-                {viewMode === 'chart' ? (
+                {/* --- BAR / ROUNDS VIEW --- */}
+                {viewMode === 'chart' && (
                     <motion.div 
                         key="chart"
                         initial={{ opacity: 0, y: 10 }}
@@ -161,7 +227,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                                                                         initial={{ width: 0 }}
                                                                         animate={{ width: `${percentage}%` }}
                                                                         transition={{ duration: 1, ease: "easeOut" }}
-                                                                        className={`h-full rounded-full ${getBarColor(id)} print:bg-slate-600`}
+                                                                        className={`h-full rounded-full ${getBarColorClass(id)} print:bg-slate-600`}
                                                                     />
                                                                 </div>
                                                             </div>
@@ -179,7 +245,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                             </div>
                         )}
 
-                        {/* Multiple Choice Visualization */}
+                        {/* Multiple Choice Visualization (Bar) */}
                         {!isRanked && simpleCounts && (
                              <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300">
                                 <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
@@ -207,7 +273,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${percentage}%` }}
                                                             transition={{ duration: 1, ease: "easeOut" }}
-                                                            className={`h-full rounded-lg ${getBarColor(id)} opacity-90 print:bg-slate-600`}
+                                                            className={`h-full rounded-lg ${getBarColorClass(id)} opacity-90 print:bg-slate-600`}
                                                         />
                                                     </div>
                                                 </div>
@@ -217,7 +283,52 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                              </div>
                         )}
                     </motion.div>
-                ) : (
+                )}
+
+                {/* --- PIE CHART VIEW --- */}
+                {viewMode === 'pie' && (
+                     <motion.div
+                        key="pie"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
+                    >
+                         <div className="relative w-64 h-64 shrink-0">
+                             <div 
+                                className="w-full h-full rounded-full border-4 border-slate-50 shadow-inner"
+                                style={{ background: `conic-gradient(${pieGradient})` }}
+                             />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                 <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
+                                     {totalVotes}
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <div className="flex-1 w-full max-w-sm">
+                             <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
+                                 {isRanked ? 'First Preference Distribution' : 'Vote Distribution'}
+                             </h3>
+                             <div className="space-y-3">
+                                 {pieData.map(d => (
+                                     <div key={d.id} className="flex items-center justify-between group">
+                                         <div className="flex items-center gap-3">
+                                             <div className="w-4 h-4 rounded-full" style={{ background: d.color }}></div>
+                                             <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
+                                         </div>
+                                         <div className="text-sm font-bold text-slate-500">
+                                             {d.percentage.toFixed(1)}% <span className="font-normal text-xs text-slate-400">({d.count})</span>
+                                         </div>
+                                     </div>
+                                 ))}
+                             </div>
+                         </div>
+                    </motion.div>
+                )}
+
+                {/* --- GRID / TABLE VIEW --- */}
+                {viewMode === 'grid' && (
                     <motion.div
                         key="grid"
                         initial={{ opacity: 0, y: 10 }}

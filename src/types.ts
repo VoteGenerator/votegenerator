@@ -9,7 +9,8 @@ export interface PollSettings {
     allowMultiple: boolean;
     requireNames: boolean;
     deadline?: string; // ISO Date string
-    security: 'browser' | 'code' | 'none'; // Added 'code'
+    maxVotes?: number; // Auto-close trigger
+    security: 'browser' | 'code' | 'none';
 }
 
 export interface Poll {

@@ -1,4 +1,4 @@
-import { Poll, PollOption, RunoffResult, RoundLog, Vote } from '../types';
+import { Poll, RunoffResult, RoundLog } from '../types';
 
 // --- Local Storage Fallback Helpers ---
 // This ensures the app works immediately for the user even without the Netlify Backend running.

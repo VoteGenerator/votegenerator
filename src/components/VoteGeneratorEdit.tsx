@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { Poll } from '../types';
 import { updatePoll } from '../services/voteGeneratorService';
 
@@ -12,6 +13,7 @@ interface Props {
 const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     const [title, setTitle] = useState(poll.title);
     const [description, setDescription] = useState(poll.description || '');
+    const [options, setOptions] = useState(poll.options.map(o => o.text));
     const [deadline, setDeadline] = useState(poll.settings.deadline ? new Date(poll.settings.deadline).toISOString().slice(0, 16) : '');
     const [maxVotes, setMaxVotes] = useState<number | ''>(poll.settings.maxVotes || '');
     const [hideResults, setHideResults] = useState(poll.settings.hideResults);
@@ -20,13 +22,53 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     // Check if votes exist to lock certain fields
     const hasVotes = poll.voteCount > 0;
 
+    const handleOptionChange = (index: number, value: string) => {
+        const newOptions = [...options];
+        newOptions[index] = value;
+        setOptions(newOptions);
+    };
+
+    const removeOption = (index: number) => {
+        if (options.length <= 2) return;
+        setOptions(options.filter((_, i) => i !== index));
+    };
+
+    const addOption = () => {
+        if (options.length >= 20) return;
+        setOptions([...options, '']);
+    };
+
     const handleSave = async () => {
         if (!title.trim()) return;
+        const validOptions = options.filter(o => o.trim() !== '');
+        if (validOptions.length < 2) {
+            alert("You need at least 2 valid options.");
+            return;
+        }
+
         setIsSaving(true);
         try {
+            // Reconstruct options array preserving IDs where possible
+            // If hasVotes is true, we technically shouldn't be here if we disabled inputs, but for safety:
+            let updatedOptions = poll.options;
+            
+            if (!hasVotes) {
+                 updatedOptions = options.filter(t => t.trim() !== '').map((text, i) => {
+                    // Try to preserve ID if index matches, otherwise generate new or use existing? 
+                    // To keep it simple for this edit: reuse existing IDs for first N items, generate new for others.
+                    // This might break if they reorder completely, but simple edit is usually fixing typos or appending.
+                    const existingId = poll.options[i]?.id;
+                    return {
+                        id: existingId || Math.random().toString(36).substr(2, 6),
+                        text
+                    };
+                 });
+            }
+
             await updatePoll(poll.id, poll.adminKey!, {
                 title,
                 description,
+                options: hasVotes ? undefined : updatedOptions, // Do not update options if votes exist
                 settings: {
                     ...poll.settings,
                     hideResults,
@@ -57,10 +99,10 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                 <div className="p-6 md:p-8 space-y-6">
                     {hasVotes && (
                         <div className="bg-amber-50 text-amber-800 p-4 rounded-xl flex gap-3 text-sm border border-amber-100">
-                            <Lock size={20} className="shrink-0" />
+                            <Lock size={20} className="shrink-0 mt-0.5" />
                             <div>
-                                <strong>Some settings are locked.</strong><br/>
-                                Because voting has already started ({poll.voteCount} votes), you cannot change the poll type or options to ensure fairness.
+                                <strong>Options are locked.</strong><br/>
+                                Because voting has already started ({poll.voteCount} votes), you cannot add, remove, or edit options to ensure fairness. You can still update the title, description, and deadline.
                             </div>
                         </div>
                     )}
@@ -88,6 +130,48 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                         />
+                    </div>
+
+                    {/* Options Editing */}
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">
+                            Options
+                        </label>
+                        <div className="space-y-3">
+                            {options.map((opt, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={opt}
+                                        onChange={(e) => handleOptionChange(i, e.target.value)}
+                                        disabled={hasVotes}
+                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-all font-medium ${
+                                            hasVotes 
+                                                ? 'bg-slate-50 text-slate-500 border-slate-100 cursor-not-allowed' 
+                                                : 'border-slate-200 focus:border-indigo-500'
+                                        }`}
+                                        placeholder={`Option ${i + 1}`}
+                                    />
+                                    {!hasVotes && options.length > 2 && (
+                                        <button 
+                                            onClick={() => removeOption(i)}
+                                            className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {!hasVotes && options.length < 20 && (
+                            <button
+                                onClick={addOption}
+                                className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors p-2 hover:bg-indigo-50 rounded-lg -ml-2"
+                            >
+                                <Plus size={16} /> Add another option
+                            </button>
+                        )}
                     </div>
 
                     <div className="pt-6 border-t border-slate-100 space-y-4">

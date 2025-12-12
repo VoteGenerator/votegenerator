@@ -243,11 +243,6 @@ const VoteGeneratorApp: React.FC = () => {
         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
     };
 
-    const copyWithText = () => {
-        if(viewState.type !== 'results') return;
-        copyToClipboard(getShareText(viewState.poll.title), 'share');
-    };
-
     return (
         <div className="min-h-screen pb-10">
             {/* Header */}
@@ -326,210 +321,172 @@ const VoteGeneratorApp: React.FC = () => {
 
                     {viewState.type === 'results' && (
                         <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <div className="max-w-3xl mx-auto px-4 py-8">
+                            <div className="max-w-4xl mx-auto px-4 py-8">
                                 
-                                {/* --- ADMIN DASHBOARD --- */}
+                                {/* --- ADMIN DASHBOARD HEADER & KEY --- */}
                                 {viewState.isAdmin && (
-                                    <div className="mb-12 print:hidden">
+                                    <div className="mb-8 print:hidden">
                                         <div className="flex items-end justify-between mb-6">
                                             <div>
                                                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                                                     <LayoutDashboard className="text-indigo-600" size={28}/> 
                                                     Admin Dashboard
                                                 </h2>
-                                                <p className="text-slate-500 text-sm mt-1 ml-10">Manage your active poll</p>
+                                                <p className="text-slate-500 text-sm mt-1 ml-10">Overview of your active polls</p>
                                             </div>
                                             <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">
-                                                Premium: Multi-poll view enabled
+                                                Premium Enabled
                                             </div>
                                         </div>
 
-                                        <div className="space-y-6">
-                                            
-                                            {/* Section 1: SHARE (Public) - Full Width */}
-                                            <div className="bg-white rounded-2xl border border-indigo-100 shadow-lg shadow-indigo-100/50 overflow-hidden">
-                                                <div className="bg-indigo-50/50 p-4 border-b border-indigo-50 flex justify-between items-center">
-                                                    <h3 className="font-bold text-indigo-900 flex items-center gap-2">
-                                                        <Share2 size={20} className="text-indigo-600"/> 
-                                                        Share & Invite
-                                                    </h3>
-                                                    <span className="text-xs font-medium text-indigo-400">Public Link</span>
+                                        {/* ADMIN KEY (Top Priority) */}
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2.5 bg-white text-amber-600 rounded-lg shadow-sm border border-amber-100">
+                                                    <Key size={20} />
                                                 </div>
-                                                <div className="p-6">
-                                                    <div className="flex flex-col md:flex-row gap-4">
-                                                        {/* Link Input */}
-                                                        <div className="flex-1">
-                                                            <div className="relative flex items-center">
-                                                                <Globe className="absolute left-3 text-slate-400" size={18} />
-                                                                <input 
-                                                                    type="text" 
-                                                                    readOnly 
-                                                                    value={getShareUrl()} 
-                                                                    className="w-full pl-10 pr-24 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                                                                />
-                                                                <button 
-                                                                    onClick={() => copyToClipboard(getShareUrl(), 'share')}
-                                                                    className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all shadow-sm"
-                                                                >
-                                                                    {copiedShare ? 'Copied' : 'Copy Link'}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Action Buttons */}
-                                                        <div className="flex gap-2 shrink-0">
-                                                            <button onClick={copyWithText} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md shadow-indigo-200" title="Copy with message">
-                                                                <Copy size={18}/> <span className="hidden md:inline">Copy Text</span>
-                                                            </button>
-                                                            <button onClick={shareToWhatsapp} className="flex-1 md:flex-none flex items-center justify-center p-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all shadow-md shadow-green-200" title="WhatsApp">
-                                                                <MessageCircle size={20}/>
-                                                            </button>
-                                                            <button onClick={shareToSms} className="flex-1 md:flex-none flex items-center justify-center p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all shadow-md shadow-blue-200" title="SMS">
-                                                                <Smartphone size={20}/>
-                                                            </button>
-                                                            <button onClick={shareToEmail} className="flex-1 md:flex-none flex items-center justify-center p-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl transition-all shadow-md shadow-slate-200" title="Email">
-                                                                <Mail size={20}/>
-                                                            </button>
-                                                        </div>
+                                                <div>
+                                                    <div className="font-bold text-amber-900">Private Admin Key</div>
+                                                    <div className="text-xs text-amber-700/80">
+                                                        Save this URL! It is the only way to manage this poll.
                                                     </div>
                                                 </div>
                                             </div>
+                                            <button 
+                                                onClick={() => copyToClipboard(window.location.href, 'admin')}
+                                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-100/50 rounded-lg text-sm font-bold transition-all shadow-sm"
+                                            >
+                                                {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} 
+                                                {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
-                                            {/* Section 2: MANAGE (Admin) - Full Width */}
-                                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                                <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                                        <Settings size={20} className="text-slate-600"/> 
-                                                        Poll Controls
-                                                    </h3>
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        {viewState.poll.settings.deadline && (
-                                                            <span className="flex items-center gap-1 text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
-                                                                <Clock size={12}/> Ends: {new Date(viewState.poll.settings.deadline).toLocaleDateString()}
-                                                            </span>
-                                                        )}
-                                                        {viewState.poll.allowedCodes && (
-                                                            <span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 cursor-pointer hover:bg-purple-100 transition-colors select-none">
-                                                                <Key size={12}/> 
-                                                                {viewState.poll.allowedCodes.length} Codes 
-                                                                {copiedCodes && <span className="font-bold ml-1 text-emerald-600">(Copied)</span>}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="p-6">
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        <button 
-                                                            onClick={handleEditPoll}
-                                                            className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 rounded-xl transition-all group text-left"
-                                                        >
-                                                            <div>
-                                                                <div className="font-bold text-slate-800 group-hover:text-indigo-700">Edit Settings</div>
-                                                                <div className="text-xs text-slate-500 group-hover:text-indigo-500/70">Update title, deadline...</div>
-                                                            </div>
-                                                            <Settings size={20} className="text-slate-300 group-hover:text-indigo-500" />
-                                                        </button>
-
-                                                        <button 
-                                                            onClick={handleExportCSV}
-                                                            disabled={isExporting}
-                                                            className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 rounded-xl transition-all group text-left"
-                                                        >
-                                                            <div>
-                                                                <div className="font-bold text-slate-800 group-hover:text-emerald-700">Export CSV</div>
-                                                                <div className="text-xs text-slate-500 group-hover:text-emerald-500/70">Download full results</div>
-                                                            </div>
-                                                            {isExporting ? <Loader2 size={20} className="animate-spin text-emerald-500"/> : <FileSpreadsheet size={20} className="text-slate-300 group-hover:text-emerald-500" />}
-                                                        </button>
-
-                                                        <button 
-                                                            onClick={handlePrintPDF}
-                                                            className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 hover:border-slate-400 hover:bg-slate-50 rounded-xl transition-all group text-left"
-                                                        >
-                                                            <div>
-                                                                <div className="font-bold text-slate-800">Print Report</div>
-                                                                <div className="text-xs text-slate-500">Save as PDF</div>
-                                                            </div>
-                                                            <Printer size={20} className="text-slate-300 group-hover:text-slate-600" />
-                                                        </button>
-                                                    </div>
+                                {/* --- POLL CONTAINER (Unified for Admin) --- */}
+                                <div className={viewState.isAdmin ? "bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition-all" : ""}>
+                                    
+                                    {/* ADMIN: Management Toolbar */}
+                                    {viewState.isAdmin && (
+                                        <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                                    Current Poll Settings
+                                                </h3>
+                                                <div className="flex gap-2">
+                                                    {viewState.poll.settings.deadline && (
+                                                        <span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-md text-slate-600 flex items-center gap-1">
+                                                            <Clock size={12}/> Ends: {new Date(viewState.poll.settings.deadline).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                    {viewState.poll.allowedCodes && (
+                                                        <span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-md text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100 transition-colors">
+                                                            <Key size={12}/> {viewState.poll.allowedCodes.length} Codes {copiedCodes ? '(Copied)' : ''}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Section 3: ADMIN KEY (Private) - Full Width */}
-                                            <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-white rounded-lg text-amber-600 shadow-sm">
-                                                        <Key size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-amber-900">Private Admin Key</div>
-                                                        <div className="text-xs text-amber-700/80">
-                                                            Don't lose this! It's the only way to manage your poll.
-                                                        </div>
-                                                    </div>
+                                            <div className="grid lg:grid-cols-2 gap-6">
+                                                
+                                                {/* Share Section */}
+                                                <div className="bg-white border border-indigo-100 rounded-xl p-5 shadow-sm">
+                                                     <div className="flex items-center justify-between mb-3">
+                                                         <h4 className="font-bold text-indigo-900 flex items-center gap-2">
+                                                             <Share2 size={18} className="text-indigo-600"/> Share Poll
+                                                         </h4>
+                                                     </div>
+                                                     <div className="flex gap-2 mb-3">
+                                                         <div className="relative flex-1">
+                                                             <Globe className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                                                             <input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600 focus:outline-none" />
+                                                         </div>
+                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                                                             {copiedShare ? 'Copied' : 'Copy'}
+                                                         </button>
+                                                     </div>
+                                                     <div className="flex gap-2">
+                                                         <button onClick={shareToWhatsapp} className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
+                                                         <button onClick={shareToEmail} className="flex-1 py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
+                                                     </div>
                                                 </div>
+
+                                                {/* Controls Section */}
+                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                                                             <Settings size={18} className="text-slate-600"/> Controls
+                                                         </h4>
+                                                     </div>
+                                                     <div className="grid grid-cols-2 gap-3">
+                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                                                             <Settings size={16}/> Edit
+                                                         </button>
+                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                                                             {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
+                                                         </button>
+                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
+                                                             <Printer size={14}/> Print Results Report
+                                                         </button>
+                                                     </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Main Content Area (Title + Results) */}
+                                    <div className={viewState.isAdmin ? "p-6 md:p-10" : ""}>
+                                        {!viewState.isAdmin && (
+                                            <div className="flex justify-end mb-4 print:hidden">
                                                 <button 
-                                                    onClick={() => copyToClipboard(window.location.href, 'admin')}
-                                                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-white text-amber-700 hover:text-amber-900 border border-amber-200 hover:bg-amber-100 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm"
+                                                    onClick={handleManualRefresh}
+                                                    className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
+                                                    disabled={isRefreshing}
                                                 >
-                                                    {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} 
-                                                    {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
+                                                    <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                                                    {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
                                                 </button>
                                             </div>
+                                        )}
 
-                                        </div>
+                                        <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
+                                        {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
+                                        
+                                        <VoteGeneratorResults 
+                                            poll={viewState.poll} 
+                                            results={viewState.results}
+                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
+                                        />
+                                        
+                                         {/* Vote Again Button for Non-Admin with Security 'none' */}
+                                        {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (
+                                            <div className="mt-8 flex flex-col items-center justify-center print:hidden">
+                                                <button
+                                                    onClick={handleVoteAgain}
+                                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                                >
+                                                    <RotateCcw size={18} />
+                                                    Vote Again
+                                                </button>
+                                                <p className="text-slate-400 text-xs mt-2">
+                                                    Multiple votes are allowed for this poll.
+                                                </p>
+                                            </div>
+                                        )}
+                                        
+                                        {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (
+                                            <div className="mt-12 text-center print:hidden">
+                                                <button 
+                                                    onClick={goHome} 
+                                                    className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                                >
+                                                    Create your own poll <ArrowRight size={14}/>
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-
-                                {!viewState.isAdmin && (
-                                     <div className="flex justify-end mb-4 print:hidden">
-                                         <button 
-                                            onClick={handleManualRefresh}
-                                            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
-                                            disabled={isRefreshing}
-                                        >
-                                            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                                            {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
-                                        </button>
-                                     </div>
-                                )}
-
-                                <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-2 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
-                                {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
-                                
-                                <VoteGeneratorResults 
-                                    poll={viewState.poll} 
-                                    results={viewState.results}
-                                    onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
-                                />
-
-                                {/* Vote Again Button for Non-Admin with Security 'none' */}
-                                {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (
-                                    <div className="mt-8 flex flex-col items-center justify-center print:hidden">
-                                        <button
-                                            onClick={handleVoteAgain}
-                                            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                        >
-                                            <RotateCcw size={18} />
-                                            Vote Again
-                                        </button>
-                                        <p className="text-slate-400 text-xs mt-2">
-                                            Multiple votes are allowed for this poll.
-                                        </p>
-                                    </div>
-                                )}
-                                
-                                {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (
-                                    <div className="mt-12 text-center print:hidden">
-                                        <button 
-                                            onClick={goHome} 
-                                            className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
-                                        >
-                                            Create your own poll <ArrowRight size={14}/>
-                                        </button>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         </motion.div>
                     )}

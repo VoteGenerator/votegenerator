@@ -1,6 +1,7 @@
+// ... imports
 import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
-// --- Local Storage Fallback Helpers ---
+// ... (keep existing helper functions like generateId, getLocalPolls, saveLocalPoll, getLocalVotes, saveLocalVote) ...
 const LS_PREFIX = 'votegenerator_';
 
 const generateId = (len: number = 8) => {
@@ -96,6 +97,28 @@ export const createPoll = async (data: {
         saveLocalPoll(poll);
         await new Promise(resolve => setTimeout(resolve, 800)); 
         return { id, adminKey };
+    }
+};
+
+export const updatePoll = async (id: string, adminKey: string, updates: Partial<Poll>): Promise<void> => {
+    try {
+         const response = await fetch('/.netlify/functions/update-poll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, adminKey, updates }),
+        });
+
+        if (response.ok) return;
+        throw new Error('API_UNAVAILABLE');
+    } catch (error) {
+        const polls = getLocalPolls();
+        const poll = polls[id];
+        
+        if (!poll || poll.adminKey !== adminKey) throw new Error("Unauthorized or Poll not found");
+
+        const updatedPoll = { ...poll, ...updates };
+        saveLocalPoll(updatedPoll);
+        await new Promise(resolve => setTimeout(resolve, 500)); 
     }
 };
 

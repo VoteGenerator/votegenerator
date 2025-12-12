@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Printer } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Printer, Settings } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
+import VoteGeneratorEdit from './VoteGeneratorEdit';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -12,6 +13,7 @@ type ViewState =
     | { type: 'loading' }
     | { type: 'vote'; poll: Poll }
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
+    | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -118,6 +120,12 @@ const VoteGeneratorApp: React.FC = () => {
         setIsRefreshing(true);
         await loadView(true);
         setTimeout(() => setIsRefreshing(false), 500);
+    };
+
+    const handleEditPoll = () => {
+        if(viewState.type === 'results' && viewState.isAdmin) {
+             setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
+        }
     };
 
     const handlePrintPDF = () => {
@@ -265,6 +273,16 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
+                    {viewState.type === 'edit' && (
+                         <motion.div key="edit" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                            <VoteGeneratorEdit
+                                poll={viewState.poll}
+                                onCancel={() => loadView(true)}
+                                onUpdate={() => loadView(false)}
+                            />
+                         </motion.div>
+                    )}
+
                     {viewState.type === 'results' && (
                         <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="max-w-3xl mx-auto px-4 py-8">
@@ -401,6 +419,13 @@ const VoteGeneratorApp: React.FC = () => {
                                 {viewState.isAdmin && (
                                     <div className="flex flex-wrap justify-end gap-2 mb-4 print:hidden">
                                         <button 
+                                            onClick={handleEditPoll}
+                                            className="flex items-center gap-2 bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm"
+                                        >
+                                            <Settings size={16}/>
+                                            Edit Poll
+                                        </button>
+                                        <button 
                                             onClick={handlePrintPDF}
                                             className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm"
                                         >
@@ -434,7 +459,11 @@ const VoteGeneratorApp: React.FC = () => {
                                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 text-center font-serif">{viewState.poll.title}</h1>
                                 {viewState.poll.description && <p className="text-slate-500 text-center mb-8 max-w-2xl mx-auto">{viewState.poll.description}</p>}
                                 
-                                <VoteGeneratorResults poll={viewState.poll} results={viewState.results} />
+                                <VoteGeneratorResults 
+                                    poll={viewState.poll} 
+                                    results={viewState.results}
+                                    onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
+                                />
                                 
                                 {!viewState.isAdmin && (
                                     <div className="mt-12 text-center print:hidden">

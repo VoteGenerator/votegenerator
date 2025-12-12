@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, Check, LayoutGrid, PieChart } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, Check, LayoutGrid, PieChart, Settings } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
     poll: Poll;
     results: RunoffResult;
+    onEdit?: () => void;
 }
 
-const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
+const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const { winnerId, rounds, totalVotes, simpleCounts, votes } = results;
     // Determine default view based on poll type
     const [viewMode, setViewMode] = useState<'chart' | 'pie' | 'grid'>('chart');
@@ -51,6 +52,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-800">No votes yet</h3>
                 <p className="text-slate-500 mt-2">Share the link to get started!</p>
+                {onEdit && (
+                    <button 
+                        onClick={onEdit}
+                        className="mt-6 px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition-colors inline-flex items-center gap-2"
+                    >
+                        <Settings size={16} /> Edit Poll Settings
+                    </button>
+                )}
             </div>
         );
     }
@@ -91,7 +100,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
 
     // Simple Conic Gradient for Pie Chart
     const pieGradient = pieData.map(d => `${d.color} ${d.startAngle}deg ${d.startAngle + d.angle}deg`).join(', ');
-
 
     return (
         <div className="space-y-6 print:space-y-4">

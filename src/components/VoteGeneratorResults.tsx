@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Users, AlertCircle } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
-    const { winnerId, rounds, totalVotes, voters } = results;
+    const { winnerId, rounds, totalVotes, voters, simpleCounts } = results;
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
@@ -35,24 +35,26 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
         );
     }
 
+    const isRanked = poll.pollType === 'ranked';
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 print:space-y-4">
             {/* Winner Card */}
-            {winnerId && (
+            {winnerId && isRanked && (
                 <motion.div 
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden"
+                    className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden print:border print:border-slate-300 print:bg-none print:text-black"
                 >
-                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden">
                         <Trophy size={120} />
                     </div>
                     <div className="relative z-10">
-                        <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2">The Winner Is</div>
+                        <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2 print:text-slate-500">The Winner Is</div>
                         <h2 className="text-3xl md:text-5xl font-black font-serif mb-4">
                             {getOptionText(winnerId)}
                         </h2>
-                        <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+                        <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm print:bg-slate-100 print:text-slate-900">
                             <Users size={18} />
                             <span className="font-semibold">{totalVotes} Total Votes</span>
                         </div>
@@ -60,9 +62,20 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                 </motion.div>
             )}
 
+            {/* Multiple Choice - Top Option Highlight (Simulated Winner) */}
+            {!isRanked && simpleCounts && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Just simple stats card */}
+                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
+                        <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Total Votes</div>
+                        <div className="text-4xl font-black text-slate-800">{totalVotes}</div>
+                    </div>
+                </div>
+            )}
+
             {/* Rounds Visualization for RCV */}
-            {rounds.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
+            {isRanked && rounds.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300">
                     <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                         Results Breakdown
                         {rounds.length > 1 && (
@@ -79,7 +92,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                                 .sort(([, a], [, b]) => b - a);
 
                             return (
-                                <div key={round.roundNumber} className="relative">
+                                <div key={round.roundNumber} className="relative break-inside-avoid">
                                     <div className="flex justify-between items-end mb-4">
                                         <h4 className="font-bold text-slate-400 uppercase tracking-wider text-sm">
                                             Round {round.roundNumber}
@@ -108,12 +121,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                                                             {count} ({percentage.toFixed(0)}%)
                                                         </span>
                                                     </div>
-                                                    <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${percentage}%` }}
                                                             transition={{ duration: 1, ease: "easeOut" }}
-                                                            className={`h-full rounded-full ${getBarColor(id)}`}
+                                                            className={`h-full rounded-full ${getBarColor(id)} print:bg-slate-600`}
                                                         />
                                                     </div>
                                                 </div>
@@ -131,9 +144,50 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
                 </div>
             )}
 
+            {/* Multiple Choice Visualization */}
+            {!isRanked && simpleCounts && (
+                 <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <BarChart size={24} className="text-indigo-500"/> Vote Breakdown
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        {Object.entries(simpleCounts)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([id, count]) => {
+                                // For multiple choice, totalVotes might not be the denominator if multiple selections allowed.
+                                // We often use totalVotes (ballots) or total selections. 
+                                // Let's use totalVotes (ballots cast) for percentage to show "X% of voters chose this"
+                                const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                                
+                                return (
+                                    <div key={id} className="relative break-inside-avoid">
+                                        <div className="flex justify-between text-sm font-medium mb-1">
+                                            <span className="text-slate-800 font-bold text-lg">
+                                                {getOptionText(id)}
+                                            </span>
+                                            <span className="text-slate-600 font-bold">
+                                                {count} <span className="text-slate-400 font-normal text-xs ml-1">({percentage.toFixed(0)}% of voters)</span>
+                                            </span>
+                                        </div>
+                                        <div className="h-6 bg-slate-100 rounded-lg overflow-hidden print:border print:border-slate-200">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${percentage}%` }}
+                                                transition={{ duration: 1, ease: "easeOut" }}
+                                                className={`h-full rounded-lg ${getBarColor(id)} opacity-90 print:bg-slate-600`}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                    </div>
+                 </div>
+            )}
+
             {/* Participants List */}
             {voters && voters.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300 break-inside-avoid">
                      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                         Participants
                         <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-normal">

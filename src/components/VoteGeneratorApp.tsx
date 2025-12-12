@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, Info, ArrowRight, FileSpreadsheet, Printer } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -120,6 +120,10 @@ const VoteGeneratorApp: React.FC = () => {
         setTimeout(() => setIsRefreshing(false), 500);
     };
 
+    const handlePrintPDF = () => {
+        window.print();
+    };
+
     const handleExportCSV = async () => {
         if (viewState.type !== 'results' || !viewState.isAdmin) return;
         
@@ -205,7 +209,7 @@ const VoteGeneratorApp: React.FC = () => {
         <div className="min-h-screen pb-10">
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
-                <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
                     <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
                         <button 
                             onClick={goHome}
@@ -216,7 +220,8 @@ const VoteGeneratorApp: React.FC = () => {
                         </button>
                         
                         <div className="flex items-center gap-2">
-                             {(viewState.type === 'results' || viewState.type === 'vote') && (
+                             {/* Only show share button if viewing results (not while voting) */}
+                             {viewState.type === 'results' && (
                                 <button
                                     onClick={() => copyToClipboard(getShareUrl(), 'share')}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
@@ -266,23 +271,13 @@ const VoteGeneratorApp: React.FC = () => {
                                 
                                 {/* Admin Hub */}
                                 {viewState.isAdmin && (
-                                    <div className="bg-white rounded-3xl shadow-xl border border-indigo-100 p-6 md:p-8 mb-8 overflow-hidden relative">
+                                    <div className="bg-white rounded-3xl shadow-xl border border-indigo-100 p-6 md:p-8 mb-8 overflow-hidden relative print:hidden">
                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500"></div>
                                         <div className="flex items-center justify-between mb-6">
                                             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                                                 <ShieldCheck className="text-indigo-600" size={28}/> 
                                                 Admin Hub
                                             </h2>
-                                            
-                                            {/* Export Button */}
-                                            <button 
-                                                onClick={handleExportCSV}
-                                                disabled={isExporting}
-                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm disabled:opacity-70 disabled:cursor-wait"
-                                            >
-                                                {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>}
-                                                Export CSV
-                                            </button>
                                         </div>
                                         
                                         <div className="grid md:grid-cols-2 gap-6">
@@ -402,8 +397,29 @@ const VoteGeneratorApp: React.FC = () => {
                                     </div>
                                 )}
 
+                                {/* Admin Toolbar (Export/Print) - Shown above results */}
+                                {viewState.isAdmin && (
+                                    <div className="flex flex-wrap justify-end gap-2 mb-4 print:hidden">
+                                        <button 
+                                            onClick={handlePrintPDF}
+                                            className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm"
+                                        >
+                                            <Printer size={16}/>
+                                            Print / Save PDF
+                                        </button>
+                                        <button 
+                                            onClick={handleExportCSV}
+                                            disabled={isExporting}
+                                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm disabled:opacity-70 disabled:cursor-wait"
+                                        >
+                                            {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>}
+                                            Export CSV
+                                        </button>
+                                    </div>
+                                )}
+
                                 {!viewState.isAdmin && (
-                                     <div className="flex justify-end mb-4">
+                                     <div className="flex justify-end mb-4 print:hidden">
                                          <button 
                                             onClick={handleManualRefresh}
                                             className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
@@ -421,7 +437,7 @@ const VoteGeneratorApp: React.FC = () => {
                                 <VoteGeneratorResults poll={viewState.poll} results={viewState.results} />
                                 
                                 {!viewState.isAdmin && (
-                                    <div className="mt-12 text-center">
+                                    <div className="mt-12 text-center print:hidden">
                                         <button 
                                             onClick={goHome} 
                                             className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"

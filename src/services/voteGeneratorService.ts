@@ -220,9 +220,19 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
     // Extract used codes
     const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
+    
+    // Calculate simple counts (Frequency of each option selected)
+    const simpleCounts: Record<string, number> = {};
+    votes.forEach((v: any) => {
+        if(Array.isArray(v.choices)) {
+            v.choices.forEach((c: string) => {
+                if(c) simpleCounts[c] = (simpleCounts[c] || 0) + 1;
+            });
+        }
+    });
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], simpleCounts: {} };
     }
 
     // Instant Runoff Calculation
@@ -308,6 +318,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         rounds,
         totalVotes: votes.length,
         voters,
-        usedCodes
+        usedCodes,
+        simpleCounts
     };
 };

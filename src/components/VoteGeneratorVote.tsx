@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, Reorder } from 'framer-motion';
 import { Check, GripVertical, ArrowRight, Loader2, Shuffle, User, Clock, Lock, Key, Users, MessageSquare } from 'lucide-react';
 import { Poll, PollOption } from '../types';
@@ -32,6 +32,16 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Initialize access code from URL param if present (e.g., #id=...&code=12345)
+    useEffect(() => {
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        const codeParam = params.get('code');
+        if (codeParam) {
+            setAccessCode(codeParam);
+        }
+    }, []);
 
     // Check Closing Triggers
     const isDeadlineExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);

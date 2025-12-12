@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Printer, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Printer, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -23,6 +23,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [copiedCodes, setCopiedCodes] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [showQrModal, setShowQrModal] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -242,6 +243,31 @@ const VoteGeneratorApp: React.FC = () => {
         const body = getShareText(viewState.poll.title);
         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
     };
+    
+    // Using a reliable public API for QR generation. 
+    // In a production app with npm access, we would use 'qrcode.react' or similar.
+    const getQrUrl = () => {
+        const url = encodeURIComponent(getShareUrl());
+        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&bgcolor=ffffff`;
+    };
+
+    const downloadQrCode = async () => {
+        try {
+            const response = await fetch(getQrUrl());
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'poll-qrcode.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Failed to download QR", e);
+            alert("Could not download image automatically. Please right-click the image to save.");
+        }
+    };
 
     return (
         <div className="min-h-screen pb-10">
@@ -408,7 +434,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                      <div className="flex gap-2">
                                                          <button onClick={shareToWhatsapp} className="flex-1 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
                                                          <button onClick={shareToSms} className="flex-1 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
-                                                         <button onClick={shareToEmail} className="flex-1 py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
+                                                         <button onClick={() => setShowQrModal(true)} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
                                                      </div>
                                                 </div>
 
@@ -427,7 +453,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                              {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
                                                          </button>
                                                          <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                                                             <Printer size={14}/> Download PDF
+                                                             <Download size={14}/> Download PDF
                                                          </button>
                                                      </div>
                                                 </div>
@@ -510,6 +536,51 @@ const VoteGeneratorApp: React.FC = () => {
                             >
                                 Create New Poll
                             </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                
+                {/* QR Code Modal */}
+                <AnimatePresence>
+                    {showQrModal && (
+                         <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+                            onClick={() => setShowQrModal(false)}
+                        >
+                             <motion.div 
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl"
+                                onClick={e => e.stopPropagation()}
+                             >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold text-slate-800">Scan to Vote</h3>
+                                    <button onClick={() => setShowQrModal(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1 rounded-full"><X size={20}/></button>
+                                </div>
+                                
+                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-center mb-6">
+                                     <img src={getQrUrl()} alt="QR Code" className="w-48 h-48 mix-blend-multiply" />
+                                </div>
+
+                                {viewState.type === 'results' && viewState.poll.settings.security === 'code' && (
+                                     <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg border border-amber-100 mb-6 flex gap-2">
+                                        <Key size={16} className="shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong>Note:</strong> This QR code opens the voting page. Voters must still manually enter their unique Access Code after scanning.
+                                        </div>
+                                     </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                     <button onClick={downloadQrCode} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2">
+                                         <Download size={18}/> Download PNG
+                                     </button>
+                                </div>
+                             </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -1,4 +1,4 @@
-import { Poll, PollOption, RunoffResult, RoundLog, Vote } from '../types';
+import { Poll, RunoffResult, RoundLog } from '../types';
 
 // --- Local Storage Fallback Helpers ---
 const LS_PREFIX = 'votegenerator_';

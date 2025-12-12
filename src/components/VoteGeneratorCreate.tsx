@@ -183,7 +183,6 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const validOptionCount = options.filter(o => o.trim() !== '').length;
-    const selectedPollType = POLL_TYPES.find(t => t.id === pollType);
 
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20">

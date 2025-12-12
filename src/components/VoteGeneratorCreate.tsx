@@ -1,10 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image, Calendar } from 'lucide-react';
-import { createPoll } from '../services/voteGeneratorService';
-import { trackEvent } from '../services/analyticsService';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar } from 'lucide-react';
+import { createPoll } from './services/voteGeneratorService';
 
-// Poll type definitions with user-friendly descriptions
 const POLL_TYPES = [
     {
         id: 'ranked',
@@ -25,10 +23,10 @@ const POLL_TYPES = [
     {
         id: 'image',
         name: 'Image Poll',
-        icon: Image,
+        icon: ImageIcon,
         description: 'Voters choose between images (logos, designs, photos)',
-        bestFor: 'Best for: Visual comparisons like logo or design votes',
-        example: 'e.g., "Which logo design do you prefer?"',
+        bestFor: 'Best for: Visual comparisons',
+        example: 'e.g., "Which logo design?"',
         comingSoon: true
     },
     {
@@ -36,7 +34,7 @@ const POLL_TYPES = [
         name: 'Meeting Poll',
         icon: Calendar,
         description: 'Voters mark which times work for them',
-        bestFor: 'Best for: Scheduling meetings across time zones',
+        bestFor: 'Best for: Scheduling meetings',
         example: 'e.g., "When can everyone meet?"',
         comingSoon: true
     }
@@ -71,6 +69,7 @@ const VoteGeneratorCreate: React.FC = () => {
         newOptions[index] = value;
         setOptions(newOptions);
         
+        // Auto-add input field if typing in the last one
         if (index === options.length - 1 && value.trim() !== '' && options.length < 20) {
             setOptions([...newOptions, '']);
         }
@@ -86,9 +85,7 @@ const VoteGeneratorCreate: React.FC = () => {
                 nextInput.focus();
             } else if (options.length < 20) {
                 setOptions([...options, '']);
-                setTimeout(() => {
-                    lastInputRef.current?.focus();
-                }, 50);
+                setTimeout(() => lastInputRef.current?.focus(), 50);
             }
         }
         
@@ -110,9 +107,7 @@ const VoteGeneratorCreate: React.FC = () => {
     const addOption = () => {
         if (options.length >= 20) return;
         setOptions([...options, '']);
-        setTimeout(() => {
-            lastInputRef.current?.focus();
-        }, 50);
+        setTimeout(() => lastInputRef.current?.focus(), 50);
     };
 
     const handleCreate = async () => {
@@ -143,13 +138,7 @@ const VoteGeneratorCreate: React.FC = () => {
                 } 
             });
             
-            trackEvent('votegenerator_poll_created', { 
-                optionCount: validOptions.length,
-                pollType,
-                hasDescription: !!description.trim(),
-                hideResults
-            });
-            
+            // Redirect to the new poll
             window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
         } catch (e) {
             console.error('Failed to create poll:', e);
@@ -162,12 +151,12 @@ const VoteGeneratorCreate: React.FC = () => {
     const selectedPollType = POLL_TYPES.find(t => t.id === pollType);
 
     return (
-        <div className="max-w-2xl mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-4 pb-20">
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center mb-10"
+                className="text-center mb-10 pt-10"
             >
                 <motion.div 
                     initial={{ scale: 0, rotate: -180 }}
@@ -182,7 +171,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     VoteGenerator
                 </h1>
                 <p className="text-lg text-slate-500 max-w-md mx-auto">
-                    Create a free poll in seconds. <br/>Share a link. Get answers.
+                    Create a free ranked-choice poll in seconds. <br/>Share a link. Get consensus.
                 </p>
             </motion.div>
 
@@ -230,15 +219,15 @@ const VoteGeneratorCreate: React.FC = () => {
                                         }`}
                                     >
                                         {isDisabled && (
-                                            <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                                            <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-semibold">
                                                 Soon
                                             </span>
                                         )}
                                         <Icon size={20} className={isSelected ? 'text-indigo-600' : 'text-slate-400'} />
-                                        <span className={`block font-bold mt-1 ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                        <span className={`block font-bold mt-2 ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
                                             {type.name}
                                         </span>
-                                        <span className="text-xs text-slate-500 block mt-0.5">
+                                        <span className="text-xs text-slate-500 block mt-1 leading-tight">
                                             {type.description}
                                         </span>
                                     </button>
@@ -253,7 +242,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100"
+                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden"
                                 >
                                     <p className="text-sm text-indigo-800 font-medium">{selectedPollType.bestFor}</p>
                                     <p className="text-sm text-indigo-600 mt-1">{selectedPollType.example}</p>
@@ -274,7 +263,6 @@ const VoteGeneratorCreate: React.FC = () => {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             maxLength={200}
-                            autoFocus
                         />
                     </div>
                     
@@ -298,8 +286,8 @@ const VoteGeneratorCreate: React.FC = () => {
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
                                 {pollType === 'ranked' ? 'Options to Rank' : 'Answer Choices'}
                             </label>
-                            <span className="text-sm text-slate-400">
-                                {validOptionCount} of 20 max
+                            <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
+                                {validOptionCount} / 20
                             </span>
                         </div>
                         
@@ -311,7 +299,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                         layout
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20, height: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
                                         className="flex items-center gap-3 group"
                                     >
                                         <span className="text-slate-300 font-bold w-6 text-right text-sm">
@@ -347,7 +335,7 @@ const VoteGeneratorCreate: React.FC = () => {
                         {options.length < 20 && (
                             <button
                                 onClick={addOption}
-                                className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                                className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors p-2 hover:bg-indigo-50 rounded-lg -ml-2"
                             >
                                 <Plus size={16} /> Add another option
                             </button>
@@ -355,15 +343,15 @@ const VoteGeneratorCreate: React.FC = () => {
                     </div>
 
                     {/* Settings */}
-                    <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <div className="pt-6 border-t border-slate-100 space-y-3">
                         {/* Multiple Choice - Allow Multiple Selections */}
                         {pollType === 'multiple' && (
-                            <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                            <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3 border border-transparent hover:border-slate-100">
                                 <input 
                                     type="checkbox" 
                                     checked={allowMultiple}
                                     onChange={e => setAllowMultiple(e.target.checked)}
-                                    className="w-5 h-5 mt-0.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                                    className="w-5 h-5 mt-0.5 accent-indigo-600 cursor-pointer"
                                 />
                                 <div className="flex-1">
                                     <span className="font-bold text-slate-700">Allow multiple selections</span>
@@ -377,22 +365,22 @@ const VoteGeneratorCreate: React.FC = () => {
                         )}
 
                         {/* Hide Results */}
-                        <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
+                        <label className="flex items-start gap-4 cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3 border border-transparent hover:border-slate-100">
                             <input 
                                 type="checkbox" 
                                 checked={hideResults}
                                 onChange={e => setHideResults(e.target.checked)}
-                                className="w-5 h-5 mt-0.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                                className="w-5 h-5 mt-0.5 accent-indigo-600 cursor-pointer"
                             />
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    {hideResults ? <EyeOff size={16} className="text-amber-500" /> : <Eye size={16} className="text-slate-400" />}
                                     <span className="font-bold text-slate-700">Hide results until you reveal them</span>
+                                    {hideResults ? <EyeOff size={16} className="text-amber-500" /> : <Eye size={16} className="text-slate-400" />}
                                 </div>
                                 <span className="text-sm text-slate-500 block mt-1">
                                     {hideResults 
-                                        ? "Only you can see results. Share when you're ready."
-                                        : "Voters see results right after they vote."}
+                                        ? "Only admin (you) can see results initially."
+                                        : "Voters see live results immediately after voting."}
                                 </span>
                             </div>
                         </label>
@@ -417,12 +405,12 @@ const VoteGeneratorCreate: React.FC = () => {
                     <button 
                         onClick={handleCreate}
                         disabled={isCreating || validOptionCount < 2 || !title.trim()}
-                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg transform active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg transform active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
                     >
                         {isCreating ? (
                             <>
                                 <Loader2 className="animate-spin" size={22} />
-                                Creating...
+                                Creating Poll...
                             </>
                         ) : (
                             <>
@@ -442,37 +430,24 @@ const VoteGeneratorCreate: React.FC = () => {
                 transition={{ delay: 0.4 }}
                 className="mt-8 grid md:grid-cols-3 gap-4 text-center"
             >
-                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                     <strong className="block text-indigo-900 mb-1">🆓 100% Free</strong>
-                    <span className="text-indigo-700 text-sm">
+                    <span className="text-slate-500 text-sm">
                         No hidden costs or limits
                     </span>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                    <strong className="block text-emerald-900 mb-1">🔓 No Sign Up</strong>
-                    <span className="text-emerald-700 text-sm">
-                        Just create and share the link
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <strong className="block text-indigo-900 mb-1">🔓 No Sign Up</strong>
+                    <span className="text-slate-500 text-sm">
+                        Just create and share link
                     </span>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                    <strong className="block text-purple-900 mb-1">📱 Works Everywhere</strong>
-                    <span className="text-purple-700 text-sm">
-                        Phone, tablet, or computer
+                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <strong className="block text-indigo-900 mb-1">📱 Modern</strong>
+                    <span className="text-slate-500 text-sm">
+                        Ranked Choice Voting
                     </span>
                 </div>
-            </motion.div>
-
-            {/* How It Works */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-8 text-center text-slate-500 text-sm"
-            >
-                <p>
-                    <strong>How it works:</strong> Create your poll above, share the link with your group, 
-                    and watch the votes come in. It's that simple!
-                </p>
             </motion.div>
         </div>
     );

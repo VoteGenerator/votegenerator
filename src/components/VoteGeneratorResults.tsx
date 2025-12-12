@@ -1,315 +1,135 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, ChevronRight, Play, RotateCcw, Sparkles, XCircle } from 'lucide-react';
-import type { RunoffResult } from '../types';
-import confetti from 'canvas-confetti';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Trophy, Users, AlertCircle } from 'lucide-react';
+import { RunoffResult, Poll } from './types';
 
-interface VoteGeneratorResultsProps {
-    runoffResult: RunoffResult;
-    pollTitle: string;
+interface Props {
+    poll: Poll;
+    results: RunoffResult;
 }
 
-const VoteGeneratorResults: React.FC<VoteGeneratorResultsProps> = ({ runoffResult, pollTitle }) => {
-    const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [autoPlay, setAutoPlay] = useState(false);
-    const [showVoteFlow, setShowVoteFlow] = useState(false);
-    const [hasShownConfetti, setHasShownConfetti] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
+const VoteGeneratorResults: React.FC<Props> = ({ poll, results }) => {
+    const { winnerId, rounds, totalVotes } = results;
 
-    const { rounds, winner, totalVotes } = runoffResult;
-    const currentRound = rounds[currentRoundIndex];
-    const isLastRound = currentRoundIndex === rounds.length - 1;
+    const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    // Auto-play through rounds
-    useEffect(() => {
-        if (!autoPlay || isLastRound) return;
-        
-        const timer = setTimeout(() => {
-            advanceRound();
-        }, 2500);
-
-        return () => clearTimeout(timer);
-    }, [autoPlay, currentRoundIndex, isLastRound]);
-
-    // Confetti on winner
-    useEffect(() => {
-        if (isLastRound && currentRound.winnerId && !hasShownConfetti) {
-            setHasShownConfetti(true);
-            setTimeout(() => {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444']
-                });
-            }, 500);
-        }
-    }, [isLastRound, currentRound.winnerId, hasShownConfetti]);
-
-    const advanceRound = () => {
-        if (isLastRound) return;
-        
-        setIsAnimating(true);
-        setShowVoteFlow(true);
-
-        // Show vote redistribution animation
-        setTimeout(() => {
-            setShowVoteFlow(false);
-            setCurrentRoundIndex(prev => prev + 1);
-            setIsAnimating(false);
-        }, 1500);
+    // Get color for bars (consistent per option)
+    const getBarColor = (id: string) => {
+        const index = poll.options.findIndex(o => o.id === id);
+        const colors = [
+            'bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 
+            'bg-teal-500', 'bg-orange-500', 'bg-cyan-500', 'bg-lime-500'
+        ];
+        return colors[index % colors.length];
     };
 
-    const resetAnimation = () => {
-        setCurrentRoundIndex(0);
-        setAutoPlay(false);
-        setHasShownConfetti(false);
-    };
-
-    const startAutoPlay = () => {
-        setAutoPlay(true);
-        if (currentRoundIndex === rounds.length - 1) {
-            resetAnimation();
-        }
-    };
-
-    // Calculate max votes for bar scaling
-    const maxVotes = Math.max(...currentRound.standings.map(s => s.voteCount));
-    const majorityThreshold = Math.ceil(totalVotes / 2);
+    if (totalVotes === 0) {
+        return (
+            <div className="text-center py-10 bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users size={32} className="text-slate-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800">No votes yet</h3>
+                <p className="text-slate-500 mt-2">Share the link to get started!</p>
+            </div>
+        );
+    }
 
     return (
-        <div ref={containerRef} className="max-w-2xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-8">
-                <motion.div
+        <div className="space-y-6">
+            {/* Winner Card */}
+            {winnerId && (
+                <motion.div 
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold mb-4"
+                    className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden"
                 >
-                    <Users size={16} />
-                    {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'} cast
+                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <Trophy size={120} />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2">The Winner Is</div>
+                        <h2 className="text-3xl md:text-5xl font-black font-serif mb-4">
+                            {getOptionText(winnerId)}
+                        </h2>
+                        <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+                            <Users size={18} />
+                            <span className="font-semibold">{totalVotes} Total Votes</span>
+                        </div>
+                    </div>
                 </motion.div>
-                <h1 className="text-3xl font-black text-slate-800 mb-2">{pollTitle}</h1>
-                <p className="text-slate-500">Ranked Choice Results</p>
-            </div>
+            )}
 
-            {/* Round Indicator */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-                {rounds.map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => !isAnimating && setCurrentRoundIndex(idx)}
-                        className={`w-8 h-8 rounded-full font-bold text-sm transition-all ${
-                            idx === currentRoundIndex
-                                ? 'bg-indigo-600 text-white scale-110'
-                                : idx < currentRoundIndex
-                                ? 'bg-indigo-200 text-indigo-700'
-                                : 'bg-slate-200 text-slate-400'
-                        }`}
-                    >
-                        {idx + 1}
-                    </button>
-                ))}
-            </div>
+            {/* Rounds Visualization for RCV */}
+            {rounds.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        Results Breakdown
+                        {rounds.length > 1 && (
+                            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-normal">
+                                {rounds.length} Rounds
+                            </span>
+                        )}
+                    </h3>
 
-            {/* Round Label */}
-            <div className="text-center mb-6">
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">
-                    {isLastRound && currentRound.winnerId ? (
-                        <span className="text-emerald-600">🎉 Winner Determined!</span>
-                    ) : (
-                        `Round ${currentRound.roundNumber} of ${rounds.length}`
-                    )}
-                </span>
-                {!isLastRound && currentRound.eliminated && (
-                    <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-500 text-sm mt-1"
-                    >
-                        Lowest option will be eliminated...
-                    </motion.p>
-                )}
-            </div>
+                    <div className="space-y-10">
+                        {rounds.map((round) => {
+                            const roundTotal = Object.values(round.counts).reduce((a,b) => a+b, 0);
+                            const sortedEntries = Object.entries(round.counts)
+                                .sort(([, a], [, b]) => b - a);
 
-            {/* Majority Line Indicator */}
-            <div className="relative mb-2 px-4">
-                <div className="flex items-center justify-end text-xs text-slate-400">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded">
-                        Majority: {majorityThreshold} votes (50%+)
-                    </span>
-                </div>
-            </div>
+                            return (
+                                <div key={round.roundNumber} className="relative">
+                                    <div className="flex justify-between items-end mb-4">
+                                        <h4 className="font-bold text-slate-400 uppercase tracking-wider text-sm">
+                                            Round {round.roundNumber}
+                                        </h4>
+                                        {round.eliminatedId && (
+                                            <div className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded font-medium flex items-center gap-1">
+                                                <AlertCircle size={12} />
+                                                Eliminated: {getOptionText(round.eliminatedId)}
+                                            </div>
+                                        )}
+                                    </div>
 
-            {/* Results Bars */}
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-4">
-                <AnimatePresence mode="popLayout">
-                    {currentRound.standings
-                        .sort((a, b) => b.voteCount - a.voteCount)
-                        .map((standing, index) => (
-                            <motion.div
-                                key={standing.optionId}
-                                layout
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ 
-                                    opacity: standing.isEliminated ? 0.4 : 1, 
-                                    x: 0,
-                                    scale: standing.isWinner ? 1.02 : 1
-                                }}
-                                exit={{ opacity: 0, x: 50, height: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className={`relative ${standing.isEliminated ? 'grayscale' : ''}`}
-                            >
-                                {/* Winner Crown */}
-                                {standing.isWinner && (
-                                    <motion.div
-                                        initial={{ scale: 0, rotate: -20 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        className="absolute -left-2 -top-2 z-10"
-                                    >
-                                        <div className="bg-amber-400 rounded-full p-1.5 shadow-lg">
-                                            <Trophy size={16} className="text-amber-900" />
-                                        </div>
-                                    </motion.div>
-                                )}
+                                    <div className="space-y-3">
+                                        {sortedEntries.map(([id, count]) => {
+                                            const percentage = (count / roundTotal) * 100;
+                                            const isWinner = id === round.winnerId;
+                                            const isEliminated = id === round.eliminatedId;
 
-                                {/* Eliminated Badge */}
-                                {standing.isEliminated && (
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="absolute -right-2 -top-2 z-10"
-                                    >
-                                        <div className="bg-red-500 rounded-full p-1 shadow-lg">
-                                            <XCircle size={14} className="text-white" />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                <div className={`rounded-xl p-4 border-2 transition-all ${
-                                    standing.isWinner 
-                                        ? 'border-emerald-400 bg-emerald-50 shadow-lg shadow-emerald-100' 
-                                        : standing.isEliminated
-                                        ? 'border-slate-200 bg-slate-50'
-                                        : 'border-slate-200 bg-white'
-                                }`}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className={`font-bold ${
-                                            standing.isWinner ? 'text-emerald-700' : 'text-slate-700'
-                                        }`}>
-                                            {standing.optionText}
-                                        </span>
-                                        <span className={`font-black text-lg ${
-                                            standing.isWinner ? 'text-emerald-600' : 'text-indigo-600'
-                                        }`}>
-                                            {standing.voteCount} <span className="text-sm font-normal text-slate-400">({standing.percentage}%)</span>
-                                        </span>
+                                            return (
+                                                <div key={id} className={`relative ${isEliminated ? 'opacity-50 grayscale' : ''}`}>
+                                                    <div className="flex justify-between text-sm font-medium mb-1">
+                                                        <span className={isWinner ? 'text-indigo-600 font-bold' : 'text-slate-700'}>
+                                                            {getOptionText(id)}
+                                                        </span>
+                                                        <span className="text-slate-500">
+                                                            {count} ({percentage.toFixed(0)}%)
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${percentage}%` }}
+                                                            transition={{ duration: 1, ease: "easeOut" }}
+                                                            className={`h-full rounded-full ${getBarColor(id)}`}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                     
-                                    {/* Vote Bar */}
-                                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden relative">
-                                        {/* Majority line */}
-                                        <div 
-                                            className="absolute top-0 bottom-0 w-0.5 bg-slate-300 z-10"
-                                            style={{ left: `${(majorityThreshold / maxVotes) * 100}%` }}
-                                        />
-                                        
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ 
-                                                width: `${maxVotes > 0 ? (standing.voteCount / maxVotes) * 100 : 0}%` 
-                                            }}
-                                            transition={{ duration: 0.8, ease: "easeOut", delay: index * 0.1 }}
-                                            className={`h-full rounded-full ${
-                                                standing.isWinner 
-                                                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' 
-                                                    : standing.isEliminated
-                                                    ? 'bg-slate-300'
-                                                    : 'bg-gradient-to-r from-indigo-400 to-indigo-500'
-                                            }`}
-                                        />
-                                    </div>
+                                    {round.roundNumber !== rounds.length && (
+                                        <div className="absolute -bottom-6 left-0 right-0 border-b border-dashed border-slate-200"></div>
+                                    )}
                                 </div>
-                            </motion.div>
-                        ))}
-                </AnimatePresence>
-
-                {/* Vote Flow Animation */}
-                <AnimatePresence>
-                    {showVoteFlow && currentRound.redistributedVotes && currentRound.redistributedVotes.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 pointer-events-none flex items-center justify-center"
-                        >
-                            <div className="bg-indigo-600 text-white px-4 py-2 rounded-full font-bold shadow-xl">
-                                <Sparkles className="inline mr-2" size={16} />
-                                Redistributing votes to 2nd choices...
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-4 mt-8">
-                {!isLastRound ? (
-                    <>
-                        <button
-                            onClick={startAutoPlay}
-                            disabled={isAnimating}
-                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50"
-                        >
-                            <Play size={18} /> {autoPlay ? 'Playing...' : 'Watch Runoff'}
-                        </button>
-                        <button
-                            onClick={advanceRound}
-                            disabled={isAnimating}
-                            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl border-2 border-slate-200 transition-all flex items-center gap-2 disabled:opacity-50"
-                        >
-                            Next Round <ChevronRight size={18} />
-                        </button>
-                    </>
-                ) : (
-                    <button
-                        onClick={resetAnimation}
-                        className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2"
-                    >
-                        <RotateCcw size={18} /> Watch Again
-                    </button>
-                )}
-            </div>
-
-            {/* Winner Announcement */}
-            <AnimatePresence>
-                {isLastRound && winner && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 text-center text-white shadow-xl"
-                    >
-                        <Trophy className="mx-auto mb-4" size={48} />
-                        <p className="text-emerald-100 uppercase tracking-wide text-sm font-bold mb-2">
-                            The Group Has Spoken
-                        </p>
-                        <h2 className="text-3xl font-black mb-2">{winner.text}</h2>
-                        <p className="text-emerald-100">
-                            Won with majority support after {rounds.length} round{rounds.length > 1 ? 's' : ''}
-                        </p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* How It Works */}
-            <div className="mt-8 bg-indigo-50 rounded-xl p-4 text-sm text-indigo-800">
-                <strong className="block mb-1">How Ranked Choice Works:</strong>
-                <p className="text-indigo-600">
-                    If no option gets 50%+ in Round 1, the lowest option is eliminated and those votes 
-                    transfer to each voter's next choice. This repeats until someone wins with majority support.
-                </p>
-            </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

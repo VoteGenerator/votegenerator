@@ -1,5 +1,4 @@
 
-// ... imports
 import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
 // ... (keep existing helper functions like generateId, getLocalPolls, saveLocalPoll, getLocalVotes, saveLocalVote) ...
@@ -45,7 +44,7 @@ export const createPoll = async (data: {
     title: string;
     description?: string;
     options: string[];
-    pollType: 'ranked' | 'multiple';
+    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image';
     settings: { 
         hideResults: boolean; 
         allowMultiple: boolean;
@@ -56,6 +55,7 @@ export const createPoll = async (data: {
         deadline?: string;
         maxVotes?: number;
         security: 'browser' | 'code' | 'none';
+        dotBudget?: number;
     };
     voterCount?: number; // Needed if security is 'code'
 }): Promise<{ id: string; adminKey: string }> => {

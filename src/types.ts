@@ -15,6 +15,7 @@ export interface PollSettings {
     deadline?: string; // ISO Date string
     maxVotes?: number; // Auto-close trigger
     security: 'browser' | 'code' | 'none';
+    dotBudget?: number; // For Dot Voting: How many points a user has
 }
 
 export interface Poll {
@@ -22,7 +23,7 @@ export interface Poll {
     adminKey?: string; // Only present if user is admin
     title: string;
     description?: string;
-    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting' | 'dot';
     options: PollOption[];
     settings: PollSettings;
     allowedCodes?: string[]; // List of valid codes if security is 'code'
@@ -33,7 +34,7 @@ export interface Poll {
 
 export interface Vote {
     pollId: string;
-    choices: string[]; 
+    choices: string[]; // For Dot: array with duplicates ['a','a','b'] = 2 votes A, 1 vote B
     votedAt: string;
     voterName?: string;
     usedCode?: string; // The code used to cast this vote

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -21,22 +21,20 @@ const POLL_TYPES = [
         example: 'e.g., "What day works for the meeting?"'
     },
     {
-        id: 'image',
-        name: 'Image Poll',
-        icon: ImageIcon,
-        description: 'Voters choose between images (logos, designs, photos)',
-        bestFor: 'Best for: Visual comparisons',
-        example: 'e.g., "Which logo design?"',
-        comingSoon: true
+        id: 'dot',
+        name: 'Dot Voting',
+        icon: Coins,
+        description: 'Voters get a budget of points to distribute among options',
+        bestFor: 'Best for: Budgeting, Prioritization, Funding',
+        example: 'e.g., "How should we spend the $1000 budget?"'
     },
     {
         id: 'meeting',
         name: 'Meeting Poll',
         icon: Calendar,
-        description: 'Voters mark which times work for them',
-        bestFor: 'Best for: Scheduling meetings',
-        example: 'e.g., "When can everyone meet?"',
-        comingSoon: true
+        description: 'Voters select all time slots that work for them',
+        bestFor: 'Best for: Scheduling meetings (Doodle style)',
+        example: 'e.g., "When can everyone meet?"'
     }
 ];
 
@@ -44,7 +42,7 @@ const PLACEHOLDER_QUESTIONS = [
     "Where should we eat lunch?",
     "What movie should we watch?",
     "When should we have the meeting?",
-    "Which design do you prefer?",
+    "Which features should we build next?",
     "What should we name the project?"
 ];
 
@@ -71,6 +69,7 @@ const VoteGeneratorCreate: React.FC = () => {
     const [voterCount, setVoterCount] = useState<number>(10);
     const [deadline, setDeadline] = useState<string>('');
     const [maxVotes, setMaxVotes] = useState<number | ''>('');
+    const [dotBudget, setDotBudget] = useState<number>(10); // Default budget
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
@@ -173,16 +172,17 @@ const VoteGeneratorCreate: React.FC = () => {
                 title: title.trim(), 
                 description: description.trim() || undefined, 
                 options: validOptions,
-                pollType: pollType as 'ranked' | 'multiple',
+                pollType: pollType as any,
                 voterCount: security === 'code' ? voterCount : undefined,
                 settings: { 
                     hideResults, 
-                    allowMultiple,
+                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, // Meeting implies multiple
                     requireNames,
                     allowComments,
                     publicComments,
                     blockVpn,
                     security,
+                    dotBudget: pollType === 'dot' ? dotBudget : undefined,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined,
                     maxVotes: maxVotes === '' ? undefined : Number(maxVotes)
                 } 
@@ -197,6 +197,7 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const validOptionCount = options.filter(o => o.trim() !== '').length;
+    const selectedPollType = POLL_TYPES.find(t => t.id === pollType);
 
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20">
@@ -250,27 +251,20 @@ const VoteGeneratorCreate: React.FC = () => {
                             {POLL_TYPES.map((type) => {
                                 const Icon = type.icon;
                                 const isSelected = pollType === type.id;
-                                const isDisabled = type.comingSoon;
+                                // const isDisabled = type.id === 'image'; // Placeholder for Image only
                                 
                                 return (
                                     <button
                                         key={type.id}
                                         type="button"
-                                        onClick={() => !isDisabled && setPollType(type.id)}
-                                        disabled={isDisabled}
+                                        onClick={() => setPollType(type.id)}
+                                        // disabled={isDisabled}
                                         className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                                             isSelected
                                                 ? 'border-indigo-500 bg-indigo-50'
-                                                : isDisabled
-                                                ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
                                                 : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
                                         }`}
                                     >
-                                        {isDisabled && (
-                                            <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-semibold">
-                                                Soon
-                                            </span>
-                                        )}
                                         <Icon size={20} className={isSelected ? 'text-indigo-600' : 'text-slate-400'} />
                                         <span className={`block font-bold mt-2 ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
                                             {type.name}
@@ -287,12 +281,12 @@ const VoteGeneratorCreate: React.FC = () => {
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            Your Question
+                            {pollType === 'meeting' ? 'Event Name' : 'Your Question'}
                         </label>
                         <input 
                             type="text" 
                             className="w-full p-4 text-xl font-bold border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:font-normal placeholder:text-slate-300"
-                            placeholder={placeholderQuestion}
+                            placeholder={pollType === 'meeting' ? "e.g., Q3 Strategy Meeting" : placeholderQuestion}
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             maxLength={200}
@@ -317,7 +311,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : 'Answer Choices'}
+                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : 'Options'}
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
                                 {validOptionCount} / 20
@@ -343,14 +337,14 @@ const VoteGeneratorCreate: React.FC = () => {
                                             <div className="relative flex-1">
                                                 <input 
                                                     ref={i === options.length - 1 ? lastInputRef : undefined}
-                                                    type="text" 
+                                                    type={pollType === 'meeting' ? 'text' : 'text'}
                                                     data-option-index={i}
                                                     className={`w-full p-3 pl-4 border-2 rounded-xl outline-none transition-all font-medium placeholder:text-slate-300 ${
                                                         isDuplicate 
                                                             ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-100 text-red-900' 
                                                             : 'border-slate-200 focus:border-indigo-500'
                                                     }`}
-                                                    placeholder={`Option ${i + 1}`}
+                                                    placeholder={pollType === 'meeting' ? `e.g. Mon, Oct ${i+1} @ 10am` : `Option ${i + 1}`}
                                                     value={opt}
                                                     onChange={(e) => handleOptionChange(i, e.target.value)}
                                                     onKeyDown={(e) => handleKeyDown(i, e)}
@@ -402,7 +396,29 @@ const VoteGeneratorCreate: React.FC = () => {
                          <h3 className="text-lg font-bold text-slate-800 mb-4">Settings</h3>
                          
                          <div className="space-y-4">
-                             {/* Allow Multiple */}
+                             
+                             {/* Dot Voting Budget */}
+                             {pollType === 'dot' && (
+                                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
+                                     <label className="block text-sm font-bold text-indigo-900 mb-2">
+                                        Points Per Voter
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <Coins size={20} className="text-indigo-500" />
+                                        <input 
+                                            type="number" 
+                                            min={1} 
+                                            max={100}
+                                            value={dotBudget}
+                                            onChange={(e) => setDotBudget(Math.max(1, parseInt(e.target.value) || 0))}
+                                            className="w-20 p-2 text-center font-bold text-indigo-900 border border-indigo-200 rounded-lg outline-none focus:border-indigo-500"
+                                        />
+                                        <span className="text-sm text-indigo-700">points available to distribute</span>
+                                    </div>
+                                </div>
+                             )}
+
+                             {/* Allow Multiple (Hidden for Dot/Meeting as it's inherent) */}
                             {pollType === 'multiple' && (
                                 <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
                                     <div className="flex-1">
@@ -657,33 +673,6 @@ const VoteGeneratorCreate: React.FC = () => {
                             </>
                         )}
                     </button>
-                </div>
-            </motion.div>
-            
-            {/* Features */}
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-8 grid md:grid-cols-3 gap-4 text-center"
-            >
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">🆓 100% Free</strong>
-                    <span className="text-slate-500 text-sm">
-                        No hidden costs or limits
-                    </span>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">🔓 No Sign Up</strong>
-                    <span className="text-slate-500 text-sm">
-                        Just create and share link
-                    </span>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <strong className="block text-indigo-900 mb-1">📱 Modern</strong>
-                    <span className="text-slate-500 text-sm">
-                        Ranked Choice Voting
-                    </span>
                 </div>
             </motion.div>
         </div>

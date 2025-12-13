@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, X } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -58,6 +58,11 @@ const VoteGeneratorCreate: React.FC = () => {
         PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
     );
     
+    // Meeting specific state
+    const [meetingDate, setMeetingDate] = useState('');
+    const [meetingTime, setMeetingTime] = useState('');
+    const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
     // Settings State
     const [hideResults, setHideResults] = useState(false);
     const [allowMultiple, setAllowMultiple] = useState(false);
@@ -106,7 +111,7 @@ const VoteGeneratorCreate: React.FC = () => {
         
         if (error && error.includes('Duplicate')) setError(null);
 
-        if (index === options.length - 1 && value.trim() !== '' && options.length < 20) {
+        if (index === options.length - 1 && value.trim() !== '' && options.length < 20 && pollType !== 'meeting') {
             setOptions([...newOptions, '']);
         }
     };
@@ -119,7 +124,7 @@ const VoteGeneratorCreate: React.FC = () => {
             );
             if (nextInput) {
                 nextInput.focus();
-            } else if (options.length < 20) {
+            } else if (options.length < 20 && pollType !== 'meeting') {
                 setOptions([...options, '']);
                 setTimeout(() => lastInputRef.current?.focus(), 50);
             }
@@ -136,6 +141,10 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const removeOption = (index: number) => {
+        if (pollType === 'meeting') {
+             setOptions(options.filter((_, i) => i !== index));
+             return;
+        }
         if (options.length <= 2) return;
         setOptions(options.filter((_, i) => i !== index));
     };
@@ -144,6 +153,32 @@ const VoteGeneratorCreate: React.FC = () => {
         if (options.length >= 20) return;
         setOptions([...options, '']);
         setTimeout(() => lastInputRef.current?.focus(), 50);
+    };
+
+    // Meeting specific handler
+    const addMeetingSlot = () => {
+        if (!meetingDate || !meetingTime) return;
+        
+        try {
+             const [year, month, day] = meetingDate.split('-').map(Number);
+             const [hours, minutes] = meetingTime.split(':').map(Number);
+             
+             const d = new Date(year, month - 1, day, hours, minutes);
+             
+             // Format: "Mon, Oct 23 • 10:00 AM"
+             const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+             const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+             
+             const newOption = `${dateStr} • ${timeStr}`;
+             
+             // Add to options, filter out blanks if any
+             const currentOptions = options.filter(o => o.trim() !== '');
+             setOptions([...currentOptions, newOption]);
+             
+             setMeetingTime('');
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const handleCreate = async () => {
@@ -184,7 +219,8 @@ const VoteGeneratorCreate: React.FC = () => {
                     security,
                     dotBudget: pollType === 'dot' ? dotBudget : undefined,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes)
+                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
+                    timezone: pollType === 'meeting' ? timezone : undefined
                 } 
             });
             
@@ -256,7 +292,14 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <button
                                         key={type.id}
                                         type="button"
-                                        onClick={() => setPollType(type.id)}
+                                        onClick={() => {
+                                             setPollType(type.id);
+                                             if (type.id === 'meeting') {
+                                                 setOptions([]); // Clear standard options
+                                             } else if (options.length === 0) {
+                                                 setOptions(['', '', '']);
+                                             }
+                                        }}
                                         className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                                             isSelected
                                                 ? 'border-indigo-500 bg-indigo-50'
@@ -320,21 +363,61 @@ const VoteGeneratorCreate: React.FC = () => {
                         />
                     </div>
 
-                    {/* Options */}
+                    {/* Options (Standard or Meeting) */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
                                 {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : 'Options'}
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
-                                {validOptionCount} / 20
+                                {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}
                             </span>
                         </div>
                         
+                        {/* MEETING DATE/TIME PICKER */}
+                        {pollType === 'meeting' && (
+                            <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 mb-4">
+                                <label className="block text-xs font-bold text-indigo-900 mb-2">Add Date & Time</label>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <input 
+                                        type="date" 
+                                        value={meetingDate}
+                                        onChange={(e) => setMeetingDate(e.target.value)}
+                                        className="p-2 border border-indigo-200 rounded-lg text-sm flex-1 outline-none focus:border-indigo-500 text-slate-700 font-bold"
+                                    />
+                                    <input 
+                                        type="time" 
+                                        value={meetingTime}
+                                        onChange={(e) => setMeetingTime(e.target.value)}
+                                        className="p-2 border border-indigo-200 rounded-lg text-sm w-32 outline-none focus:border-indigo-500 text-slate-700 font-bold"
+                                    />
+                                    <button 
+                                        onClick={addMeetingSlot}
+                                        disabled={!meetingDate || !meetingTime}
+                                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={16} /> Add
+                                    </button>
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-indigo-100 flex items-center justify-between">
+                                    <div className="text-xs text-indigo-700 font-bold">Timezone:</div>
+                                    <input 
+                                        type="text" 
+                                        value={timezone}
+                                        onChange={(e) => setTimezone(e.target.value)}
+                                        className="text-xs text-right bg-transparent border-b border-indigo-200 text-indigo-600 outline-none w-1/2 focus:border-indigo-400"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <div className="space-y-3">
                             <AnimatePresence mode="popLayout">
                                 {options.map((opt, i) => {
                                     const isDuplicate = duplicateIndices.has(i);
+                                    // Filter out blanks for Meeting type if they somehow got in, but allow for others
+                                    if(pollType === 'meeting' && opt.trim() === '') return null;
+
                                     return (
                                         <motion.div 
                                             key={i}
@@ -350,14 +433,14 @@ const VoteGeneratorCreate: React.FC = () => {
                                             <div className="relative flex-1">
                                                 <input 
                                                     ref={i === options.length - 1 ? lastInputRef : undefined}
-                                                    type={pollType === 'meeting' ? 'text' : 'text'}
+                                                    type="text"
                                                     data-option-index={i}
                                                     className={`w-full p-3 pl-4 border-2 rounded-xl outline-none transition-all font-medium placeholder:text-slate-300 ${
                                                         isDuplicate 
                                                             ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-100 text-red-900' 
                                                             : 'border-slate-200 focus:border-indigo-500'
                                                     }`}
-                                                    placeholder={pollType === 'meeting' ? `e.g. Mon, Oct ${i+1} @ 10am` : `Option ${i + 1}`}
+                                                    placeholder={pollType === 'meeting' ? `e.g. Mon, Oct 23 • 10:00 AM` : `Option ${i + 1}`}
                                                     value={opt}
                                                     onChange={(e) => handleOptionChange(i, e.target.value)}
                                                     onKeyDown={(e) => handleKeyDown(i, e)}
@@ -369,10 +452,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            {options.length > 2 && (
+                                            {(options.length > 2 || pollType === 'meeting') && (
                                                 <button 
                                                     onClick={() => removeOption(i)}
-                                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    className={`p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all focus:opacity-100 ${pollType === 'meeting' ? 'opacity-100 text-slate-400' : 'opacity-0 group-hover:opacity-100'}`}
                                                     tabIndex={-1}
                                                 >
                                                     <Trash2 size={18} />
@@ -394,7 +477,7 @@ const VoteGeneratorCreate: React.FC = () => {
                             </motion.p>
                         )}
 
-                        {options.length < 20 && (
+                        {options.length < 20 && pollType !== 'meeting' && (
                             <button
                                 onClick={addOption}
                                 className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors p-2 hover:bg-indigo-50 rounded-lg -ml-2"
@@ -406,6 +489,7 @@ const VoteGeneratorCreate: React.FC = () => {
 
                     {/* Settings Section */}
                     <div className="pt-6 border-t border-slate-100">
+                         {/* ... Keep rest of settings logic ... */}
                          <h3 className="text-lg font-bold text-slate-800 mb-4">Settings</h3>
                          
                          <div className="space-y-4">

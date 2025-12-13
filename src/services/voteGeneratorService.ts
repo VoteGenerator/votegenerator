@@ -56,11 +56,11 @@ export const createPoll = async (data: {
         maxVotes?: number;
         security: 'browser' | 'code' | 'none';
         dotBudget?: number;
+        timezone?: string;
     };
-    voterCount?: number; // Needed if security is 'code'
+    voterCount?: number; 
 }): Promise<{ id: string; adminKey: string }> => {
     try {
-        // 1. Try actual API
         const response = await fetch('/.netlify/functions/create-poll', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -74,13 +74,11 @@ export const createPoll = async (data: {
     } catch (error) {
         console.warn('Backend unavailable, falling back to LocalStorage mode.');
         
-        // 2. Fallback to LocalStorage (Demo Mode)
         const id = generateId(8);
         const adminKey = generateId(16);
         
         let allowedCodes: string[] = [];
         if (data.settings.security === 'code' && data.voterCount) {
-            // Generate unique codes
             const codes = new Set<string>();
             while(codes.size < data.voterCount) {
                 codes.add(generateAccessCode());
@@ -135,7 +133,6 @@ export const getPoll = async (id: string): Promise<Poll> => {
         const polls = getLocalPolls();
         const poll = polls[id];
         if (!poll) throw new Error('Poll not found');
-        // Strip sensitive data for public view (IMPORTANT: don't send allowedCodes to public)
         const { adminKey, votes, allowedCodes, ...publicPoll } = poll;
         return { ...publicPoll, isAdmin: false };
     }
@@ -154,26 +151,23 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string, choicesMaybe?: string[]): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices, voterName, code, comment })
+            body: JSON.stringify({ pollId, choices, voterName, code, comment, choicesMaybe })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
-        // Local fallback
         const polls = getLocalPolls();
         const poll = polls[pollId];
         if (!poll) throw new Error('Poll not found');
 
-        // Security Checks
         if (poll.settings.security === 'code') {
             if (!code) throw new Error('Access code required');
             if (!poll.allowedCodes.includes(code)) throw new Error('Invalid access code');
             
-            // Check if code used
             const existingVotes = getLocalVotes(pollId);
             const codeUsed = existingVotes.some((v: any) => v.usedCode === code);
             if (codeUsed) throw new Error('This access code has already been used');
@@ -181,18 +175,17 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
         
         saveLocalVote(pollId, { 
             pollId,
-            choices, 
+            choices,
+            choicesMaybe,
             voterName, 
             usedCode: code,
             comment,
             votedAt: new Date().toISOString() 
         });
         
-        // Update vote count
         polls[pollId].voteCount = (polls[pollId].voteCount || 0) + 1;
         saveLocalPoll(polls[pollId]);
         
-        // Mark as voted (Local Persistence)
         localStorage.setItem(`${LS_PREFIX}has_voted_${pollId}`, 'true');
         
         await new Promise(resolve => setTimeout(resolve, 600));
@@ -200,15 +193,11 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
 };
 
 export const hasVoted = (pollId: string): boolean => {
-    // Check local storage flag
     return localStorage.getItem(`${LS_PREFIX}has_voted_${pollId}`) === 'true';
 };
 
-// --- Admin Services ---
-
 export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vote[]> => {
     try {
-        // Attempt to fetch raw votes from backend
         const response = await fetch(`/.netlify/functions/get-results?id=${pollId}&admin=${adminKey}&raw=true`);
         if(response.ok) {
             return await response.json();
@@ -219,6 +208,7 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
         return votes.map(v => ({
             pollId: v.pollId || pollId,
             choices: v.choices,
+            choicesMaybe: v.choicesMaybe,
             votedAt: v.votedAt || v.createdAt || new Date().toISOString(),
             voterName: v.voterName,
             usedCode: v.usedCode,
@@ -226,8 +216,6 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
         }));
     }
 };
-
-// --- RCV Calculation Logic (Client Side for Demo) ---
 
 export const getResults = async (pollId: string, adminKey?: string): Promise<RunoffResult> => {
     let votes: any[] = [];
@@ -243,7 +231,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         votes = getLocalVotes(pollId);
     }
 
-    // Extract voter names/comments
     const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
     const comments = votes
         .filter((v: any) => !!v.comment)
@@ -255,18 +242,26 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         
     const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
     
-    // Calculate simple counts (Frequency of each option selected)
+    // Count 'Yes'
     const simpleCounts: Record<string, number> = {};
+    // Count 'Maybe'
+    const maybeCounts: Record<string, number> = {};
+
     votes.forEach((v: any) => {
         if(Array.isArray(v.choices)) {
             v.choices.forEach((c: string) => {
                 if(c) simpleCounts[c] = (simpleCounts[c] || 0) + 1;
             });
         }
+        if(Array.isArray(v.choicesMaybe)) {
+            v.choicesMaybe.forEach((c: string) => {
+                if(c) maybeCounts[c] = (maybeCounts[c] || 0) + 1;
+            });
+        }
     });
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, votes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, votes: [] };
     }
 
     // Instant Runoff Calculation
@@ -281,9 +276,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     let winnerId: string | null = null;
     let roundNum = 1;
 
-    // Safety: ensure we always have at least one round in rounds[] if there are votes,
-    // to avoid bar chart confusion.
-    
+    // Standard RCV Logic
     while (!winnerId && activeOptionIds.size > 0) {
         const roundCounts: Record<string, number> = {};
         activeOptionIds.forEach(id => roundCounts[id] = 0);
@@ -358,6 +351,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         usedCodes,
         comments,
         simpleCounts,
+        maybeCounts,
         votes: votes 
     };
 };

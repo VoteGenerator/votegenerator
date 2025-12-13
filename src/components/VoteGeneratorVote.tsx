@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -26,8 +26,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         return poll.options;
     });
     
-    // Multiple Choice & Meeting State
+    // Multiple Choice State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    
+    // Meeting State (Tri-state: Yes, Maybe, No)
+    // We store Yes in selectedIds, and Maybe in maybeIds
+    const [maybeIds, setMaybeIds] = useState<Set<string>>(new Set());
     
     // Dot Voting State
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
@@ -75,6 +79,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     };
 
     const toggleSelection = (id: string) => {
+        // Standard Multiple Choice Toggle
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) {
             newSet.delete(id);
@@ -85,6 +90,34 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             newSet.add(id);
         }
         setSelectedIds(newSet);
+    };
+
+    const toggleMeetingSelection = (id: string) => {
+        // Cycle: No -> Yes -> Maybe -> No
+        // If in Yes (selectedIds), move to Maybe
+        // If in Maybe (maybeIds), move to No
+        // If in No (neither), move to Yes
+
+        if (selectedIds.has(id)) {
+            // Yes -> Maybe
+            const newSel = new Set(selectedIds);
+            newSel.delete(id);
+            setSelectedIds(newSel);
+            
+            const newMaybe = new Set(maybeIds);
+            newMaybe.add(id);
+            setMaybeIds(newMaybe);
+        } else if (maybeIds.has(id)) {
+            // Maybe -> No
+            const newMaybe = new Set(maybeIds);
+            newMaybe.delete(id);
+            setMaybeIds(newMaybe);
+        } else {
+            // No -> Yes
+            const newSel = new Set(selectedIds);
+            newSel.add(id);
+            setSelectedIds(newSel);
+        }
     };
 
     const handleSubmit = async () => {
@@ -98,15 +131,17 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         setIsSubmitting(true);
         try {
             let choices: string[] = [];
+            let choicesMaybe: string[] = [];
 
             if (poll.pollType === 'ranked') {
                 choices = items.map(i => i.id);
             } else if (poll.pollType === 'dot') {
-                // Expand dot allocations to array of IDs (e.g. {A:2} -> ['A', 'A'])
                 choices = Object.entries(dotAllocations).flatMap(([id, count]) => Array(count).fill(id));
             } else {
-                // Multiple or Meeting
                 choices = Array.from(selectedIds);
+                if (poll.pollType === 'meeting') {
+                    choicesMaybe = Array.from(maybeIds);
+                }
             }
             
             await submitVote(
@@ -114,7 +149,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 choices, 
                 voterName.trim() || undefined,
                 accessCode.trim() || undefined,
-                comment.trim() || undefined
+                comment.trim() || undefined,
+                choicesMaybe.length > 0 ? choicesMaybe : undefined
             );
             onVoteSuccess();
         } catch (error) {
@@ -128,7 +164,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     let canSubmit = false;
     if (poll.pollType === 'ranked') canSubmit = true;
     else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
-    else canSubmit = selectedIds.size > 0;
+    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; // Meeting can have just Maybes? Sure.
     
     // Add meta validation
     if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
@@ -191,6 +227,13 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 <Coins size={14} /> {dotsRemaining} Points Left
                             </div>
                         )}
+                        
+                        {/* Timezone Badge for Meeting */}
+                        {poll.pollType === 'meeting' && poll.settings.timezone && (
+                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full w-fit">
+                                🌐 {poll.settings.timezone}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -222,30 +265,47 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         <div className="space-y-3">
                             {poll.options.map((opt) => {
                                 const isSelected = selectedIds.has(opt.id);
+                                const isMaybe = maybeIds.has(opt.id);
+                                const isMeeting = poll.pollType === 'meeting';
+
                                 return (
                                     <button
                                         key={opt.id}
-                                        onClick={() => toggleSelection(opt.id)}
+                                        onClick={() => isMeeting ? toggleMeetingSelection(opt.id) : toggleSelection(opt.id)}
                                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group ${
                                             isSelected 
-                                                ? 'border-indigo-500 bg-indigo-50 shadow-sm' 
+                                                ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
+                                                : isMaybe
+                                                ? 'border-amber-400 bg-amber-50 shadow-sm'
                                                 : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50'
                                         }`}
                                     >
-                                        <div className={`w-6 h-6 shrink-0 rounded flex items-center justify-center border transition-colors ${
-                                            isSelected ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-300 bg-white group-hover:border-indigo-300'
+                                        <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border transition-all ${
+                                            isSelected 
+                                                ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                                : isMaybe
+                                                ? 'bg-amber-400 border-amber-400 text-white'
+                                                : 'border-slate-300 bg-white group-hover:border-indigo-300'
                                         }`}>
-                                            {isSelected && <Check size={16} strokeWidth={3} />}
+                                            {isSelected && <Check size={18} strokeWidth={3} />}
+                                            {isMaybe && <HelpCircle size={18} strokeWidth={3} />}
                                         </div>
                                         <div className="flex-1">
-                                            <span className={`font-medium text-lg ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                            <span className={`font-medium text-lg ${
+                                                isSelected ? 'text-emerald-900' : isMaybe ? 'text-amber-900' : 'text-slate-700'
+                                            }`}>
                                                 {opt.text}
                                             </span>
                                         </div>
-                                        {poll.pollType === 'meeting' && <Calendar size={20} className={isSelected ? 'text-indigo-400' : 'text-slate-300'} />}
+                                        {isMeeting && <Calendar size={20} className={isSelected ? 'text-emerald-400' : isMaybe ? 'text-amber-400' : 'text-slate-300'} />}
                                     </button>
                                 )
                             })}
+                            {poll.pollType === 'meeting' && (
+                                <p className="text-xs text-center text-slate-400 mt-2">
+                                    Tap once for <span className="text-emerald-600 font-bold">Yes</span>, twice for <span className="text-amber-600 font-bold">Maybe</span>.
+                                </p>
+                            )}
                         </div>
                     )}
 

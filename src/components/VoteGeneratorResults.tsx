@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Lock, Calendar, TrendingUp, Coins, Activity, Check } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {

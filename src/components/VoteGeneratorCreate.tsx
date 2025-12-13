@@ -8,41 +8,62 @@ const POLL_TYPES = [
         id: 'ranked',
         name: 'Ranked Choice',
         icon: ListOrdered,
-        description: 'Voters drag options to rank from favorite to least favorite',
-        bestFor: 'Best for: Finding the option everyone can agree on',
-        example: 'e.g., "Where should we go for team dinner?"'
+        description: 'Voters rank options in order of preference. Finds the consensus winner.',
+        bestFor: 'Perfect for: Group decisions (lunch, movies) to avoid split votes.',
+        example: 'e.g., "Where should we have lunch?"',
+        // Theme Colors
+        selectedBorder: 'border-indigo-500',
+        selectedBg: 'bg-indigo-50',
+        iconColor: 'text-indigo-600',
+        textColor: 'text-indigo-700'
     },
     {
         id: 'matrix',
         name: 'Priority Matrix',
         icon: LayoutGrid,
-        description: 'Voters plot options on an Impact vs. Effort grid',
-        bestFor: 'Best for: Agile planning, Roadmaps, Strategy',
-        example: 'e.g., "Which features should we build next?"'
+        description: 'Voters drag items onto a 2D grid (Impact vs Effort). Visualizes priorities.',
+        bestFor: 'Perfect for: Agile planning and deciding what to build next.',
+        example: 'e.g., "Feature Roadmap 2024"',
+        selectedBorder: 'border-fuchsia-500',
+        selectedBg: 'bg-fuchsia-50',
+        iconColor: 'text-fuchsia-600',
+        textColor: 'text-fuchsia-800'
     },
     {
         id: 'multiple',
         name: 'Multiple Choice',
         icon: CheckSquare,
-        description: 'Voters pick one option (or multiple if you allow it)',
-        bestFor: 'Best for: Quick decisions with clear favorites',
-        example: 'e.g., "What day works for the meeting?"'
+        description: 'The classic poll. Voters select one or more options.',
+        bestFor: 'Perfect for: Simple "this or that" decisions.',
+        example: 'e.g., "Who should be team captain?"',
+        selectedBorder: 'border-blue-500',
+        selectedBg: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+        textColor: 'text-blue-700'
     },
     {
         id: 'dot',
         name: 'Dot Voting',
         icon: Coins,
-        description: 'Voters get a budget of points to distribute among options',
-        bestFor: 'Best for: Budgeting, Prioritization, Funding',
-        example: 'e.g., "How should we spend the $1000 budget?"'
+        description: 'Voters get a budget of points ("dots") to spend on their favorite ideas.',
+        bestFor: 'Perfect for: Budgeting and measuring intensity of preference.',
+        example: 'e.g., "How should we spend our party budget?"',
+        selectedBorder: 'border-emerald-500',
+        selectedBg: 'bg-emerald-50',
+        iconColor: 'text-emerald-600',
+        textColor: 'text-emerald-700'
     },
     {
         id: 'meeting',
         name: 'Meeting Poll',
         icon: Calendar,
-        description: 'Voters select all time slots that work for them',
-        bestFor: 'Best for: Scheduling meetings (Doodle style)',
-        example: 'e.g., "When can everyone meet?"'
+        description: 'Voters mark all the dates and times they are available.',
+        bestFor: 'Perfect for: Scheduling events without endless emails.',
+        example: 'e.g., "When is everyone free?"',
+        selectedBorder: 'border-amber-500',
+        selectedBg: 'bg-amber-50',
+        iconColor: 'text-amber-600',
+        textColor: 'text-amber-800'
     }
 ];
 
@@ -280,7 +301,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                Poll Type
+                                Poll Type <span className="text-red-500 ml-1">*</span>
                             </label>
                             <button 
                                 type="button"
@@ -310,15 +331,15 @@ const VoteGeneratorCreate: React.FC = () => {
                                         }}
                                         className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                                             isSelected
-                                                ? 'border-indigo-500 bg-indigo-50'
+                                                ? `${type.selectedBorder} ${type.selectedBg}`
                                                 : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
                                         }`}
                                     >
-                                        <Icon size={20} className={isSelected ? 'text-indigo-600' : 'text-slate-400'} />
-                                        <span className={`block font-bold mt-2 ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                        <Icon size={20} className={isSelected ? type.iconColor : 'text-slate-400'} />
+                                        <span className={`block font-bold mt-2 ${isSelected ? type.textColor : 'text-slate-700'}`}>
                                             {type.name}
                                         </span>
-                                        <span className="text-xs text-slate-500 block mt-1 leading-tight">
+                                        <span className={`text-xs block mt-1 leading-tight ${isSelected ? type.textColor : 'text-slate-500'}`}>
                                             {type.description}
                                         </span>
                                     </button>
@@ -333,10 +354,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden"
+                                    className={`mt-3 p-4 rounded-xl border overflow-hidden ${selectedPollType.selectedBg} ${selectedPollType.selectedBorder}`}
                                 >
-                                    <p className="text-sm text-indigo-800 font-medium">{selectedPollType.bestFor}</p>
-                                    <p className="text-sm text-indigo-600 mt-1">{selectedPollType.example}</p>
+                                    <p className={`text-sm font-medium ${selectedPollType.textColor}`}>{selectedPollType.bestFor}</p>
+                                    <p className={`text-sm mt-1 opacity-80 ${selectedPollType.textColor}`}>{selectedPollType.example}</p>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -345,7 +366,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            {pollType === 'meeting' ? 'Event Name' : 'Your Question'}
+                            {pollType === 'meeting' ? 'Event Name' : 'Your Question'} <span className="text-red-500 ml-1">*</span>
                         </label>
                         <input 
                             type="text" 
@@ -375,7 +396,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : 'Options'}
+                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : 'Options'} <span className="text-red-500 ml-1">*</span>
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
                                 {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}
@@ -385,7 +406,7 @@ const VoteGeneratorCreate: React.FC = () => {
                         {/* MEETING DATE/TIME PICKER */}
                         {pollType === 'meeting' && (
                             <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 mb-4">
-                                <label className="block text-xs font-bold text-indigo-900 mb-2">Add Date & Time</label>
+                                <label className="block text-xs font-bold text-indigo-900 mb-2">Add Date & Time <span className="text-red-500 ml-1">*</span></label>
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <input 
                                         type="date" 
@@ -668,7 +689,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     {security === 'code' && (
                                                         <div className="mt-3">
                                                             <label className="text-xs font-bold text-slate-700 block mb-1">
-                                                                How many voters?
+                                                                How many voters? <span className="text-red-500 ml-1">*</span>
                                                             </label>
                                                             <input 
                                                                 type="number" 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, DollarSign } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, DollarSign, ZoomIn, X } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -30,6 +30,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [maybeIds, setMaybeIds] = useState<Set<string>>(new Set());
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
     const [budgetAllocations, setBudgetAllocations] = useState<Record<string, number>>({});
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
     const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>(() => {
         if (poll.pollType === 'rating') {
@@ -287,6 +288,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     
                     <div className="flex flex-wrap gap-2 mt-4">
                         <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
+                            {poll.pollType === 'image' && "Click image to select"}
                             {poll.pollType === 'ranked' && "Rank Options"}
                             {poll.pollType === 'multiple' && (poll.settings.allowMultiple ? "Select Options" : "Select One")}
                             {poll.pollType === 'meeting' && "Select Available Times"}
@@ -311,7 +313,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             </div>
                         )}
 
-                        {/* Explicit usage of isDifferentTimezone to prevent TS error */}
                         {isDifferentTimezone && poll.pollType === 'meeting' && (
                             <div className="mt-2 w-full p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800 flex items-start gap-2">
                                 <AlertTriangle size={16} className="mt-0.5 shrink-0" />
@@ -324,6 +325,45 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 </div>
 
                 <div className="p-6 md:p-8">
+                    {/* VISUAL IMAGE POLL GRID */}
+                    {poll.pollType === 'image' && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {poll.options.map((opt) => {
+                                const isSelected = selectedIds.has(opt.id);
+                                return (
+                                    <div key={opt.id} className="relative group">
+                                        <div 
+                                            onClick={() => toggleSelection(opt.id)}
+                                            className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all border-4 ${
+                                                isSelected ? 'border-pink-500 shadow-lg scale-[1.02]' : 'border-transparent hover:scale-[1.01]'
+                                            }`}
+                                        >
+                                            <img src={opt.imageUrl} alt={opt.text} className="w-full h-full object-cover" />
+                                            
+                                            {/* Selection Overlay */}
+                                            {isSelected && (
+                                                <div className="absolute inset-0 bg-pink-500/20 flex items-center justify-center backdrop-blur-[1px]">
+                                                    <div className="bg-pink-500 text-white p-2 rounded-full shadow-md">
+                                                        <Check size={32} strokeWidth={4} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Zoom Button */}
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); setLightboxImage(opt.imageUrl || ''); }}
+                                                className="absolute bottom-2 right-2 bg-black/60 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                                            >
+                                                <ZoomIn size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 text-center font-bold text-slate-700 text-sm leading-tight">{opt.text}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
                     {poll.pollType === 'ranked' && (
                         <Reorder.Group axis="y" values={items} onReorder={setItems} className="space-y-3">
                             {items.map((item, index) => (
@@ -375,57 +415,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
-                    {poll.pollType === 'rating' && (
-                        <div className="space-y-6">
-                            {poll.options.map((opt) => {
-                                const val = ratingAllocations[opt.id] ?? 50;
-                                return (
-                                    <div key={opt.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-lg font-bold text-slate-800">{opt.text}</span>
-                                            <span className="text-lg font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg min-w-[3rem] text-center">{val}</span>
-                                        </div>
-                                        <div className="relative h-2 bg-slate-100 rounded-full">
-                                            <input type="range" min="0" max="100" value={val} onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                            <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${val}%` }} />
-                                            <div className="absolute top-1/2 -mt-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-full shadow-md transition-all pointer-events-none" style={{ left: `calc(${val}% - 8px)` }} />
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-
-                    {poll.pollType === 'matrix' && (
-                        <div className="select-none">
-                            <div className="mb-4 text-center text-sm text-slate-500">Drag all items from the list onto the grid based on Impact vs. Effort.</div>
-                            <div className="relative aspect-square bg-slate-50 rounded-xl border-2 border-slate-200 mb-6 overflow-hidden" ref={matrixContainerRef}>
-                                <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-slate-300"></div></div>
-                                <div className="absolute inset-0 flex items-center justify-center"><div className="h-full w-px bg-slate-300"></div></div>
-                                {poll.options.filter(o => isMatrixPlaced(o.id)).map(opt => {
-                                    const pos = matrixPositions[opt.id];
-                                    const domTop = 100 - pos.y;
-                                    return (
-                                        <motion.div key={opt.id} drag dragMomentum={false} dragConstraints={matrixContainerRef} onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} style={{ left: `${pos.x}%`, top: `${domTop}%` }} className="absolute -ml-4 -mt-4 w-8 h-8 bg-indigo-600 rounded-full shadow-lg border-2 border-white flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group">
-                                            <span className="text-white font-bold text-xs pointer-events-none">{poll.options.findIndex(o => o.id === opt.id) + 1}</span>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-4 rounded-xl border border-slate-200">
-                                {poll.options.map((opt, i) => {
-                                    if (isMatrixPlaced(opt.id)) return null;
-                                    return (
-                                        <motion.div key={opt.id} drag dragSnapToOrigin onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} className="bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 cursor-grab active:cursor-grabbing">
-                                            <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{i + 1}</div>
-                                            <span className="text-sm font-medium text-slate-700 truncate">{opt.text}</span>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
+                    {/* ... other poll types (rating, matrix, multiple, dot, budget) remain same ... */}
                     {(poll.pollType === 'multiple' || poll.pollType === 'meeting') && (
                         <div className="space-y-3">
                             {poll.options.map((opt) => {
@@ -488,6 +478,58 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
+                    {/* ... other render logic ... */}
+                    {poll.pollType === 'rating' && (
+                        <div className="space-y-6">
+                            {poll.options.map((opt) => {
+                                const val = ratingAllocations[opt.id] ?? 50;
+                                return (
+                                    <div key={opt.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-lg font-bold text-slate-800">{opt.text}</span>
+                                            <span className="text-lg font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg min-w-[3rem] text-center">{val}</span>
+                                        </div>
+                                        <div className="relative h-2 bg-slate-100 rounded-full">
+                                            <input type="range" min="0" max="100" value={val} onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                            <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${val}%` }} />
+                                            <div className="absolute top-1/2 -mt-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-full shadow-md transition-all pointer-events-none" style={{ left: `calc(${val}% - 8px)` }} />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {poll.pollType === 'matrix' && (
+                        <div className="select-none">
+                            <div className="mb-4 text-center text-sm text-slate-500">Drag all items from the list onto the grid based on Impact vs. Effort.</div>
+                            <div className="relative aspect-square bg-slate-50 rounded-xl border-2 border-slate-200 mb-6 overflow-hidden" ref={matrixContainerRef}>
+                                <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-slate-300"></div></div>
+                                <div className="absolute inset-0 flex items-center justify-center"><div className="h-full w-px bg-slate-300"></div></div>
+                                {poll.options.filter(o => isMatrixPlaced(o.id)).map(opt => {
+                                    const pos = matrixPositions[opt.id];
+                                    const domTop = 100 - pos.y;
+                                    return (
+                                        <motion.div key={opt.id} drag dragMomentum={false} dragConstraints={matrixContainerRef} onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} style={{ left: `${pos.x}%`, top: `${domTop}%` }} className="absolute -ml-4 -mt-4 w-8 h-8 bg-indigo-600 rounded-full shadow-lg border-2 border-white flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group">
+                                            <span className="text-white font-bold text-xs pointer-events-none">{poll.options.findIndex(o => o.id === opt.id) + 1}</span>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-4 rounded-xl border border-slate-200">
+                                {poll.options.map((opt, i) => {
+                                    if (isMatrixPlaced(opt.id)) return null;
+                                    return (
+                                        <motion.div key={opt.id} drag dragSnapToOrigin onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} className="bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                                            <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{i + 1}</div>
+                                            <span className="text-sm font-medium text-slate-700 truncate">{opt.text}</span>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Meta Inputs */}
                     <div className="space-y-4 mt-8 pt-6 border-t border-slate-100">
                         {poll.settings.security === 'code' && (
@@ -533,6 +575,22 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     )}
                 </div>
             </motion.div>
+
+            {/* LIGHTBOX FOR IMAGES */}
+            <AnimatePresence>
+                {lightboxImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-pointer"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <button className="absolute top-4 right-4 text-white hover:text-slate-300"><X size={32}/></button>
+                        <img src={lightboxImage} alt="Full view" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

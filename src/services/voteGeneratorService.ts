@@ -36,7 +36,8 @@ const saveLocalVote = (pollId: string, vote: any) => {
 export const createPoll = async (data: {
     title: string;
     description?: string;
-    options: ({ text: string; cost?: number } | string)[]; 
+    // Updated signature to accept imageUrl
+    options: ({ text: string; cost?: number; imageUrl?: string } | string)[]; 
     pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix' | 'pairwise' | 'rating' | 'budget';
     settings: { 
         hideResults: boolean; 
@@ -88,7 +89,13 @@ export const createPoll = async (data: {
             options: data.options.map(opt => {
                 const optId = generateId(6);
                 if (typeof opt === 'string') return { id: optId, text: opt };
-                return { id: optId, text: opt.text, cost: opt.cost };
+                // Map the object properties
+                return { 
+                    id: optId, 
+                    text: opt.text, 
+                    cost: opt.cost,
+                    imageUrl: opt.imageUrl 
+                };
             }),
             createdAt: new Date().toISOString(),
             voteCount: 0,
@@ -330,7 +337,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
     });
 
-    // Budget Stats Calculation
     const budgetStats: Record<string, { totalValue: number; totalQuantity: number }> = {};
     let budgetWinnerId: string | null = null;
     let maxBudgetValue = -1;

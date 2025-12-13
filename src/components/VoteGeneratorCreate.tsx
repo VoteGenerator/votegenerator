@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Image as ImageIcon, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -251,14 +251,12 @@ const VoteGeneratorCreate: React.FC = () => {
                             {POLL_TYPES.map((type) => {
                                 const Icon = type.icon;
                                 const isSelected = pollType === type.id;
-                                // const isDisabled = type.id === 'image'; // Placeholder for Image only
                                 
                                 return (
                                     <button
                                         key={type.id}
                                         type="button"
                                         onClick={() => setPollType(type.id)}
-                                        // disabled={isDisabled}
                                         className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                                             isSelected
                                                 ? 'border-indigo-500 bg-indigo-50'
@@ -276,6 +274,21 @@ const VoteGeneratorCreate: React.FC = () => {
                                 );
                             })}
                         </div>
+
+                        {/* Poll Type Info Tooltip */}
+                        <AnimatePresence>
+                            {showPollTypeInfo && selectedPollType && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden"
+                                >
+                                    <p className="text-sm text-indigo-800 font-medium">{selectedPollType.bestFor}</p>
+                                    <p className="text-sm text-indigo-600 mt-1">{selectedPollType.example}</p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Title */}

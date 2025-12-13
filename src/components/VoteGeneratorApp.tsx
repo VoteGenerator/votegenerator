@@ -7,6 +7,7 @@ import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
 import NavHeader from './NavHeader';
 import PricingPage from './PricingPage';
+import DemoPage from './DemoPage';
 import EmbedPoll from './EmbedPoll';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
@@ -18,6 +19,7 @@ type ViewState =
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'pricing' }
+    | { type: 'demo' }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -34,6 +36,7 @@ const VoteGeneratorApp: React.FC = () => {
     // Determine current page for NavHeader highlighting
     const getCurrentPage = (): 'create' | 'demo' | 'pricing' | 'blog' | 'help' => {
         if (viewState.type === 'pricing') return 'pricing';
+        if (viewState.type === 'demo') return 'demo';
         if (viewState.type === 'create') return 'create';
         return 'create'; // default
     };
@@ -69,6 +72,10 @@ const VoteGeneratorApp: React.FC = () => {
         // Handle special pages
         if (page === 'pricing') {
             setViewState({ type: 'pricing' });
+            return;
+        }
+        if (page === 'demo') {
+            setViewState({ type: 'demo' });
             return;
         }
         // Add more pages as needed:
@@ -259,7 +266,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     // Check if we should show NavHeader (hide on vote/embed pages for cleaner experience)
-    const showNavHeader = viewState.type === 'create' || viewState.type === 'pricing';
+    const showNavHeader = viewState.type === 'create' || viewState.type === 'pricing' || viewState.type === 'demo';
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -301,6 +308,17 @@ const VoteGeneratorApp: React.FC = () => {
                             exit={{ opacity: 0 }}
                         >
                             <PricingPage />
+                        </motion.div>
+                    )}
+
+                    {viewState.type === 'demo' && (
+                        <motion.div
+                            key="demo"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <DemoPage />
                         </motion.div>
                     )}
 

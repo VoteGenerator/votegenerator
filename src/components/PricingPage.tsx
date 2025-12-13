@@ -9,7 +9,6 @@ import {
     Shield,
     Users,
     HelpCircle,
-    Clock,
     FileText
 } from 'lucide-react';
 
@@ -100,7 +99,7 @@ const PricingPage: React.FC = () => {
             ctaLink: '#checkout/pro',
             features: [
                 { name: 'Everything in One-Time, plus:', included: true, header: true },
-                { name: 'Never expires', included: true },
+                { name: 'Active while subscribed', included: true, tooltip: 'Your premium features stay active as long as you\'re subscribed' },
                 { name: 'Visual Poll (image voting)', included: true, isNew: true },
                 { name: 'Unique voting codes', included: true },
                 { name: 'Embed polls (with your logo)', included: true },
@@ -123,7 +122,7 @@ const PricingPage: React.FC = () => {
                 { name: 'Everything in Pro, plus:', included: true, header: true },
                 { name: 'White-label embeds (no branding)', included: true },
                 { name: 'Advanced vote protection', included: true, tooltip: 'Cookies + codes + rate limiting' },
-                { name: 'Poll notifications', included: true, tooltip: 'Get notified when polls hit milestones' },
+                { name: 'Dashboard notifications', included: true, tooltip: 'See alerts in your dashboard when polls hit milestones' },
                 { name: 'Dedicated email support', included: true },
             ]
         }
@@ -147,7 +146,7 @@ const PricingPage: React.FC = () => {
         // Limits Section
         { name: 'Polls You Can Create', free: 'Unlimited', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited', category: 'Limits' },
         { name: 'Responses Per Poll', free: '100', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Premium Features Duration', free: '—', oneTime: '30 days', pro: 'Forever', proPlus: 'Forever', tooltip: 'How long your premium features last' },
+        { name: 'Premium Features Duration', free: '—', oneTime: '30 days', pro: 'While subscribed', proPlus: 'While subscribed', tooltip: 'One-Time: 30 days from purchase. Pro/Pro+: Active as long as your subscription is active.' },
         
         // Dashboard & Management
         { name: 'Admin Dashboard', free: 'Per poll', oneTime: 'Unified', pro: 'Unified', proPlus: 'Unified', category: 'Management', tooltip: 'Free: Each poll has separate admin link. Paid: One dashboard for all polls.' },
@@ -177,7 +176,7 @@ const PricingPage: React.FC = () => {
         
         // Extras
         { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras', tooltip: 'Let voters leave optional feedback' },
-        { name: 'Poll Notifications', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Get notified when your poll hits milestones (50, 100 votes)' },
+        { name: 'Dashboard Notifications', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'See "New votes!" alerts in your dashboard when polls hit milestones. Not email or text.' },
         { name: 'Email Support', free: false, oneTime: false, pro: true, proPlus: true },
         { name: 'Priority Email Support', free: false, oneTime: false, pro: false, proPlus: true },
     ];
@@ -204,8 +203,8 @@ const PricingPage: React.FC = () => {
             a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label - no VoteGenerator branding appears anywhere on the embedded poll."
         },
         {
-            q: "How do poll notifications work?",
-            a: "Pro+ users get notified when their polls hit milestones (like 50 or 100 votes). We don't send emails for every single vote to avoid inbox overload. Check your dashboard anytime for real-time results."
+            q: "How do dashboard notifications work?",
+            a: "Pro+ users see alert badges in their dashboard when polls hit milestones (like 50 or 100 votes). This is NOT email or text - just visual alerts when you log in. Check your dashboard anytime to see real-time results."
         },
         {
             q: "What payment methods do you accept?",

@@ -1,593 +1,598 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, X } from 'lucide-react';
-import { createPoll } from '../services/voteGeneratorService';
-import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, Reorder, AnimatePresence } from 'framer-motion';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, DollarSign, ZoomIn, X } from 'lucide-react';
+import { Poll, PollOption } from '../types';
+import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
-const POLL_TYPES = [
-    {
-        id: 'ranked',
-        name: 'Ranked Choice',
-        icon: ListOrdered,
-        description: 'Voters rank options in order of preference. Finds the consensus winner.',
-        bestFor: 'Perfect for: Group decisions (lunch, movies) to avoid split votes.',
-        example: 'e.g., "Where should we have lunch?"',
-        selectedBorder: 'border-indigo-500',
-        selectedBg: 'bg-indigo-50',
-        iconColor: 'text-indigo-600',
-        textColor: 'text-indigo-700'
-    },
-    {
-        id: 'image',
-        name: 'Visual Poll',
-        icon: ImageIcon,
-        description: 'Voters choose between images displayed in a beautiful grid.',
-        bestFor: 'Perfect for: Design contests, logo selection, photo competitions.',
-        example: 'e.g., "Which logo design is best?"',
-        selectedBorder: 'border-pink-500',
-        selectedBg: 'bg-pink-50',
-        iconColor: 'text-pink-600',
-        textColor: 'text-pink-700'
-    },
-    {
-        id: 'budget',
-        name: 'Buy a Feature',
-        icon: DollarSign,
-        description: 'Voters have a budget to "buy" options with different costs.',
-        bestFor: 'Perfect for: Prioritizing features or allocation of funds.',
-        example: 'e.g., "Feature Roadmap 2026"',
-        selectedBorder: 'border-green-500',
-        selectedBg: 'bg-green-50',
-        iconColor: 'text-green-600',
-        textColor: 'text-green-700'
-    },
-    {
-        id: 'rating',
-        name: 'Continuous Rating',
-        icon: SlidersHorizontal,
-        description: 'Voters rate each option on a scale (0-100). Good for nuance.',
-        bestFor: 'Perfect for: Performance reviews, feedback, or measuring sentiment.',
-        example: 'e.g., "Rate these potential features."',
-        selectedBorder: 'border-cyan-500',
-        selectedBg: 'bg-cyan-50',
-        iconColor: 'text-cyan-600',
-        textColor: 'text-cyan-700'
-    },
-    {
-        id: 'pairwise',
-        name: 'Pairwise Comparison',
-        icon: GitCompare,
-        description: 'Voters choose between two options at a time ("This or That").',
-        bestFor: 'Perfect for: Large lists, logos, or quick gut-check decisions.',
-        example: 'e.g., "Which logo is better?"',
-        selectedBorder: 'border-orange-500',
-        selectedBg: 'bg-orange-50',
-        iconColor: 'text-orange-600',
-        textColor: 'text-orange-700'
-    },
-    {
-        id: 'matrix',
-        name: 'Priority Matrix',
-        icon: LayoutGrid,
-        description: 'Voters drag items onto a 2D grid (Impact vs Effort). Visualizes priorities.',
-        bestFor: 'Perfect for: Agile planning and deciding what to build next.',
-        example: 'e.g., "Feature Roadmap 2026"',
-        selectedBorder: 'border-fuchsia-500',
-        selectedBg: 'bg-fuchsia-50',
-        iconColor: 'text-fuchsia-600',
-        textColor: 'text-fuchsia-800'
-    },
-    {
-        id: 'multiple',
-        name: 'Multiple Choice',
-        icon: CheckSquare,
-        description: 'The classic poll. Voters select one or more options.',
-        bestFor: 'Perfect for: Simple "this or that" decisions.',
-        example: 'e.g., "Who should be team captain?"',
-        selectedBorder: 'border-blue-500',
-        selectedBg: 'bg-blue-50',
-        iconColor: 'text-blue-600',
-        textColor: 'text-blue-700'
-    },
-    {
-        id: 'dot',
-        name: 'Dot Voting',
-        icon: Coins,
-        description: 'Voters get a budget of points ("dots") to spend on their favorite ideas.',
-        bestFor: 'Perfect for: Budgeting and measuring intensity of preference.',
-        example: 'e.g., "How should we spend our party budget?"',
-        selectedBorder: 'border-emerald-500',
-        selectedBg: 'bg-emerald-50',
-        iconColor: 'text-emerald-600',
-        textColor: 'text-emerald-700'
-    },
-    {
-        id: 'meeting',
-        name: 'Meeting Poll',
-        icon: Calendar,
-        description: 'Voters mark all the dates and times they are available.',
-        bestFor: 'Perfect for: Scheduling events without endless emails.',
-        example: 'e.g., "When is everyone free?"',
-        selectedBorder: 'border-amber-500',
-        selectedBg: 'bg-amber-50',
-        iconColor: 'text-amber-600',
-        textColor: 'text-amber-800'
-    }
-];
+interface Props {
+    poll: Poll;
+    onVoteSuccess: () => void;
+}
 
-const PLACEHOLDER_QUESTIONS = [
-    "Where should we eat lunch?",
-    "What movie should we watch?",
-    "When should we have the meeting?",
-    "Which features should we build next?",
-    "Which design concept is best?"
-];
-
-const VoteGeneratorCreate: React.FC = () => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [options, setOptions] = useState<string[]>(['', '', '']);
-    const [optionCosts, setOptionCosts] = useState<number[]>([10, 10, 10]);
-    // For image polls: parallel array for image URLs
-    const [optionImages, setOptionImages] = useState<string[]>(['', '', '']);
-    // Loading state for individual image uploads
-    const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
-    
-    const [pollType, setPollType] = useState<string>('ranked');
-    const [isCreating, setIsCreating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [showPollTypeInfo, setShowPollTypeInfo] = useState(false);
-    const [placeholderQuestion] = useState(() => 
-        PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
-    );
-    
-    const [meetingDate, setMeetingDate] = useState('');
-    const [meetingTime, setMeetingTime] = useState('');
-    const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
-
-    const [hideResults, setHideResults] = useState(false);
-    const [allowMultiple] = useState(false);
-    const [requireNames, setRequireNames] = useState(false);
-    const [allowComments, setAllowComments] = useState(false);
-    const [publicComments] = useState(true);
-    const [blockVpn] = useState(false);
-    const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
-    const [voterCount, setVoterCount] = useState<number>(10);
-    const [deadline] = useState<string>('');
-    const [maxVotes] = useState<number | ''>('');
-    const [dotBudget, setDotBudget] = useState<number>(10);
-    const [budgetLimit, setBudgetLimit] = useState<number>(100);
-    const [showAdvanced, setShowAdvanced] = useState(false);
-
-    const lastInputRef = useRef<HTMLInputElement>(null);
-
-    const handleOptionChange = (index: number, value: string) => {
-        const newOptions = [...options];
-        newOptions[index] = value;
-        setOptions(newOptions);
-        
-        if (error && error.includes('Duplicate')) setError(null);
-
-        // Auto add row if typing in last text input (except for image poll where interaction is different)
-        if (pollType !== 'image' && index === options.length - 1 && value.trim() !== '' && options.length < 20 && pollType !== 'meeting') {
-            setOptions([...newOptions, '']);
-            setOptionCosts([...optionCosts, 10]);
-            setOptionImages([...optionImages, '']);
+const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
+    const shuffle = <T,>(array: T[]): T[] => {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
         }
+        return newArr;
     };
 
-    const handleCostChange = (index: number, value: string) => {
-        const newCosts = [...optionCosts];
-        const num = parseInt(value);
-        newCosts[index] = isNaN(num) ? 0 : Math.max(0, num);
-        setOptionCosts(newCosts);
+    const [items, setItems] = useState<PollOption[]>(() => {
+        if (poll.pollType === 'ranked') {
+            return shuffle(poll.options);
+        }
+        return poll.options;
+    });
+    
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [maybeIds, setMaybeIds] = useState<Set<string>>(new Set());
+    const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
+    const [budgetAllocations, setBudgetAllocations] = useState<Record<string, number>>({});
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+    const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>(() => {
+        if (poll.pollType === 'rating') {
+            const defaults: Record<string, number> = {};
+            poll.options.forEach(opt => defaults[opt.id] = 50);
+            return defaults;
+        }
+        return {};
+    });
+
+    const [matrixPositions, setMatrixPositions] = useState<Record<string, { x: number, y: number }>>({});
+    const matrixContainerRef = useRef<HTMLDivElement>(null);
+
+    interface Pair { left: PollOption; right: PollOption }
+    const [pairwiseQueue, setPairwiseQueue] = useState<Pair[]>([]);
+    const [currentPairIndex, setCurrentPairIndex] = useState(0);
+    const [pairwiseVotes, setPairwiseVotes] = useState<{ winnerId: string; loserId: string }[]>([]);
+    const [pairwiseDone, setPairwiseDone] = useState(false);
+
+    const [voterName, setVoterName] = useState('');
+    const [accessCode, setAccessCode] = useState('');
+    const [comment, setComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        const codeParam = params.get('code');
+        if (codeParam) {
+            setAccessCode(codeParam);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (poll.pollType === 'pairwise' && pairwiseQueue.length === 0) {
+            const pairs: Pair[] = [];
+            for (let i = 0; i < poll.options.length; i++) {
+                for (let j = i + 1; j < poll.options.length; j++) {
+                    pairs.push({ left: poll.options[i], right: poll.options[j] });
+                }
+            }
+            const shuffledPairs = shuffle(pairs);
+            const limitedPairs = shuffledPairs.slice(0, 20);
+            setPairwiseQueue(limitedPairs);
+        }
+    }, [poll.pollType, poll.options, pairwiseQueue.length]);
+
+
+    const isDeadlineExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
+    const isMaxVotesReached = poll.settings.maxVotes && poll.voteCount >= poll.settings.maxVotes;
+    const isClosed = isDeadlineExpired || isMaxVotesReached;
+    const alreadyVotedBrowser = poll.settings.security === 'browser' && hasVoted(poll.id);
+
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const isDifferentTimezone = poll.settings.timezone && poll.settings.timezone !== userTimezone;
+
+    const checkVpnLikelihood = (): boolean => {
+        if (!poll.settings.blockVpn) return false;
+        const isHeadless = navigator.webdriver;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const isGenericTimezone = timezone === 'UTC' || timezone === 'Etc/GMT';
+        return !!isHeadless || isGenericTimezone;
     };
 
-    const handleImageUpload = async (index: number, file: File) => {
-        if (!file) return;
-        
-        if (file.size > 5 * 1024 * 1024) {
-            setError('Image too large. Max size is 5MB.');
-            return;
+    const getDotTotal = () => Object.values(dotAllocations).reduce((a, b) => a + b, 0);
+    const dotBudget = poll.settings.dotBudget || 10;
+    const dotsRemaining = dotBudget - getDotTotal();
+
+    const getBudgetSpent = () => {
+        return Object.entries(budgetAllocations).reduce((total, [id, qty]) => {
+            const option = poll.options.find(o => o.id === id);
+            return total + (qty * (option?.cost || 0));
+        }, 0);
+    };
+    const budgetLimit = poll.settings.budgetLimit || 100;
+    const budgetSpent = getBudgetSpent();
+    const budgetRemaining = budgetLimit - budgetSpent;
+
+    const handleDotChange = (id: string, delta: number) => {
+        const current = dotAllocations[id] || 0;
+        if (delta > 0 && dotsRemaining <= 0) return; 
+        if (delta < 0 && current <= 0) return; 
+        setDotAllocations({ ...dotAllocations, [id]: current + delta });
+    };
+
+    const handleBudgetChange = (id: string, delta: number) => {
+        const option = poll.options.find(o => o.id === id);
+        const cost = option?.cost || 0;
+        const currentQty = budgetAllocations[id] || 0;
+
+        if (delta > 0) {
+            if (budgetRemaining < cost) return; 
         }
+        if (delta < 0 && currentQty <= 0) return;
 
-        if (!CLOUDINARY_CLOUD_NAME) {
-            setError('Cloudinary Cloud Name is missing in src/config.ts');
-            return;
+        setBudgetAllocations({ ...budgetAllocations, [id]: currentQty + delta });
+    };
+
+    const handleRatingChange = (id: string, val: number) => {
+        setRatingAllocations(prev => ({ ...prev, [id]: val }));
+    };
+
+    const toggleSelection = (id: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            if (!poll.settings.allowMultiple && poll.pollType !== 'meeting') {
+                newSet.clear();
+            }
+            newSet.add(id);
         }
+        setSelectedIds(newSet);
+    };
 
-        setUploadingIndex(index);
-        setError(null);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET || 'votegenerator');
-
-        try {
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
+    const toggleMeetingSelection = (id: string) => {
+        if (selectedIds.has(id)) {
+            const newSel = new Set(selectedIds);
+            newSel.delete(id);
+            setSelectedIds(newSel);
             
-            if (!res.ok) {
-                 console.error("Cloudinary Error:", data);
-                 throw new Error(data.error?.message || 'Upload failed');
-            }
-
-            if (data.secure_url) {
-                const newImages = [...optionImages];
-                newImages[index] = data.secure_url;
-                setOptionImages(newImages);
-                
-                // If it was the last slot, add a new one
-                if (index === options.length - 1 && options.length < 20) {
-                    setOptions([...options, '']);
-                    setOptionCosts([...optionCosts, 10]);
-                    setOptionImages([...newImages, '']);
-                }
-            } else {
-                throw new Error('Upload failed - No URL returned');
-            }
-        } catch (e) {
-            console.error(e);
-            setError(e instanceof Error ? `Upload failed: ${e.message}` : 'Failed to upload image. Please try again.');
-        } finally {
-            setUploadingIndex(null);
+            const newMaybe = new Set(maybeIds);
+            newMaybe.add(id);
+            setMaybeIds(newMaybe);
+        } else if (maybeIds.has(id)) {
+            const newMaybe = new Set(maybeIds);
+            newMaybe.delete(id);
+            setMaybeIds(newMaybe);
+        } else {
+            const newSel = new Set(selectedIds);
+            newSel.add(id);
+            setSelectedIds(newSel);
         }
     };
 
-    const removeOption = (index: number) => {
-        if (pollType === 'meeting') {
-             setOptions(options.filter((_, i) => i !== index));
-             return;
+    const handleMatrixDragEnd = (id: string, info: any) => {
+        if (!matrixContainerRef.current) return;
+        const rect = matrixContainerRef.current.getBoundingClientRect();
+        const pointX = info.point.x - rect.left;
+        const pointY = info.point.y - rect.top;
+        const xPercent = Math.min(100, Math.max(0, (pointX / rect.width) * 100));
+        const yPercent = Math.min(100, Math.max(0, (pointY / rect.height) * 100));
+        const cartesianY = 100 - yPercent;
+        setMatrixPositions(prev => ({ ...prev, [id]: { x: xPercent, y: cartesianY } }));
+    };
+
+    const handlePairwiseVote = (winner: PollOption, loser: PollOption) => {
+        setPairwiseVotes(prev => [...prev, { winnerId: winner.id, loserId: loser.id }]);
+        if (currentPairIndex < pairwiseQueue.length - 1) {
+            setCurrentPairIndex(prev => prev + 1);
+        } else {
+            setPairwiseDone(true);
         }
-        if (options.length <= 2) return;
-        setOptions(options.filter((_, i) => i !== index));
-        setOptionCosts(optionCosts.filter((_, i) => i !== index));
-        setOptionImages(optionImages.filter((_, i) => i !== index));
     };
 
-    const addOption = () => {
-        if (options.length >= 20) return;
-        setOptions([...options, '']);
-        setOptionCosts([...optionCosts, 10]);
-        setOptionImages([...optionImages, '']);
-        if (pollType !== 'image') setTimeout(() => lastInputRef.current?.focus(), 50);
-    };
+    const isMatrixPlaced = (id: string) => !!matrixPositions[id];
 
-    const addMeetingSlot = () => {
-        if (!meetingDate || !meetingTime) return;
-        try {
-             const [year, month, day] = meetingDate.split('-').map(Number);
-             const [hours, minutes] = meetingTime.split(':').map(Number);
-             const d = new Date(year, month - 1, day, hours, minutes);
-             const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-             const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-             const newOption = `${dateStr} • ${timeStr}`;
-             const currentOptions = options.filter(o => o.trim() !== '');
-             setOptions([...currentOptions, newOption]);
-             setMeetingTime('');
-        } catch (e) { console.error(e); }
-    };
-
-    const handleCreate = async () => {
-        setError(null);
-        
-        // Filter options. For Image polls, image is required. For others, text is required.
-        const validOptions: { text: string; cost?: number; imageUrl?: string }[] = [];
-        
-        options.forEach((text, i) => {
-            if (pollType === 'image') {
-                if (optionImages[i]) {
-                    validOptions.push({
-                        text: text.trim() || `Image ${i + 1}`, // Default text if empty
-                        imageUrl: optionImages[i]
-                    });
-                }
-            } else {
-                if (text.trim() !== '') {
-                    const opt: { text: string; cost?: number } = { text: text.trim() };
-                    if (pollType === 'budget') opt.cost = optionCosts[i];
-                    validOptions.push(opt);
-                }
-            }
-        });
-        
-        if (!title.trim()) {
-            setError('Please add a title or question for your poll.');
+    const handleSubmit = async () => {
+        setErrorMessage(null);
+        if (checkVpnLikelihood()) {
+            setErrorMessage("Vote blocked: VPN or Proxy detected. Please disable it to vote.");
             return;
         }
-        
-        if (validOptions.length < 2) {
-            setError('Please add at least 2 options for people to choose from.');
-            return;
-        }
-
-        setIsCreating(true);
-        
+        setIsSubmitting(true);
         try {
-            const result = await createPoll({ 
-                title: title.trim(), 
-                description: description.trim() || undefined, 
-                options: validOptions,
-                pollType: pollType as any,
-                voterCount: security === 'code' ? voterCount : undefined,
-                settings: { 
-                    hideResults, 
-                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
-                    requireNames,
-                    allowComments,
-                    publicComments,
-                    blockVpn,
-                    security,
-                    dotBudget: pollType === 'dot' ? dotBudget : undefined,
-                    budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
-                    timezone: pollType === 'meeting' ? timezone : undefined
-                } 
-            });
-            window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
-        } catch (e) {
-            console.error('Failed to create poll:', e);
-            setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
-            setIsCreating(false);
+            let choices: string[] = [];
+            let choicesMaybe: string[] = [];
+
+            if (poll.pollType === 'ranked') {
+                choices = items.map(i => i.id);
+            } else if (poll.pollType === 'dot') {
+                choices = Object.entries(dotAllocations).flatMap(([id, count]) => Array(count).fill(id));
+            } else if (poll.pollType === 'budget') {
+                choices = Object.entries(budgetAllocations).flatMap(([id, count]) => Array(count).fill(id));
+            } else if (poll.pollType === 'matrix') {
+                choices = Object.keys(matrixPositions);
+            } else if (poll.pollType === 'pairwise') {
+                choices = [];
+            } else if (poll.pollType === 'rating') {
+                choices = [];
+            } else {
+                choices = Array.from(selectedIds);
+                if (poll.pollType === 'meeting') {
+                    choicesMaybe = Array.from(maybeIds);
+                }
+            }
+            
+            await submitVote(
+                poll.id, 
+                choices, 
+                voterName.trim() || undefined,
+                accessCode.trim() || undefined,
+                comment.trim() || undefined,
+                choicesMaybe.length > 0 ? choicesMaybe : undefined,
+                poll.pollType === 'matrix' ? matrixPositions : undefined,
+                poll.pollType === 'pairwise' ? pairwiseVotes : undefined,
+                poll.pollType === 'rating' ? ratingAllocations : undefined
+            );
+            onVoteSuccess();
+        } catch (error) {
+            console.error(error);
+            setIsSubmitting(false);
+            setErrorMessage(error instanceof Error ? error.message : "Failed to submit vote");
         }
     };
 
-    const validOptionCount = pollType === 'image' 
-        ? optionImages.filter(i => !!i).length 
-        : options.filter(o => o.trim() !== '').length;
-        
-    const validTextOptions = options.map(o => o.trim()).filter(o => o !== '');
-    const hasDuplicates = pollType !== 'image' && validTextOptions.length > 0 && new Set(validTextOptions).size !== validTextOptions.length;
+    let canSubmit = false;
+    if (poll.pollType === 'ranked' || poll.pollType === 'rating') canSubmit = true;
+    else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
+    else if (poll.pollType === 'budget') canSubmit = getBudgetSpent() > 0;
+    else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
+    else if (poll.pollType === 'pairwise') canSubmit = pairwiseDone;
+    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; 
+
+    if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
+    if (poll.settings.security === 'code' && accessCode.trim().length === 0) canSubmit = false;
+
+    if (isClosed) {
+        return (
+            <div className="max-w-2xl mx-auto px-4 pt-20 text-center">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock size={32} className="text-slate-400" />
+                </div>
+                <h1 className="text-3xl font-black text-slate-800 mb-2">Poll Closed</h1>
+                {isDeadlineExpired && (
+                     <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
+                )}
+                <button onClick={onVoteSuccess} className="text-indigo-600 font-bold hover:underline">View Results</button>
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-2xl mx-auto px-4 pb-20">
-            {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10 pt-10">
-                <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 3 }} transition={{ type: "spring", delay: 0.1 }} className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
-                    <BarChart2 size={32} className="text-white" />
-                </motion.div>
-                <h1 className="text-4xl md:text-5xl font-black text-slate-800 font-serif mb-3 tracking-tight">VoteGenerator</h1>
-                <p className="text-lg text-slate-500 max-w-md mx-auto">Create a free ranked-choice poll in seconds.</p>
-            </motion.div>
-
-            {/* Main Form */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
-                <div className="space-y-6">
-                    {/* Poll Type Selection */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">Poll Type <span className="text-red-500 ml-1">*</span></label>
-                            <button type="button" onClick={() => setShowPollTypeInfo(!showPollTypeInfo)} className="text-slate-400 hover:text-indigo-600 transition-colors"><HelpCircle size={18} /></button>
+        <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+            >
+                <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 relative">
+                    {poll.pollType === 'budget' && (
+                        <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-sm font-bold text-green-800 border-b border-green-100 flex items-center justify-center gap-2">
+                            Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600 flex items-center"><DollarSign size={12}/>{budgetRemaining}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            {POLL_TYPES.map((type) => {
-                                const Icon = type.icon;
-                                const isSelected = pollType === type.id;
+                    )}
+                    <h1 className={`text-2xl md:text-3xl font-black text-slate-800 font-serif mb-2 ${poll.pollType === 'budget' ? 'pt-6' : ''}`}>
+                        {poll.title}
+                    </h1>
+                    {poll.description && (
+                        <p className="text-slate-600 leading-relaxed">
+                            {poll.description}
+                        </p>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-2 mt-4">
+                        <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
+                            {poll.pollType === 'image' && "Click image to select"}
+                            {poll.pollType === 'ranked' && "Rank Options"}
+                            {poll.pollType === 'multiple' && (poll.settings.allowMultiple ? "Select Options" : "Select One")}
+                            {poll.pollType === 'meeting' && "Select Available Times"}
+                            {poll.pollType === 'dot' && "Distribute Points"}
+                            {poll.pollType === 'budget' && "Buy Features"}
+                            {poll.pollType === 'matrix' && "Drag to Grid"}
+                            {poll.pollType === 'pairwise' && "This or That"}
+                            {poll.pollType === 'rating' && "Rate Options"}
+                        </div>
+
+                        {poll.settings.deadline && (
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
+                                <Clock size={14} /> Ends: {new Date(poll.settings.deadline).toLocaleDateString()}
+                            </div>
+                        )}
+                        
+                        {poll.pollType === 'dot' && (
+                             <div className={`flex items-center gap-2 text-sm font-bold px-3 py-1 rounded-full w-fit border transition-colors ${
+                                 dotsRemaining === 0 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white border-indigo-200 text-indigo-600 shadow-sm'
+                             }`}>
+                                <Coins size={14} /> {dotsRemaining} Points Left
+                            </div>
+                        )}
+
+                        {isDifferentTimezone && poll.pollType === 'meeting' && (
+                            <div className="mt-2 w-full p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800 flex items-start gap-2">
+                                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                                <span>
+                                    <strong>Timezone Mismatch:</strong> The poll times are shown in {poll.settings.timezone}, but you are in {userTimezone}. Please adjust accordingly.
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="p-6 md:p-8">
+                    {/* VISUAL IMAGE POLL GRID */}
+                    {poll.pollType === 'image' && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {poll.options.map((opt) => {
+                                const isSelected = selectedIds.has(opt.id);
                                 return (
-                                    <button key={type.id} type="button" onClick={() => { 
-                                        setPollType(type.id);
-                                        if (type.id === 'meeting') setOptions([]); 
-                                        else if (options.length === 0) { setOptions(['', '', '']); setOptionCosts([10, 10, 10]); setOptionImages(['', '', '']); }
-                                    }} className={`relative p-4 rounded-xl border-2 text-left transition-all ${isSelected ? `${type.selectedBorder} ${type.selectedBg}` : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'}`}>
-                                        <Icon size={20} className={isSelected ? type.iconColor : 'text-slate-400'} />
-                                        <span className={`block font-bold mt-2 ${isSelected ? type.textColor : 'text-slate-700'}`}>{type.name}</span>
-                                        <span className={`text-xs block mt-1 leading-tight ${isSelected ? type.textColor : 'text-slate-500'}`}>{type.description}</span>
-                                    </button>
+                                    <div key={opt.id} className="relative group">
+                                        <div 
+                                            onClick={() => toggleSelection(opt.id)}
+                                            className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all border-4 ${
+                                                isSelected ? 'border-pink-500 shadow-lg scale-[1.02]' : 'border-transparent hover:scale-[1.01]'
+                                            }`}
+                                        >
+                                            <img src={opt.imageUrl} alt={opt.text} className="w-full h-full object-cover" />
+                                            
+                                            {/* Selection Overlay */}
+                                            {isSelected && (
+                                                <div className="absolute inset-0 bg-pink-500/20 flex items-center justify-center backdrop-blur-[1px]">
+                                                    <div className="bg-pink-500 text-white p-2 rounded-full shadow-md">
+                                                        <Check size={32} strokeWidth={4} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Zoom Button */}
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); setLightboxImage(opt.imageUrl || ''); }}
+                                                className="absolute bottom-2 right-2 bg-black/60 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                                            >
+                                                <ZoomIn size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 text-center font-bold text-slate-700 text-sm leading-tight">{opt.text}</div>
+                                    </div>
                                 );
                             })}
                         </div>
-                    </div>
+                    )}
 
-                    {/* Title */}
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{pollType === 'meeting' ? 'Event Name' : 'Your Question'} <span className="text-red-500 ml-1">*</span></label>
-                        <input type="text" className="w-full p-4 text-xl font-bold border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:font-normal placeholder:text-slate-300" placeholder={pollType === 'meeting' ? "e.g., Q3 Strategy Meeting" : placeholderQuestion} value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />
-                    </div>
-                    
-                    {/* Description */}
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Details <span className="font-normal text-slate-400">(optional)</span></label>
-                        <textarea className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all h-20 resize-none placeholder:text-slate-300" placeholder="Add extra info, deadline, or instructions..." value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
-                    </div>
+                    {poll.pollType === 'ranked' && (
+                        <Reorder.Group axis="y" values={items} onReorder={setItems} className="space-y-3">
+                            {items.map((item, index) => (
+                                <Reorder.Item key={item.id} value={item} className="relative z-0">
+                                    <div className="flex items-center gap-4 p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm hover:border-indigo-300 transition-all cursor-grab active:cursor-grabbing group select-none">
+                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors ml-2">
+                                            {index + 1}
+                                        </div>
+                                        <span className="flex-1 font-medium text-slate-800 text-lg">{item.text}</span>
+                                        <GripVertical className="text-slate-300 group-hover:text-indigo-400" />
+                                    </div>
+                                </Reorder.Item>
+                            ))}
+                        </Reorder.Group>
+                    )}
 
-                    {/* Options */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'budget' ? 'Features to Buy' : pollType === 'image' ? 'Images' : 'Options'} <span className="text-red-500 ml-1">*</span>
-                            </label>
-                            <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
-                                {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}
-                            </span>
+                    {poll.pollType === 'pairwise' && (
+                        <div className="space-y-6">
+                            {!pairwiseDone ? (
+                                <div className="max-w-md mx-auto">
+                                    <div className="mb-4 text-center">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">Match {currentPairIndex + 1} of {pairwiseQueue.length}</span>
+                                        <div className="h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                                            <motion.div className="h-full bg-orange-500" initial={{ width: 0 }} animate={{ width: `${((currentPairIndex) / pairwiseQueue.length) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                    <AnimatePresence mode="wait">
+                                        <motion.div key={currentPairIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="grid gap-4">
+                                            {pairwiseQueue[currentPairIndex] && (
+                                                <>
+                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].left, pairwiseQueue[currentPairIndex].right)} className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left">
+                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].left.text}</span>
+                                                    </button>
+                                                    <div className="flex items-center justify-center text-slate-300 font-bold text-sm uppercase"><div className="h-px bg-slate-200 w-10 mr-2"></div>VS<div className="h-px bg-slate-200 w-10 ml-2"></div></div>
+                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].right, pairwiseQueue[currentPairIndex].left)} className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left">
+                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].right.text}</span>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </motion.div>
+                                    </AnimatePresence>
+                                </div>
+                            ) : (
+                                <div className="text-center py-10">
+                                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><Check size={40} /></div>
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Complete!</h3>
+                                </div>
+                            )}
                         </div>
-                        
-                        {/* MEETING DATE/TIME PICKER */}
-                        {pollType === 'meeting' && (
-                            <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 mb-4">
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                    <input type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} className="p-2 border border-indigo-200 rounded-lg text-sm flex-1 outline-none focus:border-indigo-500 text-slate-700 font-bold" />
-                                    <input type="time" value={meetingTime} onChange={(e) => setMeetingTime(e.target.value)} className="p-2 border border-indigo-200 rounded-lg text-sm w-32 outline-none focus:border-indigo-500 text-slate-700 font-bold" />
-                                    <button onClick={addMeetingSlot} disabled={!meetingDate || !meetingTime} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"><Plus size={16} /> Add</button>
-                                </div>
-                            </div>
-                        )}
+                    )}
 
-                        {/* VISUAL IMAGE POLL UPLOADER */}
-                        {pollType === 'image' ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {optionImages.map((img, i) => (
-                                    <div key={i} className="relative group">
-                                        <div className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center overflow-hidden transition-colors relative ${img ? 'border-indigo-200 bg-slate-50' : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50'}`}>
-                                            {img ? (
-                                                <img src={img} alt={`Option ${i+1}`} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center p-2">
-                                                    {uploadingIndex === i ? (
-                                                        <Loader2 className="animate-spin text-indigo-500" size={24} />
-                                                    ) : (
-                                                        <>
-                                                            <Upload size={24} className="text-slate-400 mb-2" />
-                                                            <span className="text-xs text-slate-500 text-center font-medium">Upload</span>
-                                                        </>
-                                                    )}
-                                                    <input 
-                                                        type="file" 
-                                                        accept="image/*" 
-                                                        className="hidden" 
-                                                        onChange={(e) => e.target.files && handleImageUpload(i, e.target.files[0])} 
-                                                        disabled={uploadingIndex !== null}
-                                                    />
-                                                </label>
-                                            )}
-                                            {img && (
-                                                <button onClick={() => {
-                                                    const newImgs = [...optionImages]; newImgs[i] = ''; setOptionImages(newImgs);
-                                                    if(options.length > 2 && i < options.length -1) removeOption(i);
-                                                }} className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full hover:bg-red-500 transition-colors">
-                                                    <X size={14} />
-                                                </button>
-                                            )}
+                    {/* ... other poll types (rating, matrix, multiple, dot, budget) remain same ... */}
+                    {(poll.pollType === 'multiple' || poll.pollType === 'meeting') && (
+                        <div className="space-y-3">
+                            {poll.options.map((opt) => {
+                                const isSelected = selectedIds.has(opt.id);
+                                const isMaybe = maybeIds.has(opt.id);
+                                const isMeeting = poll.pollType === 'meeting';
+                                return (
+                                    <button key={opt.id} onClick={() => isMeeting ? toggleMeetingSelection(opt.id) : toggleSelection(opt.id)} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group ${isSelected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : isMaybe ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50'}`}>
+                                        <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'bg-emerald-500 border-emerald-500 text-white' : isMaybe ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-300 bg-white'}`}>
+                                            {isSelected && <Check size={18} strokeWidth={3} />}
+                                            {isMaybe && <HelpCircle size={18} strokeWidth={3} />}
                                         </div>
-                                        <input 
-                                            type="text" 
-                                            value={options[i]} 
-                                            onChange={(e) => handleOptionChange(i, e.target.value)}
-                                            placeholder={`Caption (Optional)`}
-                                            className="w-full mt-1 text-xs text-center border-b border-transparent focus:border-indigo-300 outline-none bg-transparent" 
-                                        />
-                                    </div>
-                                ))}
-                                {options.length < 20 && (
-                                    <button onClick={addOption} className="aspect-square rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-all">
-                                        <Plus size={24} />
+                                        <span className={`font-medium text-lg flex-1 ${isSelected ? 'text-emerald-900' : isMaybe ? 'text-amber-900' : 'text-slate-700'}`}>{opt.text}</span>
+                                        {isMeeting && <Calendar size={20} className={isSelected ? 'text-emerald-400' : isMaybe ? 'text-amber-400' : 'text-slate-300'} />}
                                     </button>
-                                )}
-                            </div>
-                        ) : (
-                            /* STANDARD TEXT INPUTS */
-                            <div className="space-y-3">
-                                <AnimatePresence mode="popLayout">
-                                    {options.map((opt, i) => {
-                                        if(pollType === 'meeting' && opt.trim() === '') return null;
-                                        return (
-                                            <motion.div key={i} layout initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex items-center gap-3 group">
-                                                <span className="text-slate-300 font-bold w-6 text-right text-sm">{i + 1}.</span>
-                                                <div className="relative flex-1 flex gap-2">
-                                                    <input 
-                                                        ref={i === options.length - 1 ? lastInputRef : undefined}
-                                                        type="text" 
-                                                        className="w-full p-3 pl-4 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-medium placeholder:text-slate-300"
-                                                        placeholder={pollType === 'meeting' ? `e.g. Mon, Oct 23 • 10:00 AM EDT` : `Option ${i + 1}`}
-                                                        value={opt}
-                                                        onChange={(e) => handleOptionChange(i, e.target.value)}
-                                                        maxLength={200}
-                                                    />
-                                                    {pollType === 'budget' && (
-                                                        <div className="relative w-24 shrink-0">
-                                                            <span className="absolute left-3 top-3.5 text-slate-400 text-sm font-bold">$</span>
-                                                            <input type="number" min="0" placeholder="Cost" value={optionCosts[i] || ''} onChange={(e) => handleCostChange(i, e.target.value)} className="w-full p-3 pl-6 border-2 border-slate-200 rounded-xl outline-none focus:border-green-500 font-bold text-slate-700 text-right" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                {(options.length > 2 || pollType === 'meeting') && (
-                                                    <button onClick={() => removeOption(i)} className={`p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all focus:opacity-100 ${pollType === 'meeting' ? 'opacity-100 text-slate-400' : 'opacity-0 group-hover:opacity-100'}`} tabIndex={-1}><Trash2 size={18} /></button>
-                                                )}
-                                            </motion.div>
-                                        );
-                                    })}
-                                </AnimatePresence>
-                                {options.length < 20 && pollType !== 'meeting' && (
-                                    <button onClick={addOption} className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors p-2 hover:bg-indigo-50 rounded-lg -ml-2"><Plus size={16} /> Add another option</button>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
 
-                    {/* Settings Section */}
-                    <div className="pt-6 border-t border-slate-100">
-                         <h3 className="text-lg font-bold text-slate-800 mb-4">Settings</h3>
-                         
-                         <div className="space-y-4">
-                             {/* Dot Budget */}
-                             {pollType === 'dot' && (
-                                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl mb-4">
-                                     <label className="block text-sm font-bold text-indigo-900 mb-2">Points Per Voter</label>
-                                     <div className="flex items-center gap-3">
-                                        <Coins size={20} className="text-indigo-500" />
-                                        <input type="number" min={1} max={100} value={dotBudget} onChange={(e) => setDotBudget(Math.max(1, parseInt(e.target.value) || 0))} className="w-20 p-2 text-center font-bold text-indigo-900 border border-indigo-200 rounded-lg outline-none focus:border-indigo-500" />
-                                     </div>
-                                </div>
-                             )}
-                             {/* Budget Limit */}
-                             {pollType === 'budget' && (
-                                <div className="p-4 bg-green-50 border border-green-100 rounded-xl mb-4">
-                                     <label className="block text-sm font-bold text-green-900 mb-2">Budget Per Voter</label>
-                                     <div className="flex items-center gap-3">
-                                        <DollarSign size={20} className="text-green-600" />
-                                        <input type="number" min={1} value={budgetLimit} onChange={(e) => setBudgetLimit(Math.max(1, parseInt(e.target.value) || 0))} className="w-24 p-2 text-center font-bold text-green-900 border border-green-200 rounded-lg outline-none focus:border-green-500" />
-                                     </div>
-                                </div>
-                             )}
-                             {/* Standard Settings */}
-                             <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
-                                <div className="flex-1 font-bold text-slate-700">Require names</div>
-                                <input type="checkbox" checked={requireNames} onChange={e => setRequireNames(e.target.checked)} className="accent-indigo-600 w-5 h-5" />
-                             </label>
-                             <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
-                                <div className="flex-1 font-bold text-slate-700">Allow comments</div>
-                                <input type="checkbox" checked={allowComments} onChange={e => setAllowComments(e.target.checked)} className="accent-indigo-600 w-5 h-5" />
-                             </label>
-                             <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
-                                <div className="flex-1 font-bold text-slate-700">Hide results</div>
-                                <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="accent-indigo-600 w-5 h-5" />
-                             </label>
-                             
-                             <div className="pt-2">
-                                <button onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center gap-2 text-indigo-600 font-medium text-sm hover:text-indigo-700">
-                                    {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />} {showAdvanced ? 'Hide advanced settings' : 'Show advanced settings'}
-                                </button>
-                                {showAdvanced && (
-                                    <div className="pt-4 space-y-4">
-                                        {/* Security */}
-                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                            <h4 className="text-sm font-bold text-slate-700 mb-2">Vote Security</h4>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {(['browser', 'code', 'none'] as const).map(sec => (
-                                                    <button key={sec} onClick={() => setSecurity(sec)} className={`py-2 px-1 rounded-lg text-xs font-bold capitalize border ${security === sec ? 'bg-white border-indigo-500 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500'}`}>{sec === 'browser' ? 'Browser Check' : sec === 'code' ? 'Access Codes' : 'No Security'}</button>
-                                                ))}
-                                            </div>
-                                            {security === 'code' && <input type="number" min={1} value={voterCount} onChange={(e) => setVoterCount(parseInt(e.target.value) || 1)} className="mt-2 w-full p-2 text-sm border border-slate-300 rounded-lg" placeholder="Number of voters" />}
+                    {poll.pollType === 'dot' && (
+                        <div className="space-y-4">
+                            {poll.options.map((opt) => {
+                                const count = dotAllocations[opt.id] || 0;
+                                return (
+                                    <div key={opt.id} className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${count > 0 ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-100 bg-white'}`}>
+                                        <span className={`font-medium text-lg flex-1 ${count > 0 ? 'text-indigo-900' : 'text-slate-700'}`}>{opt.text}</span>
+                                        <div className="flex items-center gap-3 bg-white p-1 rounded-lg shadow-sm border border-slate-200">
+                                            <button onClick={() => handleDotChange(opt.id, -1)} disabled={count === 0} className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent text-slate-600"><Minus size={16} /></button>
+                                            <span className="w-6 text-center font-bold text-lg text-indigo-600">{count}</span>
+                                            <button onClick={() => handleDotChange(opt.id, 1)} disabled={dotsRemaining === 0} className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent text-slate-600"><Plus size={16} /></button>
                                         </div>
                                     </div>
-                                )}
-                             </div>
-                         </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {poll.pollType === 'budget' && (
+                        <div className="space-y-4">
+                            {poll.options.map((opt) => {
+                                const count = budgetAllocations[opt.id] || 0;
+                                const cost = opt.cost || 0;
+                                const canAfford = budgetRemaining >= cost;
+                                return (
+                                    <div key={opt.id} className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${count > 0 ? 'border-green-500 bg-green-50/30' : 'border-slate-100 bg-white'}`}>
+                                        <div className="flex-1">
+                                            <div className={`font-medium text-lg ${count > 0 ? 'text-green-900' : 'text-slate-700'}`}>{opt.text}</div>
+                                            <div className="text-sm font-bold text-slate-400 mt-1">${cost} each</div>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-3 bg-white p-1 rounded-lg shadow-sm border border-slate-200">
+                                            <button onClick={() => handleBudgetChange(opt.id, -1)} disabled={count === 0} className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent text-slate-600"><Minus size={16} /></button>
+                                            <span className="w-6 text-center font-bold text-lg text-green-600">{count}</span>
+                                            <button onClick={() => handleBudgetChange(opt.id, 1)} disabled={!canAfford} className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent text-slate-600"><Plus size={16} /></button>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {/* ... other render logic ... */}
+                    {poll.pollType === 'rating' && (
+                        <div className="space-y-6">
+                            {poll.options.map((opt) => {
+                                const val = ratingAllocations[opt.id] ?? 50;
+                                return (
+                                    <div key={opt.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-lg font-bold text-slate-800">{opt.text}</span>
+                                            <span className="text-lg font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg min-w-[3rem] text-center">{val}</span>
+                                        </div>
+                                        <div className="relative h-2 bg-slate-100 rounded-full">
+                                            <input type="range" min="0" max="100" value={val} onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                            <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${val}%` }} />
+                                            <div className="absolute top-1/2 -mt-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-full shadow-md transition-all pointer-events-none" style={{ left: `calc(${val}% - 8px)` }} />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {poll.pollType === 'matrix' && (
+                        <div className="select-none">
+                            <div className="mb-4 text-center text-sm text-slate-500">Drag all items from the list onto the grid based on Impact vs. Effort.</div>
+                            <div className="relative aspect-square bg-slate-50 rounded-xl border-2 border-slate-200 mb-6 overflow-hidden" ref={matrixContainerRef}>
+                                <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-slate-300"></div></div>
+                                <div className="absolute inset-0 flex items-center justify-center"><div className="h-full w-px bg-slate-300"></div></div>
+                                {poll.options.filter(o => isMatrixPlaced(o.id)).map(opt => {
+                                    const pos = matrixPositions[opt.id];
+                                    const domTop = 100 - pos.y;
+                                    return (
+                                        <motion.div key={opt.id} drag dragMomentum={false} dragConstraints={matrixContainerRef} onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} style={{ left: `${pos.x}%`, top: `${domTop}%` }} className="absolute -ml-4 -mt-4 w-8 h-8 bg-indigo-600 rounded-full shadow-lg border-2 border-white flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group">
+                                            <span className="text-white font-bold text-xs pointer-events-none">{poll.options.findIndex(o => o.id === opt.id) + 1}</span>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-4 rounded-xl border border-slate-200">
+                                {poll.options.map((opt, i) => {
+                                    if (isMatrixPlaced(opt.id)) return null;
+                                    return (
+                                        <motion.div key={opt.id} drag dragSnapToOrigin onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)} className="bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                                            <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{i + 1}</div>
+                                            <span className="text-sm font-medium text-slate-700 truncate">{opt.text}</span>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Meta Inputs */}
+                    <div className="space-y-4 mt-8 pt-6 border-t border-slate-100">
+                        {poll.settings.security === 'code' && (
+                             <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Access Code *</label>
+                                <div className="relative">
+                                    <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <input type="text" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono" placeholder="Enter code" />
+                                </div>
+                            </div>
+                        )}
+                        {poll.settings.requireNames && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Your Name *</label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <input type="text" value={voterName} onChange={(e) => setVoterName(e.target.value)} className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all" placeholder="Enter your name" />
+                                </div>
+                            </div>
+                        )}
+                        {poll.settings.allowComments && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Comment <span className="font-normal text-slate-400">(optional)</span></label>
+                                <div className="relative">
+                                    <MessageSquare className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <textarea value={comment} onChange={(e) => setComment(e.target.value)} className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all resize-none" placeholder="Add a comment..." rows={2} />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                                <AlertCircle size={20} /> <span className="font-medium">{error}</span>
-                            </motion.div>
-                        )}
-                        {hasDuplicates && (
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-700">
-                                <AlertTriangle size={20} /> <span className="font-medium">Duplicate options are not allowed.</span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {errorMessage && <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-200 text-center">{errorMessage}</div>}
 
-                    <button onClick={handleCreate} disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg transform active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed">
-                        {isCreating ? <><Loader2 className="animate-spin" size={22} /> Creating Poll...</> : <><Sparkles size={20} /> Create Poll <ArrowRight size={20} /></>}
-                    </button>
+                    {alreadyVotedBrowser ? (
+                        <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-center border border-amber-200">
+                            <strong>You have already voted.</strong><br/>
+                            <div className="mt-2"><button onClick={onVoteSuccess} className="text-indigo-600 underline text-sm font-bold">See Results</button></div>
+                        </div>
+                    ) : (
+                        <button onClick={handleSubmit} disabled={isSubmitting || !canSubmit} className="w-full mt-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg">
+                            {isSubmitting ? <><Loader2 className="animate-spin" size={24} /> Submitting...</> : <>Submit Vote <ArrowRight size={24} /></>}
+                        </button>
+                    )}
                 </div>
             </motion.div>
+
+            {/* LIGHTBOX FOR IMAGES */}
+            <AnimatePresence>
+                {lightboxImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-pointer"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <button className="absolute top-4 right-4 text-white hover:text-slate-300"><X size={32}/></button>
+                        <img src={lightboxImage} alt="Full view" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
-export default VoteGeneratorCreate;
+export default VoteGeneratorVote;

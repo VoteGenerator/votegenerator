@@ -244,8 +244,6 @@ const VoteGeneratorApp: React.FC = () => {
         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
     };
     
-    // Using a reliable public API for QR generation. 
-    // In a production app with npm access, we would use 'qrcode.react' or similar.
     const getQrUrl = () => {
         const url = encodeURIComponent(getShareUrl());
         return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&bgcolor=ffffff`;

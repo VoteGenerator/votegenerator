@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -18,12 +18,24 @@ const POLL_TYPES = [
         textColor: 'text-indigo-700'
     },
     {
+        id: 'pairwise',
+        name: 'Pairwise Comparison',
+        icon: GitCompare,
+        description: 'Voters choose between two options at a time ("This or That").',
+        bestFor: 'Perfect for: Large lists, logos, or quick gut-check decisions.',
+        example: 'e.g., "Which logo is better?"',
+        selectedBorder: 'border-orange-500',
+        selectedBg: 'bg-orange-50',
+        iconColor: 'text-orange-600',
+        textColor: 'text-orange-700'
+    },
+    {
         id: 'matrix',
         name: 'Priority Matrix',
         icon: LayoutGrid,
         description: 'Voters drag items onto a 2D grid (Impact vs Effort). Visualizes priorities.',
         bestFor: 'Perfect for: Agile planning and deciding what to build next.',
-        example: 'e.g., "Feature Roadmap 2024"',
+        example: 'e.g., "Feature Roadmap 2026"',
         selectedBorder: 'border-fuchsia-500',
         selectedBg: 'bg-fuchsia-50',
         iconColor: 'text-fuchsia-600',
@@ -396,7 +408,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : 'Options'} <span className="text-red-500 ml-1">*</span>
+                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'pairwise' ? 'Items to Compare' : 'Options'} <span className="text-red-500 ml-1">*</span>
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
                                 {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -10,15 +10,16 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
     const isMatrix = poll.pollType === 'matrix';
+    const isPairwise = poll.pollType === 'pairwise';
     
     // Determine default view based on poll type
-    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix'>(
-        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : 'bar'
+    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise'>(
+        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : 'bar'
     );
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
@@ -313,10 +314,18 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                             <LayoutGrid size={16} /> Matrix
                         </button>
                     )}
+
+                    {isPairwise && (
+                         <button onClick={() => setViewMode('pairwise')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pairwise' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <GitCompare size={16} /> Leaderboard
+                        </button>
+                    )}
                     
-                    <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <BarChart size={16} /> Bar
-                    </button>
+                    {!isPairwise && (
+                         <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <BarChart size={16} /> Bar
+                        </button>
+                    )}
                     
                     {isRanked && (
                         <button onClick={() => setViewMode('flow')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'flow' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
@@ -330,9 +339,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </button>
                     )}
 
+                    {!isPairwise && (
                      <button onClick={() => setViewMode('pie')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pie' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                         <PieChart size={16} /> Pie
                     </button>
+                    )}
 
                     <button onClick={() => setViewMode('velocity')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'velocity' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                         <Activity size={16} /> Velocity
@@ -350,7 +361,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap') && activeWinnerId && !isDot && !isMatrix) && (
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise') && activeWinnerId && !isDot && !isMatrix) && (
                      <motion.div 
                         key="winner"
                         initial={{ scale: 0.95, opacity: 0 }}
@@ -377,6 +388,58 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                     Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
                                 </div>
                             )}
+                            {isPairwise && pairwiseScores && pairwiseScores[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Win Rate: {pairwiseScores[activeWinnerId].score.toFixed(1)}% ({pairwiseScores[activeWinnerId].wins} wins)
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- PAIRWISE VIEW --- */}
+                {viewMode === 'pairwise' && pairwiseScores && (
+                    <motion.div
+                        key="pairwise"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <GitCompare size={24} className="text-indigo-500"/> Comparison Leaderboard
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            {Object.entries(pairwiseScores)
+                                .sort(([, a], [, b]) => b.score - a.score)
+                                .map(([id, data], index) => {
+                                    return (
+                                        <div key={id} className="relative break-inside-avoid">
+                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <span className="text-slate-800 font-bold text-lg">
+                                                        {getOptionText(id)}
+                                                    </span>
+                                                </div>
+                                                <span className="text-slate-600 font-bold">
+                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins / {data.matches} matches)</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${data.score}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`h-full rounded-full ${getBarColorClass(id)} opacity-90`}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </motion.div>
                 )}
@@ -727,6 +790,13 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                             </div>
                                                         );
                                                     }
+                                                } else if (isPairwise && vote.pairwiseVotes) {
+                                                     // Calculate how many times this option won in this voter's session
+                                                     const voterWins = vote.pairwiseVotes.filter(p => p.winnerId === opt.id).length;
+                                                     const voterMatches = vote.pairwiseVotes.filter(p => p.winnerId === opt.id || p.loserId === opt.id).length;
+                                                     if (voterMatches > 0) {
+                                                         cellContent = <span className="text-xs font-bold text-slate-600">{voterWins} / {voterMatches}</span>;
+                                                     }
                                                 } else if (isRanked) {
                                                     const rank = vote.choices.indexOf(opt.id);
                                                     if (rank !== -1) {

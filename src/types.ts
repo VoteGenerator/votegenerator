@@ -24,7 +24,7 @@ export interface Poll {
     adminKey?: string;
     title: string;
     description?: string;
-    pollType: 'ranked' | 'multiple' | 'image' | 'meeting' | 'dot' | 'matrix';
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting' | 'dot' | 'matrix' | 'pairwise';
     options: PollOption[];
     settings: PollSettings;
     allowedCodes?: string[];
@@ -38,6 +38,7 @@ export interface Vote {
     choices: string[]; // Yes votes
     choicesMaybe?: string[]; // Maybe votes (for meetings)
     matrixVotes?: Record<string, { x: number, y: number }>; // Matrix coordinates (0-100)
+    pairwiseVotes?: { winnerId: string; loserId: string }[]; // Array of pair outcomes
     votedAt: string;
     voterName?: string;
     usedCode?: string;
@@ -61,5 +62,6 @@ export interface RunoffResult {
     simpleCounts?: Record<string, number>; // Yes counts
     maybeCounts?: Record<string, number>; // Maybe counts
     matrixAverages?: Record<string, { x: number, y: number }>; // Average coordinates
+    pairwiseScores?: Record<string, { wins: number; matches: number; score: number }>; // Win stats
     votes: Vote[];
 }

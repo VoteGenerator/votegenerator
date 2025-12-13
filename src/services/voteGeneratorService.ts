@@ -43,7 +43,7 @@ export const createPoll = async (data: {
     title: string;
     description?: string;
     options: string[];
-    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix';
+    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix' | 'pairwise';
     settings: { 
         hideResults: boolean; 
         allowMultiple: boolean;
@@ -150,11 +150,11 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string, choicesMaybe?: string[], matrixVotes?: Record<string, { x: number, y: number }>): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string, choicesMaybe?: string[], matrixVotes?: Record<string, { x: number, y: number }>, pairwiseVotes?: { winnerId: string; loserId: string }[]): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices, voterName, code, comment, choicesMaybe, matrixVotes })
+            body: JSON.stringify({ pollId, choices, voterName, code, comment, choicesMaybe, matrixVotes, pairwiseVotes })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
@@ -177,6 +177,7 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
             choices,
             choicesMaybe,
             matrixVotes,
+            pairwiseVotes,
             voterName, 
             usedCode: code,
             comment,
@@ -210,6 +211,7 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
             choices: v.choices,
             choicesMaybe: v.choicesMaybe,
             matrixVotes: v.matrixVotes,
+            pairwiseVotes: v.pairwiseVotes,
             votedAt: v.votedAt || v.createdAt || new Date().toISOString(),
             voterName: v.voterName,
             usedCode: v.usedCode,
@@ -250,6 +252,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     
     // Matrix Averages
     const matrixSums: Record<string, { x: number, y: number, count: number }> = {};
+    
+    // Pairwise Scores
+    const pairwiseStats: Record<string, { wins: number, matches: number }> = {};
 
     votes.forEach((v: any) => {
         if(Array.isArray(v.choices)) {
@@ -270,6 +275,20 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 matrixSums[id].count++;
             });
         }
+        if (Array.isArray(v.pairwiseVotes)) {
+            v.pairwiseVotes.forEach((match: { winnerId: string, loserId: string }) => {
+                // Initialize if not present
+                if (!pairwiseStats[match.winnerId]) pairwiseStats[match.winnerId] = { wins: 0, matches: 0 };
+                if (!pairwiseStats[match.loserId]) pairwiseStats[match.loserId] = { wins: 0, matches: 0 };
+                
+                // Update Winner
+                pairwiseStats[match.winnerId].matches++;
+                pairwiseStats[match.winnerId].wins++;
+                
+                // Update Loser
+                pairwiseStats[match.loserId].matches++;
+            });
+        }
     });
 
     const matrixAverages: Record<string, { x: number, y: number }> = {};
@@ -277,9 +296,28 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         matrixAverages[id] = { x: data.x / data.count, y: data.y / data.count };
     });
 
+    const pairwiseScores: Record<string, { wins: number, matches: number, score: number }> = {};
+    Object.entries(pairwiseStats).forEach(([id, stats]) => {
+        pairwiseScores[id] = { 
+            wins: stats.wins, 
+            matches: stats.matches, 
+            score: stats.matches > 0 ? (stats.wins / stats.matches) * 100 : 0 
+        };
+    });
+
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, votes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, pairwiseScores: {}, votes: [] };
     }
+
+    // Determine Pairwise Winner
+    let pairwiseWinnerId: string | null = null;
+    let maxPairwiseScore = -1;
+    Object.entries(pairwiseScores).forEach(([id, data]) => {
+        if (data.score > maxPairwiseScore) {
+            maxPairwiseScore = data.score;
+            pairwiseWinnerId = id;
+        }
+    });
 
     // Instant Runoff Calculation
     const rounds: RoundLog[] = [];
@@ -359,6 +397,11 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         roundNum++;
         if(roundNum > 20) break;
     }
+    
+    // Override Winner ID for Pairwise type
+    if (Object.keys(pairwiseScores).length > 0) {
+        winnerId = pairwiseWinnerId;
+    }
 
     return {
         winnerId,
@@ -370,6 +413,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         simpleCounts,
         maybeCounts,
         matrixAverages,
+        pairwiseScores,
         votes: votes 
     };
 };

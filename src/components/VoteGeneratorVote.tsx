@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle } from 'lucide-react';
+import { motion, Reorder, AnimatePresence } from 'framer-motion';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, GitCompare } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -39,6 +39,13 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [matrixPositions, setMatrixPositions] = useState<Record<string, { x: number, y: number }>>({});
     const matrixContainerRef = useRef<HTMLDivElement>(null);
 
+    // Pairwise Voting State
+    interface Pair { left: PollOption; right: PollOption }
+    const [pairwiseQueue, setPairwiseQueue] = useState<Pair[]>([]);
+    const [currentPairIndex, setCurrentPairIndex] = useState(0);
+    const [pairwiseVotes, setPairwiseVotes] = useState<{ winnerId: string; loserId: string }[]>([]);
+    const [pairwiseDone, setPairwiseDone] = useState(false);
+
     // Meta State
     const [voterName, setVoterName] = useState('');
     const [accessCode, setAccessCode] = useState('');
@@ -55,6 +62,25 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             setAccessCode(codeParam);
         }
     }, []);
+
+    // Initialize Pairwise Queue
+    useEffect(() => {
+        if (poll.pollType === 'pairwise' && pairwiseQueue.length === 0) {
+            // Generate all pairs
+            const pairs: Pair[] = [];
+            for (let i = 0; i < poll.options.length; i++) {
+                for (let j = i + 1; j < poll.options.length; j++) {
+                    pairs.push({ left: poll.options[i], right: poll.options[j] });
+                }
+            }
+            // Shuffle pairs
+            const shuffledPairs = shuffle(pairs);
+            // Limit to max 20 pairs to avoid fatigue
+            const limitedPairs = shuffledPairs.slice(0, 20);
+            setPairwiseQueue(limitedPairs);
+        }
+    }, [poll.pollType, poll.options, pairwiseQueue.length]);
+
 
     const isDeadlineExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
     const isMaxVotesReached = poll.settings.maxVotes && poll.voteCount >= poll.settings.maxVotes;
@@ -129,16 +155,22 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         const yPercent = Math.min(100, Math.max(0, (pointY / rect.height) * 100));
 
         // Flip Y because grid charts usually have High on top (Low Y in DOM is Top)
-        // But for storing "High Impact", Y=100 is Top.
-        // Let's stick to standard Cartesian: Bottom-Left is 0,0.
-        // DOM: Top-Left is 0,0.
-        // If we want Y=100 to be Top (High Impact), we need 100 - domPercent.
         const cartesianY = 100 - yPercent;
         
         setMatrixPositions(prev => ({
             ...prev,
             [id]: { x: xPercent, y: cartesianY }
         }));
+    };
+
+    const handlePairwiseVote = (winner: PollOption, loser: PollOption) => {
+        setPairwiseVotes(prev => [...prev, { winnerId: winner.id, loserId: loser.id }]);
+        
+        if (currentPairIndex < pairwiseQueue.length - 1) {
+            setCurrentPairIndex(prev => prev + 1);
+        } else {
+            setPairwiseDone(true);
+        }
     };
 
     const isMatrixPlaced = (id: string) => !!matrixPositions[id];
@@ -161,9 +193,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             } else if (poll.pollType === 'dot') {
                 choices = Object.entries(dotAllocations).flatMap(([id, count]) => Array(count).fill(id));
             } else if (poll.pollType === 'matrix') {
-                // For matrix, we don't use 'choices' array for values, we use matrixVotes.
-                // We'll leave choices empty or maybe just list the IDs voted on.
                 choices = Object.keys(matrixPositions);
+            } else if (poll.pollType === 'pairwise') {
+                // Choices array is empty for pairwise, we rely on pairwiseVotes field
+                choices = [];
             } else {
                 choices = Array.from(selectedIds);
                 if (poll.pollType === 'meeting') {
@@ -178,7 +211,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 accessCode.trim() || undefined,
                 comment.trim() || undefined,
                 choicesMaybe.length > 0 ? choicesMaybe : undefined,
-                poll.pollType === 'matrix' ? matrixPositions : undefined
+                poll.pollType === 'matrix' ? matrixPositions : undefined,
+                poll.pollType === 'pairwise' ? pairwiseVotes : undefined
             );
             onVoteSuccess();
         } catch (error) {
@@ -192,11 +226,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     let canSubmit = false;
     if (poll.pollType === 'ranked') canSubmit = true;
     else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
-    else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length; // Must place all? Or at least 1? Let's say at least 1.
+    else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
+    else if (poll.pollType === 'pairwise') canSubmit = pairwiseDone;
     else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; 
-
-    // Update matrix validation: Require all options to be placed? Or just some. Let's require all for better data.
-    if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
 
     // Add meta validation
     if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
@@ -243,6 +275,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             {poll.pollType === 'meeting' && "Select Available Times"}
                             {poll.pollType === 'dot' && "Distribute Points"}
                             {poll.pollType === 'matrix' && "Drag to Grid"}
+                            {poll.pollType === 'pairwise' && "This or That"}
                         </div>
 
                          {/* Deadline Badge */}
@@ -301,6 +334,80 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 </Reorder.Item>
                             ))}
                         </Reorder.Group>
+                    )}
+
+                    {/* --- PAIRWISE UI --- */}
+                    {poll.pollType === 'pairwise' && (
+                        <div className="space-y-6">
+                            {!pairwiseDone ? (
+                                <div className="max-w-md mx-auto">
+                                    <div className="mb-4 text-center">
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">
+                                            Match {currentPairIndex + 1} of {pairwiseQueue.length}
+                                        </span>
+                                        <div className="h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                                            <motion.div 
+                                                className="h-full bg-orange-500"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${((currentPairIndex) / pairwiseQueue.length) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <AnimatePresence mode="wait">
+                                        <motion.div 
+                                            key={currentPairIndex}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="grid gap-4"
+                                        >
+                                            {pairwiseQueue[currentPairIndex] && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].left, pairwiseQueue[currentPairIndex].right)}
+                                                        className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left"
+                                                    >
+                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">
+                                                            {pairwiseQueue[currentPairIndex].left.text}
+                                                        </span>
+                                                        <div className="text-xs text-slate-400 mt-2 font-medium uppercase tracking-wide">Select Option A</div>
+                                                    </button>
+                                                    
+                                                    <div className="flex items-center justify-center text-slate-300 font-bold text-sm uppercase">
+                                                        <div className="h-px bg-slate-200 w-10 mr-2"></div>
+                                                        VS
+                                                        <div className="h-px bg-slate-200 w-10 ml-2"></div>
+                                                    </div>
+
+                                                    <button 
+                                                        onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].right, pairwiseQueue[currentPairIndex].left)}
+                                                        className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left"
+                                                    >
+                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">
+                                                            {pairwiseQueue[currentPairIndex].right.text}
+                                                        </span>
+                                                        <div className="text-xs text-slate-400 mt-2 font-medium uppercase tracking-wide">Select Option B</div>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </motion.div>
+                                    </AnimatePresence>
+                                </div>
+                            ) : (
+                                <div className="text-center py-10">
+                                    <motion.div 
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                                    >
+                                        <Check size={40} strokeWidth={3} />
+                                    </motion.div>
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Comparison Complete!</h3>
+                                    <p className="text-slate-500">You've compared {pairwiseQueue.length} pairs.</p>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* --- MATRIX UI --- */}

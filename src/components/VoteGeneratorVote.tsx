@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, SlidersHorizontal } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 

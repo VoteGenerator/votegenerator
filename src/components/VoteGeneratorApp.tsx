@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, RotateCcw, Globe, QrCode, X, Download, Code } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -327,7 +327,6 @@ const VoteGeneratorApp: React.FC = () => {
                         >
                             <VoteGeneratorEdit 
                                 poll={viewState.poll}
-                                onSave={() => loadView()}
                                 onCancel={() => loadView()}
                             />
                         </motion.div>
@@ -426,7 +425,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                 </div>
 
                                                 {/* Voting Codes (if security = 'code') */}
-                                                {viewState.poll.settings.security === 'code' && viewState.poll.settings.votingCodes && (
+                                                {viewState.poll.settings.security === 'code' && (viewState.poll.settings as any).votingCodes && (
                                                     <div className="space-y-3">
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                                             <Key size={12} />
@@ -434,14 +433,14 @@ const VoteGeneratorApp: React.FC = () => {
                                                         </h4>
                                                         <div className="bg-white rounded-xl p-3 border border-slate-100">
                                                             <div className="max-h-32 overflow-y-auto space-y-1 mb-2">
-                                                                {viewState.poll.settings.votingCodes.map((code, i) => (
+                                                                {((viewState.poll.settings as any).votingCodes as string[]).map((code: string, i: number) => (
                                                                     <div key={i} className="text-xs font-mono bg-slate-50 px-2 py-1 rounded text-slate-600">
                                                                         {code}
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                             <button 
-                                                                onClick={() => copyToClipboard(viewState.poll.settings.votingCodes?.join('\n') || '', 'codes')}
+                                                                onClick={() => copyToClipboard(((viewState.poll.settings as any).votingCodes as string[])?.join('\n') || '', 'codes')}
                                                                 className={`w-full py-1.5 rounded-lg text-xs font-medium transition-all ${copiedCodes ? 'bg-green-500 text-white' : 'bg-slate-100 hover:bg-indigo-100 text-slate-600'}`}
                                                             >
                                                                 {copiedCodes ? 'Copied!' : 'Copy All Codes'}
@@ -600,6 +599,7 @@ const VoteGeneratorApp: React.FC = () => {
                     {showEmbedModal && viewState.type === 'results' && (
                         <EmbedPoll 
                             poll={viewState.poll}
+                            isOpen={showEmbedModal}
                             isPremium={false} // TODO: Check user's premium status
                             onClose={() => setShowEmbedModal(false)}
                         />

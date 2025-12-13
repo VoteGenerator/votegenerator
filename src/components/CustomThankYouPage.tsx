@@ -3,13 +3,11 @@ import { motion } from 'framer-motion';
 import { 
     Check, 
     ExternalLink, 
-    Share2, 
     Copy, 
     Twitter, 
     Facebook, 
     Linkedin,
     MessageCircle,
-    Sparkles,
     Crown,
     ArrowRight
 } from 'lucide-react';

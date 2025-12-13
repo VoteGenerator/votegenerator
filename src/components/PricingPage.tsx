@@ -7,9 +7,10 @@ import {
     Sparkles,
     ArrowRight,
     Shield,
-    Lock,
     Users,
-    HelpCircle
+    HelpCircle,
+    Clock,
+    FileText
 } from 'lucide-react';
 
 // Proper TypeScript interfaces
@@ -41,6 +42,7 @@ interface ComparisonFeature {
     pro: string | boolean;
     proPlus: string | boolean;
     tooltip?: string;
+    category?: string;
 }
 
 const PricingPage: React.FC = () => {
@@ -50,26 +52,26 @@ const PricingPage: React.FC = () => {
         {
             id: 'free',
             name: 'Free',
-            description: 'Perfect for quick polls and personal use',
+            description: 'Quick polls for personal use',
             price: { monthly: 0, yearly: 0 },
             badge: null,
             highlight: false,
             cta: 'Start Free',
             ctaLink: '#',
             features: [
-                { name: 'All 12 poll types', included: true },
-                { name: 'Unlimited polls', included: true, tooltip: 'Each poll has its own unique link' },
+                { name: 'All 12 poll types included', included: true },
+                { name: 'Unlimited polls', included: true },
                 { name: 'Up to 100 responses per poll', included: true },
-                { name: 'Cookie-based duplicate detection', included: true, tooltip: 'Helps prevent repeat voting from the same browser' },
-                { name: 'Scheduled poll closing', included: true },
-                { name: 'Ads displayed on polls', included: true, negative: true },
-                { name: '"Powered by VoteGenerator" shown', included: true, negative: true },
+                { name: 'Basic analytics', included: true },
+                { name: 'Separate admin link per poll', included: true, tooltip: 'Each poll gets its own unique admin link' },
+                { name: 'Ads displayed', included: true, negative: true },
+                { name: 'VoteGenerator branding shown', included: true, negative: true },
             ]
         },
         {
             id: 'one-time',
             name: 'One-Time Event',
-            description: 'For a single important poll or event',
+            description: 'For a single important event',
             price: { monthly: 9.99, yearly: 9.99 },
             badge: 'PAY ONCE',
             highlight: false,
@@ -77,18 +79,20 @@ const PricingPage: React.FC = () => {
             ctaLink: '#checkout/one-time',
             features: [
                 { name: 'Everything in Free, plus:', included: true, header: true },
-                { name: '1 premium poll for 30 days', included: true },
-                { name: 'Up to 1,000 responses', included: true },
-                { name: 'No ads on your poll', included: true },
-                { name: 'Remove "Powered by VoteGenerator"', included: true },
-                { name: 'Download results (CSV & PDF)', included: true },
-                { name: 'Upload your own logo', included: true },
+                { name: 'Unlimited polls & responses', included: true },
+                { name: 'Admin dashboard (manage all polls)', included: true },
+                { name: 'No ads', included: true },
+                { name: 'Remove VoteGenerator branding', included: true },
+                { name: 'Upload your logo', included: true },
+                { name: 'Download CSV & PDF', included: true },
+                { name: 'Custom thank-you page', included: true },
+                { name: 'Valid for 30 days', included: true, tooltip: 'Your premium features last 30 days from purchase' },
             ]
         },
         {
             id: 'pro',
             name: 'Pro',
-            description: 'For teams and regular poll creators',
+            description: 'For teams and regular creators',
             price: { monthly: 12, yearly: 99 },
             badge: 'BEST VALUE',
             highlight: true,
@@ -96,20 +100,20 @@ const PricingPage: React.FC = () => {
             ctaLink: '#checkout/pro',
             features: [
                 { name: 'Everything in One-Time, plus:', included: true, header: true },
-                { name: 'Unlimited polls & responses', included: true },
-                { name: 'Unified dashboard', included: true, tooltip: 'Manage all your polls from one place' },
-                { name: 'Unique voting codes', included: true, tooltip: 'Generate one-time codes for controlled voting' },
+                { name: 'Never expires', included: true },
                 { name: 'Visual Poll (image voting)', included: true, isNew: true },
-                { name: 'Basic analytics', included: true, tooltip: 'Vote counts, percentages, timestamps' },
-                { name: 'Embed polls on your site', included: true },
-                { name: 'Email notifications', included: true, tooltip: 'Get notified when someone votes' },
-                { name: 'Priority email support', included: true },
+                { name: 'Unique voting codes', included: true },
+                { name: 'Embed polls (with your logo)', included: true },
+                { name: 'Custom short links', included: true, tooltip: 'e.g., votegenerator.com/v/team-vote' },
+                { name: 'Voter comments', included: true },
+                { name: 'Export to Google Sheets', included: true },
+                { name: 'Email support', included: true },
             ]
         },
         {
             id: 'pro-plus',
             name: 'Pro+',
-            description: 'For power users and businesses',
+            description: 'For power users & businesses',
             price: { monthly: 19, yearly: 149 },
             badge: 'FULL POWER',
             highlight: false,
@@ -117,62 +121,91 @@ const PricingPage: React.FC = () => {
             ctaLink: '#checkout/pro-plus',
             features: [
                 { name: 'Everything in Pro, plus:', included: true, header: true },
-                { name: 'White-label embeds (no branding)', included: true, tooltip: 'Embed polls without any VoteGenerator branding' },
-                { name: 'Custom short links', included: true, tooltip: 'votegenerator.com/v/your-custom-name' },
-                { name: 'Custom thank-you page', included: true, tooltip: 'Show your own message after voting' },
-                { name: 'Voter comments & feedback', included: true },
-                { name: 'Export to Google Sheets', included: true, tooltip: 'One-click export to Google Sheets' },
-                { name: 'Advanced vote protection', included: true, tooltip: 'Multiple layers: cookies + unique codes + rate limiting' },
-                { name: 'Dedicated support', included: true },
+                { name: 'White-label embeds (no branding)', included: true },
+                { name: 'Advanced vote protection', included: true, tooltip: 'Cookies + codes + rate limiting' },
+                { name: 'Poll notifications', included: true, tooltip: 'Get notified when polls hit milestones' },
+                { name: 'Dedicated email support', included: true },
             ]
         }
     ];
 
     const comparisonFeatures: ComparisonFeature[] = [
-        { name: 'Poll Types Available', free: 'All 12 types', oneTime: 'All 12 types', pro: 'All 12 types', proPlus: 'All 12 types' },
-        { name: 'Visual Poll (Image Voting)', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Let voters choose between images' },
-        { name: 'Polls You Can Create', free: 'Unlimited', oneTime: '1 poll', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Responses Per Poll', free: '100', oneTime: '1,000', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Poll Duration', free: 'Unlimited', oneTime: '30 days', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Unified Dashboard', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'See and manage all your polls in one place' },
-        { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Remove VoteGenerator Branding', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Hide "Powered by VoteGenerator" footer' },
+        // Poll Types Section
+        { name: 'Multiple Choice Poll', free: true, oneTime: true, pro: true, proPlus: true, category: 'Poll Types' },
+        { name: 'Ranked Choice Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Meeting Poll (Scheduler)', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'This or That Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Dot Voting Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Rating Scale Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Buy a Feature Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Priority Matrix Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Approval Voting Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Quiz Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Sentiment Check Poll', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Visual Poll (Image Voting)', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Upload images for voters to choose from' },
+        
+        // Limits Section
+        { name: 'Polls You Can Create', free: 'Unlimited', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited', category: 'Limits' },
+        { name: 'Responses Per Poll', free: '100', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited' },
+        { name: 'Premium Features Duration', free: '—', oneTime: '30 days', pro: 'Forever', proPlus: 'Forever', tooltip: 'How long your premium features last' },
+        
+        // Dashboard & Management
+        { name: 'Admin Dashboard', free: 'Per poll', oneTime: 'Unified', pro: 'Unified', proPlus: 'Unified', category: 'Management', tooltip: 'Free: Each poll has separate admin link. Paid: One dashboard for all polls.' },
+        { name: 'Manage Multiple Polls', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'View and manage all your polls from one place' },
+        
+        // Branding & Customization
+        { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true, category: 'Branding' },
+        { name: 'Remove VoteGenerator Branding', free: false, oneTime: true, pro: true, proPlus: true },
         { name: 'Upload Your Logo', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Download CSV/PDF', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Custom Thank-You Page', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Show your own message after someone votes' },
+        { name: 'Custom Short Links', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Example: votegenerator.com/v/my-team-vote' },
+        
+        // Embedding
+        { name: 'Embed Polls on Your Site', free: 'With branding', oneTime: 'With your logo', pro: 'With your logo', proPlus: 'White-label', category: 'Embedding', tooltip: 'White-label = no VoteGenerator branding at all' },
+        
+        // Security
+        { name: 'Cookie-Based Duplicate Detection', free: true, oneTime: true, pro: true, proPlus: true, category: 'Vote Security', tooltip: 'Helps prevent same browser from voting twice' },
+        { name: 'Unique Voting Codes', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Generate one-time codes for controlled voting' },
+        { name: 'Advanced Vote Protection', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Combines cookies + codes + rate limiting' },
         { name: 'Scheduled Poll Closing', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'Set a deadline to automatically close voting' },
-        { name: 'Cookie-Based Duplicate Detection', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'Uses browser cookies to detect repeat voters. Not foolproof if cookies are cleared.' },
-        { name: 'Unique Voting Codes', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Generate one-time codes. Each code can only vote once.' },
-        { name: 'Advanced Vote Protection', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Combines cookies + codes + rate limiting for maximum protection' },
-        { name: 'Basic Analytics', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Vote counts, percentages, timestamps' },
-        { name: 'Embed Polls', free: false, oneTime: false, pro: 'With your logo', proPlus: 'White-label', tooltip: 'Add polls to your website via embed code' },
-        { name: 'Custom Short Links', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Create memorable links like /v/team-vote' },
-        { name: 'Custom Thank-You Page', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Show your own message after someone votes' },
-        { name: 'Voter Comments', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Let voters leave optional feedback with their vote' },
-        { name: 'Email Notifications', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Get an email when someone votes on your poll' },
-        { name: 'Export to Google Sheets', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'One-click export results to a Google Sheet' },
-        { name: 'Priority Support', free: false, oneTime: false, pro: true, proPlus: true },
+        
+        // Analytics & Export
+        { name: 'Basic Analytics', free: true, oneTime: true, pro: true, proPlus: true, category: 'Analytics & Export', tooltip: 'Vote counts, percentages, timestamps' },
+        { name: 'Download as CSV', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Download as PDF', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Export to Google Sheets', free: false, oneTime: true, pro: true, proPlus: true },
+        
+        // Extras
+        { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras', tooltip: 'Let voters leave optional feedback' },
+        { name: 'Poll Notifications', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Get notified when your poll hits milestones (50, 100 votes)' },
+        { name: 'Email Support', free: false, oneTime: false, pro: true, proPlus: true },
+        { name: 'Priority Email Support', free: false, oneTime: false, pro: false, proPlus: true },
     ];
 
     const faqs = [
         {
             q: "Is the free plan really free forever?",
-            a: "Yes! Create unlimited polls with up to 100 responses each, completely free. We show small ads to keep it sustainable. No credit card required, no time limits."
+            a: "Yes! Create unlimited polls with up to 100 responses each, completely free. We show small ads to keep it sustainable. No credit card or signup required."
         },
         {
-            q: "What's the difference between free polls and paid polls?",
-            a: "Free polls show ads and VoteGenerator branding, have a 100 response limit, and each poll has its own separate link. Paid plans remove ads/branding, increase limits, and Pro users get a unified dashboard to manage all polls."
+            q: "What's the difference between the free and paid admin dashboard?",
+            a: "With the free plan, each poll gets its own separate admin link - you'll need to save each link. Paid plans give you a unified dashboard where you can see and manage ALL your polls in one place."
         },
         {
             q: "How does the One-Time plan work?",
-            a: "Pay $9.99 once for a single premium poll that stays active for 30 days with up to 1,000 responses. Perfect for weddings, team votes, or one-off events. No subscription required."
+            a: "Pay once for premium features that last 30 days. Create unlimited polls during that time. Perfect for weddings, team events, or one-off occasions. No subscription required."
         },
         {
-            q: "How does vote protection work?",
-            a: "Free plans use browser cookies to detect repeat voters from the same browser. Pro adds unique voting codes (each code works once). Pro+ combines multiple methods. Note: No online poll is 100% fraud-proof - determined users can find workarounds. For high-stakes decisions, we recommend unique codes."
+            q: "What does '30 days' mean for the One-Time plan?",
+            a: "Your premium features (no ads, custom branding, etc.) remain active for 30 days from purchase. After that, your existing polls stay accessible but new polls use free tier features. You can always buy another One-Time pass."
         },
         {
-            q: "What if someone blocks cookies?",
-            a: "If a voter has cookies disabled or uses incognito mode, cookie-based detection won't work for them. For important polls, we recommend using unique voting codes (Pro/Pro+) which don't rely on cookies."
+            q: "What's the difference between Pro embed and Pro+ white-label?",
+            a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label - no VoteGenerator branding appears anywhere on the embedded poll."
+        },
+        {
+            q: "How do poll notifications work?",
+            a: "Pro+ users get notified when their polls hit milestones (like 50 or 100 votes). We don't send emails for every single vote to avoid inbox overload. Check your dashboard anytime for real-time results."
         },
         {
             q: "What payment methods do you accept?",
@@ -194,6 +227,9 @@ const PricingPage: React.FC = () => {
         const savings = Math.round((1 - plan.price.yearly / monthlyTotal) * 100);
         return savings > 0 ? savings : null;
     };
+
+    // Group features by category for the comparison table
+    let currentCategory = '';
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -375,79 +411,93 @@ const PricingPage: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-100">
-                                    <th className="text-left p-4 font-semibold text-slate-600">Feature</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">Free</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">One-Time</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28 bg-indigo-50">
-                                        <span className="text-indigo-600">Pro</span>
+                                <tr className="border-b border-slate-200 bg-slate-50">
+                                    <th className="text-left p-4 font-semibold text-slate-600 w-[40%]">Feature</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">Free</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">One-Time</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%] bg-indigo-100">
+                                        <span className="text-indigo-700">Pro</span>
                                     </th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">Pro+</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">Pro+</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {comparisonFeatures.map((feature, i) => (
-                                    <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
-                                        <td className="p-4 text-slate-700">
-                                            <div className="flex items-center gap-2">
-                                                {feature.name}
-                                                {feature.tooltip && (
-                                                    <div className="relative group">
-                                                        <HelpCircle size={14} className="text-slate-400 cursor-help" />
-                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
-                                                            {feature.tooltip}
-                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                        </div>
+                                {comparisonFeatures.map((feature, i) => {
+                                    const showCategory = feature.category && feature.category !== currentCategory;
+                                    if (feature.category) currentCategory = feature.category;
+                                    
+                                    return (
+                                        <React.Fragment key={i}>
+                                            {showCategory && (
+                                                <tr className="bg-slate-100">
+                                                    <td colSpan={5} className="p-3 font-bold text-slate-700 text-sm uppercase tracking-wide">
+                                                        {feature.category}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            <tr className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                                                <td className="p-3 text-slate-700 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        {feature.name}
+                                                        {feature.tooltip && (
+                                                            <div className="relative group">
+                                                                <HelpCircle size={14} className="text-slate-400 cursor-help" />
+                                                                <div className="absolute bottom-full left-0 mb-2 w-52 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
+                                                                    {feature.tooltip}
+                                                                    <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.free === 'boolean' ? (
-                                                feature.free ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.free}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.oneTime === 'boolean' ? (
-                                                feature.oneTime ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.oneTime}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center bg-indigo-50/50">
-                                            {typeof feature.pro === 'boolean' ? (
-                                                feature.pro ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-indigo-600 font-medium">{feature.pro}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.proPlus === 'boolean' ? (
-                                                feature.proPlus ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.proPlus}</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    {typeof feature.free === 'boolean' ? (
+                                                        feature.free ? (
+                                                            <Check size={18} className="text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <X size={18} className="text-slate-300 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        <span className="text-xs text-slate-600">{feature.free}</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    {typeof feature.oneTime === 'boolean' ? (
+                                                        feature.oneTime ? (
+                                                            <Check size={18} className="text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <X size={18} className="text-slate-300 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        <span className="text-xs text-slate-600">{feature.oneTime}</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-center bg-indigo-50/50">
+                                                    {typeof feature.pro === 'boolean' ? (
+                                                        feature.pro ? (
+                                                            <Check size={18} className="text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <X size={18} className="text-slate-300 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        <span className="text-xs text-indigo-600 font-medium">{feature.pro}</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    {typeof feature.proPlus === 'boolean' ? (
+                                                        feature.proPlus ? (
+                                                            <Check size={18} className="text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <X size={18} className="text-slate-300 mx-auto" />
+                                                        )
+                                                    ) : (
+                                                        <span className="text-xs text-slate-600">{feature.proPlus}</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </React.Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -456,35 +506,42 @@ const PricingPage: React.FC = () => {
 
             {/* Trust Section */}
             <div className="bg-slate-50 py-12">
-                <div className="max-w-4xl mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="max-w-5xl mx-auto px-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <Zap size={24} className="text-green-600" />
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-sm">Free Forever</h4>
+                            <p className="text-xs text-slate-500">No credit card</p>
+                        </div>
                         <div className="text-center">
                             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                                 <Users size={24} className="text-indigo-600" />
                             </div>
-                            <h4 className="font-bold text-slate-800">No Signup Required</h4>
-                            <p className="text-sm text-slate-500">Create polls in seconds</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <Shield size={24} className="text-green-600" />
-                            </div>
-                            <h4 className="font-bold text-slate-800">Privacy First</h4>
-                            <p className="text-sm text-slate-500">Your data stays yours</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <Zap size={24} className="text-amber-600" />
-                            </div>
-                            <h4 className="font-bold text-slate-800">Free Forever</h4>
-                            <p className="text-sm text-slate-500">No credit card needed</p>
+                            <h4 className="font-bold text-slate-800 text-sm">No Signup</h4>
+                            <p className="text-xs text-slate-500">Start instantly</p>
                         </div>
                         <div className="text-center">
                             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                                <Lock size={24} className="text-purple-600" />
+                                <FileText size={24} className="text-purple-600" />
                             </div>
-                            <h4 className="font-bold text-slate-800">Secure Payments</h4>
-                            <p className="text-sm text-slate-500">Powered by Stripe</p>
+                            <h4 className="font-bold text-slate-800 text-sm">No Registration</h4>
+                            <p className="text-xs text-slate-500">Just create & share</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <Sparkles size={24} className="text-amber-600" />
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-sm">12 Poll Types</h4>
+                            <p className="text-xs text-slate-500">All included free</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <Shield size={24} className="text-blue-600" />
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-sm">Privacy First</h4>
+                            <p className="text-xs text-slate-500">Your data stays yours</p>
                         </div>
                     </div>
                 </div>
@@ -520,7 +577,7 @@ const PricingPage: React.FC = () => {
                         Ready to create your first poll?
                     </h2>
                     <p className="text-indigo-100 mb-8">
-                        No signup required. Start in seconds.
+                        No signup. No credit card. Just create and share.
                     </p>
                     <a
                         href="#"

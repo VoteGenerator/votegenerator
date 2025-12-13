@@ -79,7 +79,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         }
     }, [poll.pollType, poll.options, pairwiseQueue.length]);
 
-
     const isDeadlineExpired = poll.settings.deadline && new Date() > new Date(poll.settings.deadline);
     const isMaxVotesReached = poll.settings.maxVotes && poll.voteCount >= poll.settings.maxVotes;
     const isClosed = isDeadlineExpired || isMaxVotesReached;
@@ -139,7 +138,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         if (newSet.has(id)) {
             newSet.delete(id);
         } else {
-            if (!poll.settings.allowMultiple && poll.pollType !== 'meeting') {
+            // For image polls with single selection (like multiple choice)
+            if (!poll.settings.allowMultiple && (poll.pollType !== 'meeting')) {
                 newSet.clear();
             }
             newSet.add(id);
@@ -213,6 +213,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             } else if (poll.pollType === 'rating') {
                 choices = [];
             } else {
+                // multiple, meeting, image all use selectedIds
                 choices = Array.from(selectedIds);
                 if (poll.pollType === 'meeting') {
                     choicesMaybe = Array.from(maybeIds);
@@ -244,7 +245,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     else if (poll.pollType === 'budget') canSubmit = getBudgetSpent() > 0;
     else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
     else if (poll.pollType === 'pairwise') canSubmit = pairwiseDone;
-    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; 
+    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; // multiple, meeting, image
 
     if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
     if (poll.settings.security === 'code' && accessCode.trim().length === 0) canSubmit = false;
@@ -257,7 +258,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 </div>
                 <h1 className="text-3xl font-black text-slate-800 mb-2">Poll Closed</h1>
                 {isDeadlineExpired && (
-                     <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
+                    <p className="text-slate-500 mb-8">This poll ended on {new Date(poll.settings.deadline!).toLocaleString()}.</p>
                 )}
                 <button onClick={onVoteSuccess} className="text-indigo-600 font-bold hover:underline">View Results</button>
             </div>
@@ -281,15 +282,13 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         {poll.title}
                     </h1>
                     {poll.description && (
-                        <p className="text-slate-600 leading-relaxed">
-                            {poll.description}
-                        </p>
+                        <p className="text-slate-600 leading-relaxed">{poll.description}</p>
                     )}
                     
                     <div className="flex flex-wrap gap-2 mt-4">
                         <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
                             {poll.pollType === 'image' && "Click image to select"}
-                            {poll.pollType === 'ranked' && "Rank Options"}
+                            {poll.pollType === 'ranked' && "Drag to Rank Options"}
                             {poll.pollType === 'multiple' && (poll.settings.allowMultiple ? "Select Options" : "Select One")}
                             {poll.pollType === 'meeting' && "Select Available Times"}
                             {poll.pollType === 'dot' && "Distribute Points"}
@@ -306,9 +305,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         )}
                         
                         {poll.pollType === 'dot' && (
-                             <div className={`flex items-center gap-2 text-sm font-bold px-3 py-1 rounded-full w-fit border transition-colors ${
-                                 dotsRemaining === 0 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white border-indigo-200 text-indigo-600 shadow-sm'
-                             }`}>
+                            <div className={`flex items-center gap-2 text-sm font-bold px-3 py-1 rounded-full w-fit border transition-colors ${
+                                dotsRemaining === 0 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white border-indigo-200 text-indigo-600 shadow-sm'
+                            }`}>
                                 <Coins size={14} /> {dotsRemaining} Points Left
                             </div>
                         )}
@@ -364,6 +363,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
+                    {/* RANKED CHOICE */}
                     {poll.pollType === 'ranked' && (
                         <Reorder.Group axis="y" values={items} onReorder={setItems} className="space-y-3">
                             {items.map((item, index) => (
@@ -380,6 +380,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </Reorder.Group>
                     )}
 
+                    {/* PAIRWISE */}
                     {poll.pollType === 'pairwise' && (
                         <div className="space-y-6">
                             {!pairwiseDone ? (
@@ -410,12 +411,13 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 <div className="text-center py-10">
                                     <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><Check size={40} /></div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-2">Complete!</h3>
+                                    <p className="text-slate-500">You've made all your comparisons.</p>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* ... other poll types (rating, matrix, multiple, dot, budget) remain same ... */}
+                    {/* MULTIPLE CHOICE & MEETING */}
                     {(poll.pollType === 'multiple' || poll.pollType === 'meeting') && (
                         <div className="space-y-3">
                             {poll.options.map((opt) => {
@@ -436,6 +438,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
+                    {/* DOT VOTING */}
                     {poll.pollType === 'dot' && (
                         <div className="space-y-4">
                             {poll.options.map((opt) => {
@@ -454,6 +457,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
+                    {/* BUDGET / BUY A FEATURE */}
                     {poll.pollType === 'budget' && (
                         <div className="space-y-4">
                             {poll.options.map((opt) => {
@@ -478,7 +482,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
-                    {/* ... other render logic ... */}
+                    {/* RATING */}
                     {poll.pollType === 'rating' && (
                         <div className="space-y-6">
                             {poll.options.map((opt) => {
@@ -500,10 +504,17 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
                     )}
 
+                    {/* MATRIX */}
                     {poll.pollType === 'matrix' && (
                         <div className="select-none">
                             <div className="mb-4 text-center text-sm text-slate-500">Drag all items from the list onto the grid based on Impact vs. Effort.</div>
                             <div className="relative aspect-square bg-slate-50 rounded-xl border-2 border-slate-200 mb-6 overflow-hidden" ref={matrixContainerRef}>
+                                {/* Axis labels */}
+                                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase">High Impact</div>
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase">Low Impact</div>
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 uppercase -rotate-90">Low Effort</div>
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 uppercase rotate-90">High Effort</div>
+                                
                                 <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-px bg-slate-300"></div></div>
                                 <div className="absolute inset-0 flex items-center justify-center"><div className="h-full w-px bg-slate-300"></div></div>
                                 {poll.options.filter(o => isMatrixPlaced(o.id)).map(opt => {
@@ -533,7 +544,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     {/* Meta Inputs */}
                     <div className="space-y-4 mt-8 pt-6 border-t border-slate-100">
                         {poll.settings.security === 'code' && (
-                             <div>
+                            <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Access Code *</label>
                                 <div className="relative">
                                     <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />

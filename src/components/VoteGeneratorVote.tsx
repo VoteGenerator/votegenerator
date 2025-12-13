@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, LayoutGrid, X } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -30,11 +30,14 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     
     // Meeting State (Tri-state: Yes, Maybe, No)
-    // We store Yes in selectedIds, and Maybe in maybeIds
     const [maybeIds, setMaybeIds] = useState<Set<string>>(new Set());
     
     // Dot Voting State
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
+
+    // Matrix Voting State
+    const [matrixPositions, setMatrixPositions] = useState<Record<string, { x: number, y: number }>>({});
+    const matrixContainerRef = useRef<HTMLDivElement>(null);
 
     // Meta State
     const [voterName, setVoterName] = useState('');
@@ -82,7 +85,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     };
 
     const toggleSelection = (id: string) => {
-        // Standard Multiple Choice Toggle
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) {
             newSet.delete(id);
@@ -96,13 +98,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     };
 
     const toggleMeetingSelection = (id: string) => {
-        // Cycle: No -> Yes -> Maybe -> No
-        // If in Yes (selectedIds), move to Maybe
-        // If in Maybe (maybeIds), move to No
-        // If in No (neither), move to Yes
-
         if (selectedIds.has(id)) {
-            // Yes -> Maybe
             const newSel = new Set(selectedIds);
             newSel.delete(id);
             setSelectedIds(newSel);
@@ -111,17 +107,41 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             newMaybe.add(id);
             setMaybeIds(newMaybe);
         } else if (maybeIds.has(id)) {
-            // Maybe -> No
             const newMaybe = new Set(maybeIds);
             newMaybe.delete(id);
             setMaybeIds(newMaybe);
         } else {
-            // No -> Yes
             const newSel = new Set(selectedIds);
             newSel.add(id);
             setSelectedIds(newSel);
         }
     };
+
+    const handleMatrixDragEnd = (id: string, info: any) => {
+        if (!matrixContainerRef.current) return;
+        
+        const rect = matrixContainerRef.current.getBoundingClientRect();
+        const pointX = info.point.x - rect.left;
+        const pointY = info.point.y - rect.top;
+
+        // Convert to percentage (0-100), constrained to 0-100
+        const xPercent = Math.min(100, Math.max(0, (pointX / rect.width) * 100));
+        const yPercent = Math.min(100, Math.max(0, (pointY / rect.height) * 100));
+
+        // Flip Y because grid charts usually have High on top (Low Y in DOM is Top)
+        // But for storing "High Impact", Y=100 is Top.
+        // Let's stick to standard Cartesian: Bottom-Left is 0,0.
+        // DOM: Top-Left is 0,0.
+        // If we want Y=100 to be Top (High Impact), we need 100 - domPercent.
+        const cartesianY = 100 - yPercent;
+        
+        setMatrixPositions(prev => ({
+            ...prev,
+            [id]: { x: xPercent, y: cartesianY }
+        }));
+    };
+
+    const isMatrixPlaced = (id: string) => !!matrixPositions[id];
 
     const handleSubmit = async () => {
         setErrorMessage(null);
@@ -140,6 +160,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 choices = items.map(i => i.id);
             } else if (poll.pollType === 'dot') {
                 choices = Object.entries(dotAllocations).flatMap(([id, count]) => Array(count).fill(id));
+            } else if (poll.pollType === 'matrix') {
+                // For matrix, we don't use 'choices' array for values, we use matrixVotes.
+                // We'll leave choices empty or maybe just list the IDs voted on.
+                choices = Object.keys(matrixPositions);
             } else {
                 choices = Array.from(selectedIds);
                 if (poll.pollType === 'meeting') {
@@ -153,7 +177,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 voterName.trim() || undefined,
                 accessCode.trim() || undefined,
                 comment.trim() || undefined,
-                choicesMaybe.length > 0 ? choicesMaybe : undefined
+                choicesMaybe.length > 0 ? choicesMaybe : undefined,
+                poll.pollType === 'matrix' ? matrixPositions : undefined
             );
             onVoteSuccess();
         } catch (error) {
@@ -167,8 +192,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     let canSubmit = false;
     if (poll.pollType === 'ranked') canSubmit = true;
     else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
-    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; // Meeting can have just Maybes? Sure.
-    
+    else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length; // Must place all? Or at least 1? Let's say at least 1.
+    else canSubmit = selectedIds.size > 0 || maybeIds.size > 0; 
+
+    // Update matrix validation: Require all options to be placed? Or just some. Let's require all for better data.
+    if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
+
     // Add meta validation
     if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
     if (poll.settings.security === 'code' && accessCode.trim().length === 0) canSubmit = false;
@@ -213,6 +242,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             {poll.pollType === 'multiple' && (poll.settings.allowMultiple ? "Select Options" : "Select One")}
                             {poll.pollType === 'meeting' && "Select Available Times"}
                             {poll.pollType === 'dot' && "Distribute Points"}
+                            {poll.pollType === 'matrix' && "Drag to Grid"}
                         </div>
 
                          {/* Deadline Badge */}
@@ -271,6 +301,85 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 </Reorder.Item>
                             ))}
                         </Reorder.Group>
+                    )}
+
+                    {/* --- MATRIX UI --- */}
+                    {poll.pollType === 'matrix' && (
+                        <div className="select-none">
+                            <div className="mb-4 text-center text-sm text-slate-500">
+                                Drag all items from the list onto the grid based on Impact vs. Effort.
+                            </div>
+                            
+                            {/* The Grid */}
+                            <div className="relative aspect-square bg-slate-50 rounded-xl border-2 border-slate-200 mb-6 overflow-hidden" ref={matrixContainerRef}>
+                                {/* Grid Lines */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-px bg-slate-300"></div>
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="h-full w-px bg-slate-300"></div>
+                                </div>
+                                
+                                {/* Labels */}
+                                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/80 px-2 rounded">High Impact</div>
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/80 px-2 rounded">Low Impact</div>
+                                <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/80 px-2 rounded origin-center">Low Effort</div>
+                                <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/80 px-2 rounded origin-center">High Effort</div>
+                                
+                                {/* Placed Items */}
+                                {poll.options.filter(o => isMatrixPlaced(o.id)).map(opt => {
+                                    const pos = matrixPositions[opt.id];
+                                    // Cartesian Y to DOM Y
+                                    const domTop = 100 - pos.y;
+                                    
+                                    return (
+                                        <motion.div
+                                            key={opt.id}
+                                            drag
+                                            dragMomentum={false}
+                                            dragConstraints={matrixContainerRef}
+                                            onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)}
+                                            style={{ left: `${pos.x}%`, top: `${domTop}%` }}
+                                            className="absolute -ml-4 -mt-4 w-8 h-8 bg-indigo-600 rounded-full shadow-lg border-2 border-white flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group"
+                                        >
+                                            <span className="text-white font-bold text-xs pointer-events-none">
+                                                {poll.options.findIndex(o => o.id === opt.id) + 1}
+                                            </span>
+                                            {/* Tooltip */}
+                                            <div className="absolute top-full mt-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                                                {opt.text}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Unplaced Items Dock */}
+                            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-4 rounded-xl border border-slate-200">
+                                {poll.options.map((opt, i) => {
+                                    if (isMatrixPlaced(opt.id)) return null;
+                                    return (
+                                        <motion.div
+                                            key={opt.id}
+                                            drag
+                                            dragSnapToOrigin // Snaps back if dropped invalidly (outside constraints), but we manually handle placement logic
+                                            onDragEnd={(_, info) => handleMatrixDragEnd(opt.id, info)}
+                                            className="bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 cursor-grab active:cursor-grabbing"
+                                        >
+                                            <div className="w-6 h-6 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">
+                                                {i + 1}
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-700 truncate">{opt.text}</span>
+                                        </motion.div>
+                                    );
+                                })}
+                                {poll.options.every(o => isMatrixPlaced(o.id)) && (
+                                    <div className="col-span-2 text-center text-emerald-600 font-bold py-2 flex items-center justify-center gap-2">
+                                        <Check size={18} /> All items placed!
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
 
                     {/* --- MULTIPLE / MEETING UI --- */}

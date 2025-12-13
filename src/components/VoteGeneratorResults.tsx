@@ -10,14 +10,15 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
+    const isMatrix = poll.pollType === 'matrix';
     
     // Determine default view based on poll type
-    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map'>(
-        isRanked ? 'flow' : isMeeting ? 'heatmap' : 'bar'
+    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix'>(
+        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : 'bar'
     );
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
@@ -207,12 +208,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                     const targetNode = nodes.find(n => n.id === link.target);
                     if (!sourceNode || !targetNode) return null;
 
-                    // Calculate offsets for stacking flows. 
-                    // This is a simplified "center-ish" anchor. For perfect Sankey, tracking stack input/output Y is needed.
-                    // Simplified: Draw from center-right of source to center-left of target
-                    // Better: We need to know "offset inside node".
-                    // For this demo, standard bezier is decent.
-                    
                     const sy = sourceNode.y + sourceNode.height / 2;
                     const ty = targetNode.y + targetNode.height / 2;
                     const sx = sourceNode.x + 20; // nodeWidth
@@ -313,6 +308,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
             {/* View Mode Toggle */}
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
+                    {isMatrix && (
+                         <button onClick={() => setViewMode('matrix')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'matrix' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <LayoutGrid size={16} /> Matrix
+                        </button>
+                    )}
+                    
                     <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                         <BarChart size={16} /> Bar
                     </button>
@@ -349,7 +350,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap') && activeWinnerId && !isDot) && (
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap') && activeWinnerId && !isDot && !isMatrix) && (
                      <motion.div 
                         key="winner"
                         initial={{ scale: 0.95, opacity: 0 }}
@@ -378,6 +379,73 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                             )}
                         </div>
                     </motion.div>
+                )}
+
+                {/* --- MATRIX VIEW --- */}
+                {viewMode === 'matrix' && matrixAverages && (
+                     <motion.div 
+                        key="matrix"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <LayoutGrid size={24} className="text-indigo-500"/> Priority Matrix Results
+                        </h3>
+                        
+                        <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
+                             {/* Quadrant Backgrounds */}
+                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                                <div className="bg-emerald-50/50 flex items-start justify-start p-2"><span className="text-[10px] font-bold text-emerald-800 opacity-40 uppercase">Quick Wins</span></div>
+                                <div className="bg-blue-50/50 flex items-start justify-end p-2"><span className="text-[10px] font-bold text-blue-800 opacity-40 uppercase">Major Projects</span></div>
+                                <div className="bg-slate-50/50 flex items-end justify-start p-2"><span className="text-[10px] font-bold text-slate-500 opacity-40 uppercase">Fill Ins</span></div>
+                                <div className="bg-red-50/50 flex items-end justify-end p-2"><span className="text-[10px] font-bold text-red-800 opacity-40 uppercase">Thankless Tasks</span></div>
+                            </div>
+
+                             {/* Grid Lines */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="w-full h-px bg-slate-300"></div>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="h-full w-px bg-slate-300"></div>
+                            </div>
+                            
+                            {/* Axis Labels */}
+                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">High Impact</div>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">Low Impact</div>
+                            <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">Low Effort</div>
+                            <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">High Effort</div>
+
+                            {/* Placed Items */}
+                             {Object.entries(matrixAverages).map(([id, coords]) => {
+                                 // Convert cartesian coords (0,0 bottom left) to CSS coords (top left)
+                                 // CSS Top = 100 - Y
+                                 const top = 100 - coords.y;
+                                 return (
+                                     <div 
+                                        key={id}
+                                        className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20"
+                                        style={{ left: `${coords.x}%`, top: `${top}%` }}
+                                     >
+                                         <span className="text-[10px] text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
+                                         
+                                         {/* Tooltip */}
+                                         <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                                             {getOptionText(id)}
+                                         </div>
+                                     </div>
+                                 )
+                             })}
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-500">
+                             {poll.options.map((opt, i) => (
+                                 <div key={opt.id} className="flex items-center gap-2">
+                                     <span className="w-4 h-4 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-[9px]">{i + 1}</span>
+                                     <span className="truncate">{opt.text}</span>
+                                 </div>
+                             ))}
+                        </div>
+                     </motion.div>
                 )}
 
                 {/* --- BAR VIEW (Standard for Dot/Multiple) --- */}
@@ -648,7 +716,18 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                             {poll.options.map(opt => {
                                                 let cellContent = <span className="text-slate-300">-</span>;
                                                 
-                                                if (isRanked) {
+                                                if (isMatrix && vote.matrixVotes) {
+                                                    const pos = vote.matrixVotes[opt.id];
+                                                    if (pos) {
+                                                        cellContent = (
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="text-xs font-bold text-slate-600">
+                                                                    X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    }
+                                                } else if (isRanked) {
                                                     const rank = vote.choices.indexOf(opt.id);
                                                     if (rank !== -1) {
                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -11,6 +11,14 @@ const POLL_TYPES = [
         description: 'Voters drag options to rank from favorite to least favorite',
         bestFor: 'Best for: Finding the option everyone can agree on',
         example: 'e.g., "Where should we go for team dinner?"'
+    },
+    {
+        id: 'matrix',
+        name: 'Priority Matrix',
+        icon: LayoutGrid,
+        description: 'Voters plot options on an Impact vs. Effort grid',
+        bestFor: 'Best for: Agile planning, Roadmaps, Strategy',
+        example: 'e.g., "Which features should we build next?"'
     },
     {
         id: 'multiple',

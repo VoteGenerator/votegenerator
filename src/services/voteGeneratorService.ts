@@ -1,4 +1,3 @@
-
 import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
 // ... (keep existing helper functions like generateId, getLocalPolls, saveLocalPoll, getLocalVotes, saveLocalVote) ...
@@ -44,7 +43,7 @@ export const createPoll = async (data: {
     title: string;
     description?: string;
     options: string[];
-    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image';
+    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix';
     settings: { 
         hideResults: boolean; 
         allowMultiple: boolean;
@@ -151,11 +150,11 @@ export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => 
     }
 };
 
-export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string, choicesMaybe?: string[]): Promise<void> => {
+export const submitVote = async (pollId: string, choices: string[], voterName?: string, code?: string, comment?: string, choicesMaybe?: string[], matrixVotes?: Record<string, { x: number, y: number }>): Promise<void> => {
     try {
         const response = await fetch('/.netlify/functions/submit-vote', {
             method: 'POST',
-            body: JSON.stringify({ pollId, choices, voterName, code, comment, choicesMaybe })
+            body: JSON.stringify({ pollId, choices, voterName, code, comment, choicesMaybe, matrixVotes })
         });
         if (response.ok) return;
         throw new Error('API_UNAVAILABLE');
@@ -177,6 +176,7 @@ export const submitVote = async (pollId: string, choices: string[], voterName?: 
             pollId,
             choices,
             choicesMaybe,
+            matrixVotes,
             voterName, 
             usedCode: code,
             comment,
@@ -209,6 +209,7 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
             pollId: v.pollId || pollId,
             choices: v.choices,
             choicesMaybe: v.choicesMaybe,
+            matrixVotes: v.matrixVotes,
             votedAt: v.votedAt || v.createdAt || new Date().toISOString(),
             voterName: v.voterName,
             usedCode: v.usedCode,
@@ -246,6 +247,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     const simpleCounts: Record<string, number> = {};
     // Count 'Maybe'
     const maybeCounts: Record<string, number> = {};
+    
+    // Matrix Averages
+    const matrixSums: Record<string, { x: number, y: number, count: number }> = {};
 
     votes.forEach((v: any) => {
         if(Array.isArray(v.choices)) {
@@ -258,20 +262,33 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 if(c) maybeCounts[c] = (maybeCounts[c] || 0) + 1;
             });
         }
+        if (v.matrixVotes) {
+            Object.entries(v.matrixVotes).forEach(([id, coords]: [string, any]) => {
+                if (!matrixSums[id]) matrixSums[id] = { x: 0, y: 0, count: 0 };
+                matrixSums[id].x += coords.x;
+                matrixSums[id].y += coords.y;
+                matrixSums[id].count++;
+            });
+        }
+    });
+
+    const matrixAverages: Record<string, { x: number, y: number }> = {};
+    Object.entries(matrixSums).forEach(([id, data]) => {
+        matrixAverages[id] = { x: data.x / data.count, y: data.y / data.count };
     });
 
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, votes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, votes: [] };
     }
 
     // Instant Runoff Calculation
     const rounds: RoundLog[] = [];
     let remainingVotes = votes.map(v => ({ 
-        choices: v.choices.filter((c: string) => !!c)
+        choices: (v.choices || []).filter((c: string) => !!c)
     }));
     
     let activeOptionIds = new Set<string>();
-    votes.forEach(v => v.choices.forEach((c: string) => activeOptionIds.add(c)));
+    votes.forEach(v => (v.choices || []).forEach((c: string) => activeOptionIds.add(c)));
     
     let winnerId: string | null = null;
     let roundNum = 1;
@@ -352,6 +369,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         comments,
         simpleCounts,
         maybeCounts,
+        matrixAverages,
         votes: votes 
     };
 };

@@ -1,6 +1,5 @@
 import { Poll, RunoffResult, RoundLog, Vote } from '../types';
 
-// ... (keep existing helper functions like generateId, getLocalPolls, saveLocalPoll, getLocalVotes, saveLocalVote) ...
 const LS_PREFIX = 'votegenerator_';
 
 const generateId = (len: number = 8) => {
@@ -8,11 +7,6 @@ const generateId = (len: number = 8) => {
     let result = '';
     for (let i = 0; i < len; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
     return result;
-};
-
-// Generate a simple numeric code for ease of typing (e.g., 6 digits)
-const generateAccessCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 const getLocalPolls = (): Record<string, any> => {
@@ -42,7 +36,7 @@ const saveLocalVote = (pollId: string, vote: any) => {
 export const createPoll = async (data: {
     title: string;
     description?: string;
-    options: ({ text: string; cost?: number } | string)[]; // Updated signature
+    options: ({ text: string; cost?: number } | string)[]; 
     pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix' | 'pairwise' | 'rating' | 'budget';
     settings: { 
         hideResults: boolean; 
@@ -81,7 +75,7 @@ export const createPoll = async (data: {
         if (data.settings.security === 'code' && data.voterCount) {
             const codes = new Set<string>();
             while(codes.size < data.voterCount) {
-                codes.add(generateAccessCode());
+                codes.add(Math.floor(100000 + Math.random() * 900000).toString());
             }
             allowedCodes = Array.from(codes);
         }
@@ -232,8 +226,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     let poll: Poll | null = null;
 
     try {
-        // Fetch poll to get options and costs for calculation
-        poll = await getPoll(pollId); // Assuming we can get public poll data
+        poll = await getPoll(pollId);
     } catch (e) {
         const polls = getLocalPolls();
         poll = polls[pollId];
@@ -263,16 +256,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     
     // Count 'Yes'
     const simpleCounts: Record<string, number> = {};
-    // Count 'Maybe'
     const maybeCounts: Record<string, number> = {};
-    
-    // Matrix Averages
     const matrixSums: Record<string, { x: number, y: number, count: number }> = {};
-    
-    // Pairwise Scores
     const pairwiseStats: Record<string, { wins: number, matches: number }> = {};
-
-    // Rating Arrays (OptionID -> [values])
     const ratingArrays: Record<string, number[]> = {};
 
     votes.forEach((v: any) => {
@@ -296,15 +282,10 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
         if (Array.isArray(v.pairwiseVotes)) {
             v.pairwiseVotes.forEach((match: { winnerId: string, loserId: string }) => {
-                // Initialize if not present
                 if (!pairwiseStats[match.winnerId]) pairwiseStats[match.winnerId] = { wins: 0, matches: 0 };
                 if (!pairwiseStats[match.loserId]) pairwiseStats[match.loserId] = { wins: 0, matches: 0 };
-                
-                // Update Winner
                 pairwiseStats[match.winnerId].matches++;
                 pairwiseStats[match.winnerId].wins++;
-                
-                // Update Loser
                 pairwiseStats[match.loserId].matches++;
             });
         }
@@ -330,7 +311,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         };
     });
 
-    // Rating Stats (Mean & StdDev)
     const ratingStats: Record<string, { average: number; stdDev: number; count: number }> = {};
     let ratingWinnerId: string | null = null;
     let maxRatingAverage = -1;
@@ -340,13 +320,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         if (count > 0) {
             const sum = values.reduce((a, b) => a + b, 0);
             const average = sum / count;
-            
-            // Calculate Variance
             const variance = values.reduce((total, val) => total + Math.pow(val - average, 2), 0) / count;
             const stdDev = Math.sqrt(variance);
-            
             ratingStats[id] = { average, stdDev, count };
-
             if (average > maxRatingAverage) {
                 maxRatingAverage = average;
                 ratingWinnerId = id;
@@ -377,7 +353,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, pairwiseScores: {}, ratingStats: {}, budgetStats: {}, votes: [] };
     }
 
-    // Determine Pairwise Winner
     let pairwiseWinnerId: string | null = null;
     let maxPairwiseScore = -1;
     Object.entries(pairwiseScores).forEach(([id, data]) => {
@@ -387,7 +362,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
     });
 
-    // Instant Runoff Calculation
     const rounds: RoundLog[] = [];
     let remainingVotes = votes.map(v => ({ 
         choices: (v.choices || []).filter((c: string) => !!c)
@@ -399,7 +373,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     let winnerId: string | null = null;
     let roundNum = 1;
 
-    // Standard RCV Logic
     while (!winnerId && activeOptionIds.size > 0) {
         const roundCounts: Record<string, number> = {};
         activeOptionIds.forEach(id => roundCounts[id] = 0);
@@ -414,7 +387,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         });
 
         const totalActiveVotes = Object.values(roundCounts).reduce((a, b) => a + b, 0);
-        
         let roundWinner: string | null = null;
         let minVotes = Infinity;
         let loserId: string | null = null;
@@ -429,34 +401,18 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         
         if (roundWinner) {
             winnerId = roundWinner;
-            rounds.push({
-                roundNumber: roundNum,
-                counts: roundCounts,
-                eliminatedId: null,
-                winnerId: winnerId
-            });
+            rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
             break;
         }
         
         if (activeOptionIds.size <= 1) {
              winnerId = loserId; 
-             rounds.push({
-                roundNumber: roundNum,
-                counts: roundCounts,
-                eliminatedId: null,
-                winnerId: winnerId
-            });
+             rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
             break;
         }
 
         activeOptionIds.delete(loserId!);
-        
-        rounds.push({
-            roundNumber: roundNum,
-            counts: { ...roundCounts },
-            eliminatedId: loserId,
-            winnerId: null
-        });
+        rounds.push({ roundNumber: roundNum, counts: { ...roundCounts }, eliminatedId: loserId, winnerId: null });
 
         remainingVotes.forEach(vote => {
             vote.choices = vote.choices.filter((id: string) => id !== loserId);
@@ -466,7 +422,6 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         if(roundNum > 20) break;
     }
     
-    // Override Winner ID based on type
     if (Object.keys(pairwiseScores).length > 0) {
         winnerId = pairwiseWinnerId;
     } else if (Object.keys(ratingStats).length > 0) {

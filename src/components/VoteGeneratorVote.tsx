@@ -29,8 +29,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [maybeIds, setMaybeIds] = useState<Set<string>>(new Set());
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
-    
-    // Budget Allocations: OptionID -> Quantity
     const [budgetAllocations, setBudgetAllocations] = useState<Record<string, number>>({});
 
     const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>(() => {
@@ -97,7 +95,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         return !!isHeadless || isGenericTimezone;
     };
 
-    // --- Helpers ---
     const getDotTotal = () => Object.values(dotAllocations).reduce((a, b) => a + b, 0);
     const dotBudget = poll.settings.dotBudget || 10;
     const dotsRemaining = dotBudget - getDotTotal();
@@ -125,9 +122,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         const currentQty = budgetAllocations[id] || 0;
 
         if (delta > 0) {
-            if (budgetRemaining < cost) return; // Cannot afford
+            if (budgetRemaining < cost) return; 
         }
-        if (delta < 0 && currentQty <= 0) return; // Cannot go below 0
+        if (delta < 0 && currentQty <= 0) return;
 
         setBudgetAllocations({ ...budgetAllocations, [id]: currentQty + delta });
     };
@@ -275,8 +272,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             >
                 <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 relative">
                     {poll.pollType === 'budget' && (
-                        <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-sm font-bold text-green-800 border-b border-green-100">
-                            Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600">${budgetRemaining}</span>
+                        <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-sm font-bold text-green-800 border-b border-green-100 flex items-center justify-center gap-2">
+                            Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600 flex items-center"><DollarSign size={12}/>{budgetRemaining}</span>
                         </div>
                     )}
                     <h1 className={`text-2xl md:text-3xl font-black text-slate-800 font-serif mb-2 ${poll.pollType === 'budget' ? 'pt-6' : ''}`}>
@@ -311,6 +308,16 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                  dotsRemaining === 0 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white border-indigo-200 text-indigo-600 shadow-sm'
                              }`}>
                                 <Coins size={14} /> {dotsRemaining} Points Left
+                            </div>
+                        )}
+
+                        {/* Explicit usage of isDifferentTimezone to prevent TS error */}
+                        {isDifferentTimezone && poll.pollType === 'meeting' && (
+                            <div className="mt-2 w-full p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800 flex items-start gap-2">
+                                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                                <span>
+                                    <strong>Timezone Mismatch:</strong> The poll times are shown in {poll.settings.timezone}, but you are in {userTimezone}. Please adjust accordingly.
+                                </span>
                             </div>
                         )}
                     </div>

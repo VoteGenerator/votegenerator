@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -19,14 +19,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const isRating = poll.pollType === 'rating';
     const isBudget = poll.pollType === 'budget';
     
-    // Determine default view based on poll type
     const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
         isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
     );
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    // FIX: Ensure Bar Chart displays correct data context
     const barChartData = (() => {
         if (isBudget && budgetStats) {
             const data: Record<string, number> = {};
@@ -40,7 +38,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         return counts;
     })();
 
-    // Meeting Score Data
     const meetingScoreData = (() => {
         const scores: Record<string, number> = {};
         poll.options.forEach(o => scores[o.id] = 0);
@@ -72,8 +69,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     };
 
     const shouldShowComments = comments && comments.length > 0 && (poll.isAdmin || (poll.settings.allowComments && poll.settings.publicComments));
-
-    // --- Visualization Helpers ---
 
     const pieData = (() => {
         const counts = barChartData; 
@@ -115,7 +110,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         return data;
     })();
 
-    // --- SANKEY DIAGRAM GENERATION ---
     const sankeyData = useMemo(() => {
         if (rounds.length === 0) return { nodes: [], links: [], width: 0, height: 400 };
         const nodes: any[] = [];
@@ -211,7 +205,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     return (
         <div className="space-y-6 print:space-y-4">
-            {/* View Mode Toggle */}
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
                     {isMatrix && (
@@ -310,7 +303,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                 </div>
                             )}
                             {isBudget && budgetStats && budgetStats[activeWinnerId] && (
-                                <div className="mt-2 text-indigo-200 text-sm">
+                                <div className="mt-2 text-indigo-200 text-sm flex items-center justify-center gap-1">
+                                    <DollarSign size={16} />
                                     Total Value: ${budgetStats[activeWinnerId].totalValue.toLocaleString()} ({budgetStats[activeWinnerId].totalQuantity} purchased)
                                 </div>
                             )}

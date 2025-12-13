@@ -15,12 +15,6 @@ import {
     Image,
     ChevronRight,
     Sparkles,
-    Users,
-    Building2,
-    Heart,
-    Briefcase,
-    GraduationCap,
-    PartyPopper,
     Target,
     Info,
     Play,
@@ -30,8 +24,7 @@ import {
     BarChart3,
     Shield,
     Crown,
-    Check,
-    Clock
+    Check
 } from 'lucide-react';
 
 interface PollTypeInfo {
@@ -214,9 +207,8 @@ const DemoPoll: React.FC<{
     question: string;
     options: string[];
     type: 'single' | 'multiple' | 'ranked';
-    showVoteCount?: boolean;
     security?: string;
-}> = ({ question, options, type, showVoteCount = true, security }) => {
+}> = ({ question, options, type, security }) => {
     const [selected, setSelected] = useState<string[]>([]);
     const [hasVoted, setHasVoted] = useState(false);
     const [votes, setVotes] = useState<Record<string, number>>(() => {

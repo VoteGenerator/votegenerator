@@ -43,3 +43,8 @@
 # Functions configuration
 [functions]
   node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/v/*"
+  to = "/.netlify/functions/v-redirect"
+  status = 200

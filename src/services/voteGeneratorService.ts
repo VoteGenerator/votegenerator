@@ -365,3 +365,27 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         votes: votes 
     };
 };
+
+export const createCustomSlug = async (
+    slug: string,
+    pollId: string,
+    adminKey: string
+): Promise<{ success: boolean; shortUrl?: string; error?: string }> => {
+    try {
+        const response = await fetch('/.netlify/functions/vg-create-slug', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, pollId, adminKey })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            return { success: false, error: data.error };
+        }
+
+        return { success: true, shortUrl: data.shortUrl };
+    } catch (error) {
+        return { success: false, error: 'Failed to create short link' };
+    }
+};

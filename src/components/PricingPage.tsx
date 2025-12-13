@@ -9,7 +9,16 @@ import {
     Shield,
     Users,
     HelpCircle,
-    FileText
+    FileText,
+    Lock,
+    Crown,
+    Clock,
+    Mail,
+    Ban,
+    Fingerprint,
+    Key,
+    Eye,
+    Gift
 } from 'lucide-react';
 
 // Proper TypeScript interfaces
@@ -26,7 +35,9 @@ interface Plan {
     id: string;
     name: string;
     description: string;
-    price: { monthly: number; yearly: number };
+    price: { monthly: number; yearly: number; oneTime?: number };
+    monthlyEquivalent?: number; // for yearly plans
+    savings?: string;
     badge: string | null;
     highlight: boolean;
     cta: string;
@@ -45,7 +56,7 @@ interface ComparisonFeature {
 }
 
 const PricingPage: React.FC = () => {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
     const plans: Plan[] = [
         {
@@ -53,57 +64,60 @@ const PricingPage: React.FC = () => {
             name: 'Free',
             description: 'Quick polls for personal use',
             price: { monthly: 0, yearly: 0 },
-            badge: null,
+            badge: 'AD-SUPPORTED',
             highlight: false,
             cta: 'Start Free',
             ctaLink: '#',
             features: [
-                { name: 'All 12 poll types included', included: true },
+                { name: 'All 12 poll types', included: true },
                 { name: 'Unlimited polls', included: true },
-                { name: 'Up to 100 responses per poll', included: true },
+                { name: 'Up to 100 responses/poll', included: true },
                 { name: 'Basic analytics', included: true },
-                { name: 'Separate admin link per poll', included: true, tooltip: 'Each poll gets its own unique admin link' },
+                { name: 'Cookie-based vote protection', included: true },
+                { name: 'Dashboard notifications', included: true },
                 { name: 'Ads displayed', included: true, negative: true },
-                { name: 'VoteGenerator branding shown', included: true, negative: true },
+                { name: 'VoteGenerator branding', included: true, negative: true },
             ]
         },
         {
             id: 'one-time',
             name: 'One-Time Event',
-            description: 'For a single important event',
-            price: { monthly: 9.99, yearly: 9.99 },
+            description: 'Perfect for a single event',
+            price: { monthly: 7.99, yearly: 7.99, oneTime: 7.99 },
             badge: 'PAY ONCE',
             highlight: false,
-            cta: 'Buy Now',
+            cta: 'Get Started',
             ctaLink: '#checkout/one-time',
             features: [
                 { name: 'Everything in Free, plus:', included: true, header: true },
-                { name: 'Unlimited polls & responses', included: true },
-                { name: 'Admin dashboard (manage all polls)', included: true },
+                { name: 'Unlimited responses', included: true },
+                { name: 'Premium for 30 days', included: true },
                 { name: 'No ads', included: true },
                 { name: 'Remove VoteGenerator branding', included: true },
                 { name: 'Upload your logo', included: true },
                 { name: 'Download CSV & PDF', included: true },
                 { name: 'Custom thank-you page', included: true },
-                { name: 'Valid for 30 days', included: true, tooltip: 'Your premium features last 30 days from purchase' },
+                { name: 'Custom short links', included: true },
             ]
         },
         {
             id: 'pro',
             name: 'Pro',
             description: 'For teams and regular creators',
-            price: { monthly: 12, yearly: 99 },
-            badge: 'BEST VALUE',
+            price: { monthly: 9, yearly: 79 },
+            monthlyEquivalent: 6.58,
+            savings: 'Save 27%',
+            badge: 'MOST POPULAR',
             highlight: true,
             cta: 'Get Pro',
             ctaLink: '#checkout/pro',
             features: [
                 { name: 'Everything in One-Time, plus:', included: true, header: true },
-                { name: 'Active while subscribed', included: true, tooltip: 'Your premium features stay active as long as you\'re subscribed' },
+                { name: 'Never expires', included: true },
+                { name: 'Unified admin dashboard', included: true },
                 { name: 'Visual Poll (image voting)', included: true, isNew: true },
-                { name: 'Unique voting codes', included: true },
+                { name: 'Unique voting codes', included: true, tooltip: 'One-time codes for controlled voting' },
                 { name: 'Embed polls (with your logo)', included: true },
-                { name: 'Custom short links', included: true, tooltip: 'e.g., votegenerator.com/v/team-vote' },
                 { name: 'Voter comments', included: true },
                 { name: 'Export to Google Sheets', included: true },
                 { name: 'Email support', included: true },
@@ -113,26 +127,28 @@ const PricingPage: React.FC = () => {
             id: 'pro-plus',
             name: 'Pro+',
             description: 'For power users & businesses',
-            price: { monthly: 19, yearly: 149 },
-            badge: 'FULL POWER',
+            price: { monthly: 15, yearly: 119 },
+            monthlyEquivalent: 9.92,
+            savings: 'Save 34%',
+            badge: 'BEST VALUE',
             highlight: false,
             cta: 'Get Pro+',
             ctaLink: '#checkout/pro-plus',
             features: [
                 { name: 'Everything in Pro, plus:', included: true, header: true },
-                { name: 'White-label embeds (no branding)', included: true },
+                { name: 'White-label embeds', included: true, tooltip: 'No VoteGenerator branding anywhere' },
                 { name: 'Advanced vote protection', included: true, tooltip: 'Cookies + codes + rate limiting' },
-                { name: 'Dashboard notifications', included: true, tooltip: 'See alerts in your dashboard when polls hit milestones' },
-                { name: 'Dedicated email support', included: true },
+                { name: 'Team collaboration', included: true, tooltip: 'Share polls with team members' },
+                { name: 'Priority support', included: true },
             ]
         }
     ];
 
     const comparisonFeatures: ComparisonFeature[] = [
-        // Poll Types Section
-        { name: 'Multiple Choice Poll', free: true, oneTime: true, pro: true, proPlus: true, category: 'Poll Types' },
+        // Poll Types
+        { name: 'Multiple Choice Poll', free: true, oneTime: true, pro: true, proPlus: true, category: 'Poll Types Included' },
         { name: 'Ranked Choice Poll', free: true, oneTime: true, pro: true, proPlus: true },
-        { name: 'Meeting Poll (Scheduler)', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Meeting Scheduler Poll', free: true, oneTime: true, pro: true, proPlus: true },
         { name: 'This or That Poll', free: true, oneTime: true, pro: true, proPlus: true },
         { name: 'Dot Voting Poll', free: true, oneTime: true, pro: true, proPlus: true },
         { name: 'Rating Scale Poll', free: true, oneTime: true, pro: true, proPlus: true },
@@ -143,76 +159,72 @@ const PricingPage: React.FC = () => {
         { name: 'Sentiment Check Poll', free: true, oneTime: true, pro: true, proPlus: true },
         { name: 'Visual Poll (Image Voting)', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Upload images for voters to choose from' },
         
-        // Limits Section
-        { name: 'Polls You Can Create', free: 'Unlimited', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited', category: 'Limits' },
+        // Limits
+        { name: 'Polls You Can Create', free: 'Unlimited', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited', category: 'Usage Limits' },
         { name: 'Responses Per Poll', free: '100', oneTime: 'Unlimited', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Premium Features Duration', free: '—', oneTime: '30 days', pro: 'While subscribed', proPlus: 'While subscribed', tooltip: 'One-Time: 30 days from purchase. Pro/Pro+: Active as long as your subscription is active.' },
+        { name: 'Premium Duration', free: '—', oneTime: '30 days', pro: 'While subscribed', proPlus: 'While subscribed' },
         
-        // Dashboard & Management
-        { name: 'Admin Dashboard', free: 'Per poll', oneTime: 'Unified', pro: 'Unified', proPlus: 'Unified', category: 'Management', tooltip: 'Free: Each poll has separate admin link. Paid: One dashboard for all polls.' },
-        { name: 'Manage Multiple Polls', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'View and manage all your polls from one place' },
+        // Dashboard
+        { name: 'Admin Dashboard', free: 'Per poll', oneTime: 'Per poll', pro: 'Unified', proPlus: 'Unified', category: 'Dashboard & Management', tooltip: 'Free/One-Time: Each poll has separate link. Pro: One dashboard for all.' },
+        { name: 'Dashboard Notifications', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'See new vote alerts when you check your dashboard' },
+        { name: 'Team Collaboration', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Share poll management with team members' },
         
-        // Branding & Customization
-        { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true, category: 'Branding' },
+        // Branding
+        { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true, category: 'Branding & Customization' },
         { name: 'Remove VoteGenerator Branding', free: false, oneTime: true, pro: true, proPlus: true },
         { name: 'Upload Your Logo', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Custom Thank-You Page', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Show your own message after someone votes' },
-        { name: 'Custom Short Links', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Example: votegenerator.com/v/my-team-vote' },
+        { name: 'Custom Thank-You Page', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Custom Short Links', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'e.g., votegenerator.com/v/my-team-vote' },
         
         // Embedding
-        { name: 'Embed Polls on Your Site', free: 'With branding', oneTime: 'With your logo', pro: 'With your logo', proPlus: 'White-label', category: 'Embedding', tooltip: 'White-label = no VoteGenerator branding at all' },
+        { name: 'Embed Polls', free: 'With branding', oneTime: 'With your logo', pro: 'With your logo', proPlus: 'White-label', category: 'Embedding', tooltip: 'White-label = zero VoteGenerator branding' },
         
         // Security
-        { name: 'Cookie-Based Duplicate Detection', free: true, oneTime: true, pro: true, proPlus: true, category: 'Vote Security', tooltip: 'Helps prevent same browser from voting twice' },
-        { name: 'Unique Voting Codes', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Generate one-time codes for controlled voting' },
-        { name: 'Advanced Vote Protection', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Combines cookies + codes + rate limiting' },
-        { name: 'Scheduled Poll Closing', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'Set a deadline to automatically close voting' },
+        { name: 'Cookie-Based Protection', free: true, oneTime: true, pro: true, proPlus: true, category: 'Vote Security', tooltip: 'Detects repeat voters from same browser' },
+        { name: 'Unique Voting Codes', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Generate one-time codes for controlled access' },
+        { name: 'Advanced Protection', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Combines cookies + codes + rate limiting' },
+        { name: 'Scheduled Poll Closing', free: true, oneTime: true, pro: true, proPlus: true },
         
-        // Analytics & Export
-        { name: 'Basic Analytics', free: true, oneTime: true, pro: true, proPlus: true, category: 'Analytics & Export', tooltip: 'Vote counts, percentages, timestamps' },
+        // Export
+        { name: 'Basic Analytics', free: true, oneTime: true, pro: true, proPlus: true, category: 'Analytics & Export' },
         { name: 'Download as CSV', free: false, oneTime: true, pro: true, proPlus: true },
         { name: 'Download as PDF', free: false, oneTime: true, pro: true, proPlus: true },
         { name: 'Export to Google Sheets', free: false, oneTime: true, pro: true, proPlus: true },
         
         // Extras
-        { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras', tooltip: 'Let voters leave optional feedback' },
-        { name: 'Dashboard Notifications', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'See "New votes!" alerts in your admin dashboard when you check your polls. Not email or text.' },
+        { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras' },
         { name: 'Email Support', free: false, oneTime: false, pro: true, proPlus: true },
-        { name: 'Priority Email Support', free: false, oneTime: false, pro: false, proPlus: true },
+        { name: 'Priority Support', free: false, oneTime: false, pro: false, proPlus: true },
     ];
 
     const faqs = [
         {
             q: "Is the free plan really free forever?",
-            a: "Yes! Create unlimited polls with up to 100 responses each, completely free. We show small ads to keep it sustainable. No credit card or signup required."
-        },
-        {
-            q: "What's the difference between the free and paid admin dashboard?",
-            a: "With the free plan, each poll gets its own separate admin link - you'll need to save each link. Paid plans give you a unified dashboard where you can see and manage ALL your polls in one place."
+            a: "Yes! Create unlimited polls with up to 100 responses each. We show small ads to keep it sustainable. No credit card, no signup, no email required."
         },
         {
             q: "How does the One-Time plan work?",
-            a: "Pay once for premium features that last 30 days. Create unlimited polls during that time. Perfect for weddings, team events, or one-off occasions. No subscription required."
+            a: "Pay once, get premium features for 30 days. Create unlimited polls during that time. Perfect for weddings, events, or trying before subscribing. No auto-renewal."
         },
         {
-            q: "What does '30 days' mean for the One-Time plan?",
-            a: "Your premium features (no ads, custom branding, etc.) remain active for 30 days from purchase. After that, your existing polls stay accessible but new polls use free tier features. You can always buy another One-Time pass."
+            q: "What happens after my One-Time plan expires?",
+            a: "Your existing polls stay accessible, but new polls use free tier features. You can purchase another One-Time pass or upgrade to Pro anytime."
         },
         {
-            q: "What's the difference between Pro embed and Pro+ white-label?",
-            a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label - no VoteGenerator branding appears anywhere on the embedded poll."
+            q: "What's the difference between Pro and Pro+ embeds?",
+            a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label — zero VoteGenerator branding anywhere."
         },
         {
-            q: "How do dashboard notifications work?",
-            a: "Pro+ users see alert badges in their dashboard when polls hit milestones (like 50 or 100 votes). This is NOT email or text - just visual alerts when you log in. Check your dashboard anytime to see real-time results."
-        },
-        {
-            q: "What payment methods do you accept?",
-            a: "We accept all major credit cards (Visa, Mastercard, Amex) and PayPal through Stripe, our secure payment processor."
+            q: "How do unique voting codes work?",
+            a: "Generate one-time access codes. Share them with your voters. Each code works exactly once, preventing duplicate votes regardless of browser or device."
         },
         {
             q: "Can I upgrade or downgrade anytime?",
             a: "Yes! Upgrade instantly and we'll prorate your billing. Downgrade takes effect at your next billing date."
+        },
+        {
+            q: "What payment methods do you accept?",
+            a: "All major credit cards (Visa, Mastercard, Amex) and PayPal through Stripe, our secure payment processor."
         },
         {
             q: "What's your refund policy?",
@@ -220,19 +232,48 @@ const PricingPage: React.FC = () => {
         }
     ];
 
-    const getYearlySavings = (plan: Plan) => {
-        if (plan.price.monthly === 0 || plan.id === 'one-time') return null;
-        const monthlyTotal = plan.price.monthly * 12;
-        const savings = Math.round((1 - plan.price.yearly / monthlyTotal) * 100);
-        return savings > 0 ? savings : null;
-    };
-
-    // Group features by category for the comparison table
+    // Group features by category
     let currentCategory = '';
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            {/* Hero */}
+            {/* Unique Value Proposition Hero */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-8">
+                <div className="max-w-5xl mx-auto px-4">
+                    <div className="grid md:grid-cols-4 gap-6 text-center">
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                                <Ban size={24} />
+                            </div>
+                            <h3 className="font-bold mb-1">No Signup Required</h3>
+                            <p className="text-indigo-100 text-sm">Skip the email verification dance</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                                <Mail size={24} />
+                            </div>
+                            <h3 className="font-bold mb-1">Zero Spam</h3>
+                            <p className="text-indigo-100 text-sm">We don't collect emails to spam</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                                <Shield size={24} />
+                            </div>
+                            <h3 className="font-bold mb-1">Privacy-First Security</h3>
+                            <p className="text-indigo-100 text-sm">Vote protection without tracking</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+                                <Zap size={24} />
+                            </div>
+                            <h3 className="font-bold mb-1">Instant Start</h3>
+                            <p className="text-indigo-100 text-sm">Create your first poll in 30 seconds</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Pricing Section */}
             <div className="pt-16 pb-12 px-4 text-center">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -243,7 +284,7 @@ const PricingPage: React.FC = () => {
                         Simple, Transparent Pricing
                     </h1>
                     <p className="text-xl text-slate-600 mb-8">
-                        Start free. Upgrade when you need more.
+                        Start free. Upgrade when you need more. Cancel anytime.
                     </p>
 
                     {/* Billing Toggle */}
@@ -268,7 +309,7 @@ const PricingPage: React.FC = () => {
                         >
                             Yearly
                             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                                Save 30%+
+                                Save up to 34%
                             </span>
                         </button>
                     </div>
@@ -286,23 +327,27 @@ const PricingPage: React.FC = () => {
                             transition={{ delay: index * 0.1 }}
                             className={`relative rounded-2xl p-6 ${
                                 plan.highlight
-                                    ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white ring-4 ring-indigo-300 scale-105'
+                                    ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white ring-4 ring-indigo-300 scale-105 z-10'
                                     : 'bg-white border border-slate-200'
                             }`}
                         >
                             {/* Badge */}
                             {plan.badge && (
-                                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${
-                                    plan.highlight
-                                        ? 'bg-amber-400 text-amber-900'
-                                        : 'bg-slate-800 text-white'
+                                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                                    plan.id === 'free'
+                                        ? 'bg-slate-200 text-slate-600'
+                                        : plan.highlight
+                                            ? 'bg-amber-400 text-amber-900'
+                                            : plan.id === 'pro-plus'
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-slate-800 text-white'
                                 }`}>
                                     {plan.badge}
                                 </div>
                             )}
 
                             {/* Plan Name */}
-                            <div className="mb-4">
+                            <div className="mb-4 mt-2">
                                 <h3 className={`text-xl font-bold ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
                                     {plan.name}
                                 </h3>
@@ -313,25 +358,57 @@ const PricingPage: React.FC = () => {
 
                             {/* Price */}
                             <div className="mb-6">
-                                <div className="flex items-baseline gap-1">
-                                    <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                        ${billingCycle === 'yearly' && plan.id !== 'one-time' ? plan.price.yearly : plan.price.monthly}
-                                    </span>
-                                    {plan.price.monthly > 0 && plan.id !== 'one-time' && (
-                                        <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
-                                            /{billingCycle === 'yearly' ? 'year' : 'month'}
-                                        </span>
-                                    )}
-                                    {plan.id === 'one-time' && (
-                                        <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
-                                            one-time
-                                        </span>
-                                    )}
-                                </div>
-                                {billingCycle === 'yearly' && getYearlySavings(plan) && (
-                                    <p className={`text-sm mt-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
-                                        Save {getYearlySavings(plan)}% vs monthly
-                                    </p>
+                                {plan.id === 'one-time' ? (
+                                    // One-time pricing
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
+                                                ${plan.price.oneTime}
+                                            </span>
+                                            <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
+                                                one-time
+                                            </span>
+                                        </div>
+                                        <p className={`text-sm mt-1 ${plan.highlight ? 'text-indigo-200' : 'text-slate-500'}`}>
+                                            Valid for 30 days
+                                        </p>
+                                    </div>
+                                ) : plan.price.monthly === 0 ? (
+                                    // Free plan
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl font-black text-slate-900">$0</span>
+                                        <span className="text-slate-400">/month</span>
+                                    </div>
+                                ) : (
+                                    // Subscription plans
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
+                                                ${billingCycle === 'yearly' ? plan.price.yearly : plan.price.monthly}
+                                            </span>
+                                            <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
+                                                /{billingCycle === 'yearly' ? 'year' : 'month'}
+                                            </span>
+                                        </div>
+                                        {billingCycle === 'yearly' && plan.monthlyEquivalent && (
+                                            <div className="mt-1">
+                                                <span className={`text-sm ${plan.highlight ? 'text-indigo-200' : 'text-slate-500'}`}>
+                                                    ${plan.monthlyEquivalent}/mo · 
+                                                </span>
+                                                <span className={`text-sm line-through ${plan.highlight ? 'text-indigo-300' : 'text-slate-400'}`}>
+                                                    ${plan.price.monthly * 12}/yr
+                                                </span>
+                                                <span className={`text-sm font-bold ml-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
+                                                    {plan.savings}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {billingCycle === 'monthly' && plan.savings && (
+                                            <p className={`text-sm mt-1 ${plan.highlight ? 'text-indigo-200' : 'text-slate-500'}`}>
+                                                Or ${plan.price.yearly}/year ({plan.savings})
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
 
@@ -378,7 +455,9 @@ const PricingPage: React.FC = () => {
                                         }`}>
                                             {feature.name}
                                             {feature.isNew && (
-                                                <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-xs font-bold rounded">
+                                                <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
+                                                    plan.highlight ? 'bg-amber-400/30 text-amber-200' : 'bg-amber-100 text-amber-700'
+                                                }`}>
                                                     NEW
                                                 </span>
                                             )}
@@ -400,8 +479,100 @@ const PricingPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Why VoteGenerator Section */}
+            <div className="bg-gradient-to-b from-slate-50 to-white py-16">
+                <div className="max-w-5xl mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-slate-900 text-center mb-4">
+                        Why Teams Choose VoteGenerator
+                    </h2>
+                    <p className="text-slate-600 text-center mb-12 max-w-2xl mx-auto">
+                        We built VoteGenerator because we were tired of poll tools that require signups, 
+                        harvest emails, and spam your inbox. Here's what makes us different:
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Left: Our Approach */}
+                        <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <Check size={24} className="text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800">VoteGenerator</h3>
+                            </div>
+                            <ul className="space-y-4">
+                                {[
+                                    { icon: Zap, title: 'Instant Start', desc: 'Create a poll in 30 seconds. No account needed.' },
+                                    { icon: Ban, title: 'No Email Required', desc: 'We don\'t need your email. Share links directly.' },
+                                    { icon: Shield, title: 'Privacy-First Security', desc: 'Cookie + unique code protection without tracking.' },
+                                    { icon: Gift, title: 'Free Forever Tier', desc: 'All 12 poll types free. Upgrade only if you need more.' },
+                                    { icon: Eye, title: 'Transparent Pricing', desc: 'No hidden fees. No surprise charges.' },
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-3">
+                                        <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+                                            <item.icon size={16} className="text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-slate-800">{item.title}</h4>
+                                            <p className="text-sm text-slate-600">{item.desc}</p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Right: Vote Security Explained */}
+                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-100">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                    <Lock size={24} className="text-indigo-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800">How We Secure Your Votes</h3>
+                            </div>
+                            <p className="text-slate-600 mb-6">
+                                One-person-one-vote without invading privacy or harvesting data:
+                            </p>
+                            <div className="space-y-4">
+                                <div className="bg-white rounded-xl p-4 border border-indigo-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Fingerprint size={18} className="text-indigo-600" />
+                                        <h4 className="font-bold text-slate-800">Cookie Detection</h4>
+                                        <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">FREE</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600">
+                                        Browser cookies remember if you've voted. Works for most casual polls. 
+                                        No personal data collected.
+                                    </p>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 border border-indigo-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Key size={18} className="text-indigo-600" />
+                                        <h4 className="font-bold text-slate-800">Unique Voting Codes</h4>
+                                        <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">PRO</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600">
+                                        Generate one-time access codes. Each code works exactly once. 
+                                        Perfect for controlled audiences.
+                                    </p>
+                                </div>
+                                <div className="bg-white rounded-xl p-4 border border-indigo-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Shield size={18} className="text-purple-600" />
+                                        <h4 className="font-bold text-slate-800">Combined Protection</h4>
+                                        <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">PRO+</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600">
+                                        Cookies + unique codes + rate limiting. Maximum security for 
+                                        important decisions.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Feature Comparison Table */}
-            <div className="max-w-6xl mx-auto px-4 pb-20">
+            <div className="max-w-6xl mx-auto px-4 py-16">
                 <h2 className="text-3xl font-bold text-slate-900 text-center mb-10">
                     Compare All Features
                 </h2>
@@ -412,12 +583,24 @@ const PricingPage: React.FC = () => {
                             <thead>
                                 <tr className="border-b border-slate-200 bg-slate-50">
                                     <th className="text-left p-4 font-semibold text-slate-600 w-[40%]">Feature</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">Free</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">One-Time</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%] bg-indigo-100">
-                                        <span className="text-indigo-700">Pro</span>
+                                    <th className="text-center p-4 font-semibold text-slate-500 w-[15%]">
+                                        <div className="text-xs uppercase tracking-wider">Free</div>
+                                        <div className="text-slate-400 text-xs font-normal">ad-supported</div>
                                     </th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">Pro+</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">
+                                        <div>One-Time</div>
+                                        <div className="text-slate-400 text-xs font-normal">$7.99</div>
+                                    </th>
+                                    <th className="text-center p-4 font-semibold text-indigo-700 w-[15%] bg-indigo-50">
+                                        <div className="flex items-center justify-center gap-1">
+                                            Pro <Crown size={12} className="text-amber-500" />
+                                        </div>
+                                        <div className="text-indigo-400 text-xs font-normal">$6.58/mo</div>
+                                    </th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">
+                                        <div>Pro+</div>
+                                        <div className="text-slate-400 text-xs font-normal">$9.92/mo</div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -576,7 +759,7 @@ const PricingPage: React.FC = () => {
                         Ready to create your first poll?
                     </h2>
                     <p className="text-indigo-100 mb-8">
-                        No signup. No credit card. Just create and share.
+                        No signup. No credit card. No email required. Just start creating.
                     </p>
                     <a
                         href="#"

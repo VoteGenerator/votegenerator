@@ -838,4 +838,64 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     );
 };
 
+const CustomShortLink: React.FC<{ pollId: string; adminKey: string }> = ({ pollId, adminKey }) => {
+    const [slug, setSlug] = useState('');
+    const [shortUrl, setShortUrl] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleCreate = async () => {
+        setIsLoading(true);
+        setError('');
+        
+        const result = await createCustomSlug(slug, pollId, adminKey);
+        
+        if (result.success) {
+            setShortUrl(result.shortUrl!);
+        } else {
+            setError(result.error || 'Failed to create');
+        }
+        
+        setIsLoading(false);
+    };
+
+    return (
+        <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <h4 className="font-bold text-slate-800 mb-3">Custom Short Link</h4>
+            
+            {shortUrl ? (
+                <div className="flex items-center gap-2 bg-green-50 p-3 rounded-lg">
+                    <Check size={18} className="text-green-600" />
+                    <span className="text-green-800 font-medium">{shortUrl}</span>
+                    <button onClick={() => navigator.clipboard.writeText(shortUrl)}>
+                        <Copy size={16} />
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-slate-500 text-sm">votegenerator.com/v/</span>
+                        <input
+                            type="text"
+                            value={slug}
+                            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                            placeholder="my-poll-name"
+                            className="flex-1 px-3 py-2 border rounded-lg"
+                            maxLength={50}
+                        />
+                    </div>
+                    {error && <p className="text-red-600 text-sm">{error}</p>}
+                    <button
+                        onClick={handleCreate}
+                        disabled={!slug || isLoading}
+                        className="w-full py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+                    >
+                        {isLoading ? 'Creating...' : 'Create Short Link'}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default VoteGeneratorResults;

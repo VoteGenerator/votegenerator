@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, X } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 
@@ -143,25 +143,23 @@ const VoteGeneratorCreate: React.FC = () => {
     
     const [meetingDate, setMeetingDate] = useState('');
     const [meetingTime, setMeetingTime] = useState('');
-    const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
     const [hideResults, setHideResults] = useState(false);
-    const [allowMultiple, setAllowMultiple] = useState(false);
+    const [allowMultiple] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
     const [allowComments, setAllowComments] = useState(false);
-    const [publicComments, setPublicComments] = useState(true);
-    const [blockVpn, setBlockVpn] = useState(false);
+    const [publicComments] = useState(true);
+    const [blockVpn] = useState(false);
     const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
     const [voterCount, setVoterCount] = useState<number>(10);
-    const [deadline, setDeadline] = useState<string>('');
-    const [maxVotes, setMaxVotes] = useState<number | ''>('');
+    const [deadline] = useState<string>('');
+    const [maxVotes] = useState<number | ''>('');
     const [dotBudget, setDotBudget] = useState<number>(10);
     const [budgetLimit, setBudgetLimit] = useState<number>(100);
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
     const lastInputRef = useRef<HTMLInputElement>(null);
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const handleOptionChange = (index: number, value: string) => {
         const newOptions = [...options];
@@ -344,8 +342,6 @@ const VoteGeneratorCreate: React.FC = () => {
         
     const validTextOptions = options.map(o => o.trim()).filter(o => o !== '');
     const hasDuplicates = pollType !== 'image' && validTextOptions.length > 0 && new Set(validTextOptions).size !== validTextOptions.length;
-
-    const selectedPollType = POLL_TYPES.find(t => t.id === pollType);
 
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20">

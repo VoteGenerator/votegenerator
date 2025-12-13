@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
-import CustomShortLink from './CustomShortLink';
 
 interface Props {
     poll: Poll;
@@ -838,3 +837,5 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         </div>
     );
 };
+
+export default VoteGeneratorResults;

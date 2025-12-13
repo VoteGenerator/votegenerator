@@ -3,24 +3,22 @@ import { motion } from 'framer-motion';
 import { 
     Check, 
     X, 
-    Zap, 
     Crown, 
     Sparkles, 
-    BarChart2, 
-    Image as ImageIcon,
-    Download,
-    FileText,
     Users,
     Lock,
-    Globe,
-    Palette,
-    MessageSquare,
-    Calendar,
     Shield,
     Star,
     ArrowRight,
     HelpCircle
 } from 'lucide-react';
+
+interface PlanFeature {
+    text: string;
+    included: boolean;
+    pro?: boolean;
+    new?: boolean;
+}
 
 interface PricingPageProps {
     onSelectPlan?: (plan: string) => void;
@@ -30,7 +28,17 @@ const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan }) => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [showFAQ, setShowFAQ] = useState<number | null>(null);
 
-    const plans = [
+    const plans: Array<{
+        id: string;
+        name: string;
+        description: string;
+        price: { monthly: number; yearly: number };
+        highlight: boolean;
+        cta: string;
+        isOneTime?: boolean;
+        badge?: string;
+        features: PlanFeature[];
+    }> = [
         {
             id: 'free',
             name: 'Free',

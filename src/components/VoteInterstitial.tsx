@@ -29,7 +29,7 @@ const VoteInterstitial: React.FC<VoteInterstitialProps> = ({
     isPremiumPoll,
     onContinue 
 }) => {
-    const [countdown, setCountdown] = useState(isPremiumPoll ? 0 : 3); // 3 second countdown for free
+    const [countdown, setCountdown] = useState(isPremiumPoll ? 0 : 5); // 5 second countdown for free (industry standard)
     const [canSkip, setCanSkip] = useState(isPremiumPoll);
 
     // Countdown timer for ad display

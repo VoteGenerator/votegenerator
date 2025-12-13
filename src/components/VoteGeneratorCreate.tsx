@@ -659,32 +659,144 @@ const VoteGeneratorCreate: React.FC = () => {
                                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                                                 <div className="pt-4 space-y-3">
                                                     {/* Quick toggles */}
-                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50">
-                                                        <span className="text-sm font-medium text-slate-700">Require names</span>
+                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 group">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-medium text-slate-700">Require names</span>
+                                                            <div className="relative">
+                                                                <HelpCircle size={14} className="text-slate-300 group-hover:text-slate-500 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                                                    Voters must enter their name before voting. Names are shown to the organizer.
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <input type="checkbox" checked={requireNames} onChange={e => setRequireNames(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
                                                     </label>
-                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50">
-                                                        <span className="text-sm font-medium text-slate-700">Allow comments</span>
+                                                    
+                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 group">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-medium text-slate-700">Allow comments</span>
+                                                            <div className="relative">
+                                                                <HelpCircle size={14} className="text-slate-300 group-hover:text-slate-500 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                                                    Let voters leave optional comments with their vote. Great for feedback!
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <input type="checkbox" checked={allowComments} onChange={e => setAllowComments(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
                                                     </label>
-                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50">
-                                                        <span className="text-sm font-medium text-slate-700">Hide results until closed</span>
+                                                    
+                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 group">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-medium text-slate-700">Hide results until closed</span>
+                                                            <div className="relative">
+                                                                <HelpCircle size={14} className="text-slate-300 group-hover:text-slate-500 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                                                    Results stay hidden from voters until you close the poll. Prevents bias!
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
                                                     </label>
+
+                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 group">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-medium text-slate-700">Multiple votes allowed</span>
+                                                            <div className="relative">
+                                                                <HelpCircle size={14} className="text-slate-300 group-hover:text-slate-500 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                                                    Allow the same person to vote multiple times (not recommended for serious polls).
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <input type="checkbox" checked={allowMultiple} onChange={e => e} className="w-4 h-4 accent-indigo-600" disabled />
+                                                    </label>
+                                                    
+                                                    {/* Deadline */}
+                                                    <div className="p-3 bg-slate-50 rounded-xl">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-xs font-bold text-slate-600 uppercase">Deadline (Optional)</span>
+                                                            <div className="relative group/tip">
+                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
+                                                                    Automatically close voting at this date/time.
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <input type="datetime-local" value={deadline} onChange={(e) => e} className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:border-indigo-500 outline-none" />
+                                                    </div>
+
+                                                    {/* Max Votes */}
+                                                    <div className="p-3 bg-slate-50 rounded-xl">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-xs font-bold text-slate-600 uppercase">Max Responses (Optional)</span>
+                                                            <div className="relative group/tip">
+                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
+                                                                    Automatically close poll after this many votes.
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <input type="number" min={1} placeholder="Unlimited" value={maxVotes} onChange={(e) => e} className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:border-indigo-500 outline-none" />
+                                                    </div>
                                                     
                                                     {/* Security */}
                                                     <div className="p-3 bg-slate-50 rounded-xl">
-                                                        <div className="text-xs font-bold text-slate-600 mb-2 uppercase">Vote Security</div>
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-xs font-bold text-slate-600 uppercase">Vote Security</span>
+                                                            <div className="relative group/tip">
+                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
+                                                                    ⚠️ No online poll is 100% fraud-proof. These options help reduce casual duplicate voting but determined users may find workarounds.
+                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <div className="grid grid-cols-3 gap-1.5">
                                                             {(['browser', 'code', 'none'] as const).map(sec => (
-                                                                <button key={sec} onClick={() => setSecurity(sec)} className={`py-1.5 px-2 rounded-lg text-xs font-bold capitalize transition-all ${security === sec ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}>
-                                                                    {sec === 'browser' ? 'Browser' : sec === 'code' ? 'Codes' : 'None'}
-                                                                </button>
+                                                                <div key={sec} className="relative group/sec">
+                                                                    <button onClick={() => setSecurity(sec)} className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold capitalize transition-all ${security === sec ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-indigo-300'}`}>
+                                                                        {sec === 'browser' ? 'Browser' : sec === 'code' ? 'Codes' : 'None'}
+                                                                    </button>
+                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/sec:opacity-100 group-hover/sec:visible transition-all z-10">
+                                                                        {sec === 'browser' && (
+                                                                            <>
+                                                                                <strong>Browser Fingerprint</strong><br/>
+                                                                                Uses cookies & browser ID to limit one vote per device. Can be bypassed with incognito/different browsers.
+                                                                            </>
+                                                                        )}
+                                                                        {sec === 'code' && (
+                                                                            <>
+                                                                                <strong>Unique Codes</strong><br/>
+                                                                                Generate unique voting codes to distribute. Each code works once. Best for controlled groups.
+                                                                            </>
+                                                                        )}
+                                                                        {sec === 'none' && (
+                                                                            <>
+                                                                                <strong>No Protection</strong><br/>
+                                                                                Anyone can vote unlimited times. Only use for casual, low-stakes polls.
+                                                                            </>
+                                                                        )}
+                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                                                                    </div>
+                                                                </div>
                                                             ))}
                                                         </div>
                                                         {security === 'code' && (
-                                                            <input type="number" min={1} max={100} value={voterCount} onChange={(e) => setVoterCount(parseInt(e.target.value) || 1)} className="mt-2 w-full p-2 text-sm border border-slate-200 rounded-lg" placeholder="# of voters" />
+                                                            <div className="mt-2">
+                                                                <input type="number" min={1} max={1000} value={voterCount} onChange={(e) => setVoterCount(parseInt(e.target.value) || 1)} className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:border-indigo-500 outline-none" placeholder="# of voters" />
+                                                                <p className="text-xs text-slate-500 mt-1">We'll generate {voterCount} unique voting codes</p>
+                                                            </div>
                                                         )}
+                                                        <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                                            <AlertTriangle size={12} />
+                                                            Security helps but isn't foolproof
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </motion.div>

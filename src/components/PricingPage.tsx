@@ -176,7 +176,7 @@ const PricingPage: React.FC = () => {
         
         // Extras
         { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras', tooltip: 'Let voters leave optional feedback' },
-        { name: 'Dashboard Notifications', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'See "New votes!" alerts in your dashboard when polls hit milestones. Not email or text.' },
+        { name: 'Dashboard Notifications', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'See "New votes!" alerts in your admin dashboard when you check your polls. Not email or text.' },
         { name: 'Email Support', free: false, oneTime: false, pro: true, proPlus: true },
         { name: 'Priority Email Support', free: false, oneTime: false, pro: false, proPlus: true },
     ];

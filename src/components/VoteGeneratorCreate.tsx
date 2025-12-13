@@ -5,16 +5,34 @@ import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
+// Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
+    {
+        id: 'multiple',
+        name: 'Multiple Choice',
+        icon: CheckSquare,
+        description: 'Classic poll - pick one or more options',
+        tooltip: 'The most common poll type. Voters simply click their favorite option(s). Great for quick decisions where you need a clear winner.',
+        useCases: ['Team votes', 'Event planning', 'Quick surveys', 'Preference checks'],
+        example: '"What should we order for the office party?"',
+        gradient: 'from-blue-500 to-indigo-500',
+        selectedBorder: 'border-blue-500',
+        selectedBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+        iconColor: 'text-blue-600',
+        textColor: 'text-blue-700',
+        isPremium: false
+    },
     {
         id: 'ranked',
         name: 'Ranked Choice',
         icon: ListOrdered,
-        description: 'Voters rank options in order of preference.',
-        bestFor: 'Perfect for: Group decisions to avoid split votes.',
-        example: 'e.g., "Where should we have lunch?"',
+        description: 'Drag to rank options in order',
+        tooltip: 'Voters rank all options from favorite to least favorite. Prevents ties and shows true preferences. Used in elections worldwide!',
+        useCases: ['Group decisions', 'Avoiding ties', 'Fair voting', 'Priority lists'],
+        example: '"Where should we go for the team retreat?"',
+        gradient: 'from-indigo-500 to-purple-500',
         selectedBorder: 'border-indigo-500',
-        selectedBg: 'bg-indigo-50',
+        selectedBg: 'bg-gradient-to-br from-indigo-50 to-purple-50',
         iconColor: 'text-indigo-600',
         textColor: 'text-indigo-700',
         isPremium: false
@@ -23,76 +41,73 @@ const POLL_TYPES = [
         id: 'image',
         name: 'Visual Poll',
         icon: ImageIcon,
-        description: 'Beautiful image grid voting experience.',
-        bestFor: 'Perfect for: Design contests, logo selection, photo competitions.',
-        example: 'e.g., "Which logo design is best?"',
+        description: 'Vote on images in a beautiful grid',
+        tooltip: 'Upload images and let people vote visually. Perfect when you\'re choosing between designs, photos, or anything visual. Instagram-style layout!',
+        useCases: ['Logo selection', 'Design contests', 'Photo competitions', 'Product choices'],
+        example: '"Which logo design should we use?"',
+        gradient: 'from-pink-500 to-rose-500',
         selectedBorder: 'border-pink-500',
-        selectedBg: 'bg-pink-50',
+        selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
         iconColor: 'text-pink-600',
         textColor: 'text-pink-700',
         isPremium: true
     },
     {
-        id: 'multiple',
-        name: 'Multiple Choice',
-        icon: CheckSquare,
-        description: 'Classic poll. Select one or more options.',
-        bestFor: 'Perfect for: Simple decisions.',
-        example: 'e.g., "Who should be team captain?"',
-        selectedBorder: 'border-blue-500',
-        selectedBg: 'bg-blue-50',
-        iconColor: 'text-blue-600',
-        textColor: 'text-blue-700',
-        isPremium: false
-    },
-    {
         id: 'meeting',
         name: 'Meeting Poll',
         icon: Calendar,
-        description: 'Mark available dates and times.',
-        bestFor: 'Perfect for: Scheduling without endless emails.',
-        example: 'e.g., "When is everyone free?"',
+        description: 'Find the best time for everyone',
+        tooltip: 'Like Doodle but simpler! Add date/time options and everyone marks when they\'re available. No more endless email chains to schedule meetings.',
+        useCases: ['Meeting scheduling', 'Event planning', 'Group availability', 'Party planning'],
+        example: '"When can everyone meet next week?"',
+        gradient: 'from-amber-500 to-orange-500',
         selectedBorder: 'border-amber-500',
-        selectedBg: 'bg-amber-50',
+        selectedBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
         iconColor: 'text-amber-600',
         textColor: 'text-amber-800',
-        isPremium: false
-    },
-    {
-        id: 'dot',
-        name: 'Dot Voting',
-        icon: Coins,
-        description: 'Distribute points across options.',
-        bestFor: 'Perfect for: Prioritization.',
-        example: 'e.g., "How should we spend our budget?"',
-        selectedBorder: 'border-emerald-500',
-        selectedBg: 'bg-emerald-50',
-        iconColor: 'text-emerald-600',
-        textColor: 'text-emerald-700',
         isPremium: false
     },
     {
         id: 'pairwise',
         name: 'This or That',
         icon: GitCompare,
-        description: 'Compare two options at a time.',
-        bestFor: 'Perfect for: Large lists, quick decisions.',
-        example: 'e.g., "Which logo is better?"',
+        description: 'Quick A vs B comparisons',
+        tooltip: 'Shows two options at a time - voters pick their favorite. Great when you have many options and want quick, gut-reaction feedback.',
+        useCases: ['Large option lists', 'Quick decisions', 'Bracket-style voting', 'Preference testing'],
+        example: '"Which slogan resonates more?"',
+        gradient: 'from-orange-500 to-red-500',
         selectedBorder: 'border-orange-500',
-        selectedBg: 'bg-orange-50',
+        selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50',
         iconColor: 'text-orange-600',
         textColor: 'text-orange-700',
+        isPremium: false
+    },
+    {
+        id: 'dot',
+        name: 'Dot Voting',
+        icon: Coins,
+        description: 'Distribute points across options',
+        tooltip: 'Each voter gets a budget of "dots" (points) to spend however they want. Can put all dots on one option or spread them out. Shows intensity of preference!',
+        useCases: ['Budget allocation', 'Feature prioritization', 'Resource planning', 'Weighted voting'],
+        example: '"How should we allocate the Q4 budget?"',
+        gradient: 'from-emerald-500 to-teal-500',
+        selectedBorder: 'border-emerald-500',
+        selectedBg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
+        iconColor: 'text-emerald-600',
+        textColor: 'text-emerald-700',
         isPremium: false
     },
     {
         id: 'rating',
         name: 'Rating Scale',
         icon: SlidersHorizontal,
-        description: 'Rate each option 0-100.',
-        bestFor: 'Perfect for: Feedback, sentiment.',
-        example: 'e.g., "Rate these features."',
+        description: 'Rate each option on a scale',
+        tooltip: 'Voters rate every option from 0-100 using a slider. Perfect for feedback and sentiment - see exactly how people feel about each choice.',
+        useCases: ['Product feedback', 'Employee surveys', 'Customer satisfaction', 'Feature ratings'],
+        example: '"Rate these new feature ideas"',
+        gradient: 'from-cyan-500 to-blue-500',
         selectedBorder: 'border-cyan-500',
-        selectedBg: 'bg-cyan-50',
+        selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50',
         iconColor: 'text-cyan-600',
         textColor: 'text-cyan-700',
         isPremium: false
@@ -101,11 +116,13 @@ const POLL_TYPES = [
         id: 'budget',
         name: 'Buy a Feature',
         icon: DollarSign,
-        description: 'Spend budget on options with costs.',
-        bestFor: 'Perfect for: Feature prioritization.',
-        example: 'e.g., "Feature Roadmap 2026"',
+        description: 'Spend virtual money on options',
+        tooltip: 'Each option has a "price" and voters get a budget to spend. Forces trade-offs! Used by product teams to let customers decide what features to build.',
+        useCases: ['Product roadmaps', 'Feature prioritization', 'Customer research', 'Trade-off decisions'],
+        example: '"Which features should we build? (Budget: $100)"',
+        gradient: 'from-green-500 to-emerald-500',
         selectedBorder: 'border-green-500',
-        selectedBg: 'bg-green-50',
+        selectedBg: 'bg-gradient-to-br from-green-50 to-emerald-50',
         iconColor: 'text-green-600',
         textColor: 'text-green-700',
         isPremium: false
@@ -114,11 +131,13 @@ const POLL_TYPES = [
         id: 'matrix',
         name: 'Priority Matrix',
         icon: LayoutGrid,
-        description: 'Drag items onto Impact vs Effort grid.',
-        bestFor: 'Perfect for: Agile planning.',
-        example: 'e.g., "Sprint Planning"',
+        description: 'Plot options on Impact vs Effort',
+        tooltip: 'Drag items onto a 2x2 grid (like Impact vs Effort). Perfect for teams doing sprint planning or deciding what to tackle first. Visual and collaborative!',
+        useCases: ['Sprint planning', 'Project prioritization', 'Strategic planning', 'Agile teams'],
+        example: '"Where do these tasks fall on our priority matrix?"',
+        gradient: 'from-fuchsia-500 to-purple-500',
         selectedBorder: 'border-fuchsia-500',
-        selectedBg: 'bg-fuchsia-50',
+        selectedBg: 'bg-gradient-to-br from-fuchsia-50 to-purple-50',
         iconColor: 'text-fuchsia-600',
         textColor: 'text-fuchsia-800',
         isPremium: false
@@ -148,7 +167,6 @@ const VoteGeneratorCreate: React.FC = () => {
     const [pollType, setPollType] = useState<string>('ranked');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showPollTypeInfo, setShowPollTypeInfo] = useState(false);
     const [placeholderQuestion] = useState(() => 
         PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
     );
@@ -426,7 +444,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">Poll Type <span className="text-red-500">*</span></label>
-                                        <button type="button" onClick={() => setShowPollTypeInfo(!showPollTypeInfo)} className="text-slate-400 hover:text-indigo-600 transition-colors"><HelpCircle size={18} /></button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {POLL_TYPES.map((type) => {
@@ -435,53 +452,75 @@ const VoteGeneratorCreate: React.FC = () => {
                                             const isLocked = type.isPremium && !hasPremium;
                                             
                                             return (
-                                                <button 
-                                                    key={type.id} 
-                                                    type="button" 
-                                                    onClick={() => {
-                                                        if (isLocked) {
-                                                            // Show premium upsell
-                                                            alert('Visual Poll is a premium feature! Upgrade to unlock.');
-                                                            return;
-                                                        }
-                                                        setPollType(type.id);
-                                                        if (type.id === 'meeting') setOptions([]); 
-                                                        else if (options.length === 0) { 
-                                                            setOptions(['', '', '']); 
-                                                            setOptionCosts([10, 10, 10]); 
-                                                            setOptionImages(['', '', '']); 
-                                                        }
-                                                    }} 
-                                                    className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                                                        isSelected 
-                                                            ? `${type.selectedBorder} ${type.selectedBg}` 
-                                                            : isLocked 
-                                                                ? 'border-slate-200 bg-slate-50 opacity-75' 
-                                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    {/* Premium Badge */}
-                                                    {type.isPremium && (
-                                                        <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${hasPremium ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : 'bg-slate-300 text-slate-600'}`}>
-                                                            {hasPremium ? <Zap size={10} /> : <Lock size={10} />}
-                                                            <span>{hasPremium ? 'PRO' : 'PRO'}</span>
+                                                <div key={type.id} className="relative group">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => {
+                                                            if (isLocked) {
+                                                                alert('Visual Poll is a premium feature! Upgrade to unlock.');
+                                                                return;
+                                                            }
+                                                            setPollType(type.id);
+                                                            if (type.id === 'meeting') setOptions([]); 
+                                                            else if (options.length === 0) { 
+                                                                setOptions(['', '', '']); 
+                                                                setOptionCosts([10, 10, 10]); 
+                                                                setOptionImages(['', '', '']); 
+                                                            }
+                                                        }} 
+                                                        className={`relative w-full p-3 rounded-xl border-2 text-left transition-all ${
+                                                            isSelected 
+                                                                ? `${type.selectedBorder} ${type.selectedBg}` 
+                                                                : isLocked 
+                                                                    ? 'border-slate-200 bg-slate-50 opacity-75' 
+                                                                    : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        {/* Premium Badge */}
+                                                        {type.isPremium && (
+                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${hasPremium ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : 'bg-slate-300 text-slate-600'}`}>
+                                                                {hasPremium ? <Zap size={10} /> : <Lock size={10} />}
+                                                                <span>PRO</span>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${isSelected ? `bg-gradient-to-br ${type.gradient} text-white` : 'bg-slate-100'}`}>
+                                                            <Icon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
                                                         </div>
-                                                    )}
+                                                        <span className={`block font-bold text-sm leading-tight ${isSelected ? type.textColor : 'text-slate-700'}`}>{type.name}</span>
+                                                    </button>
                                                     
-                                                    <Icon size={18} className={isSelected ? type.iconColor : 'text-slate-400'} />
-                                                    <span className={`block font-bold mt-1.5 text-sm leading-tight ${isSelected ? type.textColor : 'text-slate-700'}`}>{type.name}</span>
-                                                </button>
+                                                    {/* Auto-show tooltip on hover */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-xl pointer-events-none">
+                                                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r ${type.gradient} text-white text-[10px] font-bold mb-2`}>
+                                                            <Icon size={12} />
+                                                            {type.name}
+                                                        </div>
+                                                        <p className="text-slate-200 mb-2">{type.tooltip}</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {type.useCases?.map((use, i) => (
+                                                                <span key={i} className="px-1.5 py-0.5 bg-slate-700 rounded text-[10px] text-slate-300">{use}</span>
+                                                            ))}
+                                                        </div>
+                                                        <p className="text-slate-400 italic mt-2 text-[10px]">{type.example}</p>
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-slate-800"></div>
+                                                    </div>
+                                                </div>
                                             );
                                         })}
                                     </div>
-                                    <AnimatePresence>
-                                        {showPollTypeInfo && selectedPollType && (
-                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className={`mt-3 p-3 rounded-xl border overflow-hidden ${selectedPollType.selectedBg} ${selectedPollType.selectedBorder}`}>
-                                                <p className={`text-sm font-medium ${selectedPollType.textColor}`}>{selectedPollType.bestFor}</p>
-                                                <p className={`text-xs mt-1 opacity-80 ${selectedPollType.textColor}`}>{selectedPollType.example}</p>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                    
+                                    {/* Selected poll type info (compact) */}
+                                    {selectedPollType && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: -10 }} 
+                                            animate={{ opacity: 1, y: 0 }} 
+                                            className={`mt-3 p-3 rounded-xl ${selectedPollType.selectedBg} border ${selectedPollType.selectedBorder}`}
+                                        >
+                                            <p className={`text-sm font-medium ${selectedPollType.textColor}`}>{selectedPollType.description}</p>
+                                            <p className={`text-xs mt-1 opacity-70 ${selectedPollType.textColor}`}>{selectedPollType.example}</p>
+                                        </motion.div>
+                                    )}
                                 </div>
 
                                 {/* Title */}
@@ -751,8 +790,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                                             <span className="text-xs font-bold text-slate-600 uppercase">Vote Security</span>
                                                             <div className="relative group/tip">
                                                                 <HelpCircle size={14} className="text-slate-300 cursor-help" />
-                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
-                                                                    ⚠️ No online poll is 100% fraud-proof. These options help reduce casual duplicate voting but determined users may find workarounds.
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
+                                                                    <strong className="text-amber-400">ℹ️ Good to know</strong><br/><br/>
+                                                                    These options help reduce duplicate voting for casual polls and surveys. Like any online tool, determined users may find ways around them.<br/><br/>
+                                                                    <span className="text-slate-400">For high-stakes decisions, consider verified methods like unique codes or in-person voting.</span>
                                                                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
                                                                 </div>
                                                             </div>
@@ -763,23 +804,26 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                     <button onClick={() => setSecurity(sec)} className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold capitalize transition-all ${security === sec ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-indigo-300'}`}>
                                                                         {sec === 'browser' ? 'Browser' : sec === 'code' ? 'Codes' : 'None'}
                                                                     </button>
-                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/sec:opacity-100 group-hover/sec:visible transition-all z-10">
+                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/sec:opacity-100 group-hover/sec:visible transition-all z-10 shadow-xl">
                                                                         {sec === 'browser' && (
                                                                             <>
-                                                                                <strong>Browser Fingerprint</strong><br/>
-                                                                                Uses cookies & browser ID to limit one vote per device. Can be bypassed with incognito/different browsers.
+                                                                                <strong className="text-blue-300">🌐 Browser Fingerprint</strong><br/><br/>
+                                                                                Limits one vote per device using cookies and browser ID. Good for most casual polls.<br/><br/>
+                                                                                <span className="text-slate-400 text-[10px]">Note: Can be bypassed with different browsers or incognito mode.</span>
                                                                             </>
                                                                         )}
                                                                         {sec === 'code' && (
                                                                             <>
-                                                                                <strong>Unique Codes</strong><br/>
-                                                                                Generate unique voting codes to distribute. Each code works once. Best for controlled groups.
+                                                                                <strong className="text-green-300">🔑 Unique Voting Codes</strong><br/><br/>
+                                                                                Generate one-time codes to distribute to your voters. Each code can only be used once. Best for controlled groups.<br/><br/>
+                                                                                <span className="text-slate-400 text-[10px]">Most secure option for known participant lists.</span>
                                                                             </>
                                                                         )}
                                                                         {sec === 'none' && (
                                                                             <>
-                                                                                <strong>No Protection</strong><br/>
-                                                                                Anyone can vote unlimited times. Only use for casual, low-stakes polls.
+                                                                                <strong className="text-amber-300">⚡ Open Voting</strong><br/><br/>
+                                                                                No restrictions - anyone can vote multiple times. Great for quick, informal feedback.<br/><br/>
+                                                                                <span className="text-slate-400 text-[10px]">Best for low-stakes polls, brainstorming, or fun surveys.</span>
                                                                             </>
                                                                         )}
                                                                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
@@ -793,10 +837,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                 <p className="text-xs text-slate-500 mt-1">We'll generate {voterCount} unique voting codes</p>
                                                             </div>
                                                         )}
-                                                        <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                                                            <AlertTriangle size={12} />
-                                                            Security helps but isn't foolproof
-                                                        </p>
                                                     </div>
                                                 </div>
                                             </motion.div>

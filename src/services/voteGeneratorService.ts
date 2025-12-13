@@ -42,8 +42,8 @@ const saveLocalVote = (pollId: string, vote: any) => {
 export const createPoll = async (data: {
     title: string;
     description?: string;
-    options: string[];
-    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix' | 'pairwise' | 'rating';
+    options: ({ text: string; cost?: number } | string)[]; // Updated signature
+    pollType: 'ranked' | 'multiple' | 'meeting' | 'dot' | 'image' | 'matrix' | 'pairwise' | 'rating' | 'budget';
     settings: { 
         hideResults: boolean; 
         allowMultiple: boolean;
@@ -55,6 +55,7 @@ export const createPoll = async (data: {
         maxVotes?: number;
         security: 'browser' | 'code' | 'none';
         dotBudget?: number;
+        budgetLimit?: number;
         timezone?: string;
     };
     voterCount?: number; 
@@ -90,7 +91,11 @@ export const createPoll = async (data: {
             adminKey,
             ...data,
             allowedCodes: allowedCodes.length > 0 ? allowedCodes : undefined,
-            options: data.options.map(text => ({ id: generateId(6), text })),
+            options: data.options.map(opt => {
+                const optId = generateId(6);
+                if (typeof opt === 'string') return { id: optId, text: opt };
+                return { id: optId, text: opt.text, cost: opt.cost };
+            }),
             createdAt: new Date().toISOString(),
             voteCount: 0,
             votes: []
@@ -224,7 +229,16 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
 
 export const getResults = async (pollId: string, adminKey?: string): Promise<RunoffResult> => {
     let votes: any[] = [];
-    
+    let poll: Poll | null = null;
+
+    try {
+        // Fetch poll to get options and costs for calculation
+        poll = await getPoll(pollId); // Assuming we can get public poll data
+    } catch (e) {
+        const polls = getLocalPolls();
+        poll = polls[pollId];
+    }
+
     try {
         const response = await fetch(`/.netlify/functions/get-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
         if(response.ok) {
@@ -340,8 +354,27 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
     });
 
+    // Budget Stats Calculation
+    const budgetStats: Record<string, { totalValue: number; totalQuantity: number }> = {};
+    let budgetWinnerId: string | null = null;
+    let maxBudgetValue = -1;
+
+    if (poll && poll.pollType === 'budget') {
+        Object.entries(simpleCounts).forEach(([id, qty]) => {
+            const option = poll!.options.find((o: any) => o.id === id);
+            if (option && option.cost !== undefined) {
+                const totalValue = qty * option.cost;
+                budgetStats[id] = { totalValue, totalQuantity: qty };
+                if (totalValue > maxBudgetValue) {
+                    maxBudgetValue = totalValue;
+                    budgetWinnerId = id;
+                }
+            }
+        });
+    }
+
     if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, pairwiseScores: {}, ratingStats: {}, votes: [] };
+        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, maybeCounts: {}, matrixAverages: {}, pairwiseScores: {}, ratingStats: {}, budgetStats: {}, votes: [] };
     }
 
     // Determine Pairwise Winner
@@ -438,6 +471,8 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         winnerId = pairwiseWinnerId;
     } else if (Object.keys(ratingStats).length > 0) {
         winnerId = ratingWinnerId;
+    } else if (Object.keys(budgetStats).length > 0) {
+        winnerId = budgetWinnerId;
     }
 
     return {
@@ -452,6 +487,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         matrixAverages,
         pairwiseScores,
         ratingStats,
+        budgetStats,
         votes: votes 
     };
 };

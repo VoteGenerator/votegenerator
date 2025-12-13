@@ -3,6 +3,7 @@ export interface PollOption {
     id: string;
     text: string;
     imageUrl?: string;
+    cost?: number;
 }
 
 export interface PollSettings {
@@ -16,6 +17,7 @@ export interface PollSettings {
     maxVotes?: number;
     security: 'browser' | 'code' | 'none';
     dotBudget?: number;
+    budgetLimit?: number;
     timezone?: string; // For meeting polls
 }
 
@@ -24,7 +26,7 @@ export interface Poll {
     adminKey?: string;
     title: string;
     description?: string;
-    pollType: 'ranked' | 'multiple' | 'image' | 'meeting' | 'dot' | 'matrix' | 'pairwise' | 'rating';
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting' | 'dot' | 'matrix' | 'pairwise' | 'rating' | 'budget';
     options: PollOption[];
     settings: PollSettings;
     allowedCodes?: string[];
@@ -35,7 +37,7 @@ export interface Poll {
 
 export interface Vote {
     pollId: string;
-    choices: string[]; // Yes votes
+    choices: string[]; // Yes votes or Budget Items (repeated for quantity)
     choicesMaybe?: string[]; // Maybe votes (for meetings)
     matrixVotes?: Record<string, { x: number, y: number }>; // Matrix coordinates (0-100)
     pairwiseVotes?: { winnerId: string; loserId: string }[]; // Array of pair outcomes
@@ -60,10 +62,11 @@ export interface RunoffResult {
     voters?: string[];
     usedCodes?: string[];
     comments?: { name: string; text: string; date: string }[]; 
-    simpleCounts?: Record<string, number>; // Yes counts
+    simpleCounts?: Record<string, number>; // Yes counts / Budget quantities
     maybeCounts?: Record<string, number>; // Maybe counts
     matrixAverages?: Record<string, { x: number, y: number }>; // Average coordinates
     pairwiseScores?: Record<string, { wins: number; matches: number; score: number }>; // Win stats
     ratingStats?: Record<string, { average: number; stdDev: number; count: number }>; // Rating stats
+    budgetStats?: Record<string, { totalValue: number; totalQuantity: number }>; // Budget stats
     votes: Vote[];
 }

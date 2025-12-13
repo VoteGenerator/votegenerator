@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -10,13 +10,14 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
     const isMatrix = poll.pollType === 'matrix';
     const isPairwise = poll.pollType === 'pairwise';
     const isRating = poll.pollType === 'rating';
+    const isBudget = poll.pollType === 'budget';
     
     // Determine default view based on poll type
     const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
@@ -27,6 +28,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     // FIX: Ensure Bar Chart displays correct data context
     const barChartData = (() => {
+        if (isBudget && budgetStats) {
+            const data: Record<string, number> = {};
+            Object.entries(budgetStats).forEach(([id, stat]) => data[id] = stat.totalValue);
+            return data;
+        }
         if (simpleCounts) return simpleCounts;
         if (isRanked && rounds.length > 0) return rounds[0].counts;
         const counts: Record<string, number> = {};
@@ -111,173 +117,71 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     // --- SANKEY DIAGRAM GENERATION ---
     const sankeyData = useMemo(() => {
-        // Return default structure if empty to prevent undefined properties
         if (rounds.length === 0) return { nodes: [], links: [], width: 0, height: 400 };
-
         const nodes: any[] = [];
         const links: any[] = [];
         const canvasHeight = 400;
         const roundWidth = 150;
         const gap = 10;
-
-        // Calculate total votes in the first round to normalize heights against it
         const firstRoundTotal = Object.values(rounds[0].counts).reduce((a, b) => a + b, 0);
 
-        // 1. Generate Nodes for each round
         rounds.forEach((round, roundIdx) => {
             let yOffset = 0;
-            
-            // Sort to keep consistent order or by count
             const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);
-
             sortedIds.forEach(id => {
                 const count = round.counts[id];
-                const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; // Normalize against FIRST round total to keep scale
-                
-                // Only push if height > 0 (or strictly existing)
+                const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; 
                 if (count >= 0) {
-                    nodes.push({
-                        id: `${roundIdx}-${id}`,
-                        optionId: id,
-                        round: roundIdx,
-                        value: count,
-                        x: roundIdx * roundWidth,
-                        y: yOffset,
-                        height: Math.max(height, 2), // min height visibility
-                        color: getHexColor(id)
-                    });
+                    nodes.push({ id: `${roundIdx}-${id}`, optionId: id, round: roundIdx, value: count, x: roundIdx * roundWidth, y: yOffset, height: Math.max(height, 2), color: getHexColor(id) });
                     yOffset += height + gap;
                 }
             });
         });
 
-        // 2. Generate Links between rounds
-        // We infer flow: 
-        // - Surviving candidates keep their votes (Self -> Self)
-        // - Eliminated candidate votes flow to Surviving candidates based on delta
         for (let i = 0; i < rounds.length - 1; i++) {
             const currentRound = rounds[i];
             const nextRound = rounds[i+1];
             const eliminatedId = currentRound.eliminatedId;
-
-            // Map current round counts
             const currentMap = currentRound.counts;
             const nextMap = nextRound.counts;
 
             Object.keys(nextMap).forEach(id => {
-                // Determine how much 'id' grew
                 const prevCount = currentMap[id] || 0;
                 const newCount = nextMap[id];
                 const delta = newCount - prevCount;
-
-                // 1. Flow from Self (Persistence)
                 if (prevCount > 0) {
-                    links.push({
-                        source: `${i}-${id}`,
-                        target: `${i+1}-${id}`,
-                        value: prevCount,
-                        color: getHexColor(id),
-                        opacity: 0.5
-                    });
+                    links.push({ source: `${i}-${id}`, target: `${i+1}-${id}`, value: prevCount, color: getHexColor(id), opacity: 0.5 });
                 }
-
-                // 2. Flow from Eliminated (Transfer)
-                // In RCV, if you gain votes, they MUST come from the eliminated candidate(s)
-                // (Simplification: assuming 1 eliminated per round)
                 if (delta > 0 && eliminatedId) {
-                    links.push({
-                        source: `${i}-${eliminatedId}`,
-                        target: `${i+1}-${id}`,
-                        value: delta,
-                        color: getHexColor(eliminatedId), // Color of the eliminated candidate flowing out
-                        opacity: 0.3
-                    });
+                    links.push({ source: `${i}-${eliminatedId}`, target: `${i+1}-${id}`, value: delta, color: getHexColor(eliminatedId), opacity: 0.3 });
                 }
             });
         }
-
         return { nodes, links, width: rounds.length * roundWidth, height: canvasHeight };
     }, [rounds]);
 
     const renderSankeySVG = () => {
         const { nodes, links, width, height } = sankeyData;
-        
         return (
             <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
-                {/* Links */}
                 {links.map((link, i) => {
                     const sourceNode = nodes.find(n => n.id === link.source);
                     const targetNode = nodes.find(n => n.id === link.target);
                     if (!sourceNode || !targetNode) return null;
-
                     const sy = sourceNode.y + sourceNode.height / 2;
                     const ty = targetNode.y + targetNode.height / 2;
-                    const sx = sourceNode.x + 20; // nodeWidth
+                    const sx = sourceNode.x + 20; 
                     const tx = targetNode.x;
-
-                    // Stroke width proportional to value relative to max votes
                     const strokeWidth = (link.value / totalVotes) * height;
-
                     const path = `M ${sx} ${sy} C ${sx + 50} ${sy}, ${tx - 50} ${ty}, ${tx} ${ty}`;
-
-                    return (
-                        <path 
-                            key={i} 
-                            d={path} 
-                            stroke={link.color} 
-                            strokeWidth={Math.max(strokeWidth, 1)} 
-                            fill="none" 
-                            opacity={link.opacity}
-                            className="transition-all hover:opacity-80"
-                        />
-                    );
+                    return <path key={i} d={path} stroke={link.color} strokeWidth={Math.max(strokeWidth, 1)} fill="none" opacity={link.opacity} className="transition-all hover:opacity-80" />;
                 })}
-
-                {/* Nodes */}
                 {nodes.map(node => (
                     <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
-                        <rect 
-                            width={20} 
-                            height={node.height} 
-                            fill={node.color} 
-                            rx={4}
-                            className="shadow-sm"
-                        />
-                        {/* Labels */}
-                        <text 
-                            x={10} 
-                            y={-5} 
-                            textAnchor="middle" 
-                            fontSize="10" 
-                            className="fill-slate-500 font-bold"
-                        >
-                            {node.value}
-                        </text>
-                        {node.round === 0 && (
-                            <text 
-                                x={0} 
-                                y={node.height / 2} 
-                                dx={-5}
-                                dy={4}
-                                textAnchor="end" 
-                                fontSize="11" 
-                                className="fill-slate-700 font-bold"
-                            >
-                                {getOptionText(node.optionId)}
-                            </text>
-                        )}
-                        {node.round === rounds.length - 1 && (
-                             <text 
-                                x={25} 
-                                y={node.height / 2} 
-                                dy={4}
-                                textAnchor="start" 
-                                fontSize="11" 
-                                className="fill-slate-700 font-bold"
-                            >
-                                {getOptionText(node.optionId)}
-                            </text>
-                        )}
+                        <rect width={20} height={node.height} fill={node.color} rx={4} className="shadow-sm" />
+                        <text x={10} y={-5} textAnchor="middle" fontSize="10" className="fill-slate-500 font-bold">{node.value}</text>
+                        {node.round === 0 && <text x={0} y={node.height / 2} dx={-5} dy={4} textAnchor="end" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
+                        {node.round === rounds.length - 1 && <text x={25} y={node.height / 2} dy={4} textAnchor="start" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
                     </g>
                 ))}
             </svg>
@@ -381,7 +285,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </div>
                         <div className="relative z-10">
                             <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2 print:text-slate-500">
-                                {isMeeting ? "Best Time Slot" : "The Winner Is"}
+                                {isMeeting ? "Best Time Slot" : isBudget ? "Top Funded Feature" : "The Winner Is"}
                             </div>
                             <h2 className="text-3xl md:text-5xl font-black font-serif mb-4">
                                 {getOptionText(activeWinnerId)}
@@ -403,6 +307,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                             {isRating && ratingStats && ratingStats[activeWinnerId] && (
                                 <div className="mt-2 text-indigo-200 text-sm">
                                     Average Rating: {ratingStats[activeWinnerId].average.toFixed(1)} / 100
+                                </div>
+                            )}
+                            {isBudget && budgetStats && budgetStats[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Total Value: ${budgetStats[activeWinnerId].totalValue.toLocaleString()} ({budgetStats[activeWinnerId].totalQuantity} purchased)
                                 </div>
                             )}
                         </div>
@@ -447,15 +356,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                 </span>
                                             </div>
                                             <div className="relative h-8 bg-slate-100 rounded-lg mt-2 overflow-visible print:border print:border-slate-200">
-                                                {/* Average Bar */}
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${stats.average}%` }}
                                                     transition={{ duration: 1, ease: "easeOut" }}
                                                     className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
                                                 />
-                                                
-                                                {/* Std Dev Error Bar - Visualized as a range marker */}
                                                 {stats.count > 1 && (
                                                     <div 
                                                         className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
@@ -464,10 +370,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                             width: `${Math.min(100 - (stats.average - stats.stdDev), stats.stdDev * 2)}%`
                                                         }}
                                                     >
-                                                        {/* End ticks */}
                                                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
                                                         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
-                                                        {/* Center marker */}
                                                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
                                                     </div>
                                                 )}
@@ -543,42 +447,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </h3>
                         
                         <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
-                             {/* Quadrant Backgrounds */}
                             <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                                 <div className="bg-emerald-50/50 flex items-start justify-start p-2"><span className="text-[10px] font-bold text-emerald-800 opacity-40 uppercase">Quick Wins</span></div>
                                 <div className="bg-blue-50/50 flex items-start justify-end p-2"><span className="text-[10px] font-bold text-blue-800 opacity-40 uppercase">Major Projects</span></div>
                                 <div className="bg-slate-50/50 flex items-end justify-start p-2"><span className="text-[10px] font-bold text-slate-500 opacity-40 uppercase">Fill Ins</span></div>
                                 <div className="bg-red-50/50 flex items-end justify-end p-2"><span className="text-[10px] font-bold text-red-800 opacity-40 uppercase">Thankless Tasks</span></div>
                             </div>
-
-                             {/* Grid Lines */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-full h-px bg-slate-300"></div>
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="h-full w-px bg-slate-300"></div>
-                            </div>
-                            
-                            {/* Axis Labels */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-px bg-slate-300"></div></div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="h-full w-px bg-slate-300"></div></div>
                             <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">High Impact</div>
                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">Low Impact</div>
                             <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">Low Effort</div>
                             <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">High Effort</div>
-
-                            {/* Placed Items */}
                              {Object.entries(matrixAverages).map(([id, coords]) => {
-                                 // Convert cartesian coords (0,0 bottom left) to CSS coords (top left)
-                                 // CSS Top = 100 - Y
                                  const top = 100 - coords.y;
                                  return (
-                                     <div 
-                                        key={id}
-                                        className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20"
-                                        style={{ left: `${coords.x}%`, top: `${top}%` }}
-                                     >
+                                     <div key={id} className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20" style={{ left: `${coords.x}%`, top: `${top}%` }}>
                                          <span className="text-[10px] text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
-                                         
-                                         {/* Tooltip */}
                                          <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
                                              {getOptionText(id)}
                                          </div>
@@ -597,7 +482,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                      </motion.div>
                 )}
 
-                {/* --- BAR VIEW (Standard for Dot/Multiple) --- */}
+                {/* --- BAR VIEW (Standard for Dot/Multiple/Budget) --- */}
                 {viewMode === 'bar' && (
                      <motion.div 
                         key="bar"
@@ -608,15 +493,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                     >
                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                             <BarChart size={24} className="text-indigo-500"/> 
-                            {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : 'Vote Breakdown'}
+                            {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : isBudget ? 'Value Allocated' : 'Vote Breakdown'}
                         </h3>
                         
                         <div className="space-y-4">
                             {Object.entries(barChartData)
                                 .sort(([, a], [, b]) => b - a)
-                                .map(([id, count]) => {
-                                    const denominator = isDot ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
-                                    const percentage = denominator > 0 ? (count / denominator) * 100 : 0;
+                                .map(([id, value]) => {
+                                    const denominator = isDot || isBudget ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
+                                    const percentage = denominator > 0 ? (value / denominator) * 100 : 0;
                                     
                                     return (
                                         <div key={id} className="relative break-inside-avoid">
@@ -625,7 +510,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                     {getOptionText(id)}
                                                 </span>
                                                 <span className="text-slate-600 font-bold">
-                                                    {count} {isDot ? 'pts' : ''} <span className="text-slate-400 font-normal text-xs ml-1">({percentage.toFixed(0)}%)</span>
+                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className="text-slate-400 font-normal text-xs ml-1">({percentage.toFixed(0)}%)</span>
                                                 </span>
                                             </div>
                                             <div className="h-6 bg-slate-100 rounded-lg overflow-hidden print:border print:border-slate-200">
@@ -719,14 +604,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                              />
                              <div className="absolute inset-0 flex items-center justify-center">
                                  <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
-                                     {isDot ? <Coins size={24} /> : totalVotes}
+                                     {isDot || isBudget ? <Coins size={24} /> : totalVotes}
                                  </div>
                              </div>
                          </div>
                          
                          <div className="flex-1 w-full max-w-sm">
                              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
-                                 {isRanked ? 'First Preference Distribution' : isDot ? 'Points Share' : 'Vote Distribution'}
+                                 {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
                              </h3>
                              <div className="space-y-3">
                                  {pieData.map(d => (
@@ -736,7 +621,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                              <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
                                          </div>
                                          <div className="text-sm font-bold text-slate-500">
-                                             {d.percentage.toFixed(1)}% <span className="font-normal text-xs text-slate-400">({d.count})</span>
+                                             {d.percentage.toFixed(1)}%
                                          </div>
                                      </div>
                                  ))}
@@ -802,7 +687,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </div>
                         
                         <div className="relative w-full aspect-[2/1] bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center">
-                            {/* Simple Abstract World Map SVG */}
                             <svg viewBox="0 0 100 50" className="w-full h-full opacity-30">
                                 <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
                                 <circle cx="25" cy="18" r="1" className="fill-indigo-600 animate-ping" />
@@ -868,16 +752,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                 if (isMatrix && vote.matrixVotes) {
                                                     const pos = vote.matrixVotes[opt.id];
                                                     if (pos) {
-                                                        cellContent = (
-                                                            <div className="flex flex-col items-center">
-                                                                <span className="text-xs font-bold text-slate-600">
-                                                                    X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}
-                                                                </span>
-                                                            </div>
-                                                        );
+                                                        cellContent = <div className="flex flex-col items-center"><span className="text-xs font-bold text-slate-600">X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}</span></div>;
                                                     }
                                                 } else if (isPairwise && vote.pairwiseVotes) {
-                                                     // Calculate how many times this option won in this voter's session
                                                      const voterWins = vote.pairwiseVotes.filter(p => p.winnerId === opt.id).length;
                                                      const voterMatches = vote.pairwiseVotes.filter(p => p.winnerId === opt.id || p.loserId === opt.id).length;
                                                      if (voterMatches > 0) {
@@ -893,7 +770,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                     if (rank !== -1) {
                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;
                                                     }
-                                                } else if (isDot) {
+                                                } else if (isDot || isBudget) {
                                                      const dots = vote.choices.filter(c => c === opt.id).length;
                                                      if(dots > 0) {
                                                          cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{dots}</span>;

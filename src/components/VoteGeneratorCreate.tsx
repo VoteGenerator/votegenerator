@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -11,11 +11,22 @@ const POLL_TYPES = [
         description: 'Voters rank options in order of preference. Finds the consensus winner.',
         bestFor: 'Perfect for: Group decisions (lunch, movies) to avoid split votes.',
         example: 'e.g., "Where should we have lunch?"',
-        // Theme Colors
         selectedBorder: 'border-indigo-500',
         selectedBg: 'bg-indigo-50',
         iconColor: 'text-indigo-600',
         textColor: 'text-indigo-700'
+    },
+    {
+        id: 'budget',
+        name: 'Buy a Feature',
+        icon: DollarSign,
+        description: 'Voters have a budget to "buy" options with different costs.',
+        bestFor: 'Perfect for: Prioritizing features or allocation of funds.',
+        example: 'e.g., "Feature Roadmap 2026"',
+        selectedBorder: 'border-green-500',
+        selectedBg: 'bg-green-50',
+        iconColor: 'text-green-600',
+        textColor: 'text-green-700'
     },
     {
         id: 'rating',
@@ -103,6 +114,9 @@ const VoteGeneratorCreate: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
+    // Parallel state for item costs in Budget polls. Index matches options.
+    const [optionCosts, setOptionCosts] = useState<number[]>([10, 10, 10]);
+    
     const [pollType, setPollType] = useState<string>('ranked');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -127,16 +141,15 @@ const VoteGeneratorCreate: React.FC = () => {
     const [voterCount, setVoterCount] = useState<number>(10);
     const [deadline, setDeadline] = useState<string>('');
     const [maxVotes, setMaxVotes] = useState<number | ''>('');
-    const [dotBudget, setDotBudget] = useState<number>(10); // Default budget
+    const [dotBudget, setDotBudget] = useState<number>(10);
+    const [budgetLimit, setBudgetLimit] = useState<number>(100); // Budgeting poll total budget
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
     const lastInputRef = useRef<HTMLInputElement>(null);
 
-    // Get Timezone
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // Real-time duplicate detection
     const getDuplicateIndices = () => {
         const normalized = options.map(o => o.trim().toLowerCase());
         const duplicates = new Set<number>();
@@ -166,7 +179,18 @@ const VoteGeneratorCreate: React.FC = () => {
 
         if (index === options.length - 1 && value.trim() !== '' && options.length < 20 && pollType !== 'meeting') {
             setOptions([...newOptions, '']);
+            // Also extend costs array
+            const newCosts = [...optionCosts];
+            newCosts.push(10); // default cost
+            setOptionCosts(newCosts);
         }
+    };
+
+    const handleCostChange = (index: number, value: string) => {
+        const newCosts = [...optionCosts];
+        const num = parseInt(value);
+        newCosts[index] = isNaN(num) ? 0 : Math.max(0, num);
+        setOptionCosts(newCosts);
     };
 
     const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -178,7 +202,9 @@ const VoteGeneratorCreate: React.FC = () => {
             if (nextInput) {
                 nextInput.focus();
             } else if (options.length < 20 && pollType !== 'meeting') {
-                setOptions([...options, '']);
+                const newOptions = [...options, ''];
+                setOptions(newOptions);
+                setOptionCosts([...optionCosts, 10]);
                 setTimeout(() => lastInputRef.current?.focus(), 50);
             }
         }
@@ -200,15 +226,16 @@ const VoteGeneratorCreate: React.FC = () => {
         }
         if (options.length <= 2) return;
         setOptions(options.filter((_, i) => i !== index));
+        setOptionCosts(optionCosts.filter((_, i) => i !== index));
     };
 
     const addOption = () => {
         if (options.length >= 20) return;
         setOptions([...options, '']);
+        setOptionCosts([...optionCosts, 10]);
         setTimeout(() => lastInputRef.current?.focus(), 50);
     };
 
-    // Meeting specific handler
     const addMeetingSlot = () => {
         if (!meetingDate || !meetingTime) return;
         
@@ -218,13 +245,11 @@ const VoteGeneratorCreate: React.FC = () => {
              
              const d = new Date(year, month - 1, day, hours, minutes);
              
-             // Format: "Mon, Oct 23 • 10:00 AM EDT"
              const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
              const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
              
              const newOption = `${dateStr} • ${timeStr}`;
              
-             // Add to options, filter out blanks if any
              const currentOptions = options.filter(o => o.trim() !== '');
              setOptions([...currentOptions, newOption]);
              
@@ -236,7 +261,19 @@ const VoteGeneratorCreate: React.FC = () => {
 
     const handleCreate = async () => {
         setError(null);
-        const validOptions = options.filter(o => o.trim() !== '');
+        
+        // Filter options and matching costs
+        const validOptions: { text: string; cost?: number }[] = [];
+        
+        options.forEach((text, i) => {
+            if (text.trim() !== '') {
+                const opt: { text: string; cost?: number } = { text: text.trim() };
+                if (pollType === 'budget') {
+                    opt.cost = optionCosts[i];
+                }
+                validOptions.push(opt);
+            }
+        });
         
         if (!title.trim()) {
             setError('Please add a title or question for your poll.');
@@ -259,18 +296,19 @@ const VoteGeneratorCreate: React.FC = () => {
             const result = await createPoll({ 
                 title: title.trim(), 
                 description: description.trim() || undefined, 
-                options: validOptions,
+                options: validOptions, // Now passing objects
                 pollType: pollType as any,
                 voterCount: security === 'code' ? voterCount : undefined,
                 settings: { 
                     hideResults, 
-                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, // Meeting implies multiple
+                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
                     requireNames,
                     allowComments,
                     publicComments,
                     blockVpn,
                     security,
                     dotBudget: pollType === 'dot' ? dotBudget : undefined,
+                    budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined,
                     maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
                     timezone: pollType === 'meeting' ? timezone : undefined
@@ -348,9 +386,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                         onClick={() => {
                                              setPollType(type.id);
                                              if (type.id === 'meeting') {
-                                                 setOptions([]); // Clear standard options
+                                                 setOptions([]); 
                                              } else if (options.length === 0) {
                                                  setOptions(['', '', '']);
+                                                 setOptionCosts([10, 10, 10]);
                                              }
                                         }}
                                         className={`relative p-4 rounded-xl border-2 text-left transition-all ${
@@ -420,7 +459,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'pairwise' ? 'Items to Compare' : pollType === 'rating' ? 'Items to Rate' : 'Options'} <span className="text-red-500 ml-1">*</span>
+                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'budget' ? 'Features to Buy' : 'Options'} <span className="text-red-500 ml-1">*</span>
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
                                 {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}
@@ -468,7 +507,6 @@ const VoteGeneratorCreate: React.FC = () => {
                             <AnimatePresence mode="popLayout">
                                 {options.map((opt, i) => {
                                     const isDuplicate = duplicateIndices.has(i);
-                                    // Filter out blanks for Meeting type if they somehow got in, but allow for others
                                     if(pollType === 'meeting' && opt.trim() === '') return null;
 
                                     return (
@@ -483,7 +521,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                             <span className="text-slate-300 font-bold w-6 text-right text-sm">
                                                 {i + 1}.
                                             </span>
-                                            <div className="relative flex-1">
+                                            <div className="relative flex-1 flex gap-2">
                                                 <input 
                                                     ref={i === options.length - 1 ? lastInputRef : undefined}
                                                     type="text"
@@ -499,6 +537,22 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     onKeyDown={(e) => handleKeyDown(i, e)}
                                                     maxLength={200}
                                                 />
+                                                
+                                                {/* COST INPUT for Budget Poll */}
+                                                {pollType === 'budget' && (
+                                                    <div className="relative w-24 shrink-0">
+                                                        <span className="absolute left-3 top-3.5 text-slate-400 text-sm font-bold">$</span>
+                                                        <input 
+                                                            type="number"
+                                                            min="0"
+                                                            placeholder="Cost"
+                                                            value={optionCosts[i] || ''}
+                                                            onChange={(e) => handleCostChange(i, e.target.value)}
+                                                            className="w-full p-3 pl-6 border-2 border-slate-200 rounded-xl outline-none focus:border-green-500 font-bold text-slate-700 text-right"
+                                                        />
+                                                    </div>
+                                                )}
+
                                                 {isDuplicate && (
                                                     <div className="absolute right-3 top-3.5 text-red-500 animate-pulse">
                                                         <AlertTriangle size={18} />
@@ -542,7 +596,6 @@ const VoteGeneratorCreate: React.FC = () => {
 
                     {/* Settings Section */}
                     <div className="pt-6 border-t border-slate-100">
-                         {/* ... Keep rest of settings logic ... */}
                          <h3 className="text-lg font-bold text-slate-800 mb-4">Settings</h3>
                          
                          <div className="space-y-4">
@@ -568,7 +621,27 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                              )}
 
-                             {/* Allow Multiple (Hidden for Dot/Meeting as it's inherent) */}
+                             {/* Budget Poll Limit */}
+                             {pollType === 'budget' && (
+                                <div className="p-4 bg-green-50 border border-green-100 rounded-xl mb-4">
+                                     <label className="block text-sm font-bold text-green-900 mb-2">
+                                        Budget Per Voter
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <DollarSign size={20} className="text-green-600" />
+                                        <input 
+                                            type="number" 
+                                            min={1} 
+                                            value={budgetLimit}
+                                            onChange={(e) => setBudgetLimit(Math.max(1, parseInt(e.target.value) || 0))}
+                                            className="w-24 p-2 text-center font-bold text-green-900 border border-green-200 rounded-lg outline-none focus:border-green-500"
+                                        />
+                                        <span className="text-sm text-green-700">currency units available to spend</span>
+                                    </div>
+                                </div>
+                             )}
+
+                             {/* Allow Multiple */}
                             {pollType === 'multiple' && (
                                 <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl hover:bg-slate-50 transition-colors -mx-3">
                                     <div className="flex-1">
@@ -606,7 +679,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                     </div>
                                 </label>
                                 
-                                {/* Sub-setting for Comment Visibility */}
                                 <AnimatePresence>
                                     {allowComments && (
                                         <motion.div
@@ -663,7 +735,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                             className="overflow-hidden"
                                         >
                                             <div className="pt-4 space-y-6">
-                                                {/* Security Settings */}
+                                                {/* Security Settings ... (kept same) */}
                                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
@@ -699,7 +771,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         ))}
                                                     </div>
 
-                                                    {/* Security Disclaimer */}
                                                     {security !== 'code' && (
                                                         <div className="flex items-start gap-2 text-[10px] text-slate-400 bg-white p-2 rounded border border-slate-100">
                                                             <Lock size={12} className="mt-0.5 shrink-0" />
@@ -709,7 +780,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* If Codes Selected */}
                                                     {security === 'code' && (
                                                         <div className="mt-3">
                                                             <label className="text-xs font-bold text-slate-700 block mb-1">
@@ -730,7 +800,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                     )}
                                                 </div>
                                                 
-                                                {/* Block VPN Settings */}
                                                 <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors">
                                                     <div className="flex-1 flex items-center gap-2">
                                                         <Globe size={18} className="text-slate-400" />
@@ -746,7 +815,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                 </label>
 
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    {/* Deadline */}
                                                     <div>
                                                         <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
                                                             <Clock size={12} /> Close poll on date
@@ -765,7 +833,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         <p className="text-[10px] text-slate-400 mt-1">Timezone: {userTimeZone}</p>
                                                     </div>
                                                     
-                                                    {/* Max Votes */}
                                                     <div>
                                                         <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
                                                             <Hash size={12} /> Vote Limit
@@ -789,7 +856,6 @@ const VoteGeneratorCreate: React.FC = () => {
                          </div>
                     </div>
 
-                    {/* Error */}
                     <AnimatePresence>
                         {error && (
                             <motion.div
@@ -804,7 +870,6 @@ const VoteGeneratorCreate: React.FC = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Submit */}
                     <button 
                         onClick={handleCreate}
                         disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates}

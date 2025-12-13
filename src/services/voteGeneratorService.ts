@@ -266,7 +266,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
         // Matrix
         if (v.matrixVotes) {
-             Object.entries(v.matrixVotes).forEach(([id, pos]: [string, any]) => {
+             Object.entries(v.matrixVotes).forEach(([id, _pos]: [string, any]) => {
                 if (!matrixAverages[id]) matrixAverages[id] = { x: 0, y: 0 };
                 // Using simple counts to average? No, need total count.
                 // Simplified: we won't implement full matrix math in fallback unless requested.

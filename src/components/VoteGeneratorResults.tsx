@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check } from 'lucide-react';
+import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -16,68 +16,56 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const isDot = poll.pollType === 'dot';
     
     // Determine default view based on poll type
-    const [viewMode, setViewMode] = useState<'bar' | 'rounds' | 'pie' | 'grid' | 'heatmap' | 'velocity'>(
-        isRanked ? 'rounds' : isMeeting ? 'heatmap' : 'bar'
+    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map'>(
+        isRanked ? 'flow' : isMeeting ? 'heatmap' : 'bar'
     );
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
     // FIX: Ensure Bar Chart displays correct data context
     const barChartData = (() => {
-        // Meeting: Counts are just frequencies
         if (simpleCounts) return simpleCounts;
-        
-        // Ranked: First preference or first round
         if (isRanked && rounds.length > 0) return rounds[0].counts;
-        
-        // Fallback for new polls
         const counts: Record<string, number> = {};
         poll.options.forEach(o => counts[o.id] = 0);
         return counts;
     })();
 
-    // Meeting Score Data (Weighted: Yes=1, Maybe=0.5)
+    // Meeting Score Data
     const meetingScoreData = (() => {
         const scores: Record<string, number> = {};
         poll.options.forEach(o => scores[o.id] = 0);
-        
-        if (simpleCounts) {
-            Object.entries(simpleCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + c);
-        }
-        if (maybeCounts) {
-            Object.entries(maybeCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + (c * 0.5));
-        }
+        if (simpleCounts) Object.entries(simpleCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + c);
+        if (maybeCounts) Object.entries(maybeCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + (c * 0.5));
         return scores;
     })();
 
-    // Override Winner for Meeting (Highest Score)
     const meetingWinnerId = isMeeting ? Object.keys(meetingScoreData).reduce((a, b) => meetingScoreData[a] > meetingScoreData[b] ? a : b, poll.options[0].id) : winnerId;
     const activeWinnerId = isMeeting ? meetingWinnerId : winnerId;
 
     const CHART_COLORS = [
-        '#6366f1', '#a855f7', '#ec4899', '#06b6d4', '#84cc16', 
-        '#f97316', '#ef4444', '#14b8a6', '#3b82f6', '#eab308'
+        '#6366f1', '#ec4899', '#06b6d4', '#84cc16', 
+        '#f97316', '#ef4444', '#14b8a6', '#3b82f6', '#eab308', '#a855f7'
     ];
-
-    const getBarColorClass = (id: string) => {
-        const index = poll.options.findIndex(o => o.id === id);
-        const colors = [
-            'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 
-            'bg-lime-500', 'bg-orange-500', 'bg-red-500', 'bg-teal-500', 'bg-blue-500', 'bg-yellow-500'
-        ];
-        return colors[index % colors.length];
-    };
 
     const getHexColor = (id: string) => {
         const index = poll.options.findIndex(o => o.id === id);
         return CHART_COLORS[index % CHART_COLORS.length];
     };
 
+    const getBarColorClass = (id: string) => {
+        const index = poll.options.findIndex(o => o.id === id);
+        const colors = [
+            'bg-indigo-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 
+            'bg-orange-500', 'bg-red-500', 'bg-teal-500', 'bg-blue-500', 'bg-yellow-500', 'bg-purple-500'
+        ];
+        return colors[index % colors.length];
+    };
+
     const shouldShowComments = comments && comments.length > 0 && (poll.isAdmin || (poll.settings.allowComments && poll.settings.publicComments));
 
     // --- Visualization Helpers ---
 
-    // Pie Chart Data
     const pieData = (() => {
         const counts = barChartData; 
         const total = Object.values(counts).reduce((a,b) => a+b, 0);
@@ -93,22 +81,17 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     })();
     const pieGradient = pieData.map(d => `${d.color} ${d.startAngle}deg ${d.startAngle + d.angle}deg`).join(', ');
 
-    // Heatmap Data (Meeting) - Use Scores
     const maxHeat = Math.max(...Object.values(meetingScoreData), 1);
 
-    // Velocity Data (Time series)
     const velocityData = (() => {
         if (!votes || votes.length === 0) return [];
-        
-        // Group votes by time (bucketed)
         const sortedVotes = [...votes].sort((a,b) => new Date(a.votedAt).getTime() - new Date(b.votedAt).getTime());
         if(sortedVotes.length === 0) return [];
-        
         const startTime = new Date(sortedVotes[0].votedAt).getTime();
-        const endTime = new Date().getTime(); // or last vote
+        const endTime = new Date().getTime();
         const buckets = 10;
         const duration = endTime - startTime;
-        const bucketSize = Math.max(duration / buckets, 60000); // Minimum 1 minute bucket
+        const bucketSize = Math.max(duration / buckets, 60000); 
         
         const data = Array(buckets).fill(0).map((_, i) => ({ 
             time: new Date(startTime + (i * bucketSize)), 
@@ -120,48 +103,188 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
             const bucketIndex = Math.min(Math.floor((time - startTime) / bucketSize), buckets - 1);
             if(bucketIndex >= 0) data[bucketIndex].count++;
         });
-        
         return data;
     })();
 
-    // Sankey-lite for RCV
-    const renderSankeyFlow = () => {
-        if (rounds.length < 2) return null;
+    // --- SANKEY DIAGRAM GENERATION ---
+    const sankeyData = useMemo(() => {
+        if (rounds.length === 0) return { nodes: [], links: [] };
+
+        const nodes: any[] = [];
+        const links: any[] = [];
+        const canvasHeight = 400;
+        const roundWidth = 150;
+        const nodeWidth = 20;
+        const gap = 10;
+
+        // Calculate total votes in the first round to normalize heights against it
+        const firstRoundTotal = Object.values(rounds[0].counts).reduce((a, b) => a + b, 0);
+
+        // 1. Generate Nodes for each round
+        rounds.forEach((round, roundIdx) => {
+            let yOffset = 0;
+            const roundTotal = Object.values(round.counts).reduce((a, b) => a + b, 0);
+            
+            // Sort to keep consistent order or by count
+            const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);
+
+            sortedIds.forEach(id => {
+                const count = round.counts[id];
+                const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; // Normalize against FIRST round total to keep scale
+                
+                // Only push if height > 0 (or strictly existing)
+                if (count >= 0) {
+                    nodes.push({
+                        id: `${roundIdx}-${id}`,
+                        optionId: id,
+                        round: roundIdx,
+                        value: count,
+                        x: roundIdx * roundWidth,
+                        y: yOffset,
+                        height: Math.max(height, 2), // min height visibility
+                        color: getHexColor(id)
+                    });
+                    yOffset += height + gap;
+                }
+            });
+        });
+
+        // 2. Generate Links between rounds
+        // We infer flow: 
+        // - Surviving candidates keep their votes (Self -> Self)
+        // - Eliminated candidate votes flow to Surviving candidates based on delta
+        for (let i = 0; i < rounds.length - 1; i++) {
+            const currentRound = rounds[i];
+            const nextRound = rounds[i+1];
+            const eliminatedId = currentRound.eliminatedId;
+
+            // Map current round counts
+            const currentMap = currentRound.counts;
+            const nextMap = nextRound.counts;
+
+            Object.keys(nextMap).forEach(id => {
+                // Determine how much 'id' grew
+                const prevCount = currentMap[id] || 0;
+                const newCount = nextMap[id];
+                const delta = newCount - prevCount;
+
+                // 1. Flow from Self (Persistence)
+                if (prevCount > 0) {
+                    links.push({
+                        source: `${i}-${id}`,
+                        target: `${i+1}-${id}`,
+                        value: prevCount,
+                        color: getHexColor(id),
+                        opacity: 0.5
+                    });
+                }
+
+                // 2. Flow from Eliminated (Transfer)
+                // In RCV, if you gain votes, they MUST come from the eliminated candidate(s)
+                // (Simplification: assuming 1 eliminated per round)
+                if (delta > 0 && eliminatedId) {
+                    links.push({
+                        source: `${i}-${eliminatedId}`,
+                        target: `${i+1}-${id}`,
+                        value: delta,
+                        color: getHexColor(eliminatedId), // Color of the eliminated candidate flowing out
+                        opacity: 0.3
+                    });
+                }
+            });
+        }
+
+        return { nodes, links, width: rounds.length * roundWidth, height: canvasHeight };
+    }, [rounds]);
+
+    const renderSankeySVG = () => {
+        const { nodes, links, width, height } = sankeyData;
+        
         return (
-            <div className="relative h-[300px] w-full flex justify-between items-stretch py-4">
-                {rounds.map((round, rIdx) => {
-                    const roundTotal = Object.values(round.counts).reduce((a,b) => a+b, 0);
-                    const sorted = Object.entries(round.counts).sort((a,b) => b[1] - a[1]);
+            <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
+                {/* Links */}
+                {links.map((link, i) => {
+                    const sourceNode = nodes.find(n => n.id === link.source);
+                    const targetNode = nodes.find(n => n.id === link.target);
+                    if (!sourceNode || !targetNode) return null;
+
+                    // Calculate offsets for stacking flows. 
+                    // This is a simplified "center-ish" anchor. For perfect Sankey, tracking stack input/output Y is needed.
+                    // Simplified: Draw from center-right of source to center-left of target
+                    // Better: We need to know "offset inside node".
+                    // For this demo, standard bezier is decent.
                     
+                    const sy = sourceNode.y + sourceNode.height / 2;
+                    const ty = targetNode.y + targetNode.height / 2;
+                    const sx = sourceNode.x + 20; // nodeWidth
+                    const tx = targetNode.x;
+
+                    // Stroke width proportional to value relative to max votes
+                    const strokeWidth = (link.value / totalVotes) * height;
+
+                    const path = `M ${sx} ${sy} C ${sx + 50} ${sy}, ${tx - 50} ${ty}, ${tx} ${ty}`;
+
                     return (
-                        <div key={rIdx} className="flex flex-col justify-center h-full w-12 z-10 relative">
-                            <div className="text-center text-xs font-bold text-slate-400 mb-2">R{round.roundNumber}</div>
-                            <div className="flex flex-col gap-1 h-full justify-center">
-                                {sorted.map(([id, count]) => {
-                                    const heightPct = (count / roundTotal) * 100;
-                                    const isEliminated = id === round.eliminatedId;
-                                    return (
-                                        <div 
-                                            key={id} 
-                                            style={{ height: `${heightPct}%` }}
-                                            className={`w-full rounded-sm relative group transition-all ${isEliminated ? 'opacity-30' : 'opacity-90'}`}
-                                        >
-                                            <div className={`w-full h-full rounded ${getBarColorClass(id)}`} />
-                                            {/* Tooltip */}
-                                            <div className="absolute left-1/2 -translate-x-1/2 -top-8 bg-slate-800 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none">
-                                                {getOptionText(id)}: {count}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
+                        <path 
+                            key={i} 
+                            d={path} 
+                            stroke={link.color} 
+                            strokeWidth={Math.max(strokeWidth, 1)} 
+                            fill="none" 
+                            opacity={link.opacity}
+                            className="transition-all hover:opacity-80"
+                        />
                     );
                 })}
-                <div className="absolute inset-0 flex items-center justify-center -z-0 opacity-10">
-                    <GitMerge size={200} />
-                </div>
-            </div>
+
+                {/* Nodes */}
+                {nodes.map(node => (
+                    <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
+                        <rect 
+                            width={20} 
+                            height={node.height} 
+                            fill={node.color} 
+                            rx={4}
+                            className="shadow-sm"
+                        />
+                        {/* Labels */}
+                        <text 
+                            x={10} 
+                            y={-5} 
+                            textAnchor="middle" 
+                            fontSize="10" 
+                            className="fill-slate-500 font-bold"
+                        >
+                            {node.value}
+                        </text>
+                        {node.round === 0 && (
+                            <text 
+                                x={0} 
+                                y={node.height / 2} 
+                                dx={-5}
+                                dy={4}
+                                textAnchor="end" 
+                                fontSize="11" 
+                                className="fill-slate-700 font-bold"
+                            >
+                                {getOptionText(node.optionId)}
+                            </text>
+                        )}
+                        {node.round === rounds.length - 1 && (
+                             <text 
+                                x={25} 
+                                y={node.height / 2} 
+                                dy={4}
+                                textAnchor="start" 
+                                fontSize="11" 
+                                className="fill-slate-700 font-bold"
+                            >
+                                {getOptionText(node.optionId)}
+                            </text>
+                        )}
+                    </g>
+                ))}
+            </svg>
         );
     };
 
@@ -196,8 +319,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                     </button>
                     
                     {isRanked && (
-                        <button onClick={() => setViewMode('rounds')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'rounds' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <GitMerge size={16} /> Rounds
+                        <button onClick={() => setViewMode('flow')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'flow' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <GitMerge size={16} /> Flow Chart
                         </button>
                     )}
 
@@ -215,6 +338,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         <Activity size={16} /> Velocity
                     </button>
                     
+                    <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        <MapIcon size={16} /> Map
+                    </button>
+
                     <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                         <LayoutGrid size={16} /> Grid
                     </button>
@@ -223,7 +350,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
-                {((viewMode === 'rounds' || viewMode === 'bar' || viewMode === 'heatmap') && activeWinnerId && !isDot) && (
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap') && activeWinnerId && !isDot) && (
                      <motion.div 
                         key="winner"
                         initial={{ scale: 0.95, opacity: 0 }}
@@ -300,60 +427,29 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                      </motion.div>
                 )}
 
-                {/* --- ROUNDS VIEW (Sankey-ish for RCV) --- */}
-                {viewMode === 'rounds' && isRanked && rounds.length > 0 && (
+                {/* --- FLOW CHART (SANKEY) VIEW --- */}
+                {viewMode === 'flow' && isRanked && rounds.length > 0 && (
                     <motion.div 
-                        key="rounds"
+                        key="flow"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300"
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 overflow-x-auto"
                     >
                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                             <GitMerge size={24} className="text-indigo-500"/>
-                            Runoff Flow
+                            Vote Transfer Flow
                         </h3>
                         
-                        <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
-                            {renderSankeyFlow()}
+                        <div className="min-w-[600px] h-[450px]">
+                            {renderSankeySVG()}
                         </div>
-
-                        <div className="space-y-8">
-                            {rounds.map((round) => {
-                                const roundTotal = Object.values(round.counts).reduce((a,b) => a+b, 0);
-                                const sortedEntries = Object.entries(round.counts).sort(([, a], [, b]) => b - a);
-                                return (
-                                    <div key={round.roundNumber} className="relative break-inside-avoid border-t pt-4 border-dashed border-slate-200">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h4 className="font-bold text-slate-600 uppercase tracking-wider text-xs">
-                                                Round {round.roundNumber}
-                                            </h4>
-                                            {round.eliminatedId && (
-                                                <div className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded font-medium flex items-center gap-1">
-                                                    <AlertCircle size={12} />
-                                                    Eliminated: {getOptionText(round.eliminatedId)}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            {sortedEntries.map(([id, count]) => {
-                                                const percentage = (count / roundTotal) * 100;
-                                                const isEliminated = id === round.eliminatedId;
-                                                return (
-                                                    <div key={id} className={`flex items-center gap-2 text-sm ${isEliminated ? 'opacity-50' : ''}`}>
-                                                        <div className="w-24 truncate text-right font-medium text-slate-600" title={getOptionText(id)}>{getOptionText(id)}</div>
-                                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                                                             <div className={`h-full ${getBarColorClass(id)}`} style={{ width: `${percentage}%` }}></div>
-                                                        </div>
-                                                        <div className="w-8 text-xs text-slate-400">{count}</div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        
+                        <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <Info size={16} className="text-indigo-500"/>
+                            <span>
+                                This diagram shows how votes from eliminated candidates (faded lines) are transferred to their next choice in subsequent rounds.
+                            </span>
                         </div>
                     </motion.div>
                 )}
@@ -468,6 +564,55 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         <div className="flex justify-between text-xs text-slate-400 mt-2">
                             <span>First Vote</span>
                             <span>Latest Vote</span>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- MAP VIEW (Geography) --- */}
+                {viewMode === 'map' && (
+                    <motion.div
+                        key="map"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <MapIcon size={24} className="text-indigo-500"/> Voter Geography
+                            </h3>
+                            <div className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                                Demo Mode: Locations simulated
+                            </div>
+                        </div>
+                        
+                        <div className="relative w-full aspect-[2/1] bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center">
+                            {/* Simple Abstract World Map SVG */}
+                            <svg viewBox="0 0 100 50" className="w-full h-full opacity-30">
+                                <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
+                                <circle cx="25" cy="18" r="1" className="fill-indigo-600 animate-ping" />
+                                <circle cx="55" cy="15" r="1.5" className="fill-indigo-600 animate-ping" style={{animationDelay: '0.5s'}} />
+                                <circle cx="75" cy="25" r="0.8" className="fill-indigo-600 animate-ping" style={{animationDelay: '1s'}} />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                    <p className="text-indigo-900 font-bold text-lg">Global Reach</p>
+                                    <p className="text-slate-500 text-xs"> votes collected from 3 regions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">65%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">North America</div>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">25%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">Europe</div>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">10%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">Asia</div>
+                            </div>
                         </div>
                     </motion.div>
                 )}

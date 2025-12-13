@@ -165,9 +165,9 @@ const VoteGeneratorCreate: React.FC = () => {
              
              const d = new Date(year, month - 1, day, hours, minutes);
              
-             // Format: "Mon, Oct 23 • 10:00 AM"
+             // Format: "Mon, Oct 23 • 10:00 AM EDT"
              const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-             const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+             const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
              
              const newOption = `${dateStr} • ${timeStr}`;
              
@@ -440,7 +440,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                             ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-100 text-red-900' 
                                                             : 'border-slate-200 focus:border-indigo-500'
                                                     }`}
-                                                    placeholder={pollType === 'meeting' ? `e.g. Mon, Oct 23 • 10:00 AM` : `Option ${i + 1}`}
+                                                    placeholder={pollType === 'meeting' ? `e.g. Mon, Oct 23 • 10:00 AM EDT` : `Option ${i + 1}`}
                                                     value={opt}
                                                     onChange={(e) => handleOptionChange(i, e.target.value)}
                                                     onKeyDown={(e) => handleKeyDown(i, e)}

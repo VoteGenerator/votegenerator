@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -57,6 +57,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const isMaxVotesReached = poll.settings.maxVotes && poll.voteCount >= poll.settings.maxVotes;
     const isClosed = isDeadlineExpired || isMaxVotesReached;
     const alreadyVotedBrowser = poll.settings.security === 'browser' && hasVoted(poll.id);
+
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const isDifferentTimezone = poll.settings.timezone && poll.settings.timezone !== userTimezone;
 
     const checkVpnLikelihood = (): boolean => {
         if (!poll.settings.blockVpn) return false;
@@ -230,11 +233,21 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         
                         {/* Timezone Badge for Meeting */}
                         {poll.pollType === 'meeting' && poll.settings.timezone && (
-                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full w-fit">
+                            <div className={`flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-full w-fit border ${isDifferentTimezone ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-transparent'}`}>
                                 🌐 {poll.settings.timezone}
                             </div>
                         )}
                     </div>
+                    
+                    {/* Timezone Warning */}
+                    {isDifferentTimezone && poll.pollType === 'meeting' && (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-800 flex items-start gap-2">
+                            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                            <span>
+                                <strong>Timezone Mismatch:</strong> The poll times are shown in {poll.settings.timezone}, but you are in {userTimezone}. Please adjust accordingly.
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-6 md:p-8">
@@ -263,6 +276,16 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     {/* --- MULTIPLE / MEETING UI --- */}
                     {(poll.pollType === 'multiple' || poll.pollType === 'meeting') && (
                         <div className="space-y-3">
+                            {poll.pollType === 'meeting' && (
+                                <div className="mb-4 text-center">
+                                    <p className="text-sm font-bold text-indigo-900 mb-1">Select <span className="underline decoration-wavy decoration-indigo-300">all</span> the times that work for you</p>
+                                    <p className="text-xs text-slate-500">
+                                        Tap once for <span className="text-emerald-600 font-bold bg-emerald-50 px-1 rounded">Yes</span>, 
+                                        twice for <span className="text-amber-600 font-bold bg-amber-50 px-1 rounded">Maybe</span>.
+                                    </p>
+                                </div>
+                            )}
+
                             {poll.options.map((opt) => {
                                 const isSelected = selectedIds.has(opt.id);
                                 const isMaybe = maybeIds.has(opt.id);
@@ -301,11 +324,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                     </button>
                                 )
                             })}
-                            {poll.pollType === 'meeting' && (
-                                <p className="text-xs text-center text-slate-400 mt-2">
-                                    Tap once for <span className="text-emerald-600 font-bold">Yes</span>, twice for <span className="text-amber-600 font-bold">Maybe</span>.
-                                </p>
-                            )}
                         </div>
                     )}
 

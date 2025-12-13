@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, AlertCircle, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -108,13 +108,13 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
     // --- SANKEY DIAGRAM GENERATION ---
     const sankeyData = useMemo(() => {
-        if (rounds.length === 0) return { nodes: [], links: [] };
+        // Return default structure if empty to prevent undefined properties
+        if (rounds.length === 0) return { nodes: [], links: [], width: 0, height: 400 };
 
         const nodes: any[] = [];
         const links: any[] = [];
         const canvasHeight = 400;
         const roundWidth = 150;
-        const nodeWidth = 20;
         const gap = 10;
 
         // Calculate total votes in the first round to normalize heights against it
@@ -123,7 +123,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
         // 1. Generate Nodes for each round
         rounds.forEach((round, roundIdx) => {
             let yOffset = 0;
-            const roundTotal = Object.values(round.counts).reduce((a, b) => a + b, 0);
             
             // Sort to keep consistent order or by count
             const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);

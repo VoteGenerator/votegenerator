@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, SlidersHorizontal } from 'lucide-react';
 import { Poll, PollOption } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 
@@ -35,6 +35,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     // Dot Voting State
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
 
+    // Rating Voting State (Default 50)
+    const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>({});
+
     // Matrix Voting State
     const [matrixPositions, setMatrixPositions] = useState<Record<string, { x: number, y: number }>>({});
     const matrixContainerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +65,15 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             setAccessCode(codeParam);
         }
     }, []);
+
+    // Initialize Rating Defaults
+    useEffect(() => {
+        if (poll.pollType === 'rating') {
+            const defaults: Record<string, number> = {};
+            poll.options.forEach(opt => defaults[opt.id] = 50); // Start at middle
+            setRatingAllocations(defaults);
+        }
+    }, [poll.pollType, poll.options]);
 
     // Initialize Pairwise Queue
     useEffect(() => {
@@ -108,6 +120,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         if (delta > 0 && dotsRemaining <= 0) return; // Cap at budget
         if (delta < 0 && current <= 0) return; // Floor at 0
         setDotAllocations({ ...dotAllocations, [id]: current + delta });
+    };
+
+    const handleRatingChange = (id: string, val: number) => {
+        setRatingAllocations(prev => ({ ...prev, [id]: val }));
     };
 
     const toggleSelection = (id: string) => {
@@ -195,8 +211,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             } else if (poll.pollType === 'matrix') {
                 choices = Object.keys(matrixPositions);
             } else if (poll.pollType === 'pairwise') {
-                // Choices array is empty for pairwise, we rely on pairwiseVotes field
                 choices = [];
+            } else if (poll.pollType === 'rating') {
+                choices = []; // ratings handled separately
             } else {
                 choices = Array.from(selectedIds);
                 if (poll.pollType === 'meeting') {
@@ -212,7 +229,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 comment.trim() || undefined,
                 choicesMaybe.length > 0 ? choicesMaybe : undefined,
                 poll.pollType === 'matrix' ? matrixPositions : undefined,
-                poll.pollType === 'pairwise' ? pairwiseVotes : undefined
+                poll.pollType === 'pairwise' ? pairwiseVotes : undefined,
+                poll.pollType === 'rating' ? ratingAllocations : undefined
             );
             onVoteSuccess();
         } catch (error) {
@@ -224,7 +242,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
 
     // Validation
     let canSubmit = false;
-    if (poll.pollType === 'ranked') canSubmit = true;
+    if (poll.pollType === 'ranked' || poll.pollType === 'rating') canSubmit = true;
     else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
     else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
     else if (poll.pollType === 'pairwise') canSubmit = pairwiseDone;
@@ -276,6 +294,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             {poll.pollType === 'dot' && "Distribute Points"}
                             {poll.pollType === 'matrix' && "Drag to Grid"}
                             {poll.pollType === 'pairwise' && "This or That"}
+                            {poll.pollType === 'rating' && "Rate Options"}
                         </div>
 
                          {/* Deadline Badge */}
@@ -407,6 +426,48 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                     <p className="text-slate-500">You've compared {pairwiseQueue.length} pairs.</p>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* --- RATING UI --- */}
+                    {poll.pollType === 'rating' && (
+                        <div className="space-y-6">
+                            {poll.options.map((opt) => {
+                                const val = ratingAllocations[opt.id] ?? 50;
+                                return (
+                                    <div key={opt.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-lg font-bold text-slate-800">{opt.text}</span>
+                                            <span className="text-lg font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg min-w-[3rem] text-center">
+                                                {val}
+                                            </span>
+                                        </div>
+                                        <div className="relative h-2 bg-slate-100 rounded-full">
+                                            <input 
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={val}
+                                                onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            />
+                                            <div 
+                                                className="h-full bg-cyan-500 rounded-full transition-all"
+                                                style={{ width: `${val}%` }}
+                                            />
+                                            <div 
+                                                className="absolute top-1/2 -mt-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-full shadow-md transition-all pointer-events-none"
+                                                style={{ left: `calc(${val}% - 8px)` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium uppercase tracking-wide">
+                                            <span>Poor</span>
+                                            <span>Average</span>
+                                            <span>Excellent</span>
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
 

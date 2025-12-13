@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 
 const POLL_TYPES = [
@@ -16,6 +16,18 @@ const POLL_TYPES = [
         selectedBg: 'bg-indigo-50',
         iconColor: 'text-indigo-600',
         textColor: 'text-indigo-700'
+    },
+    {
+        id: 'rating',
+        name: 'Continuous Rating',
+        icon: SlidersHorizontal,
+        description: 'Voters rate each option on a scale (0-100). Good for nuance.',
+        bestFor: 'Perfect for: Performance reviews, feedback, or measuring sentiment.',
+        example: 'e.g., "Rate these potential features."',
+        selectedBorder: 'border-cyan-500',
+        selectedBg: 'bg-cyan-50',
+        iconColor: 'text-cyan-600',
+        textColor: 'text-cyan-700'
     },
     {
         id: 'pairwise',
@@ -408,7 +420,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'pairwise' ? 'Items to Compare' : 'Options'} <span className="text-red-500 ml-1">*</span>
+                                {pollType === 'ranked' ? 'Options to Rank' : pollType === 'meeting' ? 'Time Slots' : pollType === 'pairwise' ? 'Items to Compare' : pollType === 'rating' ? 'Items to Rate' : 'Options'} <span className="text-red-500 ml-1">*</span>
                             </label>
                             <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">
                                 {validOptionCount} {pollType !== 'meeting' ? '/ 20' : ''}

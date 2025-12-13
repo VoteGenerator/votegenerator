@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Check, Map as MapIcon, Info, GitCompare, SlidersHorizontal } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -10,16 +10,17 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
     const isMatrix = poll.pollType === 'matrix';
     const isPairwise = poll.pollType === 'pairwise';
+    const isRating = poll.pollType === 'rating';
     
     // Determine default view based on poll type
-    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise'>(
-        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : 'bar'
+    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
+        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
     );
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
@@ -320,8 +321,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                             <GitCompare size={16} /> Leaderboard
                         </button>
                     )}
+
+                    {isRating && (
+                         <button onClick={() => setViewMode('rating')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'rating' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <SlidersHorizontal size={16} /> Averages
+                        </button>
+                    )}
                     
-                    {!isPairwise && (
+                    {!isPairwise && !isRating && (
                          <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                             <BarChart size={16} /> Bar
                         </button>
@@ -339,7 +346,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         </button>
                     )}
 
-                    {!isPairwise && (
+                    {!isPairwise && !isRating && (
                      <button onClick={() => setViewMode('pie')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pie' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
                         <PieChart size={16} /> Pie
                     </button>
@@ -361,7 +368,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
 
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise') && activeWinnerId && !isDot && !isMatrix) && (
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && activeWinnerId && !isDot && !isMatrix) && (
                      <motion.div 
                         key="winner"
                         initial={{ scale: 0.95, opacity: 0 }}
@@ -393,6 +400,85 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                     Win Rate: {pairwiseScores[activeWinnerId].score.toFixed(1)}% ({pairwiseScores[activeWinnerId].wins} wins)
                                 </div>
                             )}
+                            {isRating && ratingStats && ratingStats[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Average Rating: {ratingStats[activeWinnerId].average.toFixed(1)} / 100
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- RATING VIEW --- */}
+                {viewMode === 'rating' && ratingStats && (
+                    <motion.div
+                        key="rating"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <SlidersHorizontal size={24} className="text-indigo-500"/> Average Ratings
+                            </h3>
+                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                                <span className="w-4 h-1 bg-black/20 rounded"></span> Error bars = Standard Deviation
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-6">
+                            {Object.entries(ratingStats)
+                                .sort(([, a], [, b]) => b.average - a.average)
+                                .map(([id, stats], index) => {
+                                    return (
+                                        <div key={id} className="relative break-inside-avoid">
+                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <span className="text-slate-800 font-bold text-lg">
+                                                        {getOptionText(id)}
+                                                    </span>
+                                                </div>
+                                                <span className="text-slate-600 font-bold">
+                                                    {stats.average.toFixed(1)} <span className="text-slate-400 font-normal text-xs ml-1">/ 100</span>
+                                                </span>
+                                            </div>
+                                            <div className="relative h-8 bg-slate-100 rounded-lg mt-2 overflow-visible print:border print:border-slate-200">
+                                                {/* Average Bar */}
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${stats.average}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
+                                                />
+                                                
+                                                {/* Std Dev Error Bar - Visualized as a range marker */}
+                                                {stats.count > 1 && (
+                                                    <div 
+                                                        className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
+                                                        style={{ 
+                                                            left: `${Math.max(0, stats.average - stats.stdDev)}%`, 
+                                                            width: `${Math.min(100 - (stats.average - stats.stdDev), stats.stdDev * 2)}%`
+                                                        }}
+                                                    >
+                                                        {/* End ticks */}
+                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
+                                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
+                                                        {/* Center marker */}
+                                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-slate-400 mt-1 flex justify-between">
+                                                <span>Std Dev: {stats.stdDev.toFixed(1)}</span>
+                                                <span>{stats.count} votes</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </motion.div>
                 )}
@@ -797,6 +883,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                                      if (voterMatches > 0) {
                                                          cellContent = <span className="text-xs font-bold text-slate-600">{voterWins} / {voterMatches}</span>;
                                                      }
+                                                } else if (isRating && vote.ratingVotes) {
+                                                    const val = vote.ratingVotes[opt.id];
+                                                    if (val !== undefined) {
+                                                        cellContent = <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded">{val}</span>;
+                                                    }
                                                 } else if (isRanked) {
                                                     const rank = vote.choices.indexOf(opt.id);
                                                     if (rank !== -1) {

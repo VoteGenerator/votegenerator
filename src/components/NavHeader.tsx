@@ -10,7 +10,6 @@ import {
     BookOpen,
     HelpCircle,
     ChevronDown,
-    Vote,
     ListOrdered,
     Image,
     Calendar,
@@ -26,18 +25,18 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
 
     const navItems = [
-        { id: 'create', label: 'Create Poll', href: '/', icon: Sparkles },
-        { id: 'demo', label: 'Demo', href: '/demo', icon: Play },
-        { id: 'pricing', label: 'Pricing', href: '/pricing', icon: DollarSign },
-        { id: 'blog', label: 'Blog', href: '/blog', icon: BookOpen },
-        { id: 'help', label: 'Help', href: '/help', icon: HelpCircle },
+        { id: 'create', label: 'Create Poll', href: '#', icon: Sparkles },
+        { id: 'demo', label: 'Demo', href: '#demo', icon: Play },
+        { id: 'pricing', label: 'Pricing', href: '#pricing', icon: DollarSign },
+        { id: 'blog', label: 'Blog', href: '#blog', icon: BookOpen },
+        { id: 'help', label: 'Help', href: '#help', icon: HelpCircle },
     ];
 
     const pollTypes = [
-        { name: 'Ranked Choice', href: '/?type=ranked', icon: ListOrdered },
-        { name: 'Multiple Choice', href: '/?type=multiple', icon: CheckSquare },
-        { name: 'Visual Poll', href: '/?type=image', icon: Image, pro: true },
-        { name: 'Meeting Scheduler', href: '/?type=meeting', icon: Calendar },
+        { name: 'Ranked Choice', href: '#', icon: ListOrdered },
+        { name: 'Multiple Choice', href: '#', icon: CheckSquare },
+        { name: 'Visual Poll', href: '#', icon: Image, pro: true },
+        { name: 'Meeting Scheduler', href: '#', icon: Calendar },
     ];
 
     return (
@@ -45,7 +44,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <a href="/" className="flex items-center gap-3">
+                    <a href="#" className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
                             <BarChart2 className="text-white" size={22} />
                         </div>
@@ -93,7 +92,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                             </a>
                                         ))}
                                         <div className="border-t border-slate-100 mt-2 pt-2 px-4 pb-2">
-                                            <a href="/" className="text-xs text-indigo-600 font-medium hover:underline">
+                                            <a href="#" className="text-xs text-indigo-600 font-medium hover:underline">
                                                 View all 12 poll types →
                                             </a>
                                         </div>
@@ -120,7 +119,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
                         <a
-                            href="/"
+                            href="#"
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
@@ -163,7 +162,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
                                 <a
-                                    href="/"
+                                    href="#"
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll

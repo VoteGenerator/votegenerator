@@ -141,6 +141,51 @@ const POLL_TYPES = [
         iconColor: 'text-fuchsia-600',
         textColor: 'text-fuchsia-800',
         isPremium: false
+    },
+    {
+        id: 'approval',
+        name: 'Approval Voting',
+        icon: CheckSquare,
+        description: 'Thumbs up/down for each option',
+        tooltip: 'Voters can approve as many options as they want. Simple yes/no for each choice. Great for finding consensus - the option with most approvals wins!',
+        useCases: ['Committee decisions', 'Finding consensus', 'Board votes', 'Group approval'],
+        example: '"Which candidates do you approve of?"',
+        gradient: 'from-violet-500 to-indigo-500',
+        selectedBorder: 'border-violet-500',
+        selectedBg: 'bg-gradient-to-br from-violet-50 to-indigo-50',
+        iconColor: 'text-violet-600',
+        textColor: 'text-violet-700',
+        isPremium: false
+    },
+    {
+        id: 'quiz',
+        name: 'Quiz Poll',
+        icon: Zap,
+        description: 'Poll with a correct answer',
+        tooltip: 'Like a poll but with a right answer! Great for trivia, knowledge checks, or guessing games. Reveal the correct answer after voting closes.',
+        useCases: ['Trivia games', 'Knowledge tests', 'Training quizzes', 'Guessing games'],
+        example: '"What year was the company founded?"',
+        gradient: 'from-yellow-500 to-amber-500',
+        selectedBorder: 'border-yellow-500',
+        selectedBg: 'bg-gradient-to-br from-yellow-50 to-amber-50',
+        iconColor: 'text-yellow-600',
+        textColor: 'text-yellow-700',
+        isPremium: false
+    },
+    {
+        id: 'sentiment',
+        name: 'Sentiment Check',
+        icon: BarChart2,
+        description: 'Quick mood/opinion gauge',
+        tooltip: 'Simple emoji-based reactions (😀 😐 😞). Perfect for quick pulse checks on how the team is feeling or gathering instant feedback on ideas.',
+        useCases: ['Team morale', 'Quick feedback', 'Meeting check-ins', 'Idea validation'],
+        example: '"How do you feel about the new policy?"',
+        gradient: 'from-rose-500 to-pink-500',
+        selectedBorder: 'border-rose-500',
+        selectedBg: 'bg-gradient-to-br from-rose-50 to-pink-50',
+        iconColor: 'text-rose-600',
+        textColor: 'text-rose-700',
+        isPremium: false
     }
 ];
 

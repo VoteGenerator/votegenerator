@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, X, Crown, Smartphone, Monitor, GripVertical, Zap } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, Smartphone, Monitor, GripVertical, Zap } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -155,32 +155,29 @@ const VoteGeneratorCreate: React.FC = () => {
     
     // Preview state
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-    const [showPreview, setShowPreview] = useState(true);
     
     // Meeting specific
     const [meetingDate, setMeetingDate] = useState('');
     const [meetingTime, setMeetingTime] = useState('');
-    const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
     // Settings
     const [hideResults, setHideResults] = useState(false);
-    const [allowMultiple, setAllowMultiple] = useState(false);
+    const [allowMultiple] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
     const [allowComments, setAllowComments] = useState(false);
-    const [publicComments, setPublicComments] = useState(true);
-    const [blockVpn, setBlockVpn] = useState(false);
+    const [publicComments] = useState(true);
+    const [blockVpn] = useState(false);
     const [security, setSecurity] = useState<'browser' | 'code' | 'none'>('browser');
     const [voterCount, setVoterCount] = useState<number>(10);
-    const [deadline, setDeadline] = useState<string>('');
-    const [maxVotes, setMaxVotes] = useState<number | ''>('');
-    const [dotBudget, setDotBudget] = useState<number>(10);
-    const [budgetLimit, setBudgetLimit] = useState<number>(100);
+    const [deadline] = useState<string>('');
+    const [maxVotes] = useState<number | ''>('');
+    const [dotBudget] = useState<number>(10);
+    const [budgetLimit] = useState<number>(100);
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
     const lastInputRef = useRef<HTMLInputElement>(null);
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // Premium check (you'd replace this with actual auth check)
     const hasPremium = true; // Set to false to test locked state

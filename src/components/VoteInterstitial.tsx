@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, BarChart2, Users, Clock, CheckCircle, ExternalLink, Sparkles, Gift, Vote } from 'lucide-react';
 import type { Poll } from '../types';
 

@@ -313,7 +313,7 @@ interface EmbedPollPageProps {
 }
 
 export const EmbedPollPage: React.FC<EmbedPollPageProps> = ({ pollId }) => {
-    const [poll, setPoll] = useState<Poll | null>(null);
+    const [poll, _setPoll] = useState<Poll | null>(null);
     const [loading, setLoading] = useState(true);
     
     // Parse URL params for config

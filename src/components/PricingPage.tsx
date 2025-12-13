@@ -12,7 +12,6 @@ import {
     FileText,
     Lock,
     Crown,
-    Clock,
     Mail,
     Ban,
     Fingerprint,

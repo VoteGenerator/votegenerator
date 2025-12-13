@@ -1,10 +1,17 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+interface CustomSlug {
+    slug: string;
+    pollId: string;
+    adminKey: string;
+    createdAt: string;
+}
+
 export const handler: Handler = async (event) => {
     // Extract slug from path: /v/team-vote -> team-vote
     const pathParts = event.path.split('/v/');
-    const slug = pathParts[1]?.split('/')[0]?.toLowerCase();
+    const slug = pathParts[1]?.split('/')[0]?.split('?')[0]?.toLowerCase();
 
     if (!slug) {
         return {
@@ -15,29 +22,31 @@ export const handler: Handler = async (event) => {
 
     try {
         const store = getStore('custom-slugs');
-        const data = await store.get(slug, { type: 'json' });
+        const data = await store.get(slug, { type: 'json' }) as CustomSlug | null;
 
         if (!data) {
-            // Slug not found - redirect to 404 or home
+            // Slug not found - redirect to home with error
             return {
                 statusCode: 302,
                 headers: { Location: '/?error=poll-not-found' }
             };
         }
 
-        // Redirect to the actual poll
-        const { pollId, adminKey } = data as CustomSlug;
+        // Check if admin access is requested
+        const queryAdmin = event.queryStringParameters?.admin;
+        const isAdmin = queryAdmin === data.adminKey;
         
-        // Check if this is an admin access
-        const isAdmin = event.queryStringParameters?.admin === adminKey;
-        
+        // Build redirect URL
         const redirectUrl = isAdmin 
-            ? `/#id=${pollId}&admin=${adminKey}`
-            : `/#id=${pollId}`;
+            ? `/#id=${data.pollId}&admin=${data.adminKey}`
+            : `/#id=${data.pollId}`;
 
         return {
             statusCode: 302,
-            headers: { Location: redirectUrl }
+            headers: { 
+                Location: redirectUrl,
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
+            }
         };
     } catch (error) {
         console.error('Short link redirect error:', error);

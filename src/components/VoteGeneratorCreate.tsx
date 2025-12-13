@@ -380,6 +380,12 @@ const VoteGeneratorCreate: React.FC = () => {
                                 );
                             })}
                         </div>
+                        {showPollTypeInfo && (
+                            <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-800">
+                                <p className="font-bold mb-1">{POLL_TYPES.find(t => t.id === pollType)?.bestFor}</p>
+                                <p>{POLL_TYPES.find(t => t.id === pollType)?.example}</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Title */}

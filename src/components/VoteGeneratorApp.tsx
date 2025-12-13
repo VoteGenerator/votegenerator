@@ -327,6 +327,7 @@ const VoteGeneratorApp: React.FC = () => {
                         >
                             <VoteGeneratorEdit 
                                 poll={viewState.poll}
+                                onUpdate={() => loadView()}
                                 onCancel={() => loadView()}
                             />
                         </motion.div>

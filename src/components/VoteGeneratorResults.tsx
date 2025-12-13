@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Image as ImageIcon } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, Activity, Map as MapIcon, GitCompare, SlidersHorizontal, DollarSign } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 
 interface Props {
@@ -18,7 +18,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
     const isPairwise = poll.pollType === 'pairwise';
     const isRating = poll.pollType === 'rating';
     const isBudget = poll.pollType === 'budget';
-    const isImage = poll.pollType === 'image';
     
     const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
         isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
@@ -288,7 +287,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                             </h3>
                         </div>
                         <div className="space-y-6">
-                            {Object.entries(ratingStats).sort(([, a], [, b]) => b.average - a.average).map(([id, stats], index) => (
+                            {Object.entries(ratingStats).sort(([, a], [, b]) => b.average - a.average).map(([id, stats]) => (
                                 <div key={id} className="relative break-inside-avoid">
                                     <div className="flex justify-between text-sm font-medium mb-1">
                                         <div className="flex items-center gap-3">
@@ -445,7 +444,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                             <div className="relative w-64 h-64 shrink-0">
                                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                                    {pieData.map((slice, i) => {
+                                    {pieData.map((slice) => {
                                         // Calculate SVG path for arc
                                         const startRad = (slice.startAngle * Math.PI) / 180;
                                         const endRad = ((slice.startAngle + slice.angle) * Math.PI) / 180;

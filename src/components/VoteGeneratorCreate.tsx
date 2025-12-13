@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, EyeOff, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, User, Shield, ChevronDown, ChevronUp, Clock, Hash, Check, MessageSquare, Globe, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, X, Crown, Smartphone, Monitor, GripVertical, Zap } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
+import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
 const POLL_TYPES = [
     {
@@ -244,9 +245,15 @@ const VoteGeneratorCreate: React.FC = () => {
         setUploadingIndex(index);
         setError(null);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET || 'votegenerator');
+        try {
+            // Compress image before uploading (FREE - uses browser Canvas API)
+            console.log('Original size:', formatFileSize(file.size));
+            const compressedFile = await compressToTargetSize(file, 2); // Target 2MB max
+            console.log('Compressed size:', formatFileSize(compressedFile.size));
+
+            const formData = new FormData();
+            formData.append('file', compressedFile);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET || 'votegenerator');
 
         try {
             const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {

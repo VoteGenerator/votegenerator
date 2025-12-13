@@ -35,8 +35,15 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     // Dot Voting State
     const [dotAllocations, setDotAllocations] = useState<Record<string, number>>({});
 
-    // Rating Voting State (Default 50)
-    const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>({});
+    // Rating Voting State (Default 50, using lazy initialization)
+    const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>(() => {
+        if (poll.pollType === 'rating') {
+            const defaults: Record<string, number> = {};
+            poll.options.forEach(opt => defaults[opt.id] = 50); // Start at middle
+            return defaults;
+        }
+        return {};
+    });
 
     // Matrix Voting State
     const [matrixPositions, setMatrixPositions] = useState<Record<string, { x: number, y: number }>>({});
@@ -65,15 +72,6 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             setAccessCode(codeParam);
         }
     }, []);
-
-    // Initialize Rating Defaults
-    useEffect(() => {
-        if (poll.pollType === 'rating') {
-            const defaults: Record<string, number> = {};
-            poll.options.forEach(opt => defaults[opt.id] = 50); // Start at middle
-            setRatingAllocations(defaults);
-        }
-    }, [poll.pollType, poll.options]);
 
     // Initialize Pairwise Queue
     useEffect(() => {

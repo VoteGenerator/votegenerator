@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -269,6 +269,19 @@ const VoteGeneratorApp: React.FC = () => {
         }
     };
 
+    const getPollTypeDetails = (type: string) => {
+        switch (type) {
+            case 'ranked': return { icon: ListOrdered, label: 'Ranked Choice', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' };
+            case 'multiple': return { icon: CheckSquare, label: 'Multiple Choice', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' };
+            case 'meeting': return { icon: Calendar, label: 'Meeting Poll', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' };
+            case 'dot': return { icon: Coins, label: 'Dot Voting', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' };
+            case 'matrix': return { icon: LayoutGrid, label: 'Priority Matrix', color: 'text-fuchsia-600', bg: 'bg-fuchsia-50', border: 'border-fuchsia-100' };
+            case 'pairwise': return { icon: GitCompare, label: 'Pairwise Comparison', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' };
+            case 'rating': return { icon: SlidersHorizontal, label: 'Continuous Rating', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100' };
+            default: return { icon: CheckSquare, label: 'Poll', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' };
+        }
+    };
+
     return (
         <div className="min-h-screen pb-10">
             {/* Header */}
@@ -396,9 +409,21 @@ const VoteGeneratorApp: React.FC = () => {
                                     {viewState.isAdmin && (
                                         <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                                                    Current Poll Settings
-                                                </h3>
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                                        Current Poll Settings
+                                                    </h3>
+                                                    {(() => {
+                                                        const typeDetails = getPollTypeDetails(viewState.poll.pollType);
+                                                        const Icon = typeDetails.icon;
+                                                        return (
+                                                            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold border ${typeDetails.bg} ${typeDetails.color} ${typeDetails.border}`}>
+                                                                <Icon size={12} />
+                                                                {typeDetails.label}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
                                                 <div className="flex gap-2">
                                                     {viewState.poll.settings.deadline && (
                                                         <span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-md text-slate-600 flex items-center gap-1">

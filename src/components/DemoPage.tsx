@@ -16,7 +16,6 @@ import {
     ChevronRight,
     Sparkles,
     Target,
-    Info,
     Play,
     ArrowRight,
     Lock,
@@ -26,6 +25,7 @@ import {
     Crown,
     Check
 } from 'lucide-react';
+import PollTypePreview from './PollTypePreview';
 
 interface PollTypeInfo {
     id: string;
@@ -430,18 +430,10 @@ const DemoPage: React.FC = () => {
                             Experience all 12 poll types. Vote on live demos. See exactly how it works.
                         </p>
                         
-                        {/* Professional Disclaimer */}
-                        <div className="inline-flex items-start gap-3 px-5 py-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-sm text-left max-w-2xl">
-                            <Info size={20} className="shrink-0 mt-0.5" />
-                            <div>
-                                <strong className="block mb-1">Designed for Group Decisions, Not Scientific Research</strong>
-                                <span className="text-blue-700">
-                                    VoteGenerator is built for quick, informal group input — like team lunches, event planning, or casual feedback. 
-                                    For academic research, market studies, or decisions requiring statistical validity, 
-                                    please use professional survey tools with proper sampling methodology.
-                                </span>
-                            </div>
-                        </div>
+                        {/* Subtle Note - Not a warning */}
+                        <p className="text-slate-500 text-sm mt-6">
+                            Perfect for team decisions, event planning, and group feedback.
+                        </p>
                     </motion.div>
                 </div>
             </div>
@@ -633,10 +625,10 @@ const DemoPage: React.FC = () => {
                                                     <Eye size={18} />
                                                     Preview
                                                 </h3>
-                                                <DemoPoll
+                                                <PollTypePreview
+                                                    pollTypeId={selectedPollData.id}
                                                     question={selectedPollData.exampleQuestion}
                                                     options={selectedPollData.exampleOptions}
-                                                    type="single"
                                                 />
                                             </div>
 

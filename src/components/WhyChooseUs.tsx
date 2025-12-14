@@ -201,7 +201,7 @@ const WhyChooseUs: React.FC = () => {
                     </div>
                 </motion.div>
 
-                {/* Trust statement */}
+                {/* Trust statement - speaks to poll CREATORS */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -211,7 +211,7 @@ const WhyChooseUs: React.FC = () => {
                     <div className="inline-flex items-center gap-3 px-6 py-4 bg-green-50 border border-green-200 rounded-2xl">
                         <ShieldCheck size={24} className="text-green-600" />
                         <span className="text-green-800 font-medium">
-                            Your privacy is not our product. Your trust is.
+                            Simple for you. Private for your voters. No friction for anyone.
                         </span>
                     </div>
                 </motion.div>

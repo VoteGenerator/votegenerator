@@ -2,14 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Check,
-    BarChart3,
     Users,
-    TrendingUp,
     GripVertical,
-    Star,
-    ThumbsUp,
-    ThumbsDown,
-    ArrowLeftRight
+    Star
 } from 'lucide-react';
 
 interface DemoPollInteractiveProps {

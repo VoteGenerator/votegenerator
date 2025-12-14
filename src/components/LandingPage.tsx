@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
 import HeroSection from './HeroSection';
 import WhyChooseUs from './WhyChooseUs';
 import VoteGeneratorCreate from './VoteGeneratorCreate';

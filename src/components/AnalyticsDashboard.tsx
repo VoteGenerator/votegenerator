@@ -6,9 +6,7 @@ import {
     TrendingUp,
     TrendingDown,
     Minus,
-    Calendar,
     Globe,
-    Zap,
     Lock,
     Info,
     ChevronDown,
@@ -459,7 +457,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-sm font-medium text-slate-700">{country}</span>
-                                        <span className="text-xs text-slate-500">{percentage}%</span>
+                                        <span className="text-xs text-slate-500">{votes} votes ({percentage}%)</span>
                                     </div>
                                     <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                         <div 

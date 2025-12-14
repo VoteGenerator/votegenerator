@@ -2,14 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
 interface Props {
     poll: Poll;
     results: RunoffResult;
     onEdit?: () => void;
+    adminKey?: string | null;
+    isAdmin?: boolean;
 }
 
-const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
+const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
     const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
@@ -830,6 +833,21 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit }) => {
                                 </div>
                             ))}
                         </div>
+                    </motion.div>
+                )}
+
+                {/* --- ANALYTICS DASHBOARD (Admin Only) --- */}
+                {isAdmin && adminKey && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6"
+                    >
+                        <AnalyticsDashboard 
+                            pollId={poll.id}
+                            adminKey={adminKey}
+                            currentTier={(poll as any).premium?.tier || 'free'}
+                        />
                     </motion.div>
                 )}
 

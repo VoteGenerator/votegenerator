@@ -531,7 +531,9 @@ const VoteGeneratorApp: React.FC = () => {
                                         <VoteGeneratorResults 
                                             poll={viewState.poll} 
                                             results={viewState.results}
-                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
+                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined}
+                                            adminKey={parseHash().adminKey}
+                                            isAdmin={viewState.isAdmin}
                                         />
                                         
                                          {/* Vote Again Button for Non-Admin with Security 'none' */}

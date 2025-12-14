@@ -143,15 +143,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                             </a>
                         </div>
 
-                        {/* Trust indicators */}
+                        {/* Trust indicators - honest for new site */}
                         <div className="mt-8 flex items-center gap-6 text-indigo-200 text-sm">
                             <div className="flex items-center gap-2">
-                                <Users size={16} />
-                                <span>10,000+ polls created</span>
+                                <Clock size={16} />
+                                <span>Create in 30 seconds</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Clock size={16} />
-                                <span>30 sec to create</span>
+                                <Users size={16} />
+                                <span>No signup needed</span>
                             </div>
                         </div>
                     </motion.div>

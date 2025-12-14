@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { 
     GripVertical, 
     Star, 
     Check, 
     ThumbsUp, 
     ThumbsDown,
-    Minus,
     ArrowLeftRight
 } from 'lucide-react';
 
@@ -55,15 +53,24 @@ const MultipleChoicePreview: React.FC<{ question: string; options: string[] }> =
 const RankedChoicePreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [ranking, setRanking] = useState(options);
     
+    // Move item up when clicked (simulates drag)
+    const moveUp = (index: number) => {
+        if (index === 0) return;
+        const newRanking = [...ranking];
+        [newRanking[index - 1], newRanking[index]] = [newRanking[index], newRanking[index - 1]];
+        setRanking(newRanking);
+    };
+    
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
             <h4 className="font-bold text-slate-800 mb-1">{question}</h4>
-            <p className="text-slate-500 text-sm mb-4">Drag to rank from favorite to least:</p>
+            <p className="text-slate-500 text-sm mb-4">Click an option to move it up:</p>
             <div className="space-y-2">
                 {ranking.map((opt, i) => (
-                    <div
+                    <button
                         key={opt}
-                        className="flex items-center gap-3 p-3 rounded-lg border-2 border-slate-200 bg-slate-50 cursor-grab active:cursor-grabbing"
+                        onClick={() => moveUp(i)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border-2 border-slate-200 bg-slate-50 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all text-left"
                     >
                         <GripVertical size={18} className="text-slate-400" />
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -75,11 +82,12 @@ const RankedChoicePreview: React.FC<{ question: string; options: string[] }> = (
                             {i + 1}
                         </div>
                         <span className="text-slate-700 flex-1">{opt}</span>
-                    </div>
+                        {i > 0 && <span className="text-xs text-indigo-500">↑ Move up</span>}
+                    </button>
                 ))}
             </div>
             <p className="text-xs text-slate-400 mt-3 text-center">
-                ↕️ Drag options to reorder your ranking
+                Click options to reorder your ranking
             </p>
             <button className="w-full mt-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
                 Submit Ranking →

@@ -114,11 +114,11 @@ const PricingPage: React.FC = () => {
                 { name: 'Everything in One-Time, plus:', included: true, header: true },
                 { name: 'Never expires', included: true },
                 { name: 'Unified admin dashboard', included: true },
-                { name: 'Visual Poll (image voting)', included: true, isNew: true },
+                { name: 'Vote timeline & trends', included: true, tooltip: 'See when votes come in, peak hours, daily patterns', isNew: true },
+                { name: 'Visual Poll (image voting)', included: true },
                 { name: 'Unique voting codes', included: true, tooltip: 'One-time codes for controlled voting' },
-                { name: 'Embed polls (with your logo)', included: true },
+                { name: 'View-only admin links', included: true, tooltip: 'Share results without edit access' },
                 { name: 'Voter comments', included: true },
-                { name: 'Export to Google Sheets', included: true },
                 { name: 'Email support', included: true },
             ]
         },
@@ -137,7 +137,9 @@ const PricingPage: React.FC = () => {
                 { name: 'Everything in Pro, plus:', included: true, header: true },
                 { name: 'White-label embeds', included: true, tooltip: 'No VoteGenerator branding anywhere' },
                 { name: 'Advanced vote protection', included: true, tooltip: 'Cookies + codes + rate limiting' },
-                { name: 'Team collaboration', included: true, tooltip: 'Share polls with team members' },
+                { name: 'Named admin tokens', included: true, tooltip: 'Create, label & revoke access individually', isNew: true },
+                { name: 'Advanced analytics', included: true, tooltip: 'Hourly patterns, velocity, country stats', isNew: true },
+                { name: 'UTM source tracking', included: true },
                 { name: 'Priority support', included: true },
             ]
         }
@@ -166,7 +168,9 @@ const PricingPage: React.FC = () => {
         // Dashboard
         { name: 'Admin Dashboard', free: 'Per poll', oneTime: 'Per poll', pro: 'Unified', proPlus: 'Unified', category: 'Dashboard & Management', tooltip: 'Free/One-Time: Each poll has separate link. Pro: One dashboard for all.' },
         { name: 'Dashboard Notifications', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'See new vote alerts when you check your dashboard' },
-        { name: 'Team Collaboration', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Share poll management with team members' },
+        { name: 'Share Admin Access', free: true, oneTime: true, pro: true, proPlus: true, tooltip: 'Share admin link with anyone who needs to manage' },
+        { name: 'View-Only Links', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Share links that let others see results but not edit' },
+        { name: 'Named Admin Tokens', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Create multiple tokens with labels, revoke individually' },
         
         // Branding
         { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true, category: 'Branding & Customization' },
@@ -184,11 +188,25 @@ const PricingPage: React.FC = () => {
         { name: 'Advanced Protection', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Combines cookies + codes + rate limiting' },
         { name: 'Scheduled Poll Closing', free: true, oneTime: true, pro: true, proPlus: true },
         
+        // Analytics - NEW SECTION
+        { name: 'Total Votes & Percentages', free: true, oneTime: true, pro: true, proPlus: true, category: 'Analytics (Privacy-First)' },
+        { name: 'Real-Time Results', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Basic Bar/Pie Charts', free: true, oneTime: true, pro: true, proPlus: true },
+        { name: 'Vote Timeline Chart', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'See when votes came in over time' },
+        { name: 'First/Last Vote Timestamps', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Peak Voting Hour', free: false, oneTime: true, pro: true, proPlus: true, tooltip: 'Know when your voters are most active' },
+        { name: 'Daily Voting Trends', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Hourly Distribution', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Full 24-hour breakdown of voting activity' },
+        { name: 'Day-of-Week Patterns', free: false, oneTime: false, pro: false, proPlus: true },
+        { name: 'Response Velocity Tracking', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Is voting speeding up or slowing down?' },
+        { name: 'UTM Source Tracking', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Track which links drive the most votes' },
+        { name: 'Country Statistics', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Aggregated only. No individual tracking. Privacy-first.' },
+
         // Export
-        { name: 'Basic Analytics', free: true, oneTime: true, pro: true, proPlus: true, category: 'Analytics & Export' },
-        { name: 'Download as CSV', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Download as CSV', free: false, oneTime: true, pro: true, proPlus: true, category: 'Export' },
         { name: 'Download as PDF', free: false, oneTime: true, pro: true, proPlus: true },
         { name: 'Export to Google Sheets', free: false, oneTime: true, pro: true, proPlus: true },
+        { name: 'Export with Timestamps', free: false, oneTime: true, pro: true, proPlus: true },
         
         // Extras
         { name: 'Voter Comments', free: false, oneTime: true, pro: true, proPlus: true, category: 'Extras' },
@@ -210,12 +228,28 @@ const PricingPage: React.FC = () => {
             a: "Your existing polls stay accessible, but new polls use free tier features. You can purchase another One-Time pass or upgrade to Pro anytime."
         },
         {
-            q: "What's the difference between Pro and Pro+ embeds?",
-            a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label — zero VoteGenerator branding anywhere."
+            q: "What's included in 'Privacy-First Analytics'?",
+            a: "We track vote timestamps, counts, and patterns — not people. Free: totals & percentages. Pro: timeline charts, peak hours, trends. Pro+: hourly distribution, velocity, aggregated country stats. We never store IP addresses, device info, or personal identifiers."
+        },
+        {
+            q: "How does country tracking work? Is it private?",
+            a: "Pro+ shows aggregated stats like '45% from US, 20% from UK'. We look up the country once, then discard the IP. We never store individual locations — only totals. Your voters stay anonymous."
+        },
+        {
+            q: "What are Named Admin Tokens?",
+            a: "Pro+ feature: Instead of one shared admin link, create multiple tokens with labels like 'Marketing Team' or 'Sarah'. You can revoke individual access anytime without affecting others. Only you (the creator) can manage tokens."
+        },
+        {
+            q: "Can someone lock me out of my own poll?",
+            a: "No! You're the poll creator with a Master Key that can never be revoked. You control all admin tokens. Shared admins cannot lock you out or create their own tokens."
         },
         {
             q: "How do unique voting codes work?",
             a: "Generate one-time access codes. Share them with your voters. Each code works exactly once, preventing duplicate votes regardless of browser or device."
+        },
+        {
+            q: "What's the difference between Pro and Pro+ embeds?",
+            a: "Pro embeds show your logo but include a small 'Powered by VoteGenerator' footer. Pro+ is fully white-label — zero VoteGenerator branding anywhere."
         },
         {
             q: "Can I upgrade or downgrade anytime?",

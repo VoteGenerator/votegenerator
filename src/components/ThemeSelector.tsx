@@ -1,18 +1,13 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Check, Palette, Crown } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Palette, Crown, Upload, Pipette } from 'lucide-react';
 
 export interface PollTheme {
     id: string;
     name: string;
-    isPro: boolean;
     preview: {
         primaryColor: string;
         secondaryColor: string;
-        bgGradient: string;
-        buttonColor: string;
-        textColor: string;
-        accentColor: string;
     };
     css: {
         '--poll-primary': string;
@@ -29,19 +24,12 @@ export interface PollTheme {
     };
 }
 
+// ALL THEMES ARE FREE!
 export const POLL_THEMES: PollTheme[] = [
     {
         id: 'default',
         name: 'Classic Blue',
-        isPro: false,
-        preview: {
-            primaryColor: '#6366f1',
-            secondaryColor: '#818cf8',
-            bgGradient: 'from-slate-50 to-indigo-50',
-            buttonColor: '#6366f1',
-            textColor: '#1e293b',
-            accentColor: '#6366f1',
-        },
+        preview: { primaryColor: '#6366f1', secondaryColor: '#818cf8' },
         css: {
             '--poll-primary': '#6366f1',
             '--poll-secondary': '#818cf8',
@@ -59,15 +47,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'ocean',
         name: 'Ocean Breeze',
-        isPro: false,
-        preview: {
-            primaryColor: '#0891b2',
-            secondaryColor: '#06b6d4',
-            bgGradient: 'from-cyan-50 to-teal-50',
-            buttonColor: '#0891b2',
-            textColor: '#164e63',
-            accentColor: '#06b6d4',
-        },
+        preview: { primaryColor: '#0891b2', secondaryColor: '#06b6d4' },
         css: {
             '--poll-primary': '#0891b2',
             '--poll-secondary': '#06b6d4',
@@ -85,15 +65,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'sunset',
         name: 'Sunset Glow',
-        isPro: false,
-        preview: {
-            primaryColor: '#f97316',
-            secondaryColor: '#fb923c',
-            bgGradient: 'from-orange-50 to-amber-50',
-            buttonColor: '#f97316',
-            textColor: '#7c2d12',
-            accentColor: '#f59e0b',
-        },
+        preview: { primaryColor: '#f97316', secondaryColor: '#fb923c' },
         css: {
             '--poll-primary': '#f97316',
             '--poll-secondary': '#fb923c',
@@ -111,15 +83,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'forest',
         name: 'Forest Green',
-        isPro: false,
-        preview: {
-            primaryColor: '#16a34a',
-            secondaryColor: '#22c55e',
-            bgGradient: 'from-green-50 to-emerald-50',
-            buttonColor: '#16a34a',
-            textColor: '#14532d',
-            accentColor: '#22c55e',
-        },
+        preview: { primaryColor: '#16a34a', secondaryColor: '#22c55e' },
         css: {
             '--poll-primary': '#16a34a',
             '--poll-secondary': '#22c55e',
@@ -137,15 +101,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'grape',
         name: 'Grape Vine',
-        isPro: true,
-        preview: {
-            primaryColor: '#9333ea',
-            secondaryColor: '#a855f7',
-            bgGradient: 'from-purple-50 to-fuchsia-50',
-            buttonColor: '#9333ea',
-            textColor: '#581c87',
-            accentColor: '#a855f7',
-        },
+        preview: { primaryColor: '#9333ea', secondaryColor: '#a855f7' },
         css: {
             '--poll-primary': '#9333ea',
             '--poll-secondary': '#a855f7',
@@ -163,15 +119,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'rose',
         name: 'Rose Garden',
-        isPro: true,
-        preview: {
-            primaryColor: '#e11d48',
-            secondaryColor: '#f43f5e',
-            bgGradient: 'from-rose-50 to-pink-50',
-            buttonColor: '#e11d48',
-            textColor: '#881337',
-            accentColor: '#f43f5e',
-        },
+        preview: { primaryColor: '#e11d48', secondaryColor: '#f43f5e' },
         css: {
             '--poll-primary': '#e11d48',
             '--poll-secondary': '#f43f5e',
@@ -189,15 +137,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'midnight',
         name: 'Midnight Dark',
-        isPro: true,
-        preview: {
-            primaryColor: '#3b82f6',
-            secondaryColor: '#60a5fa',
-            bgGradient: 'from-slate-900 to-slate-800',
-            buttonColor: '#3b82f6',
-            textColor: '#f1f5f9',
-            accentColor: '#60a5fa',
-        },
+        preview: { primaryColor: '#3b82f6', secondaryColor: '#60a5fa' },
         css: {
             '--poll-primary': '#3b82f6',
             '--poll-secondary': '#60a5fa',
@@ -215,15 +155,7 @@ export const POLL_THEMES: PollTheme[] = [
     {
         id: 'corporate',
         name: 'Corporate',
-        isPro: true,
-        preview: {
-            primaryColor: '#1e40af',
-            secondaryColor: '#3b82f6',
-            bgGradient: 'from-slate-100 to-blue-50',
-            buttonColor: '#1e40af',
-            textColor: '#1e3a8a',
-            accentColor: '#3b82f6',
-        },
+        preview: { primaryColor: '#1e40af', secondaryColor: '#3b82f6' },
         css: {
             '--poll-primary': '#1e40af',
             '--poll-secondary': '#3b82f6',
@@ -251,32 +183,45 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     onThemeChange,
     isPro = false,
 }) => {
+    const [showCustomizer, setShowCustomizer] = useState(false);
+    const [customPrimary, setCustomPrimary] = useState('#6366f1');
+    const [customSecondary, setCustomSecondary] = useState('#818cf8');
+    
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Palette size={16} className="text-indigo-500" />
-                <span>Poll Theme</span>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <Palette size={16} className="text-indigo-500" />
+                    <span>Poll Theme</span>
+                </div>
+                {isPro && (
+                    <button
+                        onClick={() => setShowCustomizer(!showCustomizer)}
+                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                    >
+                        <Pipette size={12} />
+                        {showCustomizer ? 'Hide' : 'Custom Branding'}
+                    </button>
+                )}
             </div>
             
+            {/* Theme Grid - All Free */}
             <div className="grid grid-cols-4 gap-2">
                 {POLL_THEMES.map((theme) => {
                     const isSelected = selectedTheme === theme.id;
-                    const isLocked = theme.isPro && !isPro;
                     
                     return (
                         <motion.button
                             key={theme.id}
-                            onClick={() => !isLocked && onThemeChange(theme.id)}
-                            whileHover={{ scale: isLocked ? 1 : 1.05 }}
-                            whileTap={{ scale: isLocked ? 1 : 0.95 }}
+                            onClick={() => onThemeChange(theme.id)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             className={`relative p-2 rounded-lg border-2 transition-all ${
                                 isSelected
                                     ? 'border-indigo-500 ring-2 ring-indigo-200'
-                                    : isLocked
-                                    ? 'border-slate-200 opacity-60 cursor-not-allowed'
                                     : 'border-slate-200 hover:border-slate-300'
                             }`}
-                            title={isLocked ? 'Pro feature' : theme.name}
+                            title={theme.name}
                         >
                             {/* Color preview */}
                             <div className="flex gap-1 mb-1.5">
@@ -305,24 +250,105 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                                     <Check size={12} className="text-white" />
                                 </motion.div>
                             )}
-                            
-                            {/* Pro badge */}
-                            {theme.isPro && (
-                                <div className="absolute -top-1 -left-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center">
-                                    <Crown size={10} className="text-amber-800" />
-                                </div>
-                            )}
                         </motion.button>
                     );
                 })}
             </div>
             
+            {/* Pro Custom Branding Teaser (for non-Pro users) */}
             {!isPro && (
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                    <Crown size={12} className="text-amber-500" />
-                    Upgrade to Pro for premium themes
-                </p>
+                <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Crown size={14} className="text-amber-600" />
+                        <span className="text-sm font-bold text-amber-800">Custom Branding</span>
+                        <span className="px-1.5 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded">PRO</span>
+                    </div>
+                    <p className="text-xs text-amber-700">
+                        Upload your logo and pick custom colors to match your brand.
+                    </p>
+                </div>
             )}
+            
+            {/* Custom Branding Panel (Pro only) */}
+            <AnimatePresence>
+                {isPro && showCustomizer && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 space-y-4">
+                            <h4 className="text-sm font-bold text-indigo-800 flex items-center gap-2">
+                                <Crown size={14} className="text-amber-500" />
+                                Custom Branding
+                            </h4>
+                            
+                            {/* Custom Colors */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Primary Color</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={customPrimary}
+                                            onChange={(e) => setCustomPrimary(e.target.value)}
+                                            className="w-8 h-8 rounded border-2 border-slate-200 cursor-pointer"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={customPrimary}
+                                            onChange={(e) => setCustomPrimary(e.target.value)}
+                                            className="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded font-mono"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Secondary</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={customSecondary}
+                                            onChange={(e) => setCustomSecondary(e.target.value)}
+                                            className="w-8 h-8 rounded border-2 border-slate-200 cursor-pointer"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={customSecondary}
+                                            onChange={(e) => setCustomSecondary(e.target.value)}
+                                            className="flex-1 px-2 py-1.5 text-xs border border-slate-200 rounded font-mono"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Logo Upload */}
+                            <div>
+                                <label className="text-xs font-medium text-slate-600 block mb-2">Your Logo</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-lg border-2 border-dashed border-slate-300 bg-white flex items-center justify-center">
+                                        <Upload size={16} className="text-slate-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <button
+                                            onClick={() => alert('Logo upload available in admin dashboard after poll creation.')}
+                                            className="px-3 py-1.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                        >
+                                            Upload Logo
+                                        </button>
+                                        <p className="text-[10px] text-slate-500 mt-0.5">PNG/SVG, max 2MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p className="text-[10px] text-indigo-600 bg-indigo-100 px-2 py-1.5 rounded">
+                                💡 Custom branding can also be updated from the admin dashboard after poll creation.
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

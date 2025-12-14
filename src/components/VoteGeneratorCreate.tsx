@@ -4,7 +4,7 @@ import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircl
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
-import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
+import ThemeSelector, { POLL_THEMES, createCustomTheme } from './ThemeSelector';
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
@@ -242,7 +242,12 @@ const VoteGeneratorCreate: React.FC = () => {
     
     // Theme selection
     const [selectedTheme, setSelectedTheme] = useState<string>('default');
-    const currentTheme = POLL_THEMES.find(t => t.id === selectedTheme) || POLL_THEMES[0];
+    const [customColor, setCustomColor] = useState<string>('#6366f1');
+    
+    // Get current theme (including custom)
+    const currentTheme = selectedTheme === 'custom' 
+        ? createCustomTheme(customColor) 
+        : POLL_THEMES.find(t => t.id === selectedTheme) || POLL_THEMES[0];
 
     const lastInputRef = useRef<HTMLInputElement>(null);
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -746,6 +751,8 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <ThemeSelector
                                         selectedTheme={selectedTheme}
                                         onThemeChange={setSelectedTheme}
+                                        customColor={customColor}
+                                        onCustomColorChange={setCustomColor}
                                         isPro={hasPremium}
                                     />
                                 </div>
@@ -931,9 +938,10 @@ const VoteGeneratorCreate: React.FC = () => {
                         initial={{ opacity: 0, x: 20 }} 
                         animate={{ opacity: 1, x: 0 }} 
                         transition={{ delay: 0.3 }}
-                        className="flex-1 lg:max-w-md hidden lg:block"
+                        className="flex-1 lg:max-w-md"
                     >
-                        <div className="sticky top-6">
+                        {/* Sticky container - accounts for promo banner (48px) + nav (64px) + padding */}
+                        <div className="lg:sticky lg:top-36">
                             {/* Preview Header */}
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">

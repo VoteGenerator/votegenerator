@@ -18,14 +18,57 @@ import {
 
 interface NavHeaderProps {
     currentPage?: 'create' | 'demo' | 'pricing' | 'compare' | 'blog' | 'help';
+    onNavigate?: (page: string) => void;
 }
 
-const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
+const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigate }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
 
+    const handleNavClick = (e: React.MouseEvent, pageId: string, href: string) => {
+        e.preventDefault();
+        
+        // If there's an onNavigate callback, use it
+        if (onNavigate) {
+            onNavigate(pageId);
+            setMobileMenuOpen(false);
+            return;
+        }
+        
+        // Try to scroll to section based on href
+        if (href.startsWith('#') && href.length > 1) {
+            const sectionId = href.slice(1);
+            const element = document.getElementById(sectionId);
+            if (element) {
+                // Account for sticky header + promo banner (48px + 64px + padding)
+                const offset = 130; 
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            } else {
+                // Section doesn't exist yet - scroll to poll creator as fallback
+                const fallback = document.getElementById('poll-creator');
+                if (fallback) {
+                    const offset = 130;
+                    const elementPosition = fallback.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            }
+        } else if (href === '#') {
+            // Scroll to top for home/create
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        setMobileMenuOpen(false);
+    };
+
     const navItems = [
-        { id: 'create', label: 'Create Poll', href: '#', icon: Sparkles },
+        { id: 'create', label: 'Create Poll', href: '#poll-creator', icon: Sparkles },
         { id: 'demo', label: 'Demo', href: '#demo', icon: Play },
         { id: 'pricing', label: 'Pricing', href: '#pricing', icon: DollarSign },
         { id: 'compare', label: 'Compare', href: '#compare', icon: GitCompare },
@@ -34,10 +77,10 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
     ];
 
     const pollTypes = [
-        { name: 'Ranked Choice', href: '#', icon: ListOrdered },
-        { name: 'Multiple Choice', href: '#', icon: CheckSquare },
-        { name: 'Visual Poll', href: '#', icon: Image, pro: true },
-        { name: 'Meeting Scheduler', href: '#', icon: Calendar },
+        { name: 'Ranked Choice', href: '#poll-creator', icon: ListOrdered },
+        { name: 'Multiple Choice', href: '#poll-creator', icon: CheckSquare },
+        { name: 'Visual Poll', href: '#poll-creator', icon: Image, pro: true },
+        { name: 'Meeting Scheduler', href: '#poll-creator', icon: Calendar },
     ];
 
     return (
@@ -111,6 +154,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                             <a
                                 key={item.id}
                                 href={item.href}
+                                onClick={(e) => handleNavClick(e, item.id, item.href)}
                                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                                     currentPage === item.id
                                         ? 'text-indigo-600 bg-indigo-50'
@@ -125,7 +169,8 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
                         <a
-                            href="#"
+                            href="#poll-creator"
+                            onClick={(e) => handleNavClick(e, 'create', '#poll-creator')}
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
@@ -156,6 +201,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                 <a
                                     key={item.id}
                                     href={item.href}
+                                    onClick={(e) => handleNavClick(e, item.id, item.href)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                                         currentPage === item.id
                                             ? 'text-indigo-600 bg-indigo-50'
@@ -168,7 +214,8 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
                                 <a
-                                    href="#"
+                                    href="#poll-creator"
+                                    onClick={(e) => handleNavClick(e, 'create', '#poll-creator')}
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll

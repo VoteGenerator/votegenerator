@@ -8,10 +8,23 @@ import {
     ShieldCheck
 } from 'lucide-react';
 
+interface FooterLink {
+    label: string;
+    href: string;
+    coming?: boolean;
+}
+
+interface FooterLinks {
+    product: FooterLink[];
+    resources: FooterLink[];
+    company: FooterLink[];
+    legal: FooterLink[];
+}
+
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
     
-    const footerLinks = {
+    const footerLinks: FooterLinks = {
         product: [
             { label: 'Create Poll', href: '#' },
             { label: 'Demo', href: '#demo' },
@@ -22,7 +35,6 @@ const Footer: React.FC = () => {
         resources: [
             { label: 'Help Center', href: '#help' },
             { label: 'Blog', href: '#blog' },
-            { label: 'API Documentation', href: '#api', coming: true },
         ],
         company: [
             { label: 'About Us', href: '#about' },

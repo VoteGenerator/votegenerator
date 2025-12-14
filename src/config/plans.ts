@@ -27,8 +27,8 @@ export interface PlanLimits {
     customLogo: boolean;
     customShortLinks: boolean;
     exportCsv: boolean;
+    exportExcel: boolean;
     exportPdf: boolean;
-    exportGoogleSheets: boolean;
     voterComments: boolean;
     uniqueVotingCodes: boolean;
     visualPoll: boolean;
@@ -74,8 +74,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
         customLogo: false,
         customShortLinks: false,
         exportCsv: false,
+        exportExcel: false,
         exportPdf: false,
-        exportGoogleSheets: false,
         voterComments: false,
         uniqueVotingCodes: false,
         visualPoll: false,
@@ -116,8 +116,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
         customLogo: true,
         customShortLinks: true,
         exportCsv: true,
+        exportExcel: true,
         exportPdf: true,
-        exportGoogleSheets: true,
         voterComments: true,
         uniqueVotingCodes: false,
         visualPoll: false,
@@ -158,8 +158,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
         customLogo: true,
         customShortLinks: true,
         exportCsv: true,
+        exportExcel: true,
         exportPdf: true,
-        exportGoogleSheets: true,
         voterComments: true,
         uniqueVotingCodes: true,
         visualPoll: true,
@@ -200,8 +200,8 @@ export const PLANS: Record<PlanTier, PlanLimits> = {
         customLogo: true,
         customShortLinks: true,
         exportCsv: true,
+        exportExcel: true,
         exportPdf: true,
-        exportGoogleSheets: true,
         voterComments: true,
         uniqueVotingCodes: true,
         visualPoll: true,
@@ -288,7 +288,10 @@ export const ACTIVE_PROMOS: Promo[] = [
         originalPlan: 'pro',
         promoPrice: 5.00,
         durationDays: 30,
-        validUntil: new Date('2025-02-28'), // Adjust as needed
+        // Promo runs from Dec 14, 2025 to Jan 31, 2026
+        // To make it "always on" - just extend validUntil far into the future
+        // To disable - set isActive: false
+        validUntil: new Date('2026-01-31'),
         isActive: true,
     },
 ];

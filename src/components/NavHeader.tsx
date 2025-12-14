@@ -13,11 +13,12 @@ import {
     ListOrdered,
     Image,
     Calendar,
-    CheckSquare
+    CheckSquare,
+    GitCompare
 } from 'lucide-react';
 
 interface NavHeaderProps {
-    currentPage?: 'create' | 'demo' | 'pricing' | 'blog' | 'help';
+    currentPage?: 'create' | 'demo' | 'pricing' | 'compare' | 'blog' | 'help';
 }
 
 const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
@@ -28,6 +29,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
         { id: 'create', label: 'Create Poll', href: '#', icon: Sparkles },
         { id: 'demo', label: 'Demo', href: '#demo', icon: Play },
         { id: 'pricing', label: 'Pricing', href: '#pricing', icon: DollarSign },
+        { id: 'compare', label: 'Compare', href: '#compare', icon: GitCompare },
         { id: 'blog', label: 'Blog', href: '#blog', icon: BookOpen },
         { id: 'help', label: 'Help', href: '#help', icon: HelpCircle },
     ];

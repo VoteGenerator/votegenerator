@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { 
     Mail, 
     Twitter, 
@@ -9,42 +8,37 @@ import {
     ShieldCheck
 } from 'lucide-react';
 
-interface FooterLink {
-    label: string;
-    href: string;
-    coming?: boolean;
-}
-
-interface FooterLinks {
-    product: FooterLink[];
-    resources: FooterLink[];
-    company: FooterLink[];
-    legal: FooterLink[];
-}
-
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
     
-    const footerLinks: FooterLinks = {
+    const scrollToSection = (sectionId: string) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            const offset = 130;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+    };
+    
+    const footerLinks = {
         product: [
-            { label: 'Create Poll', href: '/' },
-            { label: 'Demo', href: '/demo' },
-            { label: 'Pricing', href: '/pricing' },
-            { label: 'Compare Plans', href: '/compare' },
-            { label: 'All 12 Poll Types', href: '/demo' },
+            { label: 'Create Poll', section: 'poll-creator' },
+            { label: 'Demo', section: 'demo-section' },
+            { label: 'Pricing', section: 'pricing' },
+            { label: 'Compare Plans', section: 'why-choose-us' },
         ],
         resources: [
-            { label: 'Help Center', href: '/help' },
-            { label: 'Blog', href: '/blog' },
+            { label: 'Help Center', section: 'poll-creator', coming: true },
+            { label: 'Blog', section: 'poll-creator', coming: true },
         ],
         company: [
-            { label: 'About Us', href: '/', coming: true },
-            { label: 'Contact Us', href: '/', coming: true },
+            { label: 'About Us', section: 'hero', coming: true },
+            { label: 'Contact Us', section: 'hero', coming: true },
         ],
         legal: [
-            { label: 'Privacy Policy', href: '/', coming: true },
-            { label: 'Terms of Service', href: '/', coming: true },
-            { label: 'Cookie Policy', href: '/', coming: true },
+            { label: 'Privacy Policy', section: 'hero', coming: true },
+            { label: 'Terms of Service', section: 'hero', coming: true },
         ],
     };
     
@@ -62,14 +56,17 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     {/* Brand Column */}
                     <div className="col-span-2">
-                        <Link to="/" className="flex items-center gap-2 mb-4">
+                        <button 
+                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            className="flex items-center gap-2 mb-4"
+                        >
                             <img 
                                 src="/logo.svg" 
                                 alt="VoteGenerator" 
                                 className="w-10 h-10"
                             />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
-                        </Link>
+                        </button>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">
                             Create beautiful polls in seconds. No signup required. Privacy-first.
                         </p>
@@ -101,12 +98,12 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.product.map((link) => (
                                 <li key={link.label}>
-                                    <Link 
-                                        to={link.href}
+                                    <button 
+                                        onClick={() => scrollToSection(link.section)}
                                         className="text-sm text-slate-400 hover:text-white transition-colors"
                                     >
                                         {link.label}
-                                    </Link>
+                                    </button>
                                 </li>
                             ))}
                         </ul>
@@ -118,15 +115,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.resources.map((link) => (
                                 <li key={link.label}>
-                                    <Link 
-                                        to={link.href}
+                                    <button 
+                                        onClick={() => scrollToSection(link.section)}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </Link>
+                                    </button>
                                 </li>
                             ))}
                         </ul>
@@ -138,15 +135,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.company.map((link) => (
                                 <li key={link.label}>
-                                    <Link 
-                                        to={link.href}
+                                    <button 
+                                        onClick={() => scrollToSection(link.section)}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </Link>
+                                    </button>
                                 </li>
                             ))}
                         </ul>
@@ -158,15 +155,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.label}>
-                                    <Link 
-                                        to={link.href}
+                                    <button 
+                                        onClick={() => scrollToSection(link.section)}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </Link>
+                                    </button>
                                 </li>
                             ))}
                         </ul>

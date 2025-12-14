@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Check, 
@@ -15,6 +16,9 @@ import {
     BarChart3,
     Code
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import Footer from './Footer';
+import PromoBanner from './PromoBanner';
 
 interface ComparisonRow {
     feature: string;
@@ -133,6 +137,13 @@ const ComparePage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* Promo Banner */}
+            <PromoBanner position="top" />
+            <div className="h-12" />
+            
+            {/* Navigation */}
+            <NavHeader />
+            
             {/* Hero */}
             <div className="pt-16 pb-12 px-4 text-center">
                 <motion.div
@@ -332,23 +343,26 @@ const ComparePage: React.FC = () => {
                         No signup. No credit card. Just create and share.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a
-                            href="#"
+                        <Link
+                            to="/"
                             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                         >
                             <Sparkles size={20} />
                             Create Free Poll
                             <ArrowRight size={20} />
-                        </a>
-                        <a
-                            href="#pricing"
+                        </Link>
+                        <Link
+                            to="/pricing"
                             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-500 text-white font-bold rounded-xl hover:bg-indigo-400 transition-all"
                         >
                             View Pricing
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

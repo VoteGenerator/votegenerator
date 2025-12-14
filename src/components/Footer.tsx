@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
     Mail, 
     Twitter, 
@@ -12,6 +13,7 @@ interface FooterLink {
     label: string;
     href: string;
     coming?: boolean;
+    isExternal?: boolean;
 }
 
 interface FooterLinks {
@@ -26,24 +28,24 @@ const Footer: React.FC = () => {
     
     const footerLinks: FooterLinks = {
         product: [
-            { label: 'Create Poll', href: '#' },
-            { label: 'Demo', href: '#demo' },
-            { label: 'Pricing', href: '#pricing' },
-            { label: 'Compare Plans', href: '#compare' },
-            { label: 'All 12 Poll Types', href: '#demo' },
+            { label: 'Create Poll', href: '/' },
+            { label: 'Demo', href: '/demo' },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Compare Plans', href: '/compare' },
+            { label: 'All 12 Poll Types', href: '/demo' },
         ],
         resources: [
-            { label: 'Help Center', href: '#help' },
-            { label: 'Blog', href: '#blog' },
+            { label: 'Help Center', href: '/help' },
+            { label: 'Blog', href: '/blog' },
         ],
         company: [
-            { label: 'About Us', href: '#about' },
-            { label: 'Contact Us', href: '#contact' },
+            { label: 'About Us', href: '/about', coming: true },
+            { label: 'Contact Us', href: '/contact', coming: true },
         ],
         legal: [
-            { label: 'Privacy Policy', href: '#privacy' },
-            { label: 'Terms of Service', href: '#terms' },
-            { label: 'Cookie Policy', href: '#cookies' },
+            { label: 'Privacy Policy', href: '/privacy', coming: true },
+            { label: 'Terms of Service', href: '/terms', coming: true },
+            { label: 'Cookie Policy', href: '/cookies', coming: true },
         ],
     };
     
@@ -61,14 +63,14 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     {/* Brand Column */}
                     <div className="col-span-2">
-                        <a href="#" className="flex items-center gap-2 mb-4">
+                        <Link to="/" className="flex items-center gap-2 mb-4">
                             <img 
                                 src="/logo.svg" 
                                 alt="VoteGenerator" 
                                 className="w-10 h-10"
                             />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
-                        </a>
+                        </Link>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">
                             Create beautiful polls in seconds. No signup required. Privacy-first.
                         </p>
@@ -100,12 +102,12 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.product.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={link.href}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors"
                                     >
                                         {link.label}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -117,15 +119,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.resources.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={link.href}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -137,15 +139,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.company.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={link.href}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -157,12 +159,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={link.href}
-                                        className="text-sm text-slate-400 hover:text-white transition-colors"
+                                    <Link 
+                                        to={link.href}
+                                        className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
-                                    </a>
+                                        {link.coming && (
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
+                                        )}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>

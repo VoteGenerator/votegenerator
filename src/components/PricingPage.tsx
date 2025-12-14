@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Check, 
@@ -19,6 +20,9 @@ import {
     Eye,
     Gift
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import Footer from './Footer';
+import PromoBanner from './PromoBanner';
 
 // Proper TypeScript interfaces
 interface PlanFeature {
@@ -270,6 +274,13 @@ const PricingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* Promo Banner */}
+            <PromoBanner position="top" />
+            <div className="h-12" />
+            
+            {/* Navigation */}
+            <NavHeader />
+            
             {/* Unique Value Proposition Hero */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-8">
                 <div className="max-w-5xl mx-auto px-4">
@@ -791,16 +802,19 @@ const PricingPage: React.FC = () => {
                     <p className="text-indigo-100 mb-8">
                         No signup. No credit card. No email required. Just start creating.
                     </p>
-                    <a
-                        href="#"
+                    <Link
+                        to="/"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />
                         Create Free Poll
                         <ArrowRight size={20} />
-                    </a>
+                    </Link>
                 </div>
             </div>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

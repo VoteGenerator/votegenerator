@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ListOrdered, 
@@ -25,6 +26,9 @@ import {
     Crown,
     Check
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import Footer from './Footer';
+import PromoBanner from './PromoBanner';
 import PollTypePreview from './PollTypePreview';
 
 interface PollTypeInfo {
@@ -411,6 +415,13 @@ const DemoPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* Promo Banner */}
+            <PromoBanner position="top" />
+            <div className="h-12" />
+            
+            {/* Navigation */}
+            <NavHeader />
+            
             {/* Hero Section */}
             <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-pink-600/5" />
@@ -833,16 +844,19 @@ const DemoPage: React.FC = () => {
                     <p className="text-indigo-100 mb-8">
                         No signup. No credit card. Just start creating.
                     </p>
-                    <a
-                        href="#"
+                    <Link
+                        to="/"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />
                         Create Free Poll
                         <ArrowRight size={20} />
-                    </a>
+                    </Link>
                 </div>
             </div>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

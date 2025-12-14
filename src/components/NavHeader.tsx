@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, 
@@ -21,66 +22,64 @@ interface NavHeaderProps {
     onNavigate?: (page: string) => void;
 }
 
-const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigate }) => {
+const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
+    const location = useLocation();
+    
+    // Determine current page from URL
+    const getCurrentPage = () => {
+        const path = location.pathname;
+        if (path === '/demo') return 'demo';
+        if (path === '/pricing') return 'pricing';
+        if (path === '/compare') return 'compare';
+        if (path === '/blog') return 'blog';
+        if (path === '/help') return 'help';
+        return 'create';
+    };
+    
+    const currentPage = getCurrentPage();
 
-    const handleNavClick = (e: React.MouseEvent, pageId: string, href: string) => {
-        e.preventDefault();
-        
+    const handleNavClick = (e: React.MouseEvent, pageId: string, href: string, isSection: boolean) => {
         // If there's an onNavigate callback, use it
         if (onNavigate) {
+            e.preventDefault();
             onNavigate(pageId);
             setMobileMenuOpen(false);
             return;
         }
         
-        // Try to scroll to section based on href
-        if (href.startsWith('#') && href.length > 1) {
-            const sectionId = href.slice(1);
+        // For section links on the home page, scroll to section
+        if (isSection && location.pathname === '/') {
+            e.preventDefault();
+            const sectionId = href.replace('/#', '');
             const element = document.getElementById(sectionId);
             if (element) {
-                // Account for sticky header + promo banner (48px + 64px + padding)
-                const offset = 130; 
+                const offset = 130;
                 const elementPosition = element.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - offset;
-                
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
-            } else {
-                // Section doesn't exist yet - scroll to poll creator as fallback
-                const fallback = document.getElementById('poll-creator');
-                if (fallback) {
-                    const offset = 130;
-                    const elementPosition = fallback.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - offset;
-                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                }
+                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
             }
-        } else if (href === '#') {
-            // Scroll to top for home/create
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        // For regular page links, let the Link component handle it
         
         setMobileMenuOpen(false);
     };
 
     const navItems = [
-        { id: 'create', label: 'Create Poll', href: '#poll-creator', icon: Sparkles },
-        { id: 'demo', label: 'Demo', href: '#demo', icon: Play },
-        { id: 'pricing', label: 'Pricing', href: '#pricing', icon: DollarSign },
-        { id: 'compare', label: 'Compare', href: '#compare', icon: GitCompare },
-        { id: 'blog', label: 'Blog', href: '#blog', icon: BookOpen },
-        { id: 'help', label: 'Help', href: '#help', icon: HelpCircle },
+        { id: 'create', label: 'Create Poll', href: '/#poll-creator', isSection: true, icon: Sparkles },
+        { id: 'demo', label: 'Demo', href: '/demo', isSection: false, icon: Play },
+        { id: 'pricing', label: 'Pricing', href: '/pricing', isSection: false, icon: DollarSign },
+        { id: 'compare', label: 'Compare', href: '/compare', isSection: false, icon: GitCompare },
+        { id: 'blog', label: 'Blog', href: '/blog', isSection: false, icon: BookOpen },
+        { id: 'help', label: 'Help', href: '/help', isSection: false, icon: HelpCircle },
     ];
 
     const pollTypes = [
-        { name: 'Ranked Choice', href: '#poll-creator', icon: ListOrdered },
-        { name: 'Multiple Choice', href: '#poll-creator', icon: CheckSquare },
-        { name: 'Visual Poll', href: '#poll-creator', icon: Image, pro: true },
-        { name: 'Meeting Scheduler', href: '#poll-creator', icon: Calendar },
+        { name: 'Ranked Choice', href: '/#poll-creator', icon: ListOrdered },
+        { name: 'Multiple Choice', href: '/#poll-creator', icon: CheckSquare },
+        { name: 'Visual Poll', href: '/#poll-creator', icon: Image, pro: true },
+        { name: 'Meeting Scheduler', href: '/#poll-creator', icon: Calendar },
     ];
 
     return (
@@ -88,7 +87,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo - Uses your logo.svg (already purple) */}
-                    <a href="#" className="flex items-center gap-2.5 group">
+                    <Link to="/" className="flex items-center gap-2.5 group">
                         <motion.img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
@@ -100,7 +99,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                         <span className="font-black text-xl text-slate-900 hidden sm:block">
                             VoteGenerator
                         </span>
-                    </a>
+                    </Link>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
@@ -126,9 +125,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                         className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"
                                     >
                                         {pollTypes.map((type) => (
-                                            <a
+                                            <Link
                                                 key={type.name}
-                                                href={type.href}
+                                                to={type.href}
                                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors"
                                             >
                                                 <type.icon size={18} className="text-indigo-500" />
@@ -138,12 +137,12 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                                         PRO
                                                     </span>
                                                 )}
-                                            </a>
+                                            </Link>
                                         ))}
                                         <div className="border-t border-slate-100 mt-2 pt-2 px-4 pb-2">
-                                            <a href="#" className="text-xs text-indigo-600 font-medium hover:underline">
+                                            <Link to="/demo" className="text-xs text-indigo-600 font-medium hover:underline">
                                                 View all 12 poll types →
-                                            </a>
+                                            </Link>
                                         </div>
                                     </motion.div>
                                 )}
@@ -151,26 +150,48 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                         </div>
 
                         {navItems.map((item) => (
-                            <a
-                                key={item.id}
-                                href={item.href}
-                                onClick={(e) => handleNavClick(e, item.id, item.href)}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                    currentPage === item.id
-                                        ? 'text-indigo-600 bg-indigo-50'
-                                        : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                }`}
-                            >
-                                {item.label}
-                            </a>
+                            item.isSection ? (
+                                <a
+                                    key={item.id}
+                                    href={item.href}
+                                    onClick={(e) => handleNavClick(e, item.id, item.href, item.isSection)}
+                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                        currentPage === item.id
+                                            ? 'text-indigo-600 bg-indigo-50'
+                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                    }`}
+                                >
+                                    {item.label}
+                                </a>
+                            ) : (
+                                <Link
+                                    key={item.id}
+                                    to={item.href}
+                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                        currentPage === item.id
+                                            ? 'text-indigo-600 bg-indigo-50'
+                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                    }`}
+                                >
+                                    {item.label}
+                                </Link>
+                            )
                         ))}
                     </nav>
 
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
-                        <a
-                            href="#poll-creator"
-                            onClick={(e) => handleNavClick(e, 'create', '#poll-creator')}
+                        <Link
+                            to="/#poll-creator"
+                            onClick={(e) => {
+                                if (location.pathname === '/') {
+                                    e.preventDefault();
+                                    const element = document.getElementById('poll-creator');
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                }
+                            }}
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
@@ -198,28 +219,52 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                     >
                         <nav className="p-4 space-y-1">
                             {navItems.map((item) => (
-                                <a
-                                    key={item.id}
-                                    href={item.href}
-                                    onClick={(e) => handleNavClick(e, item.id, item.href)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                                        currentPage === item.id
-                                            ? 'text-indigo-600 bg-indigo-50'
-                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                    }`}
-                                >
-                                    <item.icon size={20} />
-                                    <span className="font-medium">{item.label}</span>
-                                </a>
+                                item.isSection ? (
+                                    <a
+                                        key={item.id}
+                                        href={item.href}
+                                        onClick={(e) => handleNavClick(e, item.id, item.href, item.isSection)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                                            currentPage === item.id
+                                                ? 'text-indigo-600 bg-indigo-50'
+                                                : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                        }`}
+                                    >
+                                        <item.icon size={20} />
+                                        <span className="font-medium">{item.label}</span>
+                                    </a>
+                                ) : (
+                                    <Link
+                                        key={item.id}
+                                        to={item.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                                            currentPage === item.id
+                                                ? 'text-indigo-600 bg-indigo-50'
+                                                : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                        }`}
+                                    >
+                                        <item.icon size={20} />
+                                        <span className="font-medium">{item.label}</span>
+                                    </Link>
+                                )
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
-                                <a
-                                    href="#poll-creator"
-                                    onClick={(e) => handleNavClick(e, 'create', '#poll-creator')}
+                                <Link
+                                    to="/"
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        setTimeout(() => {
+                                            const element = document.getElementById('poll-creator');
+                                            if (element) {
+                                                element.scrollIntoView({ behavior: 'smooth' });
+                                            }
+                                        }, 100);
+                                    }}
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll
-                                </a>
+                                </Link>
                             </div>
                         </nav>
                     </motion.div>

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, 
@@ -22,72 +21,62 @@ interface NavHeaderProps {
     onNavigate?: (page: string) => void;
 }
 
-const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
+const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigate }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
-    const location = useLocation();
-    
-    // Determine current page from URL
-    const getCurrentPage = () => {
-        const path = location.pathname;
-        if (path === '/demo') return 'demo';
-        if (path === '/pricing') return 'pricing';
-        if (path === '/compare') return 'compare';
-        if (path === '/blog') return 'blog';
-        if (path === '/help') return 'help';
-        return 'create';
-    };
-    
-    const currentPage = getCurrentPage();
 
-    const handleNavClick = (e: React.MouseEvent, pageId: string, href: string, isSection: boolean) => {
-        // If there's an onNavigate callback, use it
+    const scrollToSection = (sectionId: string) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            const offset = 130;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+        setMobileMenuOpen(false);
+    };
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, pageId: string, sectionId: string) => {
+        e.preventDefault();
+        
         if (onNavigate) {
-            e.preventDefault();
             onNavigate(pageId);
             setMobileMenuOpen(false);
             return;
         }
         
-        // For section links on the home page, scroll to section
-        if (isSection && location.pathname === '/') {
-            e.preventDefault();
-            const sectionId = href.replace('/#', '');
-            const element = document.getElementById(sectionId);
-            if (element) {
-                const offset = 130;
-                const elementPosition = element.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - offset;
-                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-            }
-        }
-        // For regular page links, let the Link component handle it
-        
-        setMobileMenuOpen(false);
+        scrollToSection(sectionId);
     };
 
     const navItems = [
-        { id: 'create', label: 'Create Poll', href: '/#poll-creator', isSection: true, icon: Sparkles },
-        { id: 'demo', label: 'Demo', href: '/demo', isSection: false, icon: Play },
-        { id: 'pricing', label: 'Pricing', href: '/pricing', isSection: false, icon: DollarSign },
-        { id: 'compare', label: 'Compare', href: '/compare', isSection: false, icon: GitCompare },
-        { id: 'blog', label: 'Blog', href: '/blog', isSection: false, icon: BookOpen },
-        { id: 'help', label: 'Help', href: '/help', isSection: false, icon: HelpCircle },
+        { id: 'create', label: 'Create Poll', section: 'poll-creator', icon: Sparkles },
+        { id: 'demo', label: 'Demo', section: 'demo-section', icon: Play },
+        { id: 'pricing', label: 'Pricing', section: 'pricing', icon: DollarSign },
+        { id: 'compare', label: 'Compare', section: 'why-choose-us', icon: GitCompare },
+        { id: 'blog', label: 'Blog', section: 'poll-creator', icon: BookOpen },
+        { id: 'help', label: 'Help', section: 'poll-creator', icon: HelpCircle },
     ];
 
     const pollTypes = [
-        { name: 'Ranked Choice', href: '/#poll-creator', icon: ListOrdered },
-        { name: 'Multiple Choice', href: '/#poll-creator', icon: CheckSquare },
-        { name: 'Visual Poll', href: '/#poll-creator', icon: Image, pro: true },
-        { name: 'Meeting Scheduler', href: '/#poll-creator', icon: Calendar },
+        { name: 'Ranked Choice', section: 'poll-creator', icon: ListOrdered },
+        { name: 'Multiple Choice', section: 'poll-creator', icon: CheckSquare },
+        { name: 'Visual Poll', section: 'poll-creator', icon: Image, pro: true },
+        { name: 'Meeting Scheduler', section: 'poll-creator', icon: Calendar },
     ];
 
     return (
         <header className="sticky top-12 z-40 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo - Uses your logo.svg (already purple) */}
-                    <Link to="/" className="flex items-center gap-2.5 group">
+                    {/* Logo */}
+                    <a 
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="flex items-center gap-2.5 group"
+                    >
                         <motion.img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
@@ -99,7 +88,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                         <span className="font-black text-xl text-slate-900 hidden sm:block">
                             VoteGenerator
                         </span>
-                    </Link>
+                    </a>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
@@ -125,9 +114,13 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                                         className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"
                                     >
                                         {pollTypes.map((type) => (
-                                            <Link
+                                            <a
                                                 key={type.name}
-                                                to={type.href}
+                                                href={`#${type.section}`}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    scrollToSection(type.section);
+                                                }}
                                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors"
                                             >
                                                 <type.icon size={18} className="text-indigo-500" />
@@ -137,12 +130,19 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                                                         PRO
                                                     </span>
                                                 )}
-                                            </Link>
+                                            </a>
                                         ))}
                                         <div className="border-t border-slate-100 mt-2 pt-2 px-4 pb-2">
-                                            <Link to="/demo" className="text-xs text-indigo-600 font-medium hover:underline">
+                                            <a 
+                                                href="#demo-section"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    scrollToSection('demo-section');
+                                                }}
+                                                className="text-xs text-indigo-600 font-medium hover:underline"
+                                            >
                                                 View all 12 poll types →
-                                            </Link>
+                                            </a>
                                         </div>
                                     </motion.div>
                                 )}
@@ -150,52 +150,33 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                         </div>
 
                         {navItems.map((item) => (
-                            item.isSection ? (
-                                <a
-                                    key={item.id}
-                                    href={item.href}
-                                    onClick={(e) => handleNavClick(e, item.id, item.href, item.isSection)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                        currentPage === item.id
-                                            ? 'text-indigo-600 bg-indigo-50'
-                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                    }`}
-                                >
-                                    {item.label}
-                                </a>
-                            ) : (
-                                <Link
-                                    key={item.id}
-                                    to={item.href}
-                                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                        currentPage === item.id
-                                            ? 'text-indigo-600 bg-indigo-50'
-                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                    }`}
-                                >
-                                    {item.label}
-                                </Link>
-                            )
+                            <a
+                                key={item.id}
+                                href={`#${item.section}`}
+                                onClick={(e) => handleNavClick(e, item.id, item.section)}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                    currentPage === item.id
+                                        ? 'text-indigo-600 bg-indigo-50'
+                                        : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                }`}
+                            >
+                                {item.label}
+                            </a>
                         ))}
                     </nav>
 
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
-                        <Link
-                            to="/#poll-creator"
-                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                                if (location.pathname === '/') {
-                                    e.preventDefault();
-                                    const element = document.getElementById('poll-creator');
-                                    if (element) {
-                                        element.scrollIntoView({ behavior: 'smooth' });
-                                    }
-                                }
+                        <a
+                            href="#poll-creator"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                scrollToSection('poll-creator');
                             }}
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
-                        </Link>
+                        </a>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -219,52 +200,31 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                     >
                         <nav className="p-4 space-y-1">
                             {navItems.map((item) => (
-                                item.isSection ? (
-                                    <a
-                                        key={item.id}
-                                        href={item.href}
-                                        onClick={(e) => handleNavClick(e, item.id, item.href, item.isSection)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                                            currentPage === item.id
-                                                ? 'text-indigo-600 bg-indigo-50'
-                                                : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                        }`}
-                                    >
-                                        <item.icon size={20} />
-                                        <span className="font-medium">{item.label}</span>
-                                    </a>
-                                ) : (
-                                    <Link
-                                        key={item.id}
-                                        to={item.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                                            currentPage === item.id
-                                                ? 'text-indigo-600 bg-indigo-50'
-                                                : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                        }`}
-                                    >
-                                        <item.icon size={20} />
-                                        <span className="font-medium">{item.label}</span>
-                                    </Link>
-                                )
+                                <a
+                                    key={item.id}
+                                    href={`#${item.section}`}
+                                    onClick={(e) => handleNavClick(e, item.id, item.section)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                                        currentPage === item.id
+                                            ? 'text-indigo-600 bg-indigo-50'
+                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                    }`}
+                                >
+                                    <item.icon size={20} />
+                                    <span className="font-medium">{item.label}</span>
+                                </a>
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
-                                <Link
-                                    to="/"
-                                    onClick={() => {
-                                        setMobileMenuOpen(false);
-                                        setTimeout(() => {
-                                            const element = document.getElementById('poll-creator');
-                                            if (element) {
-                                                element.scrollIntoView({ behavior: 'smooth' });
-                                            }
-                                        }, 100);
+                                <a
+                                    href="#poll-creator"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        scrollToSection('poll-creator');
                                     }}
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll
-                                </Link>
+                                </a>
                             </div>
                         </nav>
                     </motion.div>

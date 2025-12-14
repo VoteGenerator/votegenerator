@@ -193,7 +193,7 @@ const DotVotingPreview: React.FC<{ question: string; options: string[] }> = ({ q
     
     // Seed votes for results
     const seedVotes: Record<string, number> = {};
-    options.forEach((opt, i) => {
+    options.forEach((opt) => {
         seedVotes[opt] = Math.floor(Math.random() * 30) + 10 + (dots[opt] || 0);
     });
     

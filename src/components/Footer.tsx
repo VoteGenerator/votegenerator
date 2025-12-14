@@ -5,8 +5,7 @@ import {
     Linkedin,
     Github,
     Heart,
-    ShieldCheck,
-    ExternalLink
+    ShieldCheck
 } from 'lucide-react';
 
 const Footer: React.FC = () => {
@@ -24,18 +23,15 @@ const Footer: React.FC = () => {
             { label: 'Help Center', href: '#help' },
             { label: 'Blog', href: '#blog' },
             { label: 'API Documentation', href: '#api', coming: true },
-            { label: 'Status Page', href: '#status', coming: true },
         ],
         company: [
             { label: 'About Us', href: '#about' },
             { label: 'Contact Us', href: '#contact' },
-            { label: 'Careers', href: '#careers', coming: true },
         ],
         legal: [
             { label: 'Privacy Policy', href: '#privacy' },
             { label: 'Terms of Service', href: '#terms' },
             { label: 'Cookie Policy', href: '#cookies' },
-            { label: 'GDPR', href: '#gdpr' },
         ],
     };
     
@@ -54,16 +50,11 @@ const Footer: React.FC = () => {
                     {/* Brand Column */}
                     <div className="col-span-2">
                         <a href="#" className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                                <img 
-                                    src="/logo.svg" 
-                                    alt="" 
-                                    className="w-6 h-6"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
+                            <img 
+                                src="/logo.svg" 
+                                alt="VoteGenerator" 
+                                className="w-10 h-10"
+                            />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
                         </a>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">

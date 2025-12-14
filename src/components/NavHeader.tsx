@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    BarChart2, 
     Menu, 
     X, 
     Sparkles,
@@ -45,24 +44,16 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo - Uses your logo.svg */}
+                    {/* Logo - Uses your logo.svg (already purple) */}
                     <a href="#" className="flex items-center gap-2.5 group">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-shadow overflow-hidden">
-                            <img 
-                                src="/logo.svg" 
-                                alt="" 
-                                className="w-6 h-6 object-contain"
-                                onError={(e) => {
-                                    // Fallback to icon if logo doesn't load
-                                    const parent = e.currentTarget.parentElement;
-                                    if (parent) {
-                                        e.currentTarget.style.display = 'none';
-                                    }
-                                }}
-                            />
-                            {/* Fallback icon (hidden when logo loads) */}
-                            <BarChart2 className="text-white hidden" size={22} />
-                        </div>
+                        <motion.img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
+                            initial={{ rotate: -10, scale: 0.9 }}
+                            animate={{ rotate: 0, scale: 1 }}
+                            transition={{ type: "spring", stiffness: 200 }}
+                        />
                         <span className="font-black text-xl text-slate-900 hidden sm:block">
                             VoteGenerator
                         </span>

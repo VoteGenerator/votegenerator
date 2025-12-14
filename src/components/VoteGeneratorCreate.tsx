@@ -472,16 +472,14 @@ const VoteGeneratorCreate: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 pb-20">
                 {/* Header with Logo */}
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8 pt-8">
-                    <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 3 }} transition={{ type: "spring", delay: 0.1 }} className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-200 overflow-hidden">
-                        <img 
-                            src="/logo.svg" 
-                            alt="" 
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                        />
-                    </motion.div>
+                    <motion.img 
+                        src="/logo.svg" 
+                        alt="VoteGenerator" 
+                        initial={{ scale: 0, rotate: -180 }} 
+                        animate={{ scale: 1, rotate: 3 }} 
+                        transition={{ type: "spring", delay: 0.1 }}
+                        className="w-16 h-16 mx-auto mb-4"
+                    />
                     <h1 className="text-3xl md:text-4xl font-black text-slate-800 font-serif mb-2 tracking-tight">VoteGenerator</h1>
                     <p className="text-slate-500 max-w-md mx-auto">Create beautiful polls in seconds</p>
                 </motion.div>

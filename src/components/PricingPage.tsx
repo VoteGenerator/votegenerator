@@ -583,22 +583,19 @@ const PricingPage: React.FC = () => {
                                 <tr className="border-b border-slate-200 bg-slate-50">
                                     <th className="text-left p-4 font-semibold text-slate-600 w-[40%]">Feature</th>
                                     <th className="text-center p-4 font-semibold text-slate-500 w-[15%]">
-                                        <div className="text-xs uppercase tracking-wider">Free</div>
+                                        <div className="text-sm">Free</div>
                                         <div className="text-slate-400 text-xs font-normal">ad-supported</div>
                                     </th>
                                     <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">
-                                        <div>One-Time</div>
-                                        <div className="text-slate-400 text-xs font-normal">$7.99</div>
+                                        <div className="text-sm">One-Time</div>
                                     </th>
                                     <th className="text-center p-4 font-semibold text-indigo-700 w-[15%] bg-indigo-50">
-                                        <div className="flex items-center justify-center gap-1">
+                                        <div className="flex items-center justify-center gap-1 text-sm">
                                             Pro <Crown size={12} className="text-amber-500" />
                                         </div>
-                                        <div className="text-indigo-400 text-xs font-normal">$6.58/mo</div>
                                     </th>
                                     <th className="text-center p-4 font-semibold text-slate-600 w-[15%]">
-                                        <div>Pro+</div>
-                                        <div className="text-slate-400 text-xs font-normal">$9.92/mo</div>
+                                        <div className="text-sm">Pro+</div>
                                     </th>
                                 </tr>
                             </thead>

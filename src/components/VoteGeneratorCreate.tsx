@@ -4,7 +4,7 @@ import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircl
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
-import ThemeSelector, { POLL_THEMES, createCustomTheme } from './ThemeSelector';
+import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
@@ -242,12 +242,7 @@ const VoteGeneratorCreate: React.FC = () => {
     
     // Theme selection
     const [selectedTheme, setSelectedTheme] = useState<string>('default');
-    const [customColor, setCustomColor] = useState<string>('#6366f1');
-    
-    // Get current theme (including custom)
-    const currentTheme = selectedTheme === 'custom' 
-        ? createCustomTheme(customColor) 
-        : POLL_THEMES.find(t => t.id === selectedTheme) || POLL_THEMES[0];
+    const currentTheme = POLL_THEMES.find(t => t.id === selectedTheme) || POLL_THEMES[0];
 
     const lastInputRef = useRef<HTMLInputElement>(null);
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -751,8 +746,6 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <ThemeSelector
                                         selectedTheme={selectedTheme}
                                         onThemeChange={setSelectedTheme}
-                                        customColor={customColor}
-                                        onCustomColorChange={setCustomColor}
                                         isPro={hasPremium}
                                     />
                                 </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ListOrdered, 
@@ -843,21 +844,14 @@ const DemoPage: React.FC = () => {
                     <p className="text-indigo-100 mb-8">
                         No signup. No credit card. Just start creating.
                     </p>
-                    <a
-                        href="#poll-creator"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            const element = document.getElementById('poll-creator');
-                            if (element) {
-                                element.scrollIntoView({ behavior: 'smooth' });
-                            }
-                        }}
+                    <Link
+                        to="/"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />
                         Create Free Poll
                         <ArrowRight size={20} />
-                    </a>
+                    </Link>
                 </div>
             </div>
             

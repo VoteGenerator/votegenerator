@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
     Mail, 
     Twitter, 
@@ -24,36 +25,26 @@ interface FooterLinks {
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
     
-    const scrollToSection = (sectionId: string) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            const offset = 130;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-    };
-    
     const footerLinks: FooterLinks = {
         product: [
-            { label: 'Create Poll', href: 'poll-creator' },
-            { label: 'Demo', href: 'demo-section' },
-            { label: 'Pricing', href: 'pricing' },
-            { label: 'Compare Plans', href: 'why-choose-us' },
-            { label: 'All 12 Poll Types', href: 'demo-section' },
+            { label: 'Create Poll', href: '/' },
+            { label: 'Demo', href: '/demo' },
+            { label: 'Pricing', href: '/pricing' },
+            { label: 'Compare Plans', href: '/compare' },
+            { label: 'All 12 Poll Types', href: '/demo' },
         ],
         resources: [
-            { label: 'Help Center', href: 'poll-creator', coming: true },
-            { label: 'Blog', href: 'poll-creator', coming: true },
+            { label: 'Help Center', href: '/help' },
+            { label: 'Blog', href: '/blog' },
         ],
         company: [
-            { label: 'About Us', href: 'poll-creator', coming: true },
-            { label: 'Contact Us', href: 'poll-creator', coming: true },
+            { label: 'About Us', href: '/', coming: true },
+            { label: 'Contact Us', href: '/', coming: true },
         ],
         legal: [
-            { label: 'Privacy Policy', href: 'poll-creator', coming: true },
-            { label: 'Terms of Service', href: 'poll-creator', coming: true },
-            { label: 'Cookie Policy', href: 'poll-creator', coming: true },
+            { label: 'Privacy Policy', href: '/', coming: true },
+            { label: 'Terms of Service', href: '/', coming: true },
+            { label: 'Cookie Policy', href: '/', coming: true },
         ],
     };
     
@@ -71,21 +62,14 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     {/* Brand Column */}
                     <div className="col-span-2">
-                        <a 
-                            href="#"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="flex items-center gap-2 mb-4"
-                        >
+                        <Link to="/" className="flex items-center gap-2 mb-4">
                             <img 
                                 src="/logo.svg" 
                                 alt="VoteGenerator" 
                                 className="w-10 h-10"
                             />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
-                        </a>
+                        </Link>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">
                             Create beautiful polls in seconds. No signup required. Privacy-first.
                         </p>
@@ -117,16 +101,12 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.product.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={`#${link.href}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            scrollToSection(link.href);
-                                        }}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors"
                                     >
                                         {link.label}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -138,19 +118,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.resources.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={`#${link.href}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            scrollToSection(link.href);
-                                        }}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -162,19 +138,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.company.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={`#${link.href}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            scrollToSection(link.href);
-                                        }}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -186,19 +158,15 @@ const Footer: React.FC = () => {
                         <ul className="space-y-2">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.label}>
-                                    <a 
-                                        href={`#${link.href}`}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            scrollToSection(link.href);
-                                        }}
+                                    <Link 
+                                        to={link.href}
                                         className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
                                     >
                                         {link.label}
                                         {link.coming && (
                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
                                         )}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -214,7 +182,7 @@ const Footer: React.FC = () => {
                             © {currentYear} VoteGenerator. All rights reserved.
                         </p>
                         <p className="text-sm text-slate-500 flex items-center gap-1">
-                            Made with <Heart size={14} className="text-red-500 fill-red-500" /> for better decisions
+                            Made with <Heart size={14} className="text-red-500" /> for better decisions
                         </p>
                     </div>
                 </div>

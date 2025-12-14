@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import NavHeader from './NavHeader';
 import HeroSection from './HeroSection';
 import WhyChooseUs from './WhyChooseUs';
@@ -21,7 +22,7 @@ const LandingPage: React.FC = () => {
             {/* Spacer for fixed promo banner */}
             <div className="h-12" />
             
-            {/* Sticky Navigation Header - below promo banner */}
+            {/* Sticky Navigation Header */}
             <NavHeader />
             
             {/* Hero Section */}
@@ -29,7 +30,7 @@ const LandingPage: React.FC = () => {
                 <HeroSection onGetStarted={scrollToCreate} />
             </section>
             
-            {/* Demo Section - Simple inline demo */}
+            {/* Demo Preview Section - Links to full Demo page */}
             <section id="demo-section" className="py-16 bg-gradient-to-b from-slate-50 to-white">
                 <div className="max-w-4xl mx-auto px-4">
                     <div className="text-center mb-12">
@@ -39,7 +40,7 @@ const LandingPage: React.FC = () => {
                         </p>
                     </div>
                     
-                    {/* Simple Demo Poll Preview */}
+                    {/* Demo Poll Preview */}
                     <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-lg mx-auto">
                         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
                             <h3 className="font-bold text-lg">What's your favorite feature?</h3>
@@ -66,19 +67,25 @@ const LandingPage: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="p-4 bg-slate-50 border-t border-slate-100">
+                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
                             <button 
                                 onClick={() => scrollToCreate()}
-                                className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                                className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
                             >
-                                Create Your Own Poll
+                                Create Your Own
                             </button>
+                            <Link 
+                                to="/demo"
+                                className="flex-1 py-2.5 bg-white text-indigo-600 font-bold rounded-lg border-2 border-indigo-600 hover:bg-indigo-50 transition-colors text-center"
+                            >
+                                Try All 12 Types
+                            </Link>
                         </div>
                     </div>
                 </div>
             </section>
             
-            {/* Why Choose Us (includes comparison info) */}
+            {/* Why Choose Us */}
             <section id="why-choose-us">
                 <WhyChooseUs />
             </section>
@@ -88,7 +95,7 @@ const LandingPage: React.FC = () => {
                 <VoteGeneratorCreate />
             </section>
             
-            {/* Pricing Section */}
+            {/* Pricing Preview - Links to full Pricing page */}
             <section id="pricing" className="py-16 bg-gradient-to-b from-white to-slate-50">
                 <div className="max-w-4xl mx-auto px-4 text-center">
                     <h2 className="text-3xl font-black text-slate-800 mb-4">Simple, Transparent Pricing</h2>
@@ -132,6 +139,14 @@ const LandingPage: React.FC = () => {
                                 Start Pro Trial
                             </button>
                         </div>
+                    </div>
+                    <div className="mt-8">
+                        <Link 
+                            to="/pricing" 
+                            className="text-indigo-600 font-semibold hover:underline"
+                        >
+                            View full pricing details & feature comparison →
+                        </Link>
                     </div>
                 </div>
             </section>

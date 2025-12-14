@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, 
@@ -18,12 +19,25 @@ import {
 
 interface NavHeaderProps {
     currentPage?: 'create' | 'demo' | 'pricing' | 'compare' | 'blog' | 'help';
-    onNavigate?: (page: string) => void;
 }
 
-const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigate }) => {
+const NavHeader: React.FC<NavHeaderProps> = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
+    const location = useLocation();
+    
+    // Determine current page from URL
+    const getCurrentPage = () => {
+        const path = location.pathname;
+        if (path === '/demo') return 'demo';
+        if (path === '/pricing') return 'pricing';
+        if (path === '/compare') return 'compare';
+        if (path === '/blog') return 'blog';
+        if (path === '/help') return 'help';
+        return 'create';
+    };
+    
+    const currentPage = getCurrentPage();
 
     const scrollToSection = (sectionId: string) => {
         const element = document.getElementById(sectionId);
@@ -36,32 +50,20 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
         setMobileMenuOpen(false);
     };
 
-    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, pageId: string, sectionId: string) => {
-        e.preventDefault();
-        
-        if (onNavigate) {
-            onNavigate(pageId);
-            setMobileMenuOpen(false);
-            return;
-        }
-        
-        scrollToSection(sectionId);
-    };
-
     const navItems = [
-        { id: 'create', label: 'Create Poll', section: 'poll-creator', icon: Sparkles },
-        { id: 'demo', label: 'Demo', section: 'demo-section', icon: Play },
-        { id: 'pricing', label: 'Pricing', section: 'pricing', icon: DollarSign },
-        { id: 'compare', label: 'Compare', section: 'why-choose-us', icon: GitCompare },
-        { id: 'blog', label: 'Blog', section: 'poll-creator', icon: BookOpen },
-        { id: 'help', label: 'Help', section: 'poll-creator', icon: HelpCircle },
+        { id: 'create', label: 'Create Poll', href: '/', isLink: true, icon: Sparkles },
+        { id: 'demo', label: 'Demo', href: '/demo', isLink: true, icon: Play },
+        { id: 'pricing', label: 'Pricing', href: '/pricing', isLink: true, icon: DollarSign },
+        { id: 'compare', label: 'Compare', href: '/compare', isLink: true, icon: GitCompare },
+        { id: 'blog', label: 'Blog', href: '/blog', isLink: true, icon: BookOpen },
+        { id: 'help', label: 'Help', href: '/help', isLink: true, icon: HelpCircle },
     ];
 
     const pollTypes = [
-        { name: 'Ranked Choice', section: 'poll-creator', icon: ListOrdered },
-        { name: 'Multiple Choice', section: 'poll-creator', icon: CheckSquare },
-        { name: 'Visual Poll', section: 'poll-creator', icon: Image, pro: true },
-        { name: 'Meeting Scheduler', section: 'poll-creator', icon: Calendar },
+        { name: 'Ranked Choice', icon: ListOrdered },
+        { name: 'Multiple Choice', icon: CheckSquare },
+        { name: 'Visual Poll', icon: Image, pro: true },
+        { name: 'Meeting Scheduler', icon: Calendar },
     ];
 
     return (
@@ -69,14 +71,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <a 
-                        href="#"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="flex items-center gap-2.5 group"
-                    >
+                    <Link to="/" className="flex items-center gap-2.5 group">
                         <motion.img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
@@ -88,7 +83,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                         <span className="font-black text-xl text-slate-900 hidden sm:block">
                             VoteGenerator
                         </span>
-                    </a>
+                    </Link>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
@@ -114,13 +109,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                         className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"
                                     >
                                         {pollTypes.map((type) => (
-                                            <a
+                                            <Link
                                                 key={type.name}
-                                                href={`#${type.section}`}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    scrollToSection(type.section);
-                                                }}
+                                                to="/demo"
                                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors"
                                             >
                                                 <type.icon size={18} className="text-indigo-500" />
@@ -130,19 +121,12 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                                         PRO
                                                     </span>
                                                 )}
-                                            </a>
+                                            </Link>
                                         ))}
                                         <div className="border-t border-slate-100 mt-2 pt-2 px-4 pb-2">
-                                            <a 
-                                                href="#demo-section"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    scrollToSection('demo-section');
-                                                }}
-                                                className="text-xs text-indigo-600 font-medium hover:underline"
-                                            >
+                                            <Link to="/demo" className="text-xs text-indigo-600 font-medium hover:underline">
                                                 View all 12 poll types →
-                                            </a>
+                                            </Link>
                                         </div>
                                     </motion.div>
                                 )}
@@ -150,10 +134,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                         </div>
 
                         {navItems.map((item) => (
-                            <a
+                            <Link
                                 key={item.id}
-                                href={`#${item.section}`}
-                                onClick={(e) => handleNavClick(e, item.id, item.section)}
+                                to={item.href}
                                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                                     currentPage === item.id
                                         ? 'text-indigo-600 bg-indigo-50'
@@ -161,22 +144,23 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                 }`}
                             >
                                 {item.label}
-                            </a>
+                            </Link>
                         ))}
                     </nav>
 
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
-                        <a
-                            href="#poll-creator"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                scrollToSection('poll-creator');
+                        <Link
+                            to="/"
+                            onClick={() => {
+                                if (location.pathname === '/') {
+                                    setTimeout(() => scrollToSection('poll-creator'), 100);
+                                }
                             }}
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -200,10 +184,10 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                     >
                         <nav className="p-4 space-y-1">
                             {navItems.map((item) => (
-                                <a
+                                <Link
                                     key={item.id}
-                                    href={`#${item.section}`}
-                                    onClick={(e) => handleNavClick(e, item.id, item.section)}
+                                    to={item.href}
+                                    onClick={() => setMobileMenuOpen(false)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                                         currentPage === item.id
                                             ? 'text-indigo-600 bg-indigo-50'
@@ -212,19 +196,16 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create', onNavigat
                                 >
                                     <item.icon size={20} />
                                     <span className="font-medium">{item.label}</span>
-                                </a>
+                                </Link>
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
-                                <a
-                                    href="#poll-creator"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        scrollToSection('poll-creator');
-                                    }}
+                                <Link
+                                    to="/"
+                                    onClick={() => setMobileMenuOpen(false)}
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll
-                                </a>
+                                </Link>
                             </div>
                         </nav>
                     </motion.div>

@@ -3,6 +3,7 @@ import HeroSection from './HeroSection';
 import WhyChooseUs from './WhyChooseUs';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import PromoBanner from './PromoBanner';
+import Footer from './Footer';
 
 const LandingPage: React.FC = () => {
     const createRef = useRef<HTMLDivElement>(null);
@@ -26,6 +27,9 @@ const LandingPage: React.FC = () => {
             <div ref={createRef} id="poll-creator">
                 <VoteGeneratorCreate />
             </div>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

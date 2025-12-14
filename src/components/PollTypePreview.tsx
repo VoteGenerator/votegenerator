@@ -186,54 +186,106 @@ const ThisOrThatPreview: React.FC<{ question: string; options: string[] }> = ({ 
 // Dot Voting Preview - Allocate points
 const DotVotingPreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [dots, setDots] = useState<Record<string, number>>({});
+    const [hasSubmitted, setHasSubmitted] = useState(false);
     const totalDots = 5;
     const usedDots = Object.values(dots).reduce((sum, n) => sum + n, 0);
     const remaining = totalDots - usedDots;
     
+    // Seed votes for results
+    const seedVotes: Record<string, number> = {};
+    options.forEach((opt, i) => {
+        seedVotes[opt] = Math.floor(Math.random() * 30) + 10 + (dots[opt] || 0);
+    });
+    
     const addDot = (opt: string) => {
-        if (remaining > 0) {
+        if (remaining > 0 && !hasSubmitted) {
             setDots({ ...dots, [opt]: (dots[opt] || 0) + 1 });
         }
     };
     
+    const handleSubmit = () => {
+        if (usedDots > 0) {
+            setHasSubmitted(true);
+        }
+    };
+    
+    const totalVotes = Object.values(seedVotes).reduce((sum, n) => sum + n, 0);
+    
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
             <h4 className="font-bold text-slate-800 mb-1">{question}</h4>
-            <p className="text-slate-500 text-sm mb-2">Distribute {totalDots} dots across options:</p>
-            <div className="flex items-center gap-1 mb-4">
-                {Array.from({ length: totalDots }).map((_, i) => (
-                    <div 
-                        key={i} 
-                        className={`w-4 h-4 rounded-full transition-colors ${
-                            i < remaining ? 'bg-teal-500' : 'bg-slate-200'
-                        }`}
-                    />
-                ))}
-                <span className="ml-2 text-sm text-slate-500">{remaining} remaining</span>
-            </div>
-            <div className="space-y-2">
-                {options.map((opt, i) => (
-                    <button
-                        key={i}
-                        onClick={() => addDot(opt)}
-                        disabled={remaining === 0}
-                        className="w-full flex items-center justify-between p-3 rounded-lg border-2 border-slate-200 hover:border-teal-300 transition-all disabled:opacity-50"
+            {!hasSubmitted ? (
+                <>
+                    <p className="text-slate-500 text-sm mb-2">Distribute {totalDots} dots across options:</p>
+                    <div className="flex items-center gap-1 mb-4">
+                        {Array.from({ length: totalDots }).map((_, i) => (
+                            <div 
+                                key={i} 
+                                className={`w-4 h-4 rounded-full transition-colors ${
+                                    i < remaining ? 'bg-teal-500' : 'bg-slate-200'
+                                }`}
+                            />
+                        ))}
+                        <span className="ml-2 text-sm text-slate-500">{remaining} remaining</span>
+                    </div>
+                    <div className="space-y-2">
+                        {options.map((opt, i) => (
+                            <button
+                                key={i}
+                                onClick={() => addDot(opt)}
+                                disabled={remaining === 0}
+                                className="w-full flex items-center justify-between p-3 rounded-lg border-2 border-slate-200 hover:border-teal-300 transition-all disabled:opacity-50"
+                            >
+                                <span className="text-slate-700">{opt}</span>
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: dots[opt] || 0 }).map((_, j) => (
+                                        <div key={j} className="w-4 h-4 rounded-full bg-teal-500" />
+                                    ))}
+                                    {(dots[opt] || 0) === 0 && (
+                                        <span className="text-slate-400 text-sm">Click to add</span>
+                                    )}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                    <button 
+                        onClick={handleSubmit}
+                        disabled={usedDots === 0}
+                        className="w-full mt-4 py-2.5 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
                     >
-                        <span className="text-slate-700">{opt}</span>
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: dots[opt] || 0 }).map((_, j) => (
-                                <div key={j} className="w-4 h-4 rounded-full bg-teal-500" />
-                            ))}
-                            {(dots[opt] || 0) === 0 && (
-                                <span className="text-slate-400 text-sm">Click to add</span>
-                            )}
-                        </div>
+                        Submit Votes →
                     </button>
-                ))}
-            </div>
-            <button className="w-full mt-4 py-2.5 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors">
-                Submit Votes →
-            </button>
+                </>
+            ) : (
+                <>
+                    <p className="text-green-600 text-sm mb-4 flex items-center gap-2">
+                        <Check size={16} /> Votes submitted! Here are the results:
+                    </p>
+                    <div className="space-y-2">
+                        {options.sort((a, b) => seedVotes[b] - seedVotes[a]).map((opt, i) => {
+                            const pct = Math.round((seedVotes[opt] / totalVotes) * 100);
+                            return (
+                                <div key={i} className="relative">
+                                    <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 relative overflow-hidden">
+                                        <div 
+                                            className="absolute inset-y-0 left-0 bg-teal-100"
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                        <span className="text-slate-700 relative z-10">{i === 0 && '🏆 '}{opt}</span>
+                                        <span className="font-bold text-teal-700 relative z-10">{pct}%</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <button 
+                        onClick={() => { setHasSubmitted(false); setDots({}); }}
+                        className="w-full mt-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+                    >
+                        Vote Again
+                    </button>
+                </>
+            )}
         </div>
     );
 };

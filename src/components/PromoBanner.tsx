@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Zap, Clock, Gift, ArrowRight } from 'lucide-react';
-import { ACTIVE_PROMOS, getActivePromo } from '../config/plans';
+
+// ============================================
+// PROMO CONFIGURATION - EDIT HERE
+// ============================================
+// To disable: set isActive to false
+// To change dates: update validUntil
+// To change price: update promoPrice
+const PROMO_CONFIG = {
+    id: 'launch-special',
+    name: 'Launch Special',
+    description: 'Try Pro features for 30 days',
+    originalPrice: 9,
+    promoPrice: 5.00,
+    durationDays: 30,
+    validUntil: new Date('2026-01-31'), // Promo runs until this date
+    isActive: true, // Set to false to disable
+};
+// ============================================
 
 interface PromoBannerProps {
     onClose?: () => void;
@@ -15,15 +32,17 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
     const [isVisible, setIsVisible] = useState(true);
     const [timeLeft, setTimeLeft] = useState<string>('');
     
-    // Get the active promo
-    const promo = getActivePromo('pro');
+    // Check if promo is active
+    const now = new Date();
+    const promo = PROMO_CONFIG.isActive && now < PROMO_CONFIG.validUntil ? PROMO_CONFIG : null;
     
+    // Countdown timer
     useEffect(() => {
         if (!promo?.validUntil) return;
         
         const updateTimer = () => {
             const now = new Date();
-            const end = new Date(promo.validUntil!);
+            const end = new Date(promo.validUntil);
             const diff = end.getTime() - now.getTime();
             
             if (diff <= 0) {
@@ -45,21 +64,24 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
         };
         
         updateTimer();
-        const interval = setInterval(updateTimer, 60000); // Update every minute
+        const interval = setInterval(updateTimer, 60000);
         
         return () => clearInterval(interval);
     }, [promo]);
     
     // Check if user dismissed this promo before
     useEffect(() => {
-        const dismissed = localStorage.getItem(`promo_dismissed_${promo?.id}`);
-        if (dismissed) {
-            const dismissedDate = new Date(dismissed);
-            const hoursSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60);
-            // Show again after 24 hours
-            if (hoursSinceDismissed < 24) {
-                setIsVisible(false);
+        try {
+            const dismissed = localStorage.getItem(`promo_dismissed_${promo?.id}`);
+            if (dismissed) {
+                const dismissedDate = new Date(dismissed);
+                const hoursSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60);
+                if (hoursSinceDismissed < 24) {
+                    setIsVisible(false);
+                }
             }
+        } catch {
+            // localStorage not available
         }
     }, [promo?.id]);
     
@@ -67,19 +89,22 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
     
     const handleClose = () => {
         setIsVisible(false);
-        localStorage.setItem(`promo_dismissed_${promo.id}`, new Date().toISOString());
+        try {
+            localStorage.setItem(`promo_dismissed_${promo.id}`, new Date().toISOString());
+        } catch {
+            // localStorage not available
+        }
         onClose?.();
     };
     
     const handleClaim = () => {
-        // Navigate to checkout with promo
-        window.location.hash = `checkout/promo/${promo.id}`;
+        window.location.hash = 'pricing';
     };
     
     const positionStyles = {
-        top: 'fixed top-0 left-0 right-0 z-50',
-        bottom: 'fixed bottom-0 left-0 right-0 z-50',
-        floating: 'fixed bottom-4 right-4 z-50 max-w-md rounded-2xl shadow-2xl',
+        top: 'fixed top-0 left-0 right-0 z-[100]',
+        bottom: 'fixed bottom-0 left-0 right-0 z-[100]',
+        floating: 'fixed bottom-4 right-4 z-[100] max-w-md rounded-2xl shadow-2xl',
     };
     
     return (
@@ -109,7 +134,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
                                         ${promo.promoPrice}
                                     </span>
                                     <span className="line-through text-white/60 text-sm">
-                                        ${ACTIVE_PROMOS.find(p => p.originalPlan === 'pro') ? 9 : 7.99}
+                                        ${promo.originalPrice}/mo
                                     </span>
                                 </div>
                             </div>
@@ -145,100 +170,6 @@ const PromoBanner: React.FC<PromoBannerProps> = ({
                             </button>
                         </div>
                     </div>
-                </div>
-            </motion.div>
-        </AnimatePresence>
-    );
-};
-
-// Alternative: Floating Card Style
-export const PromoFloatingCard: React.FC<PromoBannerProps> = ({ onClose }) => {
-    const [isVisible, setIsVisible] = useState(false);
-    const promo = getActivePromo('pro');
-    
-    // Show after 5 seconds on page
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            const dismissed = localStorage.getItem(`promo_dismissed_${promo?.id}`);
-            if (!dismissed) setIsVisible(true);
-        }, 5000);
-        
-        return () => clearTimeout(timer);
-    }, [promo?.id]);
-    
-    if (!promo || !isVisible) return null;
-    
-    const handleClose = () => {
-        setIsVisible(false);
-        localStorage.setItem(`promo_dismissed_${promo.id}`, new Date().toISOString());
-        onClose?.();
-    };
-    
-    return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0, x: 100, y: 50 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                exit={{ opacity: 0, x: 100 }}
-                className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden"
-            >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white">
-                        <Gift size={18} />
-                        <span className="font-bold">{promo.name}</span>
-                    </div>
-                    <button
-                        onClick={handleClose}
-                        className="p-1 text-white/70 hover:text-white transition-colors"
-                    >
-                        <X size={16} />
-                    </button>
-                </div>
-                
-                {/* Content */}
-                <div className="p-4">
-                    <p className="text-slate-600 mb-3">
-                        {promo.description}
-                    </p>
-                    
-                    <div className="flex items-baseline gap-2 mb-4">
-                        <span className="text-3xl font-black text-orange-600">
-                            ${promo.promoPrice}
-                        </span>
-                        <span className="text-slate-400 line-through">
-                            $9/mo
-                        </span>
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                            Save 44%
-                        </span>
-                    </div>
-                    
-                    <ul className="text-sm text-slate-600 space-y-1 mb-4">
-                        <li className="flex items-center gap-2">
-                            <span className="text-green-500">✓</span>
-                            Unlimited responses
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="text-green-500">✓</span>
-                            Remove all ads & branding
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="text-green-500">✓</span>
-                            Vote timeline & analytics
-                        </li>
-                    </ul>
-                    
-                    <button
-                        onClick={() => window.location.hash = `checkout/promo/${promo.id}`}
-                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-orange-200"
-                    >
-                        Get {promo.durationDays} Days for ${promo.promoPrice} →
-                    </button>
-                    
-                    <p className="text-xs text-slate-400 text-center mt-2">
-                        One-time payment. No subscription.
-                    </p>
                 </div>
             </motion.div>
         </AnimatePresence>

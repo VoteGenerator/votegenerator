@@ -755,9 +755,8 @@ const DemoPage: React.FC = () => {
                                             'Remove ads & branding',
                                             'Upload your logo',
                                             'Unique voting codes',
-                                            'Download CSV & PDF',
+                                            'Download CSV, Excel & PDF',
                                             'Custom short links',
-                                            'Export to Google Sheets',
                                             'Email support',
                                         ].map((feature, i) => (
                                             <div key={i} className="flex items-center gap-3">

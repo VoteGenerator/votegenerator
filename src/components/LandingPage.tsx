@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import NavHeader from './NavHeader';
 import HeroSection from './HeroSection';
 import WhyChooseUs from './WhyChooseUs';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
@@ -14,8 +15,14 @@ const LandingPage: React.FC = () => {
     
     return (
         <div className="min-h-screen">
-            {/* Promo Banner - Fixed at top */}
+            {/* Promo Banner - Fixed at very top */}
             <PromoBanner position="top" />
+            
+            {/* Spacer for fixed promo banner */}
+            <div className="h-12" />
+            
+            {/* Sticky Navigation Header - below promo banner */}
+            <NavHeader currentPage="create" />
             
             {/* Hero Section */}
             <HeroSection onGetStarted={scrollToCreate} />

@@ -4,6 +4,7 @@ import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircl
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
+import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
@@ -238,6 +239,10 @@ const VoteGeneratorCreate: React.FC = () => {
     const [dotBudget] = useState<number>(10);
     const [budgetLimit] = useState<number>(100);
     const [showAdvanced, setShowAdvanced] = useState(false);
+    
+    // Theme selection
+    const [selectedTheme, setSelectedTheme] = useState<string>('default');
+    const currentTheme = POLL_THEMES.find(t => t.id === selectedTheme) || POLL_THEMES[0];
 
     const lastInputRef = useRef<HTMLInputElement>(null);
     const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -736,6 +741,15 @@ const VoteGeneratorCreate: React.FC = () => {
                                     )}
                                 </div>
 
+                                {/* Theme Selector */}
+                                <div className="pt-4 border-t border-slate-100">
+                                    <ThemeSelector
+                                        selectedTheme={selectedTheme}
+                                        onThemeChange={setSelectedTheme}
+                                        isPro={hasPremium}
+                                    />
+                                </div>
+
                                 {/* Settings (Collapsed) */}
                                 <div className="pt-4 border-t border-slate-100">
                                     <button onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center justify-between w-full text-left">
@@ -937,7 +951,13 @@ const VoteGeneratorCreate: React.FC = () => {
                             </div>
                             
                             {/* Preview Card */}
-                            <div className={`bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden transition-all ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
+                            <div 
+                                className={`rounded-2xl shadow-xl border overflow-hidden transition-all ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}
+                                style={{
+                                    backgroundColor: currentTheme.css['--poll-bg'],
+                                    borderColor: currentTheme.css['--poll-border'],
+                                }}
+                            >
                                 {/* Browser Chrome */}
                                 <div className="bg-slate-100 px-3 py-2 flex items-center gap-2 border-b border-slate-200">
                                     <div className="flex gap-1.5">
@@ -954,16 +974,25 @@ const VoteGeneratorCreate: React.FC = () => {
                                 <div className="p-4 max-h-[500px] overflow-y-auto">
                                     {/* Poll Header */}
                                     <div className="mb-4">
-                                        <h2 className="text-lg font-black text-slate-800 font-serif">
+                                        <h2 
+                                            className="text-lg font-black font-serif"
+                                            style={{ color: currentTheme.css['--poll-text'] }}
+                                        >
                                             {title || 'Your Question Here'}
                                         </h2>
                                         {description && (
-                                            <p className="text-slate-500 text-sm mt-1">{description}</p>
+                                            <p className="text-sm mt-1" style={{ color: currentTheme.css['--poll-text'], opacity: 0.7 }}>{description}</p>
                                         )}
                                     </div>
                                     
                                     {/* Poll Type Badge */}
-                                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mb-4 ${selectedPollType?.selectedBg} ${selectedPollType?.textColor}`}>
+                                    <div 
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold mb-4"
+                                        style={{ 
+                                            backgroundColor: currentTheme.css['--poll-option-selected'],
+                                            color: currentTheme.css['--poll-primary']
+                                        }}
+                                    >
                                         {selectedPollType && <selectedPollType.icon size={12} />}
                                         {selectedPollType?.name}
                                     </div>
@@ -973,15 +1002,21 @@ const VoteGeneratorCreate: React.FC = () => {
                                         <div className={`grid gap-2 ${previewDevice === 'mobile' ? 'grid-cols-2' : 'grid-cols-2'}`}>
                                             {previewOptions.length > 0 ? previewOptions.map((opt, i) => (
                                                 <div key={i} className="relative group cursor-pointer">
-                                                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-slate-100 hover:border-pink-400 transition-all">
+                                                    <div 
+                                                        className="aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-[1.02]"
+                                                        style={{ borderColor: currentTheme.css['--poll-border'] }}
+                                                    >
                                                         <img src={opt.imageUrl} alt={opt.text} className="w-full h-full object-cover" />
                                                     </div>
                                                     {opt.text && opt.text !== `Image ${i + 1}` && (
-                                                        <p className="text-xs text-center text-slate-600 mt-1 truncate">{opt.text}</p>
+                                                        <p className="text-xs text-center mt-1 truncate" style={{ color: currentTheme.css['--poll-text'] }}>{opt.text}</p>
                                                     )}
                                                 </div>
                                             )) : (
-                                                <div className="col-span-2 aspect-video bg-slate-50 rounded-lg flex items-center justify-center text-slate-300">
+                                                <div 
+                                                    className="col-span-2 aspect-video rounded-lg flex items-center justify-center"
+                                                    style={{ backgroundColor: currentTheme.css['--poll-option-bg'], color: currentTheme.css['--poll-border'] }}
+                                                >
                                                     <ImageIcon size={32} />
                                                 </div>
                                             )}
@@ -989,13 +1024,31 @@ const VoteGeneratorCreate: React.FC = () => {
                                     ) : pollType === 'ranked' ? (
                                         <div className="space-y-2">
                                             {previewOptions.length > 0 ? previewOptions.map((opt, i) => (
-                                                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                    <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">{i + 1}</div>
-                                                    <span className="text-sm font-medium text-slate-700 flex-1">{opt.text}</span>
-                                                    <GripVertical size={14} className="text-slate-300" />
+                                                <div 
+                                                    key={i} 
+                                                    className="flex items-center gap-3 p-3 rounded-lg border transition-all"
+                                                    style={{ 
+                                                        backgroundColor: currentTheme.css['--poll-option-bg'],
+                                                        borderColor: currentTheme.css['--poll-border']
+                                                    }}
+                                                >
+                                                    <div 
+                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                                                        style={{ 
+                                                            backgroundColor: currentTheme.css['--poll-option-selected'],
+                                                            color: currentTheme.css['--poll-primary']
+                                                        }}
+                                                    >
+                                                        {i + 1}
+                                                    </div>
+                                                    <span className="text-sm font-medium flex-1" style={{ color: currentTheme.css['--poll-text'] }}>{opt.text}</span>
+                                                    <GripVertical size={14} style={{ color: currentTheme.css['--poll-border'] }} />
                                                 </div>
                                             )) : (
-                                                <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-400 text-sm">
+                                                <div 
+                                                    className="p-4 rounded-lg text-center text-sm"
+                                                    style={{ backgroundColor: currentTheme.css['--poll-option-bg'], color: currentTheme.css['--poll-text'], opacity: 0.5 }}
+                                                >
                                                     Add options to see preview
                                                 </div>
                                             )}
@@ -1003,12 +1056,25 @@ const VoteGeneratorCreate: React.FC = () => {
                                     ) : (
                                         <div className="space-y-2">
                                             {previewOptions.length > 0 ? previewOptions.map((opt, i) => (
-                                                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-indigo-300 cursor-pointer transition-all">
-                                                    <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>
-                                                    <span className="text-sm font-medium text-slate-700">{opt.text}</span>
+                                                <div 
+                                                    key={i} 
+                                                    className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:scale-[1.01]"
+                                                    style={{ 
+                                                        backgroundColor: currentTheme.css['--poll-option-bg'],
+                                                        borderColor: currentTheme.css['--poll-border']
+                                                    }}
+                                                >
+                                                    <div 
+                                                        className="w-5 h-5 rounded-full border-2"
+                                                        style={{ borderColor: currentTheme.css['--poll-border'] }}
+                                                    ></div>
+                                                    <span className="text-sm font-medium" style={{ color: currentTheme.css['--poll-text'] }}>{opt.text}</span>
                                                 </div>
                                             )) : (
-                                                <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-400 text-sm">
+                                                <div 
+                                                    className="p-4 rounded-lg text-center text-sm"
+                                                    style={{ backgroundColor: currentTheme.css['--poll-option-bg'], color: currentTheme.css['--poll-text'], opacity: 0.5 }}
+                                                >
                                                     Add options to see preview
                                                 </div>
                                             )}
@@ -1017,7 +1083,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                     
                                     {/* Preview Submit Button */}
                                     <div className="mt-4">
-                                        <div className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg text-center text-sm opacity-50 cursor-not-allowed">
+                                        <div 
+                                            className="w-full py-2.5 text-white font-bold rounded-lg text-center text-sm opacity-70 cursor-not-allowed"
+                                            style={{ backgroundColor: currentTheme.css['--poll-button'] }}
+                                        >
                                             Submit Vote
                                         </div>
                                     </div>

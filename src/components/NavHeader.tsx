@@ -41,7 +41,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
     ];
 
     return (
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
+        <header className="sticky top-12 z-40 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo - Uses your logo.svg (already purple) */}

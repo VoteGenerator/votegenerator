@@ -63,7 +63,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
     const totalVotes = demoOptions.reduce((sum, o) => sum + o.votes, 0);
 
     const privacyFeatures = [
-        { icon: Mail, text: 'No email required', highlight: true },
+        { icon: Mail, text: 'No email to vote', highlight: true },
         { icon: Lock, text: 'No signup needed', highlight: true },
         { icon: Eye, text: 'No tracking cookies', highlight: false },
         { icon: ShieldCheck, text: 'Privacy-first analytics', highlight: false },
@@ -286,8 +286,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                             <div className="text-indigo-200 text-sm">Emails Required</div>
                         </div>
                         <div>
-                            <div className="text-3xl font-black text-white">30s</div>
-                            <div className="text-indigo-200 text-sm">To Create</div>
+                            <div className="text-3xl font-black text-white">30</div>
+                            <div className="text-indigo-200 text-sm">Seconds to Create</div>
                         </div>
                         <div>
                             <div className="text-3xl font-black text-white">∞</div>

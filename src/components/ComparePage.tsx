@@ -11,14 +11,9 @@ import {
     Clock,
     Mail,
     CreditCard,
-    Lock,
     Palette,
     BarChart3,
-    Code,
-    Download,
-    MessageSquare,
-    Link2,
-    Crown
+    Code
 } from 'lucide-react';
 
 interface ComparisonRow {

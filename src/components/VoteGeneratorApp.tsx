@@ -8,6 +8,7 @@ import VoteGeneratorEdit from './VoteGeneratorEdit';
 import NavHeader from './NavHeader';
 import PricingPage from './PricingPage';
 import DemoPage from './DemoPage';
+import ComparePage from './ComparePage';
 import EmbedPoll from './EmbedPoll';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
@@ -20,6 +21,7 @@ type ViewState =
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'pricing' }
     | { type: 'demo' }
+    | { type: 'compare' }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -34,9 +36,10 @@ const VoteGeneratorApp: React.FC = () => {
     const pollInterval = useRef<number | undefined>(undefined);
 
     // Determine current page for NavHeader highlighting
-    const getCurrentPage = (): 'create' | 'demo' | 'pricing' | 'blog' | 'help' => {
+    const getCurrentPage = (): 'create' | 'demo' | 'pricing' | 'compare' | 'blog' | 'help' => {
         if (viewState.type === 'pricing') return 'pricing';
         if (viewState.type === 'demo') return 'demo';
+        if (viewState.type === 'compare') return 'compare';
         if (viewState.type === 'create') return 'create';
         return 'create'; // default
     };
@@ -50,6 +53,9 @@ const VoteGeneratorApp: React.FC = () => {
         }
         if (hash === 'demo') {
             return { page: 'demo', pollId: null, adminKey: null };
+        }
+        if (hash === 'compare') {
+            return { page: 'compare', pollId: null, adminKey: null };
         }
         if (hash === 'blog') {
             return { page: 'blog', pollId: null, adminKey: null };
@@ -78,8 +84,11 @@ const VoteGeneratorApp: React.FC = () => {
             setViewState({ type: 'demo' });
             return;
         }
+        if (page === 'compare') {
+            setViewState({ type: 'compare' });
+            return;
+        }
         // Add more pages as needed:
-        // if (page === 'demo') { setViewState({ type: 'demo' }); return; }
         // if (page === 'blog') { setViewState({ type: 'blog' }); return; }
 
         if (!pollId) {
@@ -266,7 +275,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     // Check if we should show NavHeader (hide on vote/embed pages for cleaner experience)
-    const showNavHeader = viewState.type === 'create' || viewState.type === 'pricing' || viewState.type === 'demo';
+    const showNavHeader = viewState.type === 'create' || viewState.type === 'pricing' || viewState.type === 'demo' || viewState.type === 'compare';
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -319,6 +328,17 @@ const VoteGeneratorApp: React.FC = () => {
                             exit={{ opacity: 0 }}
                         >
                             <DemoPage />
+                        </motion.div>
+                    )}
+
+                    {viewState.type === 'compare' && (
+                        <motion.div
+                            key="compare"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <ComparePage />
                         </motion.div>
                     )}
 

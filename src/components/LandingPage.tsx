@@ -4,7 +4,6 @@ import HeroSection from './HeroSection';
 import WhyChooseUs from './WhyChooseUs';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 import PromoBanner from './PromoBanner';
-import DemoPollInteractive from './DemoPollInteractive';
 import Footer from './Footer';
 
 const LandingPage: React.FC = () => {
@@ -30,16 +29,52 @@ const LandingPage: React.FC = () => {
                 <HeroSection onGetStarted={scrollToCreate} />
             </section>
             
-            {/* Demo Section */}
+            {/* Demo Section - Simple inline demo */}
             <section id="demo-section" className="py-16 bg-gradient-to-b from-slate-50 to-white">
-                <div className="max-w-6xl mx-auto px-4">
+                <div className="max-w-4xl mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-black text-slate-900 mb-4">Try It Live</h2>
+                        <h2 className="text-3xl font-black text-slate-900 mb-4">See How Easy It Is</h2>
                         <p className="text-slate-600 max-w-2xl mx-auto">
-                            Experience how easy it is to create and vote on polls. No signup required.
+                            Create beautiful polls in seconds. No signup required.
                         </p>
                     </div>
-                    <DemoPollInteractive />
+                    
+                    {/* Simple Demo Poll Preview */}
+                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-lg mx-auto">
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
+                            <h3 className="font-bold text-lg">What's your favorite feature?</h3>
+                            <p className="text-indigo-100 text-sm">247 votes</p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            {[
+                                { label: 'No signup required', percent: 42 },
+                                { label: 'Beautiful themes', percent: 28 },
+                                { label: 'Real-time results', percent: 18 },
+                                { label: 'Easy sharing', percent: 12 },
+                            ].map((option, i) => (
+                                <div key={i} className="relative">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm font-medium text-slate-700">{option.label}</span>
+                                        <span className="text-sm font-bold text-indigo-600">{option.percent}%</span>
+                                    </div>
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${option.percent}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 bg-slate-50 border-t border-slate-100">
+                            <button 
+                                onClick={() => scrollToCreate()}
+                                className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                            >
+                                Create Your Own Poll
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
             

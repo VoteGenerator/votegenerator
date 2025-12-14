@@ -2,20 +2,15 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
     ShieldCheck,
-    Zap,
     Mail,
     Lock,
-    Eye,
     EyeOff,
-    Clock,
-    Users,
     BarChart3,
     Check,
     X,
     Sparkles,
     CreditCard,
-    Database,
-    Server
+    Database
 } from 'lucide-react';
 
 const WhyChooseUs: React.FC = () => {

@@ -183,7 +183,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                     <div className="hidden md:flex items-center gap-3">
                         <Link
                             to="/#poll-creator"
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                                 if (location.pathname === '/') {
                                     e.preventDefault();
                                     const element = document.getElementById('poll-creator');

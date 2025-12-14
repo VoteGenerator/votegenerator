@@ -195,7 +195,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onNavigate }) => {
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Mobile Menu Button */}

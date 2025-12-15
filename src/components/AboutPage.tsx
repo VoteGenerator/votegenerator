@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
     Zap, 
@@ -25,28 +25,6 @@ import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 
 const AboutPage: React.FC = () => {
-    const [pollsCreated, setPollsCreated] = useState(0);
-    
-    // Animated counter
-    useEffect(() => {
-        const target = 12847;
-        const duration = 2000;
-        const steps = 60;
-        const increment = target / steps;
-        let current = 0;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                setPollsCreated(target);
-                clearInterval(timer);
-            } else {
-                setPollsCreated(Math.floor(current));
-            }
-        }, duration / steps);
-        
-        return () => clearInterval(timer);
-    }, []);
 
     const antiFeatures = [
         { icon: Ban, text: "No signup walls" },
@@ -112,18 +90,16 @@ const AboutPage: React.FC = () => {
                         {/* Live Stats */}
                         <div className="flex flex-wrap justify-center gap-8 md:gap-16">
                             <div className="text-center">
-                                <div className="text-4xl md:text-5xl font-black text-white mb-1">
-                                    {pollsCreated.toLocaleString()}+
-                                </div>
-                                <div className="text-slate-500 text-sm uppercase tracking-wider">Polls Created</div>
-                            </div>
-                            <div className="text-center">
                                 <div className="text-4xl md:text-5xl font-black text-white mb-1">12</div>
                                 <div className="text-slate-500 text-sm uppercase tracking-wider">Poll Types</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-4xl md:text-5xl font-black text-white mb-1">&lt;60s</div>
                                 <div className="text-slate-500 text-sm uppercase tracking-wider">To Create</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-4xl md:text-5xl font-black text-white mb-1">0</div>
+                                <div className="text-slate-500 text-sm uppercase tracking-wider">Signups Needed</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-4xl md:text-5xl font-black text-white mb-1">$0</div>

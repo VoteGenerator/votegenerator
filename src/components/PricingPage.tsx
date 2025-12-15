@@ -21,7 +21,8 @@ import {
     ThumbsUp,
     Smile,
     Image,
-    Clock
+    Clock,
+    Crown
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -104,13 +105,13 @@ const PricingPage: React.FC = () => {
             cta: 'Get Pro',
             features: [
                 { text: 'Everything in Event, plus:', header: true },
-                { text: 'Unlimited polls & responses', included: true },
-                { text: 'All 12 poll types (incl. Visual)', included: true, isNew: true },
+                { text: 'Unlimited polls', included: true },
+                { text: '10,000 responses per poll', included: true },
+                { text: '11 poll types (Quiz & Sentiment)', included: true },
                 { text: 'Unified dashboard for all polls', included: true },
-                { text: 'Secure admin tokens', included: true },
-                { text: 'Detailed analytics & charts', included: true },
+                { text: 'IP-based vote protection', included: true, isNew: true },
+                { text: 'Detailed analytics & trends', included: true },
                 { text: 'Embed polls with your logo', included: true },
-                { text: 'Poll duplication', included: true },
             ]
         },
         {
@@ -124,13 +125,13 @@ const PricingPage: React.FC = () => {
             cta: 'Get Pro+',
             features: [
                 { text: 'Everything in Pro, plus:', header: true },
-                { text: 'Advanced analytics & insights', included: true },
+                { text: 'Visual Poll (images)', included: true, isNew: true },
+                { text: 'Unlimited responses', included: true },
                 { text: 'White-label embeds (no branding)', included: true },
                 { text: 'Custom short links (/v/your-name)', included: true },
-                { text: 'Custom thank-you page with redirect', included: true },
-                { text: 'IP-based vote protection', included: true },
+                { text: 'Custom thank-you redirect', included: true },
                 { text: 'Unique voting codes', included: true },
-                { text: 'Priority support (24hr response)', included: true },
+                { text: 'Priority support (24hr)', included: true },
             ]
         }
     ];
@@ -170,7 +171,7 @@ const PricingPage: React.FC = () => {
                 { name: 'Approval Voting', free: true, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Quiz Poll', free: false, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Sentiment Check', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Visual Poll (Images)', free: false, quick: false, event: false, pro: true, proPlus: true },
+                { name: 'Visual Poll (Images)', free: false, quick: false, event: false, pro: false, proPlus: true },
             ]
         },
         {
@@ -181,7 +182,7 @@ const PricingPage: React.FC = () => {
             features: [
                 { name: 'Create Unlimited Polls', free: true, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Create as many individual polls as you want. Each poll has its own unique admin link.' },
                 { name: 'Multi-Poll Dashboard', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Manage ALL your polls from one unified dashboard instead of separate admin links.' },
-                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: 'Unlimited', proPlus: 'Unlimited', tooltip: 'Maximum number of votes each poll can receive.' },
+                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: '10,000', proPlus: 'Unlimited', tooltip: 'Maximum number of votes each poll can receive.' },
                 { name: 'Poll Active Duration', free: 'Forever', quick: '7 days', event: '30 days', pro: 'Forever', proPlus: 'Forever', tooltip: 'How long your poll stays open for voting. After this, the poll auto-closes but results remain viewable.' },
             ]
         },
@@ -194,7 +195,7 @@ const PricingPage: React.FC = () => {
                 { name: 'Shareable Admin Link', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'A unique URL to access your poll settings and results. Share with co-organizers if needed.' },
                 { name: 'Secure Admin Token', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'An extra password/code required to access admin functions. Prevents unauthorized access even if someone has the admin link.' },
                 { name: 'Browser Vote Protection', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Uses browser cookies to prevent the same person from voting multiple times on the same device.' },
-                { name: 'IP-Based Vote Protection', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Tracks IP addresses to prevent multiple votes from the same network. Stronger protection than browser-only.' },
+                { name: 'IP-Based Vote Protection', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Tracks IP addresses to prevent multiple votes from the same network. Stronger protection than browser-only.' },
                 { name: 'Unique Voting Codes', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Generate one-time codes that voters must enter to vote. Perfect for controlled voting where you know exactly who should participate.' },
             ]
         },
@@ -468,35 +469,44 @@ const PricingPage: React.FC = () => {
                         12 Poll Types Included
                     </h2>
                     <p className="text-slate-600 text-center mb-10">
-                        9 types free, 2 from $5, Visual Poll Pro-only
+                        9 free poll types • 3 premium poll types
                     </p>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {pollTypes.map((poll, i) => (
-                            <div 
-                                key={i}
-                                className={`p-4 rounded-xl border text-center ${
-                                    poll.pro 
-                                        ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200' 
-                                        : poll.paid
-                                        ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200'
-                                        : 'bg-white border-slate-200'
-                                }`}
-                            >
-                                <poll.icon size={24} className={
-                                    poll.pro ? 'text-indigo-600 mx-auto mb-2' : 
-                                    poll.paid ? 'text-amber-600 mx-auto mb-2' : 
-                                    'text-slate-600 mx-auto mb-2'
-                                } />
-                                <p className="text-sm font-medium text-slate-800">{poll.name}</p>
-                                {poll.pro && (
-                                    <span className="text-[10px] font-bold text-indigo-600">PRO</span>
-                                )}
-                                {poll.paid && (
-                                    <span className="text-[10px] font-bold text-amber-600">$5+</span>
-                                )}
-                            </div>
-                        ))}
+                        {pollTypes.map((poll, i) => {
+                            const PollIcon = poll.icon;
+                            return (
+                                <div 
+                                    key={i}
+                                    className={`group relative p-4 rounded-xl border text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${
+                                        poll.pro 
+                                            ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 hover:border-indigo-400' 
+                                            : poll.paid
+                                            ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 hover:border-amber-400'
+                                            : 'bg-white border-slate-200 hover:border-indigo-300'
+                                    }`}
+                                >
+                                    {/* Premium Crown Icon */}
+                                    {(poll.pro || poll.paid) && (
+                                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                                            <Crown size={12} className="text-white" />
+                                        </div>
+                                    )}
+                                    <PollIcon size={24} className={`mx-auto mb-2 transition-transform group-hover:scale-110 ${
+                                        poll.pro ? 'text-indigo-600' : 
+                                        poll.paid ? 'text-amber-600' : 
+                                        'text-slate-600'
+                                    }`} />
+                                    <p className="text-sm font-medium text-slate-800">{poll.name}</p>
+                                    {poll.pro && (
+                                        <span className="text-[10px] font-bold text-indigo-600 uppercase">Pro+</span>
+                                    )}
+                                    {poll.paid && (
+                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Premium</span>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

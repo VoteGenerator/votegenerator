@@ -1,138 +1,116 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
     Check, 
     X, 
-    Zap, 
     Sparkles,
     ArrowRight,
     Shield,
+    Zap,
     Users,
-    Clock,
-    Mail,
-    CreditCard,
-    Palette,
-    BarChart3,
-    Code
+    DollarSign
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 
-interface ComparisonRow {
-    feature: string;
-    voteGenerator: string | boolean;
-    strawPoll: string | boolean;
-    doodle: string | boolean;
-    googleForms: string | boolean;
-    tooltip?: string;
-    highlight?: boolean;
-}
-
 const ComparePage: React.FC = () => {
-    const comparisons: ComparisonRow[] = [
-        // Getting Started
-        { feature: 'No signup required', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false, highlight: true },
-        { feature: 'No email required', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false, highlight: true },
-        { feature: 'Create poll in under 1 minute', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false },
-        { feature: 'Free tier available', voteGenerator: true, strawPoll: true, doodle: true, googleForms: true },
-        
-        // Poll Types
-        { feature: 'Multiple choice polls', voteGenerator: true, strawPoll: true, doodle: true, googleForms: true },
-        { feature: 'Ranked choice voting', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false },
-        { feature: 'Meeting scheduler', voteGenerator: true, strawPoll: true, doodle: true, googleForms: false },
-        { feature: 'Dot voting', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Buy a feature (budget allocation)', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Priority matrix (2x2 grid)', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'This or That (A/B comparison)', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Sentiment check (emoji reactions)', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Quiz with correct answers', voteGenerator: true, strawPoll: true, doodle: false, googleForms: true },
-        { feature: 'Rating scale polls', voteGenerator: true, strawPoll: true, doodle: false, googleForms: true },
-        { feature: 'Approval voting', voteGenerator: true, strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Visual poll (image voting)', voteGenerator: 'Pro', strawPoll: true, doodle: false, googleForms: true },
-        { feature: 'Total poll types', voteGenerator: '12 types', strawPoll: '5 types', doodle: '2 types', googleForms: '4 types', highlight: true },
-        
-        // Security
-        { feature: 'Cookie-based duplicate detection', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false },
-        { feature: 'Unique voting codes', voteGenerator: 'Pro', strawPoll: 'Paid', doodle: false, googleForms: false },
-        { feature: 'CAPTCHA protection', voteGenerator: false, strawPoll: 'Paid', doodle: false, googleForms: true },
-        { feature: 'IP-based limiting', voteGenerator: false, strawPoll: 'Paid', doodle: false, googleForms: false },
-        
-        // Customization
-        { feature: 'Remove platform branding', voteGenerator: 'Paid', strawPoll: 'Paid', doodle: 'Paid', googleForms: false },
-        { feature: 'Upload your logo', voteGenerator: 'Paid', strawPoll: 'Paid', doodle: 'Paid', googleForms: false },
-        { feature: 'Custom thank-you page', voteGenerator: 'Paid', strawPoll: false, doodle: false, googleForms: true },
-        { feature: 'Custom short links', voteGenerator: 'Paid', strawPoll: 'Paid', doodle: false, googleForms: false },
-        { feature: 'Embeddable on websites', voteGenerator: 'Pro', strawPoll: true, doodle: true, googleForms: true },
-        { feature: 'White-label embeds', voteGenerator: 'Pro+', strawPoll: 'Business', doodle: false, googleForms: false },
-        
-        // Export & Analytics
-        { feature: 'Real-time results', voteGenerator: true, strawPoll: true, doodle: true, googleForms: true },
-        { feature: 'Basic analytics', voteGenerator: true, strawPoll: true, doodle: true, googleForms: true },
-        { feature: 'Export to CSV', voteGenerator: 'Paid', strawPoll: 'Paid', doodle: 'Paid', googleForms: true },
-        { feature: 'Export to PDF', voteGenerator: 'Paid', strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Export to Google Sheets', voteGenerator: 'Paid', strawPoll: false, doodle: false, googleForms: true },
-        
-        // Collaboration
-        { feature: 'Share admin link', voteGenerator: true, strawPoll: false, doodle: 'Paid', googleForms: true, highlight: true },
-        { feature: 'Voter comments', voteGenerator: 'Paid', strawPoll: false, doodle: false, googleForms: false },
-        { feature: 'Scheduled poll closing', voteGenerator: true, strawPoll: true, doodle: true, googleForms: false },
-        
-        // Pricing
-        { feature: 'Free polls', voteGenerator: 'Unlimited', strawPoll: 'Unlimited', doodle: 'Limited', googleForms: 'Unlimited' },
-        { feature: 'Free responses/poll', voteGenerator: '100', strawPoll: 'Unlimited', doodle: 'Limited', googleForms: 'Unlimited' },
-        { feature: 'One-time purchase option', voteGenerator: true, strawPoll: true, doodle: false, googleForms: false, highlight: true },
-        { feature: 'Paid plan starting price', voteGenerator: '$6.58/mo', strawPoll: '$4/mo', doodle: '$6.95/mo', googleForms: 'Free', tooltip: 'Billed annually' },
+    const competitors = [
+        {
+            name: 'VoteGenerator',
+            highlight: true,
+            features: {
+                signupRequired: false,
+                freeTier: 'Unlimited polls',
+                pricePro: '$9/mo',
+                pollTypes: 12,
+                customBranding: true,
+                analytics: true,
+                embed: true,
+                api: false,
+                dataPrivacy: 'Privacy-first',
+            }
+        },
+        {
+            name: 'Strawpoll',
+            highlight: false,
+            features: {
+                signupRequired: false,
+                freeTier: 'Limited',
+                pricePro: '$5/mo',
+                pollTypes: 3,
+                customBranding: false,
+                analytics: false,
+                embed: true,
+                api: false,
+                dataPrivacy: 'Ads & tracking',
+            }
+        },
+        {
+            name: 'Poll Everywhere',
+            highlight: false,
+            features: {
+                signupRequired: true,
+                freeTier: '25 responses',
+                pricePro: '$19/mo',
+                pollTypes: 8,
+                customBranding: true,
+                analytics: true,
+                embed: true,
+                api: true,
+                dataPrivacy: 'Enterprise',
+            }
+        },
+        {
+            name: 'Mentimeter',
+            highlight: false,
+            features: {
+                signupRequired: true,
+                freeTier: '2 questions',
+                pricePro: '$12/mo',
+                pollTypes: 6,
+                customBranding: true,
+                analytics: true,
+                embed: false,
+                api: false,
+                dataPrivacy: 'Standard',
+            }
+        },
     ];
 
-    const renderValue = (value: string | boolean) => {
-        if (value === true) {
-            return <Check size={18} className="text-green-500 mx-auto" />;
-        }
-        if (value === false) {
-            return <X size={18} className="text-slate-300 mx-auto" />;
-        }
-        // String value
-        const isProFeature = value === 'Pro' || value === 'Pro+' || value === 'Paid' || value === 'Business';
-        return (
-            <span className={`text-xs font-medium ${isProFeature ? 'text-indigo-600' : 'text-slate-700'}`}>
-                {value}
-            </span>
-        );
-    };
+    const featureRows = [
+        { key: 'signupRequired', label: 'No Signup Required', type: 'boolean', invert: true },
+        { key: 'freeTier', label: 'Free Tier', type: 'string' },
+        { key: 'pricePro', label: 'Pro Price', type: 'string' },
+        { key: 'pollTypes', label: 'Poll Types', type: 'number' },
+        { key: 'customBranding', label: 'Custom Branding', type: 'boolean' },
+        { key: 'analytics', label: 'Analytics', type: 'boolean' },
+        { key: 'embed', label: 'Embed Support', type: 'boolean' },
+        { key: 'api', label: 'API Access', type: 'boolean' },
+        { key: 'dataPrivacy', label: 'Data Privacy', type: 'string' },
+    ];
 
-    const whyChooseUs = [
-        {
-            icon: Zap,
-            title: 'Instant Start',
-            description: 'No signup, no email verification, no account setup. Create your first poll in 30 seconds.'
-        },
-        {
-            icon: Palette,
-            title: '12 Poll Types',
-            description: 'From simple multiple choice to advanced ranked voting, dot voting, and priority matrices.'
-        },
+    const whyUs = [
         {
             icon: Shield,
             title: 'Privacy-First',
-            description: 'We don\'t collect emails to spam you. Vote protection without invasive tracking.'
+            description: 'No signup, no tracking, no data selling. Your polls, your data.'
+        },
+        {
+            icon: Zap,
+            title: 'Instant Creation',
+            description: 'Create a poll in under 30 seconds. Share immediately.'
         },
         {
             icon: Users,
-            title: 'Share Admin Access',
-            description: 'Anyone with the admin link can manage the poll. No team seats or permissions to configure.'
+            title: 'Made for Teams',
+            description: '12 poll types for every decision - from lunch orders to roadmap planning.'
         },
         {
-            icon: CreditCard,
-            title: 'Flexible Pricing',
-            description: 'Free forever tier, one-time purchase for events, or monthly subscription. Your choice.'
+            icon: DollarSign,
+            title: 'Fair Pricing',
+            description: 'Generous free tier. Pro features at half the competitor price.'
         },
-        {
-            icon: Code,
-            title: 'Developer Friendly',
-            description: 'Embed polls anywhere. White-label options for agencies and businesses.'
-        }
     ];
 
     return (
@@ -141,9 +119,9 @@ const ComparePage: React.FC = () => {
             <PromoBanner position="top" />
             <div className="h-12" />
             
-            {/* Navigation */}
-            <NavHeader />
-            
+            {/* Nav Header */}
+            <NavHeader currentPage="compare" />
+
             {/* Hero */}
             <div className="pt-16 pb-12 px-4 text-center">
                 <motion.div
@@ -152,183 +130,111 @@ const ComparePage: React.FC = () => {
                     className="max-w-3xl mx-auto"
                 >
                     <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-                        How VoteGenerator Compares
+                        How We Compare
                     </h1>
-                    <p className="text-xl text-slate-600 mb-8">
-                        See how we stack up against other polling tools. 
-                        We focus on what matters: simplicity, variety, and flexibility.
+                    <p className="text-xl text-slate-600">
+                        See how VoteGenerator stacks up against other polling tools
                     </p>
                 </motion.div>
             </div>
 
-            {/* Why Choose Us */}
-            <div className="max-w-6xl mx-auto px-4 pb-16">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {whyChooseUs.map((item, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow"
-                        >
-                            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                                <item.icon size={24} className="text-indigo-600" />
-                            </div>
-                            <h3 className="font-bold text-slate-800 mb-2">{item.title}</h3>
-                            <p className="text-slate-600 text-sm">{item.description}</p>
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
-
             {/* Comparison Table */}
-            <div className="max-w-6xl mx-auto px-4 pb-20">
-                <h2 className="text-3xl font-bold text-slate-900 text-center mb-10">
-                    Feature Comparison
-                </h2>
-                
+            <div className="max-w-5xl mx-auto px-4 pb-16">
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50">
-                                    <th className="text-left p-4 font-semibold text-slate-600 w-[35%]">Feature</th>
-                                    <th className="text-center p-4 w-[16%]">
-                                        <div className="flex flex-col items-center">
-                                            <span className="font-bold text-indigo-600">VoteGenerator</span>
-                                            <span className="text-xs text-slate-400">That's us!</span>
-                                        </div>
-                                    </th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[16%]">StrawPoll</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[16%]">Doodle</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-[16%]">Google Forms</th>
+                                <tr className="border-b border-slate-100">
+                                    <th className="text-left p-4 font-semibold text-slate-600">Feature</th>
+                                    {competitors.map((comp) => (
+                                        <th 
+                                            key={comp.name}
+                                            className={`text-center p-4 font-semibold w-32 ${
+                                                comp.highlight 
+                                                    ? 'bg-indigo-50 text-indigo-700' 
+                                                    : 'text-slate-600'
+                                            }`}
+                                        >
+                                            {comp.name}
+                                            {comp.highlight && (
+                                                <span className="block text-xs font-normal text-indigo-500 mt-1">
+                                                    (That's us!)
+                                                </span>
+                                            )}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {comparisons.map((row, i) => (
-                                    <tr 
-                                        key={i} 
-                                        className={`${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} ${row.highlight ? 'bg-indigo-50/50' : ''}`}
-                                    >
-                                        <td className="p-4 text-slate-700 text-sm font-medium">
-                                            {row.feature}
-                                            {row.highlight && (
-                                                <span className="ml-2 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded">
-                                                    KEY
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center bg-indigo-50/30">
-                                            {renderValue(row.voteGenerator)}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {renderValue(row.strawPoll)}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {renderValue(row.doodle)}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {renderValue(row.googleForms)}
-                                        </td>
+                                {featureRows.map((row, i) => (
+                                    <tr key={row.key} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
+                                        <td className="p-4 text-slate-700 font-medium">{row.label}</td>
+                                        {competitors.map((comp) => {
+                                            const value = comp.features[row.key as keyof typeof comp.features];
+                                            return (
+                                                <td 
+                                                    key={comp.name} 
+                                                    className={`p-4 text-center ${
+                                                        comp.highlight ? 'bg-indigo-50/50' : ''
+                                                    }`}
+                                                >
+                                                    {row.type === 'boolean' ? (
+                                                        row.invert ? (
+                                                            !value ? (
+                                                                <X size={18} className="text-slate-300 mx-auto" />
+                                                            ) : (
+                                                                <Check size={18} className={`mx-auto ${comp.highlight ? 'text-green-500' : 'text-green-500'}`} />
+                                                            )
+                                                        ) : (
+                                                            value ? (
+                                                                <Check size={18} className={`mx-auto ${comp.highlight ? 'text-green-500' : 'text-green-500'}`} />
+                                                            ) : (
+                                                                <X size={18} className="text-slate-300 mx-auto" />
+                                                            )
+                                                        )
+                                                    ) : row.type === 'number' ? (
+                                                        <span className={`font-semibold ${comp.highlight ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                            {value}
+                                                        </span>
+                                                    ) : (
+                                                        <span className={`text-sm ${comp.highlight ? 'text-indigo-700 font-medium' : 'text-slate-600'}`}>
+                                                            {value}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
-                
-                <p className="text-center text-sm text-slate-500 mt-4">
-                    * Comparison based on publicly available information as of December 2025. Features and pricing may change.
-                </p>
             </div>
 
-            {/* Our Unique Advantages */}
-            <div className="bg-gradient-to-b from-slate-50 to-white py-16">
-                <div className="max-w-4xl mx-auto px-4">
-                    <h2 className="text-3xl font-bold text-slate-900 text-center mb-10">
-                        What Makes Us Different
+            {/* Why Us Section */}
+            <div className="bg-slate-50 py-16">
+                <div className="max-w-5xl mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-slate-900 text-center mb-12">
+                        Why Choose VoteGenerator?
                     </h2>
-                    
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-xl p-6 border border-slate-200">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Clock size={20} className="text-green-600" />
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {whyUs.map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                                className="bg-white rounded-xl p-6 border border-slate-200"
+                            >
+                                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+                                    <item.icon size={24} className="text-indigo-600" />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 mb-2">Start in Seconds, Not Minutes</h3>
-                                    <p className="text-slate-600">
-                                        Other tools require account creation, email verification, and profile setup. 
-                                        With VoteGenerator, you go from idea to shareable poll in under 30 seconds. 
-                                        No barriers, no friction.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-slate-200">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <BarChart3 size={20} className="text-purple-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 mb-2">12 Poll Types for Every Decision</h3>
-                                    <p className="text-slate-600">
-                                        Most tools offer 2-5 poll types. We offer 12 — including specialized formats like 
-                                        Dot Voting for prioritization, Buy a Feature for product roadmaps, and Priority Matrix 
-                                        for strategic planning. The right tool for the right decision.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-slate-200">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Users size={20} className="text-blue-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 mb-2">Share Admin Access Freely</h3>
-                                    <p className="text-slate-600">
-                                        Need multiple people to manage a poll? Just share the admin link. 
-                                        No team seats to purchase, no permissions to configure, no user management headaches. 
-                                        Simple collaboration for everyone.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-slate-200">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <Mail size={20} className="text-amber-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 mb-2">Your Inbox Stays Clean</h3>
-                                    <p className="text-slate-600">
-                                        We don't collect your email to create a poll. We don't spam you with marketing. 
-                                        We don't sell your data. Your poll, your business. That's it.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl p-6 border border-slate-200">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center shrink-0">
-                                    <CreditCard size={20} className="text-rose-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-slate-800 mb-2">Pay Your Way</h3>
-                                    <p className="text-slate-600">
-                                        Free forever for basic use. One-time purchase for a single event (no subscription required). 
-                                        Or monthly/yearly subscription for power users. We don't lock you into payment models 
-                                        that don't fit your needs.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                                <h3 className="font-bold text-slate-800 mb-2">{item.title}</h3>
+                                <p className="text-slate-500 text-sm">{item.description}</p>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -337,30 +243,22 @@ const ComparePage: React.FC = () => {
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 py-16">
                 <div className="max-w-3xl mx-auto px-4 text-center">
                     <h2 className="text-3xl font-bold text-white mb-4">
-                        Ready to try VoteGenerator?
+                        Ready to try the difference?
                     </h2>
                     <p className="text-indigo-100 mb-8">
-                        No signup. No credit card. Just create and share.
+                        Create your first poll in 30 seconds. No signup required.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link
-                            to="/"
-                            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
-                        >
-                            <Sparkles size={20} />
-                            Create Free Poll
-                            <ArrowRight size={20} />
-                        </Link>
-                        <Link
-                            to="/pricing"
-                            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-500 text-white font-bold rounded-xl hover:bg-indigo-400 transition-all"
-                        >
-                            View Pricing
-                        </Link>
-                    </div>
+                    <a
+                        href="/"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
+                    >
+                        <Sparkles size={20} />
+                        Create Free Poll
+                        <ArrowRight size={20} />
+                    </a>
                 </div>
             </div>
-            
+
             {/* Footer */}
             <Footer />
         </div>

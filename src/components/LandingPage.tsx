@@ -44,8 +44,14 @@ const LandingPage: React.FC = () => {
                         question="What's your favorite feature of VoteGenerator?"
                         options={['No signup required', 'Beautiful themes', 'Real-time results', 'Easy sharing']}
                     />
-                    <div className="mt-8 text-center">
+                    <div className="mt-8 text-center space-y-3">
                         <p className="text-slate-500 text-sm">This is just 1 of 12 poll types available!</p>
+                        <a 
+                            href="/demo"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                        >
+                            Explore All 12 Poll Types →
+                        </a>
                     </div>
                 </div>
             </section>
@@ -104,6 +110,14 @@ const LandingPage: React.FC = () => {
                                 Start Pro Trial
                             </button>
                         </div>
+                    </div>
+                    <div className="mt-8">
+                        <a 
+                            href="/pricing"
+                            className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
+                        >
+                            View full pricing with all 4 plans & feature comparison →
+                        </a>
                     </div>
                 </div>
             </section>

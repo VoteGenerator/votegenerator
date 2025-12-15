@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo - All 12 Poll Types | VoteGenerator</title>
-    <meta name="description" content="Explore all 12 poll types available on VoteGenerator. See interactive demos and find the perfect poll for your needs." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/demo.tsx"></script>
-  </body>
-</html>
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import DemoPage from './components/DemoPage';
+import './index.css';
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+    ReactDOM.createRoot(rootElement).render(
+        <React.StrictMode>
+            <DemoPage />
+        </React.StrictMode>
+    );
+}

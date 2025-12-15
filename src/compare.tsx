@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Compare - VoteGenerator vs Competitors | VoteGenerator</title>
-    <meta name="description" content="See how VoteGenerator compares to other polling tools like Strawpoll, Poll Everywhere, and Mentimeter." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/compare.tsx"></script>
-  </body>
-</html>
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import ComparePage from './components/ComparePage';
+import './index.css';
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+    ReactDOM.createRoot(rootElement).render(
+        <React.StrictMode>
+            <ComparePage />
+        </React.StrictMode>
+    );
+}

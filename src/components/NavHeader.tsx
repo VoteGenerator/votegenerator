@@ -24,25 +24,13 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [pollTypesOpen, setPollTypesOpen] = useState(false);
 
-    const scrollToSection = (sectionId: string) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            const offset = 130;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-        setMobileMenuOpen(false);
-        setPollTypesOpen(false);
-    };
-
     const navItems = [
-        { id: 'create', label: 'Create Poll', section: 'poll-creator', icon: Sparkles },
-        { id: 'demo', label: 'Demo', section: 'demo-section', icon: Play },
-        { id: 'pricing', label: 'Pricing', section: 'pricing', icon: DollarSign },
-        { id: 'compare', label: 'Compare', section: 'why-choose-us', icon: GitCompare },
-        { id: 'blog', label: 'Blog', section: 'poll-creator', icon: BookOpen },
-        { id: 'help', label: 'Help', section: 'poll-creator', icon: HelpCircle },
+        { id: 'create', label: 'Create Poll', href: '/', icon: Sparkles },
+        { id: 'demo', label: 'Demo', href: '/demo', icon: Play },
+        { id: 'pricing', label: 'Pricing', href: '/pricing', icon: DollarSign },
+        { id: 'compare', label: 'Compare', href: '/compare', icon: GitCompare },
+        { id: 'blog', label: 'Blog', href: '/blog', icon: BookOpen },
+        { id: 'help', label: 'Help', href: '/help', icon: HelpCircle },
     ];
 
     const pollTypes = [
@@ -99,9 +87,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                         className="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 overflow-hidden"
                                     >
                                         {pollTypes.map((type) => (
-                                            <button
+                                            <a
                                                 key={type.name}
-                                                onClick={() => scrollToSection('demo-section')}
+                                                href="/demo"
                                                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors text-left"
                                             >
                                                 <type.icon size={18} className="text-indigo-500" />
@@ -111,15 +99,15 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                                         PRO
                                                     </span>
                                                 )}
-                                            </button>
+                                            </a>
                                         ))}
                                         <div className="border-t border-slate-100 mt-2 pt-2 px-4 pb-2">
-                                            <button 
-                                                onClick={() => scrollToSection('demo-section')}
+                                            <a 
+                                                href="/demo"
                                                 className="text-xs text-indigo-600 font-medium hover:underline"
                                             >
                                                 View all 12 poll types →
-                                            </button>
+                                            </a>
                                         </div>
                                     </motion.div>
                                 )}
@@ -127,9 +115,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                         </div>
 
                         {navItems.map((item) => (
-                            <button
+                            <a
                                 key={item.id}
-                                onClick={() => scrollToSection(item.section)}
+                                href={item.href}
                                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                                     currentPage === item.id
                                         ? 'text-indigo-600 bg-indigo-50'
@@ -137,18 +125,18 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                 }`}
                             >
                                 {item.label}
-                            </button>
+                            </a>
                         ))}
                     </nav>
 
                     {/* CTA Button */}
                     <div className="hidden md:flex items-center gap-3">
-                        <button
-                            onClick={() => scrollToSection('poll-creator')}
+                        <a
+                            href="/"
                             className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                         >
                             Create Free Poll
-                        </button>
+                        </a>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -172,9 +160,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                     >
                         <nav className="p-4 space-y-1">
                             {navItems.map((item) => (
-                                <button
+                                <a
                                     key={item.id}
-                                    onClick={() => scrollToSection(item.section)}
+                                    href={item.href}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                                         currentPage === item.id
                                             ? 'text-indigo-600 bg-indigo-50'
@@ -183,15 +171,15 @@ const NavHeader: React.FC<NavHeaderProps> = ({ currentPage = 'create' }) => {
                                 >
                                     <item.icon size={20} />
                                     <span className="font-medium">{item.label}</span>
-                                </button>
+                                </a>
                             ))}
                             <div className="pt-3 border-t border-slate-100 mt-3">
-                                <button
-                                    onClick={() => scrollToSection('poll-creator')}
+                                <a
+                                    href="/"
                                     className="block w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-center rounded-xl"
                                 >
                                     Create Free Poll
-                                </button>
+                                </a>
                             </div>
                         </nav>
                     </motion.div>

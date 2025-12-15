@@ -286,7 +286,7 @@ const DemoPage: React.FC = () => {
             <div className="h-12" />
             
             {/* Nav Header */}
-            <NavHeader currentPage="demo" />
+            <NavHeader />
 
             {/* Hero Section */}
             <div className="relative overflow-hidden">

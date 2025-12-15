@@ -204,7 +204,7 @@ const PricingPage: React.FC = () => {
             <div className="h-12" />
             
             {/* Nav Header */}
-            <NavHeader currentPage="pricing" />
+            <NavHeader />
 
             {/* Hero */}
             <div className="pt-16 pb-12 px-4 text-center">

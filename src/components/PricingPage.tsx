@@ -9,164 +9,233 @@ import {
     Shield,
     Lock,
     Users,
-    HelpCircle
+    HelpCircle,
+    CheckSquare,
+    ListOrdered,
+    Calendar,
+    ArrowLeftRight,
+    CircleDot,
+    SlidersHorizontal,
+    Coins,
+    LayoutGrid,
+    ThumbsUp,
+    Smile,
+    Image
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 
-interface PlanFeature {
-    name: string;
-    included: boolean;
-    tooltip?: string;
-    negative?: boolean;
-    header?: boolean;
-    pro?: boolean;
-}
-
-interface Plan {
-    id: string;
-    name: string;
-    description: string;
-    price: { monthly: number; yearly: number };
-    badge: string | null;
-    highlight: boolean;
-    cta: string;
-    ctaLink: string;
-    features: PlanFeature[];
-}
-
 const PricingPage: React.FC = () => {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
-    const plans: Plan[] = [
+    const plans = [
         {
             id: 'free',
             name: 'Free',
             description: 'Perfect for quick polls and personal use',
-            price: { monthly: 0, yearly: 0 },
+            monthlyPrice: 0,
+            yearlyPrice: 0,
             badge: null,
             highlight: false,
             cta: 'Start Free',
-            ctaLink: '/',
             features: [
-                { name: 'All basic poll types', included: true },
-                { name: 'Unlimited polls (separate links)', included: true, tooltip: 'Each poll has its own unique link. No unified dashboard.' },
-                { name: 'Up to 500 responses per poll', included: true },
-                { name: 'Browser-based vote protection', included: true },
-                { name: 'Scheduled poll closing', included: true },
-                { name: 'Ads displayed', included: true, negative: true },
-                { name: '"Powered by VoteGenerator"', included: true, negative: true },
+                { text: '9 basic poll types', included: true },
+                { text: 'Unlimited polls (separate admin links)', included: true },
+                { text: 'Up to 100 responses per poll', included: true },
+                { text: 'Browser-based vote protection', included: true },
+                { text: 'Shareable admin link', included: true },
+                { text: 'Basic results view', included: true },
+                { text: 'Ads displayed', included: true, negative: true },
+                { text: '"Powered by VoteGenerator"', included: true, negative: true },
             ]
         },
         {
-            id: 'one-time',
-            name: 'One-Time Event',
-            description: 'For a single important poll or event',
-            price: { monthly: 9.99, yearly: 9.99 },
-            badge: 'PAY ONCE',
+            id: 'quick',
+            name: 'Quick Poll',
+            description: 'For a single quick poll',
+            monthlyPrice: 5,
+            yearlyPrice: 5,
+            isOneTime: true,
+            badge: 'ONE-TIME',
             highlight: false,
             cta: 'Buy Now',
-            ctaLink: '#checkout/one-time',
             features: [
-                { name: 'Everything in Free, plus:', included: true, header: true },
-                { name: '1 poll, active for 30 days', included: true },
-                { name: 'Up to 2,000 responses', included: true },
-                { name: 'No ads on your poll', included: true },
-                { name: 'Remove "Powered by VoteGenerator"', included: true },
-                { name: 'Download results (CSV & PDF)', included: true },
-                { name: 'Upload your logo', included: true },
+                { text: 'Everything in Free, plus:', header: true },
+                { text: '1 poll, active for 7 days', included: true },
+                { text: 'Up to 500 responses', included: true },
+                { text: 'No ads on your poll', included: true },
+                { text: 'Remove "Powered by" branding', included: true },
+                { text: 'Download results (CSV & PDF)', included: true },
+                { text: 'Custom thank-you message', included: true },
+            ]
+        },
+        {
+            id: 'event',
+            name: 'Event Poll',
+            description: 'For important events & decisions',
+            monthlyPrice: 9.99,
+            yearlyPrice: 9.99,
+            isOneTime: true,
+            badge: 'POPULAR',
+            highlight: false,
+            cta: 'Buy Now',
+            features: [
+                { text: 'Everything in Quick Poll, plus:', header: true },
+                { text: '1 poll, active for 30 days', included: true },
+                { text: 'Up to 2,000 responses', included: true },
+                { text: 'Upload your logo', included: true },
+                { text: 'Secure admin token', included: true },
+                { text: 'Custom thank-you page', included: true },
+                { text: 'Voter comments enabled', included: true },
             ]
         },
         {
             id: 'pro',
             name: 'Pro',
-            description: 'For teams and regular poll creators',
-            price: { monthly: 12, yearly: 99 },
+            description: 'For teams & regular poll creators',
+            monthlyPrice: 12,
+            yearlyPrice: 99,
             badge: 'BEST VALUE',
             highlight: true,
             cta: 'Get Pro',
-            ctaLink: '#checkout/pro',
             features: [
-                { name: 'Everything in One-Time, plus:', included: true, header: true },
-                { name: 'Unlimited polls & responses', included: true },
-                { name: 'Visual Polls (image voting)', included: true, pro: true },
-                { name: 'Unified dashboard (manage all polls)', included: true },
-                { name: 'Unique voting codes', included: true },
-                { name: 'Basic analytics (votes, times, %)', included: true },
-                { name: 'Embed with your logo', included: true },
-                { name: 'Email notifications (new votes)', included: true },
-                { name: 'Priority support', included: true },
+                { text: 'Everything in Event, plus:', header: true },
+                { text: 'Unlimited polls & responses', included: true },
+                { text: 'All 12 poll types (incl. Visual)', included: true, isNew: true },
+                { text: 'Unified dashboard for all polls', included: true },
+                { text: 'Secure admin tokens', included: true },
+                { text: 'Detailed analytics & charts', included: true },
+                { text: 'Embed polls with your logo', included: true },
+                { text: 'Poll duplication', included: true },
             ]
         },
         {
             id: 'pro-plus',
             name: 'Pro+',
-            description: 'For power users and businesses',
-            price: { monthly: 19, yearly: 149 },
+            description: 'For businesses & power users',
+            monthlyPrice: 19,
+            yearlyPrice: 149,
             badge: 'FULL POWER',
             highlight: false,
             cta: 'Get Pro+',
-            ctaLink: '#checkout/pro-plus',
             features: [
-                { name: 'Everything in Pro, plus:', included: true, header: true },
-                { name: 'Advanced analytics', included: true, tooltip: 'Geographic insights, device breakdown, response trends, peak times' },
-                { name: 'White-label embeds (no branding)', included: true },
-                { name: 'Custom short links (/v/your-name)', included: true },
-                { name: 'Custom thank-you page', included: true },
-                { name: 'Live Excel export', included: true, tooltip: 'Results automatically sync to downloadable Excel' },
-                { name: 'IP-based vote protection', included: true },
-                { name: 'Voter comments & feedback', included: true },
-                { name: 'Dedicated support', included: true },
+                { text: 'Everything in Pro, plus:', header: true },
+                { text: 'Advanced analytics & insights', included: true },
+                { text: 'White-label embeds (no branding)', included: true },
+                { text: 'Custom short links (/v/your-name)', included: true },
+                { text: 'Custom thank-you page with redirect', included: true },
+                { text: 'IP-based vote protection', included: true },
+                { text: 'Unique voting codes', included: true },
+                { text: 'Priority support (24hr response)', included: true },
             ]
         }
     ];
 
-    interface FeatureRow {
-        name: string;
-        free: string | boolean;
-        oneTime: string | boolean;
-        pro: string | boolean;
-        proPlus: string | boolean;
-        tooltip?: string;
-    }
+    // All 12 poll types
+    const pollTypes = [
+        { name: 'Multiple Choice', icon: CheckSquare, free: true },
+        { name: 'Ranked Choice', icon: ListOrdered, free: true },
+        { name: 'Meeting Poll', icon: Calendar, free: true },
+        { name: 'This or That', icon: ArrowLeftRight, free: true },
+        { name: 'Dot Voting', icon: CircleDot, free: true },
+        { name: 'Rating Scale', icon: SlidersHorizontal, free: true },
+        { name: 'Buy a Feature', icon: Coins, free: true },
+        { name: 'Priority Matrix', icon: LayoutGrid, free: true },
+        { name: 'Approval Voting', icon: ThumbsUp, free: true },
+        { name: 'Quiz Poll', icon: HelpCircle, free: true },
+        { name: 'Sentiment Check', icon: Smile, free: true },
+        { name: 'Visual Poll', icon: Image, free: false, pro: true },
+    ];
 
-    const comparisonFeatures: FeatureRow[] = [
-        { name: 'Poll Types', free: 'Basic (9 types)', oneTime: 'Basic (9 types)', pro: 'All (12 types)', proPlus: 'All (12 types)' },
-        { name: 'Visual Poll (Images)', free: false, oneTime: false, pro: true, proPlus: true },
-        { name: 'Polls You Can Create', free: 'Unlimited (separate)', oneTime: '1 poll', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Responses Per Poll', free: '500', oneTime: '2,000', pro: 'Unlimited', proPlus: 'Unlimited' },
-        { name: 'Unified Dashboard', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Manage all your polls from one place' },
-        { name: 'Remove Ads', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Remove "Powered by VoteGenerator"', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Upload Your Logo', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Download CSV/PDF', free: false, oneTime: true, pro: true, proPlus: true },
-        { name: 'Scheduled Poll Closing', free: true, oneTime: true, pro: true, proPlus: true },
-        { name: 'Browser Vote Protection', free: true, oneTime: true, pro: true, proPlus: true },
-        { name: 'Unique Voting Codes', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Generate one-time codes for controlled voting' },
-        { name: 'IP-Based Protection', free: false, oneTime: false, pro: false, proPlus: true },
-        { name: 'Basic Analytics', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Vote counts, percentages, timestamps' },
-        { name: 'Advanced Analytics', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Geographic data, device stats, trends over time' },
-        { name: 'Embed Polls', free: 'With branding', oneTime: 'With branding', pro: 'Your logo', proPlus: 'White-label' },
-        { name: 'Custom Short Links', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'votegenerator.com/v/your-custom-name' },
-        { name: 'Custom Thank-You Page', free: false, oneTime: false, pro: false, proPlus: true },
-        { name: 'Email Notifications', free: false, oneTime: false, pro: true, proPlus: true, tooltip: 'Get notified when someone votes' },
-        { name: 'Excel Export', free: false, oneTime: false, pro: false, proPlus: true, tooltip: 'Export results to Excel spreadsheet' },
-        { name: 'Priority Support', free: false, oneTime: false, pro: true, proPlus: true },
+    // Feature comparison grouped by category
+    const featureCategories = [
+        {
+            name: 'Poll Types',
+            features: [
+                { name: 'Multiple Choice', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Ranked Choice', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Meeting Poll', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'This or That', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Dot Voting', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Rating Scale', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Buy a Feature', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Priority Matrix', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Approval Voting', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Quiz Poll', free: false, quick: false, event: false, pro: true, proPlus: true },
+                { name: 'Sentiment Check', free: false, quick: false, event: false, pro: true, proPlus: true },
+                { name: 'Visual Poll (Images)', free: false, quick: false, event: false, pro: true, proPlus: true },
+            ]
+        },
+        {
+            name: 'Limits & Responses',
+            features: [
+                { name: 'Number of Polls', free: 'Unlimited', quick: '1 poll', event: '1 poll', pro: 'Unlimited', proPlus: 'Unlimited' },
+                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: 'Unlimited', proPlus: 'Unlimited' },
+                { name: 'Poll Duration', free: 'Unlimited', quick: '7 days', event: '30 days', pro: 'Unlimited', proPlus: 'Unlimited' },
+            ]
+        },
+        {
+            name: 'Admin & Security',
+            features: [
+                { name: 'Shareable Admin Link', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Secure Admin Token', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'Extra secure access code for admin functions' },
+                { name: 'Unified Dashboard', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Manage all your polls in one place' },
+                { name: 'Browser Vote Protection', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'IP-Based Vote Protection', free: false, quick: false, event: false, pro: false, proPlus: true },
+                { name: 'Unique Voting Codes', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Generate one-time codes for controlled voting' },
+            ]
+        },
+        {
+            name: 'Branding & Customization',
+            features: [
+                { name: 'Remove Ads', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Remove "Powered by" Branding', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Upload Your Logo', free: false, quick: false, event: true, pro: true, proPlus: true },
+                { name: 'Custom Thank-You Message', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Custom Thank-You Page', free: false, quick: false, event: true, pro: true, proPlus: true },
+                { name: 'Thank-You Page with Redirect', free: false, quick: false, event: false, pro: false, proPlus: true },
+                { name: 'Embed Polls', free: 'With branding', quick: 'With branding', event: 'Your logo', pro: 'Your logo', proPlus: 'White-label' },
+                { name: 'Custom Short Links', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'votegenerator.com/v/your-custom-name' },
+            ]
+        },
+        {
+            name: 'Results & Analytics',
+            features: [
+                { name: 'Real-Time Results', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Download CSV', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Download PDF Report', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Detailed Analytics', free: false, quick: false, event: false, pro: true, proPlus: true },
+                { name: 'Advanced Insights', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Vote trends, peak times, device breakdown' },
+                { name: 'Voter Comments', free: false, quick: false, event: true, pro: true, proPlus: true },
+            ]
+        },
+        {
+            name: 'Support',
+            features: [
+                { name: 'Help Center Access', free: true, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Email Support', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Priority Support (24hr)', free: false, quick: false, event: false, pro: false, proPlus: true },
+            ]
+        },
     ];
 
     const faqs = [
         {
             q: "Can I really use it for free forever?",
-            a: "Yes! The free plan is truly free with no time limits. Create unlimited polls, get up to 500 responses each, and share instantly. We show small ads to keep it free."
+            a: "Yes! The free plan is truly free with no time limits. Create unlimited polls, get up to 100 responses each, and share instantly. We show small ads to keep it free."
         },
         {
-            q: "What's the difference between 'separate links' and 'unified dashboard'?",
-            a: "Free users get a unique admin link for each poll they create. Pro users get a single dashboard where they can see and manage ALL their polls in one place - much easier for regular poll creators."
+            q: "What's the difference between Quick Poll and Event Poll?",
+            a: "Quick Poll ($5) is perfect for simple decisions - 7 days, 500 responses. Event Poll ($9.99) is for important occasions - 30 days, 2,000 responses, plus logo upload, admin tokens, and voter comments."
         },
         {
-            q: "How does the One-Time plan work?",
-            a: "Pay $9.99 once for a single premium poll that stays active for 30 days. Perfect for one-off events like weddings, team votes, or contests. No subscription needed."
+            q: "What are admin tokens?",
+            a: "Admin tokens are secure codes that protect your poll's admin functions. Instead of just a link, you get a secret token that must be entered to access results and settings. Great for sensitive polls."
+        },
+        {
+            q: "How does the unified dashboard work?",
+            a: "Pro users get a single dashboard where they can see and manage ALL their polls in one place. No more bookmarking individual admin links!"
         },
         {
             q: "What payment methods do you accept?",
@@ -174,36 +243,30 @@ const PricingPage: React.FC = () => {
         },
         {
             q: "Can I upgrade or downgrade anytime?",
-            a: "Yes! Upgrade instantly and we'll prorate your billing. Downgrade takes effect at your next billing date. You keep access to features you've already paid for."
+            a: "Yes! Upgrade instantly and we'll prorate your billing. Downgrade takes effect at your next billing date."
         },
         {
             q: "What's your refund policy?",
-            a: "Due to the digital nature of our service, we don't offer refunds. However, you can cancel anytime and continue using your plan until the end of your billing period."
-        },
-        {
-            q: "What are email notifications?",
-            a: "Pro and Pro+ users get email alerts when someone votes on their poll, when a poll deadline is approaching, and when a poll closes. Great for staying on top of active polls."
+            a: "One-time purchases are non-refundable due to immediate access. For subscriptions, you can cancel anytime and continue using features until your billing period ends."
         },
         {
             q: "Is my data secure?",
-            a: "Absolutely. Poll data is encrypted and stored securely. We never sell your data. For maximum privacy, polls can be set to auto-delete after they close."
+            a: "Absolutely. We're privacy-first by design. Poll data is encrypted, we don't track voters, and polls can be set to auto-delete after they close."
         }
     ];
 
-    const getYearlySavings = (plan: Plan) => {
-        if (plan.price.monthly === 0) return null;
-        const monthlyTotal = plan.price.monthly * 12;
-        const savings = Math.round((1 - plan.price.yearly / monthlyTotal) * 100);
-        return savings > 0 ? savings : null;
+    const getYearlySavings = (monthly: number, yearly: number) => {
+        if (monthly === 0) return null;
+        const monthlyTotal = monthly * 12;
+        const savings = monthlyTotal - yearly;
+        const percent = Math.round((savings / monthlyTotal) * 100);
+        return { savings, percent, perMonth: (yearly / 12).toFixed(2) };
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            {/* Promo Banner */}
             <PromoBanner position="top" />
             <div className="h-12" />
-            
-            {/* Nav Header */}
             <NavHeader />
 
             {/* Hero */}
@@ -217,7 +280,7 @@ const PricingPage: React.FC = () => {
                         Simple, Transparent Pricing
                     </h1>
                     <p className="text-xl text-slate-600 mb-8">
-                        Start free. Upgrade when you need more power.
+                        Start free. Pay only when you need more power.
                     </p>
 
                     {/* Billing Toggle */}
@@ -251,122 +314,154 @@ const PricingPage: React.FC = () => {
 
             {/* Pricing Cards */}
             <div className="max-w-7xl mx-auto px-4 pb-16">
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {plans.map((plan, index) => (
-                        <motion.div
-                            key={plan.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`relative rounded-2xl p-6 ${
-                                plan.highlight
-                                    ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white ring-4 ring-indigo-300 scale-105'
-                                    : 'bg-white border border-slate-200'
-                            }`}
-                        >
-                            {/* Badge */}
-                            {plan.badge && (
-                                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${
+                <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {plans.map((plan, index) => {
+                        const yearlyInfo = getYearlySavings(plan.monthlyPrice, plan.yearlyPrice);
+                        const isOneTime = plan.isOneTime;
+                        const displayPrice = isOneTime ? plan.monthlyPrice : (billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice);
+                        
+                        return (
+                            <motion.div
+                                key={plan.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={`relative rounded-2xl p-5 ${
                                     plan.highlight
-                                        ? 'bg-amber-400 text-amber-900'
-                                        : 'bg-slate-800 text-white'
-                                }`}>
-                                    {plan.badge}
-                                </div>
-                            )}
-
-                            {/* Plan Name */}
-                            <div className="mb-4">
-                                <h3 className={`text-xl font-bold ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                    {plan.name}
-                                </h3>
-                                <p className={`text-sm mt-1 ${plan.highlight ? 'text-indigo-100' : 'text-slate-500'}`}>
-                                    {plan.description}
-                                </p>
-                            </div>
-
-                            {/* Price */}
-                            <div className="mb-6">
-                                <div className="flex items-baseline gap-1">
-                                    <span className={`text-4xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                        ${billingCycle === 'yearly' && plan.id !== 'one-time' ? plan.price.yearly : plan.price.monthly}
-                                    </span>
-                                    {plan.price.monthly > 0 && plan.id !== 'one-time' && (
-                                        <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
-                                            /{billingCycle === 'yearly' ? 'year' : 'month'}
-                                        </span>
-                                    )}
-                                    {plan.id === 'one-time' && (
-                                        <span className={plan.highlight ? 'text-indigo-200' : 'text-slate-400'}>
-                                            one-time
-                                        </span>
-                                    )}
-                                </div>
-                                {billingCycle === 'yearly' && getYearlySavings(plan) && plan.id !== 'one-time' && (
-                                    <p className={`text-sm mt-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
-                                        Save {getYearlySavings(plan)}% vs monthly
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* CTA */}
-                            <a
-                                href={plan.ctaLink}
-                                className={`block w-full py-3 px-4 rounded-xl font-bold text-center transition-all ${
-                                    plan.highlight
-                                        ? 'bg-white text-indigo-600 hover:bg-indigo-50'
-                                        : plan.id === 'free'
-                                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                        ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white ring-4 ring-indigo-300 scale-105 z-10'
+                                        : 'bg-white border border-slate-200'
                                 }`}
                             >
-                                {plan.cta}
-                            </a>
+                                {plan.badge && (
+                                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                                        plan.highlight
+                                            ? 'bg-amber-400 text-amber-900'
+                                            : plan.badge === 'POPULAR' ? 'bg-green-500 text-white' : 'bg-slate-800 text-white'
+                                    }`}>
+                                        {plan.badge}
+                                    </div>
+                                )}
 
-                            {/* Features */}
-                            <ul className="mt-6 space-y-3">
-                                {plan.features.map((feature, i) => (
-                                    <li 
-                                        key={i} 
-                                        className={`flex items-start gap-2 text-sm ${
-                                            feature.header 
-                                                ? `font-semibold ${plan.highlight ? 'text-indigo-100' : 'text-slate-700'}` 
-                                                : ''
-                                        }`}
-                                    >
-                                        {!feature.header && (
-                                            feature.included ? (
-                                                feature.negative ? (
-                                                    <X size={16} className={`shrink-0 mt-0.5 ${plan.highlight ? 'text-indigo-300' : 'text-slate-400'}`} />
-                                                ) : (
-                                                    <Check size={16} className={`shrink-0 mt-0.5 ${plan.highlight ? 'text-green-300' : 'text-green-500'}`} />
-                                                )
-                                            ) : (
-                                                <X size={16} className="shrink-0 mt-0.5 text-slate-300" />
-                                            )
-                                        )}
-                                        <span className={
-                                            feature.negative 
-                                                ? plan.highlight ? 'text-indigo-200' : 'text-slate-400'
-                                                : plan.highlight ? 'text-white' : 'text-slate-600'
-                                        }>
-                                            {feature.name}
-                                            {feature.pro && (
-                                                <span className="ml-1.5 px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-xs font-bold rounded">
-                                                    NEW
-                                                </span>
-                                            )}
+                                <div className="mb-3">
+                                    <h3 className={`text-lg font-bold ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
+                                        {plan.name}
+                                    </h3>
+                                    <p className={`text-xs mt-1 ${plan.highlight ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                        {plan.description}
+                                    </p>
+                                </div>
+
+                                <div className="mb-4">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className={`text-3xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
+                                            ${displayPrice}
                                         </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </motion.div>
-                    ))}
+                                        {!isOneTime && plan.monthlyPrice > 0 && (
+                                            <span className={plan.highlight ? 'text-indigo-200 text-sm' : 'text-slate-400 text-sm'}>
+                                                /{billingCycle === 'yearly' ? 'year' : 'mo'}
+                                            </span>
+                                        )}
+                                        {isOneTime && (
+                                            <span className={plan.highlight ? 'text-indigo-200 text-sm' : 'text-slate-400 text-sm'}>
+                                                one-time
+                                            </span>
+                                        )}
+                                    </div>
+                                    {!isOneTime && billingCycle === 'yearly' && yearlyInfo && (
+                                        <p className={`text-xs mt-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
+                                            ${yearlyInfo.perMonth}/mo · Save ${yearlyInfo.savings}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <a
+                                    href="/index.html"
+                                    className={`block w-full py-2.5 px-4 rounded-xl font-bold text-center text-sm transition-all ${
+                                        plan.highlight
+                                            ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                                            : plan.id === 'free'
+                                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                    }`}
+                                >
+                                    {plan.cta}
+                                </a>
+
+                                <ul className="mt-4 space-y-2">
+                                    {plan.features.map((feature, i) => (
+                                        <li 
+                                            key={i} 
+                                            className={`flex items-start gap-2 text-xs ${
+                                                feature.header 
+                                                    ? `font-semibold ${plan.highlight ? 'text-indigo-100' : 'text-slate-700'}` 
+                                                    : ''
+                                            }`}
+                                        >
+                                            {!feature.header && (
+                                                feature.included ? (
+                                                    feature.negative ? (
+                                                        <X size={14} className={`shrink-0 mt-0.5 ${plan.highlight ? 'text-indigo-300' : 'text-slate-400'}`} />
+                                                    ) : (
+                                                        <Check size={14} className={`shrink-0 mt-0.5 ${plan.highlight ? 'text-green-300' : 'text-green-500'}`} />
+                                                    )
+                                                ) : (
+                                                    <X size={14} className="shrink-0 mt-0.5 text-slate-300" />
+                                                )
+                                            )}
+                                            <span className={
+                                                feature.negative 
+                                                    ? plan.highlight ? 'text-indigo-200' : 'text-slate-400'
+                                                    : plan.highlight ? 'text-white' : 'text-slate-600'
+                                            }>
+                                                {feature.text}
+                                                {feature.isNew && (
+                                                    <span className="ml-1 px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[10px] font-bold rounded">
+                                                        NEW
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Poll Types Section */}
+            <div className="bg-slate-50 py-16">
+                <div className="max-w-6xl mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-slate-900 text-center mb-4">
+                        12 Poll Types Included
+                    </h2>
+                    <p className="text-slate-600 text-center mb-10">
+                        9 types free, 3 exclusive to Pro plans
+                    </p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {pollTypes.map((poll, i) => (
+                            <div 
+                                key={i}
+                                className={`p-4 rounded-xl border text-center ${
+                                    poll.pro 
+                                        ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200' 
+                                        : 'bg-white border-slate-200'
+                                }`}
+                            >
+                                <poll.icon size={24} className={poll.pro ? 'text-indigo-600 mx-auto mb-2' : 'text-slate-600 mx-auto mb-2'} />
+                                <p className="text-sm font-medium text-slate-800">{poll.name}</p>
+                                {poll.pro && (
+                                    <span className="text-[10px] font-bold text-indigo-600">PRO</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Feature Comparison Table */}
-            <div className="max-w-6xl mx-auto px-4 pb-20">
+            <div className="max-w-6xl mx-auto px-4 py-20">
                 <h2 className="text-3xl font-bold text-slate-900 text-center mb-10">
                     Compare All Features
                 </h2>
@@ -375,76 +470,62 @@ const PricingPage: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-100">
+                                <tr className="border-b border-slate-100 bg-slate-50">
                                     <th className="text-left p-4 font-semibold text-slate-600">Feature</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">Free</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">One-Time</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28 bg-indigo-50">
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">Free</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">$5</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">$9.99</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20 bg-indigo-50">
                                         <span className="text-indigo-600">Pro</span>
                                     </th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-28">Pro+</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">Pro+</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {comparisonFeatures.map((feature, i) => (
-                                    <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
-                                        <td className="p-4 text-slate-700 flex items-center gap-2">
-                                            {feature.name}
-                                            {feature.tooltip && (
-                                                <div className="relative group">
-                                                    <HelpCircle size={14} className="text-slate-400 cursor-help" />
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
-                                                        {feature.tooltip}
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.free === 'boolean' ? (
-                                                feature.free ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.free}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.oneTime === 'boolean' ? (
-                                                feature.oneTime ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.oneTime}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center bg-indigo-50/50">
-                                            {typeof feature.pro === 'boolean' ? (
-                                                feature.pro ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-indigo-600 font-medium">{feature.pro}</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {typeof feature.proPlus === 'boolean' ? (
-                                                feature.proPlus ? (
-                                                    <Check size={18} className="text-green-500 mx-auto" />
-                                                ) : (
-                                                    <X size={18} className="text-slate-300 mx-auto" />
-                                                )
-                                            ) : (
-                                                <span className="text-sm text-slate-600">{feature.proPlus}</span>
-                                            )}
-                                        </td>
-                                    </tr>
+                                {featureCategories.map((category, catIndex) => (
+                                    <React.Fragment key={catIndex}>
+                                        <tr className="bg-slate-100">
+                                            <td colSpan={6} className="p-3 font-bold text-slate-700 text-sm">
+                                                {category.name}
+                                            </td>
+                                        </tr>
+                                        {category.features.map((feature, i) => (
+                                            <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
+                                                <td className="p-3 text-slate-700 text-sm flex items-center gap-2">
+                                                    {feature.name}
+                                                    {feature.tooltip && (
+                                                        <div className="relative group">
+                                                            <HelpCircle size={14} className="text-slate-400 cursor-help" />
+                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
+                                                                {feature.tooltip}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                {['free', 'quick', 'event', 'pro', 'proPlus'].map((plan) => {
+                                                    const value = feature[plan as keyof typeof feature];
+                                                    return (
+                                                        <td 
+                                                            key={plan} 
+                                                            className={`p-3 text-center ${plan === 'pro' ? 'bg-indigo-50/50' : ''}`}
+                                                        >
+                                                            {typeof value === 'boolean' ? (
+                                                                value ? (
+                                                                    <Check size={16} className="text-green-500 mx-auto" />
+                                                                ) : (
+                                                                    <X size={16} className="text-slate-300 mx-auto" />
+                                                                )
+                                                            ) : (
+                                                                <span className={`text-xs ${plan === 'pro' ? 'text-indigo-600 font-medium' : 'text-slate-600'}`}>
+                                                                    {value}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
@@ -468,7 +549,7 @@ const PricingPage: React.FC = () => {
                                 <Shield size={24} className="text-green-600" />
                             </div>
                             <h4 className="font-bold text-slate-800">Privacy First</h4>
-                            <p className="text-sm text-slate-500">No data collection</p>
+                            <p className="text-sm text-slate-500">No voter tracking</p>
                         </div>
                         <div className="text-center">
                             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -518,7 +599,7 @@ const PricingPage: React.FC = () => {
                         Ready to create your first poll?
                     </h2>
                     <p className="text-indigo-100 mb-8">
-                        Join thousands of people using VoteGenerator for quick decisions.
+                        Join thousands making better decisions with VoteGenerator.
                     </p>
                     <a
                         href="/index.html"
@@ -531,7 +612,6 @@ const PricingPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Footer */}
             <Footer />
         </div>
     );

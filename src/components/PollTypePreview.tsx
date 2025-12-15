@@ -17,6 +17,61 @@ interface PollTypePreviewProps {
 // Multiple Choice Preview
 const MultipleChoicePreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [selected, setSelected] = useState<string | null>(null);
+    const [submitted, setSubmitted] = useState(false);
+    const [votes] = useState(() => options.map(() => Math.floor(Math.random() * 50) + 10));
+    
+    const handleSubmit = () => {
+        if (selected) {
+            setSubmitted(true);
+        }
+    };
+    
+    if (submitted) {
+        const total = votes.reduce((a, b) => a + b, 0) + 1;
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Vote Recorded!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-3">{question}</h4>
+                <div className="space-y-2">
+                    {options.map((opt, i) => {
+                        const count = votes[i] + (opt === selected ? 1 : 0);
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                            <div key={i} className="relative">
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className={opt === selected ? 'font-semibold text-indigo-700' : 'text-slate-700'}>
+                                        {opt} {opt === selected && '✓'}
+                                    </span>
+                                    <span className="text-slate-500">{pct}%</span>
+                                </div>
+                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className={`h-full rounded-full transition-all ${opt === selected ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                                        style={{ width: `${pct}%` }}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-slate-400 mt-4 text-center">{total} total votes</p>
+                <button 
+                    onClick={() => { setSubmitted(false); setSelected(null); }}
+                    className="w-full mt-3 py-2 text-indigo-600 font-medium text-sm hover:bg-indigo-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -42,7 +97,15 @@ const MultipleChoicePreview: React.FC<{ question: string; options: string[] }> =
                     </button>
                 ))}
             </div>
-            <button className="w-full mt-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+            <button 
+                onClick={handleSubmit}
+                disabled={!selected}
+                className={`w-full mt-4 py-2.5 font-semibold rounded-lg transition-colors ${
+                    selected 
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
                 Vote →
             </button>
         </div>
@@ -52,14 +115,56 @@ const MultipleChoicePreview: React.FC<{ question: string; options: string[] }> =
 // Ranked Choice Preview - Drag to rank
 const RankedChoicePreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [ranking, setRanking] = useState(options);
+    const [submitted, setSubmitted] = useState(false);
     
-    // Move item up when clicked (simulates drag)
     const moveUp = (index: number) => {
         if (index === 0) return;
         const newRanking = [...ranking];
         [newRanking[index - 1], newRanking[index]] = [newRanking[index], newRanking[index - 1]];
         setRanking(newRanking);
     };
+    
+    const handleSubmit = () => {
+        setSubmitted(true);
+    };
+    
+    if (submitted) {
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Ranking Submitted!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-3">Your ranking:</h4>
+                <div className="space-y-2">
+                    {ranking.map((opt, i) => (
+                        <div key={opt} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                i === 0 ? 'bg-amber-400 text-amber-900' :
+                                i === 1 ? 'bg-slate-300 text-slate-700' :
+                                i === 2 ? 'bg-amber-600 text-white' :
+                                'bg-slate-200 text-slate-600'
+                            }`}>
+                                {i + 1}
+                            </div>
+                            <span className="text-slate-700">{opt}</span>
+                        </div>
+                    ))}
+                </div>
+                <button 
+                    onClick={() => { setSubmitted(false); setRanking(options); }}
+                    className="w-full mt-4 py-2 text-indigo-600 font-medium text-sm hover:bg-indigo-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -89,7 +194,10 @@ const RankedChoicePreview: React.FC<{ question: string; options: string[] }> = (
             <p className="text-xs text-slate-400 mt-3 text-center">
                 Click options to reorder your ranking
             </p>
-            <button className="w-full mt-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+            <button 
+                onClick={handleSubmit}
+                className="w-full mt-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            >
                 Submit Ranking →
             </button>
         </div>

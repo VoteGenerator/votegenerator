@@ -48,16 +48,80 @@ const pollTypes = [
     { id: 'visual-poll', name: 'Visual Poll', icon: Image, description: 'Vote with images', tier: 'PRO' },
 ];
 
-// Theme configurations
+// Theme configurations - prettier with gradients and textures
 const themes = [
-    { id: 'classic', name: 'Classic Blue', primary: '#4F46E5', secondary: '#818CF8', bg: '#EEF2FF' },
-    { id: 'ocean', name: 'Ocean Breeze', primary: '#0891B2', secondary: '#22D3EE', bg: '#ECFEFF' },
-    { id: 'sunset', name: 'Sunset Glow', primary: '#EA580C', secondary: '#FB923C', bg: '#FFF7ED' },
-    { id: 'forest', name: 'Forest Green', primary: '#059669', secondary: '#34D399', bg: '#ECFDF5' },
-    { id: 'grape', name: 'Grape Vine', primary: '#7C3AED', secondary: '#A78BFA', bg: '#F5F3FF' },
-    { id: 'rose', name: 'Rose Garden', primary: '#E11D48', secondary: '#FB7185', bg: '#FFF1F2' },
-    { id: 'midnight', name: 'Midnight', primary: '#1E40AF', secondary: '#60A5FA', bg: '#EFF6FF' },
-    { id: 'coral', name: 'Coral Reef', primary: '#DC2626', secondary: '#F87171', bg: '#FEF2F2' },
+    { 
+        id: 'classic', 
+        name: 'Classic Indigo', 
+        primary: '#4F46E5', 
+        secondary: '#818CF8', 
+        bg: '#EEF2FF',
+        gradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+        pattern: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%)'
+    },
+    { 
+        id: 'ocean', 
+        name: 'Ocean Wave', 
+        primary: '#0891B2', 
+        secondary: '#22D3EE', 
+        bg: '#ECFEFF',
+        gradient: 'linear-gradient(135deg, #0891B2 0%, #06B6D4 50%, #22D3EE 100%)',
+        pattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)'
+    },
+    { 
+        id: 'sunset', 
+        name: 'Sunset Fire', 
+        primary: '#EA580C', 
+        secondary: '#FB923C', 
+        bg: '#FFF7ED',
+        gradient: 'linear-gradient(135deg, #DC2626 0%, #EA580C 50%, #F59E0B 100%)',
+        pattern: 'radial-gradient(ellipse at top right, rgba(255,255,255,0.15) 0%, transparent 50%)'
+    },
+    { 
+        id: 'forest', 
+        name: 'Forest Depths', 
+        primary: '#059669', 
+        secondary: '#34D399', 
+        bg: '#ECFDF5',
+        gradient: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10B981 100%)',
+        pattern: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 40%)'
+    },
+    { 
+        id: 'grape', 
+        name: 'Neon Grape', 
+        primary: '#7C3AED', 
+        secondary: '#A78BFA', 
+        bg: '#F5F3FF',
+        gradient: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #8B5CF6 100%)',
+        pattern: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%)'
+    },
+    { 
+        id: 'rose', 
+        name: 'Rose Petal', 
+        primary: '#E11D48', 
+        secondary: '#FB7185', 
+        bg: '#FFF1F2',
+        gradient: 'linear-gradient(135deg, #BE123C 0%, #E11D48 50%, #F43F5E 100%)',
+        pattern: 'radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0%, transparent 50%)'
+    },
+    { 
+        id: 'midnight', 
+        name: 'Midnight Sky', 
+        primary: '#1E40AF', 
+        secondary: '#60A5FA', 
+        bg: '#EFF6FF',
+        gradient: 'linear-gradient(135deg, #1E3A8A 0%, #1E40AF 40%, #3B82F6 100%)',
+        pattern: 'radial-gradient(ellipse at bottom left, rgba(255,255,255,0.08) 0%, transparent 60%)'
+    },
+    { 
+        id: 'aurora', 
+        name: 'Aurora', 
+        primary: '#06B6D4', 
+        secondary: '#A855F7', 
+        bg: '#F0FDFA',
+        gradient: 'linear-gradient(135deg, #06B6D4 0%, #8B5CF6 50%, #EC4899 100%)',
+        pattern: 'linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%)'
+    },
 ];
 
 function CreatePage() {
@@ -175,8 +239,11 @@ function CreatePage() {
                 )}
 
                 <button 
-                    className="w-full mt-4 py-3 rounded-xl font-semibold text-white transition-all"
-                    style={{ backgroundColor: activeColor }}
+                    className="w-full mt-4 py-3 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg"
+                    style={{ 
+                        background: useCustomColor ? activeColor : currentTheme.gradient,
+                        backgroundImage: useCustomColor ? undefined : `${currentTheme.pattern}, ${currentTheme.gradient}`
+                    }}
                 >
                     Submit Vote
                 </button>
@@ -376,30 +443,32 @@ function CreatePage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-4 gap-3">
                                     {themes.map((theme) => (
                                         <button
                                             key={theme.id}
                                             onClick={() => setSelectedTheme(theme.id)}
-                                            className={`p-3 rounded-xl border-2 transition-all ${
+                                            className={`relative overflow-hidden rounded-xl border-2 transition-all ${
                                                 selectedTheme === theme.id
-                                                    ? 'border-slate-800 bg-slate-50'
+                                                    ? 'border-slate-800 ring-2 ring-slate-800/20'
                                                     : 'border-slate-200 hover:border-slate-300'
                                             }`}
                                         >
-                                            <div className="flex gap-1 mb-2 justify-center">
-                                                <div 
-                                                    className="w-4 h-4 rounded-full"
-                                                    style={{ backgroundColor: theme.primary }}
-                                                />
-                                                <div 
-                                                    className="w-4 h-4 rounded-full"
-                                                    style={{ backgroundColor: theme.secondary }}
-                                                />
+                                            {/* Gradient Preview */}
+                                            <div 
+                                                className="h-12 w-full"
+                                                style={{ 
+                                                    background: theme.gradient,
+                                                    backgroundImage: `${theme.pattern}, ${theme.gradient}`
+                                                }}
+                                            />
+                                            <div className="p-2 bg-white">
+                                                <p className="text-xs font-medium text-slate-700 text-center truncate">{theme.name}</p>
                                             </div>
-                                            <p className="text-xs font-medium text-slate-600 text-center">{theme.name}</p>
                                             {selectedTheme === theme.id && (
-                                                <Check size={12} className="mx-auto mt-1 text-slate-800" />
+                                                <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                                    <Check size={12} className="text-slate-800" />
+                                                </div>
                                             )}
                                         </button>
                                     ))}

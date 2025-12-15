@@ -434,58 +434,66 @@ const PollTypeQuiz: React.FC = () => {
                         className="p-6"
                     >
                         {/* Top Recommendation */}
-                        <div className={`bg-gradient-to-r ${recommendations[0].gradient} rounded-xl p-6 text-white mb-6`}>
-                            <div className="flex items-center gap-2 text-white/80 text-sm font-medium mb-2">
-                                <Sparkles size={16} />
-                                Best Match
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                                    <recommendations[0].icon size={28} />
+                        {(() => {
+                            const TopIcon = recommendations[0].icon;
+                            return (
+                                <div className={`bg-gradient-to-r ${recommendations[0].gradient} rounded-xl p-6 text-white mb-6`}>
+                                    <div className="flex items-center gap-2 text-white/80 text-sm font-medium mb-2">
+                                        <Sparkles size={16} />
+                                        Best Match
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                                            <TopIcon size={28} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-2xl font-bold">{recommendations[0].name}</h4>
+                                            <p className="text-white/80">{recommendations[0].tagline}</p>
+                                        </div>
+                                    </div>
+                                    <p className="mt-4 text-white/90 text-sm">
+                                        <strong>Why this works for you:</strong> {recommendations[0].why}
+                                    </p>
+                                    {recommendations[0].tier !== 'free' && (
+                                        <div className="mt-3 inline-block px-2 py-1 bg-white/20 rounded text-xs font-bold">
+                                            {recommendations[0].tier === 'paid' ? '$5+' : 'PRO'}
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
-                                    <h4 className="text-2xl font-bold">{recommendations[0].name}</h4>
-                                    <p className="text-white/80">{recommendations[0].tagline}</p>
-                                </div>
-                            </div>
-                            <p className="mt-4 text-white/90 text-sm">
-                                <strong>Why this works for you:</strong> {recommendations[0].why}
-                            </p>
-                            {recommendations[0].tier !== 'free' && (
-                                <div className="mt-3 inline-block px-2 py-1 bg-white/20 rounded text-xs font-bold">
-                                    {recommendations[0].tier === 'paid' ? '$5+' : 'PRO'}
-                                </div>
-                            )}
-                        </div>
+                            );
+                        })()}
 
                         {/* Other Options */}
                         <h5 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                             Also Consider
                         </h5>
                         <div className="space-y-3 mb-6">
-                            {recommendations.slice(1).map((rec, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl"
-                                >
-                                    <div className={`w-10 h-10 bg-gradient-to-br ${rec.gradient} rounded-lg flex items-center justify-center text-white`}>
-                                        <rec.icon size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h5 className="font-bold text-slate-800">{rec.name}</h5>
-                                            {rec.tier !== 'free' && (
-                                                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
-                                                    rec.tier === 'paid' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'
-                                                }`}>
-                                                    {rec.tier === 'paid' ? '$5+' : 'PRO'}
-                                                </span>
-                                            )}
+                            {recommendations.slice(1).map((rec, i) => {
+                                const RecIcon = rec.icon;
+                                return (
+                                    <div
+                                        key={i}
+                                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl"
+                                    >
+                                        <div className={`w-10 h-10 bg-gradient-to-br ${rec.gradient} rounded-lg flex items-center justify-center text-white`}>
+                                            <RecIcon size={20} />
                                         </div>
-                                        <p className="text-sm text-slate-500">{rec.tagline}</p>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h5 className="font-bold text-slate-800">{rec.name}</h5>
+                                                {rec.tier !== 'free' && (
+                                                    <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                                                        rec.tier === 'paid' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'
+                                                    }`}>
+                                                        {rec.tier === 'paid' ? '$5+' : 'PRO'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-slate-500">{rec.tagline}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* Actions */}

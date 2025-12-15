@@ -28,25 +28,16 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     <div className="col-span-2">
                         <a href="/index.html" className="flex items-center gap-3 mb-4">
-                            {/* Logo SVG */}
-                            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="10" fill="url(#footer-logo-gradient)"/>
-                                <path d="M12 20L17 25L28 14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                                <defs>
-                                    <linearGradient id="footer-logo-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                                        <stop stopColor="#4F46E5"/>
-                                        <stop offset="1" stopColor="#7C3AED"/>
-                                    </linearGradient>
-                                </defs>
-                            </svg>
+                            {/* Logo from public folder */}
+                            <img src="/logo.svg" alt="VoteGenerator" className="h-8 w-auto" />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
                         </a>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">
-                            Create beautiful polls in seconds. No signup required. Privacy-first.
+                            The fastest way to make group decisions. Create polls in seconds, share instantly, and see results in real-time.
                         </p>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
                             <ShieldCheck size={16} className="text-green-500" />
-                            <span>Privacy-first by design</span>
+                            <span>No accounts. No tracking. Just polls.</span>
                         </div>
                         
                         <div className="flex gap-3 mt-6">
@@ -85,8 +76,8 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Company</h4>
                         <ul className="space-y-2">
+                            <li><a href="/about.html" className="text-sm hover:text-white transition-colors">About Us</a></li>
                             <li><a href="/contact.html" className="text-sm hover:text-white transition-colors">Contact Us</a></li>
-                            <li><span className="text-sm text-slate-500">About Us (Coming)</span></li>
                         </ul>
                     </div>
                     

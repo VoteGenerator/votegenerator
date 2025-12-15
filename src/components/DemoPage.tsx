@@ -32,6 +32,7 @@ import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 import PollTypePreview from './PollTypePreview';
+import PollTypeQuiz from './PollTypeQuiz';
 
 interface PollTypeInfo {
     id: string;
@@ -362,11 +363,21 @@ const DemoPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                         >
-                            {/* Decision Tree */}
+                            {/* Poll Type Quiz - Primary Feature */}
                             <div className="mb-16">
-                                <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
-                                    Which Poll Type Should You Use?
+                                <div className="max-w-2xl mx-auto">
+                                    <PollTypeQuiz />
+                                </div>
+                            </div>
+
+                            {/* Quick Reference Guide */}
+                            <div className="mb-16">
+                                <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">
+                                    Quick Reference Guide
                                 </h2>
+                                <p className="text-slate-500 text-center mb-8">
+                                    Or browse by what you're trying to accomplish
+                                </p>
                                 
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all">

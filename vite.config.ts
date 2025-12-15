@@ -15,6 +15,7 @@ export default defineConfig({
                 help: resolve(__dirname, 'help.html'),
                 contact: resolve(__dirname, 'contact.html'),
                 create: resolve(__dirname, 'create.html'),
+                about: resolve(__dirname, 'about.html'),
             },
         },
     },

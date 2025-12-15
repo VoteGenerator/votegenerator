@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Zap } from 'lucide-react';
-import { isPromoActive } from './promoConfig';
+import { isPromoActive, getPromoSettings } from './promoConfig';
 
 interface CountdownTimerProps {
     storageKey?: string;
@@ -9,12 +9,14 @@ interface CountdownTimerProps {
     onExpire?: () => void;
 }
 
-const CountdownTimer: React.FC<CountdownTimerProps> = ({
-    storageKey = 'vg_quick_poll_timer',
-    durationHours = 24,
-    resetChance = 0.3, // 30% chance to reset when expired
-    onExpire
-}) => {
+const CountdownTimer: React.FC<CountdownTimerProps> = (props) => {
+    // Get promo settings with prop overrides
+    const promoSettings = getPromoSettings();
+    const storageKey = props.storageKey || promoSettings.storageKey;
+    const durationHours = props.durationHours || promoSettings.durationHours;
+    const resetChance = props.resetChance ?? promoSettings.resetChance;
+    const onExpire = props.onExpire;
+    
     const [timeLeft, setTimeLeft] = useState<{
         hours: number;
         minutes: number;
@@ -124,6 +126,12 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
 // Inline countdown for pricing cards
 export const InlineCountdown: React.FC<CountdownTimerProps> = (props) => {
+    // Get promo settings with prop overrides
+    const promoSettings = getPromoSettings();
+    const storageKey = props.storageKey || promoSettings.storageKey;
+    const durationHours = props.durationHours || promoSettings.durationHours;
+    const resetChance = props.resetChance ?? promoSettings.resetChance;
+    
     const [timeLeft, setTimeLeft] = useState<{
         hours: number;
         minutes: number;
@@ -139,10 +147,6 @@ export const InlineCountdown: React.FC<CountdownTimerProps> = (props) => {
             setTimeLeft(null);
             return;
         }
-
-        const storageKey = props.storageKey || 'vg_quick_poll_timer';
-        const durationHours = props.durationHours || 24;
-        const resetChance = props.resetChance || 0.3;
 
         const getStartTime = (): number => {
             const stored = localStorage.getItem(storageKey);
@@ -189,7 +193,7 @@ export const InlineCountdown: React.FC<CountdownTimerProps> = (props) => {
         updateTimer();
         const interval = setInterval(updateTimer, 1000);
         return () => clearInterval(interval);
-    }, [props.storageKey, props.durationHours, props.resetChance, promoEnabled]);
+    }, [storageKey, durationHours, resetChance, promoEnabled]);
 
     // Don't render if promo disabled or expired
     if (!promoEnabled || !timeLeft) return null;

@@ -1,9 +1,20 @@
 // Promo and Pricing Configuration
 // Control promotions and regional pricing
 
-// Environment variable to enable/disable promo countdown
+// Environment variable to enable/disable promo countdown globally
 // Set VITE_PROMO_ENABLED=true in your .env file to show the countdown
-export const PROMO_ENABLED = import.meta.env.VITE_PROMO_ENABLED === 'true';
+const GLOBAL_PROMO_ENABLED = import.meta.env.VITE_PROMO_ENABLED === 'true';
+
+// Regional promo overrides - set specific countries where promo is active
+// This allows you to run promos in specific geos for testing or campaigns
+const PROMO_ENABLED_REGIONS: string[] = ['CA']; // Canada enabled for testing
+
+// Promo countdown settings
+export const PROMO_SETTINGS = {
+    durationHours: 36, // 36-hour countdown
+    resetChance: 0.3,  // 30% chance to reset when expired
+    storageKey: 'vg_quick_poll_timer',
+};
 
 // Regional pricing configuration
 interface RegionalPrice {
@@ -126,8 +137,19 @@ export function formatPrice(amount: number, showDecimals: boolean = true): strin
 }
 
 // Check if promo should be shown
+// Returns true if:
+// 1. Global promo is enabled via env var, OR
+// 2. Current region is in the PROMO_ENABLED_REGIONS list
 export function isPromoActive(): boolean {
-    return PROMO_ENABLED;
+    if (GLOBAL_PROMO_ENABLED) return true;
+    
+    const region = detectRegion();
+    return PROMO_ENABLED_REGIONS.includes(region);
+}
+
+// Get promo settings for countdown timer
+export function getPromoSettings() {
+    return PROMO_SETTINGS;
 }
 
 // Stripe price IDs mapped by region and plan

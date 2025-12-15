@@ -54,8 +54,8 @@ const PricingPage: React.FC = () => {
                 { text: 'Browser-based vote protection', included: true },
                 { text: 'Shareable admin link', included: true },
                 { text: 'Basic results view', included: true },
-                { text: 'Ads displayed', included: true, negative: true },
-                { text: '"Powered by VoteGenerator"', included: true, negative: true },
+                { text: 'Ads displayed', included: true },
+                { text: '"Powered by VoteGenerator"', included: true },
             ]
         },
         {
@@ -132,7 +132,7 @@ const PricingPage: React.FC = () => {
             features: [
                 { text: 'Everything in Pro, plus:', header: true },
                 { text: 'Visual Poll (images)', included: true, isNew: true },
-                { text: 'Unlimited responses', included: true },
+                { text: '50,000 responses per poll', included: true },
                 { text: 'White-label embeds (no branding)', included: true },
                 { text: 'Custom short links (/v/your-name)', included: true },
                 { text: 'Custom thank-you redirect', included: true },
@@ -188,7 +188,7 @@ const PricingPage: React.FC = () => {
             features: [
                 { name: 'Create Unlimited Polls', free: true, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Create as many individual polls as you want. Each poll has its own unique admin link.' },
                 { name: 'Multi-Poll Dashboard', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Manage ALL your polls from one unified dashboard instead of separate admin links.' },
-                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: '10,000', proPlus: 'Unlimited', tooltip: 'Maximum number of votes each poll can receive.' },
+                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: '10,000', proPlus: '50,000', tooltip: 'Maximum number of votes each poll can receive.' },
                 { name: 'Poll Active Duration', free: 'Forever', quick: '7 days', event: '30 days', pro: 'Forever', proPlus: 'Forever', tooltip: 'How long your poll stays open for voting. After this, the poll auto-closes but results remain viewable.' },
             ]
         },
@@ -482,7 +482,7 @@ const PricingPage: React.FC = () => {
                         12 Poll Types Included
                     </h2>
                     <p className="text-slate-600 text-center mb-10">
-                        9 free poll types • 3 premium poll types
+                        9 free poll types • 2 Pro • 1 Pro+
                     </p>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -515,7 +515,7 @@ const PricingPage: React.FC = () => {
                                         <span className="text-[10px] font-bold text-indigo-600 uppercase">Pro+</span>
                                     )}
                                     {poll.paid && (
-                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Premium</span>
+                                        <span className="text-[10px] font-bold text-amber-600 uppercase">Pro</span>
                                     )}
                                 </div>
                             );

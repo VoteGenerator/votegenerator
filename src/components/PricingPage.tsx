@@ -146,8 +146,8 @@ const PricingPage: React.FC = () => {
         { name: 'Buy a Feature', icon: Coins, free: true },
         { name: 'Priority Matrix', icon: LayoutGrid, free: true },
         { name: 'Approval Voting', icon: ThumbsUp, free: true },
-        { name: 'Quiz Poll', icon: HelpCircle, free: true },
-        { name: 'Sentiment Check', icon: Smile, free: true },
+        { name: 'Quiz Poll', icon: HelpCircle, free: false, paid: true },
+        { name: 'Sentiment Check', icon: Smile, free: false, paid: true },
         { name: 'Visual Poll', icon: Image, free: false, pro: true },
     ];
 
@@ -168,8 +168,8 @@ const PricingPage: React.FC = () => {
                 { name: 'Buy a Feature', free: true, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Priority Matrix', free: true, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Approval Voting', free: true, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Quiz Poll', free: false, quick: false, event: false, pro: true, proPlus: true },
-                { name: 'Sentiment Check', free: false, quick: false, event: false, pro: true, proPlus: true },
+                { name: 'Quiz Poll', free: false, quick: true, event: true, pro: true, proPlus: true },
+                { name: 'Sentiment Check', free: false, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Visual Poll (Images)', free: false, quick: false, event: false, pro: true, proPlus: true },
             ]
         },
@@ -467,7 +467,7 @@ const PricingPage: React.FC = () => {
                         12 Poll Types Included
                     </h2>
                     <p className="text-slate-600 text-center mb-10">
-                        9 types free, 3 exclusive to Pro plans
+                        9 types free, 2 from $5, Visual Poll Pro-only
                     </p>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -477,13 +477,22 @@ const PricingPage: React.FC = () => {
                                 className={`p-4 rounded-xl border text-center ${
                                     poll.pro 
                                         ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200' 
+                                        : poll.paid
+                                        ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200'
                                         : 'bg-white border-slate-200'
                                 }`}
                             >
-                                <poll.icon size={24} className={poll.pro ? 'text-indigo-600 mx-auto mb-2' : 'text-slate-600 mx-auto mb-2'} />
+                                <poll.icon size={24} className={
+                                    poll.pro ? 'text-indigo-600 mx-auto mb-2' : 
+                                    poll.paid ? 'text-amber-600 mx-auto mb-2' : 
+                                    'text-slate-600 mx-auto mb-2'
+                                } />
                                 <p className="text-sm font-medium text-slate-800">{poll.name}</p>
                                 {poll.pro && (
                                     <span className="text-[10px] font-bold text-indigo-600">PRO</span>
+                                )}
+                                {poll.paid && (
+                                    <span className="text-[10px] font-bold text-amber-600">$5+</span>
                                 )}
                             </div>
                         ))}

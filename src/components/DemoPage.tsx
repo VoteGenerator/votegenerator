@@ -48,6 +48,7 @@ interface PollTypeInfo {
     exampleOptions: string[];
     proTip: string;
     isPro?: boolean;
+    isPaid?: boolean;
 }
 
 const pollTypes: PollTypeInfo[] = [
@@ -199,7 +200,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Opinion-based questions', 'Decisions without a right answer', 'Serious surveys'],
         exampleQuestion: 'What year was the company founded?',
         exampleOptions: ['2019', '2020 ✓', '2021', '2022'],
-        proTip: 'Add explanations to the correct answer to make it educational, not just a quiz.'
+        proTip: 'Add explanations to the correct answer to make it educational, not just a quiz.',
+        isPaid: true
     },
     {
         id: 'sentiment-check',
@@ -214,7 +216,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Detailed feedback', 'Complex decisions', 'When you need nuance'],
         exampleQuestion: 'How do you feel about the new office layout?',
         exampleOptions: ["😀 Love it", "😐 It's fine", "😞 Not great"],
-        proTip: 'Use at the start of meetings to gauge energy, or at the end to check satisfaction.'
+        proTip: 'Use at the start of meetings to gauge energy, or at the end to check satisfaction.',
+        isPaid: true
     },
     {
         id: 'visual-poll',
@@ -491,9 +494,16 @@ const DemoPage: React.FC = () => {
                                                     </span>
                                                     {poll.isPro && (
                                                         <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
-                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
                                                         }`}>
                                                             PRO
+                                                        </span>
+                                                    )}
+                                                    {poll.isPaid && !poll.isPro && (
+                                                        <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                                                        }`}>
+                                                            $5+
                                                         </span>
                                                     )}
                                                 </div>
@@ -527,11 +537,24 @@ const DemoPage: React.FC = () => {
                                                             {selectedPollData.isPro && (
                                                                 <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">PRO</span>
                                                             )}
+                                                            {selectedPollData.isPaid && !selectedPollData.isPro && (
+                                                                <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">$5+</span>
+                                                            )}
                                                         </h2>
                                                         <p className="text-white/80">{selectedPollData.tagline}</p>
                                                     </div>
                                                 </div>
                                                 <p className="text-white/90">{selectedPollData.description}</p>
+                                                {(selectedPollData.isPro || selectedPollData.isPaid) && (
+                                                    <div className="mt-4 p-3 bg-white/10 rounded-lg flex items-center gap-3">
+                                                        <Sparkles size={18} />
+                                                        <span className="text-sm">
+                                                            {selectedPollData.isPro 
+                                                                ? 'This poll type requires a Pro plan. Try the demo below!'
+                                                                : 'This poll type is available from $5. Try the demo below!'}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Content */}

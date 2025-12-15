@@ -207,12 +207,81 @@ const RankedChoicePreview: React.FC<{ question: string; options: string[] }> = (
 // Meeting Poll Preview - Availability grid
 const MeetingPollPreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [availability, setAvailability] = useState<Record<string, 'yes' | 'maybe' | 'no'>>({});
+    const [submitted, setSubmitted] = useState(false);
+    const [otherResponses] = useState(() => options.map(() => ({
+        yes: Math.floor(Math.random() * 5) + 2,
+        maybe: Math.floor(Math.random() * 3),
+        no: Math.floor(Math.random() * 2)
+    })));
     
     const toggleAvailability = (opt: string) => {
         const current = availability[opt] || 'no';
         const next = current === 'no' ? 'yes' : current === 'yes' ? 'maybe' : 'no';
         setAvailability({ ...availability, [opt]: next });
     };
+    
+    const hasSelections = Object.values(availability).some(v => v === 'yes' || v === 'maybe');
+    
+    if (submitted) {
+        // Find best time
+        const scores = options.map((opt, i) => {
+            const userVote = availability[opt] === 'yes' ? 1 : availability[opt] === 'maybe' ? 0.5 : 0;
+            return otherResponses[i].yes + (otherResponses[i].maybe * 0.5) + userVote;
+        });
+        const bestIndex = scores.indexOf(Math.max(...scores));
+        
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Availability Submitted!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-3">{question}</h4>
+                <div className="space-y-2 mb-4">
+                    {options.map((opt, i) => {
+                        const userVote = availability[opt] || 'no';
+                        const totalYes = otherResponses[i].yes + (userVote === 'yes' ? 1 : 0);
+                        const totalMaybe = otherResponses[i].maybe + (userVote === 'maybe' ? 1 : 0);
+                        const isBest = i === bestIndex;
+                        
+                        return (
+                            <div 
+                                key={i}
+                                className={`flex items-center justify-between p-3 rounded-lg ${
+                                    isBest ? 'bg-green-100 border-2 border-green-500' : 'bg-slate-50'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    {isBest && <span className="text-green-600">⭐</span>}
+                                    <span className={isBest ? 'font-semibold text-green-800' : 'text-slate-700'}>
+                                        📅 {opt}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className="px-2 py-1 bg-green-500 text-white rounded-full">{totalYes} ✓</span>
+                                    <span className="px-2 py-1 bg-amber-500 text-white rounded-full">{totalMaybe} ?</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-green-700 text-center mb-3">
+                    ⭐ Best time: {options[bestIndex]}
+                </p>
+                <button 
+                    onClick={() => { setSubmitted(false); setAvailability({}); }}
+                    className="w-full py-2 text-amber-600 font-medium text-sm hover:bg-amber-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -243,7 +312,15 @@ const MeetingPollPreview: React.FC<{ question: string; options: string[] }> = ({
                     );
                 })}
             </div>
-            <button className="w-full mt-4 py-2.5 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors">
+            <button 
+                onClick={() => hasSelections && setSubmitted(true)}
+                disabled={!hasSelections}
+                className={`w-full mt-4 py-2.5 font-semibold rounded-lg transition-colors ${
+                    hasSelections 
+                        ? 'bg-amber-500 text-white hover:bg-amber-600' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
                 Submit Availability →
             </button>
         </div>
@@ -253,6 +330,56 @@ const MeetingPollPreview: React.FC<{ question: string; options: string[] }> = ({
 // This or That Preview - Side by side
 const ThisOrThatPreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [selected, setSelected] = useState<number | null>(null);
+    const [submitted, setSubmitted] = useState(false);
+    const [votes] = useState(() => [Math.floor(Math.random() * 30) + 40, Math.floor(Math.random() * 30) + 30]);
+    
+    if (submitted && selected !== null) {
+        const total = votes[0] + votes[1] + 1;
+        const updatedVotes = [...votes];
+        updatedVotes[selected] += 1;
+        
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Vote Recorded!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-4 text-center">{question}</h4>
+                <div className="flex gap-4 mb-4">
+                    {options.slice(0, 2).map((opt, i) => {
+                        const pct = Math.round((updatedVotes[i] / total) * 100);
+                        return (
+                            <div 
+                                key={i}
+                                className={`flex-1 p-4 rounded-xl text-center ${
+                                    selected === i ? 'bg-orange-100 border-2 border-orange-500' : 'bg-slate-50 border-2 border-slate-200'
+                                }`}
+                            >
+                                <div className="text-2xl mb-2">{i === 0 ? '🅰️' : '🅱️'}</div>
+                                <div className={`font-bold mb-2 ${selected === i ? 'text-orange-700' : 'text-slate-700'}`}>
+                                    {opt} {selected === i && '✓'}
+                                </div>
+                                <div className="text-3xl font-black text-slate-800">{pct}%</div>
+                                <div className="text-xs text-slate-500">{updatedVotes[i]} votes</div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-slate-400 text-center mb-3">{total} total votes</p>
+                <button 
+                    onClick={() => { setSubmitted(false); setSelected(null); }}
+                    className="w-full py-2 text-orange-600 font-medium text-sm hover:bg-orange-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -284,7 +411,15 @@ const ThisOrThatPreview: React.FC<{ question: string; options: string[] }> = ({ 
                 <ArrowLeftRight size={16} />
                 <div className="h-px bg-slate-200 flex-1" />
             </div>
-            <button className="w-full py-2.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
+            <button 
+                onClick={() => selected !== null && setSubmitted(true)}
+                disabled={selected === null}
+                className={`w-full py-2.5 font-semibold rounded-lg transition-colors ${
+                    selected !== null 
+                        ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
                 Vote →
             </button>
         </div>
@@ -569,8 +704,60 @@ const QuizPollPreview: React.FC<{ question: string; options: string[] }> = ({ qu
 // Sentiment Check Preview - Emoji scale
 const SentimentCheckPreview: React.FC<{ question: string }> = ({ question }) => {
     const [selected, setSelected] = useState<number | null>(null);
+    const [submitted, setSubmitted] = useState(false);
+    const [votes] = useState(() => [8, 12, 25, 35, 43]);
     const emojis = ['😢', '😕', '😐', '🙂', '😄'];
     const labels = ['Very Unhappy', 'Unhappy', 'Neutral', 'Happy', 'Very Happy'];
+    
+    if (submitted && selected !== null) {
+        const total = votes.reduce((a, b) => a + b, 0) + 1;
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Feedback Submitted!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-4">{question}</h4>
+                <div className="space-y-3">
+                    {emojis.map((emoji, i) => {
+                        const count = votes[i] + (selected === i ? 1 : 0);
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                            <div key={i} className="flex items-center gap-3">
+                                <span className="text-2xl w-10 text-center">{emoji}</span>
+                                <div className="flex-1">
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className={selected === i ? 'font-semibold text-rose-700' : 'text-slate-600'}>
+                                            {labels[i]} {selected === i && '✓'}
+                                        </span>
+                                        <span className="text-slate-500">{pct}%</span>
+                                    </div>
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full ${selected === i ? 'bg-rose-500' : 'bg-slate-300'}`}
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-slate-400 mt-4 text-center">{total} responses</p>
+                <button 
+                    onClick={() => { setSubmitted(false); setSelected(null); }}
+                    className="w-full mt-3 py-2 text-rose-600 font-medium text-sm hover:bg-rose-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -594,7 +781,15 @@ const SentimentCheckPreview: React.FC<{ question: string }> = ({ question }) => 
             {selected !== null && (
                 <p className="text-center text-rose-600 font-medium mb-4">{labels[selected]}</p>
             )}
-            <button className="w-full py-2.5 bg-rose-500 text-white font-semibold rounded-lg hover:bg-rose-600 transition-colors">
+            <button 
+                onClick={() => selected !== null && setSubmitted(true)}
+                disabled={selected === null}
+                className={`w-full py-2.5 font-semibold rounded-lg transition-colors ${
+                    selected !== null 
+                        ? 'bg-rose-500 text-white hover:bg-rose-600' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
                 Submit Feedback →
             </button>
         </div>
@@ -603,6 +798,49 @@ const SentimentCheckPreview: React.FC<{ question: string }> = ({ question }) => 
 
 // Priority Matrix Preview - 2x2 grid
 const PriorityMatrixPreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
+    const [submitted, setSubmitted] = useState(false);
+    
+    if (submitted) {
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Matrix Submitted!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-3">Team Priority Matrix Results:</h4>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="bg-green-100 rounded-lg p-3">
+                        <div className="text-xs font-bold text-green-700 mb-2">Do First 🎯</div>
+                        <div className="text-sm bg-white px-2 py-1 rounded shadow-sm">{options[0]}</div>
+                    </div>
+                    <div className="bg-amber-100 rounded-lg p-3">
+                        <div className="text-xs font-bold text-amber-700 mb-2">Schedule 📅</div>
+                        <div className="text-sm bg-white px-2 py-1 rounded shadow-sm">{options[2] || 'Empty'}</div>
+                    </div>
+                    <div className="bg-blue-100 rounded-lg p-3">
+                        <div className="text-xs font-bold text-blue-700 mb-2">Quick Wins ⚡</div>
+                        <div className="text-sm bg-white px-2 py-1 rounded shadow-sm">{options[1]}</div>
+                    </div>
+                    <div className="bg-slate-100 rounded-lg p-3">
+                        <div className="text-xs font-bold text-slate-500 mb-2">Skip ❌</div>
+                        <div className="text-sm text-slate-400 italic">None</div>
+                    </div>
+                </div>
+                <button 
+                    onClick={() => setSubmitted(false)}
+                    className="w-full py-2 text-violet-600 font-medium text-sm hover:bg-violet-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
+    
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
             <h4 className="font-bold text-slate-800 mb-1">{question}</h4>
@@ -623,16 +861,86 @@ const PriorityMatrixPreview: React.FC<{ question: string; options: string[] }> =
                     <div className="text-xs font-bold text-slate-500 mb-2">Low Priority / Hard</div>
                 </div>
             </div>
-            <button className="w-full py-2.5 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors">
+            <button 
+                onClick={() => setSubmitted(true)}
+                className="w-full py-2.5 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors"
+            >
                 Submit Matrix →
             </button>
         </div>
     );
 };
 
-// Visual Poll Preview - Image grid
+// Visual Poll Preview - Image grid with demo images
 const VisualPollPreview: React.FC<{ question: string; options: string[] }> = ({ question, options }) => {
     const [selected, setSelected] = useState<number | null>(null);
+    const [submitted, setSubmitted] = useState(false);
+    const [votes] = useState(() => [42, 35, 18, 28]);
+    
+    // Demo image gradients that look like real images
+    const imageGradients = [
+        'from-blue-400 via-blue-500 to-indigo-600',
+        'from-green-400 via-emerald-500 to-teal-600',
+        'from-orange-400 via-red-500 to-pink-600',
+        'from-purple-400 via-violet-500 to-indigo-600',
+    ];
+    
+    const imageIcons = ['🏢', '🌲', '🌅', '🏙️'];
+    
+    if (submitted && selected !== null) {
+        const total = votes.reduce((a, b) => a + b, 0) + 1;
+        return (
+            <div className="bg-white rounded-xl p-5 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-green-700">Vote Recorded!</h4>
+                        <p className="text-slate-500 text-xs">This is a demo - no data saved</p>
+                    </div>
+                </div>
+                <h4 className="font-semibold text-slate-800 mb-3">{question}</h4>
+                <div className="grid grid-cols-2 gap-3">
+                    {options.slice(0, 4).map((opt, i) => {
+                        const count = votes[i] + (selected === i ? 1 : 0);
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                            <div key={i} className={`relative rounded-xl overflow-hidden ${selected === i ? 'ring-4 ring-pink-500' : ''}`}>
+                                <div className={`aspect-[4/3] bg-gradient-to-br ${imageGradients[i]} flex items-center justify-center`}>
+                                    <span className="text-4xl opacity-50">{imageIcons[i]}</span>
+                                </div>
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-2">
+                                    <div className="flex justify-between items-center text-xs mb-1">
+                                        <span className="truncate">{opt}</span>
+                                        <span className="font-bold">{pct}%</span>
+                                    </div>
+                                    <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full ${selected === i ? 'bg-pink-500' : 'bg-white'}`}
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                {selected === i && (
+                                    <div className="absolute top-2 right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-white" />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <p className="text-xs text-slate-400 mt-3 text-center">{total} total votes</p>
+                <button 
+                    onClick={() => { setSubmitted(false); setSelected(null); }}
+                    className="w-full mt-3 py-2 text-pink-600 font-medium text-sm hover:bg-pink-50 rounded-lg transition-colors"
+                >
+                    ← Try Again
+                </button>
+            </div>
+        );
+    }
     
     return (
         <div className="bg-white rounded-xl p-5 border-2 border-amber-200">
@@ -643,25 +951,33 @@ const VisualPollPreview: React.FC<{ question: string; options: string[] }> = ({ 
                     <button
                         key={i}
                         onClick={() => setSelected(i)}
-                        className={`relative aspect-square rounded-xl overflow-hidden border-4 transition-all ${
-                            selected === i ? 'border-pink-500 shadow-lg' : 'border-slate-200 hover:border-pink-300'
+                        className={`relative aspect-[4/3] rounded-xl overflow-hidden border-4 transition-all ${
+                            selected === i ? 'border-pink-500 shadow-lg scale-105' : 'border-transparent hover:border-pink-300'
                         }`}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                            <span className="text-4xl">🖼️</span>
+                        <div className={`absolute inset-0 bg-gradient-to-br ${imageGradients[i]} flex items-center justify-center`}>
+                            <span className="text-5xl">{imageIcons[i]}</span>
                         </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 truncate">
-                            {opt}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-3 pt-6">
+                            <span className="font-medium">{opt}</span>
                         </div>
                         {selected === i && (
-                            <div className="absolute top-2 right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
-                                <Check size={14} className="text-white" />
+                            <div className="absolute top-2 right-2 w-7 h-7 bg-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                                <Check size={16} className="text-white" />
                             </div>
                         )}
                     </button>
                 ))}
             </div>
-            <button className="w-full mt-4 py-2.5 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors">
+            <button 
+                onClick={() => selected !== null && setSubmitted(true)}
+                disabled={selected === null}
+                className={`w-full mt-4 py-2.5 font-semibold rounded-lg transition-colors ${
+                    selected !== null 
+                        ? 'bg-pink-600 text-white hover:bg-pink-700' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
                 Vote →
             </button>
         </div>

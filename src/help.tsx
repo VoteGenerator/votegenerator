@@ -15,8 +15,8 @@ function HelpPage() {
                 <div className="text-center p-8">
                     <h1 className="text-4xl font-black text-slate-900 mb-4">Help Center Coming Soon</h1>
                     <p className="text-slate-600 mb-6">Need help? Email support@votegenerator.com</p>
-                    <a href="/index.html" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 inline-block">
-                        Go Home
+                    <a href="/create.html" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 inline-block">
+                        Create a Poll
                     </a>
                 </div>
             </div>

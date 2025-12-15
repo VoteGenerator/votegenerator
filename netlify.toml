@@ -37,6 +37,11 @@
   to = "/contact.html"
   status = 200
 
+[[redirects]]
+  from = "/create"
+  to = "/create.html"
+  status = 200
+
 # Custom short links
 [[redirects]]
   from = "/v/*"

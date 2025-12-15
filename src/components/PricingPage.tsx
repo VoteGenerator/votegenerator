@@ -155,6 +155,9 @@ const PricingPage: React.FC = () => {
     const featureCategories = [
         {
             name: 'Poll Types',
+            icon: CheckSquare,
+            iconColor: 'text-blue-500',
+            bgColor: 'bg-blue-50',
             features: [
                 { name: 'Multiple Choice', free: true, quick: true, event: true, pro: true, proPlus: true },
                 { name: 'Ranked Choice', free: true, quick: true, event: true, pro: true, proPlus: true },
@@ -171,54 +174,71 @@ const PricingPage: React.FC = () => {
             ]
         },
         {
-            name: 'Limits & Responses',
+            name: 'Polls & Limits',
+            icon: LayoutGrid,
+            iconColor: 'text-purple-500',
+            bgColor: 'bg-purple-50',
             features: [
-                { name: 'Number of Polls', free: 'Unlimited', quick: '1 poll', event: '1 poll', pro: 'Unlimited', proPlus: 'Unlimited' },
-                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: 'Unlimited', proPlus: 'Unlimited' },
-                { name: 'Poll Duration', free: 'Unlimited', quick: '7 days', event: '30 days', pro: 'Unlimited', proPlus: 'Unlimited' },
+                { name: 'Create Unlimited Polls', free: true, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Create as many individual polls as you want. Each poll has its own unique admin link.' },
+                { name: 'Multi-Poll Dashboard', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Manage ALL your polls from one unified dashboard instead of separate admin links.' },
+                { name: 'Responses per Poll', free: '100', quick: '500', event: '2,000', pro: 'Unlimited', proPlus: 'Unlimited', tooltip: 'Maximum number of votes each poll can receive.' },
+                { name: 'Poll Active Duration', free: 'Forever', quick: '7 days', event: '30 days', pro: 'Forever', proPlus: 'Forever', tooltip: 'How long your poll stays open for voting. After this, the poll auto-closes but results remain viewable.' },
             ]
         },
         {
             name: 'Admin & Security',
+            icon: Shield,
+            iconColor: 'text-green-500',
+            bgColor: 'bg-green-50',
             features: [
-                { name: 'Shareable Admin Link', free: true, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Secure Admin Token', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'Extra secure access code for admin functions' },
-                { name: 'Unified Dashboard', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Manage all your polls in one place' },
-                { name: 'Browser Vote Protection', free: true, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'IP-Based Vote Protection', free: false, quick: false, event: false, pro: false, proPlus: true },
-                { name: 'Unique Voting Codes', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Generate one-time codes for controlled voting' },
+                { name: 'Shareable Admin Link', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'A unique URL to access your poll settings and results. Share with co-organizers if needed.' },
+                { name: 'Secure Admin Token', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'An extra password/code required to access admin functions. Prevents unauthorized access even if someone has the admin link.' },
+                { name: 'Browser Vote Protection', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Uses browser cookies to prevent the same person from voting multiple times on the same device.' },
+                { name: 'IP-Based Vote Protection', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Tracks IP addresses to prevent multiple votes from the same network. Stronger protection than browser-only.' },
+                { name: 'Unique Voting Codes', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Generate one-time codes that voters must enter to vote. Perfect for controlled voting where you know exactly who should participate.' },
             ]
         },
         {
             name: 'Branding & Customization',
+            icon: Sparkles,
+            iconColor: 'text-amber-500',
+            bgColor: 'bg-amber-50',
             features: [
-                { name: 'Remove Ads', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Remove "Powered by" Branding', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Upload Your Logo', free: false, quick: false, event: true, pro: true, proPlus: true },
-                { name: 'Custom Thank-You Message', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Custom Thank-You Page', free: false, quick: false, event: true, pro: true, proPlus: true },
-                { name: 'Thank-You Page with Redirect', free: false, quick: false, event: false, pro: false, proPlus: true },
-                { name: 'Embed Polls', free: 'With branding', quick: 'With branding', event: 'Your logo', pro: 'Your logo', proPlus: 'White-label' },
-                { name: 'Custom Short Links', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'votegenerator.com/v/your-custom-name' },
+                { name: 'Remove Ads', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Your voters see a clean poll without any advertisements.' },
+                { name: 'Remove "Powered by" Branding', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Remove the VoteGenerator branding from your poll footer.' },
+                { name: 'Upload Your Logo', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'Display your company or event logo on the poll.' },
+                { name: 'Custom Thank-You Message', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Show a personalized message after someone votes.' },
+                { name: 'Custom Thank-You Page', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'Design a full branded page voters see after voting.' },
+                { name: 'Thank-You Page with Redirect', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Automatically send voters to your website after voting.' },
+                { name: 'Embed Polls', free: 'With branding', quick: 'With branding', event: 'Your logo', pro: 'Your logo', proPlus: 'White-label', tooltip: 'Add polls directly to your website using embed code.' },
+                { name: 'Custom Short Links', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Create memorable URLs like votegenerator.com/v/company-survey' },
             ]
         },
         {
             name: 'Results & Analytics',
+            icon: SlidersHorizontal,
+            iconColor: 'text-indigo-500',
+            bgColor: 'bg-indigo-50',
             features: [
-                { name: 'Real-Time Results', free: true, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Download CSV', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Download PDF Report', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Detailed Analytics', free: false, quick: false, event: false, pro: true, proPlus: true },
-                { name: 'Advanced Insights', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Vote trends, peak times, device breakdown' },
-                { name: 'Voter Comments', free: false, quick: false, event: true, pro: true, proPlus: true },
+                { name: 'Real-Time Results', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'See votes appear instantly as they come in. No refreshing needed.' },
+                { name: 'Results Charts', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Visual bar charts and pie charts showing vote distribution.' },
+                { name: 'Download CSV', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Export raw vote data to a spreadsheet for your own analysis.' },
+                { name: 'Download PDF Report', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Generate a professional PDF summary of results to share.' },
+                { name: 'Vote Timestamps', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'See exactly when each vote was cast.' },
+                { name: 'Voting Trends Over Time', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Charts showing how voting patterns changed hour by hour or day by day.' },
+                { name: 'Device Breakdown', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'See what devices voters used: mobile, desktop, tablet.' },
+                { name: 'Voter Comments', free: false, quick: false, event: true, pro: true, proPlus: true, tooltip: 'Allow voters to leave optional comments with their vote.' },
             ]
         },
         {
             name: 'Support',
+            icon: HelpCircle,
+            iconColor: 'text-rose-500',
+            bgColor: 'bg-rose-50',
             features: [
-                { name: 'Help Center Access', free: true, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Email Support', free: false, quick: true, event: true, pro: true, proPlus: true },
-                { name: 'Priority Support (24hr)', free: false, quick: false, event: false, pro: false, proPlus: true },
+                { name: 'Help Center Access', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Access to guides, tutorials, and FAQ articles.' },
+                { name: 'Email Support', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Get help via email from our support team.' },
+                { name: 'Priority Support (24hr)', free: false, quick: false, event: false, pro: false, proPlus: true, tooltip: 'Your support requests are handled first with guaranteed 24-hour response.' },
             ]
         },
     ];
@@ -386,7 +406,7 @@ const PricingPage: React.FC = () => {
                                 </div>
 
                                 <a
-                                    href="/index.html"
+                                    href="/create.html"
                                     className={`block w-full py-2.5 px-4 rounded-xl font-bold text-center text-sm transition-all ${
                                         plan.highlight
                                             ? 'bg-white text-indigo-600 hover:bg-indigo-50'
@@ -493,11 +513,18 @@ const PricingPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {featureCategories.map((category, catIndex) => (
+                                {featureCategories.map((category, catIndex) => {
+                                    const CategoryIcon = category.icon;
+                                    return (
                                     <React.Fragment key={catIndex}>
-                                        <tr className="bg-slate-100">
+                                        <tr className={category.bgColor || 'bg-slate-100'}>
                                             <td colSpan={6} className="p-3 font-bold text-slate-700 text-sm">
-                                                {category.name}
+                                                <div className="flex items-center gap-2">
+                                                    {CategoryIcon && (
+                                                        <CategoryIcon size={16} className={category.iconColor || 'text-slate-500'} />
+                                                    )}
+                                                    {category.name}
+                                                </div>
                                             </td>
                                         </tr>
                                         {category.features.map((feature, i) => (
@@ -507,7 +534,7 @@ const PricingPage: React.FC = () => {
                                                     {feature.tooltip && (
                                                         <div className="relative group">
                                                             <HelpCircle size={14} className="text-slate-400 cursor-help" />
-                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none">
+                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 pointer-events-none shadow-xl">
                                                                 {feature.tooltip}
                                                             </div>
                                                         </div>
@@ -537,7 +564,8 @@ const PricingPage: React.FC = () => {
                                             </tr>
                                         ))}
                                     </React.Fragment>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -613,7 +641,7 @@ const PricingPage: React.FC = () => {
                         Join thousands making better decisions with VoteGenerator.
                     </p>
                     <a
-                        href="/index.html"
+                        href="/create.html"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />

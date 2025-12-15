@@ -24,7 +24,7 @@ const NavHeader: React.FC = () => {
                 </a>
 
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <a href="/index.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Create Poll</a>
+                    <a href="/create.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Create Poll</a>
                     <a href="/demo.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Demo</a>
                     <a href="/pricing.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Pricing</a>
                     <a href="/compare.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Compare</a>
@@ -32,7 +32,7 @@ const NavHeader: React.FC = () => {
                     <a href="/help.html" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Help</a>
                 </nav>
 
-                <a href="/index.html" style={{
+                <a href="/create.html" style={{
                     padding: '10px 20px',
                     background: 'linear-gradient(to right, #4f46e5, #7c3aed)',
                     color: 'white',

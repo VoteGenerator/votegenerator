@@ -19,20 +19,20 @@ const NavHeader: React.FC = () => {
                 justifyContent: 'space-between',
                 height: '64px'
             }}>
-                <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+                <a href="#/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
                     <span style={{ fontWeight: 900, fontSize: '20px', color: '#0f172a' }}>VoteGenerator</span>
                 </a>
 
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <a href="/" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Create Poll</a>
-                    <a href="/demo" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Demo</a>
-                    <a href="/pricing" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Pricing</a>
-                    <a href="/compare" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Compare</a>
-                    <a href="/blog" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Blog</a>
-                    <a href="/help" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Help</a>
+                    <a href="#/" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Create Poll</a>
+                    <a href="#/demo" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Demo</a>
+                    <a href="#/pricing" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Pricing</a>
+                    <a href="#/compare" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Compare</a>
+                    <a href="#/blog" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Blog</a>
+                    <a href="#/help" style={{ padding: '8px 16px', color: '#475569', textDecoration: 'none', fontWeight: 500, fontSize: '14px' }}>Help</a>
                 </nav>
 
-                <a href="/" style={{
+                <a href="#/" style={{
                     padding: '10px 20px',
                     background: 'linear-gradient(to right, #4f46e5, #7c3aed)',
                     color: 'white',

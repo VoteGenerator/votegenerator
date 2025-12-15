@@ -11,37 +11,6 @@ import {
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
     
-    const scrollToSection = (sectionId: string) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            const offset = 130;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-    };
-    
-    const footerLinks = {
-        product: [
-            { label: 'Create Poll', section: 'poll-creator' },
-            { label: 'Demo', section: 'demo-section' },
-            { label: 'Pricing', section: 'pricing' },
-            { label: 'Compare Plans', section: 'why-choose-us' },
-        ],
-        resources: [
-            { label: 'Help Center', section: 'poll-creator', coming: true },
-            { label: 'Blog', section: 'poll-creator', coming: true },
-        ],
-        company: [
-            { label: 'About Us', section: 'hero', coming: true },
-            { label: 'Contact Us', section: 'hero', coming: true },
-        ],
-        legal: [
-            { label: 'Privacy Policy', section: 'hero', coming: true },
-            { label: 'Terms of Service', section: 'hero', coming: true },
-        ],
-    };
-    
     const socialLinks = [
         { icon: Twitter, href: 'https://twitter.com/votegenerator', label: 'Twitter' },
         { icon: Linkedin, href: 'https://linkedin.com/company/votegenerator', label: 'LinkedIn' },
@@ -56,17 +25,14 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     {/* Brand Column */}
                     <div className="col-span-2">
-                        <button 
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                            className="flex items-center gap-2 mb-4"
-                        >
+                        <a href="#/" className="flex items-center gap-2 mb-4">
                             <img 
                                 src="/logo.svg" 
                                 alt="VoteGenerator" 
                                 className="w-10 h-10"
                             />
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
-                        </button>
+                        </a>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">
                             Create beautiful polls in seconds. No signup required. Privacy-first.
                         </p>
@@ -96,16 +62,26 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Product</h4>
                         <ul className="space-y-2">
-                            {footerLinks.product.map((link) => (
-                                <li key={link.label}>
-                                    <button 
-                                        onClick={() => scrollToSection(link.section)}
-                                        className="text-sm text-slate-400 hover:text-white transition-colors"
-                                    >
-                                        {link.label}
-                                    </button>
-                                </li>
-                            ))}
+                            <li>
+                                <a href="#/" className="text-sm hover:text-white transition-colors">
+                                    Create Poll
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#/demo" className="text-sm hover:text-white transition-colors">
+                                    Demo
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#/pricing" className="text-sm hover:text-white transition-colors">
+                                    Pricing
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#/compare" className="text-sm hover:text-white transition-colors">
+                                    Compare
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -113,19 +89,16 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Resources</h4>
                         <ul className="space-y-2">
-                            {footerLinks.resources.map((link) => (
-                                <li key={link.label}>
-                                    <button 
-                                        onClick={() => scrollToSection(link.section)}
-                                        className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
-                                    >
-                                        {link.label}
-                                        {link.coming && (
-                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
-                                        )}
-                                    </button>
-                                </li>
-                            ))}
+                            <li>
+                                <a href="#/help" className="text-sm hover:text-white transition-colors">
+                                    Help Center
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#/blog" className="text-sm hover:text-white transition-colors">
+                                    Blog
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -133,19 +106,12 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Company</h4>
                         <ul className="space-y-2">
-                            {footerLinks.company.map((link) => (
-                                <li key={link.label}>
-                                    <button 
-                                        onClick={() => scrollToSection(link.section)}
-                                        className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
-                                    >
-                                        {link.label}
-                                        {link.coming && (
-                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
-                                        )}
-                                    </button>
-                                </li>
-                            ))}
+                            <li>
+                                <span className="text-sm text-slate-500">About Us (Coming)</span>
+                            </li>
+                            <li>
+                                <span className="text-sm text-slate-500">Contact Us (Coming)</span>
+                            </li>
                         </ul>
                     </div>
                     
@@ -153,19 +119,12 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Legal</h4>
                         <ul className="space-y-2">
-                            {footerLinks.legal.map((link) => (
-                                <li key={link.label}>
-                                    <button 
-                                        onClick={() => scrollToSection(link.section)}
-                                        className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1"
-                                    >
-                                        {link.label}
-                                        {link.coming && (
-                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">Soon</span>
-                                        )}
-                                    </button>
-                                </li>
-                            ))}
+                            <li>
+                                <span className="text-sm text-slate-500">Privacy Policy (Coming)</span>
+                            </li>
+                            <li>
+                                <span className="text-sm text-slate-500">Terms of Service (Coming)</span>
+                            </li>
                         </ul>
                     </div>
                 </div>

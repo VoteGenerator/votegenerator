@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import PricingPage from './components/PricingPage';
 import DemoPage from './components/DemoPage';
@@ -6,7 +6,7 @@ import ComparePage from './components/ComparePage';
 
 function App() {
     return (
-        <BrowserRouter>
+        <HashRouter>
             <Routes>
                 {/* Main landing page */}
                 <Route path="/" element={<LandingPage />} />
@@ -59,7 +59,7 @@ function App() {
                     </div>
                 } />
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
 

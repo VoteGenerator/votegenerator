@@ -521,7 +521,7 @@ const PricingPage: React.FC = () => {
                         Join thousands of people using VoteGenerator for quick decisions.
                     </p>
                     <a
-                        href="/"
+                        href="#/"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />

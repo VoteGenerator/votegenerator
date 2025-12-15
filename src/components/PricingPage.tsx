@@ -20,11 +20,13 @@ import {
     LayoutGrid,
     ThumbsUp,
     Smile,
-    Image
+    Image,
+    Clock
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
+import { InlineCountdown } from './CountdownTimer';
 
 const PricingPage: React.FC = () => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
@@ -57,9 +59,10 @@ const PricingPage: React.FC = () => {
             monthlyPrice: 5,
             yearlyPrice: 5,
             isOneTime: true,
-            badge: 'ONE-TIME',
+            hasCountdown: true,
+            badge: 'LIMITED TIME',
             highlight: false,
-            cta: 'Buy Now',
+            cta: 'Get This Deal',
             features: [
                 { text: 'Everything in Free, plus:', header: true },
                 { text: '1 poll, active for 7 days', included: true },
@@ -336,8 +339,11 @@ const PricingPage: React.FC = () => {
                                     <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
                                         plan.highlight
                                             ? 'bg-amber-400 text-amber-900'
-                                            : plan.badge === 'POPULAR' ? 'bg-green-500 text-white' : 'bg-slate-800 text-white'
+                                            : plan.badge === 'POPULAR' ? 'bg-green-500 text-white' 
+                                            : plan.badge === 'LIMITED TIME' ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white animate-pulse'
+                                            : 'bg-slate-800 text-white'
                                     }`}>
+                                        {plan.badge === 'LIMITED TIME' && <Clock size={10} className="inline mr-1" />}
                                         {plan.badge}
                                     </div>
                                 )}
@@ -371,6 +377,11 @@ const PricingPage: React.FC = () => {
                                         <p className={`text-xs mt-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
                                             ${yearlyInfo.perMonth}/mo · Save ${yearlyInfo.savings}
                                         </p>
+                                    )}
+                                    {plan.hasCountdown && (
+                                        <div className="mt-2">
+                                            <InlineCountdown />
+                                        </div>
                                     )}
                                 </div>
 

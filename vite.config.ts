@@ -13,6 +13,7 @@ export default defineConfig({
                 compare: resolve(__dirname, 'compare.html'),
                 blog: resolve(__dirname, 'blog.html'),
                 help: resolve(__dirname, 'help.html'),
+                contact: resolve(__dirname, 'contact.html'),
             },
         },
     },

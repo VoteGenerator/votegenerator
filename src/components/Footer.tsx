@@ -70,8 +70,8 @@ const Footer: React.FC = () => {
                     <div>
                         <h4 className="font-bold text-white mb-4">Company</h4>
                         <ul className="space-y-2">
+                            <li><a href="/contact.html" className="text-sm hover:text-white transition-colors">Contact Us</a></li>
                             <li><span className="text-sm text-slate-500">About Us (Coming)</span></li>
-                            <li><span className="text-sm text-slate-500">Contact (Coming)</span></li>
                         </ul>
                     </div>
                     

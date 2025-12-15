@@ -6,6 +6,12 @@
 [functions]
   node_bundler = "esbuild"
 
+# API Routes - All go to main api function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+
 # Pretty URLs - /demo serves demo.html
 [[redirects]]
   from = "/demo"
@@ -45,6 +51,18 @@
 [[redirects]]
   from = "/about"
   to = "/about.html"
+  status = 200
+
+# Poll voting page (public)
+[[redirects]]
+  from = "/v/:pollId"
+  to = "/vote.html"
+  status = 200
+
+# Poll admin page
+[[redirects]]
+  from = "/admin/:pollId/:token"
+  to = "/admin.html"
   status = 200
 
 # Custom short links

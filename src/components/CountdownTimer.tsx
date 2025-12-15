@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Zap } from 'lucide-react';
+import { isPromoActive } from './promoConfig';
 
 interface CountdownTimerProps {
     storageKey?: string;
@@ -21,7 +22,16 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     } | null>(null);
     const [isExpired, setIsExpired] = useState(false);
 
+    // Check if promo is enabled
+    const promoEnabled = isPromoActive();
+
     useEffect(() => {
+        // If promo is disabled, don't show countdown
+        if (!promoEnabled) {
+            setTimeLeft(null);
+            return;
+        }
+
         // Get or set the start time
         const getStartTime = (): number => {
             const stored = localStorage.getItem(storageKey);
@@ -79,9 +89,10 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
         const interval = setInterval(updateTimer, 1000);
 
         return () => clearInterval(interval);
-    }, [storageKey, durationHours, resetChance, onExpire]);
+    }, [storageKey, durationHours, resetChance, onExpire, promoEnabled]);
 
-    if (!timeLeft) return null;
+    // Don't render if promo disabled or no time left
+    if (!promoEnabled || !timeLeft) return null;
 
     const formatNumber = (n: number) => n.toString().padStart(2, '0');
 
@@ -119,7 +130,16 @@ export const InlineCountdown: React.FC<CountdownTimerProps> = (props) => {
         seconds: number;
     } | null>(null);
 
+    // Check if promo is enabled
+    const promoEnabled = isPromoActive();
+
     useEffect(() => {
+        // If promo is disabled, don't show countdown
+        if (!promoEnabled) {
+            setTimeLeft(null);
+            return;
+        }
+
         const storageKey = props.storageKey || 'vg_quick_poll_timer';
         const durationHours = props.durationHours || 24;
         const resetChance = props.resetChance || 0.3;
@@ -169,9 +189,10 @@ export const InlineCountdown: React.FC<CountdownTimerProps> = (props) => {
         updateTimer();
         const interval = setInterval(updateTimer, 1000);
         return () => clearInterval(interval);
-    }, [props.storageKey, props.durationHours, props.resetChance]);
+    }, [props.storageKey, props.durationHours, props.resetChance, promoEnabled]);
 
-    if (!timeLeft) return null;
+    // Don't render if promo disabled or expired
+    if (!promoEnabled || !timeLeft) return null;
 
     const formatNumber = (n: number) => n.toString().padStart(2, '0');
 

@@ -28,9 +28,14 @@ import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 import { InlineCountdown } from './CountdownTimer';
+import { getRegionalPricing, isPromoActive, formatPrice } from './promoConfig';
 
 const PricingPage: React.FC = () => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+    
+    // Get regional pricing
+    const pricing = getRegionalPricing();
+    const promoActive = isPromoActive();
 
     const plans = [
         {
@@ -57,13 +62,14 @@ const PricingPage: React.FC = () => {
             id: 'quick',
             name: 'Quick Poll',
             description: 'For a single quick poll',
-            monthlyPrice: 5,
-            yearlyPrice: 5,
+            monthlyPrice: pricing.quickPoll,
+            yearlyPrice: pricing.quickPoll,
+            originalPrice: promoActive ? pricing.quickPollOriginal : undefined,
             isOneTime: true,
-            hasCountdown: true,
-            badge: 'LIMITED TIME',
+            hasCountdown: promoActive, // Only show countdown if promo is active
+            badge: promoActive ? 'LIMITED TIME' : 'ONE-TIME',
             highlight: false,
-            cta: 'Get This Deal',
+            cta: promoActive ? 'Get This Deal' : 'Buy Now',
             features: [
                 { text: 'Everything in Free, plus:', header: true },
                 { text: '1 poll, active for 7 days', included: true },
@@ -78,8 +84,8 @@ const PricingPage: React.FC = () => {
             id: 'event',
             name: 'Event Poll',
             description: 'For important events & decisions',
-            monthlyPrice: 9.99,
-            yearlyPrice: 9.99,
+            monthlyPrice: pricing.eventPoll,
+            yearlyPrice: pricing.eventPoll,
             isOneTime: true,
             badge: 'POPULAR',
             highlight: false,
@@ -98,8 +104,8 @@ const PricingPage: React.FC = () => {
             id: 'pro',
             name: 'Pro',
             description: 'For teams & regular poll creators',
-            monthlyPrice: 12,
-            yearlyPrice: 99,
+            monthlyPrice: pricing.proMonthly,
+            yearlyPrice: pricing.proYearly,
             badge: 'BEST VALUE',
             highlight: true,
             cta: 'Get Pro',
@@ -118,8 +124,8 @@ const PricingPage: React.FC = () => {
             id: 'pro-plus',
             name: 'Pro+',
             description: 'For businesses & power users',
-            monthlyPrice: 19,
-            yearlyPrice: 149,
+            monthlyPrice: pricing.proPlusMonthly,
+            yearlyPrice: pricing.proPlusYearly,
             badge: 'FULL POWER',
             highlight: false,
             cta: 'Get Pro+',
@@ -363,6 +369,7 @@ const PricingPage: React.FC = () => {
                                             ? 'bg-amber-400 text-amber-900'
                                             : plan.badge === 'POPULAR' ? 'bg-green-500 text-white' 
                                             : plan.badge === 'LIMITED TIME' ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white animate-pulse'
+                                            : plan.badge === 'ONE-TIME' ? 'bg-slate-600 text-white'
                                             : 'bg-slate-800 text-white'
                                     }`}>
                                         {plan.badge === 'LIMITED TIME' && <Clock size={10} className="inline mr-1" />}
@@ -381,8 +388,14 @@ const PricingPage: React.FC = () => {
 
                                 <div className="mb-4">
                                     <div className="flex items-baseline gap-1">
+                                        {/* Show original price crossed out if promo active */}
+                                        {plan.originalPrice && (
+                                            <span className={`text-lg line-through ${plan.highlight ? 'text-indigo-300' : 'text-slate-400'}`}>
+                                                {pricing.symbol}{plan.originalPrice}
+                                            </span>
+                                        )}
                                         <span className={`text-3xl font-black ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
-                                            ${displayPrice}
+                                            {pricing.symbol}{displayPrice}
                                         </span>
                                         {!isOneTime && plan.monthlyPrice > 0 && (
                                             <span className={plan.highlight ? 'text-indigo-200 text-sm' : 'text-slate-400 text-sm'}>
@@ -397,7 +410,7 @@ const PricingPage: React.FC = () => {
                                     </div>
                                     {!isOneTime && billingCycle === 'yearly' && yearlyInfo && (
                                         <p className={`text-xs mt-1 ${plan.highlight ? 'text-green-300' : 'text-green-600'}`}>
-                                            ${yearlyInfo.perMonth}/mo · Save ${yearlyInfo.savings}
+                                            {pricing.symbol}{yearlyInfo.perMonth}/mo · Save {pricing.symbol}{yearlyInfo.savings}
                                         </p>
                                     )}
                                     {plan.hasCountdown && (
@@ -524,8 +537,8 @@ const PricingPage: React.FC = () => {
                                 <tr className="border-b border-slate-100 bg-slate-50">
                                     <th className="text-left p-4 font-semibold text-slate-600">Feature</th>
                                     <th className="text-center p-4 font-semibold text-slate-600 w-20">Free</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">$5</th>
-                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">$9.99</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">{pricing.symbol}{pricing.quickPoll}</th>
+                                    <th className="text-center p-4 font-semibold text-slate-600 w-20">{pricing.symbol}{pricing.eventPoll}</th>
                                     <th className="text-center p-4 font-semibold text-slate-600 w-20 bg-indigo-50">
                                         <span className="text-indigo-600">Pro</span>
                                     </th>

@@ -82,7 +82,7 @@ const Footer: React.FC = () => {
                     </div>
                     
                     <div>
-                        <h4 className="font-bold text-white mb-4">Legal</h4>
+                        <h4 className="font-bold text-white mb-4">Policies</h4>
                         <ul className="space-y-2">
                             <li><span className="text-sm text-slate-500">Privacy (Coming)</span></li>
                             <li><span className="text-sm text-slate-500">Terms (Coming)</span></li>

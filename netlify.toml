@@ -30,6 +30,16 @@
   to = "/.netlify/functions/portal"
   status = 200
 
+[[redirects]]
+  from = "/api/recover-purchase"
+  to = "/.netlify/functions/recover-purchase"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/*"
+  to = "/.netlify/functions/admin/:splat"
+  status = 200
+
 # ============================================
 # Main API Routes (polls, votes, etc)
 # ============================================
@@ -46,6 +56,16 @@
 [[redirects]]
   from = "/success"
   to = "/success.html"
+  status = 200
+
+[[redirects]]
+  from = "/recover"
+  to = "/recover.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin-support"
+  to = "/admin-support.html"
   status = 200
 
 [[redirects]]

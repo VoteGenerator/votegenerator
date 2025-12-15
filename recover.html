@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recover Your Purchase - VoteGenerator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+  
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-4xl mx-auto px-4 py-4">
+      <a href="/" class="flex items-center gap-2">
+        <img src="/logo.svg" alt="VoteGenerator" class="h-10 w-auto">
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 py-16">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Recover Your Purchase</h1>
+        <p class="text-slate-600">Already paid? Enter your details to access your purchase.</p>
+      </div>
+
+      <!-- Check for saved purchase first -->
+      <div id="saved-purchase" class="hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+        <p class="text-green-800 font-medium mb-2">Found a recent purchase!</p>
+        <p class="text-green-700 text-sm mb-3">Purchase ID: <code id="saved-purchase-id" class="bg-green-100 px-1 rounded"></code></p>
+        <a id="use-saved-purchase" href="#" class="inline-block px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700">
+          Use This Purchase →
+        </a>
+      </div>
+
+      <!-- Divider if saved purchase exists -->
+      <div id="divider" class="hidden flex items-center gap-4 mb-6">
+        <div class="flex-1 h-px bg-slate-200"></div>
+        <span class="text-slate-400 text-sm">or find another</span>
+        <div class="flex-1 h-px bg-slate-200"></div>
+      </div>
+
+      <!-- Recovery Form -->
+      <form id="recovery-form" class="space-y-4">
+        
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            placeholder="Enter the email used at checkout"
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          >
+          <p class="text-xs text-slate-500 mt-1">We'll look up purchases made with this email</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Purchase ID <span class="text-slate-400">(optional)</span>
+          </label>
+          <input 
+            type="text" 
+            id="purchase-id"
+            placeholder="e.g., abc123xyz"
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+          <p class="text-xs text-slate-500 mt-1">Found in your confirmation email</p>
+        </div>
+
+        <button 
+          type="submit"
+          class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+        >
+          Find My Purchase
+        </button>
+      </form>
+
+      <!-- Result -->
+      <div id="result" class="hidden mt-6"></div>
+
+      <!-- Help -->
+      <div class="mt-8 pt-6 border-t border-slate-200 text-center">
+        <p class="text-slate-600 text-sm">
+          Can't find your purchase? Check your email for a receipt from Stripe, or 
+          <a href="/contact" class="text-indigo-600 hover:underline">contact support</a>.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Check for saved purchase in localStorage
+    const savedPurchase = localStorage.getItem('vg_last_purchase');
+    if (savedPurchase) {
+      try {
+        const purchase = JSON.parse(savedPurchase);
+        // Only show if less than 30 days old
+        if (Date.now() - purchase.timestamp < 30 * 24 * 60 * 60 * 1000) {
+          document.getElementById('saved-purchase').classList.remove('hidden');
+          document.getElementById('divider').classList.remove('hidden');
+          document.getElementById('saved-purchase-id').textContent = purchase.purchaseId;
+          document.getElementById('use-saved-purchase').href = `/create?purchase=${purchase.purchaseId}`;
+        }
+      } catch (e) {}
+    }
+
+    // Form submission
+    document.getElementById('recovery-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const purchaseId = document.getElementById('purchase-id').value;
+      const resultDiv = document.getElementById('result');
+      
+      resultDiv.innerHTML = '<p class="text-slate-600">Looking up your purchase...</p>';
+      resultDiv.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/recover-purchase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, purchaseId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.purchase) {
+          resultDiv.innerHTML = `
+            <div class="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <p class="text-green-800 font-medium mb-2">✓ Purchase Found!</p>
+              <p class="text-green-700 text-sm mb-3">
+                <strong>${data.purchase.plan}</strong> - ${data.purchase.currency} $${data.purchase.amount}
+              </p>
+              <a href="/create?purchase=${data.purchase.id}" class="inline-block px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700">
+                Create Your Poll →
+              </a>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <p class="text-amber-800 font-medium mb-2">No purchase found</p>
+              <p class="text-amber-700 text-sm">
+                We couldn't find a purchase with those details. Please check your email 
+                for a receipt from Stripe, or <a href="/contact" class="underline">contact support</a>.
+              </p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+            <p class="text-red-800">Error looking up purchase. Please try again or contact support.</p>
+          </div>
+        `;
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Support - VoteGenerator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-slate-100">
+  
+  <!-- Auth Gate -->
+  <div id="auth-gate" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Admin Access</h1>
+        <p class="text-slate-600">Enter the admin password to continue</p>
+      </div>
+      <form id="auth-form">
+        <input 
+          type="password" 
+          id="admin-password"
+          placeholder="Admin password"
+          class="w-full px-4 py-3 border border-slate-300 rounded-xl mb-4 focus:ring-2 focus:ring-indigo-500"
+          required
+        >
+        <button type="submit" class="w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800">
+          Access Admin Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Panel (hidden until authenticated) -->
+  <div id="admin-panel" class="hidden">
+    
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/logo.svg" alt="VoteGenerator" class="h-8 w-auto">
+          <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">ADMIN</span>
+        </div>
+        <button onclick="logout()" class="text-slate-600 hover:text-slate-900 text-sm">Logout</button>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      
+      <h1 class="text-3xl font-bold text-slate-900 mb-8">Support Dashboard</h1>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        
+        <!-- Lookup Purchase -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="text-xl font-bold text-slate-900 mb-4">🔍 Look Up Purchase</h2>
+          <form id="lookup-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Email or Purchase ID</label>
+              <input 
+                type="text" 
+                id="lookup-query"
+                placeholder="email@example.com or purchase ID"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                required
+              >
+            </div>
+            <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700">
+              Search
+            </button>
+          </form>
+          <div id="lookup-result" class="mt-4"></div>
+        </div>
+
+        <!-- Create Manual Purchase -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2 class="text-xl font-bold text-slate-900 mb-4">➕ Create Manual Purchase</h2>
+          <p class="text-slate-600 text-sm mb-4">
+            For support cases where payment was made but purchase wasn't recorded properly.
+          </p>
+          <form id="create-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Customer Email</label>
+              <input 
+                type="email" 
+                id="create-email"
+                placeholder="customer@example.com"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                required
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Plan</label>
+              <select id="create-plan" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500" required>
+                <option value="">Select a plan</option>
+                <option value="quick">Quick Poll ($5 - 7 days, 500 responses)</option>
+                <option value="event">Event Poll ($9.99 - 30 days, 2,000 responses)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Stripe Payment ID (optional)</label>
+              <input 
+                type="text" 
+                id="create-stripe-id"
+                placeholder="pi_xxx or cs_xxx"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Support Note</label>
+              <input 
+                type="text" 
+                id="create-note"
+                placeholder="e.g., Webhook failed, manual recovery"
+                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              >
+            </div>
+            <button type="submit" class="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700">
+              Create Purchase
+            </button>
+          </form>
+          <div id="create-result" class="mt-4"></div>
+        </div>
+
+        <!-- Recent Purchases -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 md:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-slate-900">📋 Recent Purchases</h2>
+            <button onclick="loadRecentPurchases()" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+              Refresh
+            </button>
+          </div>
+          <div id="recent-purchases" class="overflow-x-auto">
+            <p class="text-slate-500">Click "Refresh" to load recent purchases</p>
+          </div>
+        </div>
+
+        <!-- Generate Recovery Link -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 md:col-span-2">
+          <h2 class="text-xl font-bold text-slate-900 mb-4">🔗 Generate Recovery Link</h2>
+          <p class="text-slate-600 text-sm mb-4">
+            After looking up or creating a purchase, generate a direct link for the customer.
+          </p>
+          <div class="flex gap-4">
+            <input 
+              type="text" 
+              id="recovery-purchase-id"
+              placeholder="Enter Purchase ID"
+              class="flex-1 px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+            >
+            <button onclick="generateRecoveryLink()" class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700">
+              Generate Link
+            </button>
+          </div>
+          <div id="recovery-link-result" class="mt-4"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Simple auth (in production, use proper authentication)
+    const ADMIN_PASSWORD = 'votegen2024'; // Change this!
+    
+    // Check if already authenticated
+    if (sessionStorage.getItem('admin_auth') === 'true') {
+      showAdminPanel();
+    }
+
+    // Auth form
+    document.getElementById('auth-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const password = document.getElementById('admin-password').value;
+      
+      if (password === ADMIN_PASSWORD) {
+        sessionStorage.setItem('admin_auth', 'true');
+        showAdminPanel();
+      } else {
+        alert('Incorrect password');
+      }
+    });
+
+    function showAdminPanel() {
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+    }
+
+    function logout() {
+      sessionStorage.removeItem('admin_auth');
+      location.reload();
+    }
+
+    // Lookup form
+    document.getElementById('lookup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = document.getElementById('lookup-query').value;
+      const resultDiv = document.getElementById('lookup-result');
+      
+      resultDiv.innerHTML = '<p class="text-slate-600">Searching...</p>';
+
+      try {
+        const response = await fetch('/api/admin/lookup', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Auth': sessionStorage.getItem('admin_auth')
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        if (data.purchases && data.purchases.length > 0) {
+          resultDiv.innerHTML = data.purchases.map(p => `
+            <div class="p-4 bg-green-50 border border-green-200 rounded-xl mb-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="font-semibold text-green-800">${p.tier.toUpperCase()} - ${p.currency} $${p.amount}</p>
+                  <p class="text-sm text-green-700">ID: <code class="bg-green-100 px-1 rounded">${p.id}</code></p>
+                  <p class="text-sm text-green-700">Status: ${p.status} | Created: ${new Date(p.createdAt).toLocaleDateString()}</p>
+                  ${p.pollId ? `<p class="text-sm text-green-700">Poll ID: ${p.pollId}</p>` : '<p class="text-sm text-amber-600">⚠️ No poll created yet</p>'}
+                </div>
+                <button onclick="copyToClipboard('${p.id}')" class="text-green-600 hover:text-green-800 text-sm">
+                  Copy ID
+                </button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          resultDiv.innerHTML = '<div class="p-4 bg-amber-50 border border-amber-200 rounded-xl"><p class="text-amber-800">No purchases found</p></div>';
+        }
+      } catch (error) {
+        resultDiv.innerHTML = '<div class="p-4 bg-red-50 border border-red-200 rounded-xl"><p class="text-red-800">Error searching. API may not be set up yet.</p></div>';
+      }
+    });
+
+    // Create form
+    document.getElementById('create-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('create-email').value;
+      const plan = document.getElementById('create-plan').value;
+      const stripeId = document.getElementById('create-stripe-id').value;
+      const note = document.getElementById('create-note').value;
+      const resultDiv = document.getElementById('create-result');
+      
+      resultDiv.innerHTML = '<p class="text-slate-600">Creating purchase...</p>';
+
+      try {
+        const response = await fetch('/api/admin/create-purchase', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Auth': sessionStorage.getItem('admin_auth')
+          },
+          body: JSON.stringify({ email, plan, stripeId, note })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const createLink = `${window.location.origin}/create?purchase=${data.purchase.id}`;
+          resultDiv.innerHTML = `
+            <div class="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <p class="font-semibold text-green-800 mb-2">✓ Purchase Created!</p>
+              <p class="text-sm text-green-700 mb-2">ID: <code class="bg-green-100 px-1 rounded">${data.purchase.id}</code></p>
+              <p class="text-sm text-green-700 mb-3">Send this link to customer:</p>
+              <div class="flex gap-2">
+                <input type="text" readonly value="${createLink}" class="flex-1 px-3 py-2 bg-white border border-green-300 rounded text-sm">
+                <button onclick="copyToClipboard('${createLink}')" class="px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                  Copy
+                </button>
+              </div>
+            </div>
+          `;
+          // Clear form
+          document.getElementById('create-form').reset();
+        } else {
+          resultDiv.innerHTML = `<div class="p-4 bg-red-50 border border-red-200 rounded-xl"><p class="text-red-800">${data.error || 'Failed to create purchase'}</p></div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = '<div class="p-4 bg-red-50 border border-red-200 rounded-xl"><p class="text-red-800">Error creating purchase. API may not be set up yet.</p></div>';
+      }
+    });
+
+    // Generate recovery link
+    function generateRecoveryLink() {
+      const purchaseId = document.getElementById('recovery-purchase-id').value;
+      const resultDiv = document.getElementById('recovery-link-result');
+      
+      if (!purchaseId) {
+        resultDiv.innerHTML = '<p class="text-red-600">Please enter a purchase ID</p>';
+        return;
+      }
+
+      const link = `${window.location.origin}/create?purchase=${purchaseId}`;
+      resultDiv.innerHTML = `
+        <div class="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+          <p class="text-sm text-purple-700 mb-2">Recovery link generated:</p>
+          <div class="flex gap-2">
+            <input type="text" readonly value="${link}" class="flex-1 px-3 py-2 bg-white border border-purple-300 rounded text-sm">
+            <button onclick="copyToClipboard('${link}')" class="px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+              Copy
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Load recent purchases
+    async function loadRecentPurchases() {
+      const container = document.getElementById('recent-purchases');
+      container.innerHTML = '<p class="text-slate-600">Loading...</p>';
+
+      try {
+        const response = await fetch('/api/admin/recent-purchases', {
+          headers: { 'X-Admin-Auth': sessionStorage.getItem('admin_auth') }
+        });
+        
+        const data = await response.json();
+        
+        if (data.purchases && data.purchases.length > 0) {
+          container.innerHTML = `
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-4 py-2 text-left">ID</th>
+                  <th class="px-4 py-2 text-left">Plan</th>
+                  <th class="px-4 py-2 text-left">Amount</th>
+                  <th class="px-4 py-2 text-left">Status</th>
+                  <th class="px-4 py-2 text-left">Created</th>
+                  <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.purchases.map(p => `
+                  <tr class="border-t border-slate-100">
+                    <td class="px-4 py-2 font-mono text-xs">${p.id}</td>
+                    <td class="px-4 py-2">${p.tier}</td>
+                    <td class="px-4 py-2">${p.currency} $${p.amount}</td>
+                    <td class="px-4 py-2">
+                      <span class="px-2 py-1 ${p.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} rounded text-xs">
+                        ${p.status}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">${new Date(p.createdAt).toLocaleDateString()}</td>
+                    <td class="px-4 py-2">
+                      <button onclick="copyToClipboard('${window.location.origin}/create?purchase=${p.id}')" class="text-indigo-600 hover:underline text-xs">
+                        Copy Link
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        } else {
+          container.innerHTML = '<p class="text-slate-500">No purchases found</p>';
+        }
+      } catch (error) {
+        container.innerHTML = '<p class="text-red-600">Error loading purchases. API may not be set up yet.</p>';
+      }
+    }
+
+    // Utility
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    }
+  </script>
+
+</body>
+</html>

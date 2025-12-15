@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful - VoteGenerator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .check-animation {
+      animation: scaleIn 0.5s ease-out;
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .fade-up {
+      animation: fadeUp 0.6s ease-out 0.3s both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+  
+  <!-- Header -->
+  <header class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <img src="/logo.svg" alt="VoteGenerator" class="h-10 w-auto">
+      </a>
+      <a href="/help" class="text-slate-600 hover:text-slate-900 text-sm">Need help?</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-2xl mx-auto px-4 py-12">
+    
+    <!-- Loading State -->
+    <div id="loading-state" class="text-center py-20">
+      <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-slate-600">Confirming your payment...</p>
+    </div>
+
+    <!-- Success State (hidden by default) -->
+    <div id="success-state" class="hidden">
+      
+      <!-- Success Card -->
+      <div class="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 overflow-hidden">
+        
+        <!-- Green Header -->
+        <div class="bg-gradient-to-r from-emerald-500 to-green-500 px-8 py-10 text-center text-white">
+          <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 check-animation">
+            <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h1 class="text-3xl font-bold mb-2 fade-up">Payment Successful!</h1>
+          <p class="text-emerald-100 fade-up">Your purchase is ready to use</p>
+        </div>
+
+        <!-- Purchase Details -->
+        <div class="p-8">
+          
+          <!-- What You Got -->
+          <div class="bg-gradient-to-br from-slate-50 to-indigo-50 rounded-2xl p-6 mb-6 fade-up">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-slate-600 text-sm font-medium">YOUR PURCHASE</span>
+              <span id="purchase-badge" class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase"></span>
+            </div>
+            <h2 id="plan-name" class="text-2xl font-bold text-slate-900 mb-1"></h2>
+            <p id="plan-price" class="text-lg text-indigo-600 font-semibold mb-4"></p>
+            
+            <!-- Features -->
+            <div id="features-list" class="space-y-2">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <!-- Important Info -->
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 fade-up">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <p class="text-amber-800 font-medium text-sm">Save your admin link!</p>
+                <p class="text-amber-700 text-sm">After creating your poll, you'll get a private admin link. Bookmark it - it's the only way to access your poll's results and settings.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purchase ID (for recovery) -->
+          <div class="flex items-center justify-between text-sm text-slate-500 mb-6 fade-up">
+            <span>Purchase ID:</span>
+            <code id="purchase-id" class="bg-slate-100 px-2 py-1 rounded font-mono text-xs"></code>
+          </div>
+
+          <!-- CTA Button -->
+          <a id="create-button" href="/create" class="block w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center font-bold text-lg rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 fade-up">
+            Create Your Poll Now →
+          </a>
+
+          <!-- Secondary Link -->
+          <p class="text-center text-slate-500 text-sm mt-4 fade-up">
+            Not ready yet? We've emailed you a link to use later.
+          </p>
+
+        </div>
+      </div>
+
+      <!-- Help Section -->
+      <div class="mt-8 text-center text-slate-500 text-sm fade-up">
+        <p>Questions? <a href="/contact" class="text-indigo-600 hover:underline">Contact support</a></p>
+      </div>
+
+    </div>
+
+    <!-- Error State (hidden by default) -->
+    <div id="error-state" class="hidden">
+      <div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Something went wrong</h1>
+        <p id="error-message" class="text-slate-600 mb-6">We couldn't verify your payment.</p>
+        <div class="space-y-3">
+          <a href="/pricing" class="block w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+            Back to Pricing
+          </a>
+          <a href="/contact" class="block w-full py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors">
+            Contact Support
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Plan details for display
+    const PLAN_DETAILS = {
+      quick: {
+        name: 'Quick Poll',
+        badge: 'One-Time',
+        features: [
+          '1 premium poll',
+          '500 responses',
+          'Active for 7 days',
+          'No ads or branding',
+          'CSV/Excel/PDF export'
+        ]
+      },
+      event: {
+        name: 'Event Poll',
+        badge: 'One-Time',
+        features: [
+          '1 premium poll',
+          '2,000 responses',
+          'Active for 30 days',
+          'No ads or branding',
+          'CSV/Excel/PDF export',
+          'Custom logo',
+          'Voter comments'
+        ]
+      },
+      pro: {
+        name: 'Pro',
+        badge: 'Subscription',
+        features: [
+          'Unlimited polls',
+          '10,000 responses per poll',
+          '11 poll types',
+          'Multi-poll dashboard',
+          'Advanced analytics',
+          'Vote timestamps & trends'
+        ]
+      },
+      pro_plus: {
+        name: 'Pro+',
+        badge: 'Subscription',
+        features: [
+          'Everything in Pro',
+          '50,000 responses per poll',
+          'All 12 poll types (incl. Visual)',
+          'Unique voting codes',
+          'Custom short links',
+          'White-label embeds',
+          'Priority support'
+        ]
+      }
+    };
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+
+      if (!sessionId) {
+        showError('No session ID found. If you completed a payment, please check your email for confirmation.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/verify-session?session_id=${sessionId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to verify payment');
+        }
+
+        if (data.type === 'one_time') {
+          showSuccess(data.purchase);
+        } else if (data.type === 'subscription') {
+          showSubscriptionSuccess(data.subscription);
+        }
+
+      } catch (error) {
+        console.error('Verification error:', error);
+        showError(error.message);
+      }
+    }
+
+    function showSuccess(purchase) {
+      const plan = PLAN_DETAILS[purchase.plan] || PLAN_DETAILS.quick;
+      
+      document.getElementById('plan-name').textContent = plan.name;
+      document.getElementById('plan-price').textContent = `${purchase.currency} $${purchase.amount.toFixed(2)}`;
+      document.getElementById('purchase-badge').textContent = plan.badge;
+      document.getElementById('purchase-id').textContent = purchase.purchaseId;
+      
+      // Build features list
+      const featuresList = document.getElementById('features-list');
+      featuresList.innerHTML = plan.features.map(f => `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-slate-700">${f}</span>
+        </div>
+      `).join('');
+
+      // Update create button with purchase ID
+      const createBtn = document.getElementById('create-button');
+      createBtn.href = `/create?purchase=${purchase.purchaseId}`;
+
+      // Store in localStorage for recovery
+      localStorage.setItem('vg_last_purchase', JSON.stringify({
+        purchaseId: purchase.purchaseId,
+        plan: purchase.plan,
+        timestamp: Date.now()
+      }));
+
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('success-state').classList.remove('hidden');
+    }
+
+    function showSubscriptionSuccess(subscription) {
+      const plan = PLAN_DETAILS[subscription.tier] || PLAN_DETAILS.pro;
+      
+      document.getElementById('plan-name').textContent = plan.name + ' Subscription';
+      document.getElementById('plan-price').textContent = 'Active';
+      document.getElementById('purchase-badge').textContent = 'Subscription';
+      document.getElementById('purchase-id').textContent = subscription.userId;
+      
+      // Build features list
+      const featuresList = document.getElementById('features-list');
+      featuresList.innerHTML = plan.features.map(f => `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-slate-700">${f}</span>
+        </div>
+      `).join('');
+
+      // Update button text for subscription
+      const createBtn = document.getElementById('create-button');
+      createBtn.textContent = 'Go to Dashboard →';
+      createBtn.href = `/dashboard?user=${subscription.userId}`;
+
+      // Store session
+      localStorage.setItem('vg_user', JSON.stringify({
+        userId: subscription.userId,
+        tier: subscription.tier,
+        email: subscription.email
+      }));
+
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('success-state').classList.remove('hidden');
+    }
+
+    function showError(message) {
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+
+    // Initialize on load
+    init();
+  </script>
+
+</body>
+</html>

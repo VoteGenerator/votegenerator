@@ -6,13 +6,53 @@
 [functions]
   node_bundler = "esbuild"
 
-# API Routes - All go to main api function
+# ============================================
+# Stripe API Routes (specific functions)
+# ============================================
+
+[[redirects]]
+  from = "/api/checkout"
+  to = "/.netlify/functions/checkout"
+  status = 200
+
+[[redirects]]
+  from = "/api/webhook"
+  to = "/.netlify/functions/webhook"
+  status = 200
+
+[[redirects]]
+  from = "/api/verify-session"
+  to = "/.netlify/functions/verify-session"
+  status = 200
+
+[[redirects]]
+  from = "/api/portal"
+  to = "/.netlify/functions/portal"
+  status = 200
+
+# ============================================
+# Main API Routes (polls, votes, etc)
+# ============================================
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"
   status = 200
 
-# Pretty URLs - /demo serves demo.html
+# ============================================
+# Page Routes
+# ============================================
+
+[[redirects]]
+  from = "/success"
+  to = "/success.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
+
 [[redirects]]
   from = "/demo"
   to = "/demo.html"
@@ -71,7 +111,10 @@
   to = "/.netlify/functions/v-redirect"
   status = 200
 
-# Cache headers
+# ============================================
+# Cache Headers
+# ============================================
+
 [[headers]]
   for = "/*.html"
   [headers.values]

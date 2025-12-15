@@ -27,7 +27,18 @@ const Footer: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 py-16">
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     <div className="col-span-2">
-                        <a href="/index.html" className="flex items-center gap-2 mb-4">
+                        <a href="/index.html" className="flex items-center gap-3 mb-4">
+                            {/* Logo SVG */}
+                            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="40" height="40" rx="10" fill="url(#footer-logo-gradient)"/>
+                                <path d="M12 20L17 25L28 14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                <defs>
+                                    <linearGradient id="footer-logo-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor="#4F46E5"/>
+                                        <stop offset="1" stopColor="#7C3AED"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
                             <span className="font-bold text-xl text-white">VoteGenerator</span>
                         </a>
                         <p className="text-slate-400 text-sm mb-4 max-w-xs">

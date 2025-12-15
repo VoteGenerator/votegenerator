@@ -69,7 +69,7 @@ const PricingPage: React.FC = () => {
                 { text: 'Up to 500 responses', included: true },
                 { text: 'No ads on your poll', included: true },
                 { text: 'Remove "Powered by" branding', included: true },
-                { text: 'Download results (CSV & PDF)', included: true },
+                { text: 'Download results (CSV, Excel & PDF)', included: true },
                 { text: 'Custom thank-you message', included: true },
             ]
         },
@@ -223,6 +223,7 @@ const PricingPage: React.FC = () => {
                 { name: 'Real-Time Results', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'See votes appear instantly as they come in. No refreshing needed.' },
                 { name: 'Results Charts', free: true, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Visual bar charts and pie charts showing vote distribution.' },
                 { name: 'Download CSV', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Export raw vote data to a spreadsheet for your own analysis.' },
+                { name: 'Download Excel', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Export results as a formatted Excel (.xlsx) file.' },
                 { name: 'Download PDF Report', free: false, quick: true, event: true, pro: true, proPlus: true, tooltip: 'Generate a professional PDF summary of results to share.' },
                 { name: 'Vote Timestamps', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'See exactly when each vote was cast.' },
                 { name: 'Voting Trends Over Time', free: false, quick: false, event: false, pro: true, proPlus: true, tooltip: 'Charts showing how voting patterns changed hour by hour or day by day.' },

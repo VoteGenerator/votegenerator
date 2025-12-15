@@ -87,7 +87,7 @@ const ContactPage: React.FC = () => {
         },
         {
             q: "Do you offer custom enterprise solutions?",
-            a: "Yes! Select 'Enterprise / Custom Pricing' above and tell us about your needs. We offer custom branding, SSO, and dedicated support."
+            a: "Yes! Email us at hello@votegenerator.com with your requirements and we'll discuss custom options for your organization."
         }
     ];
 

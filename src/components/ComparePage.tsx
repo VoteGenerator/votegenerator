@@ -249,7 +249,7 @@ const ComparePage: React.FC = () => {
                         Create your first poll in 30 seconds. No signup required.
                     </p>
                     <a
-                        href="#/"
+                        href="/index.html"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />

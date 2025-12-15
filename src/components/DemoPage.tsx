@@ -442,7 +442,7 @@ const DemoPage: React.FC = () => {
                             {/* CTA */}
                             <div className="text-center">
                                 <a
-                                    href="#/"
+                                    href="/index.html"
                                     className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                                 >
                                     <Sparkles size={20} />
@@ -600,7 +600,7 @@ const DemoPage: React.FC = () => {
 
                                                 {/* CTA */}
                                                 <a
-                                                    href="#/"
+                                                    href="/index.html"
                                                     className={`block w-full py-3 bg-gradient-to-r ${selectedPollData.gradient} text-white font-bold text-center rounded-xl hover:shadow-lg transition-all`}
                                                 >
                                                     Create a {selectedPollData.name} →
@@ -657,7 +657,7 @@ const DemoPage: React.FC = () => {
                             {/* CTA */}
                             <div className="text-center mt-12">
                                 <a
-                                    href="#/"
+                                    href="/index.html"
                                     className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                                 >
                                     <Sparkles size={20} />
@@ -680,7 +680,7 @@ const DemoPage: React.FC = () => {
                         No signup needed. Create a poll in 30 seconds.
                     </p>
                     <a
-                        href="#/"
+                        href="/index.html"
                         className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg"
                     >
                         <Sparkles size={20} />

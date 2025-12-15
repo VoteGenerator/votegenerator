@@ -47,7 +47,7 @@ const LandingPage: React.FC = () => {
                     <div className="mt-8 text-center space-y-3">
                         <p className="text-slate-500 text-sm">This is just 1 of 12 poll types available!</p>
                         <a 
-                            href="#/demo"
+                            href="/demo.html"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
                         >
                             Explore All 12 Poll Types →
@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
                     </div>
                     <div className="mt-8">
                         <a 
-                            href="#/pricing"
+                            href="/pricing.html"
                             className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
                         >
                             View full pricing with all 4 plans & feature comparison →

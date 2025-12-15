@@ -25,11 +25,7 @@ import {
     AlertTriangle,
     Play,
     ArrowRight,
-    Lock,
     Eye,
-    BarChart3,
-    Shield,
-    Crown,
     Check
 } from 'lucide-react';
 import NavHeader from './NavHeader';

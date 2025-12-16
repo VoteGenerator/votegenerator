@@ -1,315 +1,857 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, ChevronRight, Play, RotateCcw, Sparkles, XCircle } from 'lucide-react';
-import type { RunoffResult } from '../types';
-import confetti from 'canvas-confetti';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check } from 'lucide-react';
+import { RunoffResult, Poll } from '../types';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
-interface VoteGeneratorResultsProps {
-    runoffResult: RunoffResult;
-    pollTitle: string;
+interface Props {
+    poll: Poll;
+    results: RunoffResult;
+    onEdit?: () => void;
+    adminKey?: string | null;
+    isAdmin?: boolean;
 }
 
-const VoteGeneratorResults: React.FC<VoteGeneratorResultsProps> = ({ runoffResult, pollTitle }) => {
-    const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [autoPlay, setAutoPlay] = useState(false);
-    const [showVoteFlow, setShowVoteFlow] = useState(false);
-    const [hasShownConfetti, setHasShownConfetti] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
+const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
+    const isRanked = poll.pollType === 'ranked';
+    const isMeeting = poll.pollType === 'meeting';
+    const isDot = poll.pollType === 'dot';
+    const isMatrix = poll.pollType === 'matrix';
+    const isPairwise = poll.pollType === 'pairwise';
+    const isRating = poll.pollType === 'rating';
+    const isBudget = poll.pollType === 'budget';
+    
+    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
+        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
+    );
 
-    const { rounds, winner, totalVotes } = runoffResult;
-    const currentRound = rounds[currentRoundIndex];
-    const isLastRound = currentRoundIndex === rounds.length - 1;
+    const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    // Auto-play through rounds
-    useEffect(() => {
-        if (!autoPlay || isLastRound) return;
-        
-        const timer = setTimeout(() => {
-            advanceRound();
-        }, 2500);
-
-        return () => clearTimeout(timer);
-    }, [autoPlay, currentRoundIndex, isLastRound]);
-
-    // Confetti on winner
-    useEffect(() => {
-        if (isLastRound && currentRound.winnerId && !hasShownConfetti) {
-            setHasShownConfetti(true);
-            setTimeout(() => {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444']
-                });
-            }, 500);
+    const barChartData = (() => {
+        if (isBudget && budgetStats) {
+            const data: Record<string, number> = {};
+            Object.entries(budgetStats).forEach(([id, stat]) => data[id] = stat.totalValue);
+            return data;
         }
-    }, [isLastRound, currentRound.winnerId, hasShownConfetti]);
+        if (simpleCounts) return simpleCounts;
+        if (isRanked && rounds.length > 0) return rounds[0].counts;
+        const counts: Record<string, number> = {};
+        poll.options.forEach(o => counts[o.id] = 0);
+        return counts;
+    })();
 
-    const advanceRound = () => {
-        if (isLastRound) return;
+    const meetingScoreData = (() => {
+        const scores: Record<string, number> = {};
+        poll.options.forEach(o => scores[o.id] = 0);
+        if (simpleCounts) Object.entries(simpleCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + c);
+        if (maybeCounts) Object.entries(maybeCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + (c * 0.5));
+        return scores;
+    })();
+
+    const meetingWinnerId = isMeeting ? Object.keys(meetingScoreData).reduce((a, b) => meetingScoreData[a] > meetingScoreData[b] ? a : b, poll.options[0].id) : winnerId;
+    const activeWinnerId = isMeeting ? meetingWinnerId : winnerId;
+
+    const CHART_COLORS = [
+        '#6366f1', '#ec4899', '#06b6d4', '#84cc16', 
+        '#f97316', '#ef4444', '#14b8a6', '#3b82f6', '#eab308', '#a855f7'
+    ];
+
+    const getHexColor = (id: string) => {
+        const index = poll.options.findIndex(o => o.id === id);
+        return CHART_COLORS[index % CHART_COLORS.length];
+    };
+
+    const getBarColorClass = (id: string) => {
+        const index = poll.options.findIndex(o => o.id === id);
+        const colors = [
+            'bg-indigo-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 
+            'bg-orange-500', 'bg-red-500', 'bg-teal-500', 'bg-blue-500', 'bg-yellow-500', 'bg-purple-500'
+        ];
+        return colors[index % colors.length];
+    };
+
+    const shouldShowComments = comments && comments.length > 0 && (poll.isAdmin || (poll.settings.allowComments && poll.settings.publicComments));
+
+    const pieData = (() => {
+        const counts = barChartData; 
+        const total = Object.values(counts).reduce((a,b) => a+b, 0);
+        let currentAngle = 0;
+        return Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .map(([id, count]) => {
+                const angle = total > 0 ? (count / total) * 360 : 0;
+                const d = { id, count, percentage: total > 0 ? (count / total) * 100 : 0, color: getHexColor(id), startAngle: currentAngle, angle };
+                currentAngle += angle;
+                return d;
+            });
+    })();
+    const pieGradient = pieData.map(d => `${d.color} ${d.startAngle}deg ${d.startAngle + d.angle}deg`).join(', ');
+
+    const maxHeat = Math.max(...Object.values(meetingScoreData), 1);
+
+    const velocityData = (() => {
+        if (!votes || votes.length === 0) return [];
+        const sortedVotes = [...votes].sort((a,b) => new Date(a.votedAt).getTime() - new Date(b.votedAt).getTime());
+        if(sortedVotes.length === 0) return [];
+        const startTime = new Date(sortedVotes[0].votedAt).getTime();
+        const endTime = new Date().getTime();
+        const buckets = 10;
+        const duration = endTime - startTime;
+        const bucketSize = Math.max(duration / buckets, 60000); 
         
-        setIsAnimating(true);
-        setShowVoteFlow(true);
+        const data = Array(buckets).fill(0).map((_, i) => ({ 
+            time: new Date(startTime + (i * bucketSize)), 
+            count: 0 
+        }));
 
-        // Show vote redistribution animation
-        setTimeout(() => {
-            setShowVoteFlow(false);
-            setCurrentRoundIndex(prev => prev + 1);
-            setIsAnimating(false);
-        }, 1500);
-    };
+        sortedVotes.forEach(v => {
+            const time = new Date(v.votedAt).getTime();
+            const bucketIndex = Math.min(Math.floor((time - startTime) / bucketSize), buckets - 1);
+            if(bucketIndex >= 0) data[bucketIndex].count++;
+        });
+        return data;
+    })();
 
-    const resetAnimation = () => {
-        setCurrentRoundIndex(0);
-        setAutoPlay(false);
-        setHasShownConfetti(false);
-    };
+    const sankeyData = useMemo(() => {
+        if (rounds.length === 0) return { nodes: [], links: [], width: 0, height: 400 };
+        const nodes: any[] = [];
+        const links: any[] = [];
+        const canvasHeight = 400;
+        const roundWidth = 150;
+        const gap = 10;
+        const firstRoundTotal = Object.values(rounds[0].counts).reduce((a, b) => a + b, 0);
 
-    const startAutoPlay = () => {
-        setAutoPlay(true);
-        if (currentRoundIndex === rounds.length - 1) {
-            resetAnimation();
+        rounds.forEach((round, roundIdx) => {
+            let yOffset = 0;
+            const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);
+            sortedIds.forEach(id => {
+                const count = round.counts[id];
+                const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; 
+                if (count >= 0) {
+                    nodes.push({ id: `${roundIdx}-${id}`, optionId: id, round: roundIdx, value: count, x: roundIdx * roundWidth, y: yOffset, height: Math.max(height, 2), color: getHexColor(id) });
+                    yOffset += height + gap;
+                }
+            });
+        });
+
+        for (let i = 0; i < rounds.length - 1; i++) {
+            const currentRound = rounds[i];
+            const nextRound = rounds[i+1];
+            const eliminatedId = currentRound.eliminatedId;
+            const currentMap = currentRound.counts;
+            const nextMap = nextRound.counts;
+
+            Object.keys(nextMap).forEach(id => {
+                const prevCount = currentMap[id] || 0;
+                const newCount = nextMap[id];
+                const delta = newCount - prevCount;
+                if (prevCount > 0) {
+                    links.push({ source: `${i}-${id}`, target: `${i+1}-${id}`, value: prevCount, color: getHexColor(id), opacity: 0.5 });
+                }
+                if (delta > 0 && eliminatedId) {
+                    links.push({ source: `${i}-${eliminatedId}`, target: `${i+1}-${id}`, value: delta, color: getHexColor(eliminatedId), opacity: 0.3 });
+                }
+            });
         }
-    };
+        return { nodes, links, width: rounds.length * roundWidth, height: canvasHeight };
+    }, [rounds]);
 
-    // Calculate max votes for bar scaling
-    const maxVotes = Math.max(...currentRound.standings.map(s => s.voteCount));
-    const majorityThreshold = Math.ceil(totalVotes / 2);
-
-    return (
-        <div ref={containerRef} className="max-w-2xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-8">
-                <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold mb-4"
-                >
-                    <Users size={16} />
-                    {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'} cast
-                </motion.div>
-                <h1 className="text-3xl font-black text-slate-800 mb-2">{pollTitle}</h1>
-                <p className="text-slate-500">Ranked Choice Results</p>
-            </div>
-
-            {/* Round Indicator */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-                {rounds.map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => !isAnimating && setCurrentRoundIndex(idx)}
-                        className={`w-8 h-8 rounded-full font-bold text-sm transition-all ${
-                            idx === currentRoundIndex
-                                ? 'bg-indigo-600 text-white scale-110'
-                                : idx < currentRoundIndex
-                                ? 'bg-indigo-200 text-indigo-700'
-                                : 'bg-slate-200 text-slate-400'
-                        }`}
-                    >
-                        {idx + 1}
-                    </button>
+    const renderSankeySVG = () => {
+        const { nodes, links, width, height } = sankeyData;
+        return (
+            <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
+                {links.map((link, i) => {
+                    const sourceNode = nodes.find(n => n.id === link.source);
+                    const targetNode = nodes.find(n => n.id === link.target);
+                    if (!sourceNode || !targetNode) return null;
+                    const sy = sourceNode.y + sourceNode.height / 2;
+                    const ty = targetNode.y + targetNode.height / 2;
+                    const sx = sourceNode.x + 20; 
+                    const tx = targetNode.x;
+                    const strokeWidth = (link.value / totalVotes) * height;
+                    const path = `M ${sx} ${sy} C ${sx + 50} ${sy}, ${tx - 50} ${ty}, ${tx} ${ty}`;
+                    return <path key={i} d={path} stroke={link.color} strokeWidth={Math.max(strokeWidth, 1)} fill="none" opacity={link.opacity} className="transition-all hover:opacity-80" />;
+                })}
+                {nodes.map(node => (
+                    <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
+                        <rect width={20} height={node.height} fill={node.color} rx={4} className="shadow-sm" />
+                        <text x={10} y={-5} textAnchor="middle" fontSize="10" className="fill-slate-500 font-bold">{node.value}</text>
+                        {node.round === 0 && <text x={0} y={node.height / 2} dx={-5} dy={4} textAnchor="end" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
+                        {node.round === rounds.length - 1 && <text x={25} y={node.height / 2} dy={4} textAnchor="start" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
+                    </g>
                 ))}
-            </div>
+            </svg>
+        );
+    };
 
-            {/* Round Label */}
-            <div className="text-center mb-6">
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">
-                    {isLastRound && currentRound.winnerId ? (
-                        <span className="text-emerald-600">🎉 Winner Determined!</span>
-                    ) : (
-                        `Round ${currentRound.roundNumber} of ${rounds.length}`
-                    )}
-                </span>
-                {!isLastRound && currentRound.eliminated && (
-                    <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-red-500 text-sm mt-1"
+
+    if (totalVotes === 0) {
+        return (
+            <div className="text-center py-10 bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users size={32} className="text-slate-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800">No votes yet</h3>
+                <p className="text-slate-500 mt-2">Share the link to get started!</p>
+                {onEdit && (
+                    <button 
+                        onClick={onEdit}
+                        className="mt-6 px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition-colors inline-flex items-center gap-2"
                     >
-                        Lowest option will be eliminated...
-                    </motion.p>
+                        <Settings size={16} /> Edit Poll Settings
+                    </button>
                 )}
             </div>
+        );
+    }
 
-            {/* Majority Line Indicator */}
-            <div className="relative mb-2 px-4">
-                <div className="flex items-center justify-end text-xs text-slate-400">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded">
-                        Majority: {majorityThreshold} votes (50%+)
-                    </span>
+    return (
+        <div className="space-y-6 print:space-y-4">
+            <div className="flex flex-wrap justify-end gap-2 print:hidden">
+                <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
+                    {isMatrix && (
+                         <button onClick={() => setViewMode('matrix')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'matrix' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <LayoutGrid size={16} /> Matrix
+                        </button>
+                    )}
+
+                    {isPairwise && (
+                         <button onClick={() => setViewMode('pairwise')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pairwise' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <GitCompare size={16} /> Leaderboard
+                        </button>
+                    )}
+
+                    {isRating && (
+                         <button onClick={() => setViewMode('rating')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'rating' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <SlidersHorizontal size={16} /> Averages
+                        </button>
+                    )}
+                    
+                    {!isPairwise && !isRating && (
+                         <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <BarChart size={16} /> Bar
+                        </button>
+                    )}
+                    
+                    {isRanked && (
+                        <button onClick={() => setViewMode('flow')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'flow' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <GitMerge size={16} /> Flow Chart
+                        </button>
+                    )}
+
+                    {isMeeting && (
+                        <button onClick={() => setViewMode('heatmap')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'heatmap' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <Calendar size={16} /> Heatmap
+                        </button>
+                    )}
+
+                    {!isPairwise && !isRating && (
+                     <button onClick={() => setViewMode('pie')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pie' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        <PieChart size={16} /> Pie
+                    </button>
+                    )}
+
+                    <button onClick={() => setViewMode('velocity')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'velocity' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        <Activity size={16} /> Velocity
+                    </button>
+                    
+                    <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        <MapIcon size={16} /> Map
+                    </button>
+
+                    <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                        <LayoutGrid size={16} /> Grid
+                    </button>
                 </div>
             </div>
 
-            {/* Results Bars */}
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-4">
-                <AnimatePresence mode="popLayout">
-                    {currentRound.standings
-                        .sort((a, b) => b.voteCount - a.voteCount)
-                        .map((standing, index) => (
-                            <motion.div
-                                key={standing.optionId}
-                                layout
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ 
-                                    opacity: standing.isEliminated ? 0.4 : 1, 
-                                    x: 0,
-                                    scale: standing.isWinner ? 1.02 : 1
-                                }}
-                                exit={{ opacity: 0, x: 50, height: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className={`relative ${standing.isEliminated ? 'grayscale' : ''}`}
-                            >
-                                {/* Winner Crown */}
-                                {standing.isWinner && (
-                                    <motion.div
-                                        initial={{ scale: 0, rotate: -20 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        className="absolute -left-2 -top-2 z-10"
-                                    >
-                                        <div className="bg-amber-400 rounded-full p-1.5 shadow-lg">
-                                            <Trophy size={16} className="text-amber-900" />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {/* Eliminated Badge */}
-                                {standing.isEliminated && (
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="absolute -right-2 -top-2 z-10"
-                                    >
-                                        <div className="bg-red-500 rounded-full p-1 shadow-lg">
-                                            <XCircle size={14} className="text-white" />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                <div className={`rounded-xl p-4 border-2 transition-all ${
-                                    standing.isWinner 
-                                        ? 'border-emerald-400 bg-emerald-50 shadow-lg shadow-emerald-100' 
-                                        : standing.isEliminated
-                                        ? 'border-slate-200 bg-slate-50'
-                                        : 'border-slate-200 bg-white'
-                                }`}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className={`font-bold ${
-                                            standing.isWinner ? 'text-emerald-700' : 'text-slate-700'
-                                        }`}>
-                                            {standing.optionText}
-                                        </span>
-                                        <span className={`font-black text-lg ${
-                                            standing.isWinner ? 'text-emerald-600' : 'text-indigo-600'
-                                        }`}>
-                                            {standing.voteCount} <span className="text-sm font-normal text-slate-400">({standing.percentage}%)</span>
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Vote Bar */}
-                                    <div className="h-3 bg-slate-100 rounded-full overflow-hidden relative">
-                                        {/* Majority line */}
-                                        <div 
-                                            className="absolute top-0 bottom-0 w-0.5 bg-slate-300 z-10"
-                                            style={{ left: `${(majorityThreshold / maxVotes) * 100}%` }}
-                                        />
-                                        
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ 
-                                                width: `${maxVotes > 0 ? (standing.voteCount / maxVotes) * 100 : 0}%` 
-                                            }}
-                                            transition={{ duration: 0.8, ease: "easeOut", delay: index * 0.1 }}
-                                            className={`h-full rounded-full ${
-                                                standing.isWinner 
-                                                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' 
-                                                    : standing.isEliminated
-                                                    ? 'bg-slate-300'
-                                                    : 'bg-gradient-to-r from-indigo-400 to-indigo-500'
-                                            }`}
-                                        />
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                </AnimatePresence>
-
-                {/* Vote Flow Animation */}
-                <AnimatePresence>
-                    {showVoteFlow && currentRound.redistributedVotes && currentRound.redistributedVotes.length > 0 && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 pointer-events-none flex items-center justify-center"
-                        >
-                            <div className="bg-indigo-600 text-white px-4 py-2 rounded-full font-bold shadow-xl">
-                                <Sparkles className="inline mr-2" size={16} />
-                                Redistributing votes to 2nd choices...
+            <AnimatePresence mode="wait">
+                {/* --- WINNER CARD --- */}
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && activeWinnerId && !isDot && !isMatrix) && (
+                     <motion.div 
+                        key="winner"
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden print:border print:border-slate-300 print:bg-none print:text-black mb-6"
+                    >
+                        <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden">
+                            <Trophy size={120} />
+                        </div>
+                        <div className="relative z-10">
+                            <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2 print:text-slate-500">
+                                {isMeeting ? "Best Time Slot" : isBudget ? "Top Funded Feature" : "The Winner Is"}
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-4 mt-8">
-                {!isLastRound ? (
-                    <>
-                        <button
-                            onClick={startAutoPlay}
-                            disabled={isAnimating}
-                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50"
-                        >
-                            <Play size={18} /> {autoPlay ? 'Playing...' : 'Watch Runoff'}
-                        </button>
-                        <button
-                            onClick={advanceRound}
-                            disabled={isAnimating}
-                            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl border-2 border-slate-200 transition-all flex items-center gap-2 disabled:opacity-50"
-                        >
-                            Next Round <ChevronRight size={18} />
-                        </button>
-                    </>
-                ) : (
-                    <button
-                        onClick={resetAnimation}
-                        className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2"
-                    >
-                        <RotateCcw size={18} /> Watch Again
-                    </button>
-                )}
-            </div>
-
-            {/* Winner Announcement */}
-            <AnimatePresence>
-                {isLastRound && winner && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-8 text-center text-white shadow-xl"
-                    >
-                        <Trophy className="mx-auto mb-4" size={48} />
-                        <p className="text-emerald-100 uppercase tracking-wide text-sm font-bold mb-2">
-                            The Group Has Spoken
-                        </p>
-                        <h2 className="text-3xl font-black mb-2">{winner.text}</h2>
-                        <p className="text-emerald-100">
-                            Won with majority support after {rounds.length} round{rounds.length > 1 ? 's' : ''}
-                        </p>
+                            <h2 className="text-3xl md:text-5xl font-black font-serif mb-4">
+                                {getOptionText(activeWinnerId)}
+                            </h2>
+                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm print:bg-slate-100 print:text-slate-900">
+                                <Users size={18} />
+                                <span className="font-semibold">{totalVotes} Total Voters</span>
+                            </div>
+                            {isMeeting && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
+                                </div>
+                            )}
+                            {isPairwise && pairwiseScores && pairwiseScores[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Win Rate: {pairwiseScores[activeWinnerId].score.toFixed(1)}% ({pairwiseScores[activeWinnerId].wins} wins)
+                                </div>
+                            )}
+                            {isRating && ratingStats && ratingStats[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm">
+                                    Average Rating: {ratingStats[activeWinnerId].average.toFixed(1)} / 100
+                                </div>
+                            )}
+                            {isBudget && budgetStats && budgetStats[activeWinnerId] && (
+                                <div className="mt-2 text-indigo-200 text-sm flex items-center justify-center gap-1">
+                                    <DollarSign size={16} />
+                                    Total Value: ${budgetStats[activeWinnerId].totalValue.toLocaleString()} ({budgetStats[activeWinnerId].totalQuantity} purchased)
+                                </div>
+                            )}
+                        </div>
                     </motion.div>
                 )}
-            </AnimatePresence>
 
-            {/* How It Works */}
-            <div className="mt-8 bg-indigo-50 rounded-xl p-4 text-sm text-indigo-800">
-                <strong className="block mb-1">How Ranked Choice Works:</strong>
-                <p className="text-indigo-600">
-                    If no option gets 50%+ in Round 1, the lowest option is eliminated and those votes 
-                    transfer to each voter's next choice. This repeats until someone wins with majority support.
-                </p>
-            </div>
+                {/* --- RATING VIEW --- */}
+                {viewMode === 'rating' && ratingStats && (
+                    <motion.div
+                        key="rating"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <SlidersHorizontal size={24} className="text-indigo-500"/> Average Ratings
+                            </h3>
+                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                                <span className="w-4 h-1 bg-black/20 rounded"></span> Error bars = Standard Deviation
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-6">
+                            {Object.entries(ratingStats)
+                                .sort(([, a], [, b]) => b.average - a.average)
+                                .map(([id, stats], index) => {
+                                    return (
+                                        <div key={id} className="relative break-inside-avoid">
+                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <span className="text-slate-800 font-bold text-lg">
+                                                        {getOptionText(id)}
+                                                    </span>
+                                                </div>
+                                                <span className="text-slate-600 font-bold">
+                                                    {stats.average.toFixed(1)} <span className="text-slate-400 font-normal text-xs ml-1">/ 100</span>
+                                                </span>
+                                            </div>
+                                            <div className="relative h-8 bg-slate-100 rounded-lg mt-2 overflow-visible print:border print:border-slate-200">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${stats.average}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
+                                                />
+                                                {stats.count > 1 && (
+                                                    <div 
+                                                        className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
+                                                        style={{ 
+                                                            left: `${Math.max(0, stats.average - stats.stdDev)}%`, 
+                                                            width: `${Math.min(100 - (stats.average - stats.stdDev), stats.stdDev * 2)}%`
+                                                        }}
+                                                    >
+                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
+                                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
+                                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-slate-400 mt-1 flex justify-between">
+                                                <span>Std Dev: {stats.stdDev.toFixed(1)}</span>
+                                                <span>{stats.count} votes</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- PAIRWISE VIEW --- */}
+                {viewMode === 'pairwise' && pairwiseScores && (
+                    <motion.div
+                        key="pairwise"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <GitCompare size={24} className="text-indigo-500"/> Comparison Leaderboard
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            {Object.entries(pairwiseScores)
+                                .sort(([, a], [, b]) => b.score - a.score)
+                                .map(([id, data], index) => {
+                                    return (
+                                        <div key={id} className="relative break-inside-avoid">
+                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <span className="text-slate-800 font-bold text-lg">
+                                                        {getOptionText(id)}
+                                                    </span>
+                                                </div>
+                                                <span className="text-slate-600 font-bold">
+                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins / {data.matches} matches)</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${data.score}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`h-full rounded-full ${getBarColorClass(id)} opacity-90`}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- MATRIX VIEW --- */}
+                {viewMode === 'matrix' && matrixAverages && (
+                     <motion.div 
+                        key="matrix"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <LayoutGrid size={24} className="text-indigo-500"/> Priority Matrix Results
+                        </h3>
+                        
+                        <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
+                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                                <div className="bg-emerald-50/50 flex items-start justify-start p-2"><span className="text-[10px] font-bold text-emerald-800 opacity-40 uppercase">Quick Wins</span></div>
+                                <div className="bg-blue-50/50 flex items-start justify-end p-2"><span className="text-[10px] font-bold text-blue-800 opacity-40 uppercase">Major Projects</span></div>
+                                <div className="bg-slate-50/50 flex items-end justify-start p-2"><span className="text-[10px] font-bold text-slate-500 opacity-40 uppercase">Fill Ins</span></div>
+                                <div className="bg-red-50/50 flex items-end justify-end p-2"><span className="text-[10px] font-bold text-red-800 opacity-40 uppercase">Thankless Tasks</span></div>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-px bg-slate-300"></div></div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="h-full w-px bg-slate-300"></div></div>
+                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">High Impact</div>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">Low Impact</div>
+                            <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">Low Effort</div>
+                            <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">High Effort</div>
+                             {Object.entries(matrixAverages).map(([id, coords]) => {
+                                 const top = 100 - coords.y;
+                                 return (
+                                     <div key={id} className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20" style={{ left: `${coords.x}%`, top: `${top}%` }}>
+                                         <span className="text-[10px] text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
+                                         <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                                             {getOptionText(id)}
+                                         </div>
+                                     </div>
+                                 )
+                             })}
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-500">
+                             {poll.options.map((opt, i) => (
+                                 <div key={opt.id} className="flex items-center gap-2">
+                                     <span className="w-4 h-4 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-[9px]">{i + 1}</span>
+                                     <span className="truncate">{opt.text}</span>
+                                 </div>
+                             ))}
+                        </div>
+                     </motion.div>
+                )}
+
+                {/* --- BAR VIEW (Standard for Dot/Multiple/Budget) --- */}
+                {viewMode === 'bar' && (
+                     <motion.div 
+                        key="bar"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <BarChart size={24} className="text-indigo-500"/> 
+                            {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : isBudget ? 'Value Allocated' : 'Vote Breakdown'}
+                        </h3>
+                        
+                        <div className="space-y-4">
+                            {Object.entries(barChartData)
+                                .sort(([, a], [, b]) => b - a)
+                                .map(([id, value]) => {
+                                    const denominator = isDot || isBudget ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
+                                    const percentage = denominator > 0 ? (value / denominator) * 100 : 0;
+                                    
+                                    return (
+                                        <div key={id} className="relative break-inside-avoid">
+                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                                <span className="text-slate-800 font-bold text-lg">
+                                                    {getOptionText(id)}
+                                                </span>
+                                                <span className="text-slate-600 font-bold">
+                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className="text-slate-400 font-normal text-xs ml-1">({percentage.toFixed(0)}%)</span>
+                                                </span>
+                                            </div>
+                                            <div className="h-6 bg-slate-100 rounded-lg overflow-hidden print:border print:border-slate-200">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${percentage}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`h-full rounded-lg ${getBarColorClass(id)} opacity-90 print:bg-slate-600`}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                     </motion.div>
+                )}
+
+                {/* --- FLOW CHART (SANKEY) VIEW --- */}
+                {viewMode === 'flow' && isRanked && rounds.length > 0 && (
+                    <motion.div 
+                        key="flow"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 overflow-x-auto"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <GitMerge size={24} className="text-indigo-500"/>
+                            Vote Transfer Flow
+                        </h3>
+                        
+                        <div className="min-w-[600px] h-[450px]">
+                            {renderSankeySVG()}
+                        </div>
+                        
+                        <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <Info size={16} className="text-indigo-500"/>
+                            <span>
+                                This diagram shows how votes from eliminated candidates (faded lines) are transferred to their next choice in subsequent rounds.
+                            </span>
+                        </div>
+                    </motion.div>
+                )}
+                
+                {/* --- HEATMAP VIEW (Meeting) --- */}
+                {viewMode === 'heatmap' && (
+                    <motion.div
+                        key="heatmap"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
+                    >
+                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <Calendar size={24} className="text-indigo-500"/> Availability Heatmap
+                        </h3>
+                        {isMeeting && <p className="text-sm text-slate-500 mb-4">Intensity based on: Yes = 1, Maybe = 0.5</p>}
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {Object.entries(meetingScoreData).map(([id, score]) => {
+                                const intensity = score / maxHeat;
+                                return (
+                                    <div key={id} className="relative group overflow-hidden rounded-xl border border-slate-100 aspect-video flex flex-col items-center justify-center p-4 text-center transition-all hover:scale-105"
+                                         style={{ backgroundColor: `rgba(16, 185, 129, ${0.05 + (intensity * 0.4)})` }}>
+                                        <div className="font-bold text-slate-800 mb-1 leading-tight">{getOptionText(id)}</div>
+                                        <div className="text-2xl font-black text-emerald-600">{score}</div>
+                                        <div className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Score</div>
+                                        {/* Intensity Bar */}
+                                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-100">
+                                            <div className="h-full bg-emerald-500" style={{ width: `${(score / (totalVotes || 1)) * 100}%` }}></div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- PIE CHART VIEW --- */}
+                {viewMode === 'pie' && (
+                     <motion.div
+                        key="pie"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
+                    >
+                         <div className="relative w-64 h-64 shrink-0">
+                             <div 
+                                className="w-full h-full rounded-full border-4 border-slate-50 shadow-inner"
+                                style={{ background: `conic-gradient(${pieGradient})` }}
+                             />
+                             <div className="absolute inset-0 flex items-center justify-center">
+                                 <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
+                                     {isDot || isBudget ? <Coins size={24} /> : totalVotes}
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <div className="flex-1 w-full max-w-sm">
+                             <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
+                                 {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
+                             </h3>
+                             <div className="space-y-3">
+                                 {pieData.map(d => (
+                                     <div key={d.id} className="flex items-center justify-between group">
+                                         <div className="flex items-center gap-3">
+                                             <div className="w-4 h-4 rounded-full" style={{ background: d.color }}></div>
+                                             <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
+                                         </div>
+                                         <div className="text-sm font-bold text-slate-500">
+                                             {d.percentage.toFixed(1)}%
+                                         </div>
+                                     </div>
+                                 ))}
+                             </div>
+                         </div>
+                    </motion.div>
+                )}
+
+                {/* --- VELOCITY VIEW (Line Chart) --- */}
+                {viewMode === 'velocity' && (
+                    <motion.div
+                        key="velocity"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <TrendingUp size={24} className="text-indigo-500"/> Vote Velocity
+                        </h3>
+                        
+                        <div className="h-64 flex items-end gap-1 border-b border-l border-slate-200 p-4 relative">
+                             {/* Bars representing activity over time buckets */}
+                             {velocityData.map((d, i) => {
+                                 const maxVal = Math.max(...velocityData.map(v => v.count), 1);
+                                 const height = (d.count / maxVal) * 100;
+                                 return (
+                                     <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
+                                         <div 
+                                            className="w-full bg-indigo-500/50 hover:bg-indigo-500 rounded-t-md transition-all relative"
+                                            style={{ height: `${height}%` }}
+                                         >
+                                             <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none">
+                                                 {d.count} votes <br/> {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                             </div>
+                                         </div>
+                                     </div>
+                                 )
+                             })}
+                             {velocityData.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-slate-400">Not enough data yet</div>}
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-400 mt-2">
+                            <span>First Vote</span>
+                            <span>Latest Vote</span>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- MAP VIEW (Geography) --- */}
+                {viewMode === 'map' && (
+                    <motion.div
+                        key="map"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <MapIcon size={24} className="text-indigo-500"/> Voter Geography
+                            </h3>
+                            <div className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                                Demo Mode: Locations simulated
+                            </div>
+                        </div>
+                        
+                        <div className="relative w-full aspect-[2/1] bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center">
+                            <svg viewBox="0 0 100 50" className="w-full h-full opacity-30">
+                                <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
+                                <circle cx="25" cy="18" r="1" className="fill-indigo-600 animate-ping" />
+                                <circle cx="55" cy="15" r="1.5" className="fill-indigo-600 animate-ping" style={{animationDelay: '0.5s'}} />
+                                <circle cx="75" cy="25" r="0.8" className="fill-indigo-600 animate-ping" style={{animationDelay: '1s'}} />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                    <p className="text-indigo-900 font-bold text-lg">Global Reach</p>
+                                    <p className="text-slate-500 text-xs"> votes collected from 3 regions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">65%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">North America</div>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">25%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">Europe</div>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg">
+                                <div className="text-2xl font-black text-slate-700">10%</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-wide">Asia</div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- GRID / TABLE VIEW --- */}
+                {viewMode === 'grid' && (
+                    <motion.div
+                        key="grid"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                        <th className="p-4 font-bold text-slate-700 min-w-[150px] sticky left-0 bg-slate-50">Participant</th>
+                                        {poll.options.map(opt => (
+                                            <th key={opt.id} className="p-4 font-bold text-slate-700 min-w-[120px] text-center border-l border-slate-100">
+                                                {opt.text}
+                                            </th>
+                                        ))}
+                                         <th className="p-4 font-bold text-slate-700 min-w-[200px] border-l border-slate-100">Comment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {votes.map((vote, i) => (
+                                        <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                            <td className="p-4 font-medium text-slate-800 sticky left-0 bg-white group-hover:bg-slate-50 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                                {vote.voterName || 'Anonymous'}
+                                                <div className="text-xs text-slate-400 font-normal">{new Date(vote.votedAt).toLocaleDateString()}</div>
+                                            </td>
+                                            {poll.options.map(opt => {
+                                                let cellContent = <span className="text-slate-300">-</span>;
+                                                
+                                                if (isMatrix && vote.matrixVotes) {
+                                                    const pos = vote.matrixVotes[opt.id];
+                                                    if (pos) {
+                                                        cellContent = <div className="flex flex-col items-center"><span className="text-xs font-bold text-slate-600">X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}</span></div>;
+                                                    }
+                                                } else if (isPairwise && vote.pairwiseVotes) {
+                                                     const voterWins = vote.pairwiseVotes.filter(p => p.winnerId === opt.id).length;
+                                                     const voterMatches = vote.pairwiseVotes.filter(p => p.winnerId === opt.id || p.loserId === opt.id).length;
+                                                     if (voterMatches > 0) {
+                                                         cellContent = <span className="text-xs font-bold text-slate-600">{voterWins} / {voterMatches}</span>;
+                                                     }
+                                                } else if (isRating && vote.ratingVotes) {
+                                                    const val = vote.ratingVotes[opt.id];
+                                                    if (val !== undefined) {
+                                                        cellContent = <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded">{val}</span>;
+                                                    }
+                                                } else if (isRanked) {
+                                                    const rank = vote.choices.indexOf(opt.id);
+                                                    if (rank !== -1) {
+                                                        cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;
+                                                    }
+                                                } else if (isDot || isBudget) {
+                                                     const dots = vote.choices.filter(c => c === opt.id).length;
+                                                     if(dots > 0) {
+                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{dots}</span>;
+                                                     }
+                                                } else if (isMeeting) {
+                                                     if (vote.choices.includes(opt.id)) {
+                                                         cellContent = <span className="text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded">Yes</span>;
+                                                     } else if (vote.choicesMaybe?.includes(opt.id)) {
+                                                         cellContent = <span className="text-amber-500 font-bold bg-amber-50 px-2 py-1 rounded">Maybe</span>;
+                                                     }
+                                                } else {
+                                                     if (vote.choices.includes(opt.id)) {
+                                                         cellContent = <Check size={20} className="text-emerald-500 mx-auto" />;
+                                                     }
+                                                }
+                                                
+                                                return (
+                                                    <td key={opt.id} className="p-4 text-center border-l border-slate-100">
+                                                        {cellContent}
+                                                    </td>
+                                                );
+                                            })}
+                                            <td className="p-4 text-slate-500 border-l border-slate-100 italic">
+                                                {vote.comment || ''}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {votes.length === 0 && (
+                                        <tr>
+                                             <td colSpan={poll.options.length + 2} className="p-8 text-center text-slate-400 italic">
+                                                 No votes recorded yet.
+                                             </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- COMMENTS SECTION --- */}
+                {shouldShowComments && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 mt-6 break-inside-avoid"
+                    >
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <MessageSquare size={24} className="text-indigo-500"/> Comments
+                        </h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {comments!.map((comment, i) => (
+                                <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100 relative group hover:border-indigo-100 transition-colors">
+                                    <Quote size={20} className="text-indigo-200 absolute top-4 right-4" />
+                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{comment.text}"</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs">
+                                            {comment.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="font-bold text-slate-600">{comment.name}</span>
+                                        <span className="text-slate-400 text-xs">• {new Date(comment.date).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* --- ANALYTICS DASHBOARD (Admin Only) --- */}
+                {isAdmin && adminKey && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6"
+                    >
+                        <AnalyticsDashboard 
+                            pollId={poll.id}
+                            adminKey={adminKey}
+                            currentTier={(poll as any).premium?.tier || 'free'}
+                        />
+                    </motion.div>
+                )}
+
+            </AnimatePresence>
         </div>
     );
 };

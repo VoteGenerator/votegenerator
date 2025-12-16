@@ -1,45 +1,195 @@
 [build]
-  command = "npm run build"
+  command = "npx vite build"
   publish = "dist"
   functions = "netlify/functions"
 
-[dev]
-  command = "npm run dev"
-  port = 3000
-  targetPort = 3000
+[functions]
+  node_bundler = "esbuild"
 
-# Nice URL for voting - /vote/abc123 -> /#id=abc123
-[[redirects]]
-  from = "/vote/:id"
-  to = "/#id=:id"
-  status = 302
+# ============================================
+# Stripe API Routes (specific functions)
+# ============================================
 
-# Nice URL for admin - /poll/abc123 -> /#id=abc123
 [[redirects]]
-  from = "/poll/:id"
-  to = "/#id=:id"
-  status = 302
-
-# SPA fallback - redirect all routes to index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/api/checkout"
+  to = "/.netlify/functions/checkout"
   status = 200
 
-# Headers for security
+[[redirects]]
+  from = "/api/webhook"
+  to = "/.netlify/functions/webhook"
+  status = 200
+
+[[redirects]]
+  from = "/api/verify-session"
+  to = "/.netlify/functions/verify-session"
+  status = 200
+
+[[redirects]]
+  from = "/api/portal"
+  to = "/.netlify/functions/portal"
+  status = 200
+
+[[redirects]]
+  from = "/api/recover-purchase"
+  to = "/.netlify/functions/recover-purchase"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/*"
+  to = "/.netlify/functions/admin/:splat"
+  status = 200
+
+# ============================================
+# Main API Routes (polls, votes, etc)
+# ============================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+
+# ============================================
+# Page Routes (force=true to override SPA routing)
+# ============================================
+
+[[redirects]]
+  from = "/success"
+  to = "/success.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/recover"
+  to = "/recover.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin-support"
+  to = "/admin-support.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/demo"
+  to = "/demo.html"
+  status = 200
+
+[[redirects]]
+  from = "/pricing"
+  to = "/pricing.html"
+  status = 200
+
+[[redirects]]
+  from = "/compare"
+  to = "/compare.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog"
+  to = "/blog.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/help.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/create"
+  to = "/create.html"
+  status = 200
+
+[[redirects]]
+  from = "/about"
+  to = "/about.html"
+  status = 200
+
+# Poll voting page (public)
+[[redirects]]
+  from = "/v/:pollId"
+  to = "/vote.html"
+  status = 200
+
+# Poll admin page
+[[redirects]]
+  from = "/admin/:pollId/:token"
+  to = "/admin.html"
+  status = 200
+
+# Custom short links
+[[redirects]]
+  from = "/v/*"
+  to = "/.netlify/functions/v-redirect"
+  status = 200
+
+# ============================================
+# Cache Headers
+# ============================================
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ============================================
+# Security: Block admin/recover from search engines
+# ============================================
+
+[[headers]]
+  for = "/admin-support.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/recover.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin-support"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/recover"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ============================================
+# Security Headers (all pages)
+# ============================================
+
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# Cache static assets
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+# ============================================
+# SPA Fallback - MUST BE LAST
+# This catches any unmatched routes and sends to React
+# ============================================
 
-# Functions configuration
-[functions]
-  node_bundler = "esbuild"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

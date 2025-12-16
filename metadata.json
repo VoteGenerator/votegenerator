@@ -1,0 +1,5 @@
+{
+  "name": "VoteGenerator",
+  "description": "A beautiful, free ranked-choice voting application. Create polls, share links, and calculate winners instantly.",
+  "requestFramePermissions": []
+}

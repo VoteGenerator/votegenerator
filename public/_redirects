@@ -1,0 +1,13 @@
+# Netlify _redirects file
+
+# API routes
+/api/checkout    /.netlify/functions/checkout    200
+/api/webhook    /.netlify/functions/webhook    200
+/api/verify-session    /.netlify/functions/verify-session    200
+/api/portal    /.netlify/functions/portal    200
+/api/recover-purchase    /.netlify/functions/recover-purchase    200
+/api/admin/*    /.netlify/functions/admin/:splat    200
+/api/*    /.netlify/functions/api    200
+
+# SPA catch-all (NO ! so static files are served if they exist)
+/*    /index.html    200

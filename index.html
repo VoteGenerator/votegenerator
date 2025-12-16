@@ -2,40 +2,100 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Primary Meta Tags -->
-    <title>VoteGenerator - Free Ranked Choice Polls</title>
-    <meta name="title" content="VoteGenerator - Free Ranked Choice Polls" />
-    <meta name="description" content="Create free ranked-choice polls in seconds. No signup required. Find the option everyone can agree on with instant runoff voting." />
+    <!-- CACHE CONTROL - Prevent blank page issues -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     
-    <!-- Open Graph / Facebook -->
+    <!-- SEO -->
+    <title>VoteGenerator - Free Online Polls | No Signup Required</title>
+    <meta name="description" content="Create free online polls instantly. No signup, no email required. 12 poll types including ranked choice, dot voting, and more. Privacy-first voting." />
+    <meta name="keywords" content="poll maker, online voting, ranked choice voting, survey, free polls, no signup, privacy voting" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="VoteGenerator - Free Online Polls" />
+    <meta property="og:description" content="Create polls in seconds. No signup. No email. No tracking." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://votegenerator.com/" />
-    <meta property="og:title" content="VoteGenerator - Free Ranked Choice Polls" />
-    <meta property="og:description" content="Create free ranked-choice polls in seconds. No signup required. Find the option everyone can agree on." />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://votegenerator.com" />
     
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://votegenerator.com/" />
-    <meta property="twitter:title" content="VoteGenerator - Free Ranked Choice Polls" />
-    <meta property="twitter:description" content="Create free ranked-choice polls in seconds. No signup required. Find the option everyone can agree on." />
-    <meta property="twitter:image" content="/og-image.png" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VoteGenerator - Free Online Polls" />
+    <meta name="twitter:description" content="Create polls in seconds. No signup. No email. No tracking." />
     
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#4f46e5" />
-    
-    <!-- Apple Touch Icon -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     
-    <!-- Preconnect to external resources -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+    
+    <style>
+      /* Critical CSS - prevent flash of unstyled content */
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to bottom right, #f8fafc, #ffffff, #eef2ff);
+        min-height: 100vh;
+      }
+      
+      /* Loading state */
+      #root:empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      
+      #root:empty::after {
+        content: '';
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration with cache busting -->
+    <script>
+      // Clear old caches on page load
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            // Clear caches older than current version
+            caches.delete(name);
+          }
+        });
+      }
+      
+      // Force reload if user has stale version
+      window.addEventListener('load', function() {
+        // Check if we need to refresh
+        if (sessionStorage.getItem('refreshed') !== 'true') {
+          // Mark that we've checked
+          sessionStorage.setItem('refreshed', 'true');
+        }
+      });
+      
+      // Clear session storage flag when navigating away
+      window.addEventListener('beforeunload', function() {
+        sessionStorage.removeItem('refreshed');
+      });
+    </script>
   </body>
 </html>

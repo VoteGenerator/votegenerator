@@ -1,5 +1,4 @@
 # Netlify _redirects file
-# The ! means "force" - apply even if file exists
 
 # API routes
 /api/checkout    /.netlify/functions/checkout    200
@@ -10,5 +9,5 @@
 /api/admin/*    /.netlify/functions/admin/:splat    200
 /api/*    /.netlify/functions/api    200
 
-# SPA catch-all (NO ! so files will be served if they exist)
+# SPA catch-all (NO ! so static files are served if they exist)
 /*    /index.html    200

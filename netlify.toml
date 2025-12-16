@@ -1,14 +1,14 @@
 [build]
-  command = "npx vite build"
+  command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
 
-# ============================================
-# Stripe API Routes (specific functions)
-# ============================================
+# ============================================================================
+# Stripe API Routes
+# ============================================================================
 
 [[redirects]]
   from = "/api/checkout"
@@ -26,6 +26,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/dashboard"
+  to = "/.netlify/functions/dashboard"
+  status = 200
+
+[[redirects]]
   from = "/api/portal"
   to = "/.netlify/functions/portal"
   status = 200
@@ -36,26 +41,55 @@
   status = 200
 
 [[redirects]]
+  from = "/api/topup"
+  to = "/.netlify/functions/topup"
+  status = 200
+
+# ============================================================================
+# Email Verification Routes
+# ============================================================================
+
+[[redirects]]
+  from = "/api/verify/request"
+  to = "/.netlify/functions/verify-request"
+  status = 200
+
+[[redirects]]
+  from = "/api/verify/confirm"
+  to = "/.netlify/functions/verify-confirm"
+  status = 200
+
+# ============================================================================
+# Admin API Routes
+# ============================================================================
+
+[[redirects]]
   from = "/api/admin/*"
   to = "/.netlify/functions/admin/:splat"
   status = 200
 
-# ============================================
+# ============================================================================
 # Main API Routes (polls, votes, etc)
-# ============================================
+# ============================================================================
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"
   status = 200
 
-# ============================================
-# Page Routes (force=true to override SPA routing)
-# ============================================
+# ============================================================================
+# Page Routes
+# ============================================================================
 
 [[redirects]]
   from = "/success"
   to = "/success.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
   status = 200
   force = true
 
@@ -72,18 +106,13 @@
   force = true
 
 [[redirects]]
-  from = "/dashboard"
-  to = "/dashboard.html"
+  from = "/pricing"
+  to = "/pricing.html"
   status = 200
 
 [[redirects]]
   from = "/demo"
   to = "/demo.html"
-  status = 200
-
-[[redirects]]
-  from = "/pricing"
-  to = "/pricing.html"
   status = 200
 
 [[redirects]]
@@ -130,13 +159,13 @@
 
 # Custom short links
 [[redirects]]
-  from = "/v/*"
-  to = "/.netlify/functions/v-redirect"
+  from = "/p/*"
+  to = "/.netlify/functions/short-link"
   status = 200
 
-# ============================================
+# ============================================================================
 # Cache Headers
-# ============================================
+# ============================================================================
 
 [[headers]]
   for = "/*.html"
@@ -148,9 +177,9 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# ============================================
-# Security: Block admin/recover from search engines
-# ============================================
+# ============================================================================
+# Security: Block from search engines
+# ============================================================================
 
 [[headers]]
   for = "/admin-support.html"
@@ -159,6 +188,11 @@
 
 [[headers]]
   for = "/recover.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/dashboard.html"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
@@ -172,9 +206,14 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
-# ============================================
+[[headers]]
+  for = "/dashboard"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ============================================================================
 # Security Headers (all pages)
-# ============================================
+# ============================================================================
 
 [[headers]]
   for = "/*"
@@ -184,10 +223,9 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
-# ============================================
+# ============================================================================
 # SPA Fallback - MUST BE LAST
-# This catches any unmatched routes and sends to React
-# ============================================
+# ============================================================================
 
 [[redirects]]
   from = "/*"

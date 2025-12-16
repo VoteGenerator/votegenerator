@@ -58,7 +58,7 @@ function getClientInfo(event: HandlerEvent) {
 // POST /api/polls
 // ----------------------------------------------------------------------------
 
-export const createPoll: Handler = async (event, context) => {
+export const createPoll: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -137,7 +137,7 @@ export const createPoll: Handler = async (event, context) => {
 // GET /api/polls/:id
 // ----------------------------------------------------------------------------
 
-export const getPoll: Handler = async (event, context) => {
+export const getPoll: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -189,7 +189,7 @@ export const getPoll: Handler = async (event, context) => {
 // GET /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const getPollAdmin: Handler = async (event, context) => {
+export const getPollAdmin: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -236,7 +236,7 @@ export const getPollAdmin: Handler = async (event, context) => {
 // PUT /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const updatePoll: Handler = async (event, context) => {
+export const updatePoll: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -281,7 +281,7 @@ export const updatePoll: Handler = async (event, context) => {
 // DELETE /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const deletePoll: Handler = async (event, context) => {
+export const deletePoll: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -322,7 +322,7 @@ export const deletePoll: Handler = async (event, context) => {
 // POST /api/polls/:id/admin/:token/reopen
 // ----------------------------------------------------------------------------
 
-export const togglePollStatus: Handler = async (event, context) => {
+export const togglePollStatus: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -370,7 +370,7 @@ export const togglePollStatus: Handler = async (event, context) => {
 // POST /api/polls/:id/vote
 // ----------------------------------------------------------------------------
 
-export const submitVote: Handler = async (event, context) => {
+export const submitVote: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -419,7 +419,7 @@ export const submitVote: Handler = async (event, context) => {
 // GET /api/polls/:id/results
 // ----------------------------------------------------------------------------
 
-export const getResults: Handler = async (event, context) => {
+export const getResults: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -456,7 +456,7 @@ export const getResults: Handler = async (event, context) => {
 // GET /api/polls/:id/admin/:token/export?format=csv
 // ----------------------------------------------------------------------------
 
-export const exportResults: Handler = async (event, context) => {
+export const exportResults: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -511,7 +511,7 @@ export const exportResults: Handler = async (event, context) => {
 // POST /api/polls/:id/admin/:token/codes
 // ----------------------------------------------------------------------------
 
-export const generateCodes: Handler = async (event, context) => {
+export const generateCodes: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -554,7 +554,7 @@ export const generateCodes: Handler = async (event, context) => {
 // POST /api/polls/:id/admin/:token/shortlink
 // ----------------------------------------------------------------------------
 
-export const setShortLink: Handler = async (event, context) => {
+export const setShortLink: Handler = async (event, _context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -601,9 +601,15 @@ export const setShortLink: Handler = async (event, context) => {
 // ----------------------------------------------------------------------------
 // Default Export for single-file deployment
 // ----------------------------------------------------------------------------
+
 export const handler: Handler = async (event, context) => {
   const path = event.path;
   const method = event.httpMethod;
+
+  // Handle OPTIONS for CORS preflight
+  if (method === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
   
   // Route to appropriate handler
   if (path.match(/\/api\/polls\/[^/]+\/vote$/)) {

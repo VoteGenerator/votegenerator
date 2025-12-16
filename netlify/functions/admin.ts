@@ -72,7 +72,6 @@ export const handler: Handler = async (event) => {
 
     const store = getStore('purchases');
 
-  try {
     // ==========================================
     // POST /api/admin/lookup - Find purchases
     // ==========================================

@@ -147,3 +147,49 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# ============================================
+# Security: Block admin/recover from search engines
+# ============================================
+
+[[headers]]
+  for = "/admin-support.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/recover.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin-support"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/recover"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ============================================
+# Security Headers (all pages)
+# ============================================
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# ============================================
+# SPA Fallback - MUST BE LAST
+# This catches any unmatched routes and sends to React
+# ============================================
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

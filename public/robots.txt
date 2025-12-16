@@ -1,0 +1,25 @@
+# VoteGenerator Robots.txt
+# Allow all pages except admin/support pages
+
+User-agent: *
+Allow: /
+
+# Block admin and support pages
+Disallow: /admin-support
+Disallow: /admin-support.html
+Disallow: /recover
+Disallow: /recover.html
+Disallow: /api/admin/
+
+# Allow search engines to index main pages
+Allow: /pricing
+Allow: /demo
+Allow: /compare
+Allow: /blog
+Allow: /about
+Allow: /contact
+Allow: /help
+Allow: /create
+
+# Sitemap (if you create one later)
+# Sitemap: https://votegenerator.com/sitemap.xml

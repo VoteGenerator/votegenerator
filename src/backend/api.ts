@@ -635,6 +635,7 @@ export const handler: Handler = async (event, context) => {
     if (method === 'GET') return getPollAdmin(event, context);
     if (method === 'PUT') return updatePoll(event, context);
     if (method === 'DELETE') return deletePoll(event, context);
+    return jsonResponse(405, { error: 'Method not allowed' });
   }
   
   if (path.match(/\/api\/polls\/[^/]+$/)) {

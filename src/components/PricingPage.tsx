@@ -434,7 +434,7 @@ const PricingPage: React.FC = () => {
                     )}
                     {'perMonth' in priceInfo && (
                       <span className="text-sm text-emerald-600">
-                        (${priceInfo.perMonth.toFixed(2)}/mo)
+                        (${priceInfo.perMonth?.toFixed(2)}/mo)
                       </span>
                     )}
                   </div>

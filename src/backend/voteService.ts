@@ -431,7 +431,7 @@ export async function submitVote(
   // Get results to return
   let results: PollResults | undefined;
   if (poll.settings.showResults === 'always' || poll.settings.showResults === 'after_vote') {
-    results = await getPublicResults(request.pollId);
+    results = await getPublicResults(request.pollId) ?? undefined;
   }
   
   // For quiz, return score

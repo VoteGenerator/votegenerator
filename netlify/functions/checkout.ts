@@ -94,7 +94,7 @@ export const handler: Handler = async (event) => {
         },
       ],
       mode: isSubPlan ? 'subscription' : 'payment',
-      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing?canceled=true`,
       metadata,
       // For subscriptions, allow customer to manage billing later

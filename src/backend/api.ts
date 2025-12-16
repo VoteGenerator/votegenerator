@@ -601,7 +601,6 @@ export const setShortLink: Handler = async (event, context) => {
 // ----------------------------------------------------------------------------
 // Default Export for single-file deployment
 // ----------------------------------------------------------------------------
-
 export const handler: Handler = async (event, context) => {
   const path = event.path;
   const method = event.httpMethod;
@@ -631,7 +630,7 @@ export const handler: Handler = async (event, context) => {
     return togglePollStatus(event, context);
   }
   
- if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+$/)) {
+  if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+$/)) {
     if (method === 'GET') return getPollAdmin(event, context);
     if (method === 'PUT') return updatePoll(event, context);
     if (method === 'DELETE') return deletePoll(event, context);

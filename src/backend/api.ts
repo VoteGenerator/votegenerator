@@ -631,7 +631,7 @@ export const handler: Handler = async (event, context) => {
     return togglePollStatus(event, context);
   }
   
-  if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+$/)) {
+ if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+$/)) {
     if (method === 'GET') return getPollAdmin(event, context);
     if (method === 'PUT') return updatePoll(event, context);
     if (method === 'DELETE') return deletePoll(event, context);

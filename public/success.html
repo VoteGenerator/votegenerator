@@ -6,107 +6,36 @@
   <title>Payment Successful - VoteGenerator</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+<body class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
   
-  <div id="app" class="max-w-lg w-full">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
     
-    <!-- Loading -->
-    <div id="loading" class="bg-white rounded-2xl shadow-xl p-8 text-center">
-      <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-      <p class="text-slate-600">Verifying your payment...</p>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
+    <p class="text-gray-600 mb-6">Thank you for your purchase. You can now create your poll.</p>
+    
+    <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+      <p class="text-sm text-gray-500">Session ID:</p>
+      <p id="session-id" class="text-xs text-gray-400 break-all">Loading...</p>
     </div>
-
-    <!-- Success (hidden initially) -->
-    <div id="success" class="hidden bg-white rounded-2xl shadow-xl overflow-hidden">
-      <div class="bg-gradient-to-r from-emerald-500 to-green-500 p-8 text-center text-white">
-        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-          </svg>
-        </div>
-        <h1 class="text-2xl font-bold mb-1">Payment Successful!</h1>
-        <p class="text-emerald-100">Your purchase is ready</p>
-      </div>
-      <div class="p-8">
-        <div class="bg-slate-50 rounded-xl p-4 mb-6">
-          <p class="text-sm text-slate-500 mb-1">YOUR PURCHASE</p>
-          <p id="plan-name" class="text-xl font-bold text-slate-900">Quick Poll</p>
-          <p id="plan-details" class="text-indigo-600">$5 - 500 responses, 7 days</p>
-        </div>
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <p class="text-amber-800 text-sm"><strong>Important:</strong> After creating your poll, save your admin link - it's the only way to access results!</p>
-        </div>
-        <a id="create-btn" href="/create" class="block w-full py-4 bg-indigo-600 text-white text-center font-bold rounded-xl hover:bg-indigo-700">
-          Create Your Poll Now →
-        </a>
-      </div>
-    </div>
-
-    <!-- Error (hidden initially) -->
-    <div id="error" class="hidden bg-white rounded-2xl shadow-xl p-8 text-center">
-      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </div>
-      <h1 class="text-2xl font-bold text-slate-900 mb-2">Something went wrong</h1>
-      <p id="error-msg" class="text-slate-600 mb-6">We couldn't verify your payment.</p>
-      <a href="/pricing" class="block w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700">Back to Pricing</a>
-    </div>
-
+    
+    <a href="/create.html" class="block w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition">
+      Create Your Poll Now →
+    </a>
+    
+    <p class="text-sm text-gray-500 mt-4">
+      Questions? <a href="/contact.html" class="text-green-600 hover:underline">Contact support</a>
+    </p>
   </div>
 
   <script>
-    const PLANS = {
-      quick_poll: { name: 'Quick Poll', details: '$5 - 500 responses, 7 days' },
-      event_poll: { name: 'Event Poll', details: '$9.99 - 2,000 responses, 30 days' },
-      pro_monthly: { name: 'Pro Monthly', details: '$12/month - Unlimited polls' },
-      pro_yearly: { name: 'Pro Yearly', details: '$100/year - Unlimited polls' },
-      pro_plus_monthly: { name: 'Pro+ Monthly', details: '$19/month - All features' },
-      pro_plus_yearly: { name: 'Pro+ Yearly', details: '$160/year - All features' }
-    };
-
-    async function init() {
-      const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
-
-      if (!sessionId) {
-        showError('No session ID found. Check your email for payment confirmation.');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/verify-session?session_id=' + sessionId);
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error || 'Verification failed');
-
-        // Show success
-        const plan = data.purchase?.plan || data.subscription?.tier || 'quick_poll';
-        const planInfo = PLANS[plan] || PLANS.quick_poll;
-        
-        document.getElementById('plan-name').textContent = planInfo.name;
-        document.getElementById('plan-details').textContent = planInfo.details;
-        
-        if (data.purchase?.purchaseId) {
-          document.getElementById('create-btn').href = '/create?purchase=' + data.purchase.purchaseId;
-        }
-
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('success').classList.remove('hidden');
-
-      } catch (err) {
-        showError(err.message);
-      }
-    }
-
-    function showError(msg) {
-      document.getElementById('error-msg').textContent = msg;
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('error').classList.remove('hidden');
-    }
-
-    init();
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    document.getElementById('session-id').textContent = sessionId || 'No session ID';
   </script>
 </body>
 </html>

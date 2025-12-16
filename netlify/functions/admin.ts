@@ -7,7 +7,7 @@
 import type { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Simple admin password (in production, use proper auth)
+// Admin password from environment variable (set in Netlify dashboard)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'votegen2024';
 
 const headers = {
@@ -27,6 +27,11 @@ function generateId(): string {
   return id;
 }
 
+// Generate a simple token
+function generateToken(): string {
+  return `admin_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
 export const handler: Handler = async (event) => {
   // Handle CORS
   if (event.httpMethod === 'OPTIONS') {
@@ -35,14 +40,37 @@ export const handler: Handler = async (event) => {
 
   // Parse the path to determine action
   const path = event.path.replace('/.netlify/functions/admin', '').replace('/api/admin', '');
-  
-  // Verify admin auth (simple check)
-  const authHeader = event.headers['x-admin-auth'];
-  if (authHeader !== 'true') {
-    // For API calls, could add password check here
-  }
 
-  const store = getStore('purchases');
+  try {
+    // ==========================================
+    // POST /api/admin/verify - Verify password
+    // ==========================================
+    if (path === '/verify' && event.httpMethod === 'POST') {
+      const { password } = JSON.parse(event.body || '{}');
+      
+      if (password === ADMIN_PASSWORD) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ 
+            success: true, 
+            token: generateToken()
+          }),
+        };
+      } else {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ success: false, error: 'Invalid password' }),
+        };
+      }
+    }
+
+    // For all other endpoints, could add token verification here
+    // const authToken = event.headers['x-admin-token'];
+    // if (!authToken) return { statusCode: 401, ... }
+
+    const store = getStore('purchases');
 
   try {
     // ==========================================

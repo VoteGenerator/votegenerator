@@ -166,24 +166,35 @@
   </div>
 
   <script>
-    // Simple auth (in production, use proper authentication)
-    const ADMIN_PASSWORD = 'votegen2024'; // Change this!
-    
     // Check if already authenticated
     if (sessionStorage.getItem('admin_auth') === 'true') {
       showAdminPanel();
     }
 
-    // Auth form
-    document.getElementById('auth-form').addEventListener('submit', (e) => {
+    // Auth form - verify with server
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = document.getElementById('admin-password').value;
       
-      if (password === ADMIN_PASSWORD) {
-        sessionStorage.setItem('admin_auth', 'true');
-        showAdminPanel();
-      } else {
-        alert('Incorrect password');
+      try {
+        // Verify password with server
+        const response = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          sessionStorage.setItem('admin_auth', 'true');
+          sessionStorage.setItem('admin_token', data.token);
+          showAdminPanel();
+        } else {
+          alert('Incorrect password');
+        }
+      } catch (error) {
+        alert('Error verifying password');
       }
     });
 

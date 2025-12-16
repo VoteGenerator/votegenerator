@@ -50,23 +50,26 @@
   status = 200
 
 # ============================================
-# Page Routes
+# Page Routes (force=true to override SPA routing)
 # ============================================
 
 [[redirects]]
   from = "/success"
   to = "/success.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/recover"
   to = "/recover.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/admin-support"
   to = "/admin-support.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/dashboard"

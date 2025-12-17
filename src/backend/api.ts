@@ -602,7 +602,7 @@ export const setShortLink: Handler = async (event, _context) => {
 // Default Export for single-file deployment
 // ----------------------------------------------------------------------------
 
-export const handler: Handler = async (event, context) => {
+export const handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   const path = event.path;
   const method = event.httpMethod;
 

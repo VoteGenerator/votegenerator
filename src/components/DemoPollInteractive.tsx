@@ -8,7 +8,9 @@ import {
     BarChart3,
     PieChart,
     Table,
-    Trophy
+    Trophy,
+    Image,
+    Camera
 } from 'lucide-react';
 
 interface DemoPollInteractiveProps {
@@ -643,6 +645,185 @@ const RatingScaleDemo: React.FC<DemoPollInteractiveProps> = ({ question, options
     );
 };
 
+// Visual Poll Demo with sample images
+const VisualPollDemo: React.FC<DemoPollInteractiveProps> = ({ question, onCreateSimilar }) => {
+    const [selected, setSelected] = useState<string | null>(null);
+    const [hasVoted, setHasVoted] = useState(false);
+    const [votes, setVotes] = useState<Record<string, number>>({
+        'Design A': 45,
+        'Design B': 32,
+        'Design C': 23
+    });
+    
+    // Sample design images with gradients
+    const designOptions = [
+        { 
+            id: 'Design A', 
+            gradient: 'from-indigo-500 via-purple-500 to-pink-500',
+            label: 'Modern Minimal',
+            icon: '🎨'
+        },
+        { 
+            id: 'Design B', 
+            gradient: 'from-emerald-400 via-cyan-500 to-blue-500',
+            label: 'Fresh & Clean',
+            icon: '✨'
+        },
+        { 
+            id: 'Design C', 
+            gradient: 'from-orange-400 via-red-500 to-pink-500',
+            label: 'Bold & Vibrant',
+            icon: '🔥'
+        }
+    ];
+    
+    const handleVote = () => {
+        if (selected) {
+            setVotes(prev => ({
+                ...prev,
+                [selected]: (prev[selected] || 0) + 1
+            }));
+            setHasVoted(true);
+        }
+    };
+    
+    const totalVotes = Object.values(votes).reduce((sum, v) => sum + v, 0);
+    
+    return (
+        <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-pink-500 to-rose-600 p-4 text-white">
+                <h3 className="font-bold text-lg">{question}</h3>
+                <div className="flex items-center gap-2 mt-1 text-pink-100 text-sm">
+                    <Users size={14} />
+                    <span>{totalVotes} votes</span>
+                </div>
+            </div>
+            
+            <div className="p-5">
+                {!hasVoted ? (
+                    <>
+                        <p className="text-slate-500 text-sm mb-4">Click on your favorite design:</p>
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                            {designOptions.map((design) => (
+                                <motion.button
+                                    key={design.id}
+                                    onClick={() => setSelected(design.id)}
+                                    whileHover={{ scale: 1.03 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className={`relative aspect-square rounded-xl overflow-hidden border-3 transition-all ${
+                                        selected === design.id
+                                            ? 'border-pink-500 ring-4 ring-pink-200'
+                                            : 'border-slate-200 hover:border-pink-300'
+                                    }`}
+                                >
+                                    {/* Gradient background simulating design image */}
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${design.gradient}`}>
+                                        {/* Decorative elements to make it look like a design */}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/90">
+                                            <span className="text-3xl mb-1">{design.icon}</span>
+                                            <span className="text-xs font-bold">{design.label}</span>
+                                        </div>
+                                        {/* Decorative shapes */}
+                                        <div className="absolute top-2 left-2 w-6 h-1 bg-white/30 rounded"></div>
+                                        <div className="absolute top-5 left-2 w-10 h-1 bg-white/20 rounded"></div>
+                                        <div className="absolute bottom-2 right-2 w-4 h-4 border-2 border-white/30 rounded"></div>
+                                    </div>
+                                    
+                                    {/* Selected checkmark */}
+                                    {selected === design.id && (
+                                        <motion.div 
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className="absolute top-2 right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center"
+                                        >
+                                            <Check size={14} className="text-white" />
+                                        </motion.div>
+                                    )}
+                                </motion.button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={handleVote}
+                            disabled={!selected}
+                            className="w-full py-3 bg-pink-600 text-white font-bold rounded-xl hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Vote for Design →
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-2 text-green-600 mb-4">
+                            <Check size={18} />
+                            <span className="font-medium">Thanks for voting!</span>
+                        </div>
+                        
+                        {/* Visual results with thumbnails */}
+                        <div className="space-y-3">
+                            {designOptions.sort((a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)).map((design, i) => {
+                                const voteCount = votes[design.id] || 0;
+                                const percentage = Math.round((voteCount / totalVotes) * 100);
+                                const isWinner = i === 0;
+                                const isSelected = design.id === selected;
+                                
+                                return (
+                                    <motion.div 
+                                        key={design.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className={`flex items-center gap-3 p-2 rounded-xl ${isSelected ? 'bg-pink-50' : ''}`}
+                                    >
+                                        {/* Thumbnail */}
+                                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${design.gradient} flex items-center justify-center flex-shrink-0`}>
+                                            <span className="text-lg">{design.icon}</span>
+                                        </div>
+                                        
+                                        {/* Bar and stats */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className={`text-sm font-medium truncate ${isWinner ? 'text-pink-700' : 'text-slate-700'}`}>
+                                                    {isWinner && '🏆 '}{design.label}
+                                                </span>
+                                                <span className={`text-sm font-bold ${isWinner ? 'text-pink-600' : 'text-slate-500'}`}>
+                                                    {percentage}%
+                                                </span>
+                                            </div>
+                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${percentage}%` }}
+                                                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                                                    className={`h-full rounded-full bg-gradient-to-r ${design.gradient}`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                            <button
+                                onClick={() => { setHasVoted(false); setSelected(null); }}
+                                className="flex-1 py-2 text-slate-600 text-sm font-medium hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                Vote Again (Demo)
+                            </button>
+                            <button
+                                onClick={onCreateSimilar}
+                                className="flex-1 py-2 bg-pink-100 text-pink-700 text-sm font-bold rounded-lg hover:bg-pink-200 transition-colors"
+                            >
+                                Create Your Own →
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // Main component that switches between demo types
 const DemoPollInteractive: React.FC<DemoPollInteractiveProps> = (props) => {
     const handleCreateSimilar = () => {
@@ -663,6 +844,8 @@ const DemoPollInteractive: React.FC<DemoPollInteractiveProps> = (props) => {
             return <RankedChoiceDemo {...enhancedProps} />;
         case 'rating-scale':
             return <RatingScaleDemo {...enhancedProps} />;
+        case 'visual-poll':
+            return <VisualPollDemo {...enhancedProps} />;
         default:
             return <MultipleChoiceDemo {...enhancedProps} />;
     }

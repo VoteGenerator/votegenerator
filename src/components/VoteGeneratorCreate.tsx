@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, Smartphone, Monitor, GripVertical, Zap } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, Coins, LayoutGrid, GitCompare, SlidersHorizontal, DollarSign, Image as ImageIcon, Upload, Smartphone, Monitor, GripVertical, Zap, Users, ThumbsUp, TrendingUp, Smile, Cloud, MessageCircle } from 'lucide-react';
 import { createPoll } from '../services/voteGeneratorService';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -18,6 +18,7 @@ const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
+    // ===== FREE TIER (3 types) =====
     {
         id: 'multiple',
         name: 'Multiple Choice',
@@ -49,20 +50,22 @@ const POLL_TYPES = [
         tier: 'free' as PollTier
     },
     {
-        id: 'image',
-        name: 'Visual Poll',
-        icon: ImageIcon,
-        description: 'Vote on images in a beautiful grid',
-        tooltip: 'Upload images and let people vote visually. Perfect when you\'re choosing between designs, photos, or anything visual. Instagram-style layout!',
-        useCases: ['Logo selection', 'Design contests', 'Photo competitions', 'Product choices'],
-        example: '"Which logo design should we use?"',
-        gradient: 'from-pink-500 to-rose-500',
-        selectedBorder: 'border-pink-500',
-        selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
-        iconColor: 'text-pink-600',
-        textColor: 'text-pink-700',
-        tier: 'pro' as PollTier
+        id: 'pairwise',
+        name: 'This or That',
+        icon: GitCompare,
+        description: 'Quick A vs B comparisons',
+        tooltip: 'Shows two options at a time - voters pick their favorite. Great when you have many options and want quick, gut-reaction feedback.',
+        useCases: ['Large option lists', 'Quick decisions', 'Bracket-style voting', 'Preference testing'],
+        example: '"Which slogan resonates more?"',
+        gradient: 'from-orange-500 to-red-500',
+        selectedBorder: 'border-orange-500',
+        selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50',
+        iconColor: 'text-orange-600',
+        textColor: 'text-orange-700',
+        tier: 'free' as PollTier
     },
+    
+    // ===== QUICK TIER - $5 (7 types) =====
     {
         id: 'meeting',
         name: 'Meeting Poll',
@@ -77,21 +80,6 @@ const POLL_TYPES = [
         iconColor: 'text-amber-600',
         textColor: 'text-amber-800',
         tier: 'quick' as PollTier
-    },
-    {
-        id: 'pairwise',
-        name: 'This or That',
-        icon: GitCompare,
-        description: 'Quick A vs B comparisons',
-        tooltip: 'Shows two options at a time - voters pick their favorite. Great when you have many options and want quick, gut-reaction feedback.',
-        useCases: ['Large option lists', 'Quick decisions', 'Bracket-style voting', 'Preference testing'],
-        example: '"Which slogan resonates more?"',
-        gradient: 'from-orange-500 to-red-500',
-        selectedBorder: 'border-orange-500',
-        selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50',
-        iconColor: 'text-orange-600',
-        textColor: 'text-orange-700',
-        tier: 'free' as PollTier
     },
     {
         id: 'dot',
@@ -113,7 +101,7 @@ const POLL_TYPES = [
         name: 'Rating Scale',
         icon: SlidersHorizontal,
         description: 'Rate each option on a scale',
-        tooltip: 'Voters rate every option from 0-100 using a slider. Perfect for feedback and sentiment - see exactly how people feel about each choice.',
+        tooltip: 'Voters rate every option from 1-5 stars or 0-100. Perfect for feedback and sentiment - see exactly how people feel about each choice.',
         useCases: ['Product feedback', 'Employee surveys', 'Customer satisfaction', 'Feature ratings'],
         example: '"Rate these new feature ideas"',
         gradient: 'from-cyan-500 to-blue-500',
@@ -121,6 +109,21 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50',
         iconColor: 'text-cyan-600',
         textColor: 'text-cyan-700',
+        tier: 'quick' as PollTier
+    },
+    {
+        id: 'rsvp',
+        name: 'RSVP',
+        icon: Users,
+        description: 'Collect event attendance',
+        tooltip: 'Simple Yes/No/Maybe responses for event attendance. See who\'s coming at a glance with automatic headcounts.',
+        useCases: ['Party invites', 'Team events', 'Workshops', 'Social gatherings'],
+        example: '"Can you make it to the holiday party?"',
+        gradient: 'from-sky-500 to-blue-500',
+        selectedBorder: 'border-sky-500',
+        selectedBg: 'bg-gradient-to-br from-sky-50 to-blue-50',
+        iconColor: 'text-sky-600',
+        textColor: 'text-sky-700',
         tier: 'quick' as PollTier
     },
     {
@@ -156,7 +159,7 @@ const POLL_TYPES = [
     {
         id: 'approval',
         name: 'Approval Voting',
-        icon: CheckSquare,
+        icon: ThumbsUp,
         description: 'Thumbs up/down for each option',
         tooltip: 'Voters can approve as many options as they want. Simple yes/no for each choice. Great for finding consensus - the option with most approvals wins!',
         useCases: ['Committee decisions', 'Finding consensus', 'Board votes', 'Group approval'],
@@ -168,6 +171,8 @@ const POLL_TYPES = [
         textColor: 'text-violet-700',
         tier: 'quick' as PollTier
     },
+    
+    // ===== EVENT TIER - $10 (3 types) =====
     {
         id: 'quiz',
         name: 'Quiz Poll',
@@ -184,9 +189,24 @@ const POLL_TYPES = [
         tier: 'event' as PollTier
     },
     {
+        id: 'nps',
+        name: 'NPS Score',
+        icon: TrendingUp,
+        description: 'Net Promoter Score survey',
+        tooltip: 'The classic "How likely are you to recommend?" 0-10 scale. Automatically calculates Promoters, Passives, and Detractors with your NPS score.',
+        useCases: ['Customer feedback', 'Employee satisfaction', 'Product reviews', 'Service ratings'],
+        example: '"How likely are you to recommend us to a friend?"',
+        gradient: 'from-lime-500 to-green-500',
+        selectedBorder: 'border-lime-500',
+        selectedBg: 'bg-gradient-to-br from-lime-50 to-green-50',
+        iconColor: 'text-lime-600',
+        textColor: 'text-lime-700',
+        tier: 'event' as PollTier
+    },
+    {
         id: 'sentiment',
         name: 'Sentiment Check',
-        icon: BarChart2,
+        icon: Smile,
         description: 'Quick mood/opinion gauge',
         tooltip: 'Simple emoji-based reactions (😀 😐 😞). Perfect for quick pulse checks on how the team is feeling or gathering instant feedback on ideas.',
         useCases: ['Team morale', 'Quick feedback', 'Meeting check-ins', 'Idea validation'],
@@ -197,6 +217,53 @@ const POLL_TYPES = [
         iconColor: 'text-rose-600',
         textColor: 'text-rose-700',
         tier: 'event' as PollTier
+    },
+    
+    // ===== PRO TIER - Subscription (3 types) =====
+    {
+        id: 'wordcloud',
+        name: 'Word Cloud',
+        icon: Cloud,
+        description: 'Open-ended text responses',
+        tooltip: 'Collect free-form text answers and see them visualized as a beautiful word cloud. Most common words appear larger. Great for brainstorming!',
+        useCases: ['Brainstorming', 'Feedback collection', 'Idea generation', 'Open questions'],
+        example: '"What words describe our company culture?"',
+        gradient: 'from-purple-500 to-violet-500',
+        selectedBorder: 'border-purple-500',
+        selectedBg: 'bg-gradient-to-br from-purple-50 to-violet-50',
+        iconColor: 'text-purple-600',
+        textColor: 'text-purple-700',
+        tier: 'pro' as PollTier
+    },
+    {
+        id: 'qna',
+        name: 'Q&A / Upvote',
+        icon: MessageCircle,
+        description: 'Submit and upvote questions',
+        tooltip: 'Audience submits questions, others upvote the best ones. Perfect for Q&A sessions, AMAs, or town halls. Best questions rise to the top!',
+        useCases: ['Q&A sessions', 'Town halls', 'AMAs', 'Conference Q&A'],
+        example: '"What questions do you have for leadership?"',
+        gradient: 'from-teal-500 to-cyan-500',
+        selectedBorder: 'border-teal-500',
+        selectedBg: 'bg-gradient-to-br from-teal-50 to-cyan-50',
+        iconColor: 'text-teal-600',
+        textColor: 'text-teal-700',
+        tier: 'pro' as PollTier
+    },
+    {
+        id: 'image',
+        name: 'Visual Poll',
+        icon: ImageIcon,
+        description: 'Vote on images in a beautiful grid',
+        tooltip: 'Upload images and let people vote visually. Perfect when you\'re choosing between designs, photos, or anything visual. Instagram-style layout!',
+        useCases: ['Logo selection', 'Design contests', 'Photo competitions', 'Product choices'],
+        example: '"Which logo design should we use?"',
+        gradient: 'from-pink-500 to-rose-500',
+        selectedBorder: 'border-pink-500',
+        selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
+        iconColor: 'text-pink-600',
+        textColor: 'text-pink-700',
+        tier: 'pro' as PollTier
     }
 ];
 
@@ -510,7 +577,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <div className="flex items-center justify-between mb-3">
                                         <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">Poll Type <span className="text-red-500">*</span></label>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-4 gap-2">
                                         {POLL_TYPES.map((type) => {
                                             const Icon = type.icon;
                                             const isSelected = pollType === type.id;
@@ -533,12 +600,12 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                 setOptionImages(['', '', '']); 
                                                             }
                                                         }} 
-                                                        className={`relative w-full p-3 rounded-xl border-2 text-left transition-all ${
+                                                        className={`relative w-full p-2.5 rounded-xl border-2 text-left transition-all group/card ${
                                                             isSelected 
                                                                 ? `${type.selectedBorder} ${type.selectedBg}` 
                                                                 : isLocked 
-                                                                    ? 'border-slate-200 bg-slate-50 opacity-75' 
-                                                                    : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                                                    ? 'border-slate-200 bg-slate-50 opacity-75 cursor-not-allowed' 
+                                                                    : 'border-slate-200 hover:border-slate-300 hover:shadow-md hover:scale-[1.02]'
                                                         }`}
                                                     >
                                                         {/* Tier Badge */}
@@ -551,8 +618,8 @@ const VoteGeneratorCreate: React.FC = () => {
                                                             </div>
                                                         )}
                                                         
-                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 ${isSelected ? `bg-gradient-to-br ${type.gradient} text-white` : 'bg-slate-100'}`}>
-                                                            <Icon size={16} className={isSelected ? 'text-white' : 'text-slate-400'} />
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 transition-all ${isSelected ? `bg-gradient-to-br ${type.gradient}` : 'bg-slate-100'}`}>
+                                                            <Icon size={14} className={isSelected ? 'text-white' : type.iconColor} />
                                                         </div>
                                                         <span className={`block font-bold text-sm leading-tight ${isSelected ? type.textColor : 'text-slate-700'}`}>{type.name}</span>
                                                     </button>

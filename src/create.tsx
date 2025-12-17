@@ -481,7 +481,7 @@ function CreatePage() {
                             <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
                                 Poll Type <span className="text-red-500">*</span>
                             </label>
-                            <div className="grid grid-cols-4 gap-2 mt-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                                 {pollTypes.map((type) => {
                                     const isSelected = selectedType === type.id;
                                     const isLocked = type.tier === 'pro';

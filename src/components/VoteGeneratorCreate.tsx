@@ -577,7 +577,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <div className="flex items-center justify-between mb-3">
                                         <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">Poll Type <span className="text-red-500">*</span></label>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                         {POLL_TYPES.map((type) => {
                                             const Icon = type.icon;
                                             const isSelected = pollType === type.id;

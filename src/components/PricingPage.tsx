@@ -3,7 +3,7 @@
 // Complete pricing page with tier comparison and feature breakdown
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Check, X, Zap, Calendar, Crown, Sparkles, Users, HelpCircle,
@@ -12,6 +12,40 @@ import {
   Lock, FileSpreadsheet, FileText, FileImage, Eye, Palette,
   ArrowRight, Star, ChevronDown, Menu
 } from 'lucide-react';
+
+// ============================================================================
+// Currency Configuration
+// ============================================================================
+
+const CURRENCY_CONFIG: Record<string, { symbol: string; rate: number; code: string }> = {
+  USD: { symbol: '$', rate: 1, code: 'USD' },
+  CAD: { symbol: '$', rate: 1.36, code: 'CAD' },
+  EUR: { symbol: '€', rate: 0.92, code: 'EUR' },
+  GBP: { symbol: '£', rate: 0.79, code: 'GBP' },
+  AUD: { symbol: '$', rate: 1.53, code: 'AUD' },
+  NZD: { symbol: '$', rate: 1.67, code: 'NZD' },
+  INR: { symbol: '₹', rate: 83, code: 'INR' },
+  JPY: { symbol: '¥', rate: 149, code: 'JPY' }
+};
+
+const detectCurrency = (): string => {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const locale = navigator.language;
+    
+    if (timezone.includes('America/Toronto') || timezone.includes('America/Vancouver') || locale.includes('en-CA')) return 'CAD';
+    if (timezone.includes('Europe/London') || locale.includes('en-GB')) return 'GBP';
+    if (timezone.includes('Australia') || locale.includes('en-AU')) return 'AUD';
+    if (timezone.includes('Pacific/Auckland') || locale.includes('en-NZ')) return 'NZD';
+    if (timezone.includes('Asia/Kolkata') || locale.includes('en-IN')) return 'INR';
+    if (timezone.includes('Asia/Tokyo') || locale.includes('ja')) return 'JPY';
+    if (timezone.includes('Europe/') && !timezone.includes('London')) return 'EUR';
+    
+    return 'USD';
+  } catch {
+    return 'USD';
+  }
+};
 
 // ============================================================================
 // Navigation Header
@@ -369,6 +403,22 @@ const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ con
 const PricingPage: React.FC = () => {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   const [showComparison, setShowComparison] = useState(false);
+  const [currency, setCurrency] = useState('USD');
+
+  useEffect(() => {
+    setCurrency(detectCurrency());
+  }, []);
+
+  const formatPrice = (usdPrice: number): string => {
+    const config = CURRENCY_CONFIG[currency];
+    const convertedPrice = Math.round(usdPrice * config.rate);
+    
+    if (currency === 'JPY' || currency === 'INR') {
+      return `${config.symbol}${convertedPrice.toLocaleString()}`;
+    }
+    
+    return `${config.symbol}${convertedPrice}`;
+  };
 
   const getPrice = (tier: PricingTier) => {
     if (tier.id === 'pro_monthly' && billingPeriod === 'yearly') {
@@ -438,6 +488,30 @@ const PricingPage: React.FC = () => {
             </span>
           </button>
         </motion.div>
+
+        {/* Currency Selector */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-4 flex items-center justify-center gap-2"
+        >
+          <Globe size={14} className="text-slate-400" />
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="bg-transparent border-none text-sm text-slate-600 font-medium cursor-pointer focus:ring-0 focus:outline-none"
+          >
+            <option value="USD">🇺🇸 USD</option>
+            <option value="CAD">🇨🇦 CAD</option>
+            <option value="EUR">🇪🇺 EUR</option>
+            <option value="GBP">🇬🇧 GBP</option>
+            <option value="AUD">🇦🇺 AUD</option>
+            <option value="NZD">🇳🇿 NZD</option>
+            <option value="INR">🇮🇳 INR</option>
+            <option value="JPY">🇯🇵 JPY</option>
+          </select>
+        </motion.div>
       </div>
 
       {/* Pricing Cards - Horizontally scrollable on mobile */}
@@ -477,20 +551,21 @@ const PricingPage: React.FC = () => {
                   <div className="mt-4 mb-6">
                     <div className="flex items-baseline gap-1">
                       <span className="text-4xl font-bold text-slate-900">
-                        {typeof priceInfo.price === 'number' ? `$${priceInfo.price}` : priceInfo.price}
+                        {typeof priceInfo.price === 'number' ? formatPrice(priceInfo.price) : priceInfo.price}
                       </span>
-                      {priceInfo.period && (
+                      {priceInfo.period && priceInfo.period !== 'one-time' && (
                         <span className="text-slate-500">
-                          /{priceInfo.period === 'one-time' ? '' : priceInfo.period}
+                          /{priceInfo.period}
                         </span>
                       )}
+                      <span className="text-xs text-slate-400 ml-1">{currency}</span>
                     </div>
                     {tier.period === 'one-time' && (
                       <span className="text-sm text-slate-500">one-time payment</span>
                     )}
-                    {'perMonth' in priceInfo && (
+                    {'perMonth' in priceInfo && priceInfo.perMonth && (
                       <span className="text-sm text-emerald-600">
-                        (${priceInfo.perMonth?.toFixed(2)}/mo)
+                        ({formatPrice(priceInfo.perMonth)}/mo)
                       </span>
                     )}
                   </div>

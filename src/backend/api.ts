@@ -3,7 +3,7 @@
 // Main API endpoints for polls and voting
 // ============================================================================
 
-import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
+import type { HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { pollService } from './pollService';
 import { voteService } from './voteService';
 import { storage } from './storage';
@@ -19,7 +19,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
-function jsonResponse(statusCode: number, body: any) {
+function jsonResponse(statusCode: number, body: any): HandlerResponse {
   return {
     statusCode,
     headers: {
@@ -58,7 +58,7 @@ function getClientInfo(event: HandlerEvent) {
 // POST /api/polls
 // ----------------------------------------------------------------------------
 
-export const createPoll: Handler = async (event, _context) => {
+async function createPoll(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -70,17 +70,15 @@ export const createPoll: Handler = async (event, _context) => {
   try {
     const body = parseBody(event) as CreatePollRequest;
     
-    // Determine tier (default to free, can be upgraded via purchaseId)
     let tier: PlanTier = 'free';
     
     if (body.purchaseId) {
       const purchase = await storage.getPurchase(body.purchaseId);
       if (purchase && purchase.status === 'completed' && !purchase.pollId) {
         tier = purchase.tier;
-        // Mark purchase as used
         await storage.savePurchase({
           ...purchase,
-          pollId: 'pending', // Will be updated with actual pollId
+          pollId: 'pending',
           usedAt: new Date().toISOString(),
         });
       }
@@ -102,7 +100,6 @@ export const createPoll: Handler = async (event, _context) => {
       });
     }
     
-    // If purchase was used, update it with pollId
     if (body.purchaseId && result.poll) {
       const purchase = await storage.getPurchase(body.purchaseId);
       if (purchase) {
@@ -123,21 +120,21 @@ export const createPoll: Handler = async (event, _context) => {
       },
       voterUrl: result.voterUrl,
       adminUrl: result.adminUrl,
-      adminToken: result.poll!.adminToken, // Only returned on creation
+      adminToken: result.poll!.adminToken,
     });
     
   } catch (error) {
     console.error('Create poll error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Get Poll (Public)
 // GET /api/polls/:id
 // ----------------------------------------------------------------------------
 
-export const getPoll: Handler = async (event, _context) => {
+async function getPoll(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -158,7 +155,6 @@ export const getPoll: Handler = async (event, _context) => {
       return jsonResponse(404, { error: result.error });
     }
     
-    // Get current vote count
     const aggregate = await storage.getVoteAggregate(pollId);
     
     return jsonResponse(200, {
@@ -182,14 +178,14 @@ export const getPoll: Handler = async (event, _context) => {
     console.error('Get poll error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Get Poll (Admin)
 // GET /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const getPollAdmin: Handler = async (event, _context) => {
+async function getPollAdmin(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -216,7 +212,6 @@ export const getPollAdmin: Handler = async (event, _context) => {
       });
     }
     
-    // Get full results
     const results = await voteService.getAdminResults(pollId, adminToken);
     
     return jsonResponse(200, {
@@ -229,14 +224,14 @@ export const getPollAdmin: Handler = async (event, _context) => {
     console.error('Get poll admin error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Update Poll
 // PUT /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const updatePoll: Handler = async (event, _context) => {
+async function updatePoll(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -274,14 +269,14 @@ export const updatePoll: Handler = async (event, _context) => {
     console.error('Update poll error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Delete Poll
 // DELETE /api/polls/:id/admin/:token
 // ----------------------------------------------------------------------------
 
-export const deletePoll: Handler = async (event, _context) => {
+async function deletePoll(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -314,7 +309,7 @@ export const deletePoll: Handler = async (event, _context) => {
     console.error('Delete poll error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Close/Reopen Poll
@@ -322,7 +317,7 @@ export const deletePoll: Handler = async (event, _context) => {
 // POST /api/polls/:id/admin/:token/reopen
 // ----------------------------------------------------------------------------
 
-export const togglePollStatus: Handler = async (event, _context) => {
+async function togglePollStatus(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -333,9 +328,9 @@ export const togglePollStatus: Handler = async (event, _context) => {
   
   try {
     const pathParts = event.path.split('/');
-    const action = pathParts.pop(); // 'close' or 'reopen'
+    const action = pathParts.pop();
     const adminToken = pathParts.pop();
-    pathParts.pop(); // 'admin'
+    pathParts.pop();
     const pollId = pathParts.pop();
     
     if (!pollId || !adminToken) {
@@ -363,14 +358,14 @@ export const togglePollStatus: Handler = async (event, _context) => {
     console.error('Toggle poll status error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Submit Vote
 // POST /api/polls/:id/vote
 // ----------------------------------------------------------------------------
 
-export const submitVote: Handler = async (event, _context) => {
+async function submitVote(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -412,14 +407,14 @@ export const submitVote: Handler = async (event, _context) => {
     console.error('Submit vote error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Get Results (Public)
 // GET /api/polls/:id/results
 // ----------------------------------------------------------------------------
 
-export const getResults: Handler = async (event, _context) => {
+async function getResults(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -449,14 +444,14 @@ export const getResults: Handler = async (event, _context) => {
     console.error('Get results error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Export Results
 // GET /api/polls/:id/admin/:token/export?format=csv
 // ----------------------------------------------------------------------------
 
-export const exportResults: Handler = async (event, _context) => {
+async function exportResults(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -504,14 +499,14 @@ export const exportResults: Handler = async (event, _context) => {
     console.error('Export results error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Generate Voting Codes (Pro+)
 // POST /api/polls/:id/admin/:token/codes
 // ----------------------------------------------------------------------------
 
-export const generateCodes: Handler = async (event, _context) => {
+async function generateCodes(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -547,14 +542,14 @@ export const generateCodes: Handler = async (event, _context) => {
     console.error('Generate codes error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
 // API: Set Custom Short Link (Pro+)
 // POST /api/polls/:id/admin/:token/shortlink
 // ----------------------------------------------------------------------------
 
-export const setShortLink: Handler = async (event, _context) => {
+async function setShortLink(event: HandlerEvent): Promise<HandlerResponse> {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
@@ -596,59 +591,60 @@ export const setShortLink: Handler = async (event, _context) => {
     console.error('Set short link error:', error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
-};
+}
 
 // ----------------------------------------------------------------------------
-// Default Export for single-file deployment
+// Main Handler - Default Export
 // ----------------------------------------------------------------------------
 
-export const handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
+export const handler = async (
+  event: HandlerEvent,
+  _context: HandlerContext
+): Promise<HandlerResponse> => {
   const path = event.path;
   const method = event.httpMethod;
 
-  // Handle OPTIONS for CORS preflight
   if (method === 'OPTIONS') {
     return { statusCode: 200, headers: corsHeaders, body: '' };
   }
   
-  // Route to appropriate handler
   if (path.match(/\/api\/polls\/[^/]+\/vote$/)) {
-    return submitVote(event, context);
+    return submitVote(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/results$/)) {
-    return getResults(event, context);
+    return getResults(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+\/export$/)) {
-    return exportResults(event, context);
+    return exportResults(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+\/codes$/)) {
-    return generateCodes(event, context);
+    return generateCodes(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+\/shortlink$/)) {
-    return setShortLink(event, context);
+    return setShortLink(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+\/(close|reopen)$/)) {
-    return togglePollStatus(event, context);
+    return togglePollStatus(event);
   }
   
   if (path.match(/\/api\/polls\/[^/]+\/admin\/[^/]+$/)) {
-    if (method === 'GET') return getPollAdmin(event, context);
-    if (method === 'PUT') return updatePoll(event, context);
-    if (method === 'DELETE') return deletePoll(event, context);
+    if (method === 'GET') return getPollAdmin(event);
+    if (method === 'PUT') return updatePoll(event);
+    if (method === 'DELETE') return deletePoll(event);
     return jsonResponse(405, { error: 'Method not allowed' });
   }
   
   if (path.match(/\/api\/polls\/[^/]+$/)) {
-    return getPoll(event, context);
+    return getPoll(event);
   }
   
   if (path === '/api/polls' && method === 'POST') {
-    return createPoll(event, context);
+    return createPoll(event);
   }
   
   return jsonResponse(404, { error: 'Not found' });

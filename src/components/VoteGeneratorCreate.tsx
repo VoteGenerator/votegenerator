@@ -589,7 +589,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         type="button" 
                                                         onClick={() => {
                                                             if (isLocked) {
-                                                                alert('Visual Poll is a premium feature! Upgrade to unlock.');
+                                                                alert('This is a Pro feature! Upgrade to unlock.');
                                                                 return;
                                                             }
                                                             setPollType(type.id);
@@ -600,28 +600,28 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                 setOptionImages(['', '', '']); 
                                                             }
                                                         }} 
-                                                        className={`relative w-full p-2.5 rounded-xl border-2 text-left transition-all group/card ${
+                                                        className={`relative w-full h-[72px] p-2 rounded-xl border-2 text-left transition-all flex flex-col justify-center ${
                                                             isSelected 
-                                                                ? `${type.selectedBorder} ${type.selectedBg}` 
+                                                                ? `${type.selectedBorder} bg-gradient-to-br ${type.gradient} shadow-lg scale-[1.02]` 
                                                                 : isLocked 
-                                                                    ? 'border-slate-200 bg-slate-50 opacity-75 cursor-not-allowed' 
-                                                                    : 'border-slate-200 hover:border-slate-300 hover:shadow-md hover:scale-[1.02]'
+                                                                    ? 'border-slate-200 bg-slate-100 opacity-60 cursor-not-allowed' 
+                                                                    : `border-slate-200 ${type.selectedBg} hover:${type.selectedBorder} hover:shadow-md hover:scale-[1.02]`
                                                         }`}
                                                     >
                                                         {/* Tier Badge */}
                                                         {type.tier !== 'free' && (
-                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                                                isLocked ? 'bg-slate-300 text-slate-600' : TIER_CONFIG[type.tier].colors
+                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                                                                isLocked ? 'bg-slate-400 text-white' : TIER_CONFIG[type.tier].colors
                                                             }`}>
-                                                                {type.tier === 'pro' && (isLocked ? <Lock size={10} /> : <Zap size={10} />)}
+                                                                {type.tier === 'pro' && <Zap size={10} />}
                                                                 <span>{TIER_CONFIG[type.tier].label}</span>
                                                             </div>
                                                         )}
                                                         
-                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 transition-all ${isSelected ? `bg-gradient-to-br ${type.gradient}` : 'bg-slate-100'}`}>
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 ${isSelected ? 'bg-white/20' : 'bg-white/80'}`}>
                                                             <Icon size={14} className={isSelected ? 'text-white' : type.iconColor} />
                                                         </div>
-                                                        <span className={`block font-bold text-sm leading-tight ${isSelected ? type.textColor : 'text-slate-700'}`}>{type.name}</span>
+                                                        <span className={`block font-bold text-xs leading-tight ${isSelected ? 'text-white' : type.textColor}`}>{type.name}</span>
                                                     </button>
                                                     
                                                     {/* Auto-show tooltip on hover */}

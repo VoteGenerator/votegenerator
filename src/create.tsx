@@ -351,6 +351,7 @@ function CreatePage() {
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [customColor, setCustomColor] = useState('#4F46E5');
     const [useCustomColor, setUseCustomColor] = useState(false);
+    const [buttonText, setButtonText] = useState('Submit Vote');
 
     const selectedPollType = pollTypes.find(p => p.id === selectedType);
     const isPaidType = selectedPollType && selectedPollType.tier !== 'free';
@@ -499,7 +500,7 @@ function CreatePage() {
                         backgroundImage: useCustomColor ? undefined : `${currentTheme.pattern}, ${currentTheme.gradient}`
                     }}
                 >
-                    Submit Vote
+                    {buttonText || 'Submit Vote'}
                 </button>
                 
                 {/* Powered by branding - shows for free tier */}
@@ -642,6 +643,19 @@ function CreatePage() {
                                 rows={2}
                                 className="w-full mt-3 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
                             />
+                            
+                            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide mt-4 block">
+                                Button Text <span className="text-slate-400 font-normal">(optional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={buttonText}
+                                onChange={(e) => setButtonText(e.target.value)}
+                                placeholder="Submit Vote"
+                                maxLength={30}
+                                className="w-full mt-3 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            />
+                            <p className="text-xs text-slate-400 mt-1">Examples: "Cast Your Vote", "Submit", "Vote Now"</p>
                         </div>
 
                         {/* Options */}

@@ -316,6 +316,7 @@ const VoteGeneratorCreate: React.FC = () => {
     const [dotBudget] = useState<number>(10);
     const [budgetLimit] = useState<number>(100);
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const [buttonText, setButtonText] = useState('Submit Vote');
     
     // Theme selection
     const [selectedTheme, setSelectedTheme] = useState<string>('default');
@@ -667,6 +668,20 @@ const VoteGeneratorCreate: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Details <span className="font-normal text-slate-400">(optional)</span></label>
                                     <textarea className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all h-16 resize-none placeholder:text-slate-300 text-sm" placeholder="Add extra info or instructions..." value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
+                                </div>
+
+                                {/* Button Text */}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Button Text <span className="font-normal text-slate-400">(optional)</span></label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 text-sm" 
+                                        placeholder="Submit Vote" 
+                                        value={buttonText} 
+                                        onChange={(e) => setButtonText(e.target.value)} 
+                                        maxLength={30} 
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">e.g., "Cast Your Vote", "Submit", "Vote Now"</p>
                                 </div>
 
                                 {/* Options */}
@@ -1088,7 +1103,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                             className="w-full py-2.5 text-white font-bold rounded-lg text-center text-sm opacity-70 cursor-not-allowed"
                                             style={{ backgroundColor: currentTheme.css['--poll-button'] }}
                                         >
-                                            Submit Vote
+                                            {buttonText || 'Submit Vote'}
                                         </div>
                                     </div>
                                 </div>

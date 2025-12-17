@@ -132,28 +132,35 @@ function CheckoutPage() {
         setLoading(true);
         
         try {
+            // Map frontend plan IDs to backend plan IDs
+            let backendPlan = planId;
+            
+            // Handle yearly vs monthly for Pro plans
+            if (planId === 'pro_monthly') {
+                backendPlan = 'pro_yearly'; // Default to yearly as shown on pricing
+            } else if (planId === 'pro_plus_monthly') {
+                backendPlan = 'pro_plus_yearly'; // Default to yearly as shown on pricing
+            }
+            
             // Call your existing Netlify function
             const response = await fetch('/.netlify/functions/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    planId,
-                    currency: currency.toLowerCase(),
-                    successUrl: `${window.location.origin}/success?plan=${planId}`,
-                    cancelUrl: window.location.href
-                })
+                body: JSON.stringify({ plan: backendPlan })
             });
             
             const data = await response.json();
             
-            if (data.url) {
-                window.location.href = data.url;
+            if (data.sessionUrl) {
+                window.location.href = data.sessionUrl;
+            } else if (data.error) {
+                throw new Error(data.error);
             } else {
                 throw new Error('No checkout URL returned');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Checkout error:', error);
-            alert('Something went wrong. Please try again.');
+            alert('Something went wrong: ' + (error.message || 'Please try again.'));
             setLoading(false);
         }
     };

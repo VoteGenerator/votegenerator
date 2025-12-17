@@ -132,8 +132,8 @@ function CheckoutPage() {
         setLoading(true);
         
         try {
-            // Call your Netlify function to create Stripe checkout session
-            const response = await fetch('/.netlify/functions/create-checkout', {
+            // Call your existing Netlify function
+            const response = await fetch('/.netlify/functions/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

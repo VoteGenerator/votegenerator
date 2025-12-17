@@ -37,8 +37,16 @@ interface PollRecommendation {
     gradient: string;
     tagline: string;
     why: string;
-    tier: 'free' | 'paid' | 'pro';
+    tier: 'free' | 'quick' | 'event' | 'pro';
 }
+
+// Tier badge configuration
+const TIER_BADGES: Record<string, { label: string; bgColor: string; textColor: string }> = {
+    free: { label: '', bgColor: '', textColor: '' },
+    quick: { label: 'QUICK', bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
+    event: { label: 'EVENT', bgColor: 'bg-purple-100', textColor: 'text-purple-700' },
+    pro: { label: 'PRO', bgColor: 'bg-indigo-100', textColor: 'text-indigo-700' }
+};
 
 const questions: Question[] = [
     {
@@ -110,15 +118,6 @@ const pollTypes: Record<string, PollRecommendation> = {
         why: "When you have several good options, ranked choice finds the one most people can agree on.",
         tier: 'free'
     },
-    'meeting-poll': {
-        id: 'meeting-poll',
-        name: 'Meeting Poll',
-        icon: Calendar,
-        gradient: 'from-amber-500 to-orange-600',
-        tagline: "Find when everyone's free.",
-        why: "Built specifically for scheduling. Shows availability at a glance.",
-        tier: 'free'
-    },
     'this-or-that': {
         id: 'this-or-that',
         name: 'This or That',
@@ -128,6 +127,15 @@ const pollTypes: Record<string, PollRecommendation> = {
         why: "When you've narrowed it down to two options, this makes the final decision fast and fun.",
         tier: 'free'
     },
+    'meeting-poll': {
+        id: 'meeting-poll',
+        name: 'Meeting Poll',
+        icon: Calendar,
+        gradient: 'from-amber-500 to-orange-600',
+        tagline: "Find when everyone's free.",
+        why: "Built specifically for scheduling. Shows availability at a glance.",
+        tier: 'quick'
+    },
     'dot-voting': {
         id: 'dot-voting',
         name: 'Dot Voting',
@@ -135,7 +143,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-emerald-500 to-teal-600',
         tagline: 'Distribute your votes. Show intensity.',
         why: "Perfect for prioritization. Voters can show how strongly they feel about each option.",
-        tier: 'free'
+        tier: 'quick'
     },
     'rating-scale': {
         id: 'rating-scale',
@@ -144,7 +152,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-cyan-500 to-blue-600',
         tagline: 'Rate everything 1-5 or 1-10.',
         why: "Great for feedback and surveys. Every option gets a fair evaluation.",
-        tier: 'free'
+        tier: 'quick'
     },
     'buy-a-feature': {
         id: 'buy-a-feature',
@@ -153,7 +161,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-green-500 to-emerald-600',
         tagline: 'Spend virtual budget on priorities.',
         why: "Forces tradeoffs. People have to choose what they really want when resources are limited.",
-        tier: 'free'
+        tier: 'quick'
     },
     'priority-matrix': {
         id: 'priority-matrix',
@@ -162,7 +170,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-violet-500 to-purple-600',
         tagline: 'Map effort vs impact.',
         why: "Visual prioritization that considers both importance and difficulty.",
-        tier: 'free'
+        tier: 'quick'
     },
     'approval-voting': {
         id: 'approval-voting',
@@ -171,7 +179,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-lime-500 to-green-600',
         tagline: 'Approve all you like.',
         why: "Finds the option most people can live with. Great for avoiding controversial picks.",
-        tier: 'free'
+        tier: 'quick'
     },
     'quiz-poll': {
         id: 'quiz-poll',
@@ -180,7 +188,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-yellow-500 to-amber-600',
         tagline: 'Poll with a right answer.',
         why: "Adds a fun, competitive element. Great for trivia, training, or icebreakers.",
-        tier: 'paid'
+        tier: 'event'
     },
     'sentiment-check': {
         id: 'sentiment-check',
@@ -189,7 +197,7 @@ const pollTypes: Record<string, PollRecommendation> = {
         gradient: 'from-rose-500 to-pink-600',
         tagline: 'Quick pulse. Emoji reactions.',
         why: "Fast and engaging. Perfect for quick temperature checks or meeting feedback.",
-        tier: 'paid'
+        tier: 'event'
     },
     'visual-poll': {
         id: 'visual-poll',
@@ -200,6 +208,22 @@ const pollTypes: Record<string, PollRecommendation> = {
         why: "When seeing is believing. Perfect for design choices, product comparisons, or photo contests.",
         tier: 'pro'
     }
+};
+
+// Tier Badge Component
+const TierBadge: React.FC<{ tier: string; variant?: 'small' | 'normal' }> = ({ tier, variant = 'normal' }) => {
+    const badge = TIER_BADGES[tier];
+    if (!badge || !badge.label) return null;
+    
+    const sizeClasses = variant === 'small' 
+        ? 'px-1.5 py-0.5 text-[10px]' 
+        : 'px-2 py-1 text-xs';
+    
+    return (
+        <span className={`${sizeClasses} font-bold rounded ${badge.bgColor} ${badge.textColor}`}>
+            {badge.label}
+        </span>
+    );
 };
 
 // Recommendation logic
@@ -258,31 +282,30 @@ function getRecommendation(answers: Record<string, string>): PollRecommendation[
         scores['ranked-choice'] += 2;
         scores['rating-scale'] += 2;
     } else if (answers.complexity === 'complex') {
-        scores['buy-a-feature'] += 3;
         scores['dot-voting'] += 3;
-        scores['priority-matrix'] += 2;
+        scores['buy-a-feature'] += 3;
+        scores['priority-matrix'] += 3;
     }
 
     // Audience
     if (answers.audience === 'casual') {
-        scores['multiple-choice'] += 1;
-        scores['this-or-that'] += 2;
-        scores['quiz-poll'] += 2;
+        scores['this-or-that'] += 1;
+        scores['sentiment-check'] += 1;
     } else if (answers.audience === 'work') {
-        scores['ranked-choice'] += 2;
-        scores['dot-voting'] += 2;
         scores['meeting-poll'] += 2;
-        scores['priority-matrix'] += 2;
+        scores['priority-matrix'] += 1;
+        scores['dot-voting'] += 1;
     } else if (answers.audience === 'education') {
-        scores['quiz-poll'] += 3;
-        scores['sentiment-check'] += 2;
-        scores['rating-scale'] += 2;
+        scores['quiz-poll'] += 2;
+        scores['sentiment-check'] += 1;
+    } else if (answers.audience === 'public') {
+        scores['multiple-choice'] += 2;
+        scores['visual-poll'] += 1;
     }
 
-    // Visual needs
+    // Visual
     if (answers.visual === 'yes') {
-        scores['visual-poll'] += 5;
-        scores['this-or-that'] += 1;
+        scores['visual-poll'] += 4;
     }
 
     // Sort by score and return top 3
@@ -306,16 +329,19 @@ const PollTypeQuiz: React.FC = () => {
         };
         setAnswers(newAnswers);
 
-        if (currentQuestion < questions.length - 1) {
-            setTimeout(() => setCurrentQuestion(prev => prev + 1), 300);
-        } else {
-            setTimeout(() => setShowResults(true), 300);
-        }
+        // Auto-advance after short delay
+        setTimeout(() => {
+            if (currentQuestion < questions.length - 1) {
+                setCurrentQuestion(currentQuestion + 1);
+            } else {
+                setShowResults(true);
+            }
+        }, 300);
     };
 
     const goBack = () => {
         if (currentQuestion > 0) {
-            setCurrentQuestion(prev => prev - 1);
+            setCurrentQuestion(currentQuestion - 1);
         }
     };
 
@@ -329,20 +355,7 @@ const PollTypeQuiz: React.FC = () => {
     const progress = ((currentQuestion + 1) / questions.length) * 100;
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">
-                    {showResults ? '🎯 Your Perfect Poll Type' : '🤔 Poll Type Finder'}
-                </h3>
-                <p className="text-indigo-100 text-sm">
-                    {showResults 
-                        ? "Based on your answers, here's what we recommend"
-                        : "Answer a few quick questions and we'll recommend the best poll type for your situation"
-                    }
-                </p>
-            </div>
-
+        <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-lg overflow-hidden max-w-lg mx-auto">
             <AnimatePresence mode="wait">
                 {!showResults ? (
                     <motion.div
@@ -351,7 +364,7 @@ const PollTypeQuiz: React.FC = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
-                        {/* Progress Bar */}
+                        {/* Progress */}
                         <div className="px-6 pt-6">
                             <div className="flex items-center justify-between text-sm text-slate-500 mb-2">
                                 <span>Question {currentQuestion + 1} of {questions.length}</span>
@@ -456,7 +469,7 @@ const PollTypeQuiz: React.FC = () => {
                                     </p>
                                     {recommendations[0].tier !== 'free' && (
                                         <div className="mt-3 inline-block px-2 py-1 bg-white/20 rounded text-xs font-bold">
-                                            {recommendations[0].tier === 'paid' ? '$5+' : 'PRO'}
+                                            {TIER_BADGES[recommendations[0].tier].label}
                                         </div>
                                     )}
                                 </div>
@@ -481,13 +494,7 @@ const PollTypeQuiz: React.FC = () => {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
                                                 <h5 className="font-bold text-slate-800">{rec.name}</h5>
-                                                {rec.tier !== 'free' && (
-                                                    <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
-                                                        rec.tier === 'paid' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'
-                                                    }`}>
-                                                        {rec.tier === 'paid' ? '$5+' : 'PRO'}
-                                                    </span>
-                                                )}
+                                                <TierBadge tier={rec.tier} variant="small" />
                                             </div>
                                             <p className="text-sm text-slate-500">{rec.tagline}</p>
                                         </div>
@@ -499,7 +506,7 @@ const PollTypeQuiz: React.FC = () => {
                         {/* Actions */}
                         <div className="flex flex-col sm:flex-row gap-3">
                             <a
-                                href="/create.html"
+                                href="/create"
                                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all"
                             >
                                 Create {recommendations[0].name}

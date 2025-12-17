@@ -31,7 +31,7 @@ import {
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
-import PollTypePreview from './PollTypePreview';
+import DemoPollInteractive from './DemoPollInteractive';
 import PollTypeQuiz from './PollTypeQuiz';
 
 interface PollTypeInfo {
@@ -505,16 +505,16 @@ const DemoPage: React.FC = () => {
                                                     </span>
                                                     {poll.isPro && (
                                                         <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
-                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white'
                                                         }`}>
                                                             PRO
                                                         </span>
                                                     )}
                                                     {poll.isPaid && !poll.isPro && (
                                                         <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
-                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-purple-500 text-white'
                                                         }`}>
-                                                            $5+
+                                                            EVENT
                                                         </span>
                                                     )}
                                                 </div>
@@ -576,10 +576,11 @@ const DemoPage: React.FC = () => {
                                                         <Eye size={18} />
                                                         Live Preview
                                                     </h3>
-                                                    <PollTypePreview
+                                                    <DemoPollInteractive
                                                         pollTypeId={selectedPollData.id}
                                                         question={selectedPollData.exampleQuestion}
                                                         options={selectedPollData.exampleOptions}
+                                                        onCreateSimilar={() => window.location.href = '/create.html'}
                                                     />
                                                 </div>
 

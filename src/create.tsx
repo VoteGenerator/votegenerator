@@ -25,27 +25,245 @@ import {
     Palette,
     Lightbulb,
     GripVertical,
-    Check
+    Check,
+    Zap,
+    Users,
+    TrendingUp,
+    Cloud,
+    MessageCircle
 } from 'lucide-react';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
 import './index.css';
 
-// Poll types configuration
+// Tier configuration for badges
+type PollTier = 'free' | 'quick' | 'event' | 'pro';
+
+const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
+    free: { label: '', colors: '' },
+    quick: { label: 'QUICK', colors: 'bg-blue-500 text-white' },
+    event: { label: 'EVENT', colors: 'bg-purple-500 text-white' },
+    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' }
+};
+
+// Poll types configuration - 16 types with tiers and colors
 const pollTypes = [
-    { id: 'multiple-choice', name: 'Multiple Choice', icon: CheckSquare, description: 'Pick one or more', free: true },
-    { id: 'ranked-choice', name: 'Ranked Choice', icon: ListOrdered, description: 'Drag to rank', free: true },
-    { id: 'meeting-poll', name: 'Meeting Poll', icon: Calendar, description: 'Find best time', free: true },
-    { id: 'this-or-that', name: 'This or That', icon: ArrowLeftRight, description: 'A vs B', free: true },
-    { id: 'dot-voting', name: 'Dot Voting', icon: CircleDot, description: 'Distribute votes', free: true },
-    { id: 'rating-scale', name: 'Rating Scale', icon: SlidersHorizontal, description: 'Rate 1-5', free: true },
-    { id: 'buy-a-feature', name: 'Buy a Feature', icon: Coins, description: 'Spend points', free: true },
-    { id: 'priority-matrix', name: 'Priority Matrix', icon: LayoutGrid, description: 'Effort vs Impact', free: true },
-    { id: 'approval-voting', name: 'Approval Voting', icon: ThumbsUp, description: 'Approve all you like', free: true },
-    { id: 'quiz-poll', name: 'Quiz Poll', icon: HelpCircle, description: 'With correct answer', tier: '$5+' },
-    { id: 'sentiment-check', name: 'Sentiment Check', icon: Smile, description: 'Emoji reactions', tier: '$5+' },
-    { id: 'visual-poll', name: 'Visual Poll', icon: Image, description: 'Vote with images', tier: 'PRO' },
+    // FREE TIER (3 types)
+    { 
+        id: 'multiple-choice', 
+        name: 'Multiple Choice', 
+        icon: CheckSquare, 
+        description: 'Pick one or more options',
+        tooltip: 'The classic poll. Voters click their favorite option(s). Great for quick decisions.',
+        useCases: ['Team votes', 'Quick surveys', 'Yes/No questions'],
+        tier: 'free' as PollTier,
+        gradient: 'from-blue-500 to-indigo-500',
+        bgLight: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+        textColor: 'text-blue-700'
+    },
+    { 
+        id: 'ranked-choice', 
+        name: 'Ranked Choice', 
+        icon: ListOrdered, 
+        description: 'Drag to rank in order',
+        tooltip: 'Voters rank all options. Finds true consensus, not just first-place votes.',
+        useCases: ['Group decisions', 'Avoiding ties', 'Elections'],
+        tier: 'free' as PollTier,
+        gradient: 'from-indigo-500 to-purple-500',
+        bgLight: 'bg-indigo-50',
+        iconColor: 'text-indigo-600',
+        textColor: 'text-indigo-700'
+    },
+    { 
+        id: 'this-or-that', 
+        name: 'This or That', 
+        icon: ArrowLeftRight, 
+        description: 'Quick A vs B',
+        tooltip: 'Shows two options at a time. Quick gut-reaction feedback.',
+        useCases: ['Quick decisions', 'Bracket-style voting', 'Preference testing'],
+        tier: 'free' as PollTier,
+        gradient: 'from-orange-500 to-red-500',
+        bgLight: 'bg-orange-50',
+        iconColor: 'text-orange-600',
+        textColor: 'text-orange-700'
+    },
+    
+    // QUICK TIER - $5 (7 types)
+    { 
+        id: 'meeting-poll', 
+        name: 'Meeting Poll', 
+        icon: Calendar, 
+        description: 'Find best time',
+        tooltip: 'Like Doodle but simpler! Everyone marks availability, see the best time instantly.',
+        useCases: ['Meeting scheduling', 'Event planning', 'Group availability'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-amber-500 to-orange-500',
+        bgLight: 'bg-amber-50',
+        iconColor: 'text-amber-600',
+        textColor: 'text-amber-700'
+    },
+    { 
+        id: 'dot-voting', 
+        name: 'Dot Voting', 
+        icon: CircleDot, 
+        description: 'Distribute points',
+        tooltip: 'Give voters a budget of points to spend. Shows intensity of preference!',
+        useCases: ['Budget allocation', 'Feature prioritization', 'Weighted voting'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-emerald-500 to-teal-500',
+        bgLight: 'bg-emerald-50',
+        iconColor: 'text-emerald-600',
+        textColor: 'text-emerald-700'
+    },
+    { 
+        id: 'rating-scale', 
+        name: 'Rating Scale', 
+        icon: SlidersHorizontal, 
+        description: 'Rate 1-5 stars',
+        tooltip: 'Voters rate every option. Perfect for feedback and sentiment.',
+        useCases: ['Product feedback', 'Customer satisfaction', 'Feature ratings'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-cyan-500 to-blue-500',
+        bgLight: 'bg-cyan-50',
+        iconColor: 'text-cyan-600',
+        textColor: 'text-cyan-700'
+    },
+    { 
+        id: 'rsvp', 
+        name: 'RSVP', 
+        icon: Users, 
+        description: 'Event attendance',
+        tooltip: 'Simple Yes/No/Maybe for event attendance. Automatic headcounts.',
+        useCases: ['Party invites', 'Team events', 'Workshops'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-sky-500 to-blue-500',
+        bgLight: 'bg-sky-50',
+        iconColor: 'text-sky-600',
+        textColor: 'text-sky-700'
+    },
+    { 
+        id: 'buy-a-feature', 
+        name: 'Buy a Feature', 
+        icon: Coins, 
+        description: 'Spend points',
+        tooltip: 'Options have prices, voters have budgets. Forces real trade-offs!',
+        useCases: ['Product roadmaps', 'Feature prioritization', 'Customer research'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-green-500 to-emerald-500',
+        bgLight: 'bg-green-50',
+        iconColor: 'text-green-600',
+        textColor: 'text-green-700'
+    },
+    { 
+        id: 'priority-matrix', 
+        name: 'Priority Matrix', 
+        icon: LayoutGrid, 
+        description: 'Effort vs Impact',
+        tooltip: 'Drag items onto a 2x2 grid. Perfect for sprint planning.',
+        useCases: ['Sprint planning', 'Project prioritization', 'Strategic planning'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-fuchsia-500 to-purple-500',
+        bgLight: 'bg-fuchsia-50',
+        iconColor: 'text-fuchsia-600',
+        textColor: 'text-fuchsia-700'
+    },
+    { 
+        id: 'approval-voting', 
+        name: 'Approval Voting', 
+        icon: ThumbsUp, 
+        description: 'Approve all you like',
+        tooltip: 'Voters approve as many options as they want. Finds consensus!',
+        useCases: ['Committee decisions', 'Finding consensus', 'Board votes'],
+        tier: 'quick' as PollTier,
+        gradient: 'from-violet-500 to-indigo-500',
+        bgLight: 'bg-violet-50',
+        iconColor: 'text-violet-600',
+        textColor: 'text-violet-700'
+    },
+    
+    // EVENT TIER - $10 (3 types)
+    { 
+        id: 'quiz-poll', 
+        name: 'Quiz Poll', 
+        icon: Zap, 
+        description: 'With correct answer',
+        tooltip: 'Poll with a right answer! Great for trivia and knowledge checks.',
+        useCases: ['Trivia games', 'Knowledge tests', 'Training quizzes'],
+        tier: 'event' as PollTier,
+        gradient: 'from-yellow-500 to-amber-500',
+        bgLight: 'bg-yellow-50',
+        iconColor: 'text-yellow-600',
+        textColor: 'text-yellow-700'
+    },
+    { 
+        id: 'nps-score', 
+        name: 'NPS Score', 
+        icon: TrendingUp, 
+        description: 'Net Promoter Score',
+        tooltip: 'Classic 0-10 recommendation scale. Auto-calculates your NPS.',
+        useCases: ['Customer feedback', 'Employee satisfaction', 'Product reviews'],
+        tier: 'event' as PollTier,
+        gradient: 'from-lime-500 to-green-500',
+        bgLight: 'bg-lime-50',
+        iconColor: 'text-lime-600',
+        textColor: 'text-lime-700'
+    },
+    { 
+        id: 'sentiment-check', 
+        name: 'Sentiment Check', 
+        icon: Smile, 
+        description: 'Emoji reactions',
+        tooltip: 'Quick emoji-based reactions. Perfect for pulse checks.',
+        useCases: ['Team morale', 'Meeting check-ins', 'Idea validation'],
+        tier: 'event' as PollTier,
+        gradient: 'from-rose-500 to-pink-500',
+        bgLight: 'bg-rose-50',
+        iconColor: 'text-rose-600',
+        textColor: 'text-rose-700'
+    },
+    
+    // PRO TIER - Subscription (3 types)
+    { 
+        id: 'word-cloud', 
+        name: 'Word Cloud', 
+        icon: Cloud, 
+        description: 'Open text responses',
+        tooltip: 'Collect free-form text, see it as a beautiful word cloud.',
+        useCases: ['Brainstorming', 'Feedback collection', 'Idea generation'],
+        tier: 'pro' as PollTier,
+        gradient: 'from-purple-500 to-violet-500',
+        bgLight: 'bg-purple-50',
+        iconColor: 'text-purple-600',
+        textColor: 'text-purple-700'
+    },
+    { 
+        id: 'qna-upvote', 
+        name: 'Q&A / Upvote', 
+        icon: MessageCircle, 
+        description: 'Submit & upvote',
+        tooltip: 'Audience submits questions, others upvote. Best questions rise up!',
+        useCases: ['Q&A sessions', 'Town halls', 'AMAs'],
+        tier: 'pro' as PollTier,
+        gradient: 'from-teal-500 to-cyan-500',
+        bgLight: 'bg-teal-50',
+        iconColor: 'text-teal-600',
+        textColor: 'text-teal-700'
+    },
+    { 
+        id: 'visual-poll', 
+        name: 'Visual Poll', 
+        icon: Image, 
+        description: 'Vote with images',
+        tooltip: 'Upload images, let people vote visually. Instagram-style layout!',
+        useCases: ['Logo selection', 'Design contests', 'Photo competitions'],
+        tier: 'pro' as PollTier,
+        gradient: 'from-pink-500 to-rose-500',
+        bgLight: 'bg-pink-50',
+        iconColor: 'text-pink-600',
+        textColor: 'text-pink-700'
+    },
 ];
 
 // Theme configurations - prettier with gradients and textures
@@ -133,9 +351,10 @@ function CreatePage() {
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [customColor, setCustomColor] = useState('#4F46E5');
     const [useCustomColor, setUseCustomColor] = useState(false);
+    const [buttonText, setButtonText] = useState('Submit Vote');
 
     const selectedPollType = pollTypes.find(p => p.id === selectedType);
-    const isPaidType = selectedPollType && !selectedPollType.free;
+    const isPaidType = selectedPollType && selectedPollType.tier !== 'free';
     const currentTheme = themes.find(t => t.id === selectedTheme) || themes[0];
     const activeColor = useCustomColor ? customColor : currentTheme.primary;
 
@@ -158,6 +377,42 @@ function CreatePage() {
     };
 
     const validOptions = options.filter(o => o.trim());
+    
+    // Check for duplicate options
+    const getDuplicateIndices = () => {
+        const normalized = options.map(o => o.trim().toLowerCase());
+        const duplicates = new Set<number>();
+        const seen = new Map<string, number>();
+        normalized.forEach((opt, index) => {
+            if (opt === '') return;
+            if (seen.has(opt)) {
+                duplicates.add(index);
+                duplicates.add(seen.get(opt)!);
+            } else {
+                seen.set(opt, index);
+            }
+        });
+        return duplicates;
+    };
+    
+    const duplicateIndices = getDuplicateIndices();
+    const hasDuplicates = duplicateIndices.size > 0;
+
+    const handleCreate = async () => {
+        if (!question.trim() || validOptions.length < 2 || hasDuplicates) return;
+        
+        // Navigate to the VoteGenerator app with the poll data
+        const pollData = {
+            title: question.trim(),
+            description: description.trim(),
+            options: validOptions.map(o => ({ text: o })),
+            pollType: selectedType,
+            theme: selectedTheme
+        };
+        
+        // For now, redirect to the hash-based app
+        window.location.href = `/#create&type=${selectedType}&q=${encodeURIComponent(question)}`;
+    };
 
     // Live Preview Component
     const LivePreview = () => (
@@ -245,8 +500,17 @@ function CreatePage() {
                         backgroundImage: useCustomColor ? undefined : `${currentTheme.pattern}, ${currentTheme.gradient}`
                     }}
                 >
-                    Submit Vote
+                    {buttonText || 'Submit Vote'}
                 </button>
+                
+                {/* Powered by branding - shows for free tier */}
+                <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-center gap-2">
+                    <span className="text-xs text-slate-400">Powered by</span>
+                    <a href="/" className="flex items-center gap-1 hover:opacity-80 transition">
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-4 h-4" />
+                        <span className="text-xs font-semibold text-slate-600">VoteGenerator</span>
+                    </a>
+                </div>
             </div>
 
             {/* Tip */}
@@ -295,32 +559,55 @@ function CreatePage() {
                             <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
                                 Poll Type <span className="text-red-500">*</span>
                             </label>
-                            <div className="grid grid-cols-3 gap-2 mt-4">
-                                {pollTypes.map((type) => (
-                                    <button
-                                        key={type.id}
-                                        onClick={() => setSelectedType(type.id)}
-                                        className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                                            selectedType === type.id
-                                                ? 'border-indigo-500 bg-indigo-50'
-                                                : 'border-slate-200 hover:border-slate-300 bg-white'
-                                        }`}
-                                    >
-                                        {type.tier && (
-                                            <span className={`absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-bold rounded-full ${
-                                                type.tier === 'PRO' 
-                                                    ? 'bg-indigo-600 text-white' 
-                                                    : 'bg-amber-500 text-white'
-                                            }`}>
-                                                {type.tier}
-                                            </span>
-                                        )}
-                                        <type.icon size={18} className={selectedType === type.id ? 'text-indigo-600' : 'text-slate-400'} />
-                                        <p className={`font-semibold text-xs mt-1 ${selectedType === type.id ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                            {type.name}
-                                        </p>
-                                    </button>
-                                ))}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                {pollTypes.map((type) => {
+                                    const isSelected = selectedType === type.id;
+                                    const isLocked = type.tier === 'pro';
+                                    
+                                    return (
+                                        <div key={type.id} className="relative group">
+                                            <button
+                                                onClick={() => setSelectedType(type.id)}
+                                                className={`relative w-full h-[68px] p-2 rounded-xl border-2 text-left transition-all flex flex-col justify-center ${
+                                                    isSelected
+                                                        ? `border-transparent bg-gradient-to-br ${type.gradient} shadow-lg scale-[1.02]`
+                                                        : isLocked
+                                                            ? `border-slate-200 ${type.bgLight} opacity-80`
+                                                            : `border-slate-200 ${type.bgLight} hover:shadow-md hover:scale-[1.02]`
+                                                }`}
+                                            >
+                                                {/* Tier Badge */}
+                                                {type.tier !== 'free' && (
+                                                    <span className={`absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-bold rounded-full shadow-sm flex items-center gap-0.5 ${TIER_CONFIG[type.tier].colors}`}>
+                                                        {type.tier === 'pro' && <Zap size={8} />}
+                                                        {TIER_CONFIG[type.tier].label}
+                                                    </span>
+                                                )}
+                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center mb-1 ${isSelected ? 'bg-white/20' : 'bg-white/80'}`}>
+                                                    <type.icon size={14} className={isSelected ? 'text-white' : type.iconColor} />
+                                                </div>
+                                                <p className={`font-semibold text-[11px] leading-tight ${isSelected ? 'text-white' : type.textColor}`}>
+                                                    {type.name}
+                                                </p>
+                                            </button>
+                                            
+                                            {/* Hover Tooltip */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-slate-800 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-xl pointer-events-none">
+                                                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r ${type.gradient} text-white text-[10px] font-bold mb-2`}>
+                                                    <type.icon size={10} />
+                                                    {type.name}
+                                                </div>
+                                                <p className="text-slate-200 mb-2">{type.tooltip}</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {type.useCases?.map((use, i) => (
+                                                        <span key={i} className="px-1.5 py-0.5 bg-slate-700 rounded text-[10px] text-slate-300">{use}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-slate-800"></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                             
                             {/* Poll Type Description */}
@@ -356,6 +643,19 @@ function CreatePage() {
                                 rows={2}
                                 className="w-full mt-3 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
                             />
+                            
+                            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide mt-4 block">
+                                Button Text <span className="text-slate-400 font-normal">(optional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={buttonText}
+                                onChange={(e) => setButtonText(e.target.value)}
+                                placeholder="Submit Vote"
+                                maxLength={30}
+                                className="w-full mt-3 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            />
+                            <p className="text-xs text-slate-400 mt-1">Examples: "Cast Your Vote", "Submit", "Vote Now"</p>
                         </div>
 
                         {/* Options */}
@@ -368,27 +668,40 @@ function CreatePage() {
                             </div>
                             
                             <div className="space-y-2">
-                                {options.map((option, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <span className="text-slate-400 text-sm w-6">{index + 1}.</span>
-                                        <input
-                                            type="text"
-                                            value={option}
-                                            onChange={(e) => updateOption(index, e.target.value)}
-                                            placeholder={`Option ${index + 1}`}
-                                            className="flex-1 px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                        />
-                                        {options.length > 2 && (
-                                            <button
-                                                onClick={() => removeOption(index)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                {options.map((option, index) => {
+                                    const isDuplicate = duplicateIndices.has(index);
+                                    return (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <span className="text-slate-400 text-sm w-6">{index + 1}.</span>
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => updateOption(index, e.target.value)}
+                                                placeholder={`Option ${index + 1}`}
+                                                className={`flex-1 px-4 py-2.5 border-2 rounded-xl focus:ring-2 outline-none transition-all ${
+                                                    isDuplicate 
+                                                        ? 'border-red-300 bg-red-50 focus:ring-red-200 focus:border-red-500' 
+                                                        : 'border-slate-200 focus:ring-indigo-500 focus:border-indigo-500'
+                                                }`}
+                                            />
+                                            {options.length > 2 && (
+                                                <button
+                                                    onClick={() => removeOption(index)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
+                            
+                            {hasDuplicates && (
+                                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                    <span>⚠️</span> Duplicate options are not allowed
+                                </p>
+                            )}
                             
                             {options.length < 20 && (
                                 <button
@@ -482,7 +795,7 @@ function CreatePage() {
                                 <div className="text-center">
                                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg mb-4">
                                         <Lock size={16} />
-                                        <span className="font-semibold">{selectedPollType?.name} requires {selectedPollType?.tier} plan</span>
+                                        <span className="font-semibold">{selectedPollType?.name} requires {TIER_CONFIG[selectedPollType?.tier || 'free'].label || 'upgrade'}</span>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                         <a
@@ -503,9 +816,10 @@ function CreatePage() {
                             ) : (
                                 <>
                                     <button
-                                        disabled={!question.trim() || validOptions.length < 2}
+                                        onClick={handleCreate}
+                                        disabled={!question.trim() || validOptions.length < 2 || hasDuplicates}
                                         className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                                            question.trim() && validOptions.length >= 2
+                                            question.trim() && validOptions.length >= 2 && !hasDuplicates
                                                 ? 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg'
                                                 : 'bg-white/30 text-white/70 cursor-not-allowed'
                                         }`}

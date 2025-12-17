@@ -11,14 +11,15 @@
     "functions:dev": "netlify functions:serve"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "framer-motion": "^10.16.4",
-    "lucide-react": "^0.292.0",
-    "react-router-dom": "^6.20.0",
-    "canvas-confetti": "^1.9.0",
-    "stripe": "^17.0.0",
-    "@netlify/blobs": "^7.0.0"
+   "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "framer-motion": "^10.16.4",
+  "lucide-react": "^0.292.0",
+  "react-router-dom": "^6.20.0",
+  "canvas-confetti": "^1.9.0",
+  "stripe": "^17.0.0",
+  "@netlify/blobs": "^7.0.0",
+  "resend": "^2.0.0"
   },
   "devDependencies": {
     "@netlify/blobs": "^6.2.0",

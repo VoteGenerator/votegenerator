@@ -362,4 +362,4 @@ export const handler: Handler = async (event) => {
 };
 
 // Export for use in vote submission endpoint
-export { verifyVoteToken };
+

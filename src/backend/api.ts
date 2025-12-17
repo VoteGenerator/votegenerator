@@ -3,7 +3,7 @@
 // Main API endpoints for polls and voting
 // ============================================================================
 
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { pollService } from './pollService';
 import { voteService } from './voteService';
 import { storage } from './storage';

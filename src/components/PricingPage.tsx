@@ -4,74 +4,61 @@
 // ============================================================================
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Check, X, Zap, Calendar, Crown, Sparkles, Users, HelpCircle,
-  BarChart3, Clock, ArrowRight, Star, ChevronDown, Menu, X as XIcon
+  BarChart3, Download, Link2, Image, Shield, Bell, Globe, 
+  Smartphone, Code, Key, Webhook, Clock, Mail, QrCode, Copy,
+  Lock, FileSpreadsheet, FileText, FileImage, Eye, Palette,
+  ArrowRight, Star, ChevronDown, Menu
 } from 'lucide-react';
 
 // ============================================================================
-// Navigation Header Component
+// Navigation Header
 // ============================================================================
 
-const Header: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+const NavHeader: React.FC = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
               <BarChart3 className="text-white" size={18} />
             </div>
             <span className="font-bold text-xl text-slate-900">VoteGenerator</span>
-          </Link>
-
-          {/* Desktop Nav */}
+          </a>
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/create" className="text-slate-600 hover:text-slate-900 font-medium">Create Poll</Link>
-            <Link to="/demo" className="text-slate-600 hover:text-slate-900 font-medium">Demo</Link>
-            <Link to="/pricing" className="text-indigo-600 font-medium">Pricing</Link>
-            <Link to="/compare" className="text-slate-600 hover:text-slate-900 font-medium">Compare</Link>
-            <Link to="/blog" className="text-slate-600 hover:text-slate-900 font-medium">Blog</Link>
-            <Link to="/help" className="text-slate-600 hover:text-slate-900 font-medium">Help</Link>
+            <a href="/create" className="text-slate-600 hover:text-slate-900 font-medium">Create Poll</a>
+            <a href="/demo" className="text-slate-600 hover:text-slate-900 font-medium">Demo</a>
+            <a href="/pricing" className="text-indigo-600 font-medium">Pricing</a>
+            <a href="/compare" className="text-slate-600 hover:text-slate-900 font-medium">Compare</a>
+            <a href="/blog" className="text-slate-600 hover:text-slate-900 font-medium">Blog</a>
+            <a href="/help" className="text-slate-600 hover:text-slate-900 font-medium">Help</a>
           </nav>
-
-          {/* CTA Button */}
           <div className="hidden md:block">
-            <Link
-              to="/create"
-              className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
-            >
+            <a href="/create" className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
               Create Free Poll
-            </Link>
+            </a>
           </div>
-
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <XIcon size={24} /> : <Menu size={24} />}
+          <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+            <Menu size={24} />
           </button>
         </div>
-
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
+        {mobileOpen && (
           <div className="md:hidden py-4 border-t border-slate-200">
             <nav className="flex flex-col gap-2">
-              <Link to="/create" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Create Poll</Link>
-              <Link to="/demo" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Demo</Link>
-              <Link to="/pricing" className="px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg font-medium">Pricing</Link>
-              <Link to="/compare" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Compare</Link>
-              <Link to="/blog" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Blog</Link>
-              <Link to="/help" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Help</Link>
-              <Link to="/create" className="mx-4 mt-2 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg text-center">
+              <a href="/create" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Create Poll</a>
+              <a href="/demo" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Demo</a>
+              <a href="/pricing" className="px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg font-medium">Pricing</a>
+              <a href="/compare" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Compare</a>
+              <a href="/blog" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Blog</a>
+              <a href="/help" className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg">Help</a>
+              <a href="/create" className="mx-4 mt-2 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg text-center">
                 Create Free Poll
-              </Link>
+              </a>
             </nav>
           </div>
         )}
@@ -406,10 +393,10 @@ const PricingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation Header */}
-      <Header />
-
+      <NavHeader />
+      
       {/* Page Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 text-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -426,7 +413,7 @@ const PricingPage: React.FC = () => {
           Start free. Pay only when you need more. No subscriptions required for quick polls.
         </motion.p>
 
-        {/* Billing toggle */}
+        {/* Billing toggle for subscriptions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -455,97 +442,96 @@ const PricingPage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Pricing Cards - Horizontally scrollable */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-thin">
+      {/* Pricing Cards - Horizontally scrollable on mobile */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="overflow-x-auto pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
           <div className="flex gap-4 min-w-max lg:min-w-0 lg:grid lg:grid-cols-5">
             {TIERS.map((tier, index) => {
-              const priceInfo = getPrice(tier);
-              const colors = colorClasses[tier.color];
-              const Icon = tier.icon;
+            const priceInfo = getPrice(tier);
+            const colors = colorClasses[tier.color];
+            const Icon = tier.icon;
 
-              return (
-                <motion.div
-                  key={tier.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                  className={`relative rounded-2xl border-2 ${tier.popular ? 'border-indigo-500 shadow-xl' : 'border-slate-200'} bg-white overflow-hidden w-[260px] lg:w-auto flex-shrink-0`}
-                >
-                  {/* Popular badge */}
-                  {tier.popular && (
-                    <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-sm font-medium">
-                      <Star className="inline-block mr-1" size={14} />
-                      Most Popular
-                    </div>
-                  )}
-
-                  <div className={`p-6 ${tier.popular ? 'pt-10' : ''}`}>
-                    {/* Icon & Name */}
-                    <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
-                      <Icon className={colors.text} size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900">{tier.name}</h3>
-                    <p className="text-slate-500 text-sm mt-1">{tier.tagline}</p>
-
-                    {/* Price */}
-                    <div className="mt-4 mb-6">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-slate-900">
-                          {typeof priceInfo.price === 'number' ? `$${priceInfo.price}` : priceInfo.price}
-                        </span>
-                        {priceInfo.period && priceInfo.period !== 'one-time' && (
-                          <span className="text-slate-500">
-                            /{priceInfo.period}
-                          </span>
-                        )}
-                      </div>
-                      {tier.period === 'one-time' && (
-                        <span className="text-sm text-slate-500">one-time payment</span>
-                      )}
-                      {'perMonth' in priceInfo && priceInfo.perMonth && (
-                        <span className="text-sm text-emerald-600">
-                          (${priceInfo.perMonth.toFixed(2)}/mo)
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Quick info */}
-                    <div className="space-y-2 mb-6">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users size={16} className="text-slate-400" />
-                        <span className="text-slate-600">{tier.features.responses}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock size={16} className="text-slate-400" />
-                        <span className="text-slate-600">{tier.features.duration}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <BarChart3 size={16} className="text-slate-400" />
-                        <span className="text-slate-600">{tier.features.pollTypes}</span>
-                      </div>
-                    </div>
-
-                    {/* CTA */}
-                    <button className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl transition flex items-center justify-center gap-2`}>
-                      {tier.cta}
-                      <ArrowRight size={18} />
-                    </button>
-
-                    {/* Feature highlights */}
-                    <ul className="mt-6 space-y-2">
-                      {tier.features.highlights.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                          <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+            return (
+              <motion.div
+                key={tier.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+                className={`relative rounded-2xl border-2 ${tier.popular ? 'border-indigo-500 shadow-xl' : 'border-slate-200'} bg-white overflow-hidden w-[280px] lg:w-auto flex-shrink-0`}
+              >
+                {/* Popular badge */}
+                {tier.popular && (
+                  <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-sm font-medium">
+                    <Star className="inline-block mr-1" size={14} />
+                    Most Popular
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                )}
+
+                <div className={`p-6 ${tier.popular ? 'pt-10' : ''}`}>
+                  {/* Icon & Name */}
+                  <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
+                    <Icon className={colors.text} size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">{tier.name}</h3>
+                  <p className="text-slate-500 text-sm mt-1">{tier.tagline}</p>
+
+                  {/* Price */}
+                  <div className="mt-4 mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-slate-900">
+                        {typeof priceInfo.price === 'number' ? `$${priceInfo.price}` : priceInfo.price}
+                      </span>
+                      {priceInfo.period && (
+                        <span className="text-slate-500">
+                          /{priceInfo.period === 'one-time' ? '' : priceInfo.period}
+                        </span>
+                      )}
+                    </div>
+                    {tier.period === 'one-time' && (
+                      <span className="text-sm text-slate-500">one-time payment</span>
+                    )}
+                    {'perMonth' in priceInfo && (
+                      <span className="text-sm text-emerald-600">
+                        (${priceInfo.perMonth?.toFixed(2)}/mo)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Quick info */}
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users size={16} className="text-slate-400" />
+                      <span className="text-slate-600">{tier.features.responses}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock size={16} className="text-slate-400" />
+                      <span className="text-slate-600">{tier.features.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <BarChart3 size={16} className="text-slate-400" />
+                      <span className="text-slate-600">{tier.features.pollTypes}</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <button className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl transition flex items-center justify-center gap-2`}>
+                    {tier.cta}
+                    <ArrowRight size={18} />
+                  </button>
+
+                  {/* Feature highlights */}
+                  <ul className="mt-6 space-y-2">
+                    {tier.features.highlights.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                        <Check size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
         <p className="text-center text-sm text-slate-400 mt-2 lg:hidden">
           ← Swipe to see all plans →
@@ -583,7 +569,7 @@ const PricingPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {FEATURE_COMPARISON.map((section) => (
+                {FEATURE_COMPARISON.map((section, sectionIndex) => (
                   <React.Fragment key={section.category}>
                     {/* Category header */}
                     <tr className="bg-slate-50">
@@ -670,18 +656,19 @@ const PricingPage: React.FC = () => {
             Create your first poll in under a minute. No signup required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/create"
+            <a
+              href="/create"
               className="px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition"
             >
               Create Free Poll
-            </Link>
-            <button
+            </a>
+            <a
+              href="#"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="px-8 py-4 border-2 border-white/30 text-white font-bold rounded-xl hover:bg-white/10 transition"
             >
               Compare Plans
-            </button>
+            </a>
           </div>
         </div>
       </div>

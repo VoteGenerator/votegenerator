@@ -6,6 +6,16 @@ import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 
+// Tier type and configuration
+type PollTier = 'free' | 'quick' | 'event' | 'pro';
+
+const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
+    free: { label: '', colors: '' },
+    quick: { label: 'QUICK', colors: 'bg-blue-500 text-white' },
+    event: { label: 'EVENT', colors: 'bg-purple-500 text-white' },
+    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' }
+};
+
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
 const POLL_TYPES = [
     {
@@ -21,7 +31,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
         iconColor: 'text-blue-600',
         textColor: 'text-blue-700',
-        isPremium: false
+        tier: 'free' as PollTier
     },
     {
         id: 'ranked',
@@ -36,7 +46,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-indigo-50 to-purple-50',
         iconColor: 'text-indigo-600',
         textColor: 'text-indigo-700',
-        isPremium: false
+        tier: 'free' as PollTier
     },
     {
         id: 'image',
@@ -51,7 +61,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
         iconColor: 'text-pink-600',
         textColor: 'text-pink-700',
-        isPremium: true
+        tier: 'pro' as PollTier
     },
     {
         id: 'meeting',
@@ -66,7 +76,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
         iconColor: 'text-amber-600',
         textColor: 'text-amber-800',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'pairwise',
@@ -81,7 +91,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50',
         iconColor: 'text-orange-600',
         textColor: 'text-orange-700',
-        isPremium: false
+        tier: 'free' as PollTier
     },
     {
         id: 'dot',
@@ -96,7 +106,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
         iconColor: 'text-emerald-600',
         textColor: 'text-emerald-700',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'rating',
@@ -111,7 +121,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50',
         iconColor: 'text-cyan-600',
         textColor: 'text-cyan-700',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'budget',
@@ -126,7 +136,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-green-50 to-emerald-50',
         iconColor: 'text-green-600',
         textColor: 'text-green-700',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'matrix',
@@ -141,7 +151,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-fuchsia-50 to-purple-50',
         iconColor: 'text-fuchsia-600',
         textColor: 'text-fuchsia-800',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'approval',
@@ -156,7 +166,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-violet-50 to-indigo-50',
         iconColor: 'text-violet-600',
         textColor: 'text-violet-700',
-        isPremium: false
+        tier: 'quick' as PollTier
     },
     {
         id: 'quiz',
@@ -171,7 +181,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-yellow-50 to-amber-50',
         iconColor: 'text-yellow-600',
         textColor: 'text-yellow-700',
-        isPremium: false
+        tier: 'event' as PollTier
     },
     {
         id: 'sentiment',
@@ -186,7 +196,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-rose-50 to-pink-50',
         iconColor: 'text-rose-600',
         textColor: 'text-rose-700',
-        isPremium: false
+        tier: 'event' as PollTier
     }
 ];
 
@@ -504,7 +514,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                         {POLL_TYPES.map((type) => {
                                             const Icon = type.icon;
                                             const isSelected = pollType === type.id;
-                                            const isLocked = type.isPremium && !hasPremium;
+                                            const isLocked = type.tier === 'pro' && !hasPremium;
                                             
                                             return (
                                                 <div key={type.id} className="relative group">
@@ -531,11 +541,13 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                     : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
                                                         }`}
                                                     >
-                                                        {/* Premium Badge */}
-                                                        {type.isPremium && (
-                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${hasPremium ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : 'bg-slate-300 text-slate-600'}`}>
-                                                                {hasPremium ? <Zap size={10} /> : <Lock size={10} />}
-                                                                <span>PRO</span>
+                                                        {/* Tier Badge */}
+                                                        {type.tier !== 'free' && (
+                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                isLocked ? 'bg-slate-300 text-slate-600' : TIER_CONFIG[type.tier].colors
+                                                            }`}>
+                                                                {type.tier === 'pro' && (isLocked ? <Lock size={10} /> : <Zap size={10} />)}
+                                                                <span>{TIER_CONFIG[type.tier].label}</span>
                                                             </div>
                                                         )}
                                                         
@@ -804,95 +816,16 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="w-4 h-4 accent-indigo-600" />
                                                     </label>
 
-                                                    <label className="flex items-center justify-between cursor-pointer p-2 rounded-lg hover:bg-slate-50 group">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-medium text-slate-700">Multiple votes allowed</span>
-                                                            <div className="relative">
-                                                                <HelpCircle size={14} className="text-slate-300 group-hover:text-slate-500 cursor-help" />
-                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                                                    Allow the same person to vote multiple times (not recommended for serious polls).
-                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <input type="checkbox" checked={allowMultiple} onChange={e => e} className="w-4 h-4 accent-indigo-600" disabled />
-                                                    </label>
-                                                    
-                                                    {/* Deadline */}
-                                                    <div className="p-3 bg-slate-50 rounded-xl">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span className="text-xs font-bold text-slate-600 uppercase">Deadline (Optional)</span>
-                                                            <div className="relative group/tip">
-                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
-                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
-                                                                    Automatically close voting at this date/time.
-                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <input type="datetime-local" value={deadline} onChange={(e) => e} className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:border-indigo-500 outline-none" />
-                                                    </div>
-
-                                                    {/* Max Votes */}
-                                                    <div className="p-3 bg-slate-50 rounded-xl">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span className="text-xs font-bold text-slate-600 uppercase">Max Responses (Optional)</span>
-                                                            <div className="relative group/tip">
-                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
-                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
-                                                                    Automatically close poll after this many votes.
-                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <input type="number" min={1} placeholder="Unlimited" value={maxVotes} onChange={(e) => e} className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:border-indigo-500 outline-none" />
-                                                    </div>
-                                                    
                                                     {/* Security */}
                                                     <div className="p-3 bg-slate-50 rounded-xl">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <span className="text-xs font-bold text-slate-600 uppercase">Vote Security</span>
-                                                            <div className="relative group/tip">
-                                                                <HelpCircle size={14} className="text-slate-300 cursor-help" />
-                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all z-10">
-                                                                    <strong className="text-amber-400">ℹ️ Good to know</strong><br/><br/>
-                                                                    These options help reduce duplicate voting for casual polls and surveys. Like any online tool, determined users may find ways around them.<br/><br/>
-                                                                    <span className="text-slate-400">For high-stakes decisions, consider verified methods like unique codes or in-person voting.</span>
-                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                                </div>
-                                                            </div>
                                                         </div>
                                                         <div className="grid grid-cols-3 gap-1.5">
                                                             {(['browser', 'code', 'none'] as const).map(sec => (
-                                                                <div key={sec} className="relative group/sec">
-                                                                    <button onClick={() => setSecurity(sec)} className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold capitalize transition-all ${security === sec ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-indigo-300'}`}>
-                                                                        {sec === 'browser' ? 'Browser' : sec === 'code' ? 'Codes' : 'None'}
-                                                                    </button>
-                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 bg-slate-800 text-white text-xs rounded-lg opacity-0 invisible group-hover/sec:opacity-100 group-hover/sec:visible transition-all z-10 shadow-xl">
-                                                                        {sec === 'browser' && (
-                                                                            <>
-                                                                                <strong className="text-blue-300">🌐 Browser Fingerprint</strong><br/><br/>
-                                                                                Limits one vote per device using cookies and browser ID. Good for most casual polls.<br/><br/>
-                                                                                <span className="text-slate-400 text-[10px]">Note: Can be bypassed with different browsers or incognito mode.</span>
-                                                                            </>
-                                                                        )}
-                                                                        {sec === 'code' && (
-                                                                            <>
-                                                                                <strong className="text-green-300">🔑 Unique Voting Codes</strong><br/><br/>
-                                                                                Generate one-time codes to distribute to your voters. Each code can only be used once. Best for controlled groups.<br/><br/>
-                                                                                <span className="text-slate-400 text-[10px]">Most secure option for known participant lists.</span>
-                                                                            </>
-                                                                        )}
-                                                                        {sec === 'none' && (
-                                                                            <>
-                                                                                <strong className="text-amber-300">⚡ Open Voting</strong><br/><br/>
-                                                                                No restrictions - anyone can vote multiple times. Great for quick, informal feedback.<br/><br/>
-                                                                                <span className="text-slate-400 text-[10px]">Best for low-stakes polls, brainstorming, or fun surveys.</span>
-                                                                            </>
-                                                                        )}
-                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
-                                                                    </div>
-                                                                </div>
+                                                                <button key={sec} onClick={() => setSecurity(sec)} className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold capitalize transition-all ${security === sec ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-indigo-300'}`}>
+                                                                    {sec === 'browser' ? 'Browser' : sec === 'code' ? 'Codes' : 'None'}
+                                                                </button>
                                                             ))}
                                                         </div>
                                                         {security === 'code' && (
@@ -933,7 +866,7 @@ const VoteGeneratorCreate: React.FC = () => {
                         transition={{ delay: 0.3 }}
                         className="flex-1 lg:max-w-md"
                     >
-                        {/* Sticky container - accounts for promo banner (48px) + nav (64px) + padding */}
+                        {/* Sticky container */}
                         <div className="lg:sticky lg:top-36">
                             {/* Preview Header */}
                             <div className="flex items-center justify-between mb-3">

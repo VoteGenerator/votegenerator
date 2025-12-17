@@ -344,6 +344,42 @@ function CreatePage() {
     };
 
     const validOptions = options.filter(o => o.trim());
+    
+    // Check for duplicate options
+    const getDuplicateIndices = () => {
+        const normalized = options.map(o => o.trim().toLowerCase());
+        const duplicates = new Set<number>();
+        const seen = new Map<string, number>();
+        normalized.forEach((opt, index) => {
+            if (opt === '') return;
+            if (seen.has(opt)) {
+                duplicates.add(index);
+                duplicates.add(seen.get(opt)!);
+            } else {
+                seen.set(opt, index);
+            }
+        });
+        return duplicates;
+    };
+    
+    const duplicateIndices = getDuplicateIndices();
+    const hasDuplicates = duplicateIndices.size > 0;
+
+    const handleCreate = async () => {
+        if (!question.trim() || validOptions.length < 2 || hasDuplicates) return;
+        
+        // Navigate to the VoteGenerator app with the poll data
+        const pollData = {
+            title: question.trim(),
+            description: description.trim(),
+            options: validOptions.map(o => ({ text: o })),
+            pollType: selectedType,
+            theme: selectedTheme
+        };
+        
+        // For now, redirect to the hash-based app
+        window.location.href = `/#create&type=${selectedType}&q=${encodeURIComponent(question)}`;
+    };
 
     // Live Preview Component
     const LivePreview = () => (
@@ -561,27 +597,40 @@ function CreatePage() {
                             </div>
                             
                             <div className="space-y-2">
-                                {options.map((option, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <span className="text-slate-400 text-sm w-6">{index + 1}.</span>
-                                        <input
-                                            type="text"
-                                            value={option}
-                                            onChange={(e) => updateOption(index, e.target.value)}
-                                            placeholder={`Option ${index + 1}`}
-                                            className="flex-1 px-4 py-2.5 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                        />
-                                        {options.length > 2 && (
-                                            <button
-                                                onClick={() => removeOption(index)}
-                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                {options.map((option, index) => {
+                                    const isDuplicate = duplicateIndices.has(index);
+                                    return (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <span className="text-slate-400 text-sm w-6">{index + 1}.</span>
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => updateOption(index, e.target.value)}
+                                                placeholder={`Option ${index + 1}`}
+                                                className={`flex-1 px-4 py-2.5 border-2 rounded-xl focus:ring-2 outline-none transition-all ${
+                                                    isDuplicate 
+                                                        ? 'border-red-300 bg-red-50 focus:ring-red-200 focus:border-red-500' 
+                                                        : 'border-slate-200 focus:ring-indigo-500 focus:border-indigo-500'
+                                                }`}
+                                            />
+                                            {options.length > 2 && (
+                                                <button
+                                                    onClick={() => removeOption(index)}
+                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
+                            
+                            {hasDuplicates && (
+                                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                    <span>⚠️</span> Duplicate options are not allowed
+                                </p>
+                            )}
                             
                             {options.length < 20 && (
                                 <button
@@ -696,9 +745,10 @@ function CreatePage() {
                             ) : (
                                 <>
                                     <button
-                                        disabled={!question.trim() || validOptions.length < 2}
+                                        onClick={handleCreate}
+                                        disabled={!question.trim() || validOptions.length < 2 || hasDuplicates}
                                         className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                                            question.trim() && validOptions.length >= 2
+                                            question.trim() && validOptions.length >= 2 && !hasDuplicates
                                                 ? 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg'
                                                 : 'bg-white/30 text-white/70 cursor-not-allowed'
                                         }`}

@@ -25,9 +25,7 @@ const NavHeader: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="text-white" size={18} />
-            </div>
+            <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8" />
             <span className="font-bold text-xl text-slate-900">VoteGenerator</span>
           </a>
           <nav className="hidden md:flex items-center gap-6">
@@ -182,7 +180,7 @@ const TIERS: PricingTier[] = [
     popular: true,
     icon: Crown,
     color: 'indigo',
-    cta: 'Start Pro Trial',
+    cta: 'Get Pro',
     features: {
       responses: '10,000/month',
       duration: 'Unlimited',
@@ -214,7 +212,7 @@ const TIERS: PricingTier[] = [
     priceNote: 'or $160/year (save 30%)',
     icon: Sparkles,
     color: 'amber',
-    cta: 'Start Pro+ Trial',
+    cta: 'Get Pro+',
     features: {
       responses: '50,000/month',
       duration: 'Unlimited',
@@ -514,10 +512,13 @@ const PricingPage: React.FC = () => {
                   </div>
 
                   {/* CTA */}
-                  <button className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl transition flex items-center justify-center gap-2`}>
+                  <a 
+                    href={tier.id === 'free' ? '/create.html' : `/checkout?plan=${tier.id}`}
+                    className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl transition flex items-center justify-center gap-2`}
+                  >
                     {tier.cta}
                     <ArrowRight size={18} />
-                  </button>
+                  </a>
 
                   {/* Feature highlights */}
                   <ul className="mt-6 space-y-2">

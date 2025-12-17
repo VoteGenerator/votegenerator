@@ -532,6 +532,7 @@ const PricingPage: React.FC = () => {
               </motion.div>
             );
           })}
+          </div>
         </div>
         <p className="text-center text-sm text-slate-400 mt-2 lg:hidden">
           ← Swipe to see all plans →

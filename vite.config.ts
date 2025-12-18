@@ -17,6 +17,7 @@ export default defineConfig({
                 create: resolve(__dirname, 'create.html'),
                 about: resolve(__dirname, 'about.html'),
                 checkout: resolve(__dirname, 'checkout.html'),
+                success: resolve(__dirname, 'success.html'),
             },
         },
     },

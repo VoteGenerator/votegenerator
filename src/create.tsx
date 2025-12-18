@@ -440,7 +440,7 @@ function CreatePage() {
                     const data = await response.json();
                     // vg-create returns { id, adminKey }
                     // Redirect to admin dashboard with the poll
-                    window.location.href = `/#admin/${data.id}/${data.adminKey}`;
+                    window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
                 } else {
                     const error = await response.json();
                     alert('Error creating poll: ' + (error.error || 'Please try again'));

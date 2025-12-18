@@ -126,7 +126,7 @@ function SuccessPage() {
                 // Clear the draft
                 localStorage.removeItem('pollDraft');
                 // Redirect to admin using hash routing
-                window.location.href = `/#admin/${data.id}/${data.adminKey}`;
+                window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
             } else {
                 const errorData = await response.json();
                 setError(errorData.error || 'Failed to create poll');

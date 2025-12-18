@@ -102,25 +102,34 @@ function SuccessPage() {
         setCreatingPoll(true);
         
         try {
+            // Format data to match vg-create.ts expected format
+            const createData = {
+                title: pollData.title,
+                description: pollData.description || undefined,
+                options: pollData.options, // Should already be string[]
+                pollType: pollData.pollType,
+                settings: pollData.settings || {
+                    hideResults: false,
+                    allowMultiple: false
+                }
+            };
+            
             const response = await fetch('/.netlify/functions/vg-create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...pollData,
-                    tier: plan // Pass the paid tier
-                })
+                body: JSON.stringify(createData)
             });
             
             if (response.ok) {
                 const data = await response.json();
-                setCreatedPoll(data);
+                // vg-create returns { id, adminKey }
                 // Clear the draft
                 localStorage.removeItem('pollDraft');
-                // Redirect to admin
-                window.location.href = `/admin.html?poll=${data.pollId}&token=${data.adminToken}`;
+                // Redirect to admin using hash routing
+                window.location.href = `/#admin/${data.id}/${data.adminKey}`;
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || 'Failed to create poll');
+                setError(errorData.error || 'Failed to create poll');
                 setCreatingPoll(false);
             }
         } catch (err) {

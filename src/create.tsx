@@ -409,16 +409,22 @@ function CreatePage() {
         
         const tier = getPollTier(selectedType);
         
-        // Build poll data
+        // Build poll data matching vg-create.ts expected format
         const pollData = {
             title: question.trim(),
-            description: description.trim(),
-            options: validOptions.map(o => ({ text: o })),
-            pollType: selectedType,
+            description: description.trim() || undefined,
+            options: validOptions, // vg-create expects string[], not { text: string }[]
+            pollType: selectedType === 'multiple-choice' ? 'multiple' : 
+                      selectedType === 'ranked-choice' ? 'ranked' : 
+                      selectedType === 'meeting-poll' ? 'meeting' :
+                      selectedType === 'visual-poll' ? 'image' : 'ranked',
+            settings: {
+                hideResults: false,
+                allowMultiple: false
+            },
             theme: selectedTheme,
             customColor: useCustomColor ? customColor : null,
-            buttonText: buttonText || 'Submit Vote',
-            tier: tier
+            buttonText: buttonText || 'Submit Vote'
         };
         
         if (tier === 'free') {
@@ -432,11 +438,12 @@ function CreatePage() {
                 
                 if (response.ok) {
                     const data = await response.json();
+                    // vg-create returns { id, adminKey }
                     // Redirect to admin dashboard with the poll
-                    window.location.href = `/admin.html?poll=${data.pollId}&token=${data.adminToken}`;
+                    window.location.href = `/#admin/${data.id}/${data.adminKey}`;
                 } else {
                     const error = await response.json();
-                    alert('Error creating poll: ' + (error.message || 'Please try again'));
+                    alert('Error creating poll: ' + (error.error || 'Please try again'));
                 }
             } catch (error) {
                 console.error('Create error:', error);

@@ -12,7 +12,8 @@ import {
     Star,
     Gift,
     Copy,
-    Check
+    Check,
+    AlertCircle
 } from 'lucide-react';
 import './index.css';
 
@@ -22,58 +23,52 @@ const PLAN_DETAILS: Record<string, {
     icon: React.ElementType;
     color: string;
     features: string[];
-    createUrl: string;
 }> = {
     'quick_poll': {
         name: 'Quick Poll',
         icon: Zap,
         color: 'from-blue-500 to-indigo-600',
-        features: ['500 responses', '7 days active', '10 poll types', 'CSV export'],
-        createUrl: '/create.html?tier=quick'
+        features: ['500 responses', '7 days active', '10 poll types', 'CSV export']
     },
     'event_poll': {
         name: 'Event Poll',
         icon: Calendar,
         color: 'from-purple-500 to-indigo-600',
-        features: ['2,000 responses', '30 days active', '13 poll types', 'PDF & PNG export'],
-        createUrl: '/create.html?tier=event'
+        features: ['2,000 responses', '30 days active', '13 poll types', 'PDF & PNG export']
     },
     'pro_monthly': {
         name: 'Pro Monthly',
         icon: Crown,
         color: 'from-indigo-500 to-purple-600',
-        features: ['10,000 responses/mo', 'Unlimited duration', 'All 16 poll types', 'Custom short links'],
-        createUrl: '/create.html?tier=pro'
+        features: ['10,000 responses/mo', 'Unlimited duration', 'All 16 poll types', 'Custom short links']
     },
     'pro_yearly': {
         name: 'Pro Annual',
         icon: Crown,
         color: 'from-indigo-500 to-purple-600',
-        features: ['10,000 responses/mo', 'Unlimited duration', 'All 16 poll types', 'Custom short links'],
-        createUrl: '/create.html?tier=pro'
+        features: ['10,000 responses/mo', 'Unlimited duration', 'All 16 poll types', 'Custom short links']
     },
     'pro_plus_monthly': {
         name: 'Pro+ Monthly',
         icon: Sparkles,
         color: 'from-amber-500 to-orange-600',
-        features: ['50,000 responses/mo', 'White-label embed', 'API access', '10 team viewers'],
-        createUrl: '/create.html?tier=pro_plus'
+        features: ['50,000 responses/mo', 'White-label embed', 'API access', '10 team viewers']
     },
     'pro_plus_yearly': {
         name: 'Pro+ Annual',
         icon: Sparkles,
         color: 'from-amber-500 to-orange-600',
-        features: ['50,000 responses/mo', 'White-label embed', 'API access', '10 team viewers'],
-        createUrl: '/create.html?tier=pro_plus'
+        features: ['50,000 responses/mo', 'White-label embed', 'API access', '10 team viewers']
     }
 };
 
 function SuccessPage() {
     const [loading, setLoading] = useState(true);
+    const [creatingPoll, setCreatingPoll] = useState(false);
     const [plan, setPlan] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const [accessCode, setAccessCode] = useState<string | null>(null);
-    const [copied, setCopied] = useState(false);
+    const [pollData, setPollData] = useState<any>(null);
+    const [createdPoll, setCreatedPoll] = useState<{ pollId: string; adminToken: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -82,54 +77,56 @@ function SuccessPage() {
         const planParam = params.get('plan');
         
         setSessionId(sid);
+        setPlan(planParam);
         
-        if (planParam) {
-            setPlan(planParam);
-            setLoading(false);
-            // Generate a simple access code (in production, this would come from your backend)
-            setAccessCode(generateAccessCode());
-        } else if (sid) {
-            // Fetch session details from your backend
-            fetchSessionDetails(sid);
-        } else {
-            setLoading(false);
+        // Check for saved poll draft
+        const draft = localStorage.getItem('pollDraft');
+        if (draft) {
+            try {
+                setPollData(JSON.parse(draft));
+            } catch (e) {
+                console.error('Error parsing poll draft:', e);
+            }
         }
+        
+        setLoading(false);
     }, []);
 
-    const generateAccessCode = () => {
-        // Generate a random access code (in production, this comes from backend after payment verification)
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 8; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
+    const createPollFromDraft = async () => {
+        if (!pollData) {
+            // No draft, just go to create page
+            window.location.href = '/create.html';
+            return;
         }
-        return code;
-    };
-
-    const fetchSessionDetails = async (sid: string) => {
+        
+        setCreatingPoll(true);
+        
         try {
-            const response = await fetch(`/.netlify/functions/verify-session?session_id=${sid}`);
+            const response = await fetch('/.netlify/functions/vg-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...pollData,
+                    tier: plan // Pass the paid tier
+                })
+            });
+            
             if (response.ok) {
                 const data = await response.json();
-                setPlan(data.plan);
-                setAccessCode(data.accessCode || generateAccessCode());
+                setCreatedPoll(data);
+                // Clear the draft
+                localStorage.removeItem('pollDraft');
+                // Redirect to admin
+                window.location.href = `/admin.html?poll=${data.pollId}&token=${data.adminToken}`;
             } else {
-                // Fallback - try to get plan from URL or default
-                setError('Could not verify session, but your payment was received.');
+                const errorData = await response.json();
+                setError(errorData.message || 'Failed to create poll');
+                setCreatingPoll(false);
             }
         } catch (err) {
-            console.error('Error fetching session:', err);
-            setError('Could not verify session, but your payment was received.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const copyAccessCode = () => {
-        if (accessCode) {
-            navigator.clipboard.writeText(accessCode);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            console.error('Error creating poll:', err);
+            setError('Failed to create poll. Please try again.');
+            setCreatingPoll(false);
         }
     };
 
@@ -219,37 +216,51 @@ function SuccessPage() {
                                 ))}
                             </ul>
 
-                            {/* Access Code */}
-                            {accessCode && (
-                                <div className="bg-slate-50 rounded-xl p-4 mb-6">
-                                    <p className="text-sm text-slate-600 mb-2">Your Access Code (save this!):</p>
-                                    <div className="flex items-center gap-2">
-                                        <code className="flex-1 bg-white px-4 py-3 rounded-lg font-mono text-lg font-bold text-slate-800 border border-slate-200">
-                                            {accessCode}
-                                        </code>
-                                        <button
-                                            onClick={copyAccessCode}
-                                            className="p-3 bg-slate-200 hover:bg-slate-300 rounded-lg transition-colors"
-                                            title="Copy code"
-                                        >
-                                            {copied ? <Check size={20} className="text-emerald-600" /> : <Copy size={20} className="text-slate-600" />}
-                                        </button>
+                            {/* Show saved poll info if exists */}
+                            {pollData && (
+                                <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-100">
+                                    <h4 className="font-semibold text-indigo-800 mb-2">Your Poll Draft:</h4>
+                                    <p className="text-indigo-700 font-medium">{pollData.title}</p>
+                                    <p className="text-indigo-600 text-sm">{pollData.options?.length || 0} options • {pollData.pollType}</p>
+                                </div>
+                            )}
+
+                            {/* Error message */}
+                            {error && (
+                                <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-100 flex items-start gap-2">
+                                    <AlertCircle size={20} className="text-red-500 mt-0.5" />
+                                    <div>
+                                        <p className="text-red-700 font-medium">Error creating poll</p>
+                                        <p className="text-red-600 text-sm">{error}</p>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-2">
-                                        Use this code to unlock premium features when creating polls.
-                                    </p>
                                 </div>
                             )}
 
                             {/* CTA Button */}
-                            <a
-                                href={planDetails.createUrl}
-                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
+                            <button
+                                onClick={createPollFromDraft}
+                                disabled={creatingPoll}
+                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                <Sparkles size={20} />
-                                Create Your Poll Now
-                                <ArrowRight size={20} />
-                            </a>
+                                {creatingPoll ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        Creating Your Poll...
+                                    </>
+                                ) : pollData ? (
+                                    <>
+                                        <Sparkles size={20} />
+                                        Create Your Poll Now
+                                        <ArrowRight size={20} />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles size={20} />
+                                        Start Creating Polls
+                                        <ArrowRight size={20} />
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </motion.div>
                 )}
@@ -262,9 +273,6 @@ function SuccessPage() {
                         transition={{ delay: 0.4 }}
                         className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center"
                     >
-                        {error && (
-                            <p className="text-amber-600 mb-4">{error}</p>
-                        )}
                         <p className="text-slate-600 mb-6">
                             A confirmation email has been sent to your inbox.
                         </p>
@@ -290,9 +298,6 @@ function SuccessPage() {
                         Need help? <a href="/help.html" className="text-indigo-600 hover:underline">Visit our Help Center</a>
                         {' '}or{' '}
                         <a href="/contact.html" className="text-indigo-600 hover:underline">Contact Support</a>
-                    </p>
-                    <p className="mt-2">
-                        Receipt sent to your email • Session: {sessionId?.slice(0, 20)}...
                     </p>
                 </motion.div>
             </div>

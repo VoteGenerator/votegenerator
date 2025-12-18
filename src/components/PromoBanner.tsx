@@ -1,203 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Clock, Gift, ArrowRight } from 'lucide-react';
+import { X, Zap, ArrowRight } from 'lucide-react';
 
-// ============================================
-// PROMO CONFIGURATION - EDIT HERE
-// ============================================
-// To disable: set isActive to false
-// To change dates: update validUntil
-// To change price: update promoPrice
-const PROMO_CONFIG = {
-    id: 'launch-special',
-    name: 'Launch Special',
-    description: 'Try Pro features for 30 days',
-    originalPrice: 9,
-    promoPrice: 5.00,
-    durationDays: 30,
-    validUntil: new Date('2026-01-31'), // Promo runs until this date
-    isActive: true, // Set to false to disable
+// Currency configuration
+const CURRENCY_CONFIG: Record<string, { symbol: string; rate: number; code: string }> = {
+    USD: { symbol: '$', rate: 1, code: 'USD' },
+    CAD: { symbol: '$', rate: 1.36, code: 'CAD' },
+    EUR: { symbol: '€', rate: 0.92, code: 'EUR' },
+    GBP: { symbol: '£', rate: 0.79, code: 'GBP' },
+    AUD: { symbol: '$', rate: 1.53, code: 'AUD' },
 };
-// ============================================
+
+const detectCurrency = (): string => {
+    try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const locale = navigator.language;
+        
+        if (timezone.includes('America/Toronto') || timezone.includes('America/Vancouver') || locale.includes('en-CA')) return 'CAD';
+        if (timezone.includes('Europe/London') || locale.includes('en-GB')) return 'GBP';
+        if (timezone.includes('Australia') || locale.includes('en-AU')) return 'AUD';
+        if (timezone.includes('Europe/') && !timezone.includes('London')) return 'EUR';
+        
+        return 'USD';
+    } catch {
+        return 'USD';
+    }
+};
 
 interface PromoBannerProps {
-    onClose?: () => void;
-    position?: 'top' | 'bottom' | 'floating';
+    position?: 'top' | 'bottom';
 }
 
-const PromoBanner: React.FC<PromoBannerProps> = ({ 
-    onClose,
-    position = 'top'
-}) => {
-    const [isVisible, setIsVisible] = useState(true);
-    const [showFloatingButton, setShowFloatingButton] = useState(false);
-    const [timeLeft, setTimeLeft] = useState<string>('');
-    
-    // Check if promo is active
-    const now = new Date();
-    const promo = PROMO_CONFIG.isActive && now < PROMO_CONFIG.validUntil ? PROMO_CONFIG : null;
-    
-    // Countdown timer
+const PromoBanner: React.FC<PromoBannerProps> = ({ position = 'top' }) => {
+    const [dismissed, setDismissed] = useState(false);
+    const [currency, setCurrency] = useState('USD');
+
     useEffect(() => {
-        if (!promo?.validUntil) return;
-        
-        const updateTimer = () => {
-            const now = new Date();
-            const end = new Date(promo.validUntil);
-            const diff = end.getTime() - now.getTime();
-            
-            if (diff <= 0) {
-                setTimeLeft('Expired');
-                return;
-            }
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            
-            if (days > 0) {
-                setTimeLeft(`${days}d ${hours}h left`);
-            } else if (hours > 0) {
-                setTimeLeft(`${hours}h ${minutes}m left`);
-            } else {
-                setTimeLeft(`${minutes}m left`);
-            }
-        };
-        
-        updateTimer();
-        const interval = setInterval(updateTimer, 60000);
-        
-        return () => clearInterval(interval);
-    }, [promo]);
-    
-    // Check if user dismissed this promo before
-    useEffect(() => {
-        try {
-            const dismissed = localStorage.getItem(`promo_dismissed_${promo?.id}`);
-            if (dismissed) {
-                const dismissedDate = new Date(dismissed);
-                const hoursSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60);
-                if (hoursSinceDismissed < 24) {
-                    setIsVisible(false);
-                    setShowFloatingButton(true); // Show floating button instead
-                }
-            }
-        } catch {
-            // localStorage not available
+        // Check if already dismissed this session
+        const wasDismissed = sessionStorage.getItem('promoBannerDismissed');
+        if (wasDismissed) {
+            setDismissed(true);
         }
-    }, [promo?.id]);
-    
-    if (!promo) return null;
-    
-    const handleClose = () => {
-        setIsVisible(false);
-        setShowFloatingButton(true); // Show floating button when dismissed
-        try {
-            localStorage.setItem(`promo_dismissed_${promo.id}`, new Date().toISOString());
-        } catch {
-            // localStorage not available
-        }
-        onClose?.();
+        
+        // Detect currency
+        setCurrency(detectCurrency());
+    }, []);
+
+    const handleDismiss = () => {
+        setDismissed(true);
+        sessionStorage.setItem('promoBannerDismissed', 'true');
     };
-    
-    const handleClaim = () => {
-        window.location.hash = 'pricing';
+
+    const formatPrice = (usdPrice: number): string => {
+        const config = CURRENCY_CONFIG[currency];
+        const convertedPrice = Math.round(usdPrice * config.rate);
+        return `${config.symbol}${convertedPrice} ${config.code}`;
     };
-    
-    const positionStyles = {
-        top: 'fixed top-0 left-0 right-0 z-[100]',
-        bottom: 'fixed bottom-0 left-0 right-0 z-[100]',
-        floating: 'fixed bottom-4 right-4 z-[100] max-w-md rounded-2xl shadow-2xl',
-    };
-    
+
+    if (dismissed) return null;
+
     return (
-        <>
-            {/* Main Banner */}
-            <AnimatePresence>
-                {isVisible && (
-                    <motion.div
-                        initial={{ opacity: 0, y: position === 'bottom' ? 100 : -100 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: position === 'bottom' ? 100 : -100 }}
-                        className={`${positionStyles[position]} bg-gradient-to-r from-amber-500 via-orange-500 to-red-500`}
+        <div className={`${position === 'top' ? 'fixed top-0 left-0 right-0 z-50' : 'fixed bottom-0 left-0 right-0 z-50'}`}>
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
+                <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                        <Zap size={16} className="text-yellow-300" />
+                        <span className="font-medium">
+                            <span className="hidden sm:inline">🎉 Limited Offer: </span>
+                            Quick Poll for just <strong>{formatPrice(5)}</strong>
+                        </span>
+                    </div>
+                    <a
+                        href="/checkout?plan=quick_poll"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white text-indigo-600 font-bold rounded-full text-xs hover:bg-indigo-50 transition-colors"
                     >
-                        <div className="max-w-6xl mx-auto px-4 py-3">
-                            <div className="flex items-center justify-between gap-4">
-                                {/* Left: Icon + Message */}
-                                <div className="flex items-center gap-3 flex-1">
-                                    <div className="hidden sm:flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-                                        <Gift size={20} className="text-white" />
-                                    </div>
-                                    <div className="text-white">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-bold text-sm sm:text-base">
-                                                🚀 {promo.name}:
-                                            </span>
-                                            <span className="text-white/90 text-sm sm:text-base">
-                                                {promo.description} for just
-                                            </span>
-                                            <span className="font-black text-lg sm:text-xl">
-                                                ${promo.promoPrice}
-                                            </span>
-                                            <span className="line-through text-white/60 text-sm">
-                                                ${promo.originalPrice}/mo
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Center: Timer */}
-                                {timeLeft && (
-                                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full">
-                                        <Clock size={14} className="text-white" />
-                                        <span className="text-white text-sm font-semibold">
-                                            {timeLeft}
-                                        </span>
-                                    </div>
-                                )}
-                                
-                                {/* Right: CTA + Close */}
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleClaim}
-                                        className="flex items-center gap-2 px-4 py-2 bg-white text-orange-600 font-bold text-sm rounded-lg hover:bg-orange-50 transition-colors shadow-lg"
-                                    >
-                                        <Zap size={16} />
-                                        <span className="hidden sm:inline">Claim Deal</span>
-                                        <span className="sm:hidden">Get</span>
-                                        <ArrowRight size={14} className="hidden sm:block" />
-                                    </button>
-                                    <button
-                                        onClick={handleClose}
-                                        className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                                        aria-label="Close promo banner"
-                                    >
-                                        <X size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            
-            {/* Floating Button (shows when banner dismissed) */}
-            <AnimatePresence>
-                {showFloatingButton && !isVisible && (
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.8, x: 100 }}
-                        animate={{ opacity: 1, scale: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, x: 100 }}
-                        onClick={handleClaim}
-                        className="fixed bottom-6 right-6 z-[90] flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                        Claim Deal
+                        <ArrowRight size={12} />
+                    </a>
+                    <button
+                        onClick={handleDismiss}
+                        className="absolute right-4 p-1 hover:bg-white/10 rounded transition-colors"
+                        aria-label="Dismiss"
                     >
-                        <Gift size={18} />
-                        <span>${promo.promoPrice} Deal</span>
-                        <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">{timeLeft}</span>
-                    </motion.button>
-                )}
-            </AnimatePresence>
-        </>
+                        <X size={16} />
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 

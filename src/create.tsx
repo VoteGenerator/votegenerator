@@ -398,20 +398,63 @@ function CreatePage() {
     const duplicateIndices = getDuplicateIndices();
     const hasDuplicates = duplicateIndices.size > 0;
 
+    // Determine if poll type is free or paid
+    const getPollTier = (typeId: string): 'free' | 'quick' | 'event' | 'pro' => {
+        const type = pollTypes.find(t => t.id === typeId);
+        return type?.tier || 'free';
+    };
+
     const handleCreate = async () => {
         if (!question.trim() || validOptions.length < 2 || hasDuplicates) return;
         
-        // Navigate to the VoteGenerator app with the poll data
+        const tier = getPollTier(selectedType);
+        
+        // Build poll data
         const pollData = {
             title: question.trim(),
             description: description.trim(),
             options: validOptions.map(o => ({ text: o })),
             pollType: selectedType,
-            theme: selectedTheme
+            theme: selectedTheme,
+            customColor: useCustomColor ? customColor : null,
+            buttonText: buttonText || 'Submit Vote',
+            tier: tier
         };
         
-        // For now, redirect to the hash-based app
-        window.location.href = `/#create&type=${selectedType}&q=${encodeURIComponent(question)}`;
+        if (tier === 'free') {
+            // FREE POLL: Create directly via API
+            try {
+                const response = await fetch('/.netlify/functions/vg-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pollData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Redirect to admin dashboard with the poll
+                    window.location.href = `/admin.html?poll=${data.pollId}&token=${data.adminToken}`;
+                } else {
+                    const error = await response.json();
+                    alert('Error creating poll: ' + (error.message || 'Please try again'));
+                }
+            } catch (error) {
+                console.error('Create error:', error);
+                alert('Error creating poll. Please try again.');
+            }
+        } else {
+            // PAID POLL: Save draft to localStorage and redirect to checkout
+            localStorage.setItem('pollDraft', JSON.stringify(pollData));
+            
+            // Map tier to checkout plan
+            const planMap: Record<string, string> = {
+                'quick': 'quick_poll',
+                'event': 'event_poll',
+                'pro': 'pro_yearly'
+            };
+            
+            window.location.href = `/checkout?plan=${planMap[tier] || 'quick_poll'}`;
+        }
     };
 
     // Live Preview Component

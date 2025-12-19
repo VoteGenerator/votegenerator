@@ -515,30 +515,70 @@ const VoteGeneratorCreate: React.FC = () => {
         if (validOptions.length < 2) { setError('Please add at least 2 options.'); return; }
         if (hasDuplicates) { setError('Please remove duplicate options.'); return; }
 
-        setIsCreating(true);
-        try {
-            const result = await createPoll({ 
-                title: title.trim(), 
-                description: description.trim() || undefined, 
-                options: validOptions,
-                pollType: pollType as any,
-                voterCount: security === 'code' ? voterCount : undefined,
-                settings: { 
-                    hideResults, 
-                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
-                    requireNames, allowComments, publicComments, blockVpn, security,
-                    dotBudget: pollType === 'dot' ? dotBudget : undefined,
-                    budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
-                    timezone: pollType === 'meeting' ? timezone : undefined
-                } 
-            });
-            window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
-        } catch (e) {
-            console.error('Failed to create poll:', e);
-            setError(e instanceof Error ? e.message : 'Something went wrong.');
-            setIsCreating(false);
+        // Get selected poll type tier
+        const selectedType = POLL_TYPES.find(t => t.id === pollType);
+        const tier = selectedType?.tier || 'free';
+
+        // Build poll data
+        const pollData = {
+            title: title.trim(), 
+            description: description.trim() || undefined, 
+            options: validOptions.map(o => o.text), // Convert to string array for vg-create
+            pollType: pollType,
+            settings: { 
+                hideResults, 
+                allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
+                requireNames, allowComments, publicComments, blockVpn, security,
+                dotBudget: pollType === 'dot' ? dotBudget : undefined,
+                budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
+                deadline: deadline ? new Date(deadline).toISOString() : undefined,
+                maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
+                timezone: pollType === 'meeting' ? timezone : undefined
+            },
+            buttonText: buttonText || 'Submit Vote'
+        };
+
+        if (tier === 'free') {
+            // FREE POLL: Create directly via API
+            setIsCreating(true);
+            try {
+                const response = await fetch('/.netlify/functions/vg-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...pollData,
+                        tier: 'free'
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = `/#id=${result.id}&admin=${result.adminKey}`;
+                } else {
+                    const error = await response.json();
+                    setError(error.error || 'Failed to create poll');
+                    setIsCreating(false);
+                }
+            } catch (e) {
+                console.error('Failed to create poll:', e);
+                setError(e instanceof Error ? e.message : 'Something went wrong.');
+                setIsCreating(false);
+            }
+        } else {
+            // PAID POLL: Save draft to localStorage and redirect to checkout
+            localStorage.setItem('pollDraft', JSON.stringify({
+                ...pollData,
+                tier: tier
+            }));
+            
+            // Map tier to checkout plan
+            const planMap: Record<string, string> = {
+                'quick': 'quick_poll',
+                'event': 'event_poll',
+                'pro': 'pro_yearly'
+            };
+            
+            window.location.href = `/checkout.html?plan=${planMap[tier] || 'quick_poll'}`;
         }
     };
 

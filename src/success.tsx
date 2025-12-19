@@ -102,17 +102,26 @@ function SuccessPage() {
         setCreatingPoll(true);
         
         try {
+            // Map plan to tier for storage
+            const tierFromPlan = plan || pollData.tier || 'quick_poll';
+            
             // Format data to match vg-create.ts expected format
             const createData = {
                 title: pollData.title,
                 description: pollData.description || undefined,
-                options: pollData.options, // Should already be string[]
-                pollType: pollData.pollType,
+                options: Array.isArray(pollData.options) 
+                    ? pollData.options.map((o: any) => typeof o === 'string' ? o : o.text)
+                    : [],
+                pollType: pollData.pollType || 'ranked',
                 settings: pollData.settings || {
                     hideResults: false,
                     allowMultiple: false
-                }
+                },
+                tier: tierFromPlan,
+                buttonText: pollData.buttonText
             };
+            
+            console.log('Creating poll with data:', createData);
             
             const response = await fetch('/.netlify/functions/vg-create', {
                 method: 'POST',
@@ -122,6 +131,7 @@ function SuccessPage() {
             
             if (response.ok) {
                 const data = await response.json();
+                console.log('Poll created:', data);
                 // vg-create returns { id, adminKey }
                 // Clear the draft
                 localStorage.removeItem('pollDraft');
@@ -129,6 +139,7 @@ function SuccessPage() {
                 window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
             } else {
                 const errorData = await response.json();
+                console.error('API error:', errorData);
                 setError(errorData.error || 'Failed to create poll');
                 setCreatingPoll(false);
             }

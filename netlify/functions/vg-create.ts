@@ -1,5 +1,4 @@
 import { Handler } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
 
 interface CreatePollRequest {
     title: string;
@@ -107,8 +106,6 @@ export const handler: Handler = async (event) => {
 
     try {
         const body: CreatePollRequest = JSON.parse(event.body || '{}');
-        
-        console.log('Received create poll request:', JSON.stringify(body, null, 2));
 
         // Validation
         if (!body.title || typeof body.title !== 'string' || body.title.trim().length === 0) {
@@ -188,11 +185,17 @@ export const handler: Handler = async (event) => {
             expiresAt: expiresAt
         };
 
-        // Store using Netlify Blobs - SIMPLE SYNTAX (like your other functions)
-        const store = getStore('polls');
+        // Store using Netlify Blobs
+        const { getStore } = await import('@netlify/blobs');
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         await store.setJSON(pollId, poll);
 
-        console.log(`Poll created successfully: ${pollId}, type: ${poll.pollType}, tier: ${tier}`);
+        console.log(`Poll created: ${pollId}, type: ${poll.pollType}, tier: ${tier}`);
 
         return {
             statusCode: 201,
@@ -216,7 +219,7 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({ 
                 error: 'Something went wrong. Please try again.',
-                details: errorMessage // Always show details for debugging
+                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
             })
         };
     }

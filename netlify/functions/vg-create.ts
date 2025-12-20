@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface CreatePollRequest {
     title: string;
@@ -185,13 +186,8 @@ export const handler: Handler = async (event) => {
             expiresAt: expiresAt
         };
 
-        // Store using Netlify Blobs
-        const { getStore } = await import('@netlify/blobs');
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
+        // Store using Netlify Blobs - simple syntax like vg-create-slug
+        const store = getStore('polls');
         
         await store.setJSON(pollId, poll);
 

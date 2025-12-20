@@ -10,9 +10,9 @@ import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 type PollTier = 'free' | 'quick' | 'event' | 'pro';
 
 const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
-    free: { label: '', colors: '' },
-    quick: { label: 'QUICK', colors: 'bg-blue-500 text-white' },
-    event: { label: 'EVENT', colors: 'bg-purple-500 text-white' },
+    free: { label: 'FREE', colors: 'bg-emerald-500 text-white' },
+    quick: { label: 'PAID', colors: 'bg-blue-500 text-white' },
+    event: { label: 'PAID', colors: 'bg-blue-500 text-white' },
     pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' }
 };
 
@@ -649,15 +649,13 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                     : `border-slate-200 ${type.selectedBg} hover:${type.selectedBorder} hover:shadow-md hover:scale-[1.02]`
                                                         }`}
                                                     >
-                                                        {/* Tier Badge */}
-                                                        {type.tier !== 'free' && (
-                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
-                                                                isLocked ? 'bg-slate-400 text-white' : TIER_CONFIG[type.tier].colors
-                                                            }`}>
-                                                                {type.tier === 'pro' && <Zap size={10} />}
-                                                                <span>{TIER_CONFIG[type.tier].label}</span>
-                                                            </div>
-                                                        )}
+                                                        {/* Tier Badge - Always show */}
+                                                        <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                                                            isLocked ? 'bg-slate-400 text-white' : TIER_CONFIG[type.tier].colors
+                                                        }`}>
+                                                            {type.tier === 'pro' && <Zap size={10} />}
+                                                            <span>{TIER_CONFIG[type.tier].label}</span>
+                                                        </div>
                                                         
                                                         <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 ${isSelected ? 'bg-white/20' : 'bg-white/80'}`}>
                                                             <Icon size={14} className={isSelected ? 'text-white' : type.iconColor} />

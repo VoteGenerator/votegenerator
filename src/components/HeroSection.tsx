@@ -136,7 +136,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                                 <ArrowRight size={20} />
                             </motion.button>
                             <a
-                                href="#demo"
+                                href="/demo.html"
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm"
                             >
                                 See Demo

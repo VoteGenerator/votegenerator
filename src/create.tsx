@@ -460,7 +460,7 @@ function CreatePage() {
                 'pro': 'pro_yearly'
             };
             
-            window.location.href = `/checkout?plan=${planMap[tier] || 'quick_poll'}`;
+            window.location.href = `/checkout.html?plan=${planMap[tier] || 'quick_poll'}`;
         }
     };
 

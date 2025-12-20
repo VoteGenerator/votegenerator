@@ -48,6 +48,7 @@ interface PollTypeInfo {
     exampleQuestion: string;
     exampleOptions: string[];
     proTip: string;
+    isFree?: boolean;
     isPro?: boolean;
     isPaid?: boolean;
 }
@@ -66,7 +67,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Ranking preferences', 'Complex decisions with tradeoffs', 'Budget allocation'],
         exampleQuestion: 'What should we order for the team lunch?',
         exampleOptions: ['🍕 Pizza', '🍜 Thai food', '🌮 Tacos', '🍣 Sushi'],
-        proTip: 'Keep options to 5 or fewer for faster decisions. Too many choices cause "analysis paralysis."'
+        proTip: 'Keep options to 5 or fewer for faster decisions. Too many choices cause "analysis paralysis."',
+        isFree: true
     },
     {
         id: 'ranked-choice',
@@ -81,7 +83,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Simple yes/no questions', 'Time-sensitive quick polls', 'Very young audiences'],
         exampleQuestion: 'Where should we go for the company retreat?',
         exampleOptions: ['🏔️ Mountain cabin', '🏖️ Beach resort', '🏙️ City hotel', '🏕️ Camping'],
-        proTip: 'This prevents the "spoiler effect" where similar options split votes. Great when you have 3+ strong contenders.'
+        proTip: 'This prevents the "spoiler effect" where similar options split votes. Great when you have 3+ strong contenders.',
+        isFree: true
     },
     {
         id: 'meeting-poll',
@@ -96,7 +99,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Decisions unrelated to time', 'Choosing between non-time options'],
         exampleQuestion: 'When can everyone attend the project kickoff?',
         exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm', 'Wed 10am'],
-        proTip: 'Offer 4-6 time slots. Too many options makes it hard to find overlap.'
+        proTip: 'Offer 4-6 time slots. Too many options makes it hard to find overlap.',
+        isPaid: true
     },
     {
         id: 'this-or-that',
@@ -111,7 +115,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['More than 2 options', 'Nuanced feedback', 'Ranking multiple items'],
         exampleQuestion: 'Which logo should we use?',
         exampleOptions: ['Logo A (Blue)', 'Logo B (Green)'],
-        proTip: 'Great for narrowing down. Run multiple rounds: "Winner of Round 1 vs Option C" to find the best.'
+        proTip: 'Great for narrowing down. Run multiple rounds: "Winner of Round 1 vs Option C" to find the best.',
+        isFree: true
     },
     {
         id: 'dot-voting',
@@ -126,7 +131,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Simple single-choice questions', 'When equal weighting matters', 'Small option sets'],
         exampleQuestion: 'Which features should we build next? (You have 5 dots)',
         exampleOptions: ['Dark mode', 'Mobile app', 'API access', 'Integrations', 'Reports', 'Templates'],
-        proTip: 'Give voters fewer dots than options (e.g., 5 dots for 10 options) to force prioritization.'
+        proTip: 'Give voters fewer dots than options (e.g., 5 dots for 10 options) to force prioritization.',
+        isPaid: true
     },
     {
         id: 'rating-scale',
@@ -141,7 +147,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Choosing one winner', 'When you need forced ranking', 'Binary decisions'],
         exampleQuestion: 'Rate each proposed tagline (1-5 stars):',
         exampleOptions: ['"Just vote."', '"Decisions, simplified."', '"Your voice, counted."', '"Poll smarter."'],
-        proTip: 'Use 5-point scales. Anything more granular (1-10) is harder for voters to be consistent.'
+        proTip: 'Use 5-point scales. Anything more granular (1-10) is harder for voters to be consistent.',
+        isPaid: true
     },
     {
         id: 'buy-a-feature',
@@ -156,7 +163,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Simple preference polls', 'When all options are equal cost', 'Fun/casual polls'],
         exampleQuestion: 'You have $100 to spend. What should we build?',
         exampleOptions: ['Mobile app ($50)', 'Dark mode ($20)', 'API ($40)', 'Templates ($15)', 'Reports ($30)'],
-        proTip: 'Price options based on actual effort/cost. This reveals if people want expensive features badly enough.'
+        proTip: 'Price options based on actual effort/cost. This reveals if people want expensive features badly enough.',
+        isPaid: true
     },
     {
         id: 'priority-matrix',
@@ -171,7 +179,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Simple polls', 'Non-strategic decisions', 'Audiences unfamiliar with matrices'],
         exampleQuestion: 'Where does each feature land? (X: Effort, Y: Impact)',
         exampleOptions: ['Mobile app', 'Dark mode', 'API access', 'Integrations'],
-        proTip: 'Use familiar axes like "Impact vs Effort" or "Urgent vs Important." Explain the matrix to voters first.'
+        proTip: 'Use familiar axes like "Impact vs Effort" or "Urgent vs Important." Explain the matrix to voters first.',
+        isPaid: true
     },
     {
         id: 'approval-voting',
@@ -186,7 +195,8 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Ranking preferences', 'When intensity of preference matters', 'A/B decisions'],
         exampleQuestion: 'Which dates work for you? (Select all that apply)',
         exampleOptions: ['December 15', 'December 16', 'December 17', 'December 18'],
-        proTip: "This finds the option most people can live with, even if it's nobody's #1 choice. Great for group harmony."
+        proTip: "This finds the option most people can live with, even if it's nobody's #1 choice. Great for group harmony.",
+        isPaid: true
     },
     {
         id: 'quiz-poll',
@@ -503,6 +513,13 @@ const DemoPage: React.FC = () => {
                                                     <span className={`font-semibold truncate ${selectedPoll === poll.id ? 'text-white' : 'text-slate-800'}`}>
                                                         {poll.name}
                                                     </span>
+                                                    {poll.isFree && (
+                                                        <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-emerald-500 text-white'
+                                                        }`}>
+                                                            FREE
+                                                        </span>
+                                                    )}
                                                     {poll.isPro && (
                                                         <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
                                                             selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white'
@@ -512,9 +529,9 @@ const DemoPage: React.FC = () => {
                                                     )}
                                                     {poll.isPaid && !poll.isPro && (
                                                         <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${
-                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-purple-500 text-white'
+                                                            selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-blue-500 text-white'
                                                         }`}>
-                                                            EVENT
+                                                            PAID
                                                         </span>
                                                     )}
                                                 </div>
@@ -545,11 +562,14 @@ const DemoPage: React.FC = () => {
                                                     <div>
                                                         <h2 className="text-2xl font-bold flex items-center gap-2">
                                                             {selectedPollData.name}
+                                                            {selectedPollData.isFree && (
+                                                                <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">FREE</span>
+                                                            )}
                                                             {selectedPollData.isPro && (
                                                                 <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">PRO</span>
                                                             )}
                                                             {selectedPollData.isPaid && !selectedPollData.isPro && (
-                                                                <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">$5+</span>
+                                                                <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">PAID</span>
                                                             )}
                                                         </h2>
                                                         <p className="text-white/80">{selectedPollData.tagline}</p>

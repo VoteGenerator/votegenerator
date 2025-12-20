@@ -7,13 +7,14 @@ import { compressToTargetSize, formatFileSize } from '../utils/imageCompression'
 import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 
 // Tier type and configuration
-type PollTier = 'free' | 'quick' | 'event' | 'pro';
+type PollTier = 'free' | 'quick' | 'event' | 'pro' | 'pro_plus';
 
 const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
-    free: { label: '', colors: '' },
-    quick: { label: 'QUICK', colors: 'bg-blue-500 text-white' },
-    event: { label: 'EVENT', colors: 'bg-purple-500 text-white' },
-    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' }
+    free: { label: 'FREE', colors: 'bg-emerald-500 text-white' },
+    quick: { label: 'PAID', colors: 'bg-blue-500 text-white' },
+    event: { label: 'PAID', colors: 'bg-blue-500 text-white' },
+    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' },
+    pro_plus: { label: 'PRO+', colors: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' }
 };
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
@@ -263,7 +264,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
         iconColor: 'text-pink-600',
         textColor: 'text-pink-700',
-        tier: 'pro' as PollTier
+        tier: 'pro_plus' as PollTier
     }
 ];
 
@@ -515,30 +516,96 @@ const VoteGeneratorCreate: React.FC = () => {
         if (validOptions.length < 2) { setError('Please add at least 2 options.'); return; }
         if (hasDuplicates) { setError('Please remove duplicate options.'); return; }
 
-        setIsCreating(true);
-        try {
-            const result = await createPoll({ 
-                title: title.trim(), 
-                description: description.trim() || undefined, 
-                options: validOptions,
-                pollType: pollType as any,
-                voterCount: security === 'code' ? voterCount : undefined,
-                settings: { 
-                    hideResults, 
-                    allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
-                    requireNames, allowComments, publicComments, blockVpn, security,
-                    dotBudget: pollType === 'dot' ? dotBudget : undefined,
-                    budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
-                    timezone: pollType === 'meeting' ? timezone : undefined
-                } 
-            });
-            window.location.hash = `id=${result.id}&admin=${result.adminKey}`;
-        } catch (e) {
-            console.error('Failed to create poll:', e);
-            setError(e instanceof Error ? e.message : 'Something went wrong.');
-            setIsCreating(false);
+        // Get selected poll type tier
+        const selectedType = POLL_TYPES.find(t => t.id === pollType);
+        const tier = selectedType?.tier || 'free';
+
+        // Map internal poll types to API-accepted types
+        // API only accepts: 'ranked' | 'multiple' | 'image' | 'meeting'
+        const apiPollTypeMap: Record<string, string> = {
+            'multiple': 'multiple',
+            'ranked': 'ranked',
+            'pairwise': 'multiple',  // This or That → multiple choice
+            'meeting': 'meeting',
+            'dot': 'multiple',       // Dot voting → multiple choice
+            'scale': 'multiple',     // Rating scale → multiple choice  
+            'budget': 'multiple',    // Buy a feature → multiple choice
+            'matrix': 'multiple',    // Priority matrix → multiple choice
+            'approval': 'multiple',  // Approval voting → multiple choice
+            'quiz': 'multiple',      // Quiz → multiple choice
+            'nps': 'multiple',       // NPS → multiple choice
+            'sentiment': 'multiple', // Sentiment → multiple choice
+            'wordcloud': 'multiple', // Word cloud → multiple choice
+            'qna': 'multiple',       // Q&A → multiple choice
+            'image': 'image'         // Visual poll → image
+        };
+        
+        const apiPollType = apiPollTypeMap[pollType] || 'multiple';
+
+        // Build poll data - ONLY send what the API expects
+        const pollData = {
+            title: title.trim(), 
+            description: description.trim() || undefined, 
+            options: validOptions.map(o => o.text), // Convert to string array for vg-create
+            pollType: apiPollType, // Use mapped type for API
+            settings: { 
+                hideResults: hideResults || false, 
+                allowMultiple: pollType === 'meeting' ? true : (allowMultiple || false)
+            }
+        };
+
+        if (tier === 'free') {
+            // FREE POLL: Create directly via API
+            setIsCreating(true);
+            try {
+                console.log('Creating FREE poll with data:', JSON.stringify(pollData, null, 2));
+                
+                const response = await fetch('/.netlify/functions/vg-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pollData)
+                });
+                
+                console.log('API response status:', response.status);
+                const responseText = await response.text();
+                console.log('API response body:', responseText);
+                
+                if (response.ok) {
+                    const result = JSON.parse(responseText);
+                    console.log('Poll created:', result);
+                    window.location.href = `/#id=${result.id}&admin=${result.adminKey}`;
+                } else {
+                    let errorMsg = 'Failed to create poll';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorMsg = errorData.error || errorMsg;
+                        console.error('API error details:', errorData);
+                    } catch (e) {
+                        console.error('Raw error response:', responseText);
+                    }
+                    setError(errorMsg);
+                    setIsCreating(false);
+                }
+            } catch (e) {
+                console.error('Failed to create poll:', e);
+                setError(e instanceof Error ? e.message : 'Something went wrong.');
+                setIsCreating(false);
+            }
+        } else {
+            // PAID POLL: Save draft to localStorage and redirect to checkout
+            localStorage.setItem('pollDraft', JSON.stringify({
+                ...pollData,
+                tier: tier
+            }));
+            
+            // Map tier to checkout plan
+            const planMap: Record<string, string> = {
+                'quick': 'quick_poll',
+                'event': 'event_poll',
+                'pro': 'pro_monthly'
+            };
+            
+            window.location.href = `/checkout.html?plan=${planMap[tier] || 'quick_poll'}`;
         }
     };
 
@@ -609,15 +676,13 @@ const VoteGeneratorCreate: React.FC = () => {
                                                                     : `border-slate-200 ${type.selectedBg} hover:${type.selectedBorder} hover:shadow-md hover:scale-[1.02]`
                                                         }`}
                                                     >
-                                                        {/* Tier Badge */}
-                                                        {type.tier !== 'free' && (
-                                                            <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
-                                                                isLocked ? 'bg-slate-400 text-white' : TIER_CONFIG[type.tier].colors
-                                                            }`}>
-                                                                {type.tier === 'pro' && <Zap size={10} />}
-                                                                <span>{TIER_CONFIG[type.tier].label}</span>
-                                                            </div>
-                                                        )}
+                                                        {/* Tier Badge - Always show */}
+                                                        <div className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                                                            isLocked ? 'bg-slate-400 text-white' : TIER_CONFIG[type.tier].colors
+                                                        }`}>
+                                                            {type.tier === 'pro' && <Zap size={10} />}
+                                                            <span>{TIER_CONFIG[type.tier].label}</span>
+                                                        </div>
                                                         
                                                         <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1 ${isSelected ? 'bg-white/20' : 'bg-white/80'}`}>
                                                             <Icon size={14} className={isSelected ? 'text-white' : type.iconColor} />
@@ -933,10 +998,46 @@ const VoteGeneratorCreate: React.FC = () => {
                                     )}
                                 </AnimatePresence>
 
-                                {/* Create Button */}
-                                <button onClick={handleCreate} disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg">
-                                    {isCreating ? <><Loader2 className="animate-spin" size={20} /> Creating...</> : <><Sparkles size={18} /> Create Poll <ArrowRight size={18} /></>}
-                                </button>
+                                {/* Create Button - Different behavior for FREE vs PAID */}
+                                {selectedPollType?.tier === 'free' ? (
+                                    <button 
+                                        onClick={handleCreate} 
+                                        disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates} 
+                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
+                                    >
+                                        {isCreating ? <><Loader2 className="animate-spin" size={20} /> Creating...</> : <><Sparkles size={18} /> Create Poll <ArrowRight size={18} /></>}
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => {
+                                            // Save draft before going to pricing (so success page can create it later)
+                                            const apiPollTypeMap: Record<string, string> = {
+                                                'multiple': 'multiple', 'ranked': 'ranked', 'pairwise': 'multiple',
+                                                'meeting': 'meeting', 'dot': 'multiple', 'scale': 'multiple',
+                                                'budget': 'multiple', 'matrix': 'multiple', 'approval': 'multiple',
+                                                'quiz': 'multiple', 'nps': 'multiple', 'sentiment': 'multiple',
+                                                'wordcloud': 'multiple', 'qna': 'multiple', 'image': 'image'
+                                            };
+                                            const validOpts = pollType === 'image' 
+                                                ? optionImages.filter(img => !!img).map((img, i) => options[i]?.trim() || `Image ${i+1}`)
+                                                : options.filter(o => o.trim()).map(o => o.trim());
+                                            
+                                            localStorage.setItem('pollDraft', JSON.stringify({
+                                                title: title.trim(),
+                                                description: description.trim() || undefined,
+                                                options: validOpts,
+                                                pollType: apiPollTypeMap[pollType] || 'multiple',
+                                                settings: { hideResults, allowMultiple },
+                                                tier: selectedPollType?.tier || 'quick'
+                                            }));
+                                            window.location.href = '/pricing.html';
+                                        }}
+                                        disabled={validOptionCount < 2 || !title.trim() || hasDuplicates}
+                                        className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-slate-300 disabled:to-slate-400 text-white font-bold rounded-xl shadow-lg shadow-orange-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
+                                    >
+                                        <Lock size={18} /> Upgrade to Unlock <ArrowRight size={18} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </motion.div>

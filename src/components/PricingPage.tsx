@@ -588,7 +588,7 @@ const PricingPage: React.FC = () => {
 
                   {/* CTA */}
                   <a 
-                    href={tier.id === 'free' ? '/create.html' : `/checkout?plan=${tier.id}`}
+                    href={tier.id === 'free' ? '/create.html' : `/checkout.html?plan=${tier.id}`}
                     className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl transition flex items-center justify-center gap-2`}
                   >
                     {tier.cta}

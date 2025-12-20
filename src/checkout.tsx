@@ -52,7 +52,25 @@ const PLANS: Record<string, {
         features: ['10,000/month', 'Unlimited duration', 'All 16 poll types', 'Custom short links'],
         stripePrice: 'price_pro_yearly'
     },
+    'pro_yearly': {
+        name: 'Pro',
+        price: 100,
+        period: 'year',
+        icon: Crown,
+        color: 'from-indigo-500 to-purple-600',
+        features: ['10,000/month', 'Unlimited duration', 'All 16 poll types', 'Custom short links'],
+        stripePrice: 'price_pro_yearly'
+    },
     'pro_plus_monthly': {
+        name: 'Pro+',
+        price: 160,
+        period: 'year',
+        icon: Sparkles,
+        color: 'from-amber-500 to-orange-600',
+        features: ['50,000/month', 'White-label embed', 'API access', '10 team viewers'],
+        stripePrice: 'price_pro_plus_yearly'
+    },
+    'pro_plus_yearly': {
         name: 'Pro+',
         price: 160,
         period: 'year',

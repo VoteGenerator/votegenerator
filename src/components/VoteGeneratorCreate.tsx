@@ -7,13 +7,14 @@ import { compressToTargetSize, formatFileSize } from '../utils/imageCompression'
 import ThemeSelector, { POLL_THEMES } from './ThemeSelector';
 
 // Tier type and configuration
-type PollTier = 'free' | 'quick' | 'event' | 'pro';
+type PollTier = 'free' | 'quick' | 'event' | 'pro' | 'pro_plus';
 
 const TIER_CONFIG: Record<PollTier, { label: string; colors: string }> = {
     free: { label: 'FREE', colors: 'bg-emerald-500 text-white' },
     quick: { label: 'PAID', colors: 'bg-blue-500 text-white' },
     event: { label: 'PAID', colors: 'bg-blue-500 text-white' },
-    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' }
+    pro: { label: 'PRO', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' },
+    pro_plus: { label: 'PRO+', colors: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' }
 };
 
 // Poll types sorted by popularity with gradients and layman-friendly descriptions
@@ -263,7 +264,7 @@ const POLL_TYPES = [
         selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
         iconColor: 'text-pink-600',
         textColor: 'text-pink-700',
-        tier: 'pro' as PollTier
+        tier: 'pro_plus' as PollTier
     }
 ];
 
@@ -990,10 +991,46 @@ const VoteGeneratorCreate: React.FC = () => {
                                     )}
                                 </AnimatePresence>
 
-                                {/* Create Button */}
-                                <button onClick={handleCreate} disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg">
-                                    {isCreating ? <><Loader2 className="animate-spin" size={20} /> Creating...</> : <><Sparkles size={18} /> Create Poll <ArrowRight size={18} /></>}
-                                </button>
+                                {/* Create Button - Different behavior for FREE vs PAID */}
+                                {selectedPollType?.tier === 'free' ? (
+                                    <button 
+                                        onClick={handleCreate} 
+                                        disabled={isCreating || validOptionCount < 2 || !title.trim() || hasDuplicates} 
+                                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
+                                    >
+                                        {isCreating ? <><Loader2 className="animate-spin" size={20} /> Creating...</> : <><Sparkles size={18} /> Create Poll <ArrowRight size={18} /></>}
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => {
+                                            // Save draft before going to pricing (so success page can create it later)
+                                            const apiPollTypeMap: Record<string, string> = {
+                                                'multiple': 'multiple', 'ranked': 'ranked', 'pairwise': 'multiple',
+                                                'meeting': 'meeting', 'dot': 'multiple', 'scale': 'multiple',
+                                                'budget': 'multiple', 'matrix': 'multiple', 'approval': 'multiple',
+                                                'quiz': 'multiple', 'nps': 'multiple', 'sentiment': 'multiple',
+                                                'wordcloud': 'multiple', 'qna': 'multiple', 'image': 'image'
+                                            };
+                                            const validOpts = pollType === 'image' 
+                                                ? optionImages.filter(img => !!img).map((img, i) => options[i]?.trim() || `Image ${i+1}`)
+                                                : options.filter(o => o.trim()).map(o => o.trim());
+                                            
+                                            localStorage.setItem('pollDraft', JSON.stringify({
+                                                title: title.trim(),
+                                                description: description.trim() || undefined,
+                                                options: validOpts,
+                                                pollType: apiPollTypeMap[pollType] || 'multiple',
+                                                settings: { hideResults, allowMultiple },
+                                                tier: selectedPollType?.tier || 'quick'
+                                            }));
+                                            window.location.href = '/pricing.html';
+                                        }}
+                                        disabled={validOptionCount < 2 || !title.trim() || hasDuplicates}
+                                        className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-slate-300 disabled:to-slate-400 text-white font-bold rounded-xl shadow-lg shadow-orange-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg"
+                                    >
+                                        <Lock size={18} /> Upgrade to Unlock <ArrowRight size={18} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </motion.div>

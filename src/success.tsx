@@ -76,17 +76,25 @@ function SuccessPage() {
         const sid = params.get('session_id');
         const planParam = params.get('plan');
         
+        console.log('Success page loaded:', { sid, planParam });
+        
         setSessionId(sid);
         setPlan(planParam);
         
         // Check for saved poll draft
         const draft = localStorage.getItem('pollDraft');
+        console.log('Draft from localStorage:', draft);
+        
         if (draft) {
             try {
-                setPollData(JSON.parse(draft));
+                const parsedDraft = JSON.parse(draft);
+                console.log('Parsed draft:', parsedDraft);
+                setPollData(parsedDraft);
             } catch (e) {
                 console.error('Error parsing poll draft:', e);
             }
+        } else {
+            console.log('No draft found in localStorage');
         }
         
         setLoading(false);
@@ -94,25 +102,46 @@ function SuccessPage() {
 
     const createPollFromDraft = async () => {
         if (!pollData) {
-            // No draft, just go to create page
-            window.location.href = '/create.html';
+            // No draft - show message instead of redirecting
+            setError('No poll draft found. Please create a poll first.');
             return;
         }
         
         setCreatingPoll(true);
+        setError(null);
         
         try {
+            // Ensure pollType is in correct format for API
+            let apiPollType = pollData.pollType;
+            
+            // Convert if needed (in case it's still in create.tsx format)
+            const typeMap: Record<string, string> = {
+                'multiple-choice': 'multiple',
+                'ranked-choice': 'ranked',
+                'this-or-that': 'multiple',
+                'meeting-poll': 'meeting',
+                'visual-poll': 'image',
+            };
+            
+            if (typeMap[apiPollType]) {
+                apiPollType = typeMap[apiPollType];
+            }
+            
             // Format data to match vg-create.ts expected format
             const createData = {
                 title: pollData.title,
                 description: pollData.description || undefined,
-                options: pollData.options, // Should already be string[]
-                pollType: pollData.pollType,
+                options: Array.isArray(pollData.options) 
+                    ? pollData.options.map((o: any) => typeof o === 'string' ? o : o.text || String(o))
+                    : [],
+                pollType: apiPollType,
                 settings: pollData.settings || {
                     hideResults: false,
                     allowMultiple: false
                 }
             };
+            
+            console.log('Creating poll with data:', createData);
             
             const response = await fetch('/.netlify/functions/vg-create', {
                 method: 'POST',
@@ -120,8 +149,11 @@ function SuccessPage() {
                 body: JSON.stringify(createData)
             });
             
+            console.log('API response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('Poll created:', data);
                 // vg-create returns { id, adminKey }
                 // Clear the draft
                 localStorage.removeItem('pollDraft');
@@ -129,6 +161,7 @@ function SuccessPage() {
                 window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
             } else {
                 const errorData = await response.json();
+                console.error('API error:', errorData);
                 setError(errorData.error || 'Failed to create poll');
                 setCreatingPoll(false);
             }
@@ -246,30 +279,35 @@ function SuccessPage() {
                             )}
 
                             {/* CTA Button */}
-                            <button
-                                onClick={createPollFromDraft}
-                                disabled={creatingPoll}
-                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            >
-                                {creatingPoll ? (
-                                    <>
-                                        <Loader2 size={20} className="animate-spin" />
-                                        Creating Your Poll...
-                                    </>
-                                ) : pollData ? (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Create Your Poll Now
-                                        <ArrowRight size={20} />
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Start Creating Polls
-                                        <ArrowRight size={20} />
-                                    </>
-                                )}
-                            </button>
+                            {pollData ? (
+                                <button
+                                    onClick={createPollFromDraft}
+                                    disabled={creatingPoll}
+                                    className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    {creatingPoll ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin" />
+                                            Creating Your Poll...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={20} />
+                                            Create Your Poll Now
+                                            <ArrowRight size={20} />
+                                        </>
+                                    )}
+                                </button>
+                            ) : (
+                                <a
+                                    href="/create.html"
+                                    className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
+                                >
+                                    <Sparkles size={20} />
+                                    Start Creating Polls
+                                    <ArrowRight size={20} />
+                                </a>
+                            )}
                         </div>
                     </motion.div>
                 )}

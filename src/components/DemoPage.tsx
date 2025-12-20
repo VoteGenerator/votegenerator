@@ -87,22 +87,6 @@ const pollTypes: PollTypeInfo[] = [
         isFree: true
     },
     {
-        id: 'meeting-poll',
-        name: 'Meeting Poll',
-        icon: Calendar,
-        gradient: 'from-amber-500 to-orange-600',
-        bgColor: 'bg-amber-50',
-        tagline: "Find when everyone's free.",
-        description: 'Like Doodle or When2Meet, but simpler. Show a grid of dates/times and let people mark their availability. Instantly see which slot works for the most people.',
-        howItWorks: 'You add date/time options. Voters mark each as "Available," "Maybe," or "Unavailable." Results highlight the best time slot with a heat map.',
-        bestFor: ['Scheduling meetings', 'Planning events', 'Coordinating across time zones', 'Finding common availability'],
-        notFor: ['Decisions unrelated to time', 'Choosing between non-time options'],
-        exampleQuestion: 'When can everyone attend the project kickoff?',
-        exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm', 'Wed 10am'],
-        proTip: 'Offer 4-6 time slots. Too many options makes it hard to find overlap.',
-        isPaid: true
-    },
-    {
         id: 'this-or-that',
         name: 'This or That',
         icon: ArrowLeftRight,
@@ -117,6 +101,22 @@ const pollTypes: PollTypeInfo[] = [
         exampleOptions: ['Logo A (Blue)', 'Logo B (Green)'],
         proTip: 'Great for narrowing down. Run multiple rounds: "Winner of Round 1 vs Option C" to find the best.',
         isFree: true
+    },
+    {
+        id: 'meeting-poll',
+        name: 'Meeting Poll',
+        icon: Calendar,
+        gradient: 'from-amber-500 to-orange-600',
+        bgColor: 'bg-amber-50',
+        tagline: "Find when everyone's free.",
+        description: 'Like Doodle or When2Meet, but simpler. Show a grid of dates/times and let people mark their availability. Instantly see which slot works for the most people.',
+        howItWorks: 'You add date/time options. Voters mark each as "Available," "Maybe," or "Unavailable." Results highlight the best time slot with a heat map.',
+        bestFor: ['Scheduling meetings', 'Planning events', 'Coordinating across time zones', 'Finding common availability'],
+        notFor: ['Decisions unrelated to time', 'Choosing between non-time options'],
+        exampleQuestion: 'When can everyone attend the project kickoff?',
+        exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm', 'Wed 10am'],
+        proTip: 'Offer 4-6 time slots. Too many options makes it hard to find overlap.',
+        isPaid: true
     },
     {
         id: 'dot-voting',

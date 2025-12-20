@@ -93,8 +93,13 @@ export const handler: Handler = async (event) => {
             maxResponses: 100
         };
 
-        // Store - EXACT same syntax as vg-create-slug
-        const store = getStore('polls');
+        // Store with explicit siteID and token
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         await store.setJSON(pollId, poll);
 
         console.log('Poll created:', pollId);

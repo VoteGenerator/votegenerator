@@ -76,14 +76,17 @@ function SuccessPage() {
         const sid = params.get('session_id');
         const planParam = params.get('plan');
         
-        console.log('Success page loaded:', { sid, planParam });
+        console.log('=== SUCCESS PAGE LOADED ===');
+        console.log('URL params:', { session_id: sid, plan: planParam });
+        console.log('Full URL:', window.location.href);
         
         setSessionId(sid);
         setPlan(planParam);
         
         // Check for saved poll draft
         const draft = localStorage.getItem('pollDraft');
-        console.log('Draft from localStorage:', draft);
+        console.log('localStorage pollDraft exists:', !!draft);
+        console.log('localStorage pollDraft value:', draft);
         
         if (draft) {
             try {
@@ -94,7 +97,9 @@ function SuccessPage() {
                 console.error('Error parsing poll draft:', e);
             }
         } else {
-            console.log('No draft found in localStorage');
+            console.log('No pollDraft found in localStorage');
+            // List all localStorage keys for debugging
+            console.log('All localStorage keys:', Object.keys(localStorage));
         }
         
         setLoading(false);
@@ -312,7 +317,7 @@ function SuccessPage() {
                                 </button>
                             ) : (
                                 <a
-                                    href="/create.html"
+                                    href="/"
                                     className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
                                 >
                                     <Sparkles size={20} />
@@ -336,7 +341,7 @@ function SuccessPage() {
                             A confirmation email has been sent to your inbox.
                         </p>
                         <a
-                            href="/create.html"
+                            href="/"
                             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all"
                         >
                             <Sparkles size={20} />

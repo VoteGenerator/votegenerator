@@ -542,24 +542,23 @@ const VoteGeneratorCreate: React.FC = () => {
         
         const apiPollType = apiPollTypeMap[pollType] || 'multiple';
 
-        // Build poll data
+        // Build poll data - ONLY send what the API expects
         const pollData = {
             title: title.trim(), 
             description: description.trim() || undefined, 
             options: validOptions.map(o => o.text), // Convert to string array for vg-create
             pollType: apiPollType, // Use mapped type for API
             settings: { 
-                hideResults, 
-                allowMultiple: pollType === 'meeting' ? true : allowMultiple
-            },
-            buttonText: buttonText || 'Submit Vote'
+                hideResults: hideResults || false, 
+                allowMultiple: pollType === 'meeting' ? true : (allowMultiple || false)
+            }
         };
 
         if (tier === 'free') {
             // FREE POLL: Create directly via API
             setIsCreating(true);
             try {
-                console.log('Creating FREE poll with data:', pollData);
+                console.log('Creating FREE poll with data:', JSON.stringify(pollData, null, 2));
                 
                 const response = await fetch('/.netlify/functions/vg-create', {
                     method: 'POST',
@@ -568,15 +567,23 @@ const VoteGeneratorCreate: React.FC = () => {
                 });
                 
                 console.log('API response status:', response.status);
+                const responseText = await response.text();
+                console.log('API response body:', responseText);
                 
                 if (response.ok) {
-                    const result = await response.json();
+                    const result = JSON.parse(responseText);
                     console.log('Poll created:', result);
                     window.location.href = `/#id=${result.id}&admin=${result.adminKey}`;
                 } else {
-                    const error = await response.json();
-                    console.error('API error:', error);
-                    setError(error.error || 'Failed to create poll');
+                    let errorMsg = 'Failed to create poll';
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorMsg = errorData.error || errorMsg;
+                        console.error('API error details:', errorData);
+                    } catch (e) {
+                        console.error('Raw error response:', responseText);
+                    }
+                    setError(errorMsg);
                     setIsCreating(false);
                 }
             } catch (e) {

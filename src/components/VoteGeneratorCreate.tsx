@@ -519,21 +519,37 @@ const VoteGeneratorCreate: React.FC = () => {
         const selectedType = POLL_TYPES.find(t => t.id === pollType);
         const tier = selectedType?.tier || 'free';
 
+        // Map internal poll types to API-accepted types
+        // API only accepts: 'ranked' | 'multiple' | 'image' | 'meeting'
+        const apiPollTypeMap: Record<string, string> = {
+            'multiple': 'multiple',
+            'ranked': 'ranked',
+            'pairwise': 'multiple',  // This or That → multiple choice
+            'meeting': 'meeting',
+            'dot': 'multiple',       // Dot voting → multiple choice
+            'scale': 'multiple',     // Rating scale → multiple choice  
+            'budget': 'multiple',    // Buy a feature → multiple choice
+            'matrix': 'multiple',    // Priority matrix → multiple choice
+            'approval': 'multiple',  // Approval voting → multiple choice
+            'quiz': 'multiple',      // Quiz → multiple choice
+            'nps': 'multiple',       // NPS → multiple choice
+            'sentiment': 'multiple', // Sentiment → multiple choice
+            'wordcloud': 'multiple', // Word cloud → multiple choice
+            'qna': 'multiple',       // Q&A → multiple choice
+            'image': 'image'         // Visual poll → image
+        };
+        
+        const apiPollType = apiPollTypeMap[pollType] || 'multiple';
+
         // Build poll data
         const pollData = {
             title: title.trim(), 
             description: description.trim() || undefined, 
             options: validOptions.map(o => o.text), // Convert to string array for vg-create
-            pollType: pollType,
+            pollType: apiPollType, // Use mapped type for API
             settings: { 
                 hideResults, 
-                allowMultiple: pollType === 'meeting' ? true : allowMultiple, 
-                requireNames, allowComments, publicComments, blockVpn, security,
-                dotBudget: pollType === 'dot' ? dotBudget : undefined,
-                budgetLimit: pollType === 'budget' ? budgetLimit : undefined,
-                deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                maxVotes: maxVotes === '' ? undefined : Number(maxVotes),
-                timezone: pollType === 'meeting' ? timezone : undefined
+                allowMultiple: pollType === 'meeting' ? true : allowMultiple
             },
             buttonText: buttonText || 'Submit Vote'
         };
@@ -542,20 +558,23 @@ const VoteGeneratorCreate: React.FC = () => {
             // FREE POLL: Create directly via API
             setIsCreating(true);
             try {
+                console.log('Creating FREE poll with data:', pollData);
+                
                 const response = await fetch('/.netlify/functions/vg-create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ...pollData,
-                        tier: 'free'
-                    })
+                    body: JSON.stringify(pollData)
                 });
+                
+                console.log('API response status:', response.status);
                 
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('Poll created:', result);
                     window.location.href = `/#id=${result.id}&admin=${result.adminKey}`;
                 } else {
                     const error = await response.json();
+                    console.error('API error:', error);
                     setError(error.error || 'Failed to create poll');
                     setIsCreating(false);
                 }
@@ -575,7 +594,7 @@ const VoteGeneratorCreate: React.FC = () => {
             const planMap: Record<string, string> = {
                 'quick': 'quick_poll',
                 'event': 'event_poll',
-                'pro': 'pro_yearly'
+                'pro': 'pro_monthly'
             };
             
             window.location.href = `/checkout.html?plan=${planMap[tier] || 'quick_poll'}`;

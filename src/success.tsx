@@ -111,11 +111,25 @@ function SuccessPage() {
         setError(null);
         
         try {
-            // Ensure pollType is in correct format for API
-            let apiPollType = pollData.pollType;
-            
-            // Convert if needed (in case it's still in create.tsx format)
-            const typeMap: Record<string, string> = {
+            // Map internal poll types to API-accepted types
+            // API only accepts: 'ranked' | 'multiple' | 'image' | 'meeting'
+            const apiPollTypeMap: Record<string, string> = {
+                'multiple': 'multiple',
+                'ranked': 'ranked',
+                'pairwise': 'multiple',
+                'meeting': 'meeting',
+                'dot': 'multiple',
+                'scale': 'multiple',
+                'budget': 'multiple',
+                'matrix': 'multiple',
+                'approval': 'multiple',
+                'quiz': 'multiple',
+                'nps': 'multiple',
+                'sentiment': 'multiple',
+                'wordcloud': 'multiple',
+                'qna': 'multiple',
+                'image': 'image',
+                // Also handle old format just in case
                 'multiple-choice': 'multiple',
                 'ranked-choice': 'ranked',
                 'this-or-that': 'multiple',
@@ -123,9 +137,7 @@ function SuccessPage() {
                 'visual-poll': 'image',
             };
             
-            if (typeMap[apiPollType]) {
-                apiPollType = typeMap[apiPollType];
-            }
+            const apiPollType = apiPollTypeMap[pollData.pollType] || 'multiple';
             
             // Format data to match vg-create.ts expected format
             const createData = {
@@ -135,9 +147,9 @@ function SuccessPage() {
                     ? pollData.options.map((o: any) => typeof o === 'string' ? o : o.text || String(o))
                     : [],
                 pollType: apiPollType,
-                settings: pollData.settings || {
-                    hideResults: false,
-                    allowMultiple: false
+                settings: {
+                    hideResults: pollData.settings?.hideResults || false,
+                    allowMultiple: pollData.settings?.allowMultiple || false
                 }
             };
             

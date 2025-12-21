@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight } from 'lucide-react';
-import { createPoll } from '../services/voteGeneratorService';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight } from 'lucide-react';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import ThemeSelector from './ThemeSelector';
 
@@ -189,19 +188,38 @@ const VoteGeneratorCreate: React.FC = () => {
         if (validOptions.length < 2) { setError('Please add at least 2 options'); return; }
         setIsCreating(true);
         setError(null);
+        
         try {
+            // Build poll data matching vg-create API format
             const pollData = {
                 title: title.trim(),
-                description: description.trim(),
-                type: pollType,
+                description: description.trim() || undefined,
                 options: validOptions,
-                optionImages: pollType === 'image' ? optionImages.slice(0, validOptions.length) : undefined,
-                multipleSelection,
-                theme: selectedTheme,
+                pollType: pollType,
+                settings: {
+                    allowMultiple: multipleSelection,
+                },
                 tier: selectedPollType?.tier || 'free',
             };
-            const result = await createPoll(pollData);
-            window.location.href = `/#id=${result.id}&admin=${result.adminToken}`;
+
+            // Add image URLs if visual poll
+            if (pollType === 'image') {
+                (pollData as any).optionImages = optionImages.slice(0, validOptions.length).filter(img => img);
+            }
+
+            const response = await fetch('/.netlify/functions/vg-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pollData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                window.location.href = `/#id=${result.id}&admin=${result.adminKey}`;
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || 'Failed to create poll');
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to create poll');
         } finally {
@@ -374,7 +392,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                             )}
                                             <div>
                                                 <label className="block text-sm font-medium text-slate-700 mb-2">Poll Theme</label>
-                                                <ThemeSelector selectedTheme={selectedTheme} onSelectTheme={setSelectedTheme} />
+                                                <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
                                             </div>
                                         </div>
                                     </motion.div>

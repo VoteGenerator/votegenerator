@@ -653,6 +653,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     
                                     {/* ADMIN: Management Toolbar */}
                                     {viewState.isAdmin && (
+                                        <>
                                         <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
@@ -710,7 +711,6 @@ const VoteGeneratorApp: React.FC = () => {
                                                      </div>
                                                 </div>
 
-                                                {/* Controls Section */}
                                                 <ControlsSection
                                                     poll={viewState.poll}
                                                     isExporting={isExporting}
@@ -722,8 +722,8 @@ const VoteGeneratorApp: React.FC = () => {
                                             </div>
                                         </div>
                                         
-                                        {/* Premium Features Row */}
                                         <PremiumFeaturesRow poll={viewState.poll} />
+                                        </>
                                     )}
 
                                     {/* Main Content Area (Title + Results) */}

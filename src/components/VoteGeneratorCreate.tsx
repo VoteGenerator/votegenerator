@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock } from 'lucide-react';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import ThemeSelector from './ThemeSelector';
 
@@ -10,42 +10,84 @@ import ThemeSelector from './ThemeSelector';
 
 type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited';
 
-const TIER_CONFIG: Record<PollTier, { label: string; colors: string; tooltip: string }> = {
-    free: { label: '', colors: '', tooltip: '' },
-    starter: { label: 'STARTER', colors: 'bg-blue-500 text-white', tooltip: '$9.99 one-time' },
-    pro_event: { label: 'PRO', colors: 'bg-purple-500 text-white', tooltip: '$19.99 one-time' },
-    unlimited: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white', tooltip: '$199/year' }
+const TIER_CONFIG: Record<PollTier, { label: string; colors: string; maxDays: number }> = {
+    free: { label: '', colors: '', maxDays: 7 },
+    starter: { label: 'STARTER', colors: 'bg-blue-500 text-white', maxDays: 30 },
+    pro_event: { label: 'PRO', colors: 'bg-purple-600 text-white', maxDays: 60 },
+    unlimited: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white', maxDays: 365 }
 };
 
 // ============================================================================
-// 7 Poll Types
+// 7 Poll Types - with visible description + detailed hover tooltip
 // ============================================================================
 
 const POLL_TYPES = [
-    { id: 'multiple', name: 'Multiple Choice', icon: CheckSquare, description: 'Classic poll - pick one or more', tooltip: 'Voters click their favorite option(s). Great for quick decisions.', gradient: 'from-blue-500 to-indigo-500', selectedBorder: 'border-blue-500', selectedBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', tier: 'free' as PollTier },
-    { id: 'ranked', name: 'Ranked Choice', icon: ListOrdered, description: 'Drag to rank in order', tooltip: 'Voters rank options from favorite to least. Shows true preferences!', gradient: 'from-indigo-500 to-purple-500', selectedBorder: 'border-indigo-500', selectedBg: 'bg-gradient-to-br from-indigo-50 to-purple-50', tier: 'free' as PollTier },
-    { id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, description: 'Quick A vs B comparisons', tooltip: 'Two options, pick one. Great for quick gut-reaction feedback.', gradient: 'from-orange-500 to-red-500', selectedBorder: 'border-orange-500', selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50', tier: 'free' as PollTier },
-    { id: 'meeting', name: 'Meeting Poll', icon: Calendar, description: 'Find the best time', tooltip: 'Like Doodle! Everyone marks when they\'re available.', gradient: 'from-amber-500 to-orange-500', selectedBorder: 'border-amber-500', selectedBg: 'bg-gradient-to-br from-amber-50 to-orange-50', tier: 'free' as PollTier },
-    { id: 'rating', name: 'Rating Scale', icon: SlidersHorizontal, description: 'Rate each option 1-5', tooltip: 'Voters rate every option from 1-5 stars. See average ratings.', gradient: 'from-cyan-500 to-blue-500', selectedBorder: 'border-cyan-500', selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50', tier: 'free' as PollTier },
-    { id: 'rsvp', name: 'RSVP', icon: Users, description: 'Collect event attendance', tooltip: 'Yes/No/Maybe for events. See who\'s coming at a glance.', gradient: 'from-sky-500 to-blue-500', selectedBorder: 'border-sky-500', selectedBg: 'bg-gradient-to-br from-sky-50 to-blue-50', tier: 'free' as PollTier },
-    { id: 'image', name: 'Visual Poll', icon: ImageIcon, description: 'Vote on images', tooltip: 'Upload images and let people vote visually. Perfect for design choices!', gradient: 'from-pink-500 to-rose-500', selectedBorder: 'border-pink-500', selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50', tier: 'pro_event' as PollTier }
+    { 
+        id: 'multiple', 
+        name: 'Multiple Choice', 
+        icon: CheckSquare, 
+        shortDesc: 'Pick one or more options',
+        tooltip: 'The classic poll type. Voters click their favorite(s). Perfect for quick team decisions like lunch votes or meeting topics.',
+        gradient: 'from-blue-500 to-indigo-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'ranked', 
+        name: 'Ranked Choice', 
+        icon: ListOrdered, 
+        shortDesc: 'Drag to rank in order',
+        tooltip: 'Voters rank all options from favorite to least favorite. Shows true preferences and avoids vote splitting. Used in elections!',
+        gradient: 'from-indigo-500 to-purple-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'pairwise', 
+        name: 'This or That', 
+        icon: ArrowLeftRight, 
+        shortDesc: 'Quick A vs B comparisons',
+        tooltip: 'Shows two options at a time. Voters pick their favorite. Great for narrowing down many options with gut-reaction feedback.',
+        gradient: 'from-orange-500 to-red-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'meeting', 
+        name: 'Meeting Poll', 
+        icon: Calendar, 
+        shortDesc: 'Find the best time',
+        tooltip: 'Like Doodle but simpler! Add date/time options and everyone marks when they\'re available. No more email chains.',
+        gradient: 'from-amber-500 to-orange-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'rating', 
+        name: 'Rating Scale', 
+        icon: SlidersHorizontal, 
+        shortDesc: 'Rate each 1-5 stars',
+        tooltip: 'Voters rate every option from 1-5 stars independently. See average ratings to compare. Great for feedback and evaluations.',
+        gradient: 'from-cyan-500 to-blue-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'rsvp', 
+        name: 'RSVP', 
+        icon: Users, 
+        shortDesc: 'Event attendance',
+        tooltip: 'Simple Yes/No/Maybe responses for events. See who\'s coming with automatic headcounts. Perfect for party planning!',
+        gradient: 'from-sky-500 to-blue-500', 
+        tier: 'free' as PollTier 
+    },
+    { 
+        id: 'image', 
+        name: 'Visual Poll', 
+        icon: ImageIcon, 
+        shortDesc: 'Vote on images',
+        tooltip: 'Upload images and let people vote visually. Perfect for design feedback, logo selection, photo contests, or product comparisons.',
+        gradient: 'from-pink-500 to-rose-500', 
+        tier: 'pro_event' as PollTier 
+    }
 ];
 
 const PLACEHOLDER_QUESTIONS = ["Where should we eat lunch?", "What movie should we watch?", "Which design do you prefer?", "When can everyone meet?"];
-
-// ============================================================================
-// Tooltip Component - Improved styling
-// ============================================================================
-
-const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
-    <div className="group relative inline-flex">
-        {children}
-        <div className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1.5 bg-slate-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-normal max-w-[200px] text-center leading-snug pointer-events-none shadow-lg">
-            {text}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-700" />
-        </div>
-    </div>
-);
 
 // ============================================================================
 // Main Component
@@ -70,10 +112,20 @@ const VoteGeneratorCreate: React.FC = () => {
     const [allowComments, setAllowComments] = useState(false);
     const [hideResults, setHideResults] = useState(false);
     const [buttonText, setButtonText] = useState('Submit Vote');
+    const [deadline, setDeadline] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('default');
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
     const isPaidType = selectedPollType?.tier !== 'free';
+    const currentTier = selectedPollType?.tier || 'free';
+    const maxDays = TIER_CONFIG[currentTier].maxDays;
+
+    // Calculate max deadline date based on tier
+    const getMaxDeadline = () => {
+        const max = new Date();
+        max.setDate(max.getDate() + maxDays);
+        return max.toISOString().slice(0, 16);
+    };
 
     const addOption = () => {
         if (options.length < 20) {
@@ -134,9 +186,10 @@ const VoteGeneratorCreate: React.FC = () => {
                     requireNames,
                     allowComments,
                     hideResults,
+                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
                 },
                 buttonText: buttonText || 'Submit Vote',
-                tier: selectedPollType?.tier || 'free',
+                tier: currentTier,
             };
 
             if (pollType === 'image') {
@@ -179,48 +232,69 @@ const VoteGeneratorCreate: React.FC = () => {
                 <div className="grid lg:grid-cols-5 gap-8">
                     {/* Left Column - Form */}
                     <div className="lg:col-span-3 space-y-6">
-                        {/* Poll Type Selector */}
+                        {/* Poll Type Selector - Improved cards with visible description + hover */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                             <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <BarChart2 className="text-indigo-600" size={20} />Choose Poll Type
                             </h2>
                             
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                                 {POLL_TYPES.map((type) => {
                                     const Icon = type.icon;
                                     const isSelected = pollType === type.id;
                                     const tierConfig = TIER_CONFIG[type.tier];
                                     
                                     return (
-                                        <Tooltip key={type.id} text={type.tooltip}>
+                                        <div key={type.id} className="relative group">
                                             <button
                                                 onClick={() => setPollType(type.id)}
-                                                className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${
-                                                    isSelected ? `${type.selectedBorder} ${type.selectedBg}` : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                className={`relative w-full p-3 rounded-xl border-2 transition-all text-left ${
+                                                    isSelected 
+                                                        ? 'border-indigo-500 bg-indigo-50 shadow-md ring-2 ring-indigo-200' 
+                                                        : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-sm'
                                                 }`}
                                             >
+                                                {/* Tier Badge */}
                                                 {tierConfig.label && (
-                                                    <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold rounded-full ${tierConfig.colors}`}>
+                                                    <span className={`absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-bold rounded-full shadow ${tierConfig.colors}`}>
                                                         {tierConfig.label}
                                                     </span>
                                                 )}
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-gradient-to-br ${type.gradient}`}>
-                                                    <Icon className="text-white" size={20} />
+                                                
+                                                {/* Icon */}
+                                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2 bg-gradient-to-br ${type.gradient}`}>
+                                                    <Icon className="text-white" size={18} />
                                                 </div>
-                                                <div className="font-medium text-slate-900 text-sm mb-1">{type.name}</div>
-                                                <div className="text-xs text-slate-500 line-clamp-2">{type.description}</div>
+                                                
+                                                {/* Name */}
+                                                <div className={`font-semibold text-sm leading-tight ${isSelected ? 'text-indigo-900' : 'text-slate-900'}`}>
+                                                    {type.name}
+                                                </div>
+                                                
+                                                {/* Short Description - Always Visible */}
+                                                <div className="text-[11px] text-slate-500 mt-1 leading-snug">
+                                                    {type.shortDesc}
+                                                </div>
                                             </button>
-                                        </Tooltip>
+                                            
+                                            {/* Hover Tooltip - Clean styling */}
+                                            <div className="absolute z-40 bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 bg-slate-900 text-white text-sm rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none shadow-2xl">
+                                                <div className="font-bold mb-1.5 text-white">{type.name}</div>
+                                                <div className="text-slate-300 leading-relaxed text-xs">{type.tooltip}</div>
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                                            </div>
+                                        </div>
                                     );
                                 })}
                             </div>
                             
+                            {/* Pro type notice */}
                             {isPaidType && (
                                 <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-3">
                                     <Lock className="text-purple-600 flex-shrink-0 mt-0.5" size={18} />
                                     <div>
                                         <p className="text-purple-900 font-medium text-sm">{selectedPollType?.name} requires Pro Event ($19.99 one-time)</p>
-                                        <p className="text-purple-700 text-xs mt-1">Includes 2,000 responses, PDF export, remove branding & more. <a href="/pricing" className="underline">See features →</a></p>
+                                        <p className="text-purple-700 text-xs mt-1">Includes 2,000 responses, 60 days active, PDF export & more. <a href="/pricing" className="underline hover:text-purple-900">See features →</a></p>
                                     </div>
                                 </div>
                             )}
@@ -285,70 +359,91 @@ const VoteGeneratorCreate: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Advanced Options */}
+                        {/* Settings */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                             <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">
                                 <span className="font-medium text-slate-900">Settings & Customization</span>
-                                {showAdvanced ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                {showAdvanced ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
                             </button>
                             
                             <AnimatePresence>
                                 {showAdvanced && (
                                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
                                         <div className="p-6 space-y-4">
-                                            {/* Multiple Selection (for multiple choice) */}
+                                            {/* Deadline */}
+                                            <div className="p-4 bg-slate-50 rounded-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                                        <Clock size={16} className="text-slate-500" />
+                                                        Close poll on
+                                                    </label>
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full ${currentTier === 'free' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                        {currentTier === 'free' ? 'Free: max 7 days' : `Max ${maxDays} days`}
+                                                    </span>
+                                                </div>
+                                                <input 
+                                                    type="datetime-local" 
+                                                    value={deadline} 
+                                                    onChange={(e) => setDeadline(e.target.value)}
+                                                    min={new Date().toISOString().slice(0, 16)}
+                                                    max={getMaxDeadline()}
+                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                />
+                                                <p className="text-xs text-slate-500 mt-2">
+                                                    {currentTier === 'free' 
+                                                        ? '⚠️ Free polls can be active up to 7 days. Need longer? Upgrade to extend.'
+                                                        : `Your plan allows polls up to ${maxDays} days.`
+                                                    }
+                                                </p>
+                                            </div>
+
+                                            {/* Multiple Selection */}
                                             {pollType === 'multiple' && (
-                                                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition">
                                                     <div className="flex items-center gap-2">
+                                                        <CheckSquare size={16} className="text-slate-500" />
                                                         <span className="text-sm font-medium text-slate-700">Allow multiple selections</span>
-                                                        <Tooltip text="Let voters pick more than one option">
-                                                            <HelpCircle size={14} className="text-slate-400" />
-                                                        </Tooltip>
                                                     </div>
-                                                    <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                                    <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} 
+                                                        className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                                 </label>
                                             )}
                                             
                                             {/* Require Names */}
-                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition">
                                                 <div className="flex items-center gap-2">
+                                                    <Users size={16} className="text-slate-500" />
                                                     <span className="text-sm font-medium text-slate-700">Require names</span>
-                                                    <Tooltip text="Voters must enter their name before voting. Names shown to organizer only.">
-                                                        <HelpCircle size={14} className="text-slate-400" />
-                                                    </Tooltip>
                                                 </div>
-                                                <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                                <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} 
+                                                    className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                             </label>
                                             
                                             {/* Allow Comments */}
-                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition">
                                                 <div className="flex items-center gap-2">
                                                     <MessageCircle size={16} className="text-slate-500" />
                                                     <span className="text-sm font-medium text-slate-700">Allow comments</span>
-                                                    <Tooltip text="Let voters leave optional comments with their vote. Great for feedback!">
-                                                        <HelpCircle size={14} className="text-slate-400" />
-                                                    </Tooltip>
                                                 </div>
-                                                <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                                <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} 
+                                                    className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                             </label>
                                             
                                             {/* Hide Results */}
-                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition">
                                                 <div className="flex items-center gap-2">
                                                     <Eye size={16} className="text-slate-500" />
                                                     <span className="text-sm font-medium text-slate-700">Hide results until closed</span>
-                                                    <Tooltip text="Results stay hidden from voters until you close the poll. Prevents bias!">
-                                                        <HelpCircle size={14} className="text-slate-400" />
-                                                    </Tooltip>
                                                 </div>
-                                                <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                                <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} 
+                                                    className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                             </label>
                                             
                                             {/* Button Text */}
-                                            <div className="p-3 bg-slate-50 rounded-xl">
+                                            <div className="p-4 bg-slate-50 rounded-xl">
                                                 <label className="block text-sm font-medium text-slate-700 mb-2">Submit button text</label>
                                                 <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote"
-                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
                                             </div>
                                             
                                             {/* Theme Selector */}
@@ -411,7 +506,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                 <ul className="text-sm text-amber-700 space-y-1">
                                     <li>• Keep your question clear and specific</li>
                                     <li>• 4-6 options works best for most polls</li>
-                                    <li>• Save your admin link to manage the poll later</li>
+                                    <li>• Save your admin link to manage later</li>
                                 </ul>
                             </div>
                         </div>

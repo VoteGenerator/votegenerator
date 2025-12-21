@@ -68,6 +68,128 @@ const TIER_CONFIG: Record<string, {
   }
 };
 
+// Premium Features Row Component
+const PremiumFeaturesRow: React.FC<{ poll: Poll }> = ({ poll }) => {
+    const pollTier = (poll as any).tier || 'free';
+    const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
+    
+    const features = [
+        { key: 'customShortLink', icon: Link2, label: 'Custom Link', color: 'text-indigo-500' },
+        { key: 'uploadLogo', icon: Image, label: 'Upload Logo', color: 'text-purple-500' },
+        { key: 'removeBranding', icon: Sparkles, label: 'Remove Branding', color: 'text-amber-500' },
+    ];
+    
+    return (
+        <div className="bg-slate-50/50 border-t border-slate-200 p-6 print:hidden">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Crown size={12} />
+                {pollTier === 'free' ? 'Premium Features' : 'Your Features'}
+            </h4>
+            <div className="grid grid-cols-3 gap-3">
+                {features.map(feature => {
+                    const isLocked = !tierConfig.features[feature.key as keyof typeof tierConfig.features];
+                    const IconComp = feature.icon;
+                    
+                    if (isLocked) {
+                        return (
+                            <a
+                                key={feature.key}
+                                href="/pricing"
+                                className="relative p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center opacity-50 hover:opacity-70 transition group"
+                                title="Upgrade to unlock"
+                            >
+                                <IconComp size={20} className={feature.color} />
+                                <span className="text-xs font-medium text-slate-600">{feature.label}</span>
+                                <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full shadow flex items-center gap-0.5">
+                                    <DollarSign size={7} />PRO
+                                </span>
+                            </a>
+                        );
+                    }
+                    
+                    return (
+                        <button
+                            key={feature.key}
+                            onClick={() => alert(feature.label + ' - Coming soon!')}
+                            className="p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center hover:border-indigo-300 hover:shadow-sm transition"
+                        >
+                            <IconComp size={20} className={feature.color} />
+                            <span className="text-xs font-medium text-slate-700">{feature.label}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+// Controls Section Component  
+interface ControlsSectionProps {
+    poll: Poll;
+    isExporting: boolean;
+    handleEditPoll: () => void;
+    handleExportCSV: () => void;
+    handlePrintPDF: () => void;
+}
+
+const ControlsSection: React.FC<ControlsSectionProps> = ({ 
+    poll, isExporting, handleEditPoll, handleExportCSV, handlePrintPDF 
+}) => {
+    const pollTier = (poll as any).tier || 'free';
+    const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
+    const canExportCsv = tierConfig.features.exportCsv;
+    const canExportPdf = tierConfig.features.exportPdf;
+    
+    return (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                    <Settings size={18} className="text-slate-600"/> Controls
+                </h4>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                    <Settings size={16}/> Edit
+                </button>
+                
+                {canExportCsv ? (
+                    <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                        {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
+                    </button>
+                ) : (
+                    <a 
+                        href="/pricing" 
+                        className="relative flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 rounded-lg text-sm font-medium text-slate-400 opacity-60 hover:opacity-80 transition-all group"
+                        title="Upgrade to unlock CSV export"
+                    >
+                        <FileSpreadsheet size={16}/> CSV
+                        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
+                            <DollarSign size={8} />PRO
+                        </span>
+                    </a>
+                )}
+                
+                {canExportPdf ? (
+                    <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
+                        <Download size={14}/> Download PDF
+                    </button>
+                ) : (
+                    <a 
+                        href="/pricing" 
+                        className="relative col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white text-slate-400 rounded-lg text-xs font-medium opacity-60 hover:opacity-80 transition-all"
+                        title="Upgrade to unlock PDF export"
+                    >
+                        <Download size={14}/> Download PDF
+                        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
+                            <DollarSign size={8} />PRO
+                        </span>
+                    </a>
+                )}
+            </div>
+        </div>
+    );
+};
+
 type ViewState = 
     | { type: 'create' }
     | { type: 'loading' }
@@ -589,124 +711,19 @@ const VoteGeneratorApp: React.FC = () => {
                                                 </div>
 
                                                 {/* Controls Section */}
-                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                                                             <Settings size={18} className="text-slate-600"/> Controls
-                                                         </h4>
-                                                     </div>
-                                                     {(() => {
-                                                         const pollTier = (viewState.poll as any).tier || 'free';
-                                                         const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
-                                                         const canExportCsv = tierConfig.features.exportCsv;
-                                                         const canExportPdf = tierConfig.features.exportPdf;
-                                                         
-                                                         return (
-                                                             <div className="grid grid-cols-2 gap-3">
-                                                                 <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                                     <Settings size={16}/> Edit
-                                                                 </button>
-                                                                 
-                                                                 {/* CSV Button - Locked for FREE */}
-                                                                 {canExportCsv ? (
-                                                                     <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                                         {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
-                                                                     </button>
-                                                                 ) : (
-                                                                     <a 
-                                                                         href="/pricing" 
-                                                                         className="relative flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 rounded-lg text-sm font-medium text-slate-400 opacity-60 hover:opacity-80 transition-all group"
-                                                                         title="Upgrade to unlock CSV export"
-                                                                     >
-                                                                         <FileSpreadsheet size={16}/> CSV
-                                                                         <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                                                                             <DollarSign size={8} />PRO
-                                                                         </span>
-                                                                     </a>
-                                                                 )}
-                                                                 
-                                                                 {/* PDF Button - Locked for FREE & Quick Poll */}
-                                                                 {canExportPdf ? (
-                                                                     <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                                                                         <Download size={14}/> Download PDF
-                                                                     </button>
-                                                                 ) : (
-                                                                     <a 
-                                                                         href="/pricing" 
-                                                                         className="relative col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white text-slate-400 rounded-lg text-xs font-medium opacity-60 hover:opacity-80 transition-all"
-                                                                         title="Upgrade to unlock PDF export"
-                                                                     >
-                                                                         <Download size={14}/> Download PDF
-                                                                         <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                                                                             <DollarSign size={8} />PRO
-                                                                         </span>
-                                                                     </a>
-                                                                 )}
-                                                             </div>
-                                                         );
-                                                     })()}
-                                                </div>
+                                                <ControlsSection
+                                                    poll={viewState.poll}
+                                                    isExporting={isExporting}
+                                                    handleEditPoll={handleEditPoll}
+                                                    handleExportCSV={handleExportCSV}
+                                                    handlePrintPDF={handlePrintPDF}
+                                                />
 
                                             </div>
                                         </div>
                                         
-                                        {/* Premium Features Row - Show locked features for all tiers */}
-                                        <div className="bg-slate-50/50 border-t border-slate-200 p-6 print:hidden">
-                                            {(() => {
-                                                const pollTier = (viewState.poll as any).tier || 'free';
-                                                const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
-                                                
-                                                // Feature items to display
-                                                const features = [
-                                                    { key: 'customShortLink', icon: Link2, label: 'Custom Link', color: 'text-indigo-500' },
-                                                    { key: 'uploadLogo', icon: Image, label: 'Upload Logo', color: 'text-purple-500' },
-                                                    { key: 'removeBranding', icon: Sparkles, label: 'Remove Branding', color: 'text-amber-500' },
-                                                ];
-                                                
-                                                return (
-                                                    <>
-                                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                                            <Crown size={12} />
-                                                            {pollTier === 'free' ? 'Premium Features' : 'Your Features'}
-                                                        </h4>
-                                                        <div className="grid grid-cols-3 gap-3">
-                                                            {features.map(feature => {
-                                                                const isLocked = !tierConfig.features[feature.key as keyof typeof tierConfig.features];
-                                                                const Icon = feature.icon;
-                                                                
-                                                                if (isLocked) {
-                                                                    return (
-                                                                        <a
-                                                                            key={feature.key}
-                                                                            href="/pricing"
-                                                                            className="relative p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center opacity-50 hover:opacity-70 transition group"
-                                                                            title="Upgrade to unlock"
-                                                                        >
-                                                                            <Icon size={20} className={feature.color} />
-                                                                            <span className="text-xs font-medium text-slate-600">{feature.label}</span>
-                                                                            <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                                                                                <DollarSign size={7} />PRO
-                                                                            </span>
-                                                                        </a>
-                                                                    );
-                                                                }
-                                                                
-                                                                return (
-                                                                    <button
-                                                                        key={feature.key}
-                                                                        onClick={() => alert(`${feature.label} - Coming soon!`)}
-                                                                        className="p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center hover:border-indigo-300 hover:shadow-sm transition"
-                                                                    >
-                                                                        <Icon size={20} className={feature.color} />
-                                                                        <span className="text-xs font-medium text-slate-700">{feature.label}</span>
-                                                                    </button>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
+                                        {/* Premium Features Row */}
+                                        <PremiumFeaturesRow poll={viewState.poll} />
                                     )}
 
                                     {/* Main Content Area (Title + Results) */}

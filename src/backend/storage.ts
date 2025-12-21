@@ -36,31 +36,55 @@ const CONFIG = {
 };
 
 // ----------------------------------------------------------------------------
-// Helper: Get Stores
+// Helper: Get Stores (with credentials for production)
 // ----------------------------------------------------------------------------
 
 function getPollStore() {
-  return getStore(STORES.POLLS);
+  return getStore({
+    name: STORES.POLLS,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 function getVoteStore() {
-  return getStore(STORES.VOTES);
+  return getStore({
+    name: STORES.VOTES,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 function getVoteLogStore() {
-  return getStore(STORES.VOTE_LOG);
+  return getStore({
+    name: STORES.VOTE_LOG,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 function getUserStore() {
-  return getStore(STORES.USERS);
+  return getStore({
+    name: STORES.USERS,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 function getPurchaseStore() {
-  return getStore(STORES.PURCHASES);
+  return getStore({
+    name: STORES.PURCHASES,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 function getShortLinkStore() {
-  return getStore(STORES.SHORT_LINKS);
+  return getStore({
+    name: STORES.SHORT_LINKS,
+    siteID: process.env.SITE_ID || '',
+    token: process.env.NETLIFY_AUTH_TOKEN || ''
+  });
 }
 
 // ----------------------------------------------------------------------------

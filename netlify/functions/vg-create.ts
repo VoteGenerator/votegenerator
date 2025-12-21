@@ -1,11 +1,24 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-interface Vote {
+interface CreatePollRequest {
+    title: string;
+    description?: string;
+    options: string[];
+    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
+    settings?: {
+        hideResults?: boolean;
+        allowMultiple?: boolean;
+    };
+    tier?: 'free' | 'quick_poll' | 'event_poll' | 'pro_monthly' | 'pro_yearly' | 'pro_plus_monthly' | 'pro_plus_yearly';
+    theme?: string;
+    buttonText?: string;
+}
+
+interface PollOption {
     id: string;
-    rankedOptionIds?: string[];
-    selectedOptionIds?: string[];
-    timestamp: string;
+    text: string;
+    imageUrl?: string;
 }
 
 interface Poll {
@@ -14,230 +27,80 @@ interface Poll {
     title: string;
     description?: string;
     pollType: string;
-    options: { id: string; text: string }[];
+    options: PollOption[];
     settings: {
         hideResults: boolean;
         allowMultiple: boolean;
     };
-    votes: Vote[];
+    votes: any[];
     createdAt: string;
     voteCount: number;
+    tier: string;
+    theme?: string;
+    buttonText?: string;
+    maxResponses: number;
+    expiresAt?: string;
 }
 
-interface RoundStanding {
-    optionId: string;
-    optionText: string;
-    voteCount: number;
-    percentage: number;
-    isEliminated: boolean;
-    isWinner: boolean;
-}
+// Tier configuration for max responses and duration
+const TIER_LIMITS = {
+    free: { maxResponses: 100, durationDays: 30 },
+    quick_poll: { maxResponses: 500, durationDays: 7 },
+    event_poll: { maxResponses: 2000, durationDays: 30 },
+    pro_monthly: { maxResponses: 2000, durationDays: null },
+    pro_yearly: { maxResponses: 2000, durationDays: null },
+    pro_plus_monthly: { maxResponses: 5000, durationDays: null },
+    pro_plus_yearly: { maxResponses: 5000, durationDays: null },
+};
 
-interface VoteRedistribution {
-    fromOptionId: string;
-    toOptionId: string;
-    count: number;
-}
-
-interface RunoffRound {
-    roundNumber: number;
-    standings: RoundStanding[];
-    eliminated?: string;
-    redistributedVotes?: VoteRedistribution[];
-    isComplete: boolean;
-    winnerId?: string;
-}
-
-interface RunoffResult {
-    rounds: RunoffRound[];
-    winner: { id: string; text: string } | null;
-    totalVotes: number;
-}
-
-interface SimpleResult {
-    standings: { optionId: string; optionText: string; voteCount: number; percentage: number }[];
-    totalVotes: number;
-    winner: { id: string; text: string } | null;
-}
-
-/**
- * Calculate simple multiple choice results
- */
-function calculateSimpleResults(poll: Poll): SimpleResult {
-    const { votes, options } = poll;
-    const totalVotes = votes.length;
-
-    // Count votes per option
-    const voteCounts: Map<string, number> = new Map();
-    options.forEach(o => voteCounts.set(o.id, 0));
-
-    for (const vote of votes) {
-        if (vote.selectedOptionIds) {
-            for (const optionId of vote.selectedOptionIds) {
-                voteCounts.set(optionId, (voteCounts.get(optionId) || 0) + 1);
-            }
-        }
+// Generate a short, readable ID (8 characters)
+const generateShortId = (): string => {
+    const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return result;
+};
 
-    // Build standings
-    const standings = options.map(option => ({
-        optionId: option.id,
-        optionText: option.text,
-        voteCount: voteCounts.get(option.id) || 0,
-        percentage: totalVotes > 0 ? Math.round(((voteCounts.get(option.id) || 0) / totalVotes) * 100) : 0
-    })).sort((a, b) => b.voteCount - a.voteCount);
-
-    const winner = standings.length > 0 && standings[0].voteCount > 0
-        ? { id: standings[0].optionId, text: standings[0].optionText }
-        : null;
-
-    return { standings, totalVotes, winner };
-}
-
-/**
- * Calculate Instant Runoff Voting results
- */
-function calculateRunoff(poll: Poll): RunoffResult {
-    const { votes, options } = poll;
-    const totalVotes = votes.length;
-    
-    if (totalVotes === 0) {
-        return { rounds: [], winner: null, totalVotes: 0 };
+// Generate admin key (16 characters)
+const generateAdminKey = (): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return result;
+};
 
-    const majorityThreshold = Math.floor(totalVotes / 2) + 1;
-    let activeOptionIds = new Set(options.map(o => o.id));
-    
-    const ballots = votes.map(vote => ({
-        currentPreferences: [...(vote.rankedOptionIds || [])]
-    }));
-    
-    const rounds: RunoffRound[] = [];
-    let roundNumber = 0;
-    
-    while (activeOptionIds.size > 1) {
-        roundNumber++;
-        
-        // Count first-choice votes
-        const voteCounts: Map<string, number> = new Map();
-        activeOptionIds.forEach(id => voteCounts.set(id, 0));
-        
-        for (const ballot of ballots) {
-            const topChoice = ballot.currentPreferences.find(id => activeOptionIds.has(id));
-            if (topChoice) {
-                voteCounts.set(topChoice, (voteCounts.get(topChoice) || 0) + 1);
-            }
-        }
-        
-        // Build standings
-        const standings: RoundStanding[] = options.map(option => {
-            const count = voteCounts.get(option.id) || 0;
-            const isActive = activeOptionIds.has(option.id);
-            return {
-                optionId: option.id,
-                optionText: option.text,
-                voteCount: count,
-                percentage: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0,
-                isEliminated: !isActive,
-                isWinner: false
-            };
-        });
-        
-        standings.sort((a, b) => b.voteCount - a.voteCount);
-        
-        // Check for winner
-        const leader = standings.find(s => !s.isEliminated);
-        if (leader && leader.voteCount >= majorityThreshold) {
-            leader.isWinner = true;
-            rounds.push({
-                roundNumber,
-                standings,
-                isComplete: true,
-                winnerId: leader.optionId
-            });
-            
-            const winnerOption = options.find(o => o.id === leader.optionId)!;
-            return {
-                rounds,
-                winner: { id: winnerOption.id, text: winnerOption.text },
-                totalVotes
-            };
-        }
-        
-        // Check if only 2 left
-        const activeCandidates = standings.filter(s => !s.isEliminated);
-        if (activeCandidates.length <= 2) {
-            const winner = activeCandidates[0];
-            if (winner) {
-                winner.isWinner = true;
-                rounds.push({
-                    roundNumber,
-                    standings,
-                    isComplete: true,
-                    winnerId: winner.optionId
-                });
-                
-                const winnerOption = options.find(o => o.id === winner.optionId)!;
-                return {
-                    rounds,
-                    winner: { id: winnerOption.id, text: winnerOption.text },
-                    totalVotes
-                };
-            }
-        }
-        
-        // Eliminate lowest
-        const activeStandings = standings.filter(s => activeOptionIds.has(s.optionId));
-        const minVotes = Math.min(...activeStandings.map(s => s.voteCount));
-        const toEliminate = activeStandings.filter(s => s.voteCount === minVotes);
-        
-        const eliminatedOption = toEliminate.sort((a, b) => 
-            a.optionText.localeCompare(b.optionText)
-        )[0];
-        
-        activeOptionIds.delete(eliminatedOption.optionId);
-        
-        const eliminatedStanding = standings.find(s => s.optionId === eliminatedOption.optionId);
-        if (eliminatedStanding) {
-            eliminatedStanding.isEliminated = true;
-        }
-        
-        rounds.push({
-            roundNumber,
-            standings,
-            eliminated: eliminatedOption.optionId,
-            isComplete: false
-        });
-        
-        if (roundNumber > 50) break;
+// Generate option ID (8 characters)
+const generateOptionId = (): string => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    
-    // Last standing wins
-    const lastStanding = options.find(o => activeOptionIds.has(o.id));
-    if (lastStanding) {
-        return {
-            rounds,
-            winner: { id: lastStanding.id, text: lastStanding.text },
-            totalVotes
-        };
-    }
-    
-    return { rounds, winner: null, totalVotes };
-}
+    return result;
+};
 
 export const handler: Handler = async (event) => {
+    // Debug logging
+    console.log('vg-create called:', event.httpMethod, event.path);
+    
+    // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json'
     };
 
+    // Handle preflight
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
 
-    if (event.httpMethod !== 'GET') {
+    if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
             headers,
@@ -246,92 +109,121 @@ export const handler: Handler = async (event) => {
     }
 
     try {
-        const pollId = event.queryStringParameters?.id;
-        const adminKey = event.queryStringParameters?.admin;
+        const body: CreatePollRequest = JSON.parse(event.body || '{}');
 
-        if (!pollId) {
+        // Validation
+        if (!body.title || typeof body.title !== 'string' || body.title.trim().length === 0) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Poll ID is required' })
+                body: JSON.stringify({ error: 'Please add a title for your poll' })
             };
         }
 
-        // Get poll - static import with env vars
+        if (!Array.isArray(body.options) || body.options.length < 2) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Please add at least 2 options' })
+            };
+        }
+
+        if (body.options.length > 20) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Maximum 20 options allowed' })
+            };
+        }
+
+        // Clean up options
+        const validOptions = body.options
+            .map(opt => (typeof opt === 'string' ? opt.trim() : ''))
+            .filter(opt => opt.length > 0 && opt.length <= 200);
+
+        if (validOptions.length < 2) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Please add at least 2 valid options' })
+            };
+        }
+
+        // Determine tier (default to free if not specified)
+        const tier = body.tier || 'free';
+        const tierLimits = TIER_LIMITS[tier as keyof typeof TIER_LIMITS] || TIER_LIMITS.free;
+
+        // Calculate expiration date based on tier
+        let expiresAt: string | undefined;
+        if (tierLimits.durationDays) {
+            const expDate = new Date();
+            expDate.setDate(expDate.getDate() + tierLimits.durationDays);
+            expiresAt = expDate.toISOString();
+        }
+
+        // Create poll
+        const pollId = generateShortId();
+        const adminKey = generateAdminKey();
+
+        const poll: Poll = {
+            id: pollId,
+            adminKey: adminKey,
+            title: body.title.trim().substring(0, 200),
+            description: body.description?.trim().substring(0, 500) || undefined,
+            pollType: body.pollType || 'ranked',
+            options: validOptions.map(text => ({
+                id: generateOptionId(),
+                text: text
+            })),
+            settings: {
+                hideResults: Boolean(body.settings?.hideResults),
+                allowMultiple: Boolean(body.settings?.allowMultiple)
+            },
+            votes: [],
+            createdAt: new Date().toISOString(),
+            voteCount: 0,
+            tier: tier,
+            theme: body.theme,
+            buttonText: body.buttonText,
+            maxResponses: tierLimits.maxResponses,
+            expiresAt: expiresAt
+        };
+
+        // Store using Netlify Blobs
         const store = getStore({
             name: 'polls',
             siteID: process.env.SITE_ID || '',
             token: process.env.NETLIFY_AUTH_TOKEN || ''
         });
         
-        const poll: Poll | null = await store.get(pollId, { type: 'json' });
+        await store.setJSON(pollId, poll);
 
-        if (!poll) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ error: 'Poll not found' })
-            };
-        }
+        console.log(`Poll created: ${pollId}, type: ${poll.pollType}, tier: ${tier}`);
 
-        // Check access
-        const isAdmin = adminKey && adminKey === poll.adminKey;
-        
-        if (poll.settings.hideResults && !isAdmin) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'Results are hidden',
-                    message: 'The poll creator will reveal results when voting is complete.'
-                })
-            };
-        }
-
-        if (poll.votes.length === 0) {
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: poll.pollType,
-                    totalVotes: 0,
-                    message: 'No votes yet'
-                })
-            };
-        }
-
-        // Calculate results based on poll type
-        if (poll.pollType === 'ranked') {
-            const runoffResult = calculateRunoff(poll);
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: 'ranked',
-                    ...runoffResult
-                })
-            };
-        } else {
-            const simpleResult = calculateSimpleResults(poll);
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: poll.pollType,
-                    ...simpleResult
-                })
-            };
-        }
+        return {
+            statusCode: 201,
+            headers,
+            body: JSON.stringify({
+                id: pollId,
+                adminKey: adminKey,
+                tier: tier,
+                maxResponses: tierLimits.maxResponses,
+                expiresAt: expiresAt
+            })
+        };
 
     } catch (error) {
-        console.error('Error calculating results:', error);
+        console.error('Error creating poll:', error);
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
+            body: JSON.stringify({ 
+                error: 'Something went wrong. Please try again.',
+                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+            })
         };
     }
 };

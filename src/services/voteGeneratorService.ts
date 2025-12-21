@@ -43,7 +43,7 @@ export const createPoll = async (data: {
     voterCount?: number;
 }): Promise<{ id: string; adminKey: string }> => {
     try {
-        const response = await fetch('/.netlify/functions/create-poll', {
+        const response = await fetch('/.netlify/functions/vg-create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
@@ -103,7 +103,7 @@ export const updatePoll = async (id: string, adminKey: string, updates: Partial<
 
 export const getPoll = async (id: string): Promise<Poll> => {
     try {
-        const response = await fetch(`/.netlify/functions/get-poll?id=${id}`);
+        const response = await fetch(`/.netlify/functions/vg-get?id=${id}`);
         if (response.ok) return await response.json();
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
@@ -117,7 +117,7 @@ export const getPoll = async (id: string): Promise<Poll> => {
 
 export const getPollAsAdmin = async (id: string, key: string): Promise<Poll> => {
     try {
-        const response = await fetch(`/.netlify/functions/get-poll?id=${id}&admin=${key}`);
+        const response = await fetch(`/.netlify/functions/vg-get?id=${id}&admin=${key}`);
         if (response.ok) return await response.json();
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
@@ -152,7 +152,7 @@ export const submitVote = async (
     };
 
     try {
-        const response = await fetch('/.netlify/functions/submit-vote', {
+        const response = await fetch('/.netlify/functions/vg-vote', {
             method: 'POST',
             body: JSON.stringify(votePayload)
         });
@@ -184,7 +184,7 @@ export const hasVoted = (pollId: string): boolean => {
 
 export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vote[]> => {
     try {
-        const response = await fetch(`/.netlify/functions/get-results?id=${pollId}&admin=${adminKey}&raw=true`);
+        const response = await fetch(`/.netlify/functions/vg-results?id=${pollId}&admin=${adminKey}&raw=true`);
         if(response.ok) {
             return await response.json();
         }
@@ -210,7 +210,7 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
     let votes: any[] = [];
     
     try {
-        const response = await fetch(`/.netlify/functions/get-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
+        const response = await fetch(`/.netlify/functions/vg-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
         if(response.ok) {
             votes = await response.json(); 
         } else {

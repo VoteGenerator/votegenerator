@@ -18,6 +18,8 @@ interface Poll {
 }
 
 export const handler: Handler = async (event) => {
+    console.log('vg-get called:', event.httpMethod);
+    
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -40,6 +42,8 @@ export const handler: Handler = async (event) => {
     try {
         const pollId = event.queryStringParameters?.id;
         const adminKey = event.queryStringParameters?.admin;
+        
+        console.log('Looking for poll:', pollId);
 
         if (!pollId) {
             return {
@@ -49,14 +53,16 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Fetch from Netlify Blobs - static import
+        // Same pattern as vg-create
         const store = getStore({
             name: 'polls',
             siteID: process.env.SITE_ID || '',
             token: process.env.NETLIFY_AUTH_TOKEN || ''
         });
         
+        console.log('Fetching poll from store...');
         const poll: Poll | null = await store.get(pollId, { type: 'json' });
+        console.log('Poll found:', !!poll);
 
         if (!poll) {
             return {
@@ -68,6 +74,7 @@ export const handler: Handler = async (event) => {
 
         // Check if admin
         const isAdmin = adminKey && adminKey === poll.adminKey;
+        console.log('Is admin:', isAdmin);
 
         if (isAdmin) {
             // Admin gets everything
@@ -104,7 +111,7 @@ export const handler: Handler = async (event) => {
         }
 
     } catch (error) {
-        console.error('Error fetching poll:', error);
+        console.error('Error in vg-get:', error);
         return {
             statusCode: 500,
             headers,

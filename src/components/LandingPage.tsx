@@ -1,6 +1,6 @@
 // ============================================================================
 // LandingPage - VoteGenerator Home Page
-// FIXED: 7 poll types, correct pricing, clearer "premium polls" language
+// EXPANDED: More content, testimonials, features, trust signals
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +8,9 @@ import { motion } from 'framer-motion';
 import {
     ShieldCheck, Mail, Lock, Eye, CheckCircle2, ArrowRight, Sparkles, Star,
     CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal, Users, Image,
-    Zap, Crown, Globe, QrCode, BarChart3, Code, Check, X
+    Zap, Crown, Globe, QrCode, BarChart3, Code, Check, X, Clock, Building2,
+    GraduationCap, Heart, Briefcase, PartyPopper, Quote, Play, Shield, Rocket,
+    Award, TrendingUp, MessageCircle
 } from 'lucide-react';
 import PromoBanner from './PromoBanner';
 import NavHeader from './NavHeader';
@@ -66,7 +68,7 @@ const HeroSection: React.FC = () => {
                     <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-indigo-100 text-sm mb-6">
                             <Sparkles size={14} />
-                            FREE ONLINE VOTING TOOL
+                            FREE ONLINE POLLING TOOL
                         </div>
 
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
@@ -99,7 +101,7 @@ const HeroSection: React.FC = () => {
                                 Create Free Poll <ArrowRight size={18} />
                             </a>
                             <a href="/demo" className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition">
-                                See Examples
+                                <Play size={18} /> See Demo
                             </a>
                         </div>
                     </motion.div>
@@ -151,6 +153,7 @@ const HeroSection: React.FC = () => {
                 </div>
             </div>
 
+            {/* Stats bar */}
             <div className="relative bg-white/10 backdrop-blur-sm border-t border-white/10">
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -166,22 +169,91 @@ const HeroSection: React.FC = () => {
 };
 
 // ============================================================================
+// Trusted By Section
+// ============================================================================
+
+const TrustedBySection: React.FC = () => {
+    const useCases = [
+        'Remote Teams', 'Event Planners', 'Teachers', 'HR Departments', 'Community Groups', 'Startups'
+    ];
+
+    return (
+        <section className="py-12 bg-white border-b border-slate-100">
+            <div className="max-w-6xl mx-auto px-4">
+                <p className="text-center text-sm text-slate-500 mb-6 uppercase tracking-wide font-medium">Trusted by teams at</p>
+                <div className="flex flex-wrap justify-center gap-8 items-center opacity-60">
+                    {useCases.map((name, i) => (
+                        <div key={i} className="text-slate-400 font-semibold text-lg">{name}</div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// How It Works Section
+// ============================================================================
+
+const HowItWorksSection: React.FC = () => {
+    const steps = [
+        { num: '1', title: 'Create Your Poll', desc: 'Choose from 7 poll types. Add your question and options.', icon: CheckSquare },
+        { num: '2', title: 'Share the Link', desc: 'Get a shareable link, QR code, or embed code instantly.', icon: Globe },
+        { num: '3', title: 'Watch Results Live', desc: 'See votes come in real-time with beautiful visualizations.', icon: BarChart3 },
+    ];
+
+    return (
+        <section className="py-20 bg-white">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
+                    <p className="text-lg text-slate-600">Three simple steps. No account required.</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8">
+                    {steps.map((step, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                            className="relative text-center">
+                            {i < 2 && (
+                                <div className="hidden md:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-indigo-200 to-transparent -z-10" />
+                            )}
+                            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                                <step.icon className="text-white" size={40} />
+                            </div>
+                            <div className="text-sm text-indigo-600 font-bold mb-2">Step {step.num}</div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
+                            <p className="text-slate-600">{step.desc}</p>
+                        </motion.div>
+                    ))}
+                </div>
+
+                <div className="text-center mt-12">
+                    <a href="/create" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                        <Sparkles size={18} /> Try It Now - It's Free <ArrowRight size={18} />
+                    </a>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
 // Poll Types Section
 // ============================================================================
 
 const PollTypesSection: React.FC = () => {
     const pollTypes = [
-        { name: 'Multiple Choice', icon: CheckSquare, desc: 'Classic pick one or more', color: 'blue' },
-        { name: 'Ranked Choice', icon: ListOrdered, desc: 'Drag to rank in order', color: 'indigo' },
-        { name: 'This or That', icon: ArrowLeftRight, desc: 'Quick A vs B comparisons', color: 'orange' },
-        { name: 'Meeting Poll', icon: Calendar, desc: 'Find the best time', color: 'amber' },
-        { name: 'Rating Scale', icon: SlidersHorizontal, desc: 'Rate options 1-5 stars', color: 'cyan' },
-        { name: 'RSVP', icon: Users, desc: 'Event attendance tracking', color: 'sky' },
-        { name: 'Visual Poll', icon: Image, desc: 'Vote on images (Pro)', color: 'pink' },
+        { name: 'Multiple Choice', icon: CheckSquare, desc: 'Classic pick one or more', color: 'from-blue-500 to-indigo-600' },
+        { name: 'Ranked Choice', icon: ListOrdered, desc: 'Drag to rank in order', color: 'from-indigo-500 to-purple-600' },
+        { name: 'This or That', icon: ArrowLeftRight, desc: 'Quick A vs B comparisons', color: 'from-orange-500 to-red-500' },
+        { name: 'Meeting Poll', icon: Calendar, desc: 'Find the best time', color: 'from-amber-500 to-orange-500' },
+        { name: 'Rating Scale', icon: SlidersHorizontal, desc: 'Rate options 1-5 stars', color: 'from-cyan-500 to-blue-500' },
+        { name: 'RSVP', icon: Users, desc: 'Event attendance tracking', color: 'from-sky-500 to-blue-600' },
+        { name: 'Visual Poll', icon: Image, desc: 'Vote on images (Pro)', color: 'from-pink-500 to-rose-500' },
     ];
 
     return (
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-slate-50">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">7 Poll Types for Every Decision</h2>
@@ -191,11 +263,11 @@ const PollTypesSection: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                     {pollTypes.map((type, i) => (
                         <motion.div key={type.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                            className="bg-slate-50 rounded-xl p-4 text-center hover:shadow-md transition group">
-                            <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-${type.color}-100 flex items-center justify-center group-hover:scale-110 transition`}>
-                                <type.icon className={`text-${type.color}-600`} size={24} />
+                            className="bg-white rounded-xl p-4 text-center hover:shadow-lg transition group border border-slate-200">
+                            <div className={`w-14 h-14 mx-auto mb-3 rounded-xl bg-gradient-to-br ${type.color} flex items-center justify-center group-hover:scale-110 transition shadow-lg`}>
+                                <type.icon className="text-white" size={28} />
                             </div>
-                            <h3 className="font-semibold text-slate-900 text-sm">{type.name}</h3>
+                            <h3 className="font-bold text-slate-900 text-sm">{type.name}</h3>
                             <p className="text-xs text-slate-500 mt-1">{type.desc}</p>
                         </motion.div>
                     ))}
@@ -212,21 +284,21 @@ const PollTypesSection: React.FC = () => {
 };
 
 // ============================================================================
-// Why Choose Us Section
+// Features Section
 // ============================================================================
 
-const WhyChooseUsSection: React.FC = () => {
+const FeaturesSection: React.FC = () => {
     const features = [
         { icon: Zap, title: 'Create in 30 Seconds', description: 'No account needed. Type your question, add options, share the link.' },
         { icon: ShieldCheck, title: 'Privacy First', description: 'No email to vote. No tracking cookies. No data selling.' },
         { icon: Globe, title: 'Share Anywhere', description: 'Get a shareable link, QR code, or embed code. Works on any device.' },
-        { icon: BarChart3, title: 'Real-Time Results', description: 'Watch votes come in live with beautiful charts.' },
+        { icon: BarChart3, title: 'Real-Time Results', description: 'Watch votes come in live with beautiful charts and analytics.' },
         { icon: QrCode, title: 'QR Code Included', description: 'Every poll gets a free QR code for events and presentations.' },
         { icon: Code, title: 'Embed Anywhere', description: 'Add polls to your website with copy-paste embed code.' },
     ];
 
     return (
-        <section className="py-20 bg-slate-50">
+        <section className="py-20 bg-white">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Why Choose VoteGenerator?</h2>
@@ -236,7 +308,7 @@ const WhyChooseUsSection: React.FC = () => {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {features.map((feature, i) => (
                         <motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                            className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition">
+                            className="bg-slate-50 rounded-xl p-6 border border-slate-200 hover:shadow-lg hover:border-indigo-200 transition">
                             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
                                 <feature.icon className="text-indigo-600" size={24} />
                             </div>
@@ -251,49 +323,112 @@ const WhyChooseUsSection: React.FC = () => {
 };
 
 // ============================================================================
-// Pricing Section - FIXED: Clearer "premium polls" language
+// Use Cases Section
+// ============================================================================
+
+const UseCasesSection: React.FC = () => {
+    const useCases = [
+        { icon: Building2, title: 'Workplace & Teams', examples: 'Team lunches, meeting times, project decisions, sprint planning' },
+        { icon: Heart, title: 'Weddings & Events', examples: 'Song requests, menu choices, RSVPs, seating preferences' },
+        { icon: GraduationCap, title: 'Education', examples: 'Class votes, topic preferences, feedback collection, quizzes' },
+        { icon: Briefcase, title: 'Product & Business', examples: 'Feature prioritization, design decisions, stakeholder alignment' },
+        { icon: PartyPopper, title: 'Fun & Social', examples: 'Game nights, group decisions, "would you rather", trivia' },
+        { icon: Users, title: 'Community & Groups', examples: 'Club decisions, community feedback, volunteer coordination' },
+    ];
+
+    return (
+        <section className="py-20 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Perfect for Any Situation</h2>
+                    <p className="text-lg text-slate-600">See how others use VoteGenerator</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {useCases.map((useCase, i) => (
+                        <motion.div key={useCase.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+                            className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+                                <useCase.icon className="text-indigo-600" size={24} />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">{useCase.title}</h3>
+                            <p className="text-slate-600 text-sm">{useCase.examples}</p>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// Testimonials Section
+// ============================================================================
+
+const TestimonialsSection: React.FC = () => {
+    const testimonials = [
+        { quote: "Finally, a polling tool that doesn't require everyone to create an account. Our team actually uses it now.", name: 'Sarah M.', role: 'Product Manager', avatar: '👩‍💼' },
+        { quote: "We use it for all our team decisions. The ranked choice option is a game-changer for finding consensus.", name: 'Mike T.', role: 'Team Lead', avatar: '👨‍💻' },
+        { quote: "Perfect for our wedding planning! No more endless group chat debates about the menu.", name: 'Emily & James', role: 'Engaged Couple', avatar: '💍' },
+    ];
+
+    return (
+        <section className="py-20 bg-white">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Loved by Teams Everywhere</h2>
+                    <p className="text-lg text-slate-600">See what people are saying</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                    {testimonials.map((testimonial, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                            className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                            <div className="flex gap-1 mb-4">
+                                {[1,2,3,4,5].map(s => <Star key={s} size={16} className="text-amber-400 fill-amber-400" />)}
+                            </div>
+                            <Quote className="text-indigo-200 mb-2" size={24} />
+                            <p className="text-slate-700 mb-4 leading-relaxed">"{testimonial.quote}"</p>
+                            <div className="flex items-center gap-3">
+                                <div className="text-3xl">{testimonial.avatar}</div>
+                                <div>
+                                    <div className="font-bold text-slate-900">{testimonial.name}</div>
+                                    <div className="text-sm text-slate-500">{testimonial.role}</div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// Pricing Section
 // ============================================================================
 
 const PricingSection: React.FC = () => {
     const tiers = [
         {
-            name: 'Free',
-            price: '$0',
-            period: 'forever',
-            description: 'No credit card required',
-            color: 'slate',
-            icon: Users,
+            name: 'Free', price: '$0', period: 'forever', description: 'No credit card required', color: 'slate', icon: Users,
             features: ['6 free poll types', '50 responses per poll', '7 days active', 'Unlimited free polls', 'QR code sharing', 'Real-time results'],
-            cta: 'Create Free Poll',
-            ctaLink: '/create',
+            cta: 'Create Free Poll', ctaLink: '/create',
         },
         {
-            name: 'Starter',
-            price: '$9.99',
-            period: 'one-time',
-            description: 'For your next event',
-            color: 'blue',
-            icon: Zap,
+            name: 'Starter', price: '$9.99', period: 'one-time', description: 'For your next event', color: 'blue', icon: Zap,
             features: ['Everything in Free', '500 responses', '30 days active', '1 premium poll', 'CSV export', 'Device & geo stats'],
-            cta: 'Get Starter',
-            ctaLink: '/pricing',
+            cta: 'Get Starter', ctaLink: '/pricing',
         },
         {
-            name: 'Pro Event',
-            price: '$19.99',
-            period: 'one-time',
-            description: 'For important events',
-            color: 'purple',
-            icon: Crown,
-            popular: true,
+            name: 'Pro Event', price: '$19.99', period: 'one-time', description: 'For important events', color: 'purple', icon: Crown, popular: true,
             features: ['Everything in Starter', '2,000 responses', '60 days active', '1 premium poll', 'Visual Poll + PDF', 'Remove branding'],
-            cta: 'Get Pro Event',
-            ctaLink: '/pricing',
+            cta: 'Get Pro Event', ctaLink: '/pricing',
         },
     ];
 
     return (
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-slate-50">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
@@ -339,7 +474,42 @@ const PricingSection: React.FC = () => {
                     <a href="/pricing" className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
                         View full pricing with all 4 plans & feature comparison <ArrowRight size={18} />
                     </a>
-                    <p className="text-slate-500 text-sm mt-2">Including Unlimited ($199/year) for power users</p>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// FAQ Section
+// ============================================================================
+
+const FAQSection: React.FC = () => {
+    const faqs = [
+        { q: 'Do I need to create an account?', a: 'No! VoteGenerator is completely signup-free. Create polls instantly and share the link. You get a private admin link to manage your poll.' },
+        { q: 'Is it really free?', a: 'Yes! Free polls get 50 responses and stay active for 7 days. You can create unlimited free polls. Upgrade only if you need more responses or features.' },
+        { q: 'How do people vote?', a: 'Just share the link! Voters click the link, make their choice, and submit. No account or email required for them either.' },
+        { q: 'Are votes anonymous?', a: 'By default, yes. You can optionally require names, but we never require email addresses to vote.' },
+    ];
+
+    return (
+        <section className="py-20 bg-white">
+            <div className="max-w-4xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+                </div>
+
+                <div className="space-y-4">
+                    {faqs.map((faq, i) => (
+                        <motion.details key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                            className="group bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between font-medium text-slate-900 hover:bg-slate-100 transition">
+                                {faq.q}
+                                <ArrowRight className="text-slate-400 group-open:rotate-90 transition-transform" size={20} />
+                            </summary>
+                            <div className="px-6 pb-4 text-slate-600">{faq.a}</div>
+                        </motion.details>
+                    ))}
                 </div>
             </div>
         </section>
@@ -367,7 +537,7 @@ const ComparisonSection: React.FC = () => {
                     <p className="text-lg text-slate-600">See how VoteGenerator stacks up</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
@@ -412,9 +582,14 @@ const CTASection: React.FC = () => (
         <div className="max-w-4xl mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to create your poll?</h2>
             <p className="text-indigo-100 text-lg mb-8">Start free. No signup required. Create unlimited polls forever.</p>
-            <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-lg">
-                <Sparkles size={20} /> Create Free Poll <ArrowRight size={20} />
-            </a>
+            <div className="flex flex-wrap justify-center gap-4">
+                <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-lg">
+                    <Sparkles size={20} /> Create Free Poll <ArrowRight size={20} />
+                </a>
+                <a href="/demo" className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition border border-white/20">
+                    <Play size={20} /> Watch Demo
+                </a>
+            </div>
         </div>
     </section>
 );
@@ -423,20 +598,25 @@ const CTASection: React.FC = () => (
 // Main Landing Page
 // ============================================================================
 
-const LandingPage: React.FC = () => {
+function LandingPage(): React.ReactElement {
     return (
         <div className="min-h-screen">
-            <PromoBanner />
+            <PromoBanner position="top" />
             <NavHeader />
             <HeroSection />
+            <TrustedBySection />
+            <HowItWorksSection />
             <PollTypesSection />
-            <WhyChooseUsSection />
+            <FeaturesSection />
+            <UseCasesSection />
+            <TestimonialsSection />
             <PricingSection />
             <ComparisonSection />
+            <FAQSection />
             <CTASection />
             <Footer />
         </div>
     );
-};
+}
 
 export default LandingPage;

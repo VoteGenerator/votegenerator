@@ -1,31 +1,23 @@
+// ============================================================================
+// Demo Page - VoteGenerator
+// FIXED: 7 poll types (not 12), added seeded results with graphs/tables
+// ============================================================================
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    ListOrdered, 
-    CheckSquare, 
-    Calendar, 
-    ArrowLeftRight,
-    SlidersHorizontal,
-    Image,
-    Users,
-    ChevronRight,
-    Sparkles,
-    Building2,
-    Heart,
-    Briefcase,
-    GraduationCap,
-    PartyPopper,
-    Target,
-    AlertTriangle,
-    Play,
-    ArrowRight,
-    Eye,
-    Check
+    ListOrdered, CheckSquare, Calendar, ArrowLeftRight, SlidersHorizontal,
+    Users, Image, ChevronRight, Sparkles, Building2, Heart, Briefcase,
+    GraduationCap, PartyPopper, Target, AlertTriangle, Play, ArrowRight,
+    Eye, Check, BarChart3, TrendingUp, Award, Percent
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
-import PollTypePreview from './PollTypePreview';
+
+// ============================================================================
+// 7 Poll Types Data
+// ============================================================================
 
 interface PollTypeInfo {
     id: string;
@@ -41,10 +33,12 @@ interface PollTypeInfo {
     exampleQuestion: string;
     exampleOptions: string[];
     proTip: string;
-    tier: 'free' | 'pro_event';
+    isPro?: boolean;
+    // Seeded results data
+    sampleResults: { option: string; votes: number; pct: number }[];
+    insights: string[];
 }
 
-// ===== 7 ACTIVE POLL TYPES =====
 const pollTypes: PollTypeInfo[] = [
     {
         id: 'multiple-choice',
@@ -53,14 +47,20 @@ const pollTypes: PollTypeInfo[] = [
         gradient: 'from-blue-500 to-indigo-600',
         bgColor: 'bg-blue-50',
         tagline: 'The classic. Pick one (or more).',
-        description: 'The most familiar poll type. Voters see a list of options and pick their favorite. You can allow single selection or let people choose multiple options.',
-        howItWorks: 'Present 2-10 options. Voters click their choice(s). Results show as a bar chart with percentages. Simple, fast, and universally understood.',
-        bestFor: ['Quick decisions', 'Team lunches', 'Simple votes', 'Getting a headcount', 'Yes/No questions'],
-        notFor: ['Ranking preferences', 'Complex decisions with tradeoffs', 'Budget allocation'],
+        description: 'The most familiar poll type. Voters see a list of options and pick their favorite.',
+        howItWorks: 'Present 2-10 options. Voters click their choice(s). Results show as a bar chart with percentages.',
+        bestFor: ['Quick decisions', 'Team lunches', 'Simple votes', 'Yes/No questions'],
+        notFor: ['Ranking preferences', 'Complex decisions'],
         exampleQuestion: 'What should we order for the team lunch?',
         exampleOptions: ['🍕 Pizza', '🍜 Thai food', '🌮 Tacos', '🍣 Sushi'],
-        proTip: 'Keep options to 5 or fewer for faster decisions. Too many choices cause "analysis paralysis."',
-        tier: 'free'
+        proTip: 'Keep options to 5 or fewer for faster decisions.',
+        sampleResults: [
+            { option: '🍕 Pizza', votes: 12, pct: 40 },
+            { option: '🍜 Thai food', votes: 9, pct: 30 },
+            { option: '🌮 Tacos', votes: 6, pct: 20 },
+            { option: '🍣 Sushi', votes: 3, pct: 10 },
+        ],
+        insights: ['Clear winner: Pizza with 40%', '30 total votes collected', 'Most popular at lunchtime']
     },
     {
         id: 'ranked-choice',
@@ -69,30 +69,41 @@ const pollTypes: PollTypeInfo[] = [
         gradient: 'from-indigo-500 to-purple-600',
         bgColor: 'bg-indigo-50',
         tagline: 'Drag to rank. Find true consensus.',
-        description: 'Voters rank options from favorite to least favorite by dragging them into order. The algorithm finds the option with the broadest support.',
-        howItWorks: 'Voters drag options to rank them 1st, 2nd, 3rd, etc. We use Instant Runoff Voting (IRV) to find the winner with majority support.',
-        bestFor: ['Choosing between many options', 'Finding compromise', 'Elections', 'Team retreats', 'Avoiding vote splitting'],
-        notFor: ['Simple yes/no questions', 'Time-sensitive polls', 'Very young audiences'],
+        description: 'Voters rank options from favorite to least favorite. Finds the option with broadest support.',
+        howItWorks: 'Voters drag options to rank them. We use Instant Runoff Voting to find the winner.',
+        bestFor: ['Multiple good options', 'Finding compromise', 'Elections'],
+        notFor: ['Simple yes/no questions', 'Quick polls'],
         exampleQuestion: 'Where should we go for the company retreat?',
         exampleOptions: ['🏔️ Mountain cabin', '🏖️ Beach resort', '🏙️ City hotel', '🏕️ Camping'],
-        proTip: 'Great when you have 3+ strong contenders and want to avoid the "spoiler effect."',
-        tier: 'free'
+        proTip: 'Prevents the "spoiler effect" where similar options split votes.',
+        sampleResults: [
+            { option: '🏖️ Beach resort', votes: 0, pct: 45 },
+            { option: '🏔️ Mountain cabin', votes: 0, pct: 30 },
+            { option: '🏙️ City hotel', votes: 0, pct: 15 },
+            { option: '🏕️ Camping', votes: 0, pct: 10 },
+        ],
+        insights: ['Beach resort wins after 3 rounds', 'Mountain cabin was close 2nd choice', 'True consensus: 75% satisfaction']
     },
     {
-        id: 'this-or-that',
+        id: 'pairwise',
         name: 'This or That',
         icon: ArrowLeftRight,
         gradient: 'from-orange-500 to-red-600',
         bgColor: 'bg-orange-50',
-        tagline: 'A vs B. Head-to-head battle.',
-        description: 'Present exactly two options side by side. Voters pick one. Perfect for design feedback, A/B testing, and quick binary decisions.',
-        howItWorks: 'Show two options (can include images). Voters click their preference. Results show the split percentage.',
-        bestFor: ['Design comparisons', 'A/B testing', 'Logo selection', 'Final decisions', '"Would you rather" games'],
-        notFor: ['More than 2 options', 'Nuanced feedback', 'Ranking multiple items'],
-        exampleQuestion: 'Which logo should we use?',
-        exampleOptions: ['Logo A (Blue)', 'Logo B (Green)'],
-        proTip: 'Run multiple rounds: "Winner of Round 1 vs Option C" to find the best.',
-        tier: 'free'
+        tagline: 'A vs B. Quick gut reactions.',
+        description: 'Present two options at a time. Voters pick their preference. Great for narrowing down.',
+        howItWorks: 'Show pairs of options. Voters click their favorite. Algorithm ranks by win rate.',
+        bestFor: ['Quick comparisons', 'Design feedback', 'Narrowing down choices'],
+        notFor: ['Many options at once', 'Nuanced decisions'],
+        exampleQuestion: 'Which logo design is better?',
+        exampleOptions: ['Design A', 'Design B', 'Design C'],
+        proTip: 'Perfect for design decisions where gut reaction matters.',
+        sampleResults: [
+            { option: 'Design B', votes: 18, pct: 60 },
+            { option: 'Design A', votes: 9, pct: 30 },
+            { option: 'Design C', votes: 3, pct: 10 },
+        ],
+        insights: ['Design B won 60% of matchups', '30 comparisons made', 'Clearest preference: B vs C (85%)']
     },
     {
         id: 'meeting-poll',
@@ -101,14 +112,20 @@ const pollTypes: PollTypeInfo[] = [
         gradient: 'from-amber-500 to-orange-600',
         bgColor: 'bg-amber-50',
         tagline: "Find when everyone's free.",
-        description: 'Like Doodle but simpler. Show a grid of dates/times and let people mark their availability. Instantly see which slot works best.',
-        howItWorks: 'Add date/time options. Voters mark each as "Available," "Maybe," or "Unavailable." Results highlight the best time.',
-        bestFor: ['Scheduling meetings', 'Planning events', 'Coordinating time zones', 'Finding common availability'],
-        notFor: ['Non-time decisions', 'Choosing between options'],
+        description: 'Like Doodle but simpler. Show date/time options and let people mark availability.',
+        howItWorks: 'Add time slots. Voters mark Available, Maybe, or Unavailable. Results show best times.',
+        bestFor: ['Scheduling meetings', 'Planning events', 'Coordinating groups'],
+        notFor: ['Non-time decisions', 'Single choice votes'],
         exampleQuestion: 'When can everyone attend the project kickoff?',
-        exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm', 'Wed 10am'],
-        proTip: 'Offer 4-6 time slots. Too many options makes it hard to find overlap.',
-        tier: 'free'
+        exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm'],
+        proTip: 'Offer 4-6 time slots. Too many makes finding overlap harder.',
+        sampleResults: [
+            { option: 'Tue 10am', votes: 8, pct: 80 },
+            { option: 'Mon 2pm', votes: 6, pct: 60 },
+            { option: 'Tue 2pm', votes: 5, pct: 50 },
+            { option: 'Mon 10am', votes: 3, pct: 30 },
+        ],
+        insights: ['Tuesday 10am works for 8/10 people', '100% team coverage possible', 'Avoid Monday mornings']
     },
     {
         id: 'rating-scale',
@@ -116,15 +133,21 @@ const pollTypes: PollTypeInfo[] = [
         icon: SlidersHorizontal,
         gradient: 'from-cyan-500 to-blue-600',
         bgColor: 'bg-cyan-50',
-        tagline: 'Rate each option. See averages.',
-        description: 'Voters rate each option on a scale (1-5 stars). See the average rating for each. Good for evaluating multiple items independently.',
-        howItWorks: 'Each option gets a star rating. Voters rate each one. Results show average scores for comparison.',
-        bestFor: ['Feedback collection', 'Rating multiple ideas', 'Product reviews', 'Performance evaluations'],
-        notFor: ['Choosing one winner', 'Forced ranking', 'Binary decisions'],
-        exampleQuestion: 'Rate each proposed tagline (1-5 stars):',
-        exampleOptions: ['"Just vote."', '"Decisions, simplified."', '"Your voice, counted."'],
-        proTip: 'Use 5-point scales. More granular scales (1-10) are harder for voters to use consistently.',
-        tier: 'free'
+        tagline: 'Rate each option 1-5 stars.',
+        description: 'Voters rate every option independently. See average ratings to compare.',
+        howItWorks: 'Each option gets a 1-5 star rating. Results show average scores for comparison.',
+        bestFor: ['Comparing multiple items', 'Feedback collection', 'Quality assessment'],
+        notFor: ['Choosing a single winner', 'Quick decisions'],
+        exampleQuestion: 'Rate our new product features:',
+        exampleOptions: ['Dark mode', 'Mobile app', 'API access', 'Team sharing'],
+        proTip: 'Great for NPS-style feedback and feature prioritization.',
+        sampleResults: [
+            { option: 'Mobile app', votes: 0, pct: 92 },
+            { option: 'Dark mode', votes: 0, pct: 84 },
+            { option: 'Team sharing', votes: 0, pct: 76 },
+            { option: 'API access', votes: 0, pct: 68 },
+        ],
+        insights: ['Mobile app: 4.6★ average', 'All features rated above 3.4★', '25 ratings collected']
     },
     {
         id: 'rsvp',
@@ -132,15 +155,20 @@ const pollTypes: PollTypeInfo[] = [
         icon: Users,
         gradient: 'from-sky-500 to-blue-600',
         bgColor: 'bg-sky-50',
-        tagline: 'Yes, No, Maybe. Simple attendance.',
-        description: 'Collect event attendance with simple Yes/No/Maybe responses. See who\'s coming at a glance with automatic headcounts.',
-        howItWorks: 'Create your event with details. Guests respond with their attendance. You get a real-time headcount and guest list.',
-        bestFor: ['Party invitations', 'Team events', 'Workshops', 'Social gatherings', 'Volunteer signups'],
-        notFor: ['Choosing between options', 'Ranked preferences', 'Complex scheduling'],
-        exampleQuestion: 'Can you make it to the holiday party?',
-        exampleOptions: ['✅ Yes!', '❌ Can\'t make it', '🤔 Maybe'],
-        proTip: 'Add a deadline to get final counts. Follow up with "maybes" a few days before.',
-        tier: 'free'
+        tagline: 'Yes, No, or Maybe.',
+        description: 'Simple event attendance tracking. See who\'s coming at a glance.',
+        howItWorks: 'Share the link. People respond Yes/No/Maybe. Get automatic headcount.',
+        bestFor: ['Event planning', 'Headcounts', 'Simple attendance'],
+        notFor: ['Complex scheduling', 'Multiple choice decisions'],
+        exampleQuestion: 'Can you attend the team holiday party?',
+        exampleOptions: ['✅ Yes', '❌ No', '🤔 Maybe'],
+        proTip: 'Enable name collection to see exactly who\'s coming.',
+        sampleResults: [
+            { option: '✅ Yes', votes: 18, pct: 60 },
+            { option: '🤔 Maybe', votes: 6, pct: 20 },
+            { option: '❌ No', votes: 6, pct: 20 },
+        ],
+        insights: ['18 confirmed attendees', '6 maybes to follow up with', 'Plan for 20-24 people']
     },
     {
         id: 'visual-poll',
@@ -148,58 +176,201 @@ const pollTypes: PollTypeInfo[] = [
         icon: Image,
         gradient: 'from-pink-500 to-rose-600',
         bgColor: 'bg-pink-50',
-        tagline: 'Vote with images. See to decide.',
-        description: 'Upload images as options. Voters click on the image they prefer. Perfect when seeing is better than reading.',
-        howItWorks: 'Upload 2-8 images as options. Voters click their favorite. Results show votes per image with thumbnails.',
-        bestFor: ['Design feedback', 'Logo selection', 'Photo contests', 'Product comparisons', 'Creative decisions'],
-        notFor: ['Text-based options', 'Abstract concepts', 'When images aren\'t relevant'],
+        tagline: 'Vote with images.',
+        description: 'Upload images as options. Perfect when seeing is better than reading.',
+        howItWorks: 'Upload 2-8 images. Voters click their favorite. Results show votes per image.',
+        bestFor: ['Design feedback', 'Logo selection', 'Photo contests'],
+        notFor: ['Text-based options', 'Abstract concepts'],
         exampleQuestion: 'Which website design should we launch?',
         exampleOptions: ['[Design A]', '[Design B]', '[Design C]'],
-        proTip: 'Keep images similar in size and style. One fancy image vs one plain one biases results.',
-        tier: 'pro_event'
+        proTip: 'Keep images similar in size and style for fair comparison.',
+        isPro: true,
+        sampleResults: [
+            { option: 'Design B', votes: 24, pct: 48 },
+            { option: 'Design A', votes: 18, pct: 36 },
+            { option: 'Design C', votes: 8, pct: 16 },
+        ],
+        insights: ['Design B preferred by 48%', 'Clean visual comparison', '50 votes in 2 hours']
     }
 ];
 
 const useCases = [
-    {
-        icon: Building2,
-        title: 'Workplace & Teams',
-        description: 'Team lunches, meeting times, project names, retrospectives',
-        polls: ['Multiple Choice', 'Meeting Poll', 'Ranked Choice', 'Rating Scale']
-    },
-    {
-        icon: Heart,
-        title: 'Weddings & Events',
-        description: 'Song requests, menu choices, date selection, RSVPs',
-        polls: ['RSVP', 'Multiple Choice', 'This or That', 'Meeting Poll']
-    },
-    {
-        icon: GraduationCap,
-        title: 'Education',
-        description: 'Class votes, topic preferences, feedback, group projects',
-        polls: ['Multiple Choice', 'Ranked Choice', 'Rating Scale', 'This or That']
-    },
-    {
-        icon: Briefcase,
-        title: 'Product & Business',
-        description: 'Feature prioritization, design decisions, stakeholder alignment',
-        polls: ['Ranked Choice', 'Visual Poll', 'Rating Scale', 'This or That']
-    },
-    {
-        icon: PartyPopper,
-        title: 'Fun & Social',
-        description: 'Game nights, friend group decisions, photo contests',
-        polls: ['This or That', 'Visual Poll', 'Ranked Choice', 'Multiple Choice']
-    },
-    {
-        icon: Users,
-        title: 'Community & Groups',
-        description: 'Club decisions, volunteer coordination, elections',
-        polls: ['Ranked Choice', 'RSVP', 'Multiple Choice', 'Meeting Poll']
-    }
+    { icon: Building2, title: 'Workplace & Teams', description: 'Team lunches, meeting times, project decisions', polls: ['Multiple Choice', 'Meeting Poll', 'Rating Scale'] },
+    { icon: Heart, title: 'Weddings & Events', description: 'Song requests, menu choices, RSVPs', polls: ['Multiple Choice', 'RSVP', 'This or That'] },
+    { icon: GraduationCap, title: 'Education', description: 'Class votes, topic preferences, feedback', polls: ['Multiple Choice', 'Rating Scale', 'Ranked Choice'] },
+    { icon: Briefcase, title: 'Product & Business', description: 'Feature prioritization, design decisions', polls: ['Ranked Choice', 'Visual Poll', 'Rating Scale'] },
+    { icon: PartyPopper, title: 'Fun & Social', description: 'Game nights, group decisions, "would you rather"', polls: ['This or That', 'Ranked Choice', 'Multiple Choice'] },
+    { icon: Users, title: 'Community & Groups', description: 'Club decisions, community feedback, elections', polls: ['Ranked Choice', 'Multiple Choice', 'RSVP'] }
 ];
 
-const DemoPage: React.FC = () => {
+// ============================================================================
+// Results Visualization Component
+// ============================================================================
+
+const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
+    const maxPct = Math.max(...poll.sampleResults.map(r => r.pct));
+    
+    return (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            {/* Header */}
+            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                        <BarChart3 size={18} className="text-indigo-600" />
+                        Sample Results
+                    </h4>
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                        Live Demo Data
+                    </span>
+                </div>
+            </div>
+            
+            {/* Bar Chart */}
+            <div className="p-6">
+                <div className="space-y-3 mb-6">
+                    {poll.sampleResults.map((result, i) => (
+                        <div key={i}>
+                            <div className="flex items-center justify-between text-sm mb-1">
+                                <span className="font-medium text-slate-700">{result.option}</span>
+                                <span className="font-bold text-slate-900">{result.pct}%</span>
+                            </div>
+                            <div className="h-8 bg-slate-100 rounded-lg overflow-hidden relative">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${result.pct}%` }}
+                                    transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
+                                    className={`h-full bg-gradient-to-r ${poll.gradient} rounded-lg`}
+                                />
+                                {result.votes > 0 && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-500">
+                                        {result.votes} votes
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                
+                {/* Insights */}
+                <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                    <h5 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                        <TrendingUp size={16} />
+                        Key Insights
+                    </h5>
+                    <ul className="space-y-1">
+                        {poll.insights.map((insight, i) => (
+                            <li key={i} className="text-sm text-indigo-700 flex items-start gap-2">
+                                <Check size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
+                                {insight}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// Why It's Better Section
+// ============================================================================
+
+const WhyItsBetterSection: React.FC = () => {
+    const comparisons = [
+        {
+            title: 'Multiple Choice vs Ranked Choice',
+            scenario: '4 restaurant options, 20 voters',
+            multipleChoice: {
+                winner: 'Italian (35%)',
+                problem: 'Mexican & Tex-Mex split 45% combined',
+                satisfaction: '35% got their #1 choice'
+            },
+            rankedChoice: {
+                winner: 'Mexican (52% after runoff)',
+                benefit: 'True majority winner found',
+                satisfaction: '78% got their #1 or #2 choice'
+            }
+        },
+        {
+            title: 'Simple Poll vs Meeting Poll',
+            scenario: 'Scheduling a team meeting',
+            simplePoll: {
+                winner: 'Tuesday 2pm (40%)',
+                problem: '60% can\'t attend',
+                satisfaction: '40% can make it'
+            },
+            meetingPoll: {
+                winner: 'Monday 10am (90% available)',
+                benefit: 'Shows all availability at once',
+                satisfaction: '90% can make it'
+            }
+        }
+    ];
+
+    return (
+        <section className="py-16 bg-slate-50">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Why the Right Poll Type Matters</h2>
+                    <p className="text-slate-600 max-w-2xl mx-auto">Same question, different results. Choosing the right poll type can dramatically improve outcomes.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {comparisons.map((comp, i) => (
+                        <motion.div 
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg"
+                        >
+                            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4">
+                                <h3 className="font-bold text-lg">{comp.title}</h3>
+                                <p className="text-indigo-100 text-sm">{comp.scenario}</p>
+                            </div>
+                            
+                            <div className="p-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {/* Before */}
+                                    <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                                        <div className="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">❌ Basic Approach</div>
+                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.multipleChoice.winner}</strong></div>
+                                        <div className="text-xs text-red-600 mb-2">{comp.multipleChoice.problem}</div>
+                                        <div className="flex items-center gap-1 mt-3">
+                                            <div className="h-2 bg-red-200 rounded-full flex-1">
+                                                <div className="h-2 bg-red-500 rounded-full" style={{ width: comp.multipleChoice.satisfaction.split('%')[0] + '%' }} />
+                                            </div>
+                                            <span className="text-xs text-red-600 font-bold">{comp.multipleChoice.satisfaction}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* After */}
+                                    <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                                        <div className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wide">✓ Better Approach</div>
+                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.rankedChoice.winner}</strong></div>
+                                        <div className="text-xs text-emerald-600 mb-2">{comp.rankedChoice.benefit}</div>
+                                        <div className="flex items-center gap-1 mt-3">
+                                            <div className="h-2 bg-emerald-200 rounded-full flex-1">
+                                                <div className="h-2 bg-emerald-500 rounded-full" style={{ width: comp.rankedChoice.satisfaction.split('%')[0] + '%' }} />
+                                            </div>
+                                            <span className="text-xs text-emerald-600 font-bold">{comp.rankedChoice.satisfaction}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// Main Demo Page
+// ============================================================================
+
+function DemoPage(): React.ReactElement {
     const [selectedPoll, setSelectedPoll] = useState<string | null>('multiple-choice');
     const [activeTab, setActiveTab] = useState<'overview' | 'types' | 'use-cases'>('types');
 
@@ -208,10 +379,9 @@ const DemoPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             <PromoBanner position="top" />
-            <div className="h-12" />
             <NavHeader />
 
-            {/* Hero */}
+            {/* Hero Section - FIXED: 7 poll types */}
             <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-pink-600/5" />
                 <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-12 text-center">
@@ -227,18 +397,22 @@ const DemoPage: React.FC = () => {
                             </span>
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
-                            Choose the right poll type for your question and get insights that actually help.
+                            Not all polls are created equal. Choose the right type for your question 
+                            and get insights that actually help you decide.
                         </p>
+                        
                         <div className="inline-flex items-center gap-3 px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
                             <AlertTriangle size={18} className="shrink-0" />
-                            <span><strong>Quick decisions, not science.</strong> Great for informal group input.</span>
+                            <span>
+                                <strong>Quick decisions, not science.</strong> Great for informal group input.
+                            </span>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="sticky top-28 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+            {/* Tab Navigation - FIXED: 7 poll types */}
+            <div className="sticky top-16 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="flex gap-1 py-2">
                         {[
@@ -250,7 +424,9 @@ const DemoPage: React.FC = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                                    activeTab === tab.id ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                    activeTab === tab.id
+                                        ? 'bg-indigo-100 text-indigo-700'
+                                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
                                 {tab.label}
@@ -263,125 +439,123 @@ const DemoPage: React.FC = () => {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-4 py-12">
                 <AnimatePresence mode="wait">
+                    {/* Quick Guide Tab */}
                     {activeTab === 'overview' && (
                         <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                            <div className="mb-16">
-                                <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Which Poll Type Do I Need?</h2>
-                                <p className="text-slate-500 text-center mb-8">Choose based on what you're trying to accomplish</p>
-                                
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[
-                                        { icon: Target, color: 'blue', title: '"Pick one thing"', desc: 'Simple decision between clear options', polls: ['Multiple Choice', 'This or That'] },
-                                        { icon: ListOrdered, color: 'purple', title: '"Rank preferences"', desc: 'Order of preference matters', polls: ['Ranked Choice'] },
-                                        { icon: Calendar, color: 'amber', title: '"When are you free?"', desc: 'Scheduling and availability', polls: ['Meeting Poll'] },
-                                        { icon: SlidersHorizontal, color: 'cyan', title: '"Rate everything"', desc: 'Evaluate each option independently', polls: ['Rating Scale'] },
-                                        { icon: Users, color: 'sky', title: '"Are you coming?"', desc: 'Event attendance tracking', polls: ['RSVP'] },
-                                        { icon: Image, color: 'pink', title: '"Which looks better?"', desc: 'Visual comparisons', polls: ['Visual Poll'], isPro: true },
-                                    ].map((item, i) => (
-                                        <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all">
-                                            <div className={`w-12 h-12 bg-${item.color}-100 rounded-xl flex items-center justify-center mb-4`}>
-                                                <item.icon size={24} className={`text-${item.color}-600`} />
-                                            </div>
-                                            <h3 className="font-bold text-slate-800 mb-2">{item.title}</h3>
-                                            <p className="text-slate-500 text-sm mb-4">{item.desc}</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {item.polls.map((poll, j) => (
-                                                    <span key={j} className={`px-2 py-1 bg-${item.color}-50 text-${item.color}-700 text-xs font-semibold rounded-full`}>{poll}</span>
-                                                ))}
-                                                {item.isPro && <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">PRO</span>}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
-                                    <Sparkles size={20} />Create Your First Poll<ArrowRight size={20} />
-                                </a>
-                            </div>
+                            <WhyItsBetterSection />
                         </motion.div>
                     )}
 
+                    {/* All Poll Types Tab */}
                     {activeTab === 'types' && (
                         <motion.div key="types" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                             <div className="grid lg:grid-cols-3 gap-8">
-                                <div className="lg:col-span-1 space-y-2">
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Select a Poll Type</h3>
-                                    {pollTypes.map((poll) => (
-                                        <button
-                                            key={poll.id}
-                                            onClick={() => setSelectedPoll(poll.id)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
-                                                selectedPoll === poll.id
-                                                    ? 'bg-gradient-to-r ' + poll.gradient + ' text-white shadow-lg'
-                                                    : 'bg-white border border-slate-200 hover:border-indigo-300 hover:shadow'
-                                            }`}
-                                        >
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedPoll === poll.id ? 'bg-white/20' : 'bg-gradient-to-br ' + poll.gradient}`}>
-                                                <poll.icon size={20} className="text-white" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`font-semibold truncate ${selectedPoll === poll.id ? 'text-white' : 'text-slate-800'}`}>{poll.name}</span>
-                                                    {poll.tier === 'pro_event' && (
-                                                        <span className={`px-1.5 py-0.5 text-xs font-bold rounded ${selectedPoll === poll.id ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-700'}`}>PRO</span>
-                                                    )}
-                                                </div>
-                                                <p className={`text-xs truncate ${selectedPoll === poll.id ? 'text-white/80' : 'text-slate-500'}`}>{poll.tagline}</p>
-                                            </div>
-                                            <ChevronRight size={16} className={selectedPoll === poll.id ? 'text-white' : 'text-slate-400'} />
-                                        </button>
-                                    ))}
+                                {/* Poll Type Selector */}
+                                <div className="lg:col-span-1">
+                                    <div className="sticky top-32 space-y-2">
+                                        <h3 className="text-lg font-bold text-slate-900 mb-4">Select a Poll Type</h3>
+                                        {pollTypes.map((poll) => {
+                                            const Icon = poll.icon;
+                                            const isSelected = selectedPoll === poll.id;
+                                            return (
+                                                <button
+                                                    key={poll.id}
+                                                    onClick={() => setSelectedPoll(poll.id)}
+                                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                                                        isSelected
+                                                            ? `bg-gradient-to-r ${poll.gradient} text-white shadow-lg`
+                                                            : 'bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md'
+                                                    }`}
+                                                >
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                        isSelected ? 'bg-white/20' : `bg-gradient-to-br ${poll.gradient}`
+                                                    }`}>
+                                                        <Icon className={isSelected ? 'text-white' : 'text-white'} size={20} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                                                            {poll.name}
+                                                            {poll.isPro && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">PRO</span>}
+                                                        </div>
+                                                        <div className={`text-xs truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                                                            {poll.tagline}
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight size={18} className={isSelected ? 'text-white' : 'text-slate-400'} />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
+                                {/* Poll Details */}
                                 <div className="lg:col-span-2">
                                     {selectedPollData && (
-                                        <motion.div key={selectedPollData.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                                            <div className={`bg-gradient-to-r ${selectedPollData.gradient} p-6 text-white`}>
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                                                        <selectedPollData.icon size={28} />
+                                        <motion.div key={selectedPollData.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                                            {/* Header */}
+                                            <div className={`rounded-2xl p-8 bg-gradient-to-br ${selectedPollData.gradient} text-white`}>
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                                                        <selectedPollData.icon size={32} />
                                                     </div>
                                                     <div>
-                                                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                                                            {selectedPollData.name}
-                                                            {selectedPollData.tier === 'pro_event' && <span className="px-2 py-1 bg-white/20 text-sm font-bold rounded">PRO</span>}
-                                                        </h2>
+                                                        <h2 className="text-2xl font-bold mb-1">{selectedPollData.name}</h2>
                                                         <p className="text-white/80">{selectedPollData.tagline}</p>
                                                     </div>
                                                 </div>
-                                                <p className="text-white/90">{selectedPollData.description}</p>
+                                                <p className="mt-4 text-white/90 leading-relaxed">{selectedPollData.description}</p>
                                             </div>
-                                            <div className="p-6 space-y-6">
-                                                <div>
-                                                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Eye size={18} className="text-indigo-600" />How It Works</h3>
-                                                    <p className="text-slate-600">{selectedPollData.howItWorks}</p>
-                                                </div>
-                                                <div className="grid md:grid-cols-2 gap-4">
-                                                    <div className="bg-emerald-50 rounded-xl p-4">
-                                                        <h4 className="font-bold text-emerald-800 mb-2 flex items-center gap-2"><Check size={16} />Best For</h4>
-                                                        <ul className="space-y-1">{selectedPollData.bestFor.map((item, i) => <li key={i} className="text-sm text-emerald-700">• {item}</li>)}</ul>
-                                                    </div>
-                                                    <div className="bg-red-50 rounded-xl p-4">
-                                                        <h4 className="font-bold text-red-800 mb-2 flex items-center gap-2"><AlertTriangle size={16} />Not Ideal For</h4>
-                                                        <ul className="space-y-1">{selectedPollData.notFor.map((item, i) => <li key={i} className="text-sm text-red-700">• {item}</li>)}</ul>
-                                                    </div>
-                                                </div>
-                                                <div className="bg-slate-50 rounded-xl p-4">
-                                                    <h4 className="font-bold text-slate-800 mb-2">Example</h4>
-                                                    <p className="text-slate-700 font-medium mb-2">"{selectedPollData.exampleQuestion}"</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {selectedPollData.exampleOptions.map((opt, i) => <span key={i} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-sm text-slate-600">{opt}</span>)}
-                                                    </div>
-                                                </div>
-                                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                                    <h4 className="font-bold text-amber-800 mb-1">💡 Pro Tip</h4>
-                                                    <p className="text-sm text-amber-700">{selectedPollData.proTip}</p>
-                                                </div>
-                                                <a href={`/create?type=${selectedPollData.id}`} className={`w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r ${selectedPollData.gradient} text-white font-bold rounded-xl hover:shadow-lg transition-all`}>
-                                                    Create {selectedPollData.name} Poll<ArrowRight size={18} />
-                                                </a>
+
+                                            {/* Sample Results Visualization */}
+                                            <ResultsVisualization poll={selectedPollData} />
+
+                                            {/* How it works */}
+                                            <div className="bg-white rounded-2xl p-6 border border-slate-200">
+                                                <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                                    <Eye size={18} className="text-indigo-600" />
+                                                    How It Works
+                                                </h3>
+                                                <p className="text-slate-600">{selectedPollData.howItWorks}</p>
                                             </div>
+
+                                            {/* Best For / Not For */}
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                                                    <h3 className="font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                                                        <Check size={18} /> Best For
+                                                    </h3>
+                                                    <ul className="space-y-1.5">
+                                                        {selectedPollData.bestFor.map((item, i) => (
+                                                            <li key={i} className="text-sm text-emerald-700 flex items-start gap-2">
+                                                                <span className="text-emerald-500 mt-0.5">•</span>{item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="bg-red-50 rounded-xl p-5 border border-red-100">
+                                                    <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+                                                        <AlertTriangle size={18} /> Not Ideal For
+                                                    </h3>
+                                                    <ul className="space-y-1.5">
+                                                        {selectedPollData.notFor.map((item, i) => (
+                                                            <li key={i} className="text-sm text-red-700 flex items-start gap-2">
+                                                                <span className="text-red-500 mt-0.5">•</span>{item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            {/* Pro Tip */}
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                                <h3 className="font-bold text-amber-800 mb-1">💡 Pro Tip</h3>
+                                                <p className="text-amber-700 text-sm">{selectedPollData.proTip}</p>
+                                            </div>
+
+                                            {/* CTA */}
+                                            <a href="/create" className={`block w-full py-4 bg-gradient-to-r ${selectedPollData.gradient} text-white font-bold text-center rounded-xl hover:shadow-lg transition-all`}>
+                                                Create a {selectedPollData.name} →
+                                            </a>
                                         </motion.div>
                                     )}
                                 </div>
@@ -389,39 +563,45 @@ const DemoPage: React.FC = () => {
                         </motion.div>
                     )}
 
+                    {/* Use Cases Tab */}
                     {activeTab === 'use-cases' && (
                         <motion.div key="use-cases" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl font-bold text-slate-900 mb-4">Polls for Every Situation</h2>
-                                <p className="text-slate-600 max-w-2xl mx-auto">Whether you're planning a wedding or prioritizing features, there's a poll for you.</p>
-                            </div>
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {useCases.map((useCase, i) => (
-                                    <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all">
-                                        <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                                            <useCase.icon size={28} className="text-indigo-600" />
+                                    <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                                        className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg transition-all">
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+                                            <useCase.icon size={24} className="text-indigo-600" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-800 mb-2">{useCase.title}</h3>
+                                        <h3 className="font-bold text-slate-800 mb-2">{useCase.title}</h3>
                                         <p className="text-slate-500 text-sm mb-4">{useCase.description}</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {useCase.polls.map((poll, j) => <span key={j} className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">{poll}</span>)}
+                                            {useCase.polls.map((poll, j) => (
+                                                <span key={j} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">{poll}</span>
+                                            ))}
                                         </div>
                                     </motion.div>
                                 ))}
-                            </div>
-                            <div className="text-center mt-12">
-                                <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
-                                    <Sparkles size={20} />Start Creating<ArrowRight size={20} />
-                                </a>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
 
+            {/* Bottom CTA */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 py-16">
+                <div className="max-w-3xl mx-auto px-4 text-center">
+                    <h2 className="text-3xl font-bold text-white mb-4">Ready to try it yourself?</h2>
+                    <p className="text-indigo-100 mb-8">No signup needed. Create a poll in 30 seconds.</p>
+                    <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg">
+                        <Sparkles size={20} /> Create Free Poll <ArrowRight size={20} />
+                    </a>
+                </div>
+            </div>
+
             <Footer />
         </div>
     );
-};
+}
 
 export default DemoPage;

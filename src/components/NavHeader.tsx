@@ -1,27 +1,24 @@
 // ============================================================================
-// NavHeader - Sticky navigation with promo banner awareness
+// NavHeader - Navigation with Logo
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
-interface NavHeaderProps {
+export interface NavHeaderProps {
     transparent?: boolean;
 }
 
-const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
+function NavHeader({ transparent = false }: NavHeaderProps): React.ReactElement {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
-            // Consider scrolled after 50px (past promo banner)
             setIsScrolled(window.scrollY > 50);
         };
-
         window.addEventListener('scroll', handleScroll);
-        handleScroll(); // Check initial state
-        
+        handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -35,20 +32,30 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
     ];
 
     return (
-        <header 
-            className={`sticky top-0 z-40 transition-all duration-300 ${
-                isScrolled 
-                    ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100' 
-                    : transparent 
-                        ? 'bg-transparent' 
-                        : 'bg-white border-b border-slate-100'
-            }`}
-        >
+        <header className={`sticky top-0 z-40 transition-all duration-300 ${
+            isScrolled 
+                ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100' 
+                : transparent ? 'bg-transparent' : 'bg-white border-b border-slate-100'
+        }`}>
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <a href="/" className="flex items-center gap-2">
-                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                        {/* Use actual logo image */}
+                        <img 
+                            src="/logo.png" 
+                            alt="VoteGenerator" 
+                            className="h-9 w-auto"
+                            onError={(e) => {
+                                // Fallback to SVG if image doesn't load
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                            }}
+                        />
+                        {/* Fallback logo if image doesn't load */}
+                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl items-center justify-center shadow-md hidden">
                             <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
                                 <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                                 <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2"/>
@@ -103,19 +110,13 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                 <div className="md:hidden bg-white border-t border-slate-100 shadow-lg">
                     <nav className="max-w-7xl mx-auto px-4 py-4 space-y-1">
                         {navLinks.map((link) => (
-                            <a
-                                key={link.href}
-                                href={link.href}
-                                className="block px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
-                            >
+                            <a key={link.href} href={link.href}
+                                className="block px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-100 font-medium">
                                 {link.label}
                             </a>
                         ))}
                         <div className="pt-4 border-t border-slate-100">
-                            <a
-                                href="/create"
-                                className="block w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center font-semibold rounded-xl"
-                            >
+                            <a href="/create" className="block w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center font-semibold rounded-xl">
                                 Create Free Poll
                             </a>
                         </div>
@@ -124,6 +125,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
             )}
         </header>
     );
-};
+}
 
 export default NavHeader;

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, HelpCircle, ListOrdered, CheckSquare, Calendar, AlertTriangle, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Upload, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle } from 'lucide-react';
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
 import ThemeSelector from './ThemeSelector';
 
 // ============================================================================
-// Tier Configuration - Updated for 4-tier pricing
+// Tier Configuration
 // ============================================================================
 
 type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited';
@@ -18,102 +18,38 @@ const TIER_CONFIG: Record<PollTier, { label: string; colors: string; tooltip: st
 };
 
 // ============================================================================
-// 7 Active Poll Types
+// 7 Poll Types
 // ============================================================================
 
 const POLL_TYPES = [
-    {
-        id: 'multiple',
-        name: 'Multiple Choice',
-        icon: CheckSquare,
-        description: 'Classic poll - pick one or more options',
-        tooltip: 'The most common poll type. Voters click their favorite option(s). Great for quick decisions.',
-        useCases: ['Team votes', 'Event planning', 'Quick surveys'],
-        gradient: 'from-blue-500 to-indigo-500',
-        selectedBorder: 'border-blue-500',
-        selectedBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'ranked',
-        name: 'Ranked Choice',
-        icon: ListOrdered,
-        description: 'Drag to rank options in order',
-        tooltip: 'Voters rank options from favorite to least favorite. Shows true preferences!',
-        useCases: ['Group decisions', 'Avoiding ties', 'Fair voting'],
-        gradient: 'from-indigo-500 to-purple-500',
-        selectedBorder: 'border-indigo-500',
-        selectedBg: 'bg-gradient-to-br from-indigo-50 to-purple-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'pairwise',
-        name: 'This or That',
-        icon: ArrowLeftRight,
-        description: 'Quick A vs B comparisons',
-        tooltip: 'Two options, pick one. Great for quick gut-reaction feedback.',
-        useCases: ['Bracket voting', 'Preference testing', 'Quick decisions'],
-        gradient: 'from-orange-500 to-red-500',
-        selectedBorder: 'border-orange-500',
-        selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'meeting',
-        name: 'Meeting Poll',
-        icon: Calendar,
-        description: 'Find the best time for everyone',
-        tooltip: 'Like Doodle but simpler! Everyone marks when they\'re available.',
-        useCases: ['Meeting scheduling', 'Event planning', 'Party planning'],
-        gradient: 'from-amber-500 to-orange-500',
-        selectedBorder: 'border-amber-500',
-        selectedBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'rating',
-        name: 'Rating Scale',
-        icon: SlidersHorizontal,
-        description: 'Rate each option on a scale',
-        tooltip: 'Voters rate every option from 1-5 stars. See average ratings.',
-        useCases: ['Product feedback', 'Surveys', 'Feature ratings'],
-        gradient: 'from-cyan-500 to-blue-500',
-        selectedBorder: 'border-cyan-500',
-        selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'rsvp',
-        name: 'RSVP',
-        icon: Users,
-        description: 'Collect event attendance',
-        tooltip: 'Simple Yes/No/Maybe for events. See who\'s coming at a glance.',
-        useCases: ['Party invites', 'Team events', 'Social gatherings'],
-        gradient: 'from-sky-500 to-blue-500',
-        selectedBorder: 'border-sky-500',
-        selectedBg: 'bg-gradient-to-br from-sky-50 to-blue-50',
-        tier: 'free' as PollTier
-    },
-    {
-        id: 'image',
-        name: 'Visual Poll',
-        icon: ImageIcon,
-        description: 'Vote on images in a grid',
-        tooltip: 'Upload images and let people vote visually. Perfect for design choices!',
-        useCases: ['Logo selection', 'Design contests', 'Photo competitions'],
-        gradient: 'from-pink-500 to-rose-500',
-        selectedBorder: 'border-pink-500',
-        selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50',
-        tier: 'pro_event' as PollTier
-    }
+    { id: 'multiple', name: 'Multiple Choice', icon: CheckSquare, description: 'Classic poll - pick one or more', tooltip: 'Voters click their favorite option(s). Great for quick decisions.', gradient: 'from-blue-500 to-indigo-500', selectedBorder: 'border-blue-500', selectedBg: 'bg-gradient-to-br from-blue-50 to-indigo-50', tier: 'free' as PollTier },
+    { id: 'ranked', name: 'Ranked Choice', icon: ListOrdered, description: 'Drag to rank in order', tooltip: 'Voters rank options from favorite to least. Shows true preferences!', gradient: 'from-indigo-500 to-purple-500', selectedBorder: 'border-indigo-500', selectedBg: 'bg-gradient-to-br from-indigo-50 to-purple-50', tier: 'free' as PollTier },
+    { id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, description: 'Quick A vs B comparisons', tooltip: 'Two options, pick one. Great for quick gut-reaction feedback.', gradient: 'from-orange-500 to-red-500', selectedBorder: 'border-orange-500', selectedBg: 'bg-gradient-to-br from-orange-50 to-red-50', tier: 'free' as PollTier },
+    { id: 'meeting', name: 'Meeting Poll', icon: Calendar, description: 'Find the best time', tooltip: 'Like Doodle! Everyone marks when they\'re available.', gradient: 'from-amber-500 to-orange-500', selectedBorder: 'border-amber-500', selectedBg: 'bg-gradient-to-br from-amber-50 to-orange-50', tier: 'free' as PollTier },
+    { id: 'rating', name: 'Rating Scale', icon: SlidersHorizontal, description: 'Rate each option 1-5', tooltip: 'Voters rate every option from 1-5 stars. See average ratings.', gradient: 'from-cyan-500 to-blue-500', selectedBorder: 'border-cyan-500', selectedBg: 'bg-gradient-to-br from-cyan-50 to-blue-50', tier: 'free' as PollTier },
+    { id: 'rsvp', name: 'RSVP', icon: Users, description: 'Collect event attendance', tooltip: 'Yes/No/Maybe for events. See who\'s coming at a glance.', gradient: 'from-sky-500 to-blue-500', selectedBorder: 'border-sky-500', selectedBg: 'bg-gradient-to-br from-sky-50 to-blue-50', tier: 'free' as PollTier },
+    { id: 'image', name: 'Visual Poll', icon: ImageIcon, description: 'Vote on images', tooltip: 'Upload images and let people vote visually. Perfect for design choices!', gradient: 'from-pink-500 to-rose-500', selectedBorder: 'border-pink-500', selectedBg: 'bg-gradient-to-br from-pink-50 to-rose-50', tier: 'pro_event' as PollTier }
 ];
 
-const PLACEHOLDER_QUESTIONS = [
-    "Where should we eat lunch?",
-    "What movie should we watch?",
-    "Which design do you prefer?",
-    "When can everyone meet?"
-];
+const PLACEHOLDER_QUESTIONS = ["Where should we eat lunch?", "What movie should we watch?", "Which design do you prefer?", "When can everyone meet?"];
+
+// ============================================================================
+// Tooltip Component - Improved styling
+// ============================================================================
+
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
+    <div className="group relative inline-flex">
+        {children}
+        <div className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1.5 bg-slate-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-normal max-w-[200px] text-center leading-snug pointer-events-none shadow-lg">
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-700" />
+        </div>
+    </div>
+);
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 const VoteGeneratorCreate: React.FC = () => {
     const [title, setTitle] = useState('');
@@ -124,12 +60,16 @@ const VoteGeneratorCreate: React.FC = () => {
     const [pollType, setPollType] = useState<string>('multiple');
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [placeholderQuestion] = useState(() => 
-        PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]
-    );
+    const [placeholderQuestion] = useState(() => PLACEHOLDER_QUESTIONS[Math.floor(Math.random() * PLACEHOLDER_QUESTIONS.length)]);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+    
+    // Settings
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [multipleSelection, setMultipleSelection] = useState(false);
+    const [requireNames, setRequireNames] = useState(false);
+    const [allowComments, setAllowComments] = useState(false);
+    const [hideResults, setHideResults] = useState(false);
+    const [buttonText, setButtonText] = useState('Submit Vote');
     const [selectedTheme, setSelectedTheme] = useState('default');
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
@@ -156,20 +96,14 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const handleImageUpload = async (index: number, file: File) => {
-        if (!file.type.startsWith('image/')) {
-            setError('Please upload an image file');
-            return;
-        }
+        if (!file.type.startsWith('image/')) { setError('Please upload an image file'); return; }
         setUploadingIndex(index);
         setError(null);
         try {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            const response = await fetch(
-                `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-                { method: 'POST', body: formData }
-            );
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
             if (!response.ok) throw new Error('Upload failed');
             const data = await response.json();
             const newImages = [...optionImages];
@@ -190,7 +124,6 @@ const VoteGeneratorCreate: React.FC = () => {
         setError(null);
         
         try {
-            // Build poll data matching vg-create API format
             const pollData = {
                 title: title.trim(),
                 description: description.trim() || undefined,
@@ -198,11 +131,14 @@ const VoteGeneratorCreate: React.FC = () => {
                 pollType: pollType,
                 settings: {
                     allowMultiple: multipleSelection,
+                    requireNames,
+                    allowComments,
+                    hideResults,
                 },
+                buttonText: buttonText || 'Submit Vote',
                 tier: selectedPollType?.tier || 'free',
             };
 
-            // Add image URLs if visual poll
             if (pollType === 'image') {
                 (pollData as any).optionImages = optionImages.slice(0, validOptions.length).filter(img => img);
             }
@@ -234,13 +170,10 @@ const VoteGeneratorCreate: React.FC = () => {
                 <div className="text-center mb-10">
                     <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4">
-                        <Sparkles size={16} />
-                        7 Poll Types Available
+                        <Sparkles size={16} />7 Poll Types Available
                     </motion.div>
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Create Your Poll</h1>
-                    <p className="text-slate-600 max-w-xl mx-auto">
-                        Choose a poll type, add your question and options, and share instantly. No signup required.
-                    </p>
+                    <p className="text-slate-600 max-w-xl mx-auto">Choose a poll type, add your question and options, and share instantly. No signup required.</p>
                 </div>
 
                 <div className="grid lg:grid-cols-5 gap-8">
@@ -249,8 +182,7 @@ const VoteGeneratorCreate: React.FC = () => {
                         {/* Poll Type Selector */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                             <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <BarChart2 className="text-indigo-600" size={20} />
-                                Choose Poll Type
+                                <BarChart2 className="text-indigo-600" size={20} />Choose Poll Type
                             </h2>
                             
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -260,29 +192,25 @@ const VoteGeneratorCreate: React.FC = () => {
                                     const tierConfig = TIER_CONFIG[type.tier];
                                     
                                     return (
-                                        <button
-                                            key={type.id}
-                                            onClick={() => setPollType(type.id)}
-                                            className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
-                                                isSelected ? `${type.selectedBorder} ${type.selectedBg}` : 'border-slate-200 hover:border-slate-300 bg-white'
-                                            }`}
-                                        >
-                                            {tierConfig.label && (
-                                                <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold rounded-full ${tierConfig.colors}`}>
-                                                    {tierConfig.label}
-                                                </span>
-                                            )}
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-gradient-to-br ${type.gradient}`}>
-                                                <Icon className="text-white" size={20} />
-                                            </div>
-                                            <div className="font-medium text-slate-900 text-sm mb-1">{type.name}</div>
-                                            <div className="text-xs text-slate-500 line-clamp-2">{type.description}</div>
-                                            
-                                            <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-normal max-w-xs pointer-events-none">
-                                                {type.tooltip}
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
-                                            </div>
-                                        </button>
+                                        <Tooltip key={type.id} text={type.tooltip}>
+                                            <button
+                                                onClick={() => setPollType(type.id)}
+                                                className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${
+                                                    isSelected ? `${type.selectedBorder} ${type.selectedBg}` : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                }`}
+                                            >
+                                                {tierConfig.label && (
+                                                    <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold rounded-full ${tierConfig.colors}`}>
+                                                        {tierConfig.label}
+                                                    </span>
+                                                )}
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 bg-gradient-to-br ${type.gradient}`}>
+                                                    <Icon className="text-white" size={20} />
+                                                </div>
+                                                <div className="font-medium text-slate-900 text-sm mb-1">{type.name}</div>
+                                                <div className="text-xs text-slate-500 line-clamp-2">{type.description}</div>
+                                            </button>
+                                        </Tooltip>
                                     );
                                 })}
                             </div>
@@ -292,10 +220,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                     <Lock className="text-purple-600 flex-shrink-0 mt-0.5" size={18} />
                                     <div>
                                         <p className="text-purple-900 font-medium text-sm">{selectedPollType?.name} requires Pro Event ($19.99 one-time)</p>
-                                        <p className="text-purple-700 text-xs mt-1">
-                                            Includes 2,000 responses, PDF export, remove branding & more.
-                                            <a href="/pricing" className="underline ml-1">See features →</a>
-                                        </p>
+                                        <p className="text-purple-700 text-xs mt-1">Includes 2,000 responses, PDF export, remove branding & more. <a href="/pricing" className="underline">See features →</a></p>
                                     </div>
                                 </div>
                             )}
@@ -307,17 +232,14 @@ const VoteGeneratorCreate: React.FC = () => {
                             
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Question *</label>
-                                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-                                    placeholder={placeholderQuestion}
+                                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={placeholderQuestion}
                                     className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-lg" />
                             </div>
 
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Description <span className="text-slate-400">(optional)</span></label>
-                                <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Add context or instructions..."
-                                    rows={2}
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none" />
+                                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add context or instructions..."
+                                    rows={2} className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none" />
                             </div>
 
                             <div>
@@ -326,8 +248,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                     {options.map((option, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <div className="flex-1 relative">
-                                                <input type="text" value={option} onChange={(e) => updateOption(index, e.target.value)}
-                                                    placeholder={`Option ${index + 1}`}
+                                                <input type="text" value={option} onChange={(e) => updateOption(index, e.target.value)} placeholder={`Option ${index + 1}`}
                                                     className="w-full px-4 py-3 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
                                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{index + 1}</span>
                                             </div>
@@ -335,12 +256,8 @@ const VoteGeneratorCreate: React.FC = () => {
                                             {pollType === 'image' && (
                                                 <button onClick={() => {
                                                     const input = document.createElement('input');
-                                                    input.type = 'file';
-                                                    input.accept = 'image/*';
-                                                    input.onchange = (e) => {
-                                                        const file = (e.target as HTMLInputElement).files?.[0];
-                                                        if (file) handleImageUpload(index, file);
-                                                    };
+                                                    input.type = 'file'; input.accept = 'image/*';
+                                                    input.onchange = (e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) handleImageUpload(index, file); };
                                                     input.click();
                                                 }}
                                                     className={`p-3 rounded-xl border-2 border-dashed transition ${optionImages[index] ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-indigo-300'}`}
@@ -352,8 +269,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                             )}
                                             
                                             {options.length > 2 && (
-                                                <button onClick={() => removeOption(index)}
-                                                    className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition">
+                                                <button onClick={() => removeOption(index)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition">
                                                     <Trash2 size={20} />
                                                 </button>
                                             )}
@@ -362,8 +278,7 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                                 
                                 {options.length < 20 && (
-                                    <button onClick={addOption}
-                                        className="mt-3 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition text-sm font-medium">
+                                    <button onClick={addOption} className="mt-3 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition text-sm font-medium">
                                         <Plus size={18} />Add Option
                                     </button>
                                 )}
@@ -372,25 +287,72 @@ const VoteGeneratorCreate: React.FC = () => {
 
                         {/* Advanced Options */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <button onClick={() => setShowAdvanced(!showAdvanced)}
-                                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">
-                                <span className="font-medium text-slate-900">Advanced Options</span>
+                            <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">
+                                <span className="font-medium text-slate-900">Settings & Customization</span>
                                 {showAdvanced ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
                             
                             <AnimatePresence>
                                 {showAdvanced && (
-                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                                        className="border-t border-slate-200">
+                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
                                         <div className="p-6 space-y-4">
+                                            {/* Multiple Selection (for multiple choice) */}
                                             {pollType === 'multiple' && (
-                                                <label className="flex items-center gap-3 cursor-pointer">
-                                                    <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)}
-                                                        className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
-                                                    <span className="text-slate-700">Allow multiple selections</span>
+                                                <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-slate-700">Allow multiple selections</span>
+                                                        <Tooltip text="Let voters pick more than one option">
+                                                            <HelpCircle size={14} className="text-slate-400" />
+                                                        </Tooltip>
+                                                    </div>
+                                                    <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
                                                 </label>
                                             )}
-                                            <div>
+                                            
+                                            {/* Require Names */}
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-slate-700">Require names</span>
+                                                    <Tooltip text="Voters must enter their name before voting. Names shown to organizer only.">
+                                                        <HelpCircle size={14} className="text-slate-400" />
+                                                    </Tooltip>
+                                                </div>
+                                                <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                            </label>
+                                            
+                                            {/* Allow Comments */}
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                                <div className="flex items-center gap-2">
+                                                    <MessageCircle size={16} className="text-slate-500" />
+                                                    <span className="text-sm font-medium text-slate-700">Allow comments</span>
+                                                    <Tooltip text="Let voters leave optional comments with their vote. Great for feedback!">
+                                                        <HelpCircle size={14} className="text-slate-400" />
+                                                    </Tooltip>
+                                                </div>
+                                                <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                            </label>
+                                            
+                                            {/* Hide Results */}
+                                            <label className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-slate-50">
+                                                <div className="flex items-center gap-2">
+                                                    <Eye size={16} className="text-slate-500" />
+                                                    <span className="text-sm font-medium text-slate-700">Hide results until closed</span>
+                                                    <Tooltip text="Results stay hidden from voters until you close the poll. Prevents bias!">
+                                                        <HelpCircle size={14} className="text-slate-400" />
+                                                    </Tooltip>
+                                                </div>
+                                                <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                                            </label>
+                                            
+                                            {/* Button Text */}
+                                            <div className="p-3 bg-slate-50 rounded-xl">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">Submit button text</label>
+                                                <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote"
+                                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                                            </div>
+                                            
+                                            {/* Theme Selector */}
+                                            <div className="pt-4 border-t border-slate-100">
                                                 <label className="block text-sm font-medium text-slate-700 mb-2">Poll Theme</label>
                                                 <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
                                             </div>
@@ -407,11 +369,9 @@ const VoteGeneratorCreate: React.FC = () => {
                             </div>
                         )}
 
-                        <button onClick={handleCreate}
-                            disabled={isCreating || !title.trim() || options.filter(o => o.trim()).length < 2}
+                        <button onClick={handleCreate} disabled={isCreating || !title.trim() || options.filter(o => o.trim()).length < 2}
                             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25">
-                            {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</>
-                                : <>Create Poll<ArrowRight size={20} /></>}
+                            {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</> : <><Sparkles size={18} />Create Poll<ArrowRight size={20} /></>}
                         </button>
                     </div>
 
@@ -420,16 +380,12 @@ const VoteGeneratorCreate: React.FC = () => {
                         <div className="sticky top-8">
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                                 <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                                        <Eye size={18} className="text-slate-400" />Preview
-                                    </h3>
+                                    <h3 className="font-semibold text-slate-900 flex items-center gap-2"><Eye size={18} className="text-slate-400" />Preview</h3>
                                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                                        <button onClick={() => setPreviewDevice('desktop')}
-                                            className={`p-1.5 rounded ${previewDevice === 'desktop' ? 'bg-white shadow' : ''}`}>
+                                        <button onClick={() => setPreviewDevice('desktop')} className={`p-1.5 rounded ${previewDevice === 'desktop' ? 'bg-white shadow' : ''}`}>
                                             <Monitor size={16} className={previewDevice === 'desktop' ? 'text-indigo-600' : 'text-slate-400'} />
                                         </button>
-                                        <button onClick={() => setPreviewDevice('mobile')}
-                                            className={`p-1.5 rounded ${previewDevice === 'mobile' ? 'bg-white shadow' : ''}`}>
+                                        <button onClick={() => setPreviewDevice('mobile')} className={`p-1.5 rounded ${previewDevice === 'mobile' ? 'bg-white shadow' : ''}`}>
                                             <Smartphone size={16} className={previewDevice === 'mobile' ? 'text-indigo-600' : 'text-slate-400'} />
                                         </button>
                                     </div>
@@ -441,14 +397,12 @@ const VoteGeneratorCreate: React.FC = () => {
                                         <div className="space-y-2">
                                             {options.filter(o => o.trim() || true).slice(0, 5).map((option, i) => (
                                                 <div key={i} className="p-3 border border-slate-200 rounded-lg hover:border-indigo-300 cursor-pointer transition">
-                                                    {pollType === 'image' && optionImages[i] && (
-                                                        <img src={optionImages[i]} alt="" className="w-full h-24 object-cover rounded mb-2" />
-                                                    )}
+                                                    {pollType === 'image' && optionImages[i] && <img src={optionImages[i]} alt="" className="w-full h-24 object-cover rounded mb-2" />}
                                                     <span className="text-slate-700">{option || `Option ${i + 1}`}</span>
                                                 </div>
                                             ))}
                                         </div>
-                                        <button className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg">Submit Vote</button>
+                                        <button className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg">{buttonText || 'Submit Vote'}</button>
                                     </div>
                                 </div>
                             </div>

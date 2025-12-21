@@ -1,6 +1,6 @@
 // ============================================================================
 // Demo Page - VoteGenerator
-// FIXED: 7 poll types (not 12), added seeded results with graphs/tables
+// FIXED: 7 poll types (not 12), seeded results, TypeScript strict mode
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -8,8 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ListOrdered, CheckSquare, Calendar, ArrowLeftRight, SlidersHorizontal,
     Users, Image, ChevronRight, Sparkles, Building2, Heart, Briefcase,
-    GraduationCap, PartyPopper, Target, AlertTriangle, Play, ArrowRight,
-    Eye, Check, BarChart3, TrendingUp, Award, Percent
+    GraduationCap, PartyPopper, AlertTriangle, Play, ArrowRight,
+    Eye, Check, BarChart3, TrendingUp
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -34,7 +34,6 @@ interface PollTypeInfo {
     exampleOptions: string[];
     proTip: string;
     isPro?: boolean;
-    // Seeded results data
     sampleResults: { option: string; votes: number; pct: number }[];
     insights: string[];
 }
@@ -208,11 +207,8 @@ const useCases = [
 // ============================================================================
 
 const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
-    const maxPct = Math.max(...poll.sampleResults.map(r => r.pct));
-    
     return (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            {/* Header */}
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
                 <div className="flex items-center justify-between">
                     <h4 className="font-bold text-slate-900 flex items-center gap-2">
@@ -225,7 +221,6 @@ const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                 </div>
             </div>
             
-            {/* Bar Chart */}
             <div className="p-6">
                 <div className="space-y-3 mb-6">
                     {poll.sampleResults.map((result, i) => (
@@ -251,7 +246,6 @@ const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                     ))}
                 </div>
                 
-                {/* Insights */}
                 <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
                     <h5 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
                         <TrendingUp size={16} />
@@ -272,37 +266,58 @@ const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
 };
 
 // ============================================================================
-// Why It's Better Section
+// Why It's Better Section - FIXED TypeScript
 // ============================================================================
 
+interface ComparisonData {
+    title: string;
+    scenario: string;
+    basic: {
+        label: string;
+        winner: string;
+        problem: string;
+        satisfaction: string;
+    };
+    better: {
+        label: string;
+        winner: string;
+        benefit: string;
+        satisfaction: string;
+    };
+}
+
 const WhyItsBetterSection: React.FC = () => {
-    const comparisons = [
+    const comparisons: ComparisonData[] = [
         {
             title: 'Multiple Choice vs Ranked Choice',
             scenario: '4 restaurant options, 20 voters',
-            multipleChoice: {
+            basic: {
+                label: 'Multiple Choice',
                 winner: 'Italian (35%)',
                 problem: 'Mexican & Tex-Mex split 45% combined',
-                satisfaction: '35% got their #1 choice'
+                satisfaction: '35%'
             },
-            rankedChoice: {
+            better: {
+                label: 'Ranked Choice',
                 winner: 'Mexican (52% after runoff)',
                 benefit: 'True majority winner found',
-                satisfaction: '78% got their #1 or #2 choice'
+                satisfaction: '78%'
             }
         },
         {
             title: 'Simple Poll vs Meeting Poll',
             scenario: 'Scheduling a team meeting',
-            simplePoll: {
+            basic: {
+                label: 'Simple Poll',
                 winner: 'Tuesday 2pm (40%)',
                 problem: '60% can\'t attend',
-                satisfaction: '40% can make it'
+                satisfaction: '40%'
             },
-            meetingPoll: {
+            better: {
+                label: 'Meeting Poll',
                 winner: 'Monday 10am (90% available)',
                 benefit: 'Shows all availability at once',
-                satisfaction: '90% can make it'
+                satisfaction: '90%'
             }
         }
     ];
@@ -331,29 +346,29 @@ const WhyItsBetterSection: React.FC = () => {
                             
                             <div className="p-6">
                                 <div className="grid grid-cols-2 gap-4">
-                                    {/* Before */}
+                                    {/* Basic Approach */}
                                     <div className="bg-red-50 rounded-xl p-4 border border-red-100">
-                                        <div className="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">❌ Basic Approach</div>
-                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.multipleChoice.winner}</strong></div>
-                                        <div className="text-xs text-red-600 mb-2">{comp.multipleChoice.problem}</div>
+                                        <div className="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">❌ {comp.basic.label}</div>
+                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.basic.winner}</strong></div>
+                                        <div className="text-xs text-red-600 mb-2">{comp.basic.problem}</div>
                                         <div className="flex items-center gap-1 mt-3">
                                             <div className="h-2 bg-red-200 rounded-full flex-1">
-                                                <div className="h-2 bg-red-500 rounded-full" style={{ width: comp.multipleChoice.satisfaction.split('%')[0] + '%' }} />
+                                                <div className="h-2 bg-red-500 rounded-full" style={{ width: comp.basic.satisfaction }} />
                                             </div>
-                                            <span className="text-xs text-red-600 font-bold">{comp.multipleChoice.satisfaction}</span>
+                                            <span className="text-xs text-red-600 font-bold">{comp.basic.satisfaction}</span>
                                         </div>
                                     </div>
                                     
-                                    {/* After */}
+                                    {/* Better Approach */}
                                     <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-                                        <div className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wide">✓ Better Approach</div>
-                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.rankedChoice.winner}</strong></div>
-                                        <div className="text-xs text-emerald-600 mb-2">{comp.rankedChoice.benefit}</div>
+                                        <div className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wide">✓ {comp.better.label}</div>
+                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.better.winner}</strong></div>
+                                        <div className="text-xs text-emerald-600 mb-2">{comp.better.benefit}</div>
                                         <div className="flex items-center gap-1 mt-3">
                                             <div className="h-2 bg-emerald-200 rounded-full flex-1">
-                                                <div className="h-2 bg-emerald-500 rounded-full" style={{ width: comp.rankedChoice.satisfaction.split('%')[0] + '%' }} />
+                                                <div className="h-2 bg-emerald-500 rounded-full" style={{ width: comp.better.satisfaction }} />
                                             </div>
-                                            <span className="text-xs text-emerald-600 font-bold">{comp.rankedChoice.satisfaction}</span>
+                                            <span className="text-xs text-emerald-600 font-bold">{comp.better.satisfaction}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -422,7 +437,7 @@ function DemoPage(): React.ReactElement {
                         ].map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as 'overview' | 'types' | 'use-cases')}
                                 className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                                     activeTab === tab.id
                                         ? 'bg-indigo-100 text-indigo-700'
@@ -470,7 +485,7 @@ function DemoPage(): React.ReactElement {
                                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                                         isSelected ? 'bg-white/20' : `bg-gradient-to-br ${poll.gradient}`
                                                     }`}>
-                                                        <Icon className={isSelected ? 'text-white' : 'text-white'} size={20} />
+                                                        <Icon className="text-white" size={20} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-900'}`}>

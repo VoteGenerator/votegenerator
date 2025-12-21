@@ -18,7 +18,13 @@ const PROMO = {
     link: '/pricing',
 };
 
-const PromoBanner: React.FC = () => {
+// Explicit props interface
+export interface PromoBannerProps {
+    position?: 'top' | 'bottom' | 'floating' | string;
+}
+
+// Component with explicit typing
+function PromoBanner({ position = 'top' }: PromoBannerProps): React.ReactElement | null {
     const [isVisible, setIsVisible] = useState(true);
 
     if (!SHOW_BANNER || !isVisible) return null;
@@ -56,6 +62,6 @@ const PromoBanner: React.FC = () => {
             </div>
         </div>
     );
-};
+}
 
 export default PromoBanner;

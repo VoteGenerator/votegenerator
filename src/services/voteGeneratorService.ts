@@ -207,163 +207,128 @@ export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vot
 };
 
 export const getResults = async (pollId: string, adminKey?: string): Promise<RunoffResult> => {
-    let votes: any[] = [];
-    
     try {
         const response = await fetch(`/.netlify/functions/vg-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
         if(response.ok) {
-            votes = await response.json(); 
-        } else {
-            throw new Error();
+            const data = await response.json();
+            // vg-results returns calculated results, not raw votes
+            // Transform to match RunoffResult format
+            return {
+                winnerId: data.winner?.id || null,
+                rounds: data.rounds || [],
+                totalVotes: data.totalVotes || 0,
+                voters: [],
+                usedCodes: [],
+                comments: [],
+                simpleCounts: data.standings ? 
+                    data.standings.reduce((acc: Record<string, number>, s: any) => {
+                        acc[s.optionId] = s.voteCount;
+                        return acc;
+                    }, {}) : {},
+                votes: []
+            };
         }
+        throw new Error('API error');
     } catch {
-        votes = getLocalVotes(pollId);
-    }
+        // Fallback to local votes
+        const votes = getLocalVotes(pollId);
+        
+        if (votes.length === 0) {
+            return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, votes: [] };
+        }
 
-    const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
-    const comments = votes
-        .filter((v: any) => !!v.comment)
-        .map((v: any) => ({
-            name: v.voterName || 'Anonymous',
-            text: v.comment,
-            date: v.votedAt
+        const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
+        const comments = votes
+            .filter((v: any) => !!v.comment)
+            .map((v: any) => ({
+                name: v.voterName || 'Anonymous',
+                text: v.comment,
+                date: v.votedAt
+            }));
+            
+        const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
+        
+        const simpleCounts: Record<string, number> = {};
+        votes.forEach((v: any) => {
+            if(Array.isArray(v.choices)) {
+                v.choices.forEach((c: string) => {
+                    if(c) simpleCounts[c] = (simpleCounts[c] || 0) + 1;
+                });
+            }
+        });
+
+        // Simple RCV calculation for local fallback
+        let remainingVotes = votes.map(v => ({ 
+            choices: (v.choices || []).filter((c: string) => !!c)
         }));
         
-    const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];
-    
-    const simpleCounts: Record<string, number> = {};
-    const maybeCounts: Record<string, number> = {};
-    const ratingStats: Record<string, { average: number; stdDev: number; count: number }> = {};
-    const matrixAverages: Record<string, { x: number, y: number }> = {};
-    const pairwiseScores: Record<string, { wins: number; matches: number; score: number }> = {};
-    const budgetStats: Record<string, { totalValue: number; totalQuantity: number }> = {};
-
-    // Helper to process votes for different types (rudimentary local calculation)
-    votes.forEach((v: any) => {
-        // Simple counts & Budget
-        if(Array.isArray(v.choices)) {
-            v.choices.forEach((c: string) => {
-                if(c) simpleCounts[c] = (simpleCounts[c] || 0) + 1;
-            });
-        }
-        // Maybe counts
-        if(Array.isArray(v.choicesMaybe)) {
-             v.choicesMaybe.forEach((c: string) => {
-                if(c) maybeCounts[c] = (maybeCounts[c] || 0) + 1;
-            });
-        }
-        // Ratings
-        if (v.ratingVotes) {
-            Object.entries(v.ratingVotes).forEach(([id, val]: [string, any]) => {
-                if (!ratingStats[id]) ratingStats[id] = { average: 0, stdDev: 0, count: 0 }; // Just placeholders for raw accum
-                // This local calc is getting complex, simplification:
-                // We mainly rely on backend for results. For fallback, simple counts is often enough.
-                // But for Rating view to work in fallback mode, we need basic stats.
-                const currentSum = ratingStats[id].average * ratingStats[id].count;
-                ratingStats[id].count++;
-                ratingStats[id].average = (currentSum + Number(val)) / ratingStats[id].count;
-            });
-        }
-        // Matrix
-        if (v.matrixVotes) {
-             Object.entries(v.matrixVotes).forEach(([id, _pos]: [string, any]) => {
-                if (!matrixAverages[id]) matrixAverages[id] = { x: 0, y: 0 };
-                // Using simple counts to average? No, need total count.
-                // Simplified: we won't implement full matrix math in fallback unless requested.
-                // Assuming simpleCounts has count of occurrences if needed.
-             });
-        }
-    });
-
-    // Budget Stats Construction from simple counts (assuming simple counts holds quantity if ids repeated)
-    Object.entries(simpleCounts).forEach(([id, qty]) => {
-         // This requires access to poll options cost, which we don't have easily here without fetching poll.
-         // Skipping deep calc for fallback.
-         budgetStats[id] = { totalValue: 0, totalQuantity: qty }; 
-    });
-
-    if (votes.length === 0) {
-        return { winnerId: null, rounds: [], totalVotes: 0, voters: [], usedCodes: [], comments: [], simpleCounts: {}, votes: [] };
-    }
-
-    const rounds: RoundLog[] = [];
-    let remainingVotes = votes.map(v => ({ 
-        choices: (v.choices || []).filter((c: string) => !!c)
-    }));
-    
-    let activeOptionIds = new Set<string>();
-    votes.forEach(v => (v.choices || []).forEach((c: string) => activeOptionIds.add(c)));
-    
-    let winnerId: string | null = null;
-    let roundNum = 1;
-
-    // RCV Logic (only relevant if choices are ranked)
-    // We assume RCV if choices > 1 per vote on average? Or just run it.
-    
-    while (!winnerId && activeOptionIds.size > 0) {
-        const roundCounts: Record<string, number> = {};
-        activeOptionIds.forEach(id => roundCounts[id] = 0);
+        let activeOptionIds = new Set<string>();
+        votes.forEach(v => (v.choices || []).forEach((c: string) => activeOptionIds.add(c)));
         
-        remainingVotes.forEach(vote => {
-            if (vote.choices.length > 0) {
-                const firstChoice = vote.choices[0];
-                if (activeOptionIds.has(firstChoice)) {
-                    roundCounts[firstChoice] = (roundCounts[firstChoice] || 0) + 1;
+        let winnerId: string | null = null;
+        const rounds: RoundLog[] = [];
+        let roundNum = 1;
+
+        while (!winnerId && activeOptionIds.size > 0) {
+            const roundCounts: Record<string, number> = {};
+            activeOptionIds.forEach(id => roundCounts[id] = 0);
+            
+            remainingVotes.forEach(vote => {
+                if (vote.choices.length > 0) {
+                    const firstChoice = vote.choices[0];
+                    if (activeOptionIds.has(firstChoice)) {
+                        roundCounts[firstChoice] = (roundCounts[firstChoice] || 0) + 1;
+                    }
                 }
+            });
+
+            const totalActiveVotes = Object.values(roundCounts).reduce((a, b) => a + b, 0);
+            let roundWinner: string | null = null;
+            let minVotes = Infinity;
+            let loserId: string | null = null;
+
+            Object.entries(roundCounts).forEach(([id, count]) => {
+                if (totalActiveVotes > 0 && count > totalActiveVotes / 2) roundWinner = id;
+                if (count < minVotes) {
+                    minVotes = count;
+                    loserId = id;
+                }
+            });
+            
+            if (roundWinner) {
+                winnerId = roundWinner;
+                rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
+                break;
             }
-        });
-
-        const totalActiveVotes = Object.values(roundCounts).reduce((a, b) => a + b, 0);
-        let roundWinner: string | null = null;
-        let minVotes = Infinity;
-        let loserId: string | null = null;
-
-        Object.entries(roundCounts).forEach(([id, count]) => {
-            if (totalActiveVotes > 0 && count > totalActiveVotes / 2) roundWinner = id;
-            if (count < minVotes) {
-                minVotes = count;
-                loserId = id;
+            
+            if (activeOptionIds.size <= 1) {
+                winnerId = loserId; 
+                rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
+                break;
             }
-        });
-        
-        if (roundWinner) {
-            winnerId = roundWinner;
-            rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
-            break;
-        }
-        
-        if (activeOptionIds.size <= 1) {
-             winnerId = loserId; 
-             rounds.push({ roundNumber: roundNum, counts: roundCounts, eliminatedId: null, winnerId: winnerId });
-            break;
+
+            activeOptionIds.delete(loserId!);
+            rounds.push({ roundNumber: roundNum, counts: { ...roundCounts }, eliminatedId: loserId, winnerId: null });
+
+            remainingVotes.forEach(vote => {
+                vote.choices = vote.choices.filter((id: string) => id !== loserId);
+            });
+
+            roundNum++;
+            if(roundNum > 20) break;
         }
 
-        activeOptionIds.delete(loserId!);
-        rounds.push({ roundNumber: roundNum, counts: { ...roundCounts }, eliminatedId: loserId, winnerId: null });
-
-        remainingVotes.forEach(vote => {
-            vote.choices = vote.choices.filter((id: string) => id !== loserId);
-        });
-
-        roundNum++;
-        if(roundNum > 20) break;
+        return {
+            winnerId,
+            rounds,
+            totalVotes: votes.length,
+            voters,
+            usedCodes,
+            comments,
+            simpleCounts,
+            votes: votes 
+        };
     }
-
-    return {
-        winnerId,
-        rounds,
-        totalVotes: votes.length,
-        voters,
-        usedCodes,
-        comments,
-        simpleCounts,
-        maybeCounts,
-        ratingStats,
-        matrixAverages,
-        budgetStats,
-        pairwiseScores,
-        votes: votes 
-    };
 };
 
 export const createCustomSlug = async (

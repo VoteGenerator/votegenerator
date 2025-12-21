@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface Poll {
     id: string;
@@ -48,8 +49,7 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Fetch from Netlify Blobs
-        const { getStore } = await import('@netlify/blobs');
+        // Fetch from Netlify Blobs - static import
         const store = getStore({
             name: 'polls',
             siteID: process.env.SITE_ID || '',

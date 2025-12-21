@@ -1,6 +1,6 @@
 // ============================================================================
 // LandingPage - VoteGenerator Home Page
-// UPDATED: 7 poll types, correct pricing, fixed comparison table
+// FIXED: 7 poll types, correct pricing, clearer "premium polls" language
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -8,14 +8,14 @@ import { motion } from 'framer-motion';
 import {
     ShieldCheck, Mail, Lock, Eye, CheckCircle2, ArrowRight, Sparkles, Star,
     CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal, Users, Image,
-    Zap, Crown, Globe, QrCode, BarChart3, Code, Clock, Check, X
+    Zap, Crown, Globe, QrCode, BarChart3, Code, Check, X
 } from 'lucide-react';
 import PromoBanner from './PromoBanner';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 
 // ============================================================================
-// Hero Section with Live Demo
+// Hero Section
 // ============================================================================
 
 const HeroSection: React.FC = () => {
@@ -63,7 +63,6 @@ const HeroSection: React.FC = () => {
 
             <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
-                    {/* Left - Copy */}
                     <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-indigo-100 text-sm mb-6">
                             <Sparkles size={14} />
@@ -105,9 +104,7 @@ const HeroSection: React.FC = () => {
                         </div>
                     </motion.div>
 
-                    {/* Right - Live Demo */}
                     <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="relative">
-                        {/* "Try it live" label */}
                         <div className="absolute -top-3 left-4 z-10 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                             Try it live!
                         </div>
@@ -154,7 +151,6 @@ const HeroSection: React.FC = () => {
                 </div>
             </div>
 
-            {/* Stats bar - 7 poll types */}
             <div className="relative bg-white/10 backdrop-blur-sm border-t border-white/10">
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -170,7 +166,7 @@ const HeroSection: React.FC = () => {
 };
 
 // ============================================================================
-// Poll Types Section - 7 types
+// Poll Types Section
 // ============================================================================
 
 const PollTypesSection: React.FC = () => {
@@ -216,41 +212,17 @@ const PollTypesSection: React.FC = () => {
 };
 
 // ============================================================================
-// Why Choose Us Section - CORRECTED claims
+// Why Choose Us Section
 // ============================================================================
 
 const WhyChooseUsSection: React.FC = () => {
     const features = [
-        {
-            icon: Zap,
-            title: 'Create in 30 Seconds',
-            description: 'No account needed. Type your question, add options, share the link. It\'s that simple.',
-        },
-        {
-            icon: ShieldCheck,
-            title: 'Privacy First',
-            description: 'No email required to vote. No tracking cookies. No data selling. Your polls stay private.',
-        },
-        {
-            icon: Globe,
-            title: 'Share Anywhere',
-            description: 'Get a shareable link, QR code, or embed code. Works on any device, any browser.',
-        },
-        {
-            icon: BarChart3,
-            title: 'Real-Time Results',
-            description: 'Watch votes come in live. Beautiful charts update instantly as people vote.',
-        },
-        {
-            icon: QrCode,
-            title: 'QR Code Included',
-            description: 'Every poll gets a free QR code. Perfect for events, presentations, and printed materials.',
-        },
-        {
-            icon: Code,
-            title: 'Embed Anywhere',
-            description: 'Add polls to your website with copy-paste embed code. Fully responsive design.',
-        },
+        { icon: Zap, title: 'Create in 30 Seconds', description: 'No account needed. Type your question, add options, share the link.' },
+        { icon: ShieldCheck, title: 'Privacy First', description: 'No email to vote. No tracking cookies. No data selling.' },
+        { icon: Globe, title: 'Share Anywhere', description: 'Get a shareable link, QR code, or embed code. Works on any device.' },
+        { icon: BarChart3, title: 'Real-Time Results', description: 'Watch votes come in live with beautiful charts.' },
+        { icon: QrCode, title: 'QR Code Included', description: 'Every poll gets a free QR code for events and presentations.' },
+        { icon: Code, title: 'Embed Anywhere', description: 'Add polls to your website with copy-paste embed code.' },
     ];
 
     return (
@@ -279,7 +251,7 @@ const WhyChooseUsSection: React.FC = () => {
 };
 
 // ============================================================================
-// Pricing Section - CORRECTED: 50 responses free, 4 tiers
+// Pricing Section - FIXED: Clearer "premium polls" language
 // ============================================================================
 
 const PricingSection: React.FC = () => {
@@ -291,7 +263,7 @@ const PricingSection: React.FC = () => {
             description: 'No credit card required',
             color: 'slate',
             icon: Users,
-            features: ['6 free poll types', '50 responses per poll', '7 days active', 'Unlimited polls', 'QR code sharing', 'Real-time results'],
+            features: ['6 free poll types', '50 responses per poll', '7 days active', 'Unlimited free polls', 'QR code sharing', 'Real-time results'],
             cta: 'Create Free Poll',
             ctaLink: '/create',
         },
@@ -302,7 +274,7 @@ const PricingSection: React.FC = () => {
             description: 'For your next event',
             color: 'blue',
             icon: Zap,
-            features: ['Everything in Free', '500 responses', '30 days active', 'CSV export', 'Device & geo stats', '90-day data retention'],
+            features: ['Everything in Free', '500 responses', '30 days active', '1 premium poll', 'CSV export', 'Device & geo stats'],
             cta: 'Get Starter',
             ctaLink: '/pricing',
         },
@@ -314,7 +286,7 @@ const PricingSection: React.FC = () => {
             color: 'purple',
             icon: Crown,
             popular: true,
-            features: ['Everything in Starter', '2,000 responses', '60 days active', 'Visual Poll (images)', 'PDF & PNG export', 'Remove branding'],
+            features: ['Everything in Starter', '2,000 responses', '60 days active', '1 premium poll', 'Visual Poll + PDF', 'Remove branding'],
             cta: 'Get Pro Event',
             ctaLink: '/pricing',
         },
@@ -375,7 +347,7 @@ const PricingSection: React.FC = () => {
 };
 
 // ============================================================================
-// Comparison Table - CORRECTED for new pricing
+// Comparison Table
 // ============================================================================
 
 const ComparisonSection: React.FC = () => {
@@ -426,10 +398,6 @@ const ComparisonSection: React.FC = () => {
                         </table>
                     </div>
                 </div>
-
-                <p className="text-center text-sm text-slate-500 mt-4">
-                    VoteGenerator offers the best combination of privacy, features, and simplicity.
-                </p>
             </div>
         </section>
     );

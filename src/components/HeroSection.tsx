@@ -136,7 +136,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                                 <ArrowRight size={20} />
                             </motion.button>
                             <a
-                                href="/demo.html"
+                                href="#demo"
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-bold text-lg rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm"
                             >
                                 See Demo
@@ -147,11 +147,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                         <div className="mt-8 flex items-center gap-6 text-indigo-200 text-sm">
                             <div className="flex items-center gap-2">
                                 <Clock size={16} />
-                                <span>Create in 30 seconds</span>
+                                <span>30-second setup</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Users size={16} />
-                                <span>No signup needed</span>
+                                <span>Free forever</span>
                             </div>
                         </div>
                     </motion.div>
@@ -273,12 +273,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGetStarted }) => {
                 </div>
             </div>
 
-            {/* Stats bar */}
+            {/* Stats bar - UPDATED: 7 poll types instead of 12 */}
             <div className="relative bg-white/10 backdrop-blur-sm border-t border-white/10">
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                         <div>
-                            <div className="text-3xl font-black text-white">12</div>
+                            <div className="text-3xl font-black text-white">7</div>
                             <div className="text-indigo-200 text-sm">Poll Types</div>
                         </div>
                         <div>

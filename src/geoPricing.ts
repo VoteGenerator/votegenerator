@@ -1,7 +1,6 @@
 // ============================================================================
-// Geo Pricing - Display Only
-// Stripe automatically handles currency at checkout based on user's location
-// This is just for DISPLAYING correct prices on the site
+// Geo Pricing - TELL BELLA IF THESE PRICES NEED ADJUSTING
+// These should match your Stripe price objects
 // ============================================================================
 
 import { useState, useEffect } from 'react';
@@ -16,13 +15,15 @@ export interface GeoPrice {
     unlimited: number;
 }
 
-// Prices in each supported currency (must match Stripe prices)
+// ============================================================================
+// PRICES - UPDATE THESE TO MATCH YOUR STRIPE PRICES
+// ============================================================================
 export const GEO_PRICES: Record<Currency, GeoPrice> = {
     USD: { currency: 'USD', symbol: '$', starter: 9.99, proEvent: 19.99, unlimited: 199 },
-    CAD: { currency: 'CAD', symbol: '$', starter: 12.99, proEvent: 24.99, unlimited: 249 },
+    CAD: { currency: 'CAD', symbol: '$', starter: 13.99, proEvent: 27.99, unlimited: 279 },
     EUR: { currency: 'EUR', symbol: '€', starter: 9.49, proEvent: 18.99, unlimited: 189 },
     GBP: { currency: 'GBP', symbol: '£', starter: 7.99, proEvent: 15.99, unlimited: 159 },
-    AUD: { currency: 'AUD', symbol: '$', starter: 14.99, proEvent: 29.99, unlimited: 299 },
+    AUD: { currency: 'AUD', symbol: '$', starter: 15.99, proEvent: 31.99, unlimited: 319 },
 };
 
 // Country to currency mapping
@@ -80,10 +81,7 @@ export async function detectUserCurrency(): Promise<Currency> {
     return currency;
 }
 
-// ============================================================================
 // React Hook
-// ============================================================================
-
 export interface UseGeoPricingResult {
     loading: boolean;
     currency: Currency;

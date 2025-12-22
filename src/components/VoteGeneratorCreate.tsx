@@ -1,5 +1,6 @@
 // ============================================================================
 // VoteGeneratorCreate - FORM ONLY (parent handles headers)
+// Uses sessionStorage for ad wall redirect to avoid URL encoding issues
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
@@ -150,7 +151,13 @@ const VoteGeneratorCreate: React.FC = () => {
         try {
             const pollData = { title: title.trim(), description: description.trim() || undefined, options: valid, pollType, settings: { allowMultiple: multipleSelection, requireNames, hideResults, deadline: deadline ? new Date(deadline).toISOString() : undefined }, buttonText: buttonText || 'Submit Vote', tier: currentTier };
             const res = await fetch('/.netlify/functions/vg-create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pollData) });
-            if (res.ok) { const r = await res.json(); window.location.href = `/ad-wall?next=${encodeURIComponent(`/#id=${r.id}&admin=${r.adminKey}`)}`; }
+            if (res.ok) { 
+                const r = await res.json(); 
+                // Store the destination in sessionStorage to avoid URL encoding issues
+                const pollUrl = `/#id=${r.id}&admin=${r.adminKey}`;
+                sessionStorage.setItem('vg_ad_wall_next', pollUrl);
+                window.location.href = '/ad-wall';
+            }
             else { const e = await res.json(); setError(e.error || 'Failed to create poll'); }
         } catch (e: any) { setError(e.message || 'Failed'); } finally { setIsCreating(false); }
     };

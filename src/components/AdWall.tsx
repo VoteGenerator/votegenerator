@@ -50,9 +50,18 @@ const AdWall: React.FC = () => {
     }, []);
 
     const handleContinue = () => {
-        // Clear sessionStorage now that we're using it
-        sessionStorage.removeItem('vg_ad_wall_next');
-        window.location.href = nextUrl;
+        // Read directly from URL - don't rely on React state
+        const params = new URLSearchParams(window.location.search);
+        const pollId = params.get('pollId');
+        const adminKey = params.get('adminKey');
+        
+        if (pollId && adminKey) {
+            window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+        } else if (pollId) {
+            window.location.href = `/#id=${pollId}`;
+        } else {
+            window.location.href = '/';
+        }
     };
 
     // Ad content

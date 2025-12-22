@@ -16,33 +16,22 @@ const AdWall: React.FC = () => {
     const [nextUrl, setNextUrl] = useState('/');
     const { loading, currency, prices } = useGeoPricing();
     
-    // Get redirect URL from URL params (primary) or sessionStorage (backup)
+    // Get redirect URL from URL params
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const pollId = params.get('pollId');
         const adminKey = params.get('adminKey');
         
-        // Primary: Build URL from URL params
         if (pollId && adminKey) {
+            // Build poll URL with hash format (this is how VoteGenerator polls work)
             const pollUrl = `/#id=${pollId}&admin=${adminKey}`;
             setNextUrl(pollUrl);
-            // Also store in sessionStorage for refresh
-            try {
-                sessionStorage.setItem('vg_ad_wall_next', pollUrl);
-            } catch (e) {
-                console.warn('sessionStorage not available');
-            }
-        } else {
-            // Fallback: Check sessionStorage
-            try {
-                const stored = sessionStorage.getItem('vg_ad_wall_next');
-                if (stored) {
-                    setNextUrl(stored);
-                }
-            } catch (e) {
-                console.warn('sessionStorage not available');
-            }
+        } else if (pollId) {
+            // Just poll ID, no admin key (voter view)
+            const pollUrl = `/#id=${pollId}`;
+            setNextUrl(pollUrl);
         }
+        // If no params, nextUrl stays as '/' (home)
     }, []);
 
     // Countdown timer

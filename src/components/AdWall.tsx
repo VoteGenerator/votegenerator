@@ -16,20 +16,32 @@ const AdWall: React.FC = () => {
     const [nextUrl, setNextUrl] = useState('/');
     const { loading, currency, prices } = useGeoPricing();
     
-    // Get redirect URL from sessionStorage (set by VoteGeneratorCreate)
+    // Get redirect URL from URL params (primary) or sessionStorage (backup)
     useEffect(() => {
-        const stored = sessionStorage.getItem('vg_ad_wall_next');
-        if (stored) {
-            setNextUrl(stored);
-            // Don't clear it immediately - keep it in case user refreshes
-        } else {
-            // If no stored URL, check URL params as fallback
-            const params = new URLSearchParams(window.location.search);
-            const nextParam = params.get('next');
-            if (nextParam) {
-                setNextUrl(nextParam);
+        const params = new URLSearchParams(window.location.search);
+        const pollId = params.get('pollId');
+        const adminKey = params.get('adminKey');
+        
+        // Primary: Build URL from URL params
+        if (pollId && adminKey) {
+            const pollUrl = `/#id=${pollId}&admin=${adminKey}`;
+            setNextUrl(pollUrl);
+            // Also store in sessionStorage for refresh
+            try {
+                sessionStorage.setItem('vg_ad_wall_next', pollUrl);
+            } catch (e) {
+                console.warn('sessionStorage not available');
             }
-            // If still no URL, they might have navigated here directly - that's okay
+        } else {
+            // Fallback: Check sessionStorage
+            try {
+                const stored = sessionStorage.getItem('vg_ad_wall_next');
+                if (stored) {
+                    setNextUrl(stored);
+                }
+            } catch (e) {
+                console.warn('sessionStorage not available');
+            }
         }
     }, []);
 

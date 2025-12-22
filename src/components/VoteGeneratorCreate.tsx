@@ -173,11 +173,21 @@ const VoteGeneratorCreate: React.FC = () => {
             const responseData = await res.json();
             
             if (res.ok && responseData.id) { 
-                // Store the destination in sessionStorage to avoid URL encoding issues
-                const pollUrl = `/#id=${responseData.id}&admin=${responseData.adminKey}`;
-                sessionStorage.setItem('vg_ad_wall_next', pollUrl);
-                // Use replace to prevent back button issues
-                window.location.replace('/ad-wall');
+                // Build the poll URL
+                const pollId = responseData.id;
+                const adminKey = responseData.adminKey;
+                const pollUrl = `/#id=${pollId}&admin=${adminKey}`;
+                
+                // Store in sessionStorage as primary method
+                try {
+                    sessionStorage.setItem('vg_ad_wall_next', pollUrl);
+                } catch (e) {
+                    console.warn('sessionStorage not available:', e);
+                }
+                
+                // ALSO pass as URL params as backup (encode the parts separately)
+                const adWallUrl = `/ad-wall?pollId=${encodeURIComponent(pollId)}&adminKey=${encodeURIComponent(adminKey)}`;
+                window.location.href = adWallUrl;
             } else { 
                 setError(responseData.error || 'Failed to create poll. Please try again.'); 
                 setIsCreating(false);

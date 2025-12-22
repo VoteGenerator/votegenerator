@@ -1,6 +1,6 @@
 // ============================================================================
 // LandingPage - VoteGenerator Home Page
-// EXPANDED: More content, testimonials, features, trust signals
+// UPDATED: Geo-aware pricing integration
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -10,11 +10,12 @@ import {
     CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal, Users, Image,
     Zap, Crown, Globe, QrCode, BarChart3, Code, Check, X, Clock, Building2,
     GraduationCap, Heart, Briefcase, PartyPopper, Quote, Play, Shield, Rocket,
-    Award, TrendingUp, MessageCircle
+    Award, TrendingUp, MessageCircle, Loader2
 } from 'lucide-react';
 import PromoBanner from './PromoBanner';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
+import { useGeoPricing } from '../geoPricing';
 
 // ============================================================================
 // Hero Section
@@ -405,11 +406,7 @@ const TestimonialsSection: React.FC = () => {
 };
 
 // ============================================================================
-// Pricing Section - GEO-AWARE VERSION
-// REPLACE the existing PricingSection in LandingPage.tsx (lines 407-481)
-// Also add this import at the top of LandingPage.tsx:
-//   import { useGeoPricing } from '../geoPricing';
-// And add: Loader2, Globe to the lucide-react imports
+// Pricing Section - GEO-AWARE
 // ============================================================================
 
 const PricingSection: React.FC = () => {
@@ -560,51 +557,13 @@ const PricingSection: React.FC = () => {
 };
 
 // ============================================================================
-// FAQ Section
-// ============================================================================
-
-const FAQSection: React.FC = () => {
-    const faqs = [
-        { q: 'Do I need to create an account?', a: 'No! VoteGenerator is completely signup-free. Create polls instantly and share the link. You get a private admin link to manage your poll.' },
-        { q: 'Is it really free?', a: 'Yes! Free polls get 50 responses and stay active for 7 days. You can create unlimited free polls. Upgrade only if you need more responses or features.' },
-        { q: 'How do people vote?', a: 'Just share the link! Voters click the link, make their choice, and submit. No account or email required for them either.' },
-        { q: 'Are votes anonymous?', a: 'By default, yes. You can optionally require names, but we never require email addresses to vote.' },
-    ];
-
-    return (
-        <section className="py-20 bg-white">
-            <div className="max-w-4xl mx-auto px-4">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
-                </div>
-
-                <div className="space-y-4">
-                    {faqs.map((faq, i) => (
-                        <motion.details key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                            className="group bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between font-medium text-slate-900 hover:bg-slate-100 transition">
-                                {faq.q}
-                                <ArrowRight className="text-slate-400 group-open:rotate-90 transition-transform" size={20} />
-                            </summary>
-                            <div className="px-6 pb-4 text-slate-600">{faq.a}</div>
-                        </motion.details>
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
-// ============================================================================
-// Comparison Table - GEO-AWARE VERSION  
-// REPLACE the existing ComparisonSection in LandingPage.tsx (lines 519-574)
-// This uses the same useGeoPricing hook
+// Comparison Table - GEO-AWARE
 // ============================================================================
 
 const ComparisonSection: React.FC = () => {
     const { loading, currency, prices } = useGeoPricing();
     
-    // Format our price display
+    // Format our price display with geo
     const ourPriceDisplay = loading 
         ? 'Free / ...' 
         : `Free / ${prices.symbol}${prices.starter}+ ${currency}`;
@@ -662,6 +621,42 @@ const ComparisonSection: React.FC = () => {
                 <p className="text-center text-slate-500 text-sm mt-4">
                     * Competitor prices may vary. VoteGenerator offers one-time payments, not subscriptions.
                 </p>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// FAQ Section
+// ============================================================================
+
+const FAQSection: React.FC = () => {
+    const faqs = [
+        { q: 'Do I need to create an account?', a: 'No! VoteGenerator is completely signup-free. Create polls instantly and share the link. You get a private admin link to manage your poll.' },
+        { q: 'Is it really free?', a: 'Yes! Free polls get 50 responses and stay active for 7 days. You can create unlimited free polls. Upgrade only if you need more responses or features.' },
+        { q: 'How do people vote?', a: 'Just share the link! Voters click the link, make their choice, and submit. No account or email required for them either.' },
+        { q: 'Are votes anonymous?', a: 'By default, yes. You can optionally require names, but we never require email addresses to vote.' },
+    ];
+
+    return (
+        <section className="py-20 bg-white">
+            <div className="max-w-4xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+                </div>
+
+                <div className="space-y-4">
+                    {faqs.map((faq, i) => (
+                        <motion.details key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                            className="group bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between font-medium text-slate-900 hover:bg-slate-100 transition">
+                                {faq.q}
+                                <ArrowRight className="text-slate-400 group-open:rotate-90 transition-transform" size={20} />
+                            </summary>
+                            <div className="px-6 pb-4 text-slate-600">{faq.a}</div>
+                        </motion.details>
+                    ))}
+                </div>
             </div>
         </section>
     );

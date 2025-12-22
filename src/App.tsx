@@ -1,9 +1,8 @@
 // ============================================================================
-// App.tsx - Main Application
-// Uses VoteGeneratorApp for poll handling, with route-based page switching
+// App.tsx - Main Application Router
+// VoteGeneratorApp handles landing page, poll viewing, and admin views
 // ============================================================================
 
-import { useState, useEffect } from 'react';
 import VoteGeneratorApp from './components/VoteGeneratorApp';
 import VoteGeneratorCreate from './components/VoteGeneratorCreate';
 import AdWall from './components/AdWall';
@@ -13,7 +12,7 @@ import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
 
-// Create Page wrapper
+// Create page wrapper
 function CreatePage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
@@ -36,40 +35,21 @@ function CreatePage() {
 }
 
 function App() {
-    const [currentPath, setCurrentPath] = useState(window.location.pathname);
-
-    useEffect(() => {
-        // Update path on navigation
-        const handleLocationChange = () => {
-            setCurrentPath(window.location.pathname);
-        };
-        
-        window.addEventListener('popstate', handleLocationChange);
-        window.addEventListener('hashchange', handleLocationChange);
-        
-        return () => {
-            window.removeEventListener('popstate', handleLocationChange);
-            window.removeEventListener('hashchange', handleLocationChange);
-        };
-    }, []);
-
-    // Route based on pathname
-    switch (currentPath) {
-        case '/create':
-            return <CreatePage />;
-        case '/ad-wall':
-            return <AdWall />;
-        case '/pricing':
-            return <PricingPage />;
-        case '/compare':
-            return <ComparePage />;
-        default:
-            // VoteGeneratorApp handles:
-            // - Landing page (when no hash)
-            // - Poll viewing (/#id=xxx)
-            // - Admin view (/#id=xxx&admin=yyy)
-            return <VoteGeneratorApp />;
-    }
+    // Simple pathname routing - no React state needed
+    const path = window.location.pathname;
+    
+    if (path === '/create') return <CreatePage />;
+    if (path === '/ad-wall') return <AdWall />;
+    if (path === '/pricing') return <PricingPage />;
+    if (path === '/compare') return <ComparePage />;
+    
+    // VoteGeneratorApp handles EVERYTHING else:
+    // - Landing page (when no hash) 
+    // - Poll viewing (/#id=xxx)
+    // - Admin view (/#id=xxx&admin=yyy)
+    return <VoteGeneratorApp />;
 }
+
+export default App;
 
 export default App;

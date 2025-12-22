@@ -50,17 +50,21 @@ const AdWall: React.FC = () => {
     }, []);
 
     const handleContinue = () => {
-        // Read directly from URL - don't rely on React state
         const params = new URLSearchParams(window.location.search);
         const pollId = params.get('pollId');
         const adminKey = params.get('adminKey');
         
+        // Build the full URL with origin to ensure hash is preserved
+        const origin = window.location.origin;
+        
         if (pollId && adminKey) {
-            window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+            const targetUrl = `${origin}/#id=${pollId}&admin=${adminKey}`;
+            console.log('Navigating to:', targetUrl); // Debug
+            window.location.assign(targetUrl);
         } else if (pollId) {
-            window.location.href = `/#id=${pollId}`;
+            window.location.assign(`${origin}/#id=${pollId}`);
         } else {
-            window.location.href = '/';
+            window.location.assign(origin);
         }
     };
 

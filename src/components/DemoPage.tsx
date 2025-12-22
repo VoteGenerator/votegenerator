@@ -1,6 +1,6 @@
 // ============================================================================
 // Demo Page - VoteGenerator
-// FIXED: 7 poll types (not 12), seeded results, TypeScript strict mode
+// INTERACTIVE: Users can vote and see different result visualizations
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -9,7 +9,7 @@ import {
     ListOrdered, CheckSquare, Calendar, ArrowLeftRight, SlidersHorizontal,
     Users, Image, ChevronRight, Sparkles, Building2, Heart, Briefcase,
     GraduationCap, PartyPopper, AlertTriangle, Play, ArrowRight,
-    Eye, Check, BarChart3, TrendingUp
+    Eye, Check, BarChart3, TrendingUp, PieChart, Table, RotateCcw
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -24,172 +24,95 @@ interface PollTypeInfo {
     name: string;
     icon: React.ElementType;
     gradient: string;
-    bgColor: string;
     tagline: string;
     description: string;
     howItWorks: string;
     bestFor: string[];
     notFor: string[];
-    exampleQuestion: string;
-    exampleOptions: string[];
     proTip: string;
     isPro?: boolean;
-    sampleResults: { option: string; votes: number; pct: number }[];
-    insights: string[];
+    demoQuestion: string;
+    demoOptions: string[];
 }
 
 const pollTypes: PollTypeInfo[] = [
     {
-        id: 'multiple-choice',
-        name: 'Multiple Choice',
-        icon: CheckSquare,
-        gradient: 'from-blue-500 to-indigo-600',
-        bgColor: 'bg-blue-50',
+        id: 'multiple-choice', name: 'Multiple Choice', icon: CheckSquare, gradient: 'from-blue-500 to-indigo-600',
         tagline: 'The classic. Pick one (or more).',
         description: 'The most familiar poll type. Voters see a list of options and pick their favorite.',
         howItWorks: 'Present 2-10 options. Voters click their choice(s). Results show as a bar chart with percentages.',
         bestFor: ['Quick decisions', 'Team lunches', 'Simple votes', 'Yes/No questions'],
         notFor: ['Ranking preferences', 'Complex decisions'],
-        exampleQuestion: 'What should we order for the team lunch?',
-        exampleOptions: ['🍕 Pizza', '🍜 Thai food', '🌮 Tacos', '🍣 Sushi'],
         proTip: 'Keep options to 5 or fewer for faster decisions.',
-        sampleResults: [
-            { option: '🍕 Pizza', votes: 12, pct: 40 },
-            { option: '🍜 Thai food', votes: 9, pct: 30 },
-            { option: '🌮 Tacos', votes: 6, pct: 20 },
-            { option: '🍣 Sushi', votes: 3, pct: 10 },
-        ],
-        insights: ['Clear winner: Pizza with 40%', '30 total votes collected', 'Most popular at lunchtime']
+        demoQuestion: '🍕 What should we order for the team lunch?',
+        demoOptions: ['Pizza', 'Thai Food', 'Tacos', 'Sushi']
     },
     {
-        id: 'ranked-choice',
-        name: 'Ranked Choice',
-        icon: ListOrdered,
-        gradient: 'from-indigo-500 to-purple-600',
-        bgColor: 'bg-indigo-50',
+        id: 'ranked-choice', name: 'Ranked Choice', icon: ListOrdered, gradient: 'from-indigo-500 to-purple-600',
         tagline: 'Drag to rank. Find true consensus.',
         description: 'Voters rank options from favorite to least favorite. Finds the option with broadest support.',
         howItWorks: 'Voters drag options to rank them. We use Instant Runoff Voting to find the winner.',
         bestFor: ['Multiple good options', 'Finding compromise', 'Elections'],
         notFor: ['Simple yes/no questions', 'Quick polls'],
-        exampleQuestion: 'Where should we go for the company retreat?',
-        exampleOptions: ['🏔️ Mountain cabin', '🏖️ Beach resort', '🏙️ City hotel', '🏕️ Camping'],
         proTip: 'Prevents the "spoiler effect" where similar options split votes.',
-        sampleResults: [
-            { option: '🏖️ Beach resort', votes: 0, pct: 45 },
-            { option: '🏔️ Mountain cabin', votes: 0, pct: 30 },
-            { option: '🏙️ City hotel', votes: 0, pct: 15 },
-            { option: '🏕️ Camping', votes: 0, pct: 10 },
-        ],
-        insights: ['Beach resort wins after 3 rounds', 'Mountain cabin was close 2nd choice', 'True consensus: 75% satisfaction']
+        demoQuestion: '🏖️ Where should we go for the company retreat?',
+        demoOptions: ['Beach Resort', 'Mountain Cabin', 'City Hotel', 'Camping']
     },
     {
-        id: 'pairwise',
-        name: 'This or That',
-        icon: ArrowLeftRight,
-        gradient: 'from-orange-500 to-red-600',
-        bgColor: 'bg-orange-50',
+        id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, gradient: 'from-orange-500 to-red-600',
         tagline: 'A vs B. Quick gut reactions.',
         description: 'Present two options at a time. Voters pick their preference. Great for narrowing down.',
         howItWorks: 'Show pairs of options. Voters click their favorite. Algorithm ranks by win rate.',
         bestFor: ['Quick comparisons', 'Design feedback', 'Narrowing down choices'],
         notFor: ['Many options at once', 'Nuanced decisions'],
-        exampleQuestion: 'Which logo design is better?',
-        exampleOptions: ['Design A', 'Design B', 'Design C'],
         proTip: 'Perfect for design decisions where gut reaction matters.',
-        sampleResults: [
-            { option: 'Design B', votes: 18, pct: 60 },
-            { option: 'Design A', votes: 9, pct: 30 },
-            { option: 'Design C', votes: 3, pct: 10 },
-        ],
-        insights: ['Design B won 60% of matchups', '30 comparisons made', 'Clearest preference: B vs C (85%)']
+        demoQuestion: '🎨 Which logo design is better?',
+        demoOptions: ['Design A', 'Design B', 'Design C']
     },
     {
-        id: 'meeting-poll',
-        name: 'Meeting Poll',
-        icon: Calendar,
-        gradient: 'from-amber-500 to-orange-600',
-        bgColor: 'bg-amber-50',
+        id: 'meeting-poll', name: 'Meeting Poll', icon: Calendar, gradient: 'from-amber-500 to-orange-600',
         tagline: "Find when everyone's free.",
         description: 'Like Doodle but simpler. Show date/time options and let people mark availability.',
         howItWorks: 'Add time slots. Voters mark Available, Maybe, or Unavailable. Results show best times.',
         bestFor: ['Scheduling meetings', 'Planning events', 'Coordinating groups'],
         notFor: ['Non-time decisions', 'Single choice votes'],
-        exampleQuestion: 'When can everyone attend the project kickoff?',
-        exampleOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Tue 2pm'],
         proTip: 'Offer 4-6 time slots. Too many makes finding overlap harder.',
-        sampleResults: [
-            { option: 'Tue 10am', votes: 8, pct: 80 },
-            { option: 'Mon 2pm', votes: 6, pct: 60 },
-            { option: 'Tue 2pm', votes: 5, pct: 50 },
-            { option: 'Mon 10am', votes: 3, pct: 30 },
-        ],
-        insights: ['Tuesday 10am works for 8/10 people', '100% team coverage possible', 'Avoid Monday mornings']
+        demoQuestion: '📅 When can everyone attend the kickoff?',
+        demoOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Wed 3pm']
     },
     {
-        id: 'rating-scale',
-        name: 'Rating Scale',
-        icon: SlidersHorizontal,
-        gradient: 'from-cyan-500 to-blue-600',
-        bgColor: 'bg-cyan-50',
+        id: 'rating-scale', name: 'Rating Scale', icon: SlidersHorizontal, gradient: 'from-cyan-500 to-blue-600',
         tagline: 'Rate each option 1-5 stars.',
         description: 'Voters rate every option independently. See average ratings to compare.',
         howItWorks: 'Each option gets a 1-5 star rating. Results show average scores for comparison.',
         bestFor: ['Comparing multiple items', 'Feedback collection', 'Quality assessment'],
         notFor: ['Choosing a single winner', 'Quick decisions'],
-        exampleQuestion: 'Rate our new product features:',
-        exampleOptions: ['Dark mode', 'Mobile app', 'API access', 'Team sharing'],
         proTip: 'Great for NPS-style feedback and feature prioritization.',
-        sampleResults: [
-            { option: 'Mobile app', votes: 0, pct: 92 },
-            { option: 'Dark mode', votes: 0, pct: 84 },
-            { option: 'Team sharing', votes: 0, pct: 76 },
-            { option: 'API access', votes: 0, pct: 68 },
-        ],
-        insights: ['Mobile app: 4.6★ average', 'All features rated above 3.4★', '25 ratings collected']
+        demoQuestion: '⭐ Rate our new product features:',
+        demoOptions: ['Dark Mode', 'Mobile App', 'API Access', 'Team Sharing']
     },
     {
-        id: 'rsvp',
-        name: 'RSVP',
-        icon: Users,
-        gradient: 'from-sky-500 to-blue-600',
-        bgColor: 'bg-sky-50',
+        id: 'rsvp', name: 'RSVP', icon: Users, gradient: 'from-sky-500 to-blue-600',
         tagline: 'Yes, No, or Maybe.',
         description: 'Simple event attendance tracking. See who\'s coming at a glance.',
         howItWorks: 'Share the link. People respond Yes/No/Maybe. Get automatic headcount.',
         bestFor: ['Event planning', 'Headcounts', 'Simple attendance'],
         notFor: ['Complex scheduling', 'Multiple choice decisions'],
-        exampleQuestion: 'Can you attend the team holiday party?',
-        exampleOptions: ['✅ Yes', '❌ No', '🤔 Maybe'],
         proTip: 'Enable name collection to see exactly who\'s coming.',
-        sampleResults: [
-            { option: '✅ Yes', votes: 18, pct: 60 },
-            { option: '🤔 Maybe', votes: 6, pct: 20 },
-            { option: '❌ No', votes: 6, pct: 20 },
-        ],
-        insights: ['18 confirmed attendees', '6 maybes to follow up with', 'Plan for 20-24 people']
+        demoQuestion: '🎉 Can you attend the holiday party?',
+        demoOptions: ['Yes, count me in!', 'Maybe', 'Sorry, can\'t make it']
     },
     {
-        id: 'visual-poll',
-        name: 'Visual Poll',
-        icon: Image,
-        gradient: 'from-pink-500 to-rose-600',
-        bgColor: 'bg-pink-50',
+        id: 'visual-poll', name: 'Visual Poll', icon: Image, gradient: 'from-pink-500 to-rose-600',
         tagline: 'Vote with images.',
         description: 'Upload images as options. Perfect when seeing is better than reading.',
         howItWorks: 'Upload 2-8 images. Voters click their favorite. Results show votes per image.',
         bestFor: ['Design feedback', 'Logo selection', 'Photo contests'],
         notFor: ['Text-based options', 'Abstract concepts'],
-        exampleQuestion: 'Which website design should we launch?',
-        exampleOptions: ['[Design A]', '[Design B]', '[Design C]'],
         proTip: 'Keep images similar in size and style for fair comparison.',
         isPro: true,
-        sampleResults: [
-            { option: 'Design B', votes: 24, pct: 48 },
-            { option: 'Design A', votes: 18, pct: 36 },
-            { option: 'Design C', votes: 8, pct: 16 },
-        ],
-        insights: ['Design B preferred by 48%', 'Clean visual comparison', '50 votes in 2 hours']
+        demoQuestion: '🖼️ Which website design should we launch?',
+        demoOptions: ['Modern Minimal', 'Bold & Colorful', 'Classic Professional']
     }
 ];
 
@@ -203,181 +126,231 @@ const useCases = [
 ];
 
 // ============================================================================
-// Results Visualization Component
+// Interactive Demo Component
 // ============================================================================
 
-const ResultsVisualization: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
-    return (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                        <BarChart3 size={18} className="text-indigo-600" />
-                        Sample Results
-                    </h4>
-                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
-                        Live Demo Data
-                    </span>
-                </div>
-            </div>
-            
-            <div className="p-6">
-                <div className="space-y-3 mb-6">
-                    {poll.sampleResults.map((result, i) => (
-                        <div key={i}>
-                            <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="font-medium text-slate-700">{result.option}</span>
-                                <span className="font-bold text-slate-900">{result.pct}%</span>
-                            </div>
-                            <div className="h-8 bg-slate-100 rounded-lg overflow-hidden relative">
-                                <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${result.pct}%` }}
-                                    transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
-                                    className={`h-full bg-gradient-to-r ${poll.gradient} rounded-lg`}
-                                />
-                                {result.votes > 0 && (
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-500">
-                                        {result.votes} votes
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                
-                <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-                    <h5 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                        <TrendingUp size={16} />
-                        Key Insights
-                    </h5>
-                    <ul className="space-y-1">
-                        {poll.insights.map((insight, i) => (
-                            <li key={i} className="text-sm text-indigo-700 flex items-start gap-2">
-                                <Check size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
-                                {insight}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ============================================================================
-// Why It's Better Section - FIXED TypeScript
-// ============================================================================
-
-interface ComparisonData {
-    title: string;
-    scenario: string;
-    basic: {
-        label: string;
-        winner: string;
-        problem: string;
-        satisfaction: string;
-    };
-    better: {
-        label: string;
-        winner: string;
-        benefit: string;
-        satisfaction: string;
-    };
+interface DemoVotes {
+    [option: string]: number;
 }
 
-const WhyItsBetterSection: React.FC = () => {
-    const comparisons: ComparisonData[] = [
-        {
-            title: 'Multiple Choice vs Ranked Choice',
-            scenario: '4 restaurant options, 20 voters',
-            basic: {
-                label: 'Multiple Choice',
-                winner: 'Italian (35%)',
-                problem: 'Mexican & Tex-Mex split 45% combined',
-                satisfaction: '35%'
-            },
-            better: {
-                label: 'Ranked Choice',
-                winner: 'Mexican (52% after runoff)',
-                benefit: 'True majority winner found',
-                satisfaction: '78%'
+const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
+    const [votes, setVotes] = useState<DemoVotes>(() => {
+        // Initialize with random seed data
+        const initial: DemoVotes = {};
+        poll.demoOptions.forEach((opt, i) => {
+            initial[opt] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
+        });
+        return initial;
+    });
+    const [userVote, setUserVote] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'bar' | 'pie' | 'table'>('bar');
+
+    const totalVotes = Object.values(votes).reduce((sum, v) => sum + v, 0);
+
+    const handleVote = (option: string) => {
+        if (userVote === option) return; // Already voted for this
+        
+        setVotes(prev => {
+            const newVotes = { ...prev };
+            if (userVote) {
+                newVotes[userVote] = Math.max(0, newVotes[userVote] - 1);
             }
-        },
-        {
-            title: 'Simple Poll vs Meeting Poll',
-            scenario: 'Scheduling a team meeting',
-            basic: {
-                label: 'Simple Poll',
-                winner: 'Tuesday 2pm (40%)',
-                problem: '60% can\'t attend',
-                satisfaction: '40%'
-            },
-            better: {
-                label: 'Meeting Poll',
-                winner: 'Monday 10am (90% available)',
-                benefit: 'Shows all availability at once',
-                satisfaction: '90%'
-            }
-        }
-    ];
+            newVotes[option] = (newVotes[option] || 0) + 1;
+            return newVotes;
+        });
+        setUserVote(option);
+    };
+
+    const resetDemo = () => {
+        const initial: DemoVotes = {};
+        poll.demoOptions.forEach((opt, i) => {
+            initial[opt] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
+        });
+        setVotes(initial);
+        setUserVote(null);
+    };
+
+    const sortedOptions = [...poll.demoOptions].sort((a, b) => (votes[b] || 0) - (votes[a] || 0));
+    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
 
     return (
-        <section className="py-16 bg-slate-50">
-            <div className="max-w-6xl mx-auto px-4">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-4">Why the Right Poll Type Matters</h2>
-                    <p className="text-slate-600 max-w-2xl mx-auto">Same question, different results. Choosing the right poll type can dramatically improve outcomes.</p>
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b border-slate-200 px-6 py-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                            <Play size={18} className="text-indigo-600" />
+                            Try It Live!
+                        </h4>
+                        <p className="text-sm text-slate-500">Click an option to vote</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={resetDemo} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition" title="Reset demo">
+                            <RotateCcw size={18} />
+                        </button>
+                        <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                            <button onClick={() => setViewMode('bar')} className={`p-1.5 rounded ${viewMode === 'bar' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Bar chart">
+                                <BarChart3 size={16} />
+                            </button>
+                            <button onClick={() => setViewMode('pie')} className={`p-1.5 rounded ${viewMode === 'pie' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Pie chart">
+                                <PieChart size={16} />
+                            </button>
+                            <button onClick={() => setViewMode('table')} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Table view">
+                                <Table size={16} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <div className="grid md:grid-cols-2 gap-8">
-                    {comparisons.map((comp, i) => (
-                        <motion.div 
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg"
-                        >
-                            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4">
-                                <h3 className="font-bold text-lg">{comp.title}</h3>
-                                <p className="text-indigo-100 text-sm">{comp.scenario}</p>
-                            </div>
-                            
-                            <div className="p-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Basic Approach */}
-                                    <div className="bg-red-50 rounded-xl p-4 border border-red-100">
-                                        <div className="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">❌ {comp.basic.label}</div>
-                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.basic.winner}</strong></div>
-                                        <div className="text-xs text-red-600 mb-2">{comp.basic.problem}</div>
-                                        <div className="flex items-center gap-1 mt-3">
-                                            <div className="h-2 bg-red-200 rounded-full flex-1">
-                                                <div className="h-2 bg-red-500 rounded-full" style={{ width: comp.basic.satisfaction }} />
+            <div className="p-6">
+                {/* Question */}
+                <h3 className="text-xl font-bold text-slate-900 mb-4">{poll.demoQuestion}</h3>
+                
+                {/* Voting Options */}
+                {!userVote && (
+                    <div className="space-y-2 mb-6">
+                        {poll.demoOptions.map((option, i) => (
+                            <button
+                                key={option}
+                                onClick={() => handleVote(option)}
+                                className="w-full p-4 text-left border-2 border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+                            >
+                                <span className="font-medium text-slate-700">{option}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Results */}
+                {userVote && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between text-sm text-slate-500 mb-2">
+                            <span>Your vote: <strong className="text-indigo-600">{userVote}</strong></span>
+                            <span>{totalVotes} total votes</span>
+                        </div>
+
+                        {/* Bar Chart View */}
+                        {viewMode === 'bar' && (
+                            <div className="space-y-3">
+                                {sortedOptions.map((option, i) => {
+                                    const count = votes[option] || 0;
+                                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                    const isUserVote = option === userVote;
+                                    return (
+                                        <div key={option}>
+                                            <div className="flex items-center justify-between text-sm mb-1">
+                                                <span className={`font-medium ${isUserVote ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                    {option} {isUserVote && '✓'}
+                                                </span>
+                                                <span className="font-bold text-slate-900">{pct}%</span>
                                             </div>
-                                            <span className="text-xs text-red-600 font-bold">{comp.basic.satisfaction}</span>
+                                            <div className="h-8 bg-slate-100 rounded-lg overflow-hidden">
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${pct}%` }}
+                                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                                    className={`h-full rounded-lg ${isUserVote ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                                                    style={{ backgroundColor: isUserVote ? colors[0] : colors[i % colors.length] + '60' }}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    {/* Better Approach */}
-                                    <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-                                        <div className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wide">✓ {comp.better.label}</div>
-                                        <div className="text-sm text-slate-700 mb-2">Winner: <strong>{comp.better.winner}</strong></div>
-                                        <div className="text-xs text-emerald-600 mb-2">{comp.better.benefit}</div>
-                                        <div className="flex items-center gap-1 mt-3">
-                                            <div className="h-2 bg-emerald-200 rounded-full flex-1">
-                                                <div className="h-2 bg-emerald-500 rounded-full" style={{ width: comp.better.satisfaction }} />
-                                            </div>
-                                            <span className="text-xs text-emerald-600 font-bold">{comp.better.satisfaction}</span>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Pie Chart View */}
+                        {viewMode === 'pie' && (
+                            <div className="flex items-center gap-6">
+                                <div className="relative w-40 h-40">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                                        {(() => {
+                                            let cumulativePct = 0;
+                                            return sortedOptions.map((option, i) => {
+                                                const pct = totalVotes > 0 ? (votes[option] || 0) / totalVotes * 100 : 0;
+                                                const dashArray = `${pct} ${100 - pct}`;
+                                                const dashOffset = -cumulativePct;
+                                                cumulativePct += pct;
+                                                return (
+                                                    <circle
+                                                        key={option}
+                                                        cx="50" cy="50" r="40"
+                                                        fill="transparent"
+                                                        stroke={colors[i % colors.length]}
+                                                        strokeWidth="20"
+                                                        strokeDasharray={dashArray}
+                                                        strokeDashoffset={dashOffset}
+                                                        className="transition-all duration-500"
+                                                    />
+                                                );
+                                            });
+                                        })()}
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-slate-900">{totalVotes}</div>
+                                            <div className="text-xs text-slate-500">votes</div>
                                         </div>
                                     </div>
                                 </div>
+                                <div className="flex-1 space-y-2">
+                                    {sortedOptions.map((option, i) => {
+                                        const pct = totalVotes > 0 ? Math.round((votes[option] || 0) / totalVotes * 100) : 0;
+                                        return (
+                                            <div key={option} className="flex items-center gap-2 text-sm">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                                                <span className="flex-1 text-slate-700">{option}</span>
+                                                <span className="font-bold text-slate-900">{pct}%</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </motion.div>
-                    ))}
-                </div>
+                        )}
+
+                        {/* Table View */}
+                        {viewMode === 'table' && (
+                            <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Rank</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Option</th>
+                                            <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Votes</th>
+                                            <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sortedOptions.map((option, i) => {
+                                            const count = votes[option] || 0;
+                                            const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                            const isUserVote = option === userVote;
+                                            return (
+                                                <tr key={option} className={`border-t border-slate-100 ${isUserVote ? 'bg-indigo-50' : ''}`}>
+                                                    <td className="px-4 py-3 text-sm font-bold text-slate-500">#{i + 1}</td>
+                                                    <td className="px-4 py-3 text-sm text-slate-700">
+                                                        {option} {isUserVote && <span className="text-indigo-600">✓</span>}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-right font-medium text-slate-900">{count}</td>
+                                                    <td className="px-4 py-3 text-sm text-right font-bold text-slate-900">{pct}%</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Vote again prompt */}
+                        <button onClick={resetDemo} className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                            Reset demo & vote again →
+                        </button>
+                    </div>
+                )}
             </div>
-        </section>
+        </div>
     );
 };
 
@@ -386,8 +359,8 @@ const WhyItsBetterSection: React.FC = () => {
 // ============================================================================
 
 function DemoPage(): React.ReactElement {
-    const [selectedPoll, setSelectedPoll] = useState<string | null>('multiple-choice');
-    const [activeTab, setActiveTab] = useState<'overview' | 'types' | 'use-cases'>('types');
+    const [selectedPoll, setSelectedPoll] = useState<string>('multiple-choice');
+    const [activeTab, setActiveTab] = useState<'types' | 'use-cases'>('types');
 
     const selectedPollData = pollTypes.find(p => p.id === selectedPoll);
 
@@ -396,7 +369,7 @@ function DemoPage(): React.ReactElement {
             <PromoBanner position="top" />
             <NavHeader />
 
-            {/* Hero Section - FIXED: 7 poll types */}
+            {/* Hero Section */}
             <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-pink-600/5" />
                 <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-12 text-center">
@@ -412,32 +385,23 @@ function DemoPage(): React.ReactElement {
                             </span>
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
-                            Not all polls are created equal. Choose the right type for your question 
-                            and get insights that actually help you decide.
+                            Try each poll type live. Click to vote and see results in real-time with different visualizations.
                         </p>
-                        
-                        <div className="inline-flex items-center gap-3 px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
-                            <AlertTriangle size={18} className="shrink-0" />
-                            <span>
-                                <strong>Quick decisions, not science.</strong> Great for informal group input.
-                            </span>
-                        </div>
                     </motion.div>
                 </div>
             </div>
 
-            {/* Tab Navigation - FIXED: 7 poll types */}
+            {/* Tab Navigation */}
             <div className="sticky top-16 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="flex gap-1 py-2">
                         {[
-                            { id: 'overview', label: 'Quick Guide' },
                             { id: 'types', label: 'All 7 Poll Types' },
                             { id: 'use-cases', label: 'Use Cases' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as 'overview' | 'types' | 'use-cases')}
+                                onClick={() => setActiveTab(tab.id as 'types' | 'use-cases')}
                                 className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                                     activeTab === tab.id
                                         ? 'bg-indigo-100 text-indigo-700'
@@ -454,13 +418,6 @@ function DemoPage(): React.ReactElement {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-4 py-12">
                 <AnimatePresence mode="wait">
-                    {/* Quick Guide Tab */}
-                    {activeTab === 'overview' && (
-                        <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                            <WhyItsBetterSection />
-                        </motion.div>
-                    )}
-
                     {/* All Poll Types Tab */}
                     {activeTab === 'types' && (
                         <motion.div key="types" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
@@ -503,15 +460,15 @@ function DemoPage(): React.ReactElement {
                                     </div>
                                 </div>
 
-                                {/* Poll Details */}
+                                {/* Poll Details & Interactive Demo */}
                                 <div className="lg:col-span-2">
                                     {selectedPollData && (
                                         <motion.div key={selectedPollData.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                                             {/* Header */}
-                                            <div className={`rounded-2xl p-8 bg-gradient-to-br ${selectedPollData.gradient} text-white`}>
+                                            <div className={`rounded-2xl p-6 bg-gradient-to-br ${selectedPollData.gradient} text-white`}>
                                                 <div className="flex items-start gap-4">
-                                                    <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                                                        <selectedPollData.icon size={32} />
+                                                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                                                        <selectedPollData.icon size={28} />
                                                     </div>
                                                     <div>
                                                         <h2 className="text-2xl font-bold mb-1">{selectedPollData.name}</h2>
@@ -521,8 +478,8 @@ function DemoPage(): React.ReactElement {
                                                 <p className="mt-4 text-white/90 leading-relaxed">{selectedPollData.description}</p>
                                             </div>
 
-                                            {/* Sample Results Visualization */}
-                                            <ResultsVisualization poll={selectedPollData} />
+                                            {/* Interactive Demo */}
+                                            <InteractiveDemo poll={selectedPollData} />
 
                                             {/* How it works */}
                                             <div className="bg-white rounded-2xl p-6 border border-slate-200">
@@ -606,7 +563,7 @@ function DemoPage(): React.ReactElement {
             {/* Bottom CTA */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 py-16">
                 <div className="max-w-3xl mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Ready to try it yourself?</h2>
+                    <h2 className="text-3xl font-bold text-white mb-4">Ready to create your own?</h2>
                     <p className="text-indigo-100 mb-8">No signup needed. Create a poll in 30 seconds.</p>
                     <a href="/create" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-all shadow-lg">
                         <Sparkles size={20} /> Create Free Poll <ArrowRight size={20} />

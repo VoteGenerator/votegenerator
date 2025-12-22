@@ -1,6 +1,6 @@
 // ============================================================================
 // About Page - VoteGenerator
-// Beautiful visual design with proper z-index for floating elements
+// Changed "I" to "we", adjusted messaging for new startup
 // ============================================================================
 
 import React from 'react';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import {
     ShieldCheck, Lock, Eye, Mail, Server, Clock, Heart, Sparkles, Globe, Zap, ArrowRight,
     CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal, Users, Image,
-    Check, Star, Lightbulb, Award, TrendingUp, Shield, Rocket
+    Check, Star, Lightbulb, Shield, Rocket, Target
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -26,7 +26,7 @@ const AnimatedStat: React.FC<{ value: string; label: string; icon: React.Element
         whileInView={{ opacity: 1, y: 0 }} 
         viewport={{ once: true }}
         transition={{ delay, type: 'spring', stiffness: 100 }}
-        className={`bg-white rounded-2xl p-6 shadow-lg border border-slate-100 text-center hover:shadow-xl transition-shadow`}
+        className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 text-center hover:shadow-xl transition-shadow"
     >
         <div className={`w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
             <Icon className="text-white" size={28} />
@@ -52,23 +52,6 @@ const FeatureCard: React.FC<{ icon: React.ElementType; title: string; descriptio
         <h3 className="font-bold text-slate-900 text-lg mb-2">{title}</h3>
         <p className="text-slate-600 leading-relaxed">{description}</p>
     </motion.div>
-);
-
-const TimelineItem: React.FC<{ year: string; title: string; description: string; isLast?: boolean }> = ({ 
-    year, title, description, isLast 
-}) => (
-    <div className="flex gap-4">
-        <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                {year}
-            </div>
-            {!isLast && <div className="w-0.5 h-full bg-indigo-200 my-2" />}
-        </div>
-        <div className="pb-8">
-            <h3 className="font-bold text-slate-900 text-lg">{title}</h3>
-            <p className="text-slate-600 mt-1">{description}</p>
-        </div>
-    </div>
 );
 
 // ============================================================================
@@ -149,7 +132,7 @@ function AboutPage(): React.ReactElement {
                 </div>
             </section>
 
-            {/* Our Story Section */}
+            {/* Our Story Section - Using "we" language */}
             <section className="py-20">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -162,11 +145,11 @@ function AboutPage(): React.ReactElement {
                             </h2>
                             <div className="space-y-4 text-slate-600 leading-relaxed">
                                 <p>
-                                    I was tired of existing polling tools. They all wanted my email, tracked my data, 
+                                    We were tired of existing polling tools. They all wanted our email, tracked our data, 
                                     or made simple decisions unnecessarily complicated.
                                 </p>
                                 <p>
-                                    So I built VoteGenerator - a tool that respects privacy, works instantly, 
+                                    So we built VoteGenerator—a tool that respects privacy, works instantly, 
                                     and doesn't require anyone to create an account just to cast a vote.
                                 </p>
                                 <p>
@@ -176,20 +159,26 @@ function AboutPage(): React.ReactElement {
                             </div>
                         </motion.div>
                         
-                        <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-                            className="relative">
-                            {/* Timeline */}
-                            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-                                <TimelineItem year="'24" title="VoteGenerator Launches" description="Privacy-first polling with no signup required" />
-                                <TimelineItem year="'24" title="7 Poll Types Added" description="From simple votes to ranked choice and visual polls" />
-                                <TimelineItem year="'25" title="Growing Community" description="Thousands of polls created, zero emails collected" isLast />
+                        <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+                            {/* Our Mission Card */}
+                            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+                                <Target className="mb-4" size={40} />
+                                <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
+                                <p className="text-indigo-100 leading-relaxed mb-6">
+                                    To make group decision-making simple, fast, and private for everyone—from small teams 
+                                    picking lunch spots to organizations running important votes.
+                                </p>
+                                <div className="flex items-center gap-3 pt-4 border-t border-white/20">
+                                    <Rocket className="text-amber-300" size={24} />
+                                    <span className="font-medium">Just getting started—and excited to grow with you!</span>
+                                </div>
                             </div>
                         </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* Why Different Section - Fixed floating elements */}
+            {/* Why Different Section */}
             <section className="py-20 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center mb-16">
@@ -206,14 +195,14 @@ function AboutPage(): React.ReactElement {
                         <FeatureCard icon={Globe} title="Works Everywhere" description="Share via link, QR code, or embed. Any device, any browser, real-time results." color="from-blue-500 to-indigo-500" delay={0.3} />
                     </div>
 
-                    {/* Visual Demo - Fixed z-index for floating elements */}
+                    {/* Visual Demo */}
                     <motion.div 
                         initial={{ opacity: 0, y: 30 }} 
                         whileInView={{ opacity: 1, y: 0 }} 
                         viewport={{ once: true }}
                         className="mt-16 relative"
                     >
-                        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-auto relative">
+                        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-auto relative z-10">
                             {/* Browser dots */}
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="w-3 h-3 bg-red-400 rounded-full" />
@@ -229,10 +218,10 @@ function AboutPage(): React.ReactElement {
                                 <h3 className="text-lg font-bold text-slate-800">🍕 What should we order for lunch?</h3>
                                 <div className="space-y-2">
                                     {[
-                                        { label: 'Pizza', votes: 8, pct: 40 },
-                                        { label: 'Tacos', votes: 6, pct: 30 },
-                                        { label: 'Sushi', votes: 4, pct: 20 },
-                                        { label: 'Salads', votes: 2, pct: 10 },
+                                        { label: 'Pizza', pct: 40 },
+                                        { label: 'Tacos', pct: 30 },
+                                        { label: 'Sushi', pct: 20 },
+                                        { label: 'Salads', pct: 10 },
                                     ].map((opt, i) => (
                                         <div key={i} className="relative bg-slate-50 rounded-lg overflow-hidden">
                                             <div className={`absolute inset-0 ${i === 0 ? 'bg-indigo-100' : 'bg-slate-100'}`} style={{ width: `${opt.pct}%` }} />
@@ -253,7 +242,7 @@ function AboutPage(): React.ReactElement {
                             </div>
                         </div>
 
-                        {/* Floating badges - FIXED: Higher z-index and positioned OUTSIDE the card container */}
+                        {/* Floating badges - positioned outside main card */}
                         <motion.div 
                             animate={{ y: [0, -8, 0] }} 
                             transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}

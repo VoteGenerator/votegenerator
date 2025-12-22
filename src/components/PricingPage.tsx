@@ -1,7 +1,6 @@
 // ============================================================================
 // VoteGenerator - Pricing Page
-// CLARIFIED: All plans are ONE-TIME payments
-// Unlimited = $199 for 1 year of access (not recurring subscription)
+// Links go to Netlify function that creates Stripe checkout session
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -16,7 +15,7 @@ import Footer from './Footer';
 import PromoBanner from './PromoBanner';
 
 // ============================================================================
-// Pricing Tiers - ALL ONE-TIME PAYMENTS
+// Pricing Tiers
 // ============================================================================
 
 interface PricingTier {
@@ -46,7 +45,7 @@ const TIERS: PricingTier[] = [
     },
     {
         id: 'starter', name: 'Starter', tagline: 'For your next event', price: 9.99, period: 'one-time', icon: Zap, color: 'blue',
-        cta: 'Get Starter', ctaLink: '/checkout?tier=starter', badge: 'One-Time Payment',
+        cta: 'Get Starter', ctaLink: '/.netlify/functions/vg-checkout?tier=starter', badge: 'One-Time Payment',
         features: {
             responses: '500 responses', duration: '30 days active', polls: '1 premium poll',
             highlights: ['Everything in Free, plus:', 'Export to CSV', 'Duplicate your poll', 'Device breakdown stats', 'Geographic breakdown', '90-day data retention'],
@@ -54,7 +53,7 @@ const TIERS: PricingTier[] = [
     },
     {
         id: 'pro_event', name: 'Pro Event', tagline: 'For important events', price: 19.99, period: 'one-time', popular: true, icon: Crown, color: 'purple',
-        cta: 'Get Pro Event', ctaLink: '/checkout?tier=pro_event', badge: 'One-Time Payment',
+        cta: 'Get Pro Event', ctaLink: '/.netlify/functions/vg-checkout?tier=pro_event', badge: 'One-Time Payment',
         features: {
             responses: '2,000 responses', duration: '60 days active', polls: '1 premium poll',
             highlights: ['Everything in Starter, plus:', 'Visual Poll (images)', 'Export PDF & PNG', 'Custom short link', 'Remove VG branding', 'Password protection', 'Schedule open/close', '1-year data retention'],
@@ -62,7 +61,7 @@ const TIERS: PricingTier[] = [
     },
     {
         id: 'unlimited', name: 'Unlimited', tagline: 'For power users', price: 199, period: 'for 1 year', periodNote: 'One-time payment, not a subscription', icon: Star, color: 'amber',
-        cta: 'Get Unlimited', ctaLink: '/checkout?tier=unlimited', badge: 'Best Value',
+        cta: 'Get Unlimited', ctaLink: '/.netlify/functions/vg-checkout?tier=unlimited', badge: 'Best Value',
         features: {
             responses: '5,000 per poll', duration: '1 year per poll', polls: 'Unlimited premium polls',
             highlights: ['Everything in Pro Event, plus:', 'Unlimited premium polls for 1 year', 'Upload your logo', 'Email notifications', 'Access codes', 'Priority support', '2-year data retention'],
@@ -85,51 +84,43 @@ interface FeatureRow {
 
 const FEATURE_COMPARISON: { category: string; icon: React.ElementType; color: string; features: FeatureRow[] }[] = [
     {
-        category: 'Limits & Quotas',
-        icon: BarChart3,
-        color: 'indigo',
+        category: 'Limits & Quotas', icon: BarChart3, color: 'indigo',
         features: [
-            { name: 'Responses per poll', tooltip: 'Maximum number of votes each poll can receive', free: '50', starter: '500', proEvent: '2,000', unlimited: '5,000' },
-            { name: 'Poll duration', tooltip: 'How long your poll stays open for voting', free: '7 days', starter: '30 days', proEvent: '60 days', unlimited: '1 year' },
-            { name: 'Premium polls', tooltip: 'Number of paid polls you can manage. Free polls are always unlimited!', free: '—', starter: '1', proEvent: '1', unlimited: 'Unlimited' },
-            { name: 'Data retention', tooltip: 'How long we store your poll data and results after closing', free: '30 days', starter: '90 days', proEvent: '1 year', unlimited: '2 years' },
+            { name: 'Responses per poll', tooltip: 'Maximum votes each poll can receive', free: '50', starter: '500', proEvent: '2,000', unlimited: '5,000' },
+            { name: 'Poll duration', tooltip: 'How long your poll stays open', free: '7 days', starter: '30 days', proEvent: '60 days', unlimited: '1 year' },
+            { name: 'Premium polls', tooltip: 'Number of paid polls you can manage', free: '—', starter: '1', proEvent: '1', unlimited: 'Unlimited' },
+            { name: 'Data retention', tooltip: 'How long we store your results', free: '30 days', starter: '90 days', proEvent: '1 year', unlimited: '2 years' },
         ],
     },
     {
-        category: 'Poll Types',
-        icon: CheckSquare,
-        color: 'emerald',
+        category: 'Poll Types', icon: CheckSquare, color: 'emerald',
         features: [
-            { name: 'Multiple Choice', tooltip: 'Classic poll where voters pick one or more options', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Ranked Choice', tooltip: 'Voters drag to rank options in their preferred order', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'This or That', tooltip: 'Quick A vs B comparisons for fast decisions', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Meeting Poll', tooltip: 'Find the best time - like Doodle but simpler', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Rating Scale', tooltip: 'Voters rate each option from 1-5 stars', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'RSVP', tooltip: 'Collect Yes/No/Maybe responses for events', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Visual Poll', tooltip: 'Upload images and let people vote visually', free: false, starter: false, proEvent: true, unlimited: true },
+            { name: 'Multiple Choice', tooltip: 'Classic poll - pick one or more', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Ranked Choice', tooltip: 'Drag to rank options', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'This or That', tooltip: 'A vs B comparisons', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Meeting Poll', tooltip: 'Find the best time', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Rating Scale', tooltip: '1-5 star ratings', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'RSVP', tooltip: 'Yes/No/Maybe responses', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Visual Poll', tooltip: 'Upload images for voting', free: false, starter: false, proEvent: true, unlimited: true },
         ],
     },
     {
-        category: 'Sharing & Export',
-        icon: Share2,
-        color: 'blue',
+        category: 'Sharing & Export', icon: Share2, color: 'blue',
         features: [
-            { name: 'QR Code', tooltip: 'Auto-generated QR code for easy sharing at events', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Shareable link', tooltip: 'Simple link to share via text, email, or social media', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Embed on website', tooltip: 'Copy/paste code to add your poll to any website', free: true, starter: true, proEvent: true, unlimited: true },
-            { name: 'Export to CSV', tooltip: 'Download all results as a spreadsheet file', free: false, starter: true, proEvent: true, unlimited: true },
-            { name: 'Export to PDF', tooltip: 'Download a formatted PDF report of results', free: false, starter: false, proEvent: true, unlimited: true },
-            { name: 'Export to PNG', tooltip: 'Download results as an image to share anywhere', free: false, starter: false, proEvent: true, unlimited: true },
+            { name: 'QR Code', tooltip: 'Auto-generated QR for sharing', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Shareable link', tooltip: 'Simple link to share', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Embed on website', tooltip: 'Add poll to any website', free: true, starter: true, proEvent: true, unlimited: true },
+            { name: 'Export to CSV', tooltip: 'Download as spreadsheet', free: false, starter: true, proEvent: true, unlimited: true },
+            { name: 'Export to PDF', tooltip: 'Download formatted PDF', free: false, starter: false, proEvent: true, unlimited: true },
+            { name: 'Export to PNG', tooltip: 'Download as image', free: false, starter: false, proEvent: true, unlimited: true },
         ],
     },
     {
-        category: 'Customization',
-        icon: Palette,
-        color: 'pink',
+        category: 'Customization', icon: Palette, color: 'pink',
         features: [
-            { name: 'Custom short link', tooltip: 'Get a memorable URL like votegenerator.com/p/my-poll', free: false, starter: false, proEvent: true, unlimited: true },
-            { name: 'Remove VG branding', tooltip: 'Hide the "Powered by VoteGenerator" footer', free: false, starter: false, proEvent: true, unlimited: true },
-            { name: 'Upload your logo', tooltip: 'Add your company logo to the poll header', free: false, starter: false, proEvent: false, unlimited: true },
+            { name: 'Custom short link', tooltip: 'Memorable URL like /p/my-poll', free: false, starter: false, proEvent: true, unlimited: true },
+            { name: 'Remove VG branding', tooltip: 'Hide "Powered by VoteGenerator"', free: false, starter: false, proEvent: true, unlimited: true },
+            { name: 'Upload your logo', tooltip: 'Add your company logo', free: false, starter: false, proEvent: false, unlimited: true },
         ],
     },
 ];
@@ -201,12 +192,11 @@ function PricingPage(): React.ReactElement {
                     Start free. Pay only when you need more.
                 </motion.p>
 
-                {/* Payment clarification */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                     className="inline-flex items-center gap-3 px-6 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                     <BadgeCheck className="text-emerald-600" size={24} />
                     <div className="text-left">
-                        <p className="text-emerald-900 font-bold">All Plans Are One-Time Payments</p>
+                        <p className="text-emerald-900 font-bold">All Paid Plans Are One-Time Payments</p>
                         <p className="text-emerald-700 text-sm">No subscriptions. No recurring charges. Pay once, use it.</p>
                     </div>
                 </motion.div>
@@ -229,7 +219,6 @@ function PricingPage(): React.ReactElement {
                                 )}
 
                                 <div className={`p-6 flex-1 flex flex-col ${tier.popular ? 'pt-12' : ''}`}>
-                                    {/* Badge */}
                                     <span className={`self-start px-2.5 py-1 rounded-full text-xs font-bold mb-3 ${
                                         tier.id === 'unlimited' ? 'bg-amber-100 text-amber-700' : 
                                         tier.id === 'free' ? 'bg-slate-100 text-slate-600' :
@@ -355,9 +344,9 @@ function PricingPage(): React.ReactElement {
                 <div className="space-y-4">
                     {[
                         { q: 'Are these really one-time payments?', a: 'Yes! Starter ($9.99), Pro Event ($19.99), and Unlimited ($199) are all one-time payments. You pay once and get access—no recurring charges, no subscriptions, no surprises.' },
-                        { q: 'What does "1 year access" mean for Unlimited?', a: 'When you buy Unlimited for $199, you get unlimited premium polls for 1 full year from purchase. Each poll you create can stay active for up to 1 year with 5,000 responses. After the year, your polls and data remain accessible, but you\'d need to purchase again to create new premium polls.' },
-                        { q: 'How many free responses do I get?', a: 'Free polls allow up to 50 responses each. You can create unlimited free polls! Need more responses on a single poll? Upgrade to Starter (500), Pro Event (2,000), or Unlimited (5,000 per poll).' },
-                        { q: 'What does "1 premium poll" mean?', a: 'When you buy Starter or Pro Event, you get enhanced features for ONE poll. Your free polls remain unlimited. The premium poll gets extra responses, longer duration, exports, and more. Need multiple premium polls? Get Unlimited!' },
+                        { q: 'What does "1 year access" mean for Unlimited?', a: 'When you buy Unlimited for $199, you get unlimited premium polls for 1 full year from purchase. Each poll can stay active for up to 1 year with 5,000 responses. After the year, your polls and data remain accessible, but you\'d need to purchase again for new premium polls.' },
+                        { q: 'How many free responses do I get?', a: 'Free polls allow up to 50 responses each. You can create unlimited free polls! Need more responses? Upgrade to Starter (500), Pro Event (2,000), or Unlimited (5,000 per poll).' },
+                        { q: 'What does "1 premium poll" mean?', a: 'When you buy Starter or Pro Event, you get enhanced features for ONE poll. Free polls remain unlimited. Need multiple premium polls? Get Unlimited!' },
                         { q: 'Do I need to create an account?', a: 'Nope! VoteGenerator is privacy-first. No signup, no email required. You get a secret admin link to manage your poll.' },
                     ].map((faq, i) => (
                         <details key={i} className="group bg-white rounded-xl border border-slate-200 overflow-hidden">

@@ -1,144 +1,78 @@
 // ============================================================================
-// VoteGenerator Stripe Checkout - Multi-Currency Support
-// Netlify Function: /.netlify/functions/vg-checkout
-// 
-// Query params:
-//   - tier: starter | pro_event | unlimited
-//   - currency: usd | cad | eur | gbp | aud (defaults to usd)
+// VoteGenerator Stripe Checkout
+// Stripe automatically handles currency based on user's location
 // ============================================================================
 
 import Stripe from 'stripe';
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2023-10-16',
 });
 
-// ============================================================================
-// Price ID Configuration
-// 
-// Set these environment variables in Netlify Dashboard:
-// STRIPE_PRICE_STARTER_USD, STRIPE_PRICE_STARTER_CAD, etc.
-// ============================================================================
+// Price IDs from Stripe Dashboard
+// Stripe will show correct currency to user at checkout
+const PRICE_IDS: Record<string, string | undefined> = {
+    starter: process.env.STRIPE_PRICE_STARTER,
+    pro_event: process.env.STRIPE_PRICE_PRO_EVENT,
+    unlimited: process.env.STRIPE_PRICE_UNLIMITED,
+};
 
-type Currency = 'usd' | 'cad' | 'eur' | 'gbp' | 'aud';
-type Tier = 'starter' | 'pro_event' | 'unlimited';
-
-// Get the Stripe Price ID for a given tier and currency
-function getPriceId(tier: Tier, currency: Currency): string | null {
-    const envKey = `STRIPE_PRICE_${tier.toUpperCase()}_${currency.toUpperCase()}`;
-    const priceId = process.env[envKey];
-    
-    // Fallback to USD if specific currency not configured
-    if (!priceId && currency !== 'usd') {
-        const usdKey = `STRIPE_PRICE_${tier.toUpperCase()}_USD`;
-        return process.env[usdKey] || null;
-    }
-    
-    return priceId || null;
-}
-
-// Product names for display
-const TIER_NAMES: Record<Tier, string> = {
+const TIER_NAMES: Record<string, string> = {
     starter: 'VoteGenerator Starter',
     pro_event: 'VoteGenerator Pro Event',
     unlimited: 'VoteGenerator Unlimited',
 };
 
-// Valid currencies
-const VALID_CURRENCIES: Currency[] = ['usd', 'cad', 'eur', 'gbp', 'aud'];
-
-// Valid tiers
-const VALID_TIERS: Tier[] = ['starter', 'pro_event', 'unlimited'];
-
-// ============================================================================
-// Handler
-// ============================================================================
-
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-    // Get query parameters
-    const tier = event.queryStringParameters?.tier?.toLowerCase() as Tier | undefined;
-    const currencyParam = event.queryStringParameters?.currency?.toLowerCase() as Currency | undefined;
+export const handler: Handler = async (event) => {
+    const tier = event.queryStringParameters?.tier?.toLowerCase();
     
     // Validate tier
-    if (!tier || !VALID_TIERS.includes(tier)) {
-        const redirectUrl = `/pricing?error=invalid_tier`;
+    if (!tier || !PRICE_IDS[tier]) {
         return {
             statusCode: 302,
-            headers: { Location: redirectUrl },
+            headers: { Location: '/pricing?error=invalid_tier' },
             body: '',
         };
     }
     
-    // Default to USD if currency not specified or invalid
-    const currency: Currency = currencyParam && VALID_CURRENCIES.includes(currencyParam) 
-        ? currencyParam 
-        : 'usd';
-    
-    // Get price ID
-    const priceId = getPriceId(tier, currency);
-    
+    const priceId = PRICE_IDS[tier];
     if (!priceId) {
-        console.error(`No price ID found for tier=${tier}, currency=${currency}`);
-        const redirectUrl = `/pricing?error=price_not_found`;
+        console.error(`No price ID for tier: ${tier}`);
         return {
             statusCode: 302,
-            headers: { Location: redirectUrl },
+            headers: { Location: '/pricing?error=price_not_configured' },
             body: '',
         };
     }
     
-    // Determine base URL
     const baseUrl = process.env.URL || 'https://votegenerator.com';
     
     try {
-        // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
             payment_method_types: ['card'],
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            // Allow promo codes
+            line_items: [{ price: priceId, quantity: 1 }],
             allow_promotion_codes: true,
-            // Collect billing address for tax purposes
             billing_address_collection: 'required',
-            // Success and cancel URLs
             success_url: `${baseUrl}/checkout/success?tier=${tier}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${baseUrl}/pricing?cancelled=true`,
-            // Metadata for tracking
-            metadata: {
-                tier,
-                currency,
-                product: TIER_NAMES[tier],
-            },
+            metadata: { tier, product: TIER_NAMES[tier] },
         });
         
-        // Redirect to Stripe Checkout
         if (session.url) {
             return {
                 statusCode: 302,
-                headers: {
-                    Location: session.url,
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                },
+                headers: { Location: session.url, 'Cache-Control': 'no-cache' },
                 body: '',
             };
-        } else {
-            throw new Error('No checkout URL returned from Stripe');
         }
-        
+        throw new Error('No checkout URL');
     } catch (error: any) {
-        console.error('Stripe checkout error:', error);
-        
-        // Redirect to pricing with error
-        const redirectUrl = `/pricing?error=checkout_failed&message=${encodeURIComponent(error.message || 'Unknown error')}`;
+        console.error('Stripe error:', error);
         return {
             statusCode: 302,
-            headers: { Location: redirectUrl },
+            headers: { Location: `/pricing?error=checkout_failed` },
             body: '',
         };
     }

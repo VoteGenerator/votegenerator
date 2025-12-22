@@ -1,76 +1,22 @@
 // ============================================================================
-// VoteGenerator - Pricing Page
-// Links go to Netlify function that creates Stripe checkout session
+// VoteGenerator - Pricing Page with Geo-Detected Prices
+// Automatically shows CAD, EUR, GBP, AUD based on user location
 // ============================================================================
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Check, X, Zap, Crown, Users, HelpCircle, BarChart3, Clock, ArrowRight, Star, 
-    ChevronDown, Sparkles, Shield, BadgeCheck, CreditCard, Calendar,
-    Share2, Palette, CheckSquare
+    ChevronDown, Sparkles, Shield, BadgeCheck, CreditCard, Loader2,
+    Share2, Palette, CheckSquare, Globe
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import PromoBanner from './PromoBanner';
+import { useGeoPricing, getCheckoutUrl, type Currency } from '../geoPricing';
 
 // ============================================================================
-// Pricing Tiers
-// ============================================================================
-
-interface PricingTier {
-    id: string;
-    name: string;
-    tagline: string;
-    price: number;
-    period: string;
-    periodNote?: string;
-    popular?: boolean;
-    icon: React.ElementType;
-    color: string;
-    cta: string;
-    ctaLink: string;
-    badge: string;
-    features: { responses: string; duration: string; polls: string; highlights: string[] };
-}
-
-const TIERS: PricingTier[] = [
-    {
-        id: 'free', name: 'Free', tagline: 'No credit card required', price: 0, period: 'forever', icon: Users, color: 'slate',
-        cta: 'Create Free Poll', ctaLink: '/create', badge: 'Forever Free',
-        features: {
-            responses: '50 responses', duration: '7 days active', polls: 'Unlimited free polls',
-            highlights: ['6 free poll types', 'Multiple Choice', 'Ranked Choice', 'This or That', 'Meeting Poll', 'Rating Scale', 'RSVP', 'QR code sharing', 'Real-time results', 'Embed on your site'],
-        },
-    },
-    {
-        id: 'starter', name: 'Starter', tagline: 'For your next event', price: 9.99, period: 'one-time', icon: Zap, color: 'blue',
-        cta: 'Get Starter', ctaLink: '/.netlify/functions/vg-checkout?tier=starter', badge: 'One-Time Payment',
-        features: {
-            responses: '500 responses', duration: '30 days active', polls: '1 premium poll',
-            highlights: ['Everything in Free, plus:', 'Export to CSV', 'Duplicate your poll', 'Device breakdown stats', 'Geographic breakdown', '90-day data retention'],
-        },
-    },
-    {
-        id: 'pro_event', name: 'Pro Event', tagline: 'For important events', price: 19.99, period: 'one-time', popular: true, icon: Crown, color: 'purple',
-        cta: 'Get Pro Event', ctaLink: '/.netlify/functions/vg-checkout?tier=pro_event', badge: 'One-Time Payment',
-        features: {
-            responses: '2,000 responses', duration: '60 days active', polls: '1 premium poll',
-            highlights: ['Everything in Starter, plus:', 'Visual Poll (images)', 'Export PDF & PNG', 'Custom short link', 'Remove VG branding', 'Password protection', 'Schedule open/close', '1-year data retention'],
-        },
-    },
-    {
-        id: 'unlimited', name: 'Unlimited', tagline: 'For power users', price: 199, period: 'for 1 year', periodNote: 'One-time payment, not a subscription', icon: Star, color: 'amber',
-        cta: 'Get Unlimited', ctaLink: '/.netlify/functions/vg-checkout?tier=unlimited', badge: 'Best Value',
-        features: {
-            responses: '5,000 per poll', duration: '1 year per poll', polls: 'Unlimited premium polls',
-            highlights: ['Everything in Pro Event, plus:', 'Unlimited premium polls for 1 year', 'Upload your logo', 'Email notifications', 'Access codes', 'Priority support', '2-year data retention'],
-        },
-    },
-];
-
-// ============================================================================
-// Feature Comparison
+// Feature Comparison Data
 // ============================================================================
 
 interface FeatureRow {
@@ -149,12 +95,22 @@ const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ con
     </div>
 );
 
+// Currency flag emoji
+const CURRENCY_FLAGS: Record<Currency, string> = {
+    USD: '🇺🇸',
+    CAD: '🇨🇦',
+    EUR: '🇪🇺',
+    GBP: '🇬🇧',
+    AUD: '🇦🇺',
+};
+
 // ============================================================================
 // Main Pricing Page
 // ============================================================================
 
 function PricingPage(): React.ReactElement {
     const [showComparison, setShowComparison] = useState(false);
+    const { loading, currency, prices, formatWithCode } = useGeoPricing();
 
     const colorClasses: Record<string, { bg: string; text: string; button: string; light: string }> = {
         slate: { bg: 'bg-slate-100', text: 'text-slate-600', button: 'bg-slate-800 hover:bg-slate-900 text-white', light: 'bg-slate-50' },
@@ -169,6 +125,42 @@ function PricingPage(): React.ReactElement {
         blue: { bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-700' },
         pink: { bg: 'bg-pink-50', badge: 'bg-pink-100 text-pink-700' },
     };
+
+    // Tier configuration with dynamic prices
+    const TIERS = [
+        {
+            id: 'free', name: 'Free', tagline: 'No credit card required', price: 0, icon: Users, color: 'slate',
+            cta: 'Create Free Poll', ctaLink: '/create', badge: 'Forever Free',
+            features: {
+                responses: '50 responses', duration: '7 days active', polls: 'Unlimited free polls',
+                highlights: ['6 free poll types', 'Multiple Choice', 'Ranked Choice', 'This or That', 'Meeting Poll', 'Rating Scale', 'RSVP', 'QR code sharing', 'Real-time results', 'Embed on your site'],
+            },
+        },
+        {
+            id: 'starter', name: 'Starter', tagline: 'For your next event', price: prices.starter, icon: Zap, color: 'blue',
+            cta: 'Get Starter', ctaLink: getCheckoutUrl('starter', currency), badge: 'One-Time Payment',
+            features: {
+                responses: '500 responses', duration: '30 days active', polls: '1 premium poll',
+                highlights: ['Everything in Free, plus:', 'Export to CSV', 'Duplicate your poll', 'Device breakdown stats', 'Geographic breakdown', '90-day data retention'],
+            },
+        },
+        {
+            id: 'pro_event', name: 'Pro Event', tagline: 'For important events', price: prices.proEvent, popular: true, icon: Crown, color: 'purple',
+            cta: 'Get Pro Event', ctaLink: getCheckoutUrl('pro_event', currency), badge: 'One-Time Payment',
+            features: {
+                responses: '2,000 responses', duration: '60 days active', polls: '1 premium poll',
+                highlights: ['Everything in Starter, plus:', 'Visual Poll (images)', 'Export PDF & PNG', 'Custom short link', 'Remove VG branding', 'Password protection', 'Schedule open/close', '1-year data retention'],
+            },
+        },
+        {
+            id: 'unlimited', name: 'Unlimited', tagline: 'For power users', price: prices.unlimited, periodNote: 'One-time for 1 year access', icon: Star, color: 'amber',
+            cta: 'Get Unlimited', ctaLink: getCheckoutUrl('unlimited', currency), badge: 'Best Value',
+            features: {
+                responses: '5,000 per poll', duration: '1 year per poll', polls: 'Unlimited premium polls',
+                highlights: ['Everything in Pro Event, plus:', 'Unlimited premium polls for 1 year', 'Upload your logo', 'Email notifications', 'Access codes', 'Priority support', '2-year data retention'],
+            },
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -193,12 +185,29 @@ function PricingPage(): React.ReactElement {
                 </motion.p>
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                    className="inline-flex items-center gap-3 px-6 py-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    className="inline-flex items-center gap-3 px-6 py-3 bg-emerald-50 border border-emerald-200 rounded-xl mb-4">
                     <BadgeCheck className="text-emerald-600" size={24} />
                     <div className="text-left">
                         <p className="text-emerald-900 font-bold">All Paid Plans Are One-Time Payments</p>
                         <p className="text-emerald-700 text-sm">No subscriptions. No recurring charges. Pay once, use it.</p>
                     </div>
+                </motion.div>
+
+                {/* Currency indicator */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+                    className="flex items-center justify-center gap-2 text-sm text-slate-600">
+                    {loading ? (
+                        <span className="flex items-center gap-2">
+                            <Loader2 size={14} className="animate-spin" />
+                            Detecting your location...
+                        </span>
+                    ) : (
+                        <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full">
+                            <Globe size={14} />
+                            <span>{CURRENCY_FLAGS[currency]}</span>
+                            <span>Showing prices in <strong>{currency}</strong></span>
+                        </span>
+                    )}
                 </motion.div>
             </div>
 
@@ -235,8 +244,18 @@ function PricingPage(): React.ReactElement {
                                     <p className="text-slate-500 text-sm mt-1">{tier.tagline}</p>
 
                                     <div className="mt-4 mb-2">
-                                        <span className="text-4xl font-bold text-slate-900">{tier.price === 0 ? 'Free' : `$${tier.price}`}</span>
-                                        {tier.period !== 'forever' && <span className="text-slate-500 text-sm ml-1">{tier.period}</span>}
+                                        {tier.price === 0 ? (
+                                            <span className="text-4xl font-bold text-slate-900">Free</span>
+                                        ) : loading ? (
+                                            <span className="text-4xl font-bold text-slate-300">...</span>
+                                        ) : (
+                                            <>
+                                                <span className="text-4xl font-bold text-slate-900">
+                                                    {prices.symbol}{tier.price % 1 === 0 ? tier.price : tier.price.toFixed(2)}
+                                                </span>
+                                                <span className="text-slate-500 text-sm ml-1">{currency}</span>
+                                            </>
+                                        )}
                                     </div>
                                     
                                     {tier.periodNote && (
@@ -343,8 +362,9 @@ function PricingPage(): React.ReactElement {
                 <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">Frequently Asked Questions</h2>
                 <div className="space-y-4">
                     {[
-                        { q: 'Are these really one-time payments?', a: 'Yes! Starter ($9.99), Pro Event ($19.99), and Unlimited ($199) are all one-time payments. You pay once and get access—no recurring charges, no subscriptions, no surprises.' },
-                        { q: 'What does "1 year access" mean for Unlimited?', a: 'When you buy Unlimited for $199, you get unlimited premium polls for 1 full year from purchase. Each poll can stay active for up to 1 year with 5,000 responses. After the year, your polls and data remain accessible, but you\'d need to purchase again for new premium polls.' },
+                        { q: 'Are these really one-time payments?', a: 'Yes! Starter, Pro Event, and Unlimited are all one-time payments. You pay once and get access—no recurring charges, no subscriptions, no surprises.' },
+                        { q: 'What currency will I be charged in?', a: `We show prices in your local currency based on your location. You're currently seeing ${currency} prices. Checkout is handled securely by Stripe.` },
+                        { q: 'What does "1 year access" mean for Unlimited?', a: 'When you buy Unlimited, you get unlimited premium polls for 1 full year from purchase. Each poll can stay active for up to 1 year with 5,000 responses. After the year, your polls and data remain accessible, but you\'d need to purchase again for new premium polls.' },
                         { q: 'How many free responses do I get?', a: 'Free polls allow up to 50 responses each. You can create unlimited free polls! Need more responses? Upgrade to Starter (500), Pro Event (2,000), or Unlimited (5,000 per poll).' },
                         { q: 'What does "1 premium poll" mean?', a: 'When you buy Starter or Pro Event, you get enhanced features for ONE poll. Free polls remain unlimited. Need multiple premium polls? Get Unlimited!' },
                         { q: 'Do I need to create an account?', a: 'Nope! VoteGenerator is privacy-first. No signup, no email required. You get a secret admin link to manage your poll.' },

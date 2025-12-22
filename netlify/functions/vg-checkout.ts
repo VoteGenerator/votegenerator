@@ -1,98 +1,144 @@
 // ============================================================================
-// netlify/functions/vg-checkout.ts
-// Creates Stripe checkout session and redirects to Stripe
+// VoteGenerator Stripe Checkout - Multi-Currency Support
+// Netlify Function: /.netlify/functions/vg-checkout
+// 
+// Query params:
+//   - tier: starter | pro_event | unlimited
+//   - currency: usd | cad | eur | gbp | aud (defaults to usd)
 // ============================================================================
 
-import { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
+import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2023-10-16',
 });
 
-// Price IDs from your Stripe Dashboard
-// UPDATE THESE WITH YOUR ACTUAL STRIPE PRICE IDS
-const PRICE_IDS: Record<string, string> = {
-    starter: process.env.STRIPE_PRICE_STARTER || 'price_starter_placeholder',
-    pro_event: process.env.STRIPE_PRICE_PRO_EVENT || 'price_pro_event_placeholder',
-    unlimited: process.env.STRIPE_PRICE_UNLIMITED || 'price_unlimited_placeholder',
-};
+// ============================================================================
+// Price ID Configuration
+// 
+// Set these environment variables in Netlify Dashboard:
+// STRIPE_PRICE_STARTER_USD, STRIPE_PRICE_STARTER_CAD, etc.
+// ============================================================================
 
-const TIER_NAMES: Record<string, string> = {
-    starter: 'Starter Plan',
-    pro_event: 'Pro Event Plan',
-    unlimited: 'Unlimited Plan (1 Year)',
-};
+type Currency = 'usd' | 'cad' | 'eur' | 'gbp' | 'aud';
+type Tier = 'starter' | 'pro_event' | 'unlimited';
 
-export const handler: Handler = async (event) => {
-    // Get tier from query params
-    const tier = event.queryStringParameters?.tier;
+// Get the Stripe Price ID for a given tier and currency
+function getPriceId(tier: Tier, currency: Currency): string | null {
+    const envKey = `STRIPE_PRICE_${tier.toUpperCase()}_${currency.toUpperCase()}`;
+    const priceId = process.env[envKey];
     
-    if (!tier || !PRICE_IDS[tier]) {
-        // Redirect to pricing page if invalid tier
+    // Fallback to USD if specific currency not configured
+    if (!priceId && currency !== 'usd') {
+        const usdKey = `STRIPE_PRICE_${tier.toUpperCase()}_USD`;
+        return process.env[usdKey] || null;
+    }
+    
+    return priceId || null;
+}
+
+// Product names for display
+const TIER_NAMES: Record<Tier, string> = {
+    starter: 'VoteGenerator Starter',
+    pro_event: 'VoteGenerator Pro Event',
+    unlimited: 'VoteGenerator Unlimited',
+};
+
+// Valid currencies
+const VALID_CURRENCIES: Currency[] = ['usd', 'cad', 'eur', 'gbp', 'aud'];
+
+// Valid tiers
+const VALID_TIERS: Tier[] = ['starter', 'pro_event', 'unlimited'];
+
+// ============================================================================
+// Handler
+// ============================================================================
+
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+    // Get query parameters
+    const tier = event.queryStringParameters?.tier?.toLowerCase() as Tier | undefined;
+    const currencyParam = event.queryStringParameters?.currency?.toLowerCase() as Currency | undefined;
+    
+    // Validate tier
+    if (!tier || !VALID_TIERS.includes(tier)) {
+        const redirectUrl = `/pricing?error=invalid_tier`;
         return {
             statusCode: 302,
-            headers: {
-                Location: '/pricing?error=invalid_plan',
-            },
+            headers: { Location: redirectUrl },
             body: '',
         };
     }
-
-    // Check if Stripe is configured
-    if (!process.env.STRIPE_SECRET_KEY) {
-        console.error('STRIPE_SECRET_KEY not configured');
+    
+    // Default to USD if currency not specified or invalid
+    const currency: Currency = currencyParam && VALID_CURRENCIES.includes(currencyParam) 
+        ? currencyParam 
+        : 'usd';
+    
+    // Get price ID
+    const priceId = getPriceId(tier, currency);
+    
+    if (!priceId) {
+        console.error(`No price ID found for tier=${tier}, currency=${currency}`);
+        const redirectUrl = `/pricing?error=price_not_found`;
         return {
             statusCode: 302,
-            headers: {
-                Location: '/pricing?error=payment_not_configured',
-            },
+            headers: { Location: redirectUrl },
             body: '',
         };
     }
-
+    
+    // Determine base URL
+    const baseUrl = process.env.URL || 'https://votegenerator.com';
+    
     try {
-        // Get the base URL for redirects
-        const baseUrl = process.env.URL || 'https://votegenerator.com';
-        
-        // Create Stripe checkout session
+        // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
+            mode: 'payment',
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price: PRICE_IDS[tier],
+                    price: priceId,
                     quantity: 1,
                 },
             ],
-            mode: 'payment', // One-time payment
+            // Allow promo codes
+            allow_promotion_codes: true,
+            // Collect billing address for tax purposes
+            billing_address_collection: 'required',
+            // Success and cancel URLs
             success_url: `${baseUrl}/checkout/success?tier=${tier}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${baseUrl}/pricing?cancelled=true`,
+            // Metadata for tracking
             metadata: {
                 tier,
+                currency,
                 product: TIER_NAMES[tier],
             },
-            // Optional: collect billing address
-            billing_address_collection: 'auto',
-            // Apply promo code if SAVE10 is active
-            allow_promotion_codes: true,
         });
-
+        
         // Redirect to Stripe Checkout
-        return {
-            statusCode: 302,
-            headers: {
-                Location: session.url || '/pricing?error=session_failed',
-            },
-            body: '',
-        };
+        if (session.url) {
+            return {
+                statusCode: 302,
+                headers: {
+                    Location: session.url,
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                },
+                body: '',
+            };
+        } else {
+            throw new Error('No checkout URL returned from Stripe');
+        }
+        
     } catch (error: any) {
         console.error('Stripe checkout error:', error);
         
+        // Redirect to pricing with error
+        const redirectUrl = `/pricing?error=checkout_failed&message=${encodeURIComponent(error.message || 'Unknown error')}`;
         return {
             statusCode: 302,
-            headers: {
-                Location: `/pricing?error=checkout_failed&message=${encodeURIComponent(error.message)}`,
-            },
+            headers: { Location: redirectUrl },
             body: '',
         };
     }

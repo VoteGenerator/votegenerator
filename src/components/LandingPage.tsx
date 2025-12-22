@@ -405,27 +405,58 @@ const TestimonialsSection: React.FC = () => {
 };
 
 // ============================================================================
-// Pricing Section
+// Pricing Section - GEO-AWARE VERSION
+// REPLACE the existing PricingSection in LandingPage.tsx (lines 407-481)
+// Also add this import at the top of LandingPage.tsx:
+//   import { useGeoPricing } from '../geoPricing';
+// And add: Loader2, Globe to the lucide-react imports
 // ============================================================================
 
 const PricingSection: React.FC = () => {
+    const { loading, currency, prices } = useGeoPricing();
+    
     const tiers = [
         {
-            name: 'Free', price: '$0', period: 'forever', description: 'No credit card required', color: 'slate', icon: Users,
+            name: 'Free', 
+            price: 0, 
+            period: 'forever', 
+            description: 'No credit card required', 
+            color: 'slate', 
+            icon: Users,
             features: ['6 free poll types', '50 responses per poll', '7 days active', 'Unlimited free polls', 'QR code sharing', 'Real-time results'],
-            cta: 'Create Free Poll', ctaLink: '/create',
+            cta: 'Create Free Poll', 
+            ctaLink: '/create',
         },
         {
-            name: 'Starter', price: '$9.99', period: 'one-time', description: 'For your next event', color: 'blue', icon: Zap,
+            name: 'Starter', 
+            price: prices.starter, 
+            period: 'one-time', 
+            description: 'For your next event', 
+            color: 'blue', 
+            icon: Zap,
             features: ['Everything in Free', '500 responses', '30 days active', '1 premium poll', 'CSV export', 'Device & geo stats'],
-            cta: 'Get Starter', ctaLink: '/pricing',
+            cta: 'Get Starter', 
+            ctaLink: '/.netlify/functions/vg-checkout?tier=starter',
         },
         {
-            name: 'Pro Event', price: '$19.99', period: 'one-time', description: 'For important events', color: 'purple', icon: Crown, popular: true,
+            name: 'Pro Event', 
+            price: prices.proEvent, 
+            period: 'one-time', 
+            description: 'For important events', 
+            color: 'purple', 
+            icon: Crown, 
+            popular: true,
             features: ['Everything in Starter', '2,000 responses', '60 days active', '1 premium poll', 'Visual Poll + PDF', 'Remove branding'],
-            cta: 'Get Pro Event', ctaLink: '/pricing',
+            cta: 'Get Pro Event', 
+            ctaLink: '/.netlify/functions/vg-checkout?tier=pro_event',
         },
     ];
+
+    const colorClasses: Record<string, { bg: string; text: string; button: string }> = {
+        slate: { bg: 'bg-slate-100', text: 'text-slate-600', button: 'bg-slate-100 hover:bg-slate-200 text-slate-800' },
+        blue: { bg: 'bg-blue-100', text: 'text-blue-600', button: 'bg-blue-600 hover:bg-blue-700 text-white' },
+        purple: { bg: 'bg-purple-100', text: 'text-purple-600', button: 'bg-purple-600 hover:bg-purple-700 text-white' },
+    };
 
     return (
         <section className="py-20 bg-slate-50">
@@ -434,40 +465,88 @@ const PricingSection: React.FC = () => {
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
                     <p className="text-lg text-slate-600">Start free. Upgrade only when you need more.</p>
                     <p className="text-indigo-600 font-medium mt-2">One-time payments. Not subscriptions.</p>
+                    
+                    {/* Currency indicator */}
+                    <div className="mt-4 flex items-center justify-center">
+                        {loading ? (
+                            <span className="flex items-center gap-2 text-sm text-slate-500">
+                                <Loader2 size={14} className="animate-spin" /> Detecting your location...
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-2 text-sm text-slate-600 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
+                                <Globe size={16} className="text-indigo-500" /> 
+                                Prices shown in <strong>{currency}</strong>
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6 mb-10">
-                    {tiers.map((tier, i) => (
-                        <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                            className={`relative rounded-2xl border-2 ${tier.popular ? 'border-purple-500 shadow-xl' : 'border-slate-200'} bg-white overflow-hidden`}>
-                            {tier.popular && (
-                                <div className="absolute top-0 left-0 right-0 bg-purple-600 text-white text-center py-1.5 text-sm font-medium">
-                                    <Star className="inline mr-1" size={14} /> Best Value
+                    {tiers.map((tier, i) => {
+                        const colors = colorClasses[tier.color];
+                        const Icon = tier.icon;
+                        
+                        return (
+                            <motion.div 
+                                key={tier.name} 
+                                initial={{ opacity: 0, y: 20 }} 
+                                whileInView={{ opacity: 1, y: 0 }} 
+                                viewport={{ once: true }} 
+                                transition={{ delay: i * 0.1 }}
+                                className={`relative rounded-2xl border-2 ${tier.popular ? 'border-purple-500 shadow-xl' : 'border-slate-200'} bg-white overflow-hidden`}
+                            >
+                                {tier.popular && (
+                                    <div className="absolute top-0 left-0 right-0 bg-purple-600 text-white text-center py-1.5 text-sm font-medium">
+                                        <Star className="inline mr-1" size={14} /> Best Value
+                                    </div>
+                                )}
+                                <div className={`p-6 ${tier.popular ? 'pt-12' : ''}`}>
+                                    <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
+                                        <Icon className={colors.text} size={24} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-900">{tier.name}</h3>
+                                    <p className="text-slate-500 text-sm">{tier.description}</p>
+                                    
+                                    <div className="mt-4 mb-6">
+                                        {tier.price === 0 ? (
+                                            <span className="text-4xl font-bold text-slate-900">Free</span>
+                                        ) : loading ? (
+                                            <span className="text-4xl font-bold text-slate-300">...</span>
+                                        ) : (
+                                            <>
+                                                <span className="text-4xl font-bold text-slate-900">
+                                                    {prices.symbol}{tier.price}
+                                                </span>
+                                                <span className="text-slate-500 text-sm ml-2">{currency}</span>
+                                            </>
+                                        )}
+                                        {tier.period !== 'forever' && tier.price !== 0 && (
+                                            <span className="text-slate-500 text-sm ml-1">({tier.period})</span>
+                                        )}
+                                    </div>
+                                    
+                                    <ul className="space-y-3 mb-6">
+                                        {tier.features.map((f, j) => (
+                                            <li key={j} className="flex items-center gap-2 text-sm text-slate-600">
+                                                <Check size={16} className="text-emerald-500" />{f}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    
+                                    <a 
+                                        href={tier.ctaLink} 
+                                        className={`block w-full py-3 text-center font-medium rounded-xl transition ${
+                                            tier.popular 
+                                                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                                                : colors.button
+                                        }`}
+                                    >
+                                        {tier.cta} <ArrowRight className="inline ml-1" size={16} />
+                                    </a>
                                 </div>
-                            )}
-                            <div className={`p-6 ${tier.popular ? 'pt-12' : ''}`}>
-                                <div className={`w-12 h-12 bg-${tier.color}-100 rounded-xl flex items-center justify-center mb-4`}>
-                                    <tier.icon className={`text-${tier.color}-600`} size={24} />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900">{tier.name}</h3>
-                                <p className="text-slate-500 text-sm">{tier.description}</p>
-                                <div className="mt-4 mb-6">
-                                    <span className="text-4xl font-bold text-slate-900">{tier.price}</span>
-                                    {tier.period !== 'forever' && <span className="text-slate-500 text-sm ml-1">{tier.period}</span>}
-                                </div>
-                                <ul className="space-y-3 mb-6">
-                                    {tier.features.map((f, j) => (
-                                        <li key={j} className="flex items-center gap-2 text-sm text-slate-600">
-                                            <Check size={16} className="text-emerald-500" />{f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <a href={tier.ctaLink} className={`block w-full py-3 text-center font-medium rounded-xl transition ${tier.popular ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-800'}`}>
-                                    {tier.cta} <ArrowRight className="inline ml-1" size={16} />
-                                </a>
-                            </div>
-                        </motion.div>
-                    ))}
+                            </motion.div>
+                        );
+                    })}
                 </div>
 
                 <div className="text-center">
@@ -517,12 +596,21 @@ const FAQSection: React.FC = () => {
 };
 
 // ============================================================================
-// Comparison Table
+// Comparison Table - GEO-AWARE VERSION  
+// REPLACE the existing ComparisonSection in LandingPage.tsx (lines 519-574)
+// This uses the same useGeoPricing hook
 // ============================================================================
 
 const ComparisonSection: React.FC = () => {
+    const { loading, currency, prices } = useGeoPricing();
+    
+    // Format our price display
+    const ourPriceDisplay = loading 
+        ? 'Free / ...' 
+        : `Free / ${prices.symbol}${prices.starter}+ ${currency}`;
+
     const competitors = [
-        { name: 'VoteGenerator', free: true, noSignup: true, pollTypes: 7, responses: '50 free', price: 'Free / $9.99+' },
+        { name: 'VoteGenerator', free: true, noSignup: true, pollTypes: 7, responses: '50 free', price: ourPriceDisplay },
         { name: 'Strawpoll', free: true, noSignup: true, pollTypes: 2, responses: 'Unlimited', price: 'Free / $5+' },
         { name: 'Doodle', free: true, noSignup: false, pollTypes: 2, responses: 'Limited', price: 'Free / $6.95+/mo' },
         { name: 'SurveyMonkey', free: true, noSignup: false, pollTypes: 10, responses: '10/survey', price: 'Free / $25+/mo' },
@@ -561,13 +649,19 @@ const ComparisonSection: React.FC = () => {
                                         </td>
                                         <td className="py-4 px-4 text-center font-medium text-slate-700">{c.pollTypes}</td>
                                         <td className="py-4 px-4 text-center text-slate-600">{c.responses}</td>
-                                        <td className="py-4 px-4 text-center text-slate-600 text-sm">{c.price}</td>
+                                        <td className={`py-4 px-4 text-center text-sm ${i === 0 ? 'font-semibold text-indigo-700' : 'text-slate-600'}`}>
+                                            {c.price}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
+                
+                <p className="text-center text-slate-500 text-sm mt-4">
+                    * Competitor prices may vary. VoteGenerator offers one-time payments, not subscriptions.
+                </p>
             </div>
         </section>
     );

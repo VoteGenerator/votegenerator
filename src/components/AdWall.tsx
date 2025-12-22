@@ -21,8 +21,15 @@ const AdWall: React.FC = () => {
         const stored = sessionStorage.getItem('vg_ad_wall_next');
         if (stored) {
             setNextUrl(stored);
-            // Clear it so it doesn't persist
-            sessionStorage.removeItem('vg_ad_wall_next');
+            // Don't clear it immediately - keep it in case user refreshes
+        } else {
+            // If no stored URL, check URL params as fallback
+            const params = new URLSearchParams(window.location.search);
+            const nextParam = params.get('next');
+            if (nextParam) {
+                setNextUrl(nextParam);
+            }
+            // If still no URL, they might have navigated here directly - that's okay
         }
     }, []);
 
@@ -42,6 +49,8 @@ const AdWall: React.FC = () => {
     }, []);
 
     const handleContinue = () => {
+        // Clear sessionStorage now that we're using it
+        sessionStorage.removeItem('vg_ad_wall_next');
         window.location.href = nextUrl;
     };
 

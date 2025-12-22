@@ -1,6 +1,7 @@
 // ============================================================================
 // Demo Page - VoteGenerator
 // INTERACTIVE: Users can vote and see different result visualizations
+// Visual Poll has image placeholders
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -32,7 +33,7 @@ interface PollTypeInfo {
     proTip: string;
     isPro?: boolean;
     demoQuestion: string;
-    demoOptions: string[];
+    demoOptions: { text: string; image?: string; gradient?: string }[];
 }
 
 const pollTypes: PollTypeInfo[] = [
@@ -45,7 +46,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Ranking preferences', 'Complex decisions'],
         proTip: 'Keep options to 5 or fewer for faster decisions.',
         demoQuestion: '🍕 What should we order for the team lunch?',
-        demoOptions: ['Pizza', 'Thai Food', 'Tacos', 'Sushi']
+        demoOptions: [{ text: 'Pizza' }, { text: 'Thai Food' }, { text: 'Tacos' }, { text: 'Sushi' }]
     },
     {
         id: 'ranked-choice', name: 'Ranked Choice', icon: ListOrdered, gradient: 'from-indigo-500 to-purple-600',
@@ -56,7 +57,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Simple yes/no questions', 'Quick polls'],
         proTip: 'Prevents the "spoiler effect" where similar options split votes.',
         demoQuestion: '🏖️ Where should we go for the company retreat?',
-        demoOptions: ['Beach Resort', 'Mountain Cabin', 'City Hotel', 'Camping']
+        demoOptions: [{ text: 'Beach Resort' }, { text: 'Mountain Cabin' }, { text: 'City Hotel' }, { text: 'Camping' }]
     },
     {
         id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, gradient: 'from-orange-500 to-red-600',
@@ -67,7 +68,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Many options at once', 'Nuanced decisions'],
         proTip: 'Perfect for design decisions where gut reaction matters.',
         demoQuestion: '🎨 Which logo design is better?',
-        demoOptions: ['Design A', 'Design B', 'Design C']
+        demoOptions: [{ text: 'Design A' }, { text: 'Design B' }, { text: 'Design C' }]
     },
     {
         id: 'meeting-poll', name: 'Meeting Poll', icon: Calendar, gradient: 'from-amber-500 to-orange-600',
@@ -78,7 +79,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Non-time decisions', 'Single choice votes'],
         proTip: 'Offer 4-6 time slots. Too many makes finding overlap harder.',
         demoQuestion: '📅 When can everyone attend the kickoff?',
-        demoOptions: ['Mon 10am', 'Mon 2pm', 'Tue 10am', 'Wed 3pm']
+        demoOptions: [{ text: 'Mon 10am' }, { text: 'Mon 2pm' }, { text: 'Tue 10am' }, { text: 'Wed 3pm' }]
     },
     {
         id: 'rating-scale', name: 'Rating Scale', icon: SlidersHorizontal, gradient: 'from-cyan-500 to-blue-600',
@@ -89,7 +90,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Choosing a single winner', 'Quick decisions'],
         proTip: 'Great for NPS-style feedback and feature prioritization.',
         demoQuestion: '⭐ Rate our new product features:',
-        demoOptions: ['Dark Mode', 'Mobile App', 'API Access', 'Team Sharing']
+        demoOptions: [{ text: 'Dark Mode' }, { text: 'Mobile App' }, { text: 'API Access' }, { text: 'Team Sharing' }]
     },
     {
         id: 'rsvp', name: 'RSVP', icon: Users, gradient: 'from-sky-500 to-blue-600',
@@ -100,7 +101,7 @@ const pollTypes: PollTypeInfo[] = [
         notFor: ['Complex scheduling', 'Multiple choice decisions'],
         proTip: 'Enable name collection to see exactly who\'s coming.',
         demoQuestion: '🎉 Can you attend the holiday party?',
-        demoOptions: ['Yes, count me in!', 'Maybe', 'Sorry, can\'t make it']
+        demoOptions: [{ text: 'Yes, count me in!' }, { text: 'Maybe' }, { text: "Sorry, can't make it" }]
     },
     {
         id: 'visual-poll', name: 'Visual Poll', icon: Image, gradient: 'from-pink-500 to-rose-600',
@@ -112,7 +113,11 @@ const pollTypes: PollTypeInfo[] = [
         proTip: 'Keep images similar in size and style for fair comparison.',
         isPro: true,
         demoQuestion: '🖼️ Which website design should we launch?',
-        demoOptions: ['Modern Minimal', 'Bold & Colorful', 'Classic Professional']
+        demoOptions: [
+            { text: 'Modern Minimal', gradient: 'from-slate-100 to-slate-200' },
+            { text: 'Bold & Colorful', gradient: 'from-purple-400 to-pink-400' },
+            { text: 'Classic Professional', gradient: 'from-blue-900 to-indigo-900' }
+        ]
     }
 ];
 
@@ -126,6 +131,49 @@ const useCases = [
 ];
 
 // ============================================================================
+// Visual Poll Image Component
+// ============================================================================
+
+const VisualPollImage: React.FC<{ gradient?: string; text: string; selected?: boolean; onClick?: () => void }> = ({ gradient, text, selected, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`relative w-full aspect-video rounded-xl overflow-hidden border-2 transition-all group ${
+            selected ? 'border-indigo-500 ring-4 ring-indigo-200 shadow-lg' : 'border-slate-200 hover:border-indigo-300 hover:shadow-md'
+        }`}
+    >
+        {/* Image placeholder with gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradient || 'from-slate-200 to-slate-300'}`}>
+            {/* Fake UI elements to make it look like a website */}
+            <div className="absolute top-3 left-3 right-3">
+                <div className="flex gap-1.5 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-white/30" />
+                    <div className="w-2 h-2 rounded-full bg-white/30" />
+                    <div className="w-2 h-2 rounded-full bg-white/30" />
+                </div>
+                <div className="h-2 bg-white/20 rounded w-1/3 mb-2" />
+                <div className="h-1.5 bg-white/15 rounded w-2/3 mb-1" />
+                <div className="h-1.5 bg-white/15 rounded w-1/2" />
+            </div>
+            <div className="absolute bottom-3 left-3 right-3">
+                <div className="h-6 bg-white/20 rounded-lg w-1/4" />
+            </div>
+        </div>
+        
+        {/* Label overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+            <span className="text-white font-medium text-sm">{text}</span>
+        </div>
+        
+        {/* Selected checkmark */}
+        {selected && (
+            <div className="absolute top-2 right-2 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                <Check size={14} className="text-white" />
+            </div>
+        )}
+    </button>
+);
+
+// ============================================================================
 // Interactive Demo Component
 // ============================================================================
 
@@ -135,10 +183,9 @@ interface DemoVotes {
 
 const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
     const [votes, setVotes] = useState<DemoVotes>(() => {
-        // Initialize with random seed data
         const initial: DemoVotes = {};
         poll.demoOptions.forEach((opt, i) => {
-            initial[opt] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
+            initial[opt.text] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
         });
         return initial;
     });
@@ -148,7 +195,7 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
     const totalVotes = Object.values(votes).reduce((sum, v) => sum + v, 0);
 
     const handleVote = (option: string) => {
-        if (userVote === option) return; // Already voted for this
+        if (userVote === option) return;
         
         setVotes(prev => {
             const newVotes = { ...prev };
@@ -164,14 +211,15 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
     const resetDemo = () => {
         const initial: DemoVotes = {};
         poll.demoOptions.forEach((opt, i) => {
-            initial[opt] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
+            initial[opt.text] = Math.floor(Math.random() * 20) + 5 + (i === 0 ? 10 : 0);
         });
         setVotes(initial);
         setUserVote(null);
     };
 
-    const sortedOptions = [...poll.demoOptions].sort((a, b) => (votes[b] || 0) - (votes[a] || 0));
+    const sortedOptions = [...poll.demoOptions].sort((a, b) => (votes[b.text] || 0) - (votes[a.text] || 0));
     const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+    const isVisualPoll = poll.id === 'visual-poll';
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
@@ -183,23 +231,25 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                             <Play size={18} className="text-indigo-600" />
                             Try It Live!
                         </h4>
-                        <p className="text-sm text-slate-500">Click an option to vote</p>
+                        <p className="text-sm text-slate-500">Click {isVisualPoll ? 'an image' : 'an option'} to vote</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={resetDemo} className="p-2 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition" title="Reset demo">
                             <RotateCcw size={18} />
                         </button>
-                        <div className="flex bg-white rounded-lg border border-slate-200 p-1">
-                            <button onClick={() => setViewMode('bar')} className={`p-1.5 rounded ${viewMode === 'bar' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Bar chart">
-                                <BarChart3 size={16} />
-                            </button>
-                            <button onClick={() => setViewMode('pie')} className={`p-1.5 rounded ${viewMode === 'pie' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Pie chart">
-                                <PieChart size={16} />
-                            </button>
-                            <button onClick={() => setViewMode('table')} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Table view">
-                                <Table size={16} />
-                            </button>
-                        </div>
+                        {userVote && (
+                            <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                                <button onClick={() => setViewMode('bar')} className={`p-1.5 rounded ${viewMode === 'bar' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Bar chart">
+                                    <BarChart3 size={16} />
+                                </button>
+                                <button onClick={() => setViewMode('pie')} className={`p-1.5 rounded ${viewMode === 'pie' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Pie chart">
+                                    <PieChart size={16} />
+                                </button>
+                                <button onClick={() => setViewMode('table')} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-indigo-100 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`} title="Table view">
+                                    <Table size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -210,15 +260,24 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                 
                 {/* Voting Options */}
                 {!userVote && (
-                    <div className="space-y-2 mb-6">
+                    <div className={isVisualPoll ? 'grid grid-cols-3 gap-4 mb-6' : 'space-y-2 mb-6'}>
                         {poll.demoOptions.map((option, i) => (
-                            <button
-                                key={option}
-                                onClick={() => handleVote(option)}
-                                className="w-full p-4 text-left border-2 border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all"
-                            >
-                                <span className="font-medium text-slate-700">{option}</span>
-                            </button>
+                            isVisualPoll ? (
+                                <VisualPollImage 
+                                    key={option.text}
+                                    text={option.text}
+                                    gradient={option.gradient}
+                                    onClick={() => handleVote(option.text)}
+                                />
+                            ) : (
+                                <button
+                                    key={option.text}
+                                    onClick={() => handleVote(option.text)}
+                                    className="w-full p-4 text-left border-2 border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+                                >
+                                    <span className="font-medium text-slate-700">{option.text}</span>
+                                </button>
+                            )
                         ))}
                     </div>
                 )}
@@ -231,18 +290,53 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                             <span>{totalVotes} total votes</span>
                         </div>
 
-                        {/* Bar Chart View */}
-                        {viewMode === 'bar' && (
+                        {/* Visual Poll Results with Images */}
+                        {isVisualPoll && viewMode === 'bar' && (
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                {sortedOptions.map((option, i) => {
+                                    const count = votes[option.text] || 0;
+                                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                    const isUserVote = option.text === userVote;
+                                    return (
+                                        <div key={option.text} className={`rounded-xl overflow-hidden border-2 ${isUserVote ? 'border-indigo-500' : 'border-slate-200'}`}>
+                                            <div className={`aspect-video bg-gradient-to-br ${option.gradient || 'from-slate-200 to-slate-300'} relative`}>
+                                                {isUserVote && (
+                                                    <div className="absolute top-2 right-2 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                                                        <Check size={14} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="p-3 bg-white">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="font-medium text-slate-700 text-sm">{option.text}</span>
+                                                    <span className="font-bold text-slate-900">{pct}%</span>
+                                                </div>
+                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${pct}%` }}
+                                                        className="h-full bg-indigo-500 rounded-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Bar Chart View (non-visual polls or when selected) */}
+                        {(!isVisualPoll || viewMode !== 'bar') && viewMode === 'bar' && (
                             <div className="space-y-3">
                                 {sortedOptions.map((option, i) => {
-                                    const count = votes[option] || 0;
+                                    const count = votes[option.text] || 0;
                                     const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                                    const isUserVote = option === userVote;
+                                    const isUserVote = option.text === userVote;
                                     return (
-                                        <div key={option}>
+                                        <div key={option.text}>
                                             <div className="flex items-center justify-between text-sm mb-1">
                                                 <span className={`font-medium ${isUserVote ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                                    {option} {isUserVote && '✓'}
+                                                    {option.text} {isUserVote && '✓'}
                                                 </span>
                                                 <span className="font-bold text-slate-900">{pct}%</span>
                                             </div>
@@ -251,8 +345,8 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${pct}%` }}
                                                     transition={{ duration: 0.5, ease: "easeOut" }}
-                                                    className={`h-full rounded-lg ${isUserVote ? 'bg-indigo-500' : 'bg-slate-300'}`}
-                                                    style={{ backgroundColor: isUserVote ? colors[0] : colors[i % colors.length] + '60' }}
+                                                    className="h-full rounded-lg"
+                                                    style={{ backgroundColor: isUserVote ? colors[0] : colors[i % colors.length] + '80' }}
                                                 />
                                             </div>
                                         </div>
@@ -269,13 +363,13 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                                         {(() => {
                                             let cumulativePct = 0;
                                             return sortedOptions.map((option, i) => {
-                                                const pct = totalVotes > 0 ? (votes[option] || 0) / totalVotes * 100 : 0;
+                                                const pct = totalVotes > 0 ? (votes[option.text] || 0) / totalVotes * 100 : 0;
                                                 const dashArray = `${pct} ${100 - pct}`;
                                                 const dashOffset = -cumulativePct;
                                                 cumulativePct += pct;
                                                 return (
                                                     <circle
-                                                        key={option}
+                                                        key={option.text}
                                                         cx="50" cy="50" r="40"
                                                         fill="transparent"
                                                         stroke={colors[i % colors.length]}
@@ -297,11 +391,11 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     {sortedOptions.map((option, i) => {
-                                        const pct = totalVotes > 0 ? Math.round((votes[option] || 0) / totalVotes * 100) : 0;
+                                        const pct = totalVotes > 0 ? Math.round((votes[option.text] || 0) / totalVotes * 100) : 0;
                                         return (
-                                            <div key={option} className="flex items-center gap-2 text-sm">
+                                            <div key={option.text} className="flex items-center gap-2 text-sm">
                                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
-                                                <span className="flex-1 text-slate-700">{option}</span>
+                                                <span className="flex-1 text-slate-700">{option.text}</span>
                                                 <span className="font-bold text-slate-900">{pct}%</span>
                                             </div>
                                         );
@@ -324,14 +418,14 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                                     </thead>
                                     <tbody>
                                         {sortedOptions.map((option, i) => {
-                                            const count = votes[option] || 0;
+                                            const count = votes[option.text] || 0;
                                             const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                                            const isUserVote = option === userVote;
+                                            const isUserVote = option.text === userVote;
                                             return (
-                                                <tr key={option} className={`border-t border-slate-100 ${isUserVote ? 'bg-indigo-50' : ''}`}>
+                                                <tr key={option.text} className={`border-t border-slate-100 ${isUserVote ? 'bg-indigo-50' : ''}`}>
                                                     <td className="px-4 py-3 text-sm font-bold text-slate-500">#{i + 1}</td>
                                                     <td className="px-4 py-3 text-sm text-slate-700">
-                                                        {option} {isUserVote && <span className="text-indigo-600">✓</span>}
+                                                        {option.text} {isUserVote && <span className="text-indigo-600">✓</span>}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-right font-medium text-slate-900">{count}</td>
                                                     <td className="px-4 py-3 text-sm text-right font-bold text-slate-900">{pct}%</td>
@@ -343,7 +437,6 @@ const InteractiveDemo: React.FC<{ poll: PollTypeInfo }> = ({ poll }) => {
                             </div>
                         )}
 
-                        {/* Vote again prompt */}
                         <button onClick={resetDemo} className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
                             Reset demo & vote again →
                         </button>
@@ -418,7 +511,6 @@ function DemoPage(): React.ReactElement {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-4 py-12">
                 <AnimatePresence mode="wait">
-                    {/* All Poll Types Tab */}
                     {activeTab === 'types' && (
                         <motion.div key="types" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                             <div className="grid lg:grid-cols-3 gap-8">
@@ -460,7 +552,7 @@ function DemoPage(): React.ReactElement {
                                     </div>
                                 </div>
 
-                                {/* Poll Details & Interactive Demo */}
+                                {/* Poll Details & Demo */}
                                 <div className="lg:col-span-2">
                                     {selectedPollData && (
                                         <motion.div key={selectedPollData.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
@@ -535,7 +627,6 @@ function DemoPage(): React.ReactElement {
                         </motion.div>
                     )}
 
-                    {/* Use Cases Tab */}
                     {activeTab === 'use-cases' && (
                         <motion.div key="use-cases" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

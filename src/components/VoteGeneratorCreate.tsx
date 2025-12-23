@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { useGeoPricing } from '../geoPricing';
 
@@ -141,8 +141,22 @@ const VoteGeneratorCreate: React.FC = () => {
 
     const handlePollTypeSelect = (id: string) => {
         const type = POLL_TYPES.find(p => p.id === id);
-        if (type?.tier !== 'free') setShowPaywall(true);
-        else setPollType(id);
+        // If user has a purchased tier, allow all poll types
+        // Or if the poll type is free, allow it
+        if (purchasedTier || type?.tier === 'free') {
+            setPollType(id);
+        } else {
+            setShowPaywall(true);
+        }
+    };
+    
+    // Check if a poll type is unlocked for the user
+    const isPollTypeUnlocked = (typeTier: PollTier) => {
+        if (typeTier === 'free') return true;
+        if (!purchasedTier) return false;
+        // Tier hierarchy: unlimited > pro_event > starter > free
+        const tierRank: Record<PollTier, number> = { free: 0, starter: 1, pro_event: 2, unlimited: 3 };
+        return tierRank[purchasedTier] >= tierRank[typeTier];
     };
 
     const handleCreate = async () => {
@@ -152,8 +166,7 @@ const VoteGeneratorCreate: React.FC = () => {
         if (hasDuplicates) { setError('Remove duplicate options'); return; }
         setIsCreating(true); setError(null);
         
-        // Check if user has a purchased tier from checkout
-        const purchasedTier = localStorage.getItem('vg_purchased_tier');
+        // Use the already-loaded purchasedTier from component state
         const effectiveTier = purchasedTier || currentTier;
         
         try {
@@ -214,21 +227,57 @@ const VoteGeneratorCreate: React.FC = () => {
         <>
             <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
             
-            {/* Paid Tier Banner */}
+            {/* Paid Tier Hub Header */}
             {purchasedTier && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }} 
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl text-white shadow-lg"
+                    className="mb-6"
                 >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                <Crown size={20} />
+                    <div className={`p-5 rounded-2xl shadow-lg ${
+                        purchasedTier === 'unlimited' 
+                            ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500' 
+                            : purchasedTier === 'pro_event'
+                                ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600'
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                    } text-white`}>
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
+                                    {purchasedTier === 'unlimited' ? (
+                                        <Star size={28} className="text-white" />
+                                    ) : purchasedTier === 'pro_event' ? (
+                                        <Crown size={28} className="text-white" />
+                                    ) : (
+                                        <Zap size={28} className="text-white" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-xl font-bold">
+                                            {purchasedTier === 'unlimited' ? '⭐ Unlimited' : 
+                                             purchasedTier === 'pro_event' ? '👑 Pro Event' : 
+                                             '⚡ Starter'} Plan
+                                        </h2>
+                                        <span className="px-2 py-0.5 bg-white/20 backdrop-blur rounded-full text-xs font-bold">
+                                            ACTIVE
+                                        </span>
+                                    </div>
+                                    <p className="text-white/80 text-sm mt-0.5">
+                                        All premium features unlocked • No ads • Create your poll below
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-bold">{TIER_CONFIG[purchasedTier]?.label || purchasedTier.toUpperCase()} Plan Active! 🎉</p>
-                                <p className="text-white/80 text-sm">Create your premium poll below - no ads!</p>
+                            
+                            <div className="flex items-center gap-3">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-white/60 text-xs">Plan includes</p>
+                                    <p className="text-sm font-semibold">
+                                        {purchasedTier === 'unlimited' ? '5,000 responses • 1 year' : 
+                                         purchasedTier === 'pro_event' ? '2,000 responses • 60 days' : 
+                                         '500 responses • 30 days'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -249,13 +298,13 @@ const VoteGeneratorCreate: React.FC = () => {
                                 const Icon = type.icon;
                                 const isSelected = pollType === type.id;
                                 const tierConfig = TIER_CONFIG[type.tier];
-                                const isPaid = type.tier !== 'free';
+                                const isLocked = !isPollTypeUnlocked(type.tier);
                                 return (
                                     <motion.div key={type.id} className="relative" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
-                                        {tierConfig.label && <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 ${tierConfig.colors}`}>{tierConfig.label}</span>}
+                                        {tierConfig.label && !purchasedTier && <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 ${tierConfig.colors}`}>{tierConfig.label}</span>}
                                         <button onClick={() => handlePollTypeSelect(type.id)}
-                                            className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : isPaid ? 'border-purple-200 hover:border-purple-400 bg-purple-50/30' : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'}`}>
-                                            {isPaid && <div className="absolute top-2 left-2"><Lock size={12} className="text-purple-500" /></div>}
+                                            className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : isLocked ? 'border-purple-200 hover:border-purple-400 bg-purple-50/30' : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'}`}>
+                                            {isLocked && <div className="absolute top-2 left-2"><Lock size={12} className="text-purple-500" /></div>}
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-gradient-to-br ${type.gradient} shadow-md`}><Icon className="text-white" size={20} /></div>
                                             <div className="font-semibold text-sm">{type.name}</div>
                                             <div className="text-[11px] text-slate-500 mt-1">{type.shortDesc}</div>

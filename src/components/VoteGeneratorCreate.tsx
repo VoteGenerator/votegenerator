@@ -152,9 +152,10 @@ const VoteGeneratorCreate: React.FC = () => {
 
     const handlePollTypeSelect = (id: string) => {
         const type = POLL_TYPES.find(p => p.id === id);
-        // If user has a purchased tier, allow all poll types
-        // Or if the poll type is free, allow it
-        if (purchasedTier || type?.tier === 'free') {
+        if (!type) return;
+        
+        // Check if user can access this poll type
+        if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
         } else {
             setShowPaywall(true);
@@ -166,7 +167,8 @@ const VoteGeneratorCreate: React.FC = () => {
         if (typeTier === 'free') return true;
         if (!purchasedTier) return false;
         // Tier hierarchy: unlimited > pro_event > starter > free
-        // Visual Poll requires pro_event or higher
+        // Visual Poll (pro_event tier) requires pro_event OR unlimited
+        // Starter only unlocks starter-tier features (none currently, but future-proof)
         const tierRank: Record<PollTier, number> = { free: 0, starter: 1, pro_event: 2, unlimited: 3 };
         const requiredRank = tierRank[typeTier] || 0;
         const userRank = tierRank[purchasedTier] || 0;
@@ -304,75 +306,147 @@ const VoteGeneratorCreate: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-6"
                 >
-                    <div className={`p-5 rounded-2xl shadow-lg ${
-                        purchasedTier === 'unlimited' 
-                            ? 'bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600' 
-                            : purchasedTier === 'pro_event'
-                                ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600'
-                                : 'bg-gradient-to-r from-blue-600 to-indigo-700'
-                    } ${purchasedTier === 'unlimited' ? 'text-amber-950' : 'text-white'}`}>
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-14 h-14 ${purchasedTier === 'unlimited' ? 'bg-amber-900/20' : 'bg-white/20'} backdrop-blur rounded-xl flex items-center justify-center shadow-lg`}>
-                                    {purchasedTier === 'unlimited' ? (
-                                        <Star size={28} className={purchasedTier === 'unlimited' ? 'text-amber-900' : 'text-white'} />
-                                    ) : purchasedTier === 'pro_event' ? (
-                                        <Crown size={28} className="text-white" />
-                                    ) : (
-                                        <Zap size={28} className="text-white" />
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-bold">
-                                            {purchasedTier === 'unlimited' ? '⭐ Unlimited' : 
-                                             purchasedTier === 'pro_event' ? '👑 Pro Event' : 
-                                             '⚡ Starter'} Plan
-                                        </h2>
-                                        <span className={`px-2 py-0.5 ${purchasedTier === 'unlimited' ? 'bg-amber-900/20 text-amber-900' : 'bg-white/20'} backdrop-blur rounded-full text-xs font-bold`}>
-                                            ACTIVE
-                                        </span>
+                    {/* UNLIMITED - Premium dark design with gold accents */}
+                    {purchasedTier === 'unlimited' && (
+                        <div className="p-5 rounded-2xl shadow-xl bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white border border-amber-500/30">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                        <Star size={28} className="text-amber-950" />
                                     </div>
-                                    <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800' : 'text-white/80'} text-sm mt-0.5`}>
-                                        All premium features unlocked • No ads • Create your poll below
-                                    </p>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
+                                                ⭐ Unlimited Plan
+                                            </h2>
+                                            <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-xs font-bold animate-pulse">
+                                                ACTIVE
+                                            </span>
+                                        </div>
+                                        <p className="text-amber-200/80 text-sm mt-0.5">
+                                            All premium features unlocked • No ads • Create your poll below
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                    {expiresAt && (
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-amber-300/60 text-xs">Expires on</p>
+                                            <p className="text-sm font-semibold text-amber-200 flex items-center gap-1 justify-end">
+                                                <Calendar size={14} />
+                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-amber-300/60 text-xs">({daysRemaining} days left)</p>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-amber-300/60 text-xs">Plan includes</p>
+                                        <p className="text-sm font-semibold text-amber-200">5,000 responses</p>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div className="flex items-center gap-4">
-                                {/* Expiry Date & Days Remaining */}
-                                {expiresAt && (
-                                    <div className="text-right hidden sm:block">
-                                        <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>Expires on</p>
-                                        <p className="text-sm font-semibold flex items-center gap-1 justify-end">
-                                            <Calendar size={14} />
-                                            {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </p>
-                                        <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>({daysRemaining} days left)</p>
+                        </div>
+                    )}
+                    
+                    {/* PRO EVENT - Purple/Pink */}
+                    {purchasedTier === 'pro_event' && (
+                        <div className="p-5 rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
+                                        <Crown size={28} className="text-white" />
                                     </div>
-                                )}
-                                
-                                <div className="text-right hidden sm:block">
-                                    <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>Plan includes</p>
-                                    <p className="text-sm font-semibold">
-                                        {purchasedTier === 'unlimited' ? '5,000 responses' : 
-                                         purchasedTier === 'pro_event' ? '2,000 responses' : 
-                                         '500 responses'}
-                                    </p>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-xl font-bold">👑 Pro Event Plan</h2>
+                                            <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 rounded-full text-xs font-bold">
+                                                ACTIVE
+                                            </span>
+                                        </div>
+                                        <p className="text-white/80 text-sm mt-0.5">
+                                            All premium features unlocked • No ads • Create your poll below
+                                        </p>
+                                    </div>
                                 </div>
                                 
-                                {/* Upgrade to Unlimited (for non-unlimited users) */}
-                                {purchasedTier !== 'unlimited' && (
+                                <div className="flex items-center gap-4">
+                                    {expiresAt && (
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-white/60 text-xs">Expires on</p>
+                                            <p className="text-sm font-semibold flex items-center gap-1 justify-end">
+                                                <Calendar size={14} />
+                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-white/60 text-xs">Plan includes</p>
+                                        <p className="text-sm font-semibold">2,000 responses</p>
+                                    </div>
+                                    
                                     <a 
                                         href="/.netlify/functions/vg-checkout?tier=unlimited"
-                                        className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-lg text-sm font-semibold transition flex items-center gap-1"
+                                        className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition flex items-center gap-1 shadow-lg"
                                     >
                                         <Star size={14} /> Upgrade
                                     </a>
-                                )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
+                    
+                    {/* STARTER - Blue */}
+                    {purchasedTier === 'starter' && (
+                        <div className="p-5 rounded-2xl shadow-lg bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
+                                        <Zap size={28} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-xl font-bold">⚡ Starter Plan</h2>
+                                            <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 rounded-full text-xs font-bold">
+                                                ACTIVE
+                                            </span>
+                                        </div>
+                                        <p className="text-white/80 text-sm mt-0.5">
+                                            Extended limits • No ads • Create your poll below
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                    {expiresAt && (
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-white/60 text-xs">Expires on</p>
+                                            <p className="text-sm font-semibold flex items-center gap-1 justify-end">
+                                                <Calendar size={14} />
+                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-white/60 text-xs">Plan includes</p>
+                                        <p className="text-sm font-semibold">500 responses</p>
+                                    </div>
+                                    
+                                    <a 
+                                        href="/.netlify/functions/vg-checkout?tier=pro_event"
+                                        className="px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white rounded-lg text-sm font-bold transition flex items-center gap-1 shadow-lg"
+                                    >
+                                        <Crown size={14} /> Upgrade
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </motion.div>
             )}
             

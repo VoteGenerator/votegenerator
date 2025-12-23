@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { useGeoPricing } from '../geoPricing';
+import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
 type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited';
 
@@ -492,31 +493,53 @@ const VoteGeneratorCreate: React.FC = () => {
                                                         if (!file) return;
                                                         
                                                         setUploadingImage(true);
+                                                        setError(null);
                                                         
                                                         try {
-                                                            // Upload to Cloudinary via your API
-                                                            const formData = new FormData();
-                                                            formData.append('file', file);
+                                                            // Compress image first (max 2MB)
+                                                            const compressedFile = await compressToTargetSize(file, 2);
+                                                            console.log(`Compressed: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`);
                                                             
-                                                            const response = await fetch('/.netlify/functions/vg-upload-image', {
-                                                                method: 'POST',
-                                                                body: formData
-                                                            });
+                                                            // Convert to base64
+                                                            const reader = new FileReader();
+                                                            reader.onload = async () => {
+                                                                try {
+                                                                    const base64 = reader.result as string;
+                                                                    
+                                                                    // Upload to Cloudinary via API
+                                                                    const response = await fetch('/.netlify/functions/vg-upload-image', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ image: base64 })
+                                                                    });
+                                                                    
+                                                                    if (response.ok) {
+                                                                        const data = await response.json();
+                                                                        setImageOptions([...imageOptions, { url: data.url, label: '' }]);
+                                                                    } else {
+                                                                        const err = await response.json();
+                                                                        setError(err.error || 'Failed to upload image');
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error('Upload error:', err);
+                                                                    setError('Failed to upload image. Please try again.');
+                                                                } finally {
+                                                                    setUploadingImage(false);
+                                                                }
+                                                            };
+                                                            reader.onerror = () => {
+                                                                setError('Failed to read image file');
+                                                                setUploadingImage(false);
+                                                            };
+                                                            reader.readAsDataURL(compressedFile);
                                                             
-                                                            if (response.ok) {
-                                                                const data = await response.json();
-                                                                setImageOptions([...imageOptions, { url: data.url, label: '' }]);
-                                                            } else {
-                                                                const err = await response.json();
-                                                                setError(err.error || 'Failed to upload image');
-                                                            }
                                                         } catch (err) {
-                                                            console.error('Upload error:', err);
-                                                            setError('Failed to upload image. Please try again.');
-                                                        } finally {
+                                                            console.error('Compression error:', err);
+                                                            setError('Failed to process image. Please try again.');
                                                             setUploadingImage(false);
-                                                            e.target.value = '';
                                                         }
+                                                        
+                                                        e.target.value = '';
                                                     }}
                                                 />
                                                 {uploadingImage ? (

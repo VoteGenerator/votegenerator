@@ -166,8 +166,11 @@ const VoteGeneratorCreate: React.FC = () => {
         if (typeTier === 'free') return true;
         if (!purchasedTier) return false;
         // Tier hierarchy: unlimited > pro_event > starter > free
+        // Visual Poll requires pro_event or higher
         const tierRank: Record<PollTier, number> = { free: 0, starter: 1, pro_event: 2, unlimited: 3 };
-        return tierRank[purchasedTier] >= tierRank[typeTier];
+        const requiredRank = tierRank[typeTier] || 0;
+        const userRank = tierRank[purchasedTier] || 0;
+        return userRank >= requiredRank;
     };
 
     const handleCreate = async () => {
@@ -303,16 +306,16 @@ const VoteGeneratorCreate: React.FC = () => {
                 >
                     <div className={`p-5 rounded-2xl shadow-lg ${
                         purchasedTier === 'unlimited' 
-                            ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500' 
+                            ? 'bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600' 
                             : purchasedTier === 'pro_event'
                                 ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600'
-                                : 'bg-gradient-to-r from-blue-500 to-indigo-600'
-                    } text-white`}>
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-700'
+                    } ${purchasedTier === 'unlimited' ? 'text-amber-950' : 'text-white'}`}>
                         <div className="flex items-center justify-between flex-wrap gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
+                                <div className={`w-14 h-14 ${purchasedTier === 'unlimited' ? 'bg-amber-900/20' : 'bg-white/20'} backdrop-blur rounded-xl flex items-center justify-center shadow-lg`}>
                                     {purchasedTier === 'unlimited' ? (
-                                        <Star size={28} className="text-white" />
+                                        <Star size={28} className={purchasedTier === 'unlimited' ? 'text-amber-900' : 'text-white'} />
                                     ) : purchasedTier === 'pro_event' ? (
                                         <Crown size={28} className="text-white" />
                                     ) : (
@@ -326,11 +329,11 @@ const VoteGeneratorCreate: React.FC = () => {
                                              purchasedTier === 'pro_event' ? '👑 Pro Event' : 
                                              '⚡ Starter'} Plan
                                         </h2>
-                                        <span className="px-2 py-0.5 bg-white/20 backdrop-blur rounded-full text-xs font-bold">
+                                        <span className={`px-2 py-0.5 ${purchasedTier === 'unlimited' ? 'bg-amber-900/20 text-amber-900' : 'bg-white/20'} backdrop-blur rounded-full text-xs font-bold`}>
                                             ACTIVE
                                         </span>
                                     </div>
-                                    <p className="text-white/80 text-sm mt-0.5">
+                                    <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800' : 'text-white/80'} text-sm mt-0.5`}>
                                         All premium features unlocked • No ads • Create your poll below
                                     </p>
                                 </div>
@@ -340,17 +343,17 @@ const VoteGeneratorCreate: React.FC = () => {
                                 {/* Expiry Date & Days Remaining */}
                                 {expiresAt && (
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-white/60 text-xs">Expires on</p>
+                                        <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>Expires on</p>
                                         <p className="text-sm font-semibold flex items-center gap-1 justify-end">
                                             <Calendar size={14} />
                                             {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
-                                        <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
+                                        <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>({daysRemaining} days left)</p>
                                     </div>
                                 )}
                                 
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-white/60 text-xs">Plan includes</p>
+                                    <p className={`${purchasedTier === 'unlimited' ? 'text-amber-800/60' : 'text-white/60'} text-xs`}>Plan includes</p>
                                     <p className="text-sm font-semibold">
                                         {purchasedTier === 'unlimited' ? '5,000 responses' : 
                                          purchasedTier === 'pro_event' ? '2,000 responses' : 
@@ -377,9 +380,19 @@ const VoteGeneratorCreate: React.FC = () => {
             <div className="grid lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3 space-y-6">
                     {/* Poll Type */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`bg-white rounded-2xl shadow-lg p-6 ${
+                        purchasedTier === 'unlimited' ? 'border-2 border-amber-200' :
+                        purchasedTier === 'pro_event' ? 'border-2 border-purple-200' :
+                        purchasedTier === 'starter' ? 'border-2 border-blue-200' :
+                        'border border-slate-200/50'
+                    }`}>
                         <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center"><BarChart2 className="text-white" size={18} /></div>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                purchasedTier === 'unlimited' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
+                                purchasedTier === 'pro_event' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+                                purchasedTier === 'starter' ? 'bg-gradient-to-br from-blue-500 to-indigo-500' :
+                                'bg-gradient-to-br from-indigo-500 to-purple-500'
+                            }`}><BarChart2 className="text-white" size={18} /></div>
                             Choose Poll Type
                         </h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
@@ -405,9 +418,19 @@ const VoteGeneratorCreate: React.FC = () => {
                     </motion.div>
 
                     {/* Question & Options */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`bg-white rounded-2xl shadow-lg p-6 ${
+                        purchasedTier === 'unlimited' ? 'border-2 border-amber-200' :
+                        purchasedTier === 'pro_event' ? 'border-2 border-purple-200' :
+                        purchasedTier === 'starter' ? 'border-2 border-blue-200' :
+                        'border border-slate-200/50'
+                    }`}>
                         <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center"><Sparkles className="text-white" size={18} /></div>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                purchasedTier === 'unlimited' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
+                                purchasedTier === 'pro_event' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+                                purchasedTier === 'starter' ? 'bg-gradient-to-br from-blue-500 to-indigo-500' :
+                                'bg-gradient-to-br from-emerald-500 to-teal-500'
+                            }`}><Sparkles className="text-white" size={18} /></div>
                             Your Question & Options
                         </h2>
                         <div className="mb-6">
@@ -577,10 +600,20 @@ const VoteGeneratorCreate: React.FC = () => {
                     </motion.div>
 
                     {/* Settings */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
+                        purchasedTier === 'unlimited' ? 'border-2 border-amber-200' :
+                        purchasedTier === 'pro_event' ? 'border-2 border-purple-200' :
+                        purchasedTier === 'starter' ? 'border-2 border-blue-200' :
+                        'border border-slate-200/50'
+                    }`}>
                         <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50">
                             <span className="font-bold text-slate-900 flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center"><SlidersHorizontal className="text-white" size={18} /></div>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                    purchasedTier === 'unlimited' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
+                                    purchasedTier === 'pro_event' ? 'bg-gradient-to-br from-purple-500 to-pink-500' :
+                                    purchasedTier === 'starter' ? 'bg-gradient-to-br from-blue-500 to-indigo-500' :
+                                    'bg-gradient-to-br from-amber-500 to-orange-500'
+                                }`}><SlidersHorizontal className="text-white" size={18} /></div>
                                 Settings
                             </span>
                             {showAdvanced ? <ChevronUp size={20} className="text-indigo-600" /> : <ChevronDown size={20} className="text-slate-400" />}
@@ -623,7 +656,12 @@ const VoteGeneratorCreate: React.FC = () => {
                     <motion.button type="button" onClick={handleCreate} 
                         disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
                         whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                        className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg">
+                        className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
+                            purchasedTier === 'unlimited' ? 'bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500' :
+                            purchasedTier === 'pro_event' ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600' :
+                            purchasedTier === 'starter' ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600' :
+                            'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600'
+                        } ${purchasedTier === 'unlimited' ? 'text-amber-950' : 'text-white'}`}>
                         {isCreating ? <><Loader2 className="animate-spin" size={22} />Creating...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={22} /></>}
                     </motion.button>
                 </div>
@@ -631,9 +669,24 @@ const VoteGeneratorCreate: React.FC = () => {
                 {/* Preview */}
                 <div className="lg:col-span-2">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="sticky top-24">
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-slate-50 to-indigo-50">
-                                <h3 className="font-bold text-slate-900 flex items-center gap-2"><Eye size={18} className="text-indigo-500" />Live Preview</h3>
+                        <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
+                            purchasedTier === 'unlimited' ? 'border-2 border-amber-200' :
+                            purchasedTier === 'pro_event' ? 'border-2 border-purple-200' :
+                            purchasedTier === 'starter' ? 'border-2 border-blue-200' :
+                            'border border-slate-200/50'
+                        }`}>
+                            <div className={`px-6 py-4 border-b flex items-center justify-between ${
+                                purchasedTier === 'unlimited' ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200' :
+                                purchasedTier === 'pro_event' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200' :
+                                purchasedTier === 'starter' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200' :
+                                'bg-gradient-to-r from-slate-50 to-indigo-50 border-slate-200'
+                            }`}>
+                                <h3 className="font-bold text-slate-900 flex items-center gap-2"><Eye size={18} className={
+                                    purchasedTier === 'unlimited' ? 'text-amber-500' :
+                                    purchasedTier === 'pro_event' ? 'text-purple-500' :
+                                    purchasedTier === 'starter' ? 'text-blue-500' :
+                                    'text-indigo-500'
+                                } />Live Preview</h3>
                                 <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm">
                                     <button onClick={() => setPreviewDevice('desktop')} className={`p-1.5 rounded ${previewDevice === 'desktop' ? 'bg-indigo-100' : ''}`}><Monitor size={16} className={previewDevice === 'desktop' ? 'text-indigo-600' : 'text-slate-400'} /></button>
                                     <button onClick={() => setPreviewDevice('mobile')} className={`p-1.5 rounded ${previewDevice === 'mobile' ? 'bg-indigo-100' : ''}`}><Smartphone size={16} className={previewDevice === 'mobile' ? 'text-indigo-600' : 'text-slate-400'} /></button>

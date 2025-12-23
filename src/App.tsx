@@ -3,7 +3,7 @@
 // VoteGeneratorApp handles landing page, poll viewing, and admin views
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import VoteGeneratorApp from './components/VoteGeneratorApp';
 import VoteGeneratorCreate from './components/VoteGeneratorCreate';
 import AdWall from './components/AdWall';
@@ -147,27 +147,9 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
 
 // Create page wrapper - detects paid vs free
 function CreatePage() {
-    // Read directly from localStorage on init to avoid flash
-    const [purchasedTier, setPurchasedTier] = useState<string | null>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('vg_purchased_tier');
-        }
-        return null;
-    });
-    const [expiresAt, setExpiresAt] = useState<string | null>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('vg_expires_at');
-        }
-        return null;
-    });
-    
-    // Re-check on mount
-    useEffect(() => {
-        const tier = localStorage.getItem('vg_purchased_tier');
-        const expires = localStorage.getItem('vg_expires_at');
-        setPurchasedTier(tier);
-        setExpiresAt(expires);
-    }, []);
+    // Direct read from localStorage (same pattern as VoteGeneratorCreate)
+    const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') : null;
+    const expiresAt = typeof window !== 'undefined' ? localStorage.getItem('vg_expires_at') : null;
     
     const isPaidUser = !!purchasedTier;
     

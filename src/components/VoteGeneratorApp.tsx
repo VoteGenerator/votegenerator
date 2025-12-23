@@ -1,194 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Crown, DollarSign, Sparkles, Lock, ArrowUpRight, Users, Link2, Image, Bell } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
 import LandingPage from './LandingPage';
+import AdWall from './AdWall';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
-
-// ============================================================================
-// Tier Configuration
-// ============================================================================
-
-const TIER_CONFIG: Record<string, {
-  name: string;
-  badge: string;
-  icon: React.ComponentType<any>;
-  features: {
-    exportCsv: boolean;
-    exportPdf: boolean;
-    customShortLink: boolean;
-    uploadLogo: boolean;
-    removeBranding: boolean;
-  };
-}> = {
-  free: {
-    name: 'Free',
-    badge: 'bg-slate-100 text-slate-600',
-    icon: Users,
-    features: { exportCsv: false, exportPdf: false, customShortLink: false, uploadLogo: false, removeBranding: false }
-  },
-  quick_poll: {
-    name: 'Quick Poll',
-    badge: 'bg-blue-100 text-blue-700',
-    icon: Sparkles,
-    features: { exportCsv: true, exportPdf: false, customShortLink: false, uploadLogo: false, removeBranding: false }
-  },
-  event_poll: {
-    name: 'Event Poll',
-    badge: 'bg-purple-100 text-purple-700',
-    icon: Calendar,
-    features: { exportCsv: true, exportPdf: true, customShortLink: false, uploadLogo: false, removeBranding: false }
-  },
-  pro_monthly: {
-    name: 'Pro',
-    badge: 'bg-indigo-100 text-indigo-700',
-    icon: Crown,
-    features: { exportCsv: true, exportPdf: true, customShortLink: true, uploadLogo: true, removeBranding: true }
-  },
-  pro_yearly: {
-    name: 'Pro',
-    badge: 'bg-indigo-100 text-indigo-700',
-    icon: Crown,
-    features: { exportCsv: true, exportPdf: true, customShortLink: true, uploadLogo: true, removeBranding: true }
-  },
-  pro_plus_monthly: {
-    name: 'Pro+',
-    badge: 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700',
-    icon: Sparkles,
-    features: { exportCsv: true, exportPdf: true, customShortLink: true, uploadLogo: true, removeBranding: true }
-  },
-  pro_plus_yearly: {
-    name: 'Pro+',
-    badge: 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700',
-    icon: Sparkles,
-    features: { exportCsv: true, exportPdf: true, customShortLink: true, uploadLogo: true, removeBranding: true }
-  }
-};
-
-// Premium Features Row Component
-const PremiumFeaturesRow: React.FC<{ poll: Poll }> = ({ poll }) => {
-    const pollTier = (poll as any).tier || 'free';
-    const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
-    
-    const features = [
-        { key: 'customShortLink', icon: Link2, label: 'Custom Link', color: 'text-indigo-500' },
-        { key: 'uploadLogo', icon: Image, label: 'Upload Logo', color: 'text-purple-500' },
-        { key: 'removeBranding', icon: Sparkles, label: 'Remove Branding', color: 'text-amber-500' },
-    ];
-    
-    return (
-        <div className="bg-slate-50/50 border-t border-slate-200 p-6 print:hidden">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Crown size={12} />
-                {pollTier === 'free' ? 'Premium Features' : 'Your Features'}
-            </h4>
-            <div className="grid grid-cols-3 gap-3">
-                {features.map(feature => {
-                    const isLocked = !tierConfig.features[feature.key as keyof typeof tierConfig.features];
-                    const IconComp = feature.icon;
-                    
-                    if (isLocked) {
-                        return (
-                            <a
-                                key={feature.key}
-                                href="/pricing"
-                                className="relative p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center opacity-50 hover:opacity-70 transition group"
-                                title="Upgrade to unlock"
-                            >
-                                <IconComp size={20} className={feature.color} />
-                                <span className="text-xs font-medium text-slate-600">{feature.label}</span>
-                                <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                                    <DollarSign size={7} />PRO
-                                </span>
-                            </a>
-                        );
-                    }
-                    
-                    return (
-                        <button
-                            key={feature.key}
-                            onClick={() => alert(feature.label + ' - Coming soon!')}
-                            className="p-3 bg-white border border-slate-200 rounded-lg flex flex-col items-center gap-2 text-center hover:border-indigo-300 hover:shadow-sm transition"
-                        >
-                            <IconComp size={20} className={feature.color} />
-                            <span className="text-xs font-medium text-slate-700">{feature.label}</span>
-                        </button>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-// Controls Section Component  
-interface ControlsSectionProps {
-    poll: Poll;
-    isExporting: boolean;
-    handleEditPoll: () => void;
-    handleExportCSV: () => void;
-    handlePrintPDF: () => void;
-}
-
-const ControlsSection: React.FC<ControlsSectionProps> = ({ 
-    poll, isExporting, handleEditPoll, handleExportCSV, handlePrintPDF 
-}) => {
-    const pollTier = (poll as any).tier || 'free';
-    const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
-    const canExportCsv = tierConfig.features.exportCsv;
-    const canExportPdf = tierConfig.features.exportPdf;
-    
-    return (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-                <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                    <Settings size={18} className="text-slate-600"/> Controls
-                </h4>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                    <Settings size={16}/> Edit
-                </button>
-                
-                {canExportCsv ? (
-                    <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                        {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
-                    </button>
-                ) : (
-                    <a 
-                        href="/pricing" 
-                        className="relative flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 rounded-lg text-sm font-medium text-slate-400 opacity-60 hover:opacity-80 transition-all group"
-                        title="Upgrade to unlock CSV export"
-                    >
-                        <FileSpreadsheet size={16}/> CSV
-                        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                            <DollarSign size={8} />PRO
-                        </span>
-                    </a>
-                )}
-                
-                {canExportPdf ? (
-                    <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                        <Download size={14}/> Download PDF
-                    </button>
-                ) : (
-                    <a 
-                        href="/pricing" 
-                        className="relative col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white text-slate-400 rounded-lg text-xs font-medium opacity-60 hover:opacity-80 transition-all"
-                        title="Upgrade to unlock PDF export"
-                    >
-                        <Download size={14}/> Download PDF
-                        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow flex items-center gap-0.5">
-                            <DollarSign size={8} />PRO
-                        </span>
-                    </a>
-                )}
-            </div>
-        </div>
-    );
-};
 
 type ViewState = 
     | { type: 'create' }
@@ -464,6 +283,11 @@ const VoteGeneratorApp: React.FC = () => {
 
     return (
         <div className="min-h-screen pb-10">
+            {/* ROUTE: /ad-wall - render AdWall component */}
+            {window.location.pathname.startsWith('/ad-wall') ? (
+                <AdWall />
+            ) : (
+            <>
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
                 <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
@@ -553,35 +377,9 @@ const VoteGeneratorApp: React.FC = () => {
                                                 </h2>
                                                 <p className="text-slate-500 text-sm mt-1 ml-10">Overview of your active polls</p>
                                             </div>
-                                            {/* Dynamic Tier Badge */}
-                                            {(() => {
-                                                const pollTier = (viewState.poll as any).tier || 'free';
-                                                const tierConfig = TIER_CONFIG[pollTier] || TIER_CONFIG.free;
-                                                const TierIcon = tierConfig.icon;
-                                                
-                                                if (pollTier === 'free') {
-                                                    return (
-                                                        <a 
-                                                            href="/pricing"
-                                                            className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition group"
-                                                        >
-                                                            <Users size={14} />
-                                                            Free Plan
-                                                            <span className="bg-indigo-500 text-white px-1.5 py-0.5 rounded-full text-[10px] group-hover:bg-indigo-600">
-                                                                Upgrade
-                                                            </span>
-                                                        </a>
-                                                    );
-                                                }
-                                                
-                                                return (
-                                                    <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full ${tierConfig.badge}`}>
-                                                        <TierIcon size={14} />
-                                                        {tierConfig.name}
-                                                        <Check size={12} className="text-green-500" />
-                                                    </div>
-                                                );
-                                            })()}
+                                            <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">
+                                                Premium Enabled
+                                            </div>
                                         </div>
 
                                         {/* ADMIN KEY (Top Priority) */}
@@ -605,46 +403,6 @@ const VoteGeneratorApp: React.FC = () => {
                                                 {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
                                             </button>
                                         </div>
-
-                                        {/* FREE Tier Upgrade Banner */}
-                                        {((viewState.poll as any).tier || 'free') === 'free' && (
-                                            <div className="mt-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl p-4 text-white shadow-lg">
-                                                <div className="flex items-center justify-between flex-wrap gap-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                                                            <Sparkles size={20} className="text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="font-bold">Unlock Premium Features</h3>
-                                                            <p className="text-white/80 text-sm">CSV exports, custom links, more responses & remove branding</p>
-                                                        </div>
-                                                    </div>
-                                                    <a
-                                                        href="/pricing"
-                                                        className="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition font-bold flex items-center gap-2 shadow-md text-sm"
-                                                    >
-                                                        <Crown size={16} />
-                                                        Upgrade Now
-                                                        <ArrowUpRight size={14} />
-                                                    </a>
-                                                </div>
-                                                {/* Feature highlights */}
-                                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/20">
-                                                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
-                                                        <FileSpreadsheet size={10} /> CSV Export
-                                                    </span>
-                                                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
-                                                        <Link2 size={10} /> Custom Links
-                                                    </span>
-                                                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
-                                                        <Users size={10} /> 500+ Responses
-                                                    </span>
-                                                    <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
-                                                        <Image size={10} /> Custom Logo
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 )}
 
@@ -653,7 +411,6 @@ const VoteGeneratorApp: React.FC = () => {
                                     
                                     {/* ADMIN: Management Toolbar */}
                                     {viewState.isAdmin && (
-                                        <>
                                         <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
@@ -711,19 +468,28 @@ const VoteGeneratorApp: React.FC = () => {
                                                      </div>
                                                 </div>
 
-                                                <ControlsSection
-                                                    poll={viewState.poll}
-                                                    isExporting={isExporting}
-                                                    handleEditPoll={handleEditPoll}
-                                                    handleExportCSV={handleExportCSV}
-                                                    handlePrintPDF={handlePrintPDF}
-                                                />
+                                                {/* Controls Section */}
+                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                                                             <Settings size={18} className="text-slate-600"/> Controls
+                                                         </h4>
+                                                     </div>
+                                                     <div className="grid grid-cols-2 gap-3">
+                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                                                             <Settings size={16}/> Edit
+                                                         </button>
+                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
+                                                             {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
+                                                         </button>
+                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
+                                                             <Download size={14}/> Download PDF
+                                                         </button>
+                                                     </div>
+                                                </div>
 
                                             </div>
                                         </div>
-                                        
-                                        <PremiumFeaturesRow poll={viewState.poll} />
-                                        </>
                                     )}
 
                                     {/* Main Content Area (Title + Results) */}
@@ -849,6 +615,8 @@ const VoteGeneratorApp: React.FC = () => {
                     )}
                 </AnimatePresence>
             </main>
+            </>
+            )}
         </div>
     );
 };

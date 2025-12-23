@@ -113,10 +113,13 @@ const VoteGeneratorCreate: React.FC = () => {
     const [deadline, setDeadline] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
+    
+    // Check for purchased tier from checkout
+    const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') as PollTier | null : null;
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
-    const currentTier = selectedPollType?.tier || 'free';
-    const maxDays = TIER_CONFIG[currentTier].maxDays;
+    const currentTier = purchasedTier || selectedPollType?.tier || 'free';
+    const maxDays = TIER_CONFIG[currentTier]?.maxDays || TIER_CONFIG['free'].maxDays;
 
     const duplicateIndices = useMemo(() => {
         const indices = new Set<number>();
@@ -149,7 +152,9 @@ const VoteGeneratorCreate: React.FC = () => {
         if (hasDuplicates) { setError('Remove duplicate options'); return; }
         setIsCreating(true); setError(null);
         
-        console.log('=== CREATING POLL ===');
+        // Check if user has a purchased tier from checkout
+        const purchasedTier = localStorage.getItem('vg_purchased_tier');
+        const effectiveTier = purchasedTier || currentTier;
         
         try {
             const pollData = { 
@@ -164,10 +169,8 @@ const VoteGeneratorCreate: React.FC = () => {
                     deadline: deadline ? new Date(deadline).toISOString() : undefined 
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
-                tier: currentTier 
+                tier: effectiveTier 
             };
-            
-            console.log('Sending to API:', pollData);
             
             const res = await fetch('/.netlify/functions/vg-create', { 
                 method: 'POST', 
@@ -175,23 +178,28 @@ const VoteGeneratorCreate: React.FC = () => {
                 body: JSON.stringify(pollData) 
             });
             
-            console.log('Response status:', res.status, res.ok);
-            
             const responseData = await res.json();
-            console.log('Response data:', responseData);
             
             if (res.ok && responseData.id) { 
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
-                const adWallUrl = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;
                 
-                console.log('SUCCESS! Redirecting to:', adWallUrl);
+                // Clear purchased tier after use
+                if (purchasedTier) {
+                    localStorage.removeItem('vg_purchased_tier');
+                }
                 
-                // Use direct navigation
-                window.location.href = adWallUrl;
-                return; // Stop execution here
+                // PAID USERS: Skip ad wall, go directly to admin dashboard
+                // FREE USERS: Go through ad wall
+                if (purchasedTier || effectiveTier !== 'free') {
+                    // Direct to admin dashboard (skip ad wall)
+                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+                } else {
+                    // Free tier - show ad wall
+                    window.location.href = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;
+                }
+                return;
             } else { 
-                console.log('API returned error:', responseData.error);
                 setError(responseData.error || 'Failed to create poll. Please try again.'); 
                 setIsCreating(false);
             }
@@ -205,6 +213,28 @@ const VoteGeneratorCreate: React.FC = () => {
     return (
         <>
             <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
+            
+            {/* Paid Tier Banner */}
+            {purchasedTier && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl text-white shadow-lg"
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <Crown size={20} />
+                            </div>
+                            <div>
+                                <p className="font-bold">{TIER_CONFIG[purchasedTier]?.label || purchasedTier.toUpperCase()} Plan Active! 🎉</p>
+                                <p className="text-white/80 text-sm">Create your premium poll below - no ads!</p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+            
             <HowItWorks />
             <div className="grid lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3 space-y-6">

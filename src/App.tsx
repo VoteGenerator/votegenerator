@@ -35,18 +35,20 @@ function CreatePage() {
 }
 
 function App() {
-    // Simple pathname routing - no React state needed
+    // Simple pathname routing
     const path = window.location.pathname;
     
-    if (path === '/create') return <CreatePage />;
-    if (path === '/ad-wall') return <AdWall />;
-    if (path === '/pricing') return <PricingPage />;
-    if (path === '/compare') return <ComparePage />;
+    // DEBUG - remove after fix confirmed
+    console.log('APP ROUTING - path:', path);
     
-    // VoteGeneratorApp handles EVERYTHING else:
-    // - Landing page (when no hash) 
-    // - Poll viewing (/#id=xxx)
-    // - Admin view (/#id=xxx&admin=yyy)
+    // Use startsWith to handle any edge cases with trailing slashes
+    if (path === '/create' || path === '/create/') return <CreatePage />;
+    if (path.startsWith('/ad-wall')) return <AdWall />;
+    if (path === '/pricing' || path === '/pricing/') return <PricingPage />;
+    if (path === '/compare' || path === '/compare/') return <ComparePage />;
+    
+    // VoteGeneratorApp handles everything else
+    console.log('APP ROUTING - falling through to VoteGeneratorApp');
     return <VoteGeneratorApp />;
 }
 

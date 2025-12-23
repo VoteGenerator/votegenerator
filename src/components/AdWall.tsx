@@ -61,6 +61,11 @@ const AdWall: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900">
+            {/* DEBUG BANNER - REMOVE AFTER FIX */}
+            <div className="bg-red-500 text-white text-center py-2 font-bold">
+                ADWALL IS RENDERING - pollId: {pollId} | adminKey: {adminKey}
+            </div>
+            
             <NavHeader />
             
             <div className="max-w-4xl mx-auto px-4 py-12">

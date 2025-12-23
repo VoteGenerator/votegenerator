@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
 import LandingPage from './LandingPage';
+import AdWall from './AdWall';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -282,6 +283,11 @@ const VoteGeneratorApp: React.FC = () => {
 
     return (
         <div className="min-h-screen pb-10">
+            {/* ROUTE: /ad-wall - render AdWall component */}
+            {window.location.pathname.startsWith('/ad-wall') ? (
+                <AdWall />
+            ) : (
+            <>
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
                 <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
@@ -609,6 +615,8 @@ const VoteGeneratorApp: React.FC = () => {
                     )}
                 </AnimatePresence>
             </main>
+            </>
+            )}
         </div>
     );
 };

@@ -321,7 +321,7 @@ const ToastNotification: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ 
 };
 
 // ============================================================================
-// Feature Lock Button Component
+// Feature Lock Button Component with Upgrade Badge
 // ============================================================================
 
 interface FeatureLockButtonProps {
@@ -331,6 +331,7 @@ interface FeatureLockButtonProps {
   children: React.ReactNode;
   className?: string;
   showToast: (type: 'info', message: string) => void;
+  tier?: string;
 }
 
 const FeatureLockButton: React.FC<FeatureLockButtonProps> = ({
@@ -339,27 +340,44 @@ const FeatureLockButton: React.FC<FeatureLockButtonProps> = ({
   onClick,
   children,
   className = '',
-  showToast
+  showToast,
+  tier = 'free'
 }) => {
   const isLocked = !features[feature as keyof typeof features];
 
   const handleClick = () => {
     if (isLocked) {
-      showToast('info', 'Upgrade your plan to unlock this feature');
+      // Redirect to pricing for upgrade
+      window.location.href = '/pricing';
     } else {
       onClick();
     }
   };
 
+  if (isLocked) {
+    return (
+      <button
+        onClick={handleClick}
+        className={`relative group ${className} opacity-50 hover:opacity-70 cursor-pointer transition-all`}
+        title="Upgrade to unlock this feature"
+      >
+        {children}
+        {/* Upgrade badge */}
+        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+          <DollarSign size={10} />
+          <span>PRO</span>
+        </span>
+        {/* Hover tooltip */}
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+          Upgrade to unlock
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <button
-      onClick={handleClick}
-      className={`relative ${className} ${isLocked ? 'opacity-60' : ''}`}
-    >
+    <button onClick={onClick} className={className}>
       {children}
-      {isLocked && (
-        <Lock size={12} className="absolute -top-1 -right-1 text-amber-500 bg-white rounded-full p-0.5 shadow" />
-      )}
     </button>
   );
 };
@@ -512,10 +530,24 @@ const Dashboard: React.FC = () => {
             </a>
             
             {/* Tier Badge */}
-            <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${config.badge}`}>
-              <TierIcon size={14} />
-              {config.name}
-            </div>
+            {tier === 'free' ? (
+              <a 
+                href="/pricing"
+                className="px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200 transition group"
+              >
+                <Users size={14} />
+                <span>Free Plan</span>
+                <span className="text-xs bg-indigo-500 text-white px-1.5 py-0.5 rounded-full group-hover:bg-indigo-600">Upgrade</span>
+              </a>
+            ) : (
+              <div className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 ${config.badge}`}>
+                <TierIcon size={14} />
+                {config.name}
+                {(tier === 'pro_monthly' || tier === 'pro_yearly' || tier === 'pro_plus_monthly' || tier === 'pro_plus_yearly') && (
+                  <CheckCircle2 size={14} className="text-green-500" />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -555,6 +587,51 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </motion.div>
+
+        {/* FREE Tier Upgrade Banner */}
+        {tier === 'free' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl p-4 mb-6 text-white shadow-lg"
+          >
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                  <Sparkles size={24} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Unlock Premium Features</h3>
+                  <p className="text-white/80 text-sm">Get CSV exports, custom links, more responses & remove branding</p>
+                </div>
+              </div>
+              <a
+                href="/pricing"
+                className="px-5 py-2.5 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition font-bold flex items-center gap-2 shadow-md"
+              >
+                <Crown size={18} />
+                Upgrade Now
+                <ArrowUpRight size={16} />
+              </a>
+            </div>
+            {/* Feature highlights */}
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-white/20">
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
+                <FileSpreadsheet size={12} /> CSV Export
+              </span>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
+                <Link2 size={12} /> Custom Links
+              </span>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
+                <Users size={12} /> 500+ Responses
+              </span>
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full flex items-center gap-1">
+                <Image size={12} /> Upload Logo
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -636,6 +713,7 @@ const Dashboard: React.FC = () => {
                 features={features}
                 onClick={() => handleExport('csv')}
                 showToast={showToast}
+                tier={tier}
                 className="p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-2"
               >
                 <FileSpreadsheet size={16} />
@@ -647,6 +725,7 @@ const Dashboard: React.FC = () => {
                 features={features}
                 onClick={() => handleExport('pdf')}
                 showToast={showToast}
+                tier={tier}
                 className="p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-2 col-span-2"
               >
                 <FileText size={16} />
@@ -658,6 +737,7 @@ const Dashboard: React.FC = () => {
                 features={features}
                 onClick={() => handleExport('png')}
                 showToast={showToast}
+                tier={tier}
                 className="p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-2 col-span-2"
               >
                 <FileImage size={16} />
@@ -740,42 +820,19 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Upgrade Banner - Only show for free tier */}
-        {tier === 'free' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white"
-          >
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <Sparkles size={20} />
-                  Unlock More Features
-                </h3>
-                <p className="text-indigo-100 mt-1">
-                  Export data, add logos, custom links, and more starting at $5
-                </p>
-              </div>
-              <a
-                href="/pricing.html"
-                className="px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition flex items-center gap-2"
-              >
-                View Plans
-                <ArrowUpRight size={16} />
-              </a>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Premium Features Row - Only show for paid tiers */}
-        {tier !== 'free' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+        {/* Premium Features Row - Show for all tiers (locked for free) */}
+        <div className="mt-6">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Crown size={14} />
+            {tier === 'free' ? 'Premium Features' : 'Your Features'}
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <FeatureLockButton
               feature="customShortLink"
               features={features}
               onClick={() => showToast('info', 'Custom link settings coming soon')}
               showToast={showToast}
+              tier={tier}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition flex flex-col items-center gap-2 text-center"
             >
               <Link2 size={22} className="text-indigo-500" />
@@ -787,6 +844,7 @@ const Dashboard: React.FC = () => {
               features={features}
               onClick={() => showToast('info', 'Logo upload coming soon')}
               showToast={showToast}
+              tier={tier}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition flex flex-col items-center gap-2 text-center"
             >
               <Image size={22} className="text-purple-500" />
@@ -798,6 +856,7 @@ const Dashboard: React.FC = () => {
               features={features}
               onClick={() => showToast('info', 'Notification settings coming soon')}
               showToast={showToast}
+              tier={tier}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition flex flex-col items-center gap-2 text-center"
             >
               <Bell size={22} className="text-amber-500" />
@@ -809,13 +868,14 @@ const Dashboard: React.FC = () => {
               features={features}
               onClick={() => showToast('info', 'Password protection coming soon')}
               showToast={showToast}
+              tier={tier}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition flex flex-col items-center gap-2 text-center"
             >
               <Lock size={22} className="text-slate-500" />
               <span className="text-sm font-medium text-slate-700">Password</span>
             </FeatureLockButton>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

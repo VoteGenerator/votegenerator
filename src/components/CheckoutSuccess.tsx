@@ -116,6 +116,26 @@ const CheckoutSuccess: React.FC = () => {
         // Store the tier info so create page knows they're on paid
         if (tier) {
             localStorage.setItem('vg_purchased_tier', tier);
+            
+            // Calculate expiry date based on tier
+            const now = new Date();
+            let expiryDate: Date;
+            
+            switch (tier) {
+                case 'unlimited':
+                    expiryDate = new Date(now.setFullYear(now.getFullYear() + 1)); // 1 year
+                    break;
+                case 'pro_event':
+                    expiryDate = new Date(now.setDate(now.getDate() + 60)); // 60 days
+                    break;
+                case 'starter':
+                default:
+                    expiryDate = new Date(now.setDate(now.getDate() + 30)); // 30 days
+                    break;
+            }
+            
+            localStorage.setItem('vg_expires_at', expiryDate.toISOString());
+            localStorage.setItem('vg_purchased_at', new Date().toISOString());
         }
         window.location.href = '/create';
     };

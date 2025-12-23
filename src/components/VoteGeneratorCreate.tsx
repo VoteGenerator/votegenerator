@@ -148,6 +148,9 @@ const VoteGeneratorCreate: React.FC = () => {
         if (valid.length < 2) { setError('Add at least 2 options'); return; }
         if (hasDuplicates) { setError('Remove duplicate options'); return; }
         setIsCreating(true); setError(null);
+        
+        console.log('=== CREATING POLL ===');
+        
         try {
             const pollData = { 
                 title: title.trim(), 
@@ -164,22 +167,31 @@ const VoteGeneratorCreate: React.FC = () => {
                 tier: currentTier 
             };
             
+            console.log('Sending to API:', pollData);
+            
             const res = await fetch('/.netlify/functions/vg-create', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(pollData) 
             });
             
+            console.log('Response status:', res.status, res.ok);
+            
             const responseData = await res.json();
+            console.log('Response data:', responseData);
             
             if (res.ok && responseData.id) { 
-                // Build the poll URL (hash-based format)
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
+                const adWallUrl = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;
                 
-                // Pass pollId and adminKey as URL params to ad-wall
-                window.location.href = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;
+                console.log('SUCCESS! Redirecting to:', adWallUrl);
+                
+                // Use direct navigation
+                window.location.href = adWallUrl;
+                return; // Stop execution here
             } else { 
+                console.log('API returned error:', responseData.error);
                 setError(responseData.error || 'Failed to create poll. Please try again.'); 
                 setIsCreating(false);
             }
@@ -303,7 +315,7 @@ const VoteGeneratorCreate: React.FC = () => {
 
                     {error && <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3"><AlertCircle className="text-red-600" size={20} /><p className="text-red-700 font-medium">{error}</p></div>}
 
-                    <motion.button onClick={handleCreate} disabled={isCreating || !title.trim() || options.filter(o => o.trim()).length < 2 || hasDuplicates} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                    <motion.button type="button" onClick={handleCreate} disabled={isCreating || !title.trim() || options.filter(o => o.trim()).length < 2 || hasDuplicates} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                         className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg">
                         {isCreating ? <><Loader2 className="animate-spin" size={22} />Creating...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={22} /></>}
                     </motion.button>

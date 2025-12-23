@@ -337,14 +337,15 @@ const VoteGeneratorCreate: React.FC = () => {
                             </div>
                             
                             <div className="flex items-center gap-4">
-                                {/* Days Remaining */}
-                                {daysRemaining !== null && (
+                                {/* Expiry Date & Days Remaining */}
+                                {expiresAt && (
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-white/60 text-xs">Time remaining</p>
-                                        <p className="text-sm font-semibold flex items-center gap-1">
-                                            <Clock size={14} />
-                                            {daysRemaining} days
+                                        <p className="text-white/60 text-xs">Expires on</p>
+                                        <p className="text-sm font-semibold flex items-center gap-1 justify-end">
+                                            <Calendar size={14} />
+                                            {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
+                                        <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
                                     </div>
                                 )}
                                 
@@ -440,15 +441,24 @@ const VoteGeneratorCreate: React.FC = () => {
                             ) : (
                                 /* Visual Poll Image Upload Section */
                                 <div className="space-y-4">
+                                    {/* Info Banner */}
                                     <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-200">
                                         <div className="flex items-center gap-2 text-pink-700 mb-2">
                                             <ImageIcon size={18} />
-                                            <span className="font-semibold">Visual Poll</span>
+                                            <span className="font-semibold">Visual Poll - Upload Images</span>
                                         </div>
-                                        <p className="text-pink-600 text-sm">Upload images as poll options. Great for design feedback, photo contests, and more!</p>
+                                        <p className="text-pink-600 text-sm mb-3">
+                                            Upload images as poll options. Perfect for design feedback, photo contests, product comparisons, and more!
+                                        </p>
+                                        <div className="flex flex-wrap gap-3 text-xs">
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📐 Recommended: Square (1:1)</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📁 Max: 5MB per image</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">🖼️ Formats: JPG, PNG, WebP</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">✨ Auto-compressed for fast loading</span>
+                                        </div>
                                     </div>
                                     
-                                    {/* Uploaded Images */}
+                                    {/* Uploaded Images Grid */}
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                         {imageOptions.map((img, i) => (
                                             <motion.div 

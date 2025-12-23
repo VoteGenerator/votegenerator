@@ -5,7 +5,9 @@
 
 import { Handler } from '@netlify/functions';
 
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+// Cloud name is public, can be hardcoded
+const CLOUDINARY_CLOUD_NAME = 'dqp5iwehp';
+// These are secret and come from env vars
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
@@ -41,13 +43,13 @@ export const handler: Handler = async (event) => {
         };
     }
 
-    // Check Cloudinary credentials
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-        console.error('Missing Cloudinary credentials');
+    // Check Cloudinary credentials (only API key and secret are env vars)
+    if (!CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+        console.error('Missing Cloudinary API credentials');
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Server configuration error' })
+            body: JSON.stringify({ error: 'Server configuration error - missing Cloudinary credentials' })
         };
     }
 

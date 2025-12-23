@@ -5,9 +5,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { useGeoPricing } from '../geoPricing';
+import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
 type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited';
 
@@ -114,8 +115,18 @@ const VoteGeneratorCreate: React.FC = () => {
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
     
+    // Visual Poll image options
+    const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    
     // Check for purchased tier from checkout
     const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') as PollTier | null : null;
+    const expiresAt = typeof window !== 'undefined' ? localStorage.getItem('vg_expires_at') : null;
+    
+    // Calculate days remaining
+    const daysRemaining = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 14;
+    const isExpiringVerySoon = daysRemaining !== null && daysRemaining <= 7;
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
     const currentTier = purchasedTier || selectedPollType?.tier || 'free';
@@ -161,19 +172,35 @@ const VoteGeneratorCreate: React.FC = () => {
 
     const handleCreate = async () => {
         if (!title.trim()) { setError('Please enter a question'); return; }
-        const valid = options.filter(o => o.trim());
-        if (valid.length < 2) { setError('Add at least 2 options'); return; }
-        if (hasDuplicates) { setError('Remove duplicate options'); return; }
+        
+        // Validation based on poll type
+        if (pollType === 'image') {
+            // Visual poll - need at least 2 images
+            if (imageOptions.length < 2) { 
+                setError('Upload at least 2 images for visual poll'); 
+                return; 
+            }
+        } else {
+            // Regular poll - need at least 2 text options
+            const valid = options.filter(o => o.trim());
+            if (valid.length < 2) { setError('Add at least 2 options'); return; }
+            if (hasDuplicates) { setError('Remove duplicate options'); return; }
+        }
+        
         setIsCreating(true); setError(null);
         
         // Use the already-loaded purchasedTier from component state
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            const pollData = { 
+            const validOptions = pollType === 'image' 
+                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
+                : options.filter(o => o.trim());
+            
+            const pollData: any = { 
                 title: title.trim(), 
                 description: description.trim() || undefined, 
-                options: valid, 
+                options: validOptions, 
                 pollType, 
                 settings: { 
                     allowMultiple: multipleSelection, 
@@ -184,6 +211,11 @@ const VoteGeneratorCreate: React.FC = () => {
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier 
             };
+            
+            // Add image URLs for visual polls
+            if (pollType === 'image') {
+                pollData.imageUrls = imageOptions.map(img => img.url);
+            }
             
             const res = await fetch('/.netlify/functions/vg-create', { 
                 method: 'POST', 
@@ -227,6 +259,41 @@ const VoteGeneratorCreate: React.FC = () => {
         <>
             <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
             
+            {/* Expiry Warning Banner */}
+            {purchasedTier && isExpiringSoon && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`mb-4 p-4 rounded-xl flex items-center justify-between ${
+                        isExpiringVerySoon 
+                            ? 'bg-red-50 border-2 border-red-200' 
+                            : 'bg-amber-50 border-2 border-amber-200'
+                    }`}
+                >
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle size={20} className={isExpiringVerySoon ? 'text-red-500' : 'text-amber-500'} />
+                        <div>
+                            <p className={`font-semibold ${isExpiringVerySoon ? 'text-red-700' : 'text-amber-700'}`}>
+                                {isExpiringVerySoon ? '⚠️ Plan expires soon!' : '⏰ Plan expiring'}
+                            </p>
+                            <p className={`text-sm ${isExpiringVerySoon ? 'text-red-600' : 'text-amber-600'}`}>
+                                {daysRemaining} days remaining. Renew to keep your premium features.
+                            </p>
+                        </div>
+                    </div>
+                    <a 
+                        href={`/.netlify/functions/vg-checkout?tier=${purchasedTier}`}
+                        className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
+                            isExpiringVerySoon 
+                                ? 'bg-red-600 hover:bg-red-700 text-white' 
+                                : 'bg-amber-600 hover:bg-amber-700 text-white'
+                        }`}
+                    >
+                        Renew Plan
+                    </a>
+                </motion.div>
+            )}
+            
             {/* Paid Tier Hub Header */}
             {purchasedTier && (
                 <motion.div 
@@ -269,15 +336,37 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
+                                {/* Expiry Date & Days Remaining */}
+                                {expiresAt && (
+                                    <div className="text-right hidden sm:block">
+                                        <p className="text-white/60 text-xs">Expires on</p>
+                                        <p className="text-sm font-semibold flex items-center gap-1 justify-end">
+                                            <Calendar size={14} />
+                                            {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </p>
+                                        <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
+                                    </div>
+                                )}
+                                
                                 <div className="text-right hidden sm:block">
                                     <p className="text-white/60 text-xs">Plan includes</p>
                                     <p className="text-sm font-semibold">
-                                        {purchasedTier === 'unlimited' ? '5,000 responses • 1 year' : 
-                                         purchasedTier === 'pro_event' ? '2,000 responses • 60 days' : 
-                                         '500 responses • 30 days'}
+                                        {purchasedTier === 'unlimited' ? '5,000 responses' : 
+                                         purchasedTier === 'pro_event' ? '2,000 responses' : 
+                                         '500 responses'}
                                     </p>
                                 </div>
+                                
+                                {/* Upgrade to Unlimited (for non-unlimited users) */}
+                                {purchasedTier !== 'unlimited' && (
+                                    <a 
+                                        href="/.netlify/functions/vg-checkout?tier=unlimited"
+                                        className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-lg text-sm font-semibold transition flex items-center gap-1"
+                                    >
+                                        <Star size={14} /> Upgrade
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -334,19 +423,156 @@ const VoteGeneratorCreate: React.FC = () => {
                                 <label className="block text-sm font-semibold text-slate-700">Options *</label>
                                 {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
                             </div>
-                            <div className="space-y-3">
-                                {options.map((opt, i) => (
-                                    <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                                        <div className="flex-1 relative">
-                                            <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
-                                                className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
-                                            <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
+                            
+                            {/* Regular text options for non-image polls */}
+                            {pollType !== 'image' ? (
+                                <div className="space-y-3">
+                                    {options.map((opt, i) => (
+                                        <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                            <div className="flex-1 relative">
+                                                <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
+                                                    className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
+                                                <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
+                                            </div>
+                                            {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                /* Visual Poll Image Upload Section */
+                                <div className="space-y-4">
+                                    {/* Info Banner */}
+                                    <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-200">
+                                        <div className="flex items-center gap-2 text-pink-700 mb-2">
+                                            <ImageIcon size={18} />
+                                            <span className="font-semibold">Visual Poll - Upload Images</span>
                                         </div>
-                                        {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
-                                    </motion.div>
-                                ))}
-                            </div>
-                            {options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                                        <p className="text-pink-600 text-sm mb-3">
+                                            Upload images as poll options. Perfect for design feedback, photo contests, product comparisons, and more!
+                                        </p>
+                                        <div className="flex flex-wrap gap-3 text-xs">
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📐 Recommended: Square (1:1)</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📁 Max: 5MB per image</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">🖼️ Formats: JPG, PNG, WebP</span>
+                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">✨ Auto-compressed for fast loading</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Uploaded Images Grid */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {imageOptions.map((img, i) => (
+                                            <motion.div 
+                                                key={i} 
+                                                initial={{ opacity: 0, scale: 0.9 }} 
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="relative group"
+                                            >
+                                                <div className="aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-100">
+                                                    <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    value={img.label} 
+                                                    onChange={(e) => {
+                                                        const newImages = [...imageOptions];
+                                                        newImages[i] = { ...newImages[i], label: e.target.value };
+                                                        setImageOptions(newImages);
+                                                    }}
+                                                    placeholder="Add label..."
+                                                    className="mt-2 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+                                                />
+                                                <button 
+                                                    onClick={() => setImageOptions(imageOptions.filter((_, idx) => idx !== i))}
+                                                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </motion.div>
+                                        ))}
+                                        
+                                        {/* Upload Button */}
+                                        {imageOptions.length < 10 && (
+                                            <label className="aspect-square rounded-xl border-2 border-dashed border-pink-300 bg-pink-50 hover:bg-pink-100 cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors">
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*" 
+                                                    className="hidden"
+                                                    disabled={uploadingImage}
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        
+                                                        setUploadingImage(true);
+                                                        setError(null);
+                                                        
+                                                        try {
+                                                            // Compress image first (max 2MB)
+                                                            const compressedFile = await compressToTargetSize(file, 2);
+                                                            console.log(`Compressed: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`);
+                                                            
+                                                            // Convert to base64
+                                                            const reader = new FileReader();
+                                                            reader.onload = async () => {
+                                                                try {
+                                                                    const base64 = reader.result as string;
+                                                                    
+                                                                    // Upload to Cloudinary via API
+                                                                    const response = await fetch('/.netlify/functions/vg-upload-image', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ image: base64 })
+                                                                    });
+                                                                    
+                                                                    if (response.ok) {
+                                                                        const data = await response.json();
+                                                                        setImageOptions([...imageOptions, { url: data.url, label: '' }]);
+                                                                    } else {
+                                                                        const err = await response.json();
+                                                                        setError(err.error || 'Failed to upload image');
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error('Upload error:', err);
+                                                                    setError('Failed to upload image. Please try again.');
+                                                                } finally {
+                                                                    setUploadingImage(false);
+                                                                }
+                                                            };
+                                                            reader.onerror = () => {
+                                                                setError('Failed to read image file');
+                                                                setUploadingImage(false);
+                                                            };
+                                                            reader.readAsDataURL(compressedFile);
+                                                            
+                                                        } catch (err) {
+                                                            console.error('Compression error:', err);
+                                                            setError('Failed to process image. Please try again.');
+                                                            setUploadingImage(false);
+                                                        }
+                                                        
+                                                        e.target.value = '';
+                                                    }}
+                                                />
+                                                {uploadingImage ? (
+                                                    <Loader2 size={24} className="text-pink-400 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Upload size={24} className="text-pink-400" />
+                                                        <span className="text-pink-600 text-sm font-medium">Upload Image</span>
+                                                    </>
+                                                )}
+                                            </label>
+                                        )}
+                                    </div>
+                                    
+                                    {imageOptions.length === 0 && (
+                                        <p className="text-center text-slate-500 text-sm py-4">
+                                            Upload at least 2 images to create your visual poll
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {pollType !== 'image' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
                         </div>
                     </motion.div>
 
@@ -394,7 +620,9 @@ const VoteGeneratorCreate: React.FC = () => {
 
                     {error && <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3"><AlertCircle className="text-red-600" size={20} /><p className="text-red-700 font-medium">{error}</p></div>}
 
-                    <motion.button type="button" onClick={handleCreate} disabled={isCreating || !title.trim() || options.filter(o => o.trim()).length < 2 || hasDuplicates} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                    <motion.button type="button" onClick={handleCreate} 
+                        disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
+                        whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                         className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg">
                         {isCreating ? <><Loader2 className="animate-spin" size={22} />Creating...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={22} /></>}
                     </motion.button>

@@ -1,38 +1,23 @@
 // ============================================================================
 // AdWall - Interstitial Ad Page with Countdown
-// Reads destination from sessionStorage (set by VoteGeneratorCreate)
-// Route: /ad-wall
+// Uses <a href> for navigation - guaranteed to work
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Sparkles, Crown, Zap, ArrowRight, CheckCircle, Star, Gift, Shield, BarChart3 } from 'lucide-react';
+import { Clock, Sparkles, Crown, Zap, ArrowRight, CheckCircle, Star, Shield, BarChart3 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import { useGeoPricing } from '../geoPricing';
 
 const AdWall: React.FC = () => {
     const [countdown, setCountdown] = useState(8);
     const [canSkip, setCanSkip] = useState(false);
-    const [nextUrl, setNextUrl] = useState('/');
     const { loading, currency, prices } = useGeoPricing();
     
-    // Get redirect URL from URL params
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const pollId = params.get('pollId');
-        const adminKey = params.get('adminKey');
-        
-        if (pollId && adminKey) {
-            // Build poll URL with hash format (this is how VoteGenerator polls work)
-            const pollUrl = `/#id=${pollId}&admin=${adminKey}`;
-            setNextUrl(pollUrl);
-        } else if (pollId) {
-            // Just poll ID, no admin key (voter view)
-            const pollUrl = `/#id=${pollId}`;
-            setNextUrl(pollUrl);
-        }
-        // If no params, nextUrl stays as '/' (home)
-    }, []);
+    // Read URL params directly
+    const params = new URLSearchParams(window.location.search);
+    const pollId = params.get('pollId') || '';
+    const adminKey = params.get('adminKey') || '';
 
     // Countdown timer
     useEffect(() => {
@@ -48,25 +33,6 @@ const AdWall: React.FC = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, []);
-
-    const handleContinue = () => {
-        const params = new URLSearchParams(window.location.search);
-        const pollId = params.get('pollId');
-        const adminKey = params.get('adminKey');
-        
-        // Build the full URL with origin to ensure hash is preserved
-        const origin = window.location.origin;
-        
-        if (pollId && adminKey) {
-            const targetUrl = `${origin}/#id=${pollId}&admin=${adminKey}`;
-            console.log('Navigating to:', targetUrl); // Debug
-            window.location.assign(targetUrl);
-        } else if (pollId) {
-            window.location.assign(`${origin}/#id=${pollId}`);
-        } else {
-            window.location.assign(origin);
-        }
-    };
 
     // Ad content
     const adSlots = [
@@ -142,7 +108,7 @@ const AdWall: React.FC = () => {
                     </div>
                 </motion.div>
 
-                {/* Countdown / Skip Button */}
+                {/* Countdown / Continue Link */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-center">
                     <AnimatePresence mode="wait">
                         {!canSkip ? (
@@ -151,13 +117,23 @@ const AdWall: React.FC = () => {
                                 <span>Continue in <strong className="text-xl">{countdown}</strong> seconds</span>
                             </motion.div>
                         ) : (
-                            <motion.button key="skip" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} onClick={handleContinue}
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-lg">
-                                Continue to My Poll <ArrowRight size={20} />
-                            </motion.button>
+                            <motion.div key="continue" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                                {/* FULL URL WITH ORIGIN */}
+                                <a 
+                                    href={pollId ? `${window.location.origin}/#id=${pollId}&admin=${adminKey}` : '/'}
+                                    className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-lg"
+                                >
+                                    Continue to My Poll <ArrowRight size={20} />
+                                </a>
+                            </motion.div>
                         )}
                     </AnimatePresence>
                     <p className="text-indigo-300/60 text-sm mt-4">Free polls supported by sponsors</p>
+                    
+                    {/* Debug - shows destination */}
+                    <p className="text-white/30 text-xs mt-2">
+                        pollId: {pollId || 'EMPTY'} | adminKey: {adminKey || 'EMPTY'}
+                    </p>
                 </motion.div>
 
                 {/* Ad Placeholders */}

@@ -31,6 +31,17 @@ const POLL_TYPES = [
 
 const PLACEHOLDER_QUESTIONS = ["Where should we eat lunch?", "What movie should we watch?", "Which design do you prefer?"];
 
+// Dynamic placeholders based on poll type
+const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string[] }> = {
+    multiple: { question: "What movie should we watch?", options: ["Option 1", "Option 2", "Option 3"] },
+    ranked: { question: "Rank your favorite restaurants", options: ["Pizza Place", "Burger Joint", "Sushi Bar"] },
+    pairwise: { question: "Which logo do you prefer?", options: ["Design A", "Design B"] },
+    meeting: { question: "When can you meet?", options: ["Monday 2pm", "Tuesday 10am", "Wednesday 3pm"] },
+    rating: { question: "How was your experience?", options: ["Rate 1-5 stars"] },
+    rsvp: { question: "Can you attend the party?", options: ["Going", "Not Going", "Maybe"] },
+    image: { question: "Which design do you prefer?", options: ["Image 1", "Image 2"] }
+};
+
 // How It Works
 const HowItWorks: React.FC = () => (
     <div className="mb-8">
@@ -767,16 +778,67 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                             </div>
                             <div className={`p-6 ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
-                                <h4 className="text-lg font-bold text-slate-900 mb-4">{title || placeholderQuestion}</h4>
+                                {/* Dynamic question based on poll type */}
+                                <h4 className="text-lg font-bold text-slate-900 mb-4">
+                                    {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion}
+                                </h4>
                                 {description && <p className="text-slate-600 text-sm mb-4">{description}</p>}
+                                
+                                {/* Dynamic options preview based on poll type */}
                                 <div className="space-y-2 mb-4">
-                                    {options.slice(0, 5).map((opt, i) => (
-                                        <div key={i} className={`p-3 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50' : 'border-slate-200'}`}>
-                                            <span className="text-slate-700">{opt || `Option ${i + 1}`}</span>
+                                    {pollType === 'rsvp' ? (
+                                        // RSVP-specific preview
+                                        ['✅ Going', '❌ Not Going', '🤔 Maybe'].map((opt, i) => (
+                                            <div key={i} className="p-3 border-2 border-slate-200 rounded-xl">
+                                                <span className="text-slate-700">{opt}</span>
+                                            </div>
+                                        ))
+                                    ) : pollType === 'rating' ? (
+                                        // Rating preview
+                                        <div className="p-4 border-2 border-slate-200 rounded-xl text-center">
+                                            <div className="flex justify-center gap-1 text-2xl">
+                                                {['⭐', '⭐', '⭐', '⭐', '⭐'].map((star, i) => (
+                                                    <span key={i} className={i < 3 ? 'opacity-100' : 'opacity-30'}>{star}</span>
+                                                ))}
+                                            </div>
+                                            <p className="text-sm text-slate-500 mt-2">Click to rate</p>
                                         </div>
-                                    ))}
+                                    ) : pollType === 'meeting' ? (
+                                        // Meeting poll preview
+                                        ['Monday 2pm', 'Tuesday 10am', 'Wednesday 3pm'].map((opt, i) => (
+                                            <div key={i} className="p-3 border-2 border-slate-200 rounded-xl flex items-center gap-3">
+                                                <Calendar size={16} className="text-amber-500" />
+                                                <span className="text-slate-700">{options[i]?.trim() || opt}</span>
+                                            </div>
+                                        ))
+                                    ) : pollType === 'image' ? (
+                                        // Visual poll preview
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(imageOptions.length > 0 ? imageOptions.slice(0, 4) : [{url: '', label: 'Image 1'}, {url: '', label: 'Image 2'}]).map((img, i) => (
+                                                <div key={i} className="aspect-square border-2 border-slate-200 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
+                                                    {img.url ? (
+                                                        <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="text-slate-400 text-sm">{img.label || `Image ${i + 1}`}</div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        // Default text options preview
+                                        options.slice(0, 5).map((opt, i) => (
+                                            <div key={i} className={`p-3 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50' : 'border-slate-200'}`}>
+                                                <span className="text-slate-700">{opt || `Option ${i + 1}`}</span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
-                                <button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl">{buttonText || 'Submit Vote'}</button>
+                                <button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl">
+                                    {pollType === 'rsvp' ? 'Submit RSVP' : 
+                                     pollType === 'rating' ? 'Submit Rating' :
+                                     pollType === 'meeting' ? 'Submit Availability' :
+                                     buttonText || 'Submit Vote'}
+                                </button>
                             </div>
                         </div>
                         <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">

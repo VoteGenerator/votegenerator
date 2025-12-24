@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -125,10 +125,18 @@ const VoteGeneratorCreate: React.FC = () => {
     const [deadline, setDeadline] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
     
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
+    
+    // Copy link function
+    const copyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+    };
     
     // Check for purchased tier from checkout
     const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') as PollTier | null : null;
@@ -356,6 +364,19 @@ const VoteGeneratorCreate: React.FC = () => {
                                         <p className="text-amber-300/60 text-xs">Plan includes</p>
                                         <p className="text-sm font-semibold text-amber-200">5,000 responses</p>
                                     </div>
+                                    
+                                    {/* COPY LINK BUTTON */}
+                                    <button 
+                                        onClick={copyLink}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
+                                            copiedLink 
+                                                ? 'bg-emerald-500 text-white' 
+                                                : 'bg-amber-400 hover:bg-amber-300 text-amber-900'
+                                        }`}
+                                    >
+                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                                        {copiedLink ? 'Copied!' : 'Save Link'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -405,6 +426,19 @@ const VoteGeneratorCreate: React.FC = () => {
                                     >
                                         <Star size={14} /> Upgrade
                                     </a>
+                                    
+                                    {/* COPY LINK BUTTON */}
+                                    <button 
+                                        onClick={copyLink}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
+                                            copiedLink 
+                                                ? 'bg-emerald-500 text-white' 
+                                                : 'bg-white/20 hover:bg-white/30 text-white'
+                                        }`}
+                                    >
+                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                                        {copiedLink ? 'Copied!' : 'Save Link'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -454,6 +488,19 @@ const VoteGeneratorCreate: React.FC = () => {
                                     >
                                         <Crown size={14} /> Upgrade
                                     </a>
+                                    
+                                    {/* COPY LINK BUTTON */}
+                                    <button 
+                                        onClick={copyLink}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
+                                            copiedLink 
+                                                ? 'bg-emerald-500 text-white' 
+                                                : 'bg-white/20 hover:bg-white/30 text-white'
+                                        }`}
+                                    >
+                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                                        {copiedLink ? 'Copied!' : 'Save Link'}
+                                    </button>
                                 </div>
                             </div>
                         </div>

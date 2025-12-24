@@ -105,7 +105,7 @@ const PaywallModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
             </motion.div>
         </div>
     );
-}};
+};
 
 // Main Component
 const VoteGeneratorCreate: React.FC = () => {

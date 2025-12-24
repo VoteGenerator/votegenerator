@@ -176,6 +176,25 @@ const VoteGeneratorCreate: React.FC = () => {
         // Check if user can access this poll type
         if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
+            
+            // Reset options based on new poll type
+            if (id === 'pairwise') {
+                // This or That - only 2 options
+                setOptions(['', '']);
+            } else if (id === 'image') {
+                // Visual poll - reset image options
+                setImageOptions([]);
+                setOptions(['', '']);
+            } else if (id === 'rsvp' || id === 'rating') {
+                // These use fixed options, reset to empty
+                setOptions(['', '', '']);
+            } else {
+                // Standard poll types - reset to 3 empty options
+                setOptions(['', '', '']);
+            }
+            
+            // Clear any existing error
+            setError(null);
         } else {
             setShowPaywall(true);
         }
@@ -195,7 +214,8 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const handleCreate = async () => {
-        if (!title.trim()) { setError('Please enter a question'); return; }
+        // Use placeholder question if title is empty
+        const finalTitle = title.trim() || POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion;
         
         // Validation based on poll type
         if (pollType === 'image') {
@@ -204,6 +224,8 @@ const VoteGeneratorCreate: React.FC = () => {
                 setError('Upload at least 2 images for visual poll'); 
                 return; 
             }
+        } else if (pollType === 'rsvp' || pollType === 'rating') {
+            // These types use fixed options - no validation needed
         } else {
             // Regular poll - need at least 2 text options
             const valid = options.filter(o => o.trim());
@@ -217,12 +239,20 @@ const VoteGeneratorCreate: React.FC = () => {
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            const validOptions = pollType === 'image' 
-                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
-                : options.filter(o => o.trim());
+            // Determine options based on poll type
+            let validOptions: string[];
+            if (pollType === 'image') {
+                validOptions = imageOptions.map((img, i) => img.label || `Option ${i + 1}`);
+            } else if (pollType === 'rsvp') {
+                validOptions = ['Going', 'Not Going', 'Maybe'];
+            } else if (pollType === 'rating') {
+                validOptions = ['1', '2', '3', '4', '5'];
+            } else {
+                validOptions = options.filter(o => o.trim());
+            }
             
             const pollData: any = { 
-                title: title.trim(), 
+                title: finalTitle, 
                 description: description.trim() || undefined, 
                 options: validOptions, 
                 pollType, 

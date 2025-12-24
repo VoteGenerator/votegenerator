@@ -5,15 +5,97 @@ import {
   ChevronDown, ChevronUp, Loader2, Check, Lock, ArrowRight,
   Users, Clock, Info, Home, Zap
 } from 'lucide-react';
-import { 
-  getUserSession, 
-  addPollToSession, 
-  isPaidUser, 
-  canCreateMorePolls,
-  getUserTier
-} from './userSessionService';
 
-// Poll type definitions
+// =============================================================================
+// USER SESSION SERVICE - Inline to avoid import issues
+// =============================================================================
+interface UserPoll {
+  id: string;
+  adminKey: string;
+  title: string;
+  type: string;
+  createdAt: string;
+  responseCount?: number;
+  status?: 'active' | 'ended' | 'draft';
+}
+
+interface UserSession {
+  tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
+  expiresAt?: string;
+  polls: UserPoll[];
+  createdAt: string;
+  stripeSessionId?: string;
+}
+
+const SESSION_KEY = 'vg_user_session';
+const TIER_KEY = 'vg_purchased_tier';
+
+function getUserSession(): UserSession | null {
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+      return JSON.parse(stored) as UserSession;
+    }
+    const tier = localStorage.getItem(TIER_KEY);
+    if (tier) {
+      return {
+        tier: tier as UserSession['tier'],
+        polls: [],
+        createdAt: new Date().toISOString(),
+      };
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveUserSession(session: UserSession): void {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  localStorage.setItem(TIER_KEY, session.tier);
+}
+
+function addPollToSession(poll: UserPoll): UserSession {
+  let session = getUserSession();
+  if (!session) {
+    session = { tier: 'free', polls: [], createdAt: new Date().toISOString() };
+  }
+  const existingIndex = session.polls.findIndex(p => p.id === poll.id);
+  if (existingIndex >= 0) {
+    session.polls[existingIndex] = poll;
+  } else {
+    session.polls.unshift(poll);
+  }
+  saveUserSession(session);
+  return session;
+}
+
+function getUserTier(): UserSession['tier'] {
+  const session = getUserSession();
+  return session?.tier || 'free';
+}
+
+function isPaidUser(): boolean {
+  const tier = getUserTier();
+  return tier !== 'free';
+}
+
+function canCreateMorePolls(): boolean {
+  const session = getUserSession();
+  if (!session) return true;
+  const pollCount = session.polls.length;
+  switch (session.tier) {
+    case 'unlimited': return true;
+    case 'pro_event': return pollCount < 1; // 1 premium poll
+    case 'starter': return pollCount < 1; // 1 premium poll
+    case 'free':
+    default: return true; // Free users can always create (with ads)
+  }
+}
+
+// =============================================================================
+// POLL TYPES & TIER CONFIGURATION
+// =============================================================================
 const POLL_TYPES = [
   { id: 'multiple_choice', name: 'Multiple Choice', tier: 'free', icon: '📊' },
   { id: 'ranked_choice', name: 'Ranked Choice', tier: 'free', icon: '🏆' },
@@ -44,6 +126,9 @@ function canAccessPollType(userTier: string, pollTypeTier: string): boolean {
   return userIndex >= pollIndex;
 }
 
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
 export default function VoteGeneratorCreate() {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
@@ -60,16 +145,7 @@ export default function VoteGeneratorCreate() {
 
   const userTier = getUserTier();
   const isPaid = isPaidUser();
-  const canCreate = canCreateMorePolls();
   const config = TIER_CONFIG[userTier];
-
-  // Check if user has reached their limit
-  useEffect(() => {
-    if (!canCreate) {
-      // Redirect to dashboard with upgrade prompt
-      window.location.href = '/admin';
-    }
-  }, [canCreate]);
 
   const addOption = () => {
     if (options.length < 10) {
@@ -93,7 +169,6 @@ export default function VoteGeneratorCreate() {
     e.preventDefault();
     setError(null);
     
-    // Validation
     if (!question.trim()) {
       setError('Please enter a question');
       return;
@@ -105,7 +180,6 @@ export default function VoteGeneratorCreate() {
       return;
     }
 
-    // Check poll type access
     const pollTypeConfig = POLL_TYPES.find(p => p.id === pollType);
     if (pollTypeConfig && !canAccessPollType(userTier, pollTypeConfig.tier)) {
       setError(`${pollTypeConfig.name} requires ${TIER_CONFIG[pollTypeConfig.tier].label} plan or higher`);
@@ -123,7 +197,7 @@ export default function VoteGeneratorCreate() {
           options: validOptions,
           pollType,
           settings,
-          tier: userTier, // Pass user's tier to backend
+          tier: userTier,
         }),
       });
 
@@ -146,7 +220,7 @@ export default function VoteGeneratorCreate() {
 
       // Route based on tier
       if (isPaid) {
-        // Paid users go directly to their specific poll admin
+        // Paid users go directly to their poll admin
         window.location.href = `/admin/${data.pollId}/${data.adminKey}`;
       } else {
         // Free users go through ad wall first
@@ -174,10 +248,7 @@ export default function VoteGeneratorCreate() {
             </a>
             
             {isPaid && (
-              <a
-                href="/admin"
-                className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
-              >
+              <a href="/admin" className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800">
                 <Home size={16} />
                 Dashboard
               </a>

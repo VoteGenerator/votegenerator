@@ -1,102 +1,114 @@
+// ============================================================================
+// vg-revoke-token.ts - Revoke Access Tokens
+// Location: netlify/functions/vg-revoke-token.ts
+// Only master admin can revoke tokens
+// ============================================================================
+
 import { Handler } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
 
-interface AdminToken {
-    id: string;
-    key: string;
-    label: string;
-    createdAt: string;
-    lastUsed?: string;
-    permissions: 'full' | 'edit' | 'view-only';
-}
+// Your database imports
+// import { db } from '../lib/database';
 
-interface Poll {
-    id: string;
-    masterKey: string;
-    adminTokens?: AdminToken[];
-}
+const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+};
 
 export const handler: Handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
+    }
+
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
-        const { pollId, masterKey, tokenId } = JSON.parse(event.body || '{}');
+        const { pollId, adminKey, token } = JSON.parse(event.body || '{}');
 
-        if (!pollId || !masterKey || !tokenId) {
+        // Validation
+        if (!pollId || !adminKey || !token) {
             return {
                 statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Missing required fields' })
+                headers,
+                body: JSON.stringify({ error: 'Poll ID, admin key, and token are required' })
             };
         }
 
-        const store = getStore('polls');
-        const poll = await store.get(pollId, { type: 'json' }) as Poll | null;
+        // Get poll and verify master admin
+        const poll = await getPoll(pollId);
 
         if (!poll) {
             return {
                 statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
 
-        // CRITICAL: Only master key can revoke tokens
-        const isValidMaster = poll.masterKey === masterKey || 
-            ((poll as any).adminKey === masterKey && !poll.masterKey);
-        
-        if (!isValidMaster) {
+        if (poll.adminKey !== adminKey) {
             return {
                 statusCode: 403,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Only the poll creator can revoke tokens' })
-            };
-        }
-
-        if (!poll.adminTokens || poll.adminTokens.length === 0) {
-            return {
-                statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'No tokens found' })
+                headers,
+                body: JSON.stringify({ error: 'Invalid admin key. Only the poll creator can revoke access.' })
             };
         }
 
         // Find and remove the token
-        const tokenIndex = poll.adminTokens.findIndex(t => t.id === tokenId);
-        
+        const existingTokens = poll.accessTokens || [];
+        const tokenIndex = existingTokens.findIndex((t: any) => t.token === token);
+
         if (tokenIndex === -1) {
             return {
                 statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ error: 'Token not found' })
             };
         }
 
-        const revokedToken = poll.adminTokens[tokenIndex];
-        poll.adminTokens.splice(tokenIndex, 1);
+        const revokedToken = existingTokens[tokenIndex];
 
-        await store.setJSON(pollId, poll);
+        // Remove token from poll
+        await removeTokenFromPoll(pollId, token);
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({
                 success: true,
+                message: `Access revoked for "${revokedToken.label}"`,
                 revokedToken: {
-                    id: revokedToken.id,
-                    label: revokedToken.label
-                },
-                remainingTokens: poll.adminTokens.length
+                    label: revokedToken.label,
+                    role: revokedToken.role
+                }
             })
         };
+
     } catch (error) {
         console.error('Revoke token error:', error);
         return {
             statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Failed to revoke token' })
+            headers,
+            body: JSON.stringify({ error: 'Internal server error' })
         };
     }
 };
+
+// ============================================================================
+// Database Functions - Replace with your implementation
+// ============================================================================
+
+async function getPoll(pollId: string): Promise<any> {
+    // Example:
+    // return await db.polls.findOne({ id: pollId });
+    return null;
+}
+
+async function removeTokenFromPoll(pollId: string, token: string): Promise<void> {
+    // Example:
+    // await db.polls.updateOne(
+    //     { id: pollId },
+    //     { $pull: { accessTokens: { token: token } } }
+    // );
+}

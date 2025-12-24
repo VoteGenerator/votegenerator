@@ -1,125 +1,172 @@
-import { Handler } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
+// ============================================================================
+// vg-create-token.ts - Create Admin/Viewer Access Tokens
+// Location: netlify/functions/vg-create-token.ts
+// Unlimited users can create up to 10 access tokens per poll
+// ============================================================================
 
-// Maximum tokens per poll to prevent abuse
+import { Handler } from '@netlify/functions';
+import crypto from 'crypto';
+
+// Your database imports
+// import { db } from '../lib/database';
+
+const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+};
+
 const MAX_TOKENS_PER_POLL = 10;
 
-interface AdminToken {
-    id: string;
-    key: string;
+interface AccessToken {
+    token: string;
+    role: 'admin' | 'viewer';
     label: string;
     createdAt: string;
     lastUsed?: string;
-    permissions: 'full' | 'edit' | 'view-only';
-}
-
-interface Poll {
-    id: string;
-    masterKey: string;
-    adminTokens?: AdminToken[];
-    // ... other fields
+    expiresAt?: string;
 }
 
 export const handler: Handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
+    }
+
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
-        const { pollId, masterKey, label, permissions } = JSON.parse(event.body || '{}');
+        const { pollId, adminKey, role, label, expiresIn } = JSON.parse(event.body || '{}');
 
-        // Validate required fields
-        if (!pollId || !masterKey) {
+        // Validation
+        if (!pollId || !adminKey) {
             return {
                 statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Missing pollId or masterKey' })
+                headers,
+                body: JSON.stringify({ error: 'Poll ID and admin key are required' })
             };
         }
 
-        const store = getStore('polls');
-        const poll = await store.get(pollId, { type: 'json' }) as Poll | null;
+        if (!role || !['admin', 'viewer'].includes(role)) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Role must be "admin" or "viewer"' })
+            };
+        }
+
+        if (!label || typeof label !== 'string' || label.trim().length === 0) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Label is required' })
+            };
+        }
+
+        if (label.length > 50) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Label must be 50 characters or less' })
+            };
+        }
+
+        // Get poll and verify master admin
+        const poll = await getPoll(pollId);
 
         if (!poll) {
             return {
                 statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
 
-        // CRITICAL: Only master key can create tokens
-        // Check both masterKey (new system) and adminKey (legacy) for backwards compatibility
-        const isValidMaster = poll.masterKey === masterKey || 
-            ((poll as any).adminKey === masterKey && !poll.masterKey);
-        
-        if (!isValidMaster) {
+        if (poll.adminKey !== adminKey) {
             return {
                 statusCode: 403,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Only the poll creator can manage admin tokens' })
+                headers,
+                body: JSON.stringify({ error: 'Invalid admin key. Only the poll creator can manage access.' })
             };
         }
 
-        // Initialize adminTokens if not exists
-        poll.adminTokens = poll.adminTokens || [];
+        // Check if user has Unlimited tier
+        if (poll.tier !== 'unlimited') {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Access tokens require Unlimited plan' })
+            };
+        }
 
-        // Check token limit to prevent abuse
-        if (poll.adminTokens.length >= MAX_TOKENS_PER_POLL) {
+        // Check token limit
+        const existingTokens = poll.accessTokens || [];
+        if (existingTokens.length >= MAX_TOKENS_PER_POLL) {
             return {
                 statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ 
-                    error: `Maximum ${MAX_TOKENS_PER_POLL} tokens allowed per poll. Revoke unused tokens first.` 
+                    error: `Maximum ${MAX_TOKENS_PER_POLL} tokens allowed. Revoke one to create more.` 
                 })
             };
         }
 
-        // Generate new token
-        const tokenId = crypto.randomUUID();
-        const tokenKey = crypto.randomUUID().split('-').slice(0, 2).join(''); // Shorter key for sharing
-        
-        const newToken: AdminToken = {
-            id: tokenId,
-            key: tokenKey,
-            label: (label || 'Unnamed Token').substring(0, 50), // Limit label length
-            createdAt: new Date().toISOString(),
-            permissions: ['full', 'edit', 'view-only'].includes(permissions) ? permissions : 'view-only'
-        };
+        // Generate token
+        const prefix = role === 'admin' ? 'adm_' : 'view_';
+        const tokenValue = prefix + crypto.randomBytes(16).toString('base64url');
 
-        poll.adminTokens.push(newToken);
-        
-        // If this poll doesn't have a masterKey yet (legacy poll), set it
-        if (!poll.masterKey && (poll as any).adminKey) {
-            poll.masterKey = (poll as any).adminKey;
+        // Calculate expiration if specified
+        let expiresAt: string | undefined;
+        if (expiresIn && typeof expiresIn === 'number' && expiresIn > 0) {
+            expiresAt = new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000).toISOString();
         }
 
-        await store.setJSON(pollId, poll);
+        const newToken: AccessToken = {
+            token: tokenValue,
+            role,
+            label: label.trim(),
+            createdAt: new Date().toISOString(),
+            expiresAt
+        };
 
-        const siteUrl = process.env.URL || 'https://votegenerator.com';
+        // Add token to poll
+        await addTokenToPoll(pollId, newToken);
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({
                 success: true,
-                token: {
-                    id: newToken.id,
-                    label: newToken.label,
-                    permissions: newToken.permissions,
-                    createdAt: newToken.createdAt
-                },
-                tokenUrl: `${siteUrl}/#id=${pollId}&token=${tokenKey}`,
-                totalTokens: poll.adminTokens.length,
-                maxTokens: MAX_TOKENS_PER_POLL
+                token: newToken,
+                url: `${process.env.URL || 'https://votegenerator.com'}/#id=${pollId}&access=${tokenValue}`
             })
         };
+
     } catch (error) {
         console.error('Create token error:', error);
         return {
             statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Failed to create token' })
+            headers,
+            body: JSON.stringify({ error: 'Internal server error' })
         };
     }
 };
+
+// ============================================================================
+// Database Functions - Replace with your implementation
+// ============================================================================
+
+async function getPoll(pollId: string): Promise<any> {
+    // Example:
+    // return await db.polls.findOne({ id: pollId });
+    return null;
+}
+
+async function addTokenToPoll(pollId: string, token: AccessToken): Promise<void> {
+    // Example:
+    // await db.polls.updateOne(
+    //     { id: pollId },
+    //     { $push: { accessTokens: token } }
+    // );
+}

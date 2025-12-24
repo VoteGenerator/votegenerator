@@ -1,229 +1,175 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-interface CreatePollRequest {
-    title: string;
-    description?: string;
-    options: string[];
-    pollType: 'ranked' | 'multiple' | 'image' | 'meeting';
-    settings?: {
-        hideResults?: boolean;
-        allowMultiple?: boolean;
-    };
-    tier?: 'free' | 'quick_poll' | 'event_poll' | 'pro_monthly' | 'pro_yearly' | 'pro_plus_monthly' | 'pro_plus_yearly';
-    theme?: string;
-    buttonText?: string;
+// Generate unique IDs
+function generateId(length: number = 8): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
-interface PollOption {
-    id: string;
-    text: string;
-    imageUrl?: string;
+function generateAdminKey(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 32; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
-interface Poll {
-    id: string;
-    adminKey: string;
-    title: string;
-    description?: string;
-    pollType: string;
-    options: PollOption[];
-    settings: {
-        hideResults: boolean;
-        allowMultiple: boolean;
-    };
-    votes: any[];
-    createdAt: string;
-    voteCount: number;
-    tier: string;
-    theme?: string;
-    buttonText?: string;
-    maxResponses: number;
-    expiresAt?: string;
-}
-
-// Tier configuration for max responses and duration
-const TIER_LIMITS = {
-    free: { maxResponses: 100, durationDays: 30 },
-    quick_poll: { maxResponses: 500, durationDays: 7 },
-    event_poll: { maxResponses: 2000, durationDays: 30 },
-    pro_monthly: { maxResponses: 2000, durationDays: null },
-    pro_yearly: { maxResponses: 2000, durationDays: null },
-    pro_plus_monthly: { maxResponses: 5000, durationDays: null },
-    pro_plus_yearly: { maxResponses: 5000, durationDays: null },
-};
-
-// Generate a short, readable ID (8 characters)
-const generateShortId = (): string => {
-    const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-};
-
-// Generate admin key (16 characters)
-const generateAdminKey = (): string => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 16; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-};
-
-// Generate option ID (8 characters)
-const generateOptionId = (): string => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+// Tier limits and features
+const TIER_CONFIG: Record<string, {
+  maxResponses: number;
+  expiresInDays: number;
+  features: string[];
+}> = {
+  free: {
+    maxResponses: 100,
+    expiresInDays: 30,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
+  },
+  starter: {
+    maxResponses: 500,
+    expiresInDays: 7,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
+  },
+  pro_event: {
+    maxResponses: 2000,
+    expiresInDays: 30,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
+  },
+  unlimited: {
+    maxResponses: 10000,
+    expiresInDays: 365,
+    features: ['all'],
+  },
 };
 
 export const handler: Handler = async (event) => {
-    // Debug logging
-    console.log('vg-create called:', event.httpMethod, event.path);
-    
-    // CORS headers
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Content-Type': 'application/json'
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { question, options, pollType, settings, tier = 'free' } = body;
+
+    // Validation
+    if (!question || typeof question !== 'string') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Question is required' }),
+      };
+    }
+
+    if (!options || !Array.isArray(options) || options.length < 2) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'At least 2 options are required' }),
+      };
+    }
+
+    // Get tier config
+    const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
+
+    // Validate poll type access
+    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({ 
+          error: `Poll type "${pollType}" is not available in your tier`,
+          requiredTier: Object.keys(TIER_CONFIG).find(t => 
+            TIER_CONFIG[t].features.includes(pollType) || TIER_CONFIG[t].features[0] === 'all'
+          ),
+        }),
+      };
+    }
+
+    // Generate IDs
+    const pollId = generateId(8);
+    const adminKey = generateAdminKey();
+
+    // Calculate expiry
+    const expiresAt = new Date(
+      Date.now() + tierConfig.expiresInDays * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+    // Create poll object
+    const poll = {
+      id: pollId,
+      adminKey,
+      question: question.trim(),
+      options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
+        id: `opt_${i}`,
+        text: o.trim(),
+      })),
+      pollType: pollType || 'multiple_choice',
+      settings: {
+        allowMultiple: settings?.allowMultiple || false,
+        hideResults: settings?.hideResults || false,
+        requireNames: settings?.requireNames || false,
+        endDate: settings?.endDate || null,
+      },
+      tier,
+      maxResponses: tierConfig.maxResponses,
+      expiresAt,
+      createdAt: new Date().toISOString(),
+      votes: [],
+      responseCount: 0,
+      status: 'active',
     };
 
-    // Handle preflight
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 204, headers, body: '' };
-    }
+    // Store in Netlify Blobs
+    const store = getStore('votegenerator-polls');
+    await store.setJSON(pollId, poll);
 
-    if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
-    }
-
-    try {
-        const body: CreatePollRequest = JSON.parse(event.body || '{}');
-
-        // Validation
-        if (!body.title || typeof body.title !== 'string' || body.title.trim().length === 0) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Please add a title for your poll' })
-            };
-        }
-
-        if (!Array.isArray(body.options) || body.options.length < 2) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Please add at least 2 options' })
-            };
-        }
-
-        if (body.options.length > 20) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Maximum 20 options allowed' })
-            };
-        }
-
-        // Clean up options
-        const validOptions = body.options
-            .map(opt => (typeof opt === 'string' ? opt.trim() : ''))
-            .filter(opt => opt.length > 0 && opt.length <= 200);
-
-        if (validOptions.length < 2) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Please add at least 2 valid options' })
-            };
-        }
-
-        // Determine tier (default to free if not specified)
-        const tier = body.tier || 'free';
-        const tierLimits = TIER_LIMITS[tier as keyof typeof TIER_LIMITS] || TIER_LIMITS.free;
-
-        // Calculate expiration date based on tier
-        let expiresAt: string | undefined;
-        if (tierLimits.durationDays) {
-            const expDate = new Date();
-            expDate.setDate(expDate.getDate() + tierLimits.durationDays);
-            expiresAt = expDate.toISOString();
-        }
-
-        // Create poll
-        const pollId = generateShortId();
-        const adminKey = generateAdminKey();
-
-        const poll: Poll = {
-            id: pollId,
-            adminKey: adminKey,
-            title: body.title.trim().substring(0, 200),
-            description: body.description?.trim().substring(0, 500) || undefined,
-            pollType: body.pollType || 'ranked',
-            options: validOptions.map(text => ({
-                id: generateOptionId(),
-                text: text
-            })),
-            settings: {
-                hideResults: Boolean(body.settings?.hideResults),
-                allowMultiple: Boolean(body.settings?.allowMultiple)
-            },
-            votes: [],
-            createdAt: new Date().toISOString(),
-            voteCount: 0,
-            tier: tier,
-            theme: body.theme,
-            buttonText: body.buttonText,
-            maxResponses: tierLimits.maxResponses,
-            expiresAt: expiresAt
-        };
-
-        // Store using Netlify Blobs
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        
-        await store.setJSON(pollId, poll);
-
-        console.log(`Poll created: ${pollId}, type: ${poll.pollType}, tier: ${tier}`);
-
-        return {
-            statusCode: 201,
-            headers,
-            body: JSON.stringify({
-                id: pollId,
-                adminKey: adminKey,
-                tier: tier,
-                maxResponses: tierLimits.maxResponses,
-                expiresAt: expiresAt
-            })
-        };
-
-    } catch (error) {
-        console.error('Error creating poll:', error);
-        
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ 
-                error: 'Something went wrong. Please try again.',
-                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-            })
-        };
-    }
+    // Return success response
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        pollId,
+        adminKey,
+        voteUrl: `/vote/${pollId}`,
+        adminUrl: `/admin/${pollId}/${adminKey}`,
+        resultsUrl: `/results/${pollId}`,
+        tier,
+        maxResponses: tierConfig.maxResponses,
+        expiresAt,
+      }),
+    };
+  } catch (error) {
+    console.error('Create poll error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Failed to create poll',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      }),
+    };
+  }
 };

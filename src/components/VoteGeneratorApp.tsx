@@ -7,6 +7,7 @@ import CheckoutSuccess from './CheckoutSuccess';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+import AdminDashboard from './AdminDashboard';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -285,10 +286,12 @@ const VoteGeneratorApp: React.FC = () => {
     return (
         <div className="min-h-screen pb-10">
             {/* ROUTE: /ad-wall - render AdWall component */}
-            {window.location.pathname.startsWith('/ad-wall') ? (
-                <AdWall />
+           {window.location.pathname.startsWith('/ad-wall') ? (
+            <AdWall />
             ) : window.location.pathname.startsWith('/checkout/success') ? (
-                <CheckoutSuccess />
+            <CheckoutSuccess />
+            ) : window.location.pathname === '/admin' ? (
+            <AdminDashboard />
             ) : (
             <>
             {/* Header */}

@@ -1,17 +1,23 @@
 // ============================================================================
-// AdminDashboard.tsx - Complete working version
+// AdminDashboard.tsx - Complete with search, pagination, draft/live
 // Location: src/components/AdminDashboard.tsx
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     BarChart3, Plus, Copy, Check, ExternalLink, Trash2,
     Crown, Loader2, Clock, Users, LayoutDashboard,
     Calendar, Sparkles, AlertCircle, PlusCircle,
     Zap, Share2, Settings, X, CheckCircle, Link2,
-    Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp, Home
+    Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
+    Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
+    Home
 } from 'lucide-react';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface UserPoll {
     id: string;
@@ -20,6 +26,8 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
+    status?: 'draft' | 'live';  // For Starter/Pro polls
+    expiresAt?: string;
 }
 
 interface UserSession {
@@ -31,7 +39,12 @@ interface UserSession {
     hasPin?: boolean;
 }
 
-// Tier configuration
+// ============================================================================
+// Configuration
+// ============================================================================
+
+const POLLS_PER_PAGE = 10;
+
 const TIER_CONFIG: Record<string, {
     label: string;
     gradient: string;
@@ -40,6 +53,7 @@ const TIER_CONFIG: Record<string, {
     icon: React.ReactNode;
     maxPolls: number;
     activeDays: number;
+    requiresActivation: boolean; // Does this tier need draft→live flow?
     features: { name: string; included: boolean }[];
 }> = {
     free: {
@@ -50,14 +64,13 @@ const TIER_CONFIG: Record<string, {
         icon: <BarChart3 size={16} />,
         maxPolls: 1,
         activeDays: 7,
+        requiresActivation: false,
         features: [
             { name: '6 poll types', included: true },
             { name: '50 responses', included: true },
             { name: '7 days active', included: true },
-            { name: 'QR code sharing', included: true },
             { name: 'Visual polls', included: false },
             { name: 'Export to CSV', included: false },
-            { name: 'PIN protection', included: false },
         ]
     },
     starter: {
@@ -68,13 +81,13 @@ const TIER_CONFIG: Record<string, {
         icon: <Zap size={16} />,
         maxPolls: 1,
         activeDays: 30,
+        requiresActivation: true,
         features: [
             { name: '6 poll types', included: true },
             { name: '500 responses', included: true },
             { name: '30 days active', included: true },
             { name: 'Export to CSV', included: true },
             { name: 'Visual polls', included: false },
-            { name: 'PIN protection', included: false },
         ]
     },
     pro_event: {
@@ -85,13 +98,12 @@ const TIER_CONFIG: Record<string, {
         icon: <Crown size={16} />,
         maxPolls: 3,
         activeDays: 60,
+        requiresActivation: true,
         features: [
             { name: '7 poll types (+ Visual)', included: true },
             { name: '2,000 responses', included: true },
             { name: '60 days active', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'PIN protection', included: false },
-            { name: 'Team tokens', included: false },
         ]
     },
     unlimited: {
@@ -102,6 +114,7 @@ const TIER_CONFIG: Record<string, {
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
         activeDays: 365,
+        requiresActivation: false, // Unlimited doesn't need confirmation
         features: [
             { name: '7 poll types (+ Visual)', included: true },
             { name: '5,000 responses/poll', included: true },
@@ -113,14 +126,26 @@ const TIER_CONFIG: Record<string, {
     },
 };
 
+// ============================================================================
+// Main Component
+// ============================================================================
+
 const AdminDashboard: React.FC = () => {
     const [session, setSession] = useState<UserSession | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedDashboard, setCopiedDashboard] = useState(false);
+    
+    // UI State
     const [showSettings, setShowSettings] = useState(false);
     const [showAccessPanel, setShowAccessPanel] = useState(true);
+    const [showPinSetup, setShowPinSetup] = useState(false);
+    const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
+    
+    // Search & Pagination
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Get token from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -142,14 +167,12 @@ const AdminDashboard: React.FC = () => {
 
             const sessionData: UserSession = JSON.parse(stored);
 
-            // Validate token if provided in URL
             if (urlToken && sessionData.dashboardToken !== urlToken) {
                 setError('Invalid dashboard link. The token does not match.');
                 setLoading(false);
                 return;
             }
 
-            // Check expiration
             if (sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date()) {
                 setError('Your plan has expired. Please renew to continue.');
                 setLoading(false);
@@ -164,6 +187,30 @@ const AdminDashboard: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Filtered and paginated polls
+    const filteredPolls = useMemo(() => {
+        if (!session) return [];
+        const polls = session.polls || [];
+        if (!searchQuery.trim()) return polls;
+        const query = searchQuery.toLowerCase();
+        return polls.filter(p => 
+            p.title.toLowerCase().includes(query) ||
+            p.type?.toLowerCase().includes(query)
+        );
+    }, [session, searchQuery]);
+
+    const totalPages = Math.ceil(filteredPolls.length / POLLS_PER_PAGE);
+    const paginatedPolls = useMemo(() => {
+        const start = (currentPage - 1) * POLLS_PER_PAGE;
+        return filteredPolls.slice(start, start + POLLS_PER_PAGE);
+    }, [filteredPolls, currentPage]);
+
+    // Count live polls (for Starter/Pro limit)
+    const livePolls = useMemo(() => {
+        if (!session) return [];
+        return (session.polls || []).filter(p => p.status === 'live' || !session.tier.match(/starter|pro_event/));
+    }, [session]);
 
     const getDashboardUrl = () => {
         if (!session?.dashboardToken) return window.location.origin + '/admin';
@@ -194,6 +241,22 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleGoLive = async (pollId: string) => {
+        if (!session) return;
+        
+        // Update poll status to live
+        const updatedPolls = session.polls.map(p => 
+            p.id === pollId ? { ...p, status: 'live' as const } : p
+        );
+        const updated = { ...session, polls: updatedPolls };
+        localStorage.setItem('vg_user_session', JSON.stringify(updated));
+        setSession(updated);
+        setShowGoLiveModal(null);
+        
+        // TODO: Call backend to activate poll
+        // await fetch('/.netlify/functions/vg-activate-poll', { ... });
+    };
+
     const handleRegenerateToken = () => {
         if (!session) return;
         if (!confirm('Generate new dashboard link? Your old link will stop working.')) return;
@@ -206,8 +269,6 @@ const AdminDashboard: React.FC = () => {
         
         const updated = { ...session, dashboardToken: newToken };
         localStorage.setItem('vg_user_session', JSON.stringify(updated));
-        setSession(updated);
-        setShowSettings(false);
         window.location.href = `/admin?token=${newToken}`;
     };
 
@@ -218,6 +279,10 @@ const AdminDashboard: React.FC = () => {
     const canCreateMorePolls = () => {
         if (!session) return false;
         const config = TIER_CONFIG[session.tier];
+        // For Starter/Pro, only count LIVE polls toward the limit
+        if (config.requiresActivation) {
+            return livePolls.length < config.maxPolls;
+        }
         return session.polls.length < config.maxPolls;
     };
 
@@ -241,16 +306,10 @@ const AdminDashboard: React.FC = () => {
                     <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
                     <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
                     <div className="flex gap-3">
-                        <a
-                            href="/recover"
-                            className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center"
-                        >
+                        <a href="/recover" className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center">
                             Recover Link
                         </a>
-                        <button
-                            onClick={goHome}
-                            className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition"
-                        >
+                        <button onClick={goHome} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">
                             Go Home
                         </button>
                     </div>
@@ -264,6 +323,7 @@ const AdminDashboard: React.FC = () => {
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
     const isUnlimited = tier === 'unlimited';
+    const showSearch = isUnlimited && polls.length > 5;
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
@@ -271,15 +331,7 @@ const AdminDashboard: React.FC = () => {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                     <button onClick={goHome} className="flex items-center gap-3 hover:opacity-80 transition">
-                        <img 
-                            src="/logo.svg" 
-                            alt="VoteGenerator" 
-                            className="w-10 h-10" 
-                            onError={(e) => { 
-                                const img = e.target as HTMLImageElement;
-                                img.style.display = 'none'; 
-                            }} 
-                        />
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
                         <div className={`ml-2 px-3 py-1 bg-gradient-to-r ${config.gradient} text-white rounded-full text-xs font-bold flex items-center gap-1.5`}>
                             {config.icon} {config.label}
@@ -287,19 +339,12 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-3">
                         {tier !== 'unlimited' && (
-                            <a 
-                                href="/#pricing" 
-                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition flex items-center gap-2"
-                            >
+                            <a href="/#pricing" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition flex items-center gap-2">
                                 <Sparkles size={16} /> Upgrade
                             </a>
                         )}
                         {isUnlimited && (
-                            <button 
-                                onClick={() => setShowSettings(true)}
-                                className="p-2 hover:bg-slate-100 rounded-lg transition"
-                                title="Settings"
-                            >
+                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
                         )}
@@ -312,11 +357,7 @@ const AdminDashboard: React.FC = () => {
                     {/* Main Content */}
                     <div className="flex-1">
                         {/* Save Dashboard Link Banner */}
-                        <motion.div 
-                            initial={{ opacity: 0, y: -10 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            className="mb-6"
-                        >
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                             <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
                                 <div className="flex items-start justify-between gap-4 flex-wrap">
                                     <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -325,21 +366,14 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="font-bold text-amber-800">Save Your Dashboard Link!</p>
-                                            <p className="text-sm text-amber-600 mb-2">
-                                                Bookmark this unique URL — it's the only way to access your polls.
-                                            </p>
+                                            <p className="text-sm text-amber-600 mb-2">Bookmark this — it's the only way to access your polls.</p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-xs text-amber-700 font-mono truncate">
-                                                    {getDashboardUrl()}
-                                                </code>
+                                                <code className="text-xs text-amber-700 font-mono truncate">{getDashboardUrl()}</code>
                                             </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={handleCopyDashboardLink}
-                                        className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0"
-                                    >
+                                    <button onClick={handleCopyDashboardLink} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
                                         {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
                                         {copiedDashboard ? 'Copied!' : 'Copy'}
                                     </button>
@@ -347,115 +381,184 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         </motion.div>
 
-                        {/* Dashboard Header */}
-                        <div className="flex items-center justify-between mb-6">
+                        {/* Dashboard Header with Search */}
+                        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
                                     <LayoutDashboard size={28} className="text-indigo-600" /> My Dashboard
                                 </h1>
                                 <p className="text-slate-500 mt-1">
-                                    {polls.length === 0 
-                                        ? 'Create your first poll to get started' 
-                                        : `${polls.length} of ${config.maxPolls === Infinity ? '∞' : config.maxPolls} polls`
+                                    {polls.length === 0 ? 'Create your first poll' : 
+                                     config.requiresActivation 
+                                        ? `${livePolls.length} of ${config.maxPolls} polls active`
+                                        : `${polls.length} poll${polls.length !== 1 ? 's' : ''}`
                                     }
                                 </p>
                             </div>
-                            {polls.length > 0 && canCreateMorePolls() && (
-                                <button
-                                    onClick={goHome}
-                                    className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}
-                                >
-                                    <Plus size={18} /> New Poll
-                                </button>
-                            )}
+                            <div className="flex items-center gap-3">
+                                {/* Search bar for Unlimited with many polls */}
+                                {showSearch && (
+                                    <div className="relative">
+                                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                            placeholder="Search polls..."
+                                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 w-64"
+                                        />
+                                    </div>
+                                )}
+                                {polls.length > 0 && canCreateMorePolls() && (
+                                    <button onClick={goHome} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
+                                        <Plus size={18} /> New Poll
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Polls List or Empty State */}
                         {polls.length === 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12"
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12">
                                 <div className="text-center">
                                     <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
                                         <PlusCircle size={40} className="text-white" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Create Your First Poll</h2>
                                     <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                                        Welcome to VoteGenerator! Get started by creating a poll.
+                                        {config.requiresActivation 
+                                            ? "Create a poll and preview it. When you're happy, go live to start collecting votes."
+                                            : "Welcome to VoteGenerator! Get started by creating a poll."
+                                        }
                                     </p>
-                                    <button
-                                        onClick={goHome}
-                                        className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}
-                                    >
+                                    <button onClick={goHome} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}>
                                         <Plus size={22} /> Create New Poll
                                     </button>
                                 </div>
                             </motion.div>
                         ) : (
-                            <div className="space-y-4">
-                                {polls.map((poll, index) => (
-                                    <motion.div
-                                        key={poll.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition"
-                                    >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-slate-800 text-lg truncate">{poll.title}</h3>
-                                                <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Clock size={14} />
-                                                        {new Date(poll.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Users size={14} />
-                                                        {poll.responseCount || 0} votes
-                                                    </span>
-                                                </div>
-                                            </div>
+                            <>
+                                <div className="space-y-4">
+                                    {paginatedPolls.map((poll, index) => {
+                                        const isDraft = config.requiresActivation && poll.status !== 'live';
+                                        return (
+                                            <motion.div
+                                                key={poll.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.03 }}
+                                                className={`bg-white rounded-xl border p-5 hover:shadow-md transition ${
+                                                    isDraft ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h3 className="font-semibold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                            {isDraft && (
+                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                    <FileEdit size={12} /> Draft
+                                                                </span>
+                                                            )}
+                                                            {!isDraft && config.requiresActivation && (
+                                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                    <Rocket size={12} /> Live
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Clock size={14} />
+                                                                {new Date(poll.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Users size={14} />
+                                                                {poll.responseCount || 0} votes
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleCopyLink(poll, 'vote')}
-                                                    className="p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition"
-                                                    title="Copy vote link"
-                                                >
-                                                    {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
-                                                </button>
-                                                <a
-                                                    href={`/#id=${poll.id}&admin=${poll.adminKey}`}
-                                                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                                                    title="Open admin view"
-                                                >
-                                                    <ExternalLink size={18} />
-                                                </a>
-                                                <button
-                                                    onClick={() => handleDeletePoll(poll)}
-                                                    className="p-2.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition"
-                                                    title="Remove from dashboard"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                                    <div className="flex items-center gap-2">
+                                                        {isDraft ? (
+                                                            <button
+                                                                onClick={() => setShowGoLiveModal(poll.id)}
+                                                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
+                                                            >
+                                                                <Rocket size={16} /> Go Live
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleCopyLink(poll, 'vote')}
+                                                                className="p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition"
+                                                                title="Copy vote link"
+                                                            >
+                                                                {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
+                                                            </button>
+                                                        )}
+                                                        <a
+                                                            href={`/#id=${poll.id}&admin=${poll.adminKey}`}
+                                                            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
+                                                            title={isDraft ? "Preview & Edit" : "Open admin view"}
+                                                        >
+                                                            <ExternalLink size={18} />
+                                                        </a>
+                                                        <button
+                                                            onClick={() => handleDeletePoll(poll)}
+                                                            className="p-2.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition"
+                                                            title="Remove from dashboard"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="mt-6 flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <span className="px-4 py-2 text-sm text-slate-600">
+                                            Page {currentPage} of {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Create more button */}
+                                {canCreateMorePolls() && (
+                                    <div className="mt-6 text-center">
+                                        <button onClick={goHome} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                                            <PlusCircle size={20} /> Create Another Poll
+                                        </button>
+                                    </div>
+                                )}
 
                                 {!canCreateMorePolls() && tier !== 'unlimited' && (
                                     <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
                                         <p className="text-slate-600 mb-2">
-                                            You've used all {config.maxPolls} poll{config.maxPolls > 1 ? 's' : ''}.
+                                            You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
                                         </p>
                                         <a href="/#pricing" className="text-purple-600 font-medium hover:text-purple-700">
                                             Upgrade for more →
                                         </a>
                                     </div>
                                 )}
-                            </div>
+                            </>
                         )}
 
                         {/* Feature Cards */}
@@ -481,10 +584,7 @@ const AdminDashboard: React.FC = () => {
                         {/* Unlimited: Security & Access */}
                         {isUnlimited && (
                             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <button
-                                    onClick={() => setShowAccessPanel(!showAccessPanel)}
-                                    className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
-                                >
+                                <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                                             <Shield size={20} className="text-amber-600" />
@@ -499,47 +599,29 @@ const AdminDashboard: React.FC = () => {
 
                                 {showAccessPanel && (
                                     <div className="p-4 pt-0 border-t border-slate-100">
-                                        {/* PIN Protection */}
                                         <div className="mb-4 p-3 bg-slate-50 rounded-lg">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
                                                     <span className="text-sm font-medium text-slate-700">Admin PIN</span>
-                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                                        session.hasPin 
-                                                            ? 'bg-emerald-100 text-emerald-700' 
-                                                            : 'bg-slate-200 text-slate-600'
-                                                    }`}>
+                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
                                                         {session.hasPin ? 'Active' : 'Off'}
                                                     </span>
                                                 </div>
-                                                <button
-                                                    onClick={() => setShowSettings(true)}
-                                                    className="text-xs text-amber-600 hover:text-amber-700 font-medium"
-                                                >
+                                                <button onClick={() => setShowPinSetup(true)} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
                                                     {session.hasPin ? 'Change' : 'Set up'}
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {/* Create Token Buttons */}
                                         <div className="flex gap-2">
-                                            <button
-                                                onClick={() => setShowSettings(true)}
-                                                className="flex-1 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1"
-                                            >
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1">
                                                 <Plus size={14} /> Admin Token
                                             </button>
-                                            <button
-                                                onClick={() => setShowSettings(true)}
-                                                className="flex-1 py-2 border-2 border-dashed border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center justify-center gap-1"
-                                            >
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center justify-center gap-1">
                                                 <Plus size={14} /> Viewer Token
                                             </button>
                                         </div>
-                                        <p className="text-xs text-slate-400 text-center mt-3">
-                                            Share access without sharing your master key
-                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -557,21 +639,14 @@ const AdminDashboard: React.FC = () => {
                                 <div className="space-y-2 mb-4">
                                     {config.features.map((feature, i) => (
                                         <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
-                                            {feature.included ? (
-                                                <CheckCircle size={16} className="text-emerald-500" />
-                                            ) : (
-                                                <X size={16} className="text-red-400" />
-                                            )}
+                                            {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
                                             <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
                                         </div>
                                     ))}
                                 </div>
 
                                 {tier !== 'unlimited' && (
-                                    <a
-                                        href="/#pricing"
-                                        className="block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium text-center transition mt-3"
-                                    >
+                                    <a href="/#pricing" className="block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium text-center transition mt-3">
                                         Upgrade Plan
                                     </a>
                                 )}
@@ -593,6 +668,12 @@ const AdminDashboard: React.FC = () => {
                                     <span className="text-slate-500 text-sm">Total Polls</span>
                                     <span className="font-bold text-slate-800">{polls.length}</span>
                                 </div>
+                                {config.requiresActivation && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-slate-500 text-sm">Live Polls</span>
+                                        <span className="font-bold text-emerald-600">{livePolls.length}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-500 text-sm">Total Votes</span>
                                     <span className="font-bold text-slate-800">{totalVotes}</span>
@@ -606,34 +687,18 @@ const AdminDashboard: React.FC = () => {
             {/* Settings Modal */}
             <AnimatePresence>
                 {showSettings && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-                        onClick={() => setShowSettings(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                        >
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
                             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
                                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                    <Settings size={24} className="text-slate-600" />
-                                    Settings
+                                    <Settings size={24} className="text-slate-600" /> Settings
                                 </h2>
-                                <button 
-                                    onClick={() => setShowSettings(false)} 
-                                    className="p-2 hover:bg-slate-100 rounded-lg transition"
-                                >
+                                <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-lg transition">
                                     <X size={20} className="text-slate-500" />
                                 </button>
                             </div>
                             <div className="p-6 space-y-4">
-                                {/* PIN Protection Setting */}
+                                {/* PIN Protection */}
                                 <div className="p-4 bg-slate-50 rounded-xl">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -643,18 +708,13 @@ const AdminDashboard: React.FC = () => {
                                                 <p className="text-xs text-slate-500">Add a 6-digit PIN to admin links</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                alert('PIN Setup feature coming soon!\n\nThis will open a modal where you can set a 6-digit PIN to protect your admin links.');
-                                            }}
-                                            className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition"
-                                        >
+                                        <button onClick={() => { setShowSettings(false); setShowPinSetup(true); }} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">
                                             {session?.hasPin ? 'Change' : 'Set PIN'}
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Create Access Tokens */}
+                                {/* Team Access Tokens */}
                                 <div className="p-4 bg-slate-50 rounded-xl">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -664,12 +724,7 @@ const AdminDashboard: React.FC = () => {
                                                 <p className="text-xs text-slate-500">Share view/edit access with others</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                alert('Token Management feature coming soon!\n\nThis will let you create Admin tokens (can edit) and Viewer tokens (read-only).');
-                                            }}
-                                            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition"
-                                        >
+                                        <button onClick={() => alert('Token management coming in next update!')} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
                                             Manage
                                         </button>
                                     </div>
@@ -685,10 +740,7 @@ const AdminDashboard: React.FC = () => {
                                                 <p className="text-xs text-slate-500">Generate a new unique URL</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={handleRegenerateToken}
-                                            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition"
-                                        >
+                                        <button onClick={handleRegenerateToken} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
                                             Regenerate
                                         </button>
                                     </div>
@@ -698,7 +750,222 @@ const AdminDashboard: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* PIN Setup Modal */}
+            <AnimatePresence>
+                {showPinSetup && (
+                    <PinSetupModalInline
+                        isOpen={showPinSetup}
+                        hasExistingPin={!!session?.hasPin}
+                        onClose={() => setShowPinSetup(false)}
+                        onSuccess={(hasPin) => {
+                            if (session) {
+                                const updated = { ...session, hasPin };
+                                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                                setSession(updated);
+                            }
+                            setShowPinSetup(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Go Live Modal */}
+            <AnimatePresence>
+                {showGoLiveModal && (
+                    <GoLiveModalInline
+                        isOpen={!!showGoLiveModal}
+                        pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
+                        tier={tier as 'starter' | 'pro_event'}
+                        pollsUsed={livePolls.length}
+                        pollsMax={config.maxPolls}
+                        activeDays={config.activeDays}
+                        onClose={() => setShowGoLiveModal(null)}
+                        onConfirm={() => handleGoLive(showGoLiveModal)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
+    );
+};
+
+// ============================================================================
+// Inline PIN Setup Modal (self-contained)
+// ============================================================================
+
+const PinSetupModalInline: React.FC<{
+    isOpen: boolean;
+    hasExistingPin: boolean;
+    onClose: () => void;
+    onSuccess: (hasPin: boolean) => void;
+}> = ({ isOpen, hasExistingPin, onClose, onSuccess }) => {
+    const [pin, setPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+    const [step, setStep] = useState<'enter' | 'confirm'>('enter');
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (step === 'enter') {
+            if (pin.length !== 6 || !/^\d+$/.test(pin)) {
+                setError('PIN must be exactly 6 digits');
+                return;
+            }
+            setStep('confirm');
+            setError('');
+        } else {
+            if (pin !== confirmPin) {
+                setError('PINs do not match');
+                setConfirmPin('');
+                return;
+            }
+            // Save PIN (in real implementation, hash and send to backend)
+            onSuccess(true);
+        }
+    };
+
+    const handleRemove = () => {
+        if (confirm('Remove PIN protection?')) {
+            onSuccess(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Lock size={24} />
+                            <h2 className="font-bold text-lg">{hasExistingPin ? 'Change PIN' : 'Set Admin PIN'}</h2>
+                        </div>
+                        <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={20} /></button>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <p className="text-slate-600 text-sm mb-4">
+                        {step === 'enter' ? 'Enter a 6-digit PIN to protect your admin links:' : 'Confirm your PIN:'}
+                    </p>
+                    <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={step === 'enter' ? pin : confirmPin}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            step === 'enter' ? setPin(val) : setConfirmPin(val);
+                            setError('');
+                        }}
+                        placeholder="••••••"
+                        className="w-full text-center text-2xl tracking-[0.5em] font-bold py-4 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        autoFocus
+                    />
+                    {error && <p className="text-red-600 text-sm mt-2 text-center">{error}</p>}
+                    <div className="mt-6 flex gap-3">
+                        {hasExistingPin && step === 'enter' && (
+                            <button onClick={handleRemove} className="px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition">
+                                Remove
+                            </button>
+                        )}
+                        {step === 'confirm' && (
+                            <button onClick={() => { setStep('enter'); setConfirmPin(''); }} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">
+                                Back
+                            </button>
+                        )}
+                        <button onClick={handleSubmit} disabled={step === 'enter' ? pin.length !== 6 : confirmPin.length !== 6} className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50">
+                            {step === 'enter' ? 'Continue' : 'Set PIN'}
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Go Live Modal (self-contained)
+// ============================================================================
+
+const GoLiveModalInline: React.FC<{
+    isOpen: boolean;
+    pollTitle: string;
+    tier: 'starter' | 'pro_event';
+    pollsUsed: number;
+    pollsMax: number;
+    activeDays: number;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
+    const [confirmed, setConfirmed] = useState(false);
+    const isLastPoll = pollsMax - pollsUsed === 1;
+    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-600';
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className={`bg-gradient-to-r ${gradient} p-6 text-white`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                            <Rocket size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Ready to Go Live?</h2>
+                            <p className="text-white/80 text-sm">Launch for real voting</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <div className="mb-4 p-4 bg-slate-50 rounded-xl">
+                        <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Poll</p>
+                        <p className="font-bold text-slate-800 truncate">{pollTitle}</p>
+                    </div>
+
+                    <div className="mb-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle size={18} className="text-emerald-500" />
+                            <span className="text-slate-700 text-sm">Real voting will be enabled</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Calendar size={18} className="text-blue-500" />
+                            <span className="text-slate-700 text-sm">{activeDays}-day countdown starts</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Lock size={18} className="text-amber-500" />
+                            <span className="text-slate-700 text-sm">Uses 1 of {pollsMax} poll credits</span>
+                        </div>
+                    </div>
+
+                    <div className={`mb-4 p-4 rounded-xl ${isLastPoll ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={20} className={isLastPoll ? 'text-red-500' : 'text-amber-500'} />
+                            <div>
+                                <p className={`font-semibold ${isLastPoll ? 'text-red-700' : 'text-amber-700'}`}>
+                                    {isLastPoll ? '⚠️ This is your last poll!' : 'This cannot be undone'}
+                                </p>
+                                <p className={`text-sm ${isLastPoll ? 'text-red-600' : 'text-amber-600'}`}>
+                                    {isLastPoll ? 'After this, upgrade for more.' : 'Cannot revert to draft after going live.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label className="flex items-start gap-3 mb-6 cursor-pointer">
+                        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600" />
+                        <span className="text-sm text-slate-600">I understand this will use 1 poll credit and cannot be undone.</span>
+                    </label>
+
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
+                        <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
+                            <Rocket size={18} /> Go Live
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
     );
 };
 

@@ -1,14 +1,16 @@
 // ============================================================================
-// AdminDashboard - Updated with all feedback
+// AdminDashboard.tsx - Complete working version
+// Location: src/components/AdminDashboard.tsx
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     BarChart3, Plus, Copy, Check, ExternalLink, Trash2,
     Crown, Loader2, Clock, Users, LayoutDashboard,
     Calendar, Sparkles, AlertCircle, PlusCircle,
-    Zap, Share2, Settings, X, CheckCircle, Link2
+    Zap, Share2, Settings, X, CheckCircle, Link2,
+    Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp, Home
 } from 'lucide-react';
 
 interface UserPoll {
@@ -21,123 +23,92 @@ interface UserPoll {
 }
 
 interface UserSession {
+    dashboardToken: string;
     tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
     expiresAt?: string;
     polls: UserPoll[];
     createdAt: string;
+    hasPin?: boolean;
 }
 
-// Tier configuration with accurate details
+// Tier configuration
 const TIER_CONFIG: Record<string, {
     label: string;
-    tagline: string;
     gradient: string;
     bgGradient: string;
     headerBg: string;
     icon: React.ReactNode;
-    maxPolls: number; // Polls from this dashboard
-    maxResponses: number;
+    maxPolls: number;
     activeDays: number;
-    pollTypes: number;
     features: { name: string; included: boolean }[];
 }> = {
     free: {
         label: 'Free',
-        tagline: 'Basic polling',
         gradient: 'from-slate-500 to-slate-600',
         bgGradient: 'from-slate-50 to-slate-100',
         headerBg: 'bg-slate-100',
         icon: <BarChart3 size={16} />,
         maxPolls: 1,
-        maxResponses: 50,
         activeDays: 7,
-        pollTypes: 6,
         features: [
             { name: '6 poll types', included: true },
             { name: '50 responses', included: true },
             { name: '7 days active', included: true },
             { name: 'QR code sharing', included: true },
-            { name: 'Real-time results', included: true },
             { name: 'Visual polls', included: false },
             { name: 'Export to CSV', included: false },
-            { name: 'Export PDF/PNG', included: false },
-            { name: 'Remove branding', included: false },
-            { name: 'Custom short link', included: false },
+            { name: 'PIN protection', included: false },
         ]
     },
     starter: {
         label: 'Starter',
-        tagline: 'For your next event',
         gradient: 'from-blue-500 to-indigo-600',
         bgGradient: 'from-blue-50 to-indigo-50',
         headerBg: 'bg-blue-50',
         icon: <Zap size={16} />,
         maxPolls: 1,
-        maxResponses: 500,
         activeDays: 30,
-        pollTypes: 6,
         features: [
             { name: '6 poll types', included: true },
             { name: '500 responses', included: true },
             { name: '30 days active', included: true },
-            { name: 'QR code sharing', included: true },
-            { name: 'Real-time results', included: true },
             { name: 'Export to CSV', included: true },
-            { name: 'Device breakdown', included: true },
             { name: 'Visual polls', included: false },
-            { name: 'Export PDF/PNG', included: false },
-            { name: 'Remove branding', included: false },
+            { name: 'PIN protection', included: false },
         ]
     },
     pro_event: {
         label: 'Pro Event',
-        tagline: 'For important events',
         gradient: 'from-purple-500 to-pink-500',
         bgGradient: 'from-purple-50 to-pink-50',
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: 3,
-        maxResponses: 2000,
         activeDays: 60,
-        pollTypes: 7,
         features: [
-            { name: '7 poll types (incl. Visual)', included: true },
+            { name: '7 poll types (+ Visual)', included: true },
             { name: '2,000 responses', included: true },
             { name: '60 days active', included: true },
-            { name: 'QR code sharing', included: true },
-            { name: 'Real-time results', included: true },
-            { name: 'Export to CSV', included: true },
-            { name: 'Export PDF & PNG', included: true },
-            { name: 'Remove VG branding', included: true },
-            { name: 'Custom short link', included: true },
-            { name: 'Upload your logo', included: false },
-            { name: 'Priority support', included: false },
+            { name: 'Export CSV/PDF/PNG', included: true },
+            { name: 'PIN protection', included: false },
+            { name: 'Team tokens', included: false },
         ]
     },
     unlimited: {
         label: 'Unlimited',
-        tagline: 'For power users',
         gradient: 'from-amber-500 to-orange-500',
         bgGradient: 'from-amber-50 to-orange-50',
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
-        maxResponses: 5000,
         activeDays: 365,
-        pollTypes: 7,
         features: [
-            { name: '7 poll types (incl. Visual)', included: true },
-            { name: '5,000 responses per poll', included: true },
+            { name: '7 poll types (+ Visual)', included: true },
+            { name: '5,000 responses/poll', included: true },
             { name: '1 year active', included: true },
-            { name: 'QR code sharing', included: true },
-            { name: 'Real-time results', included: true },
-            { name: 'Export to CSV', included: true },
-            { name: 'Export PDF & PNG', included: true },
-            { name: 'Remove VG branding', included: true },
-            { name: 'Custom short link', included: true },
-            { name: 'Upload your logo', included: true },
-            { name: 'Priority support', included: true },
-            { name: 'Unlimited premium polls', included: true },
+            { name: 'Export CSV/PDF/PNG', included: true },
+            { name: 'PIN protection', included: true },
+            { name: 'Team tokens (10)', included: true },
         ]
     },
 };
@@ -145,38 +116,59 @@ const TIER_CONFIG: Record<string, {
 const AdminDashboard: React.FC = () => {
     const [session, setSession] = useState<UserSession | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedDashboard, setCopiedDashboard] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showAccessPanel, setShowAccessPanel] = useState(true);
+
+    // Get token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
 
     useEffect(() => {
+        validateAndLoadSession();
+    }, []);
+
+    const validateAndLoadSession = () => {
         try {
             const stored = localStorage.getItem('vg_user_session');
-            if (stored) {
-                setSession(JSON.parse(stored));
-            } else {
-                const tier = localStorage.getItem('vg_purchased_tier');
-                if (tier && tier !== 'free') {
-                    const config = TIER_CONFIG[tier];
-                    const newSession: UserSession = {
-                        tier: tier as UserSession['tier'],
-                        expiresAt: new Date(Date.now() + config.activeDays * 24 * 60 * 60 * 1000).toISOString(),
-                        polls: [],
-                        createdAt: new Date().toISOString(),
-                    };
-                    localStorage.setItem('vg_user_session', JSON.stringify(newSession));
-                    setSession(newSession);
-                } else {
-                    // No paid session, redirect to home
-                    window.location.href = '/';
-                    return;
-                }
+            
+            if (!stored) {
+                setError('No session found. Please purchase a plan first.');
+                setLoading(false);
+                return;
             }
-        } catch {
-            window.location.href = '/';
-            return;
+
+            const sessionData: UserSession = JSON.parse(stored);
+
+            // Validate token if provided in URL
+            if (urlToken && sessionData.dashboardToken !== urlToken) {
+                setError('Invalid dashboard link. The token does not match.');
+                setLoading(false);
+                return;
+            }
+
+            // Check expiration
+            if (sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date()) {
+                setError('Your plan has expired. Please renew to continue.');
+                setLoading(false);
+                return;
+            }
+
+            setSession(sessionData);
+            setLoading(false);
+        } catch (err) {
+            console.error('Session load error:', err);
+            setError('Failed to load session. Please try again.');
+            setLoading(false);
         }
-        setLoading(false);
-    }, []);
+    };
+
+    const getDashboardUrl = () => {
+        if (!session?.dashboardToken) return window.location.origin + '/admin';
+        return `${window.location.origin}/admin?token=${session.dashboardToken}`;
+    };
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
         const url = type === 'admin'
@@ -188,7 +180,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     const handleCopyDashboardLink = () => {
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(getDashboardUrl());
         setCopiedDashboard(true);
         setTimeout(() => setCopiedDashboard(false), 2000);
     };
@@ -202,6 +194,23 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const handleRegenerateToken = () => {
+        if (!session) return;
+        if (!confirm('Generate new dashboard link? Your old link will stop working.')) return;
+        
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let newToken = '';
+        for (let i = 0; i < 16; i++) {
+            newToken += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        const updated = { ...session, dashboardToken: newToken };
+        localStorage.setItem('vg_user_session', JSON.stringify(updated));
+        setSession(updated);
+        setShowSettings(false);
+        window.location.href = `/admin?token=${newToken}`;
+    };
+
     const goHome = () => {
         window.location.href = '/';
     };
@@ -212,6 +221,7 @@ const AdminDashboard: React.FC = () => {
         return session.polls.length < config.maxPolls;
     };
 
+    // Loading state
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -220,12 +230,40 @@ const AdminDashboard: React.FC = () => {
         );
     }
 
-    if (!session) return null;
+    // Error state
+    if (error || !session) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={32} className="text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
+                    <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
+                    <div className="flex gap-3">
+                        <a
+                            href="/recover"
+                            className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center"
+                        >
+                            Recover Link
+                        </a>
+                        <button
+                            onClick={goHome}
+                            className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition"
+                        >
+                            Go Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const tier = session.tier;
     const config = TIER_CONFIG[tier];
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
+    const isUnlimited = tier === 'unlimited';
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
@@ -233,8 +271,15 @@ const AdminDashboard: React.FC = () => {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                     <button onClick={goHome} className="flex items-center gap-3 hover:opacity-80 transition">
-                        {/* Use SVG logo from public folder */}
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" />
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className="w-10 h-10" 
+                            onError={(e) => { 
+                                const img = e.target as HTMLImageElement;
+                                img.style.display = 'none'; 
+                            }} 
+                        />
                         <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
                         <div className={`ml-2 px-3 py-1 bg-gradient-to-r ${config.gradient} text-white rounded-full text-xs font-bold flex items-center gap-1.5`}>
                             {config.icon} {config.label}
@@ -242,13 +287,22 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <div className="flex items-center gap-3">
                         {tier !== 'unlimited' && (
-                            <a href="/#pricing" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition flex items-center gap-2">
+                            <a 
+                                href="/#pricing" 
+                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition flex items-center gap-2"
+                            >
                                 <Sparkles size={16} /> Upgrade
                             </a>
                         )}
-                        <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
-                            <Settings size={20} className="text-slate-500" />
-                        </button>
+                        {isUnlimited && (
+                            <button 
+                                onClick={() => setShowSettings(true)}
+                                className="p-2 hover:bg-slate-100 rounded-lg transition"
+                                title="Settings"
+                            >
+                                <Settings size={20} className="text-slate-500" />
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>
@@ -258,22 +312,26 @@ const AdminDashboard: React.FC = () => {
                     {/* Main Content */}
                     <div className="flex-1">
                         {/* Save Dashboard Link Banner */}
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            className="mb-6"
+                        >
                             <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-start gap-3">
+                                <div className="flex items-start justify-between gap-4 flex-wrap">
+                                    <div className="flex items-start gap-3 flex-1 min-w-0">
                                         <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
                                             <AlertCircle size={20} className="text-amber-600" />
                                         </div>
-                                        <div>
+                                        <div className="min-w-0 flex-1">
                                             <p className="font-bold text-amber-800">Save Your Dashboard Link!</p>
                                             <p className="text-sm text-amber-600 mb-2">
-                                                This URL is the only way to access your polls — bookmark it now!
+                                                Bookmark this unique URL — it's the only way to access your polls.
                                             </p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-xs text-amber-700 font-mono truncate max-w-[280px]">
-                                                    {window.location.href}
+                                                <code className="text-xs text-amber-700 font-mono truncate">
+                                                    {getDashboardUrl()}
                                                 </code>
                                             </div>
                                         </div>
@@ -283,7 +341,7 @@ const AdminDashboard: React.FC = () => {
                                         className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0"
                                     >
                                         {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedDashboard ? 'Copied!' : 'Copy URL'}
+                                        {copiedDashboard ? 'Copied!' : 'Copy'}
                                     </button>
                                 </div>
                             </div>
@@ -296,7 +354,10 @@ const AdminDashboard: React.FC = () => {
                                     <LayoutDashboard size={28} className="text-indigo-600" /> My Dashboard
                                 </h1>
                                 <p className="text-slate-500 mt-1">
-                                    {polls.length === 0 ? 'Create your first poll to get started' : `${polls.length} of ${config.maxPolls === Infinity ? '∞' : config.maxPolls} polls created`}
+                                    {polls.length === 0 
+                                        ? 'Create your first poll to get started' 
+                                        : `${polls.length} of ${config.maxPolls === Infinity ? '∞' : config.maxPolls} polls`
+                                    }
                                 </p>
                             </div>
                             {polls.length > 0 && canCreateMorePolls() && (
@@ -309,13 +370,12 @@ const AdminDashboard: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Content */}
+                        {/* Polls List or Empty State */}
                         {polls.length === 0 ? (
-                            /* Empty State - In a colored container */
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className={`bg-white border-2 border-dashed ${tier === 'pro_event' ? 'border-purple-200' : tier === 'starter' ? 'border-blue-200' : tier === 'unlimited' ? 'border-amber-200' : 'border-slate-200'} rounded-2xl p-12`}
+                                className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12"
                             >
                                 <div className="text-center">
                                     <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
@@ -323,7 +383,7 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Create Your First Poll</h2>
                                     <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                                        Welcome to VoteGenerator! Get started by creating a poll. It only takes 30 seconds.
+                                        Welcome to VoteGenerator! Get started by creating a poll.
                                     </p>
                                     <button
                                         onClick={goHome}
@@ -385,124 +445,148 @@ const AdminDashboard: React.FC = () => {
                                     </motion.div>
                                 ))}
 
-                                {/* Create More - if allowed */}
-                                {canCreateMorePolls() && (
-                                    <div className="mt-6 text-center py-4">
-                                        <button
-                                            onClick={goHome}
-                                            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium"
-                                        >
-                                            <PlusCircle size={20} />
-                                            Create Another Poll
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* At limit message */}
                                 {!canCreateMorePolls() && tier !== 'unlimited' && (
                                     <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
                                         <p className="text-slate-600 mb-2">
-                                            You've used all {config.maxPolls} poll{config.maxPolls > 1 ? 's' : ''} in your {config.label} plan.
+                                            You've used all {config.maxPolls} poll{config.maxPolls > 1 ? 's' : ''}.
                                         </p>
                                         <a href="/#pricing" className="text-purple-600 font-medium hover:text-purple-700">
-                                            Upgrade for more polls →
+                                            Upgrade for more →
                                         </a>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Feature Cards - Fixed height */}
+                        {/* Feature Cards */}
                         <div className="grid grid-cols-3 gap-4 mt-8">
                             {[
-                                { icon: BarChart3, title: '7 Poll Types', desc: 'From ranked choice to visual polls', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                                { icon: Users, title: 'Real-time Results', desc: 'Watch votes come in live', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { icon: Zap, title: 'Instant Setup', desc: 'No signup required for voters', color: 'text-amber-600', bg: 'bg-amber-50' },
+                                { icon: BarChart3, title: '7 Poll Types', desc: 'Multiple choice to visual', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                                { icon: Users, title: 'Real-time Results', desc: 'Watch votes live', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { icon: Zap, title: 'Instant Setup', desc: 'No signup for voters', color: 'text-amber-600', bg: 'bg-amber-50' },
                             ].map((item, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 + i * 0.1 }}
-                                    className="bg-white rounded-xl border border-slate-200 p-5 h-[140px] flex flex-col items-center justify-center text-center"
-                                >
-                                    <div className={`w-12 h-12 ${item.bg} rounded-xl flex items-center justify-center mb-3`}>
+                                <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 text-center">
+                                    <div className={`w-12 h-12 ${item.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}>
                                         <item.icon size={24} className={item.color} />
                                     </div>
-                                    <h3 className="font-bold text-slate-800">{item.title}</h3>
+                                    <h3 className="font-bold text-slate-800 text-sm">{item.title}</h3>
                                     <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
-                                </motion.div>
+                                </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Right Sidebar */}
                     <div className="w-full lg:w-80 space-y-6">
+                        {/* Unlimited: Security & Access */}
+                        {isUnlimited && (
+                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                <button
+                                    onClick={() => setShowAccessPanel(!showAccessPanel)}
+                                    className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                            <Shield size={20} className="text-amber-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="font-bold text-slate-800">Security & Access</h3>
+                                            <p className="text-xs text-slate-500">PIN & team tokens</p>
+                                        </div>
+                                    </div>
+                                    {showAccessPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                                </button>
+
+                                {showAccessPanel && (
+                                    <div className="p-4 pt-0 border-t border-slate-100">
+                                        {/* PIN Protection */}
+                                        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
+                                                    <span className="text-sm font-medium text-slate-700">Admin PIN</span>
+                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                                        session.hasPin 
+                                                            ? 'bg-emerald-100 text-emerald-700' 
+                                                            : 'bg-slate-200 text-slate-600'
+                                                    }`}>
+                                                        {session.hasPin ? 'Active' : 'Off'}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowSettings(true)}
+                                                    className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                                                >
+                                                    {session.hasPin ? 'Change' : 'Set up'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Create Token Buttons */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setShowSettings(true)}
+                                                className="flex-1 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1"
+                                            >
+                                                <Plus size={14} /> Admin Token
+                                            </button>
+                                            <button
+                                                onClick={() => setShowSettings(true)}
+                                                className="flex-1 py-2 border-2 border-dashed border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center justify-center gap-1"
+                                            >
+                                                <Plus size={14} /> Viewer Token
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-slate-400 text-center mt-3">
+                                            Share access without sharing your master key
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Plan Card */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="bg-white rounded-xl border border-slate-200 overflow-hidden"
-                        >
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                             <div className={`p-4 ${config.headerBg} border-b border-slate-200`}>
                                 <div className="flex items-center gap-2">
                                     {config.icon}
                                     <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
                                 </div>
-                                <p className="text-sm text-slate-500 mt-1">{config.tagline}</p>
                             </div>
                             <div className="p-4">
-                                {/* Features list with checkmarks and X marks */}
                                 <div className="space-y-2 mb-4">
                                     {config.features.map((feature, i) => (
                                         <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
                                             {feature.included ? (
-                                                <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                                <CheckCircle size={16} className="text-emerald-500" />
                                             ) : (
-                                                <X size={16} className="text-red-400 flex-shrink-0" />
+                                                <X size={16} className="text-red-400" />
                                             )}
                                             <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
                                         </div>
                                     ))}
                                 </div>
 
-                                {/* Polls remaining */}
-                                <div className="pt-3 border-t border-slate-100">
-                                    <div className="flex items-center justify-between text-sm mb-2">
-                                        <span className="text-slate-500">Polls from dashboard:</span>
-                                        <span className="font-bold text-slate-800">
-                                            {polls.length} / {config.maxPolls === Infinity ? '∞' : config.maxPolls}
-                                        </span>
+                                {tier !== 'unlimited' && (
+                                    <a
+                                        href="/#pricing"
+                                        className="block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium text-center transition mt-3"
+                                    >
+                                        Upgrade Plan
+                                    </a>
+                                )}
+
+                                {session.expiresAt && (
+                                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
+                                        <Calendar size={14} />
+                                        <span>Expires: {new Date(session.expiresAt).toLocaleDateString()}</span>
                                     </div>
-
-                                    {/* Upgrade button for non-unlimited */}
-                                    {tier !== 'unlimited' && (
-                                        <a
-                                            href="/#pricing"
-                                            className="block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium text-center transition mt-3"
-                                        >
-                                            Upgrade Plan
-                                        </a>
-                                    )}
-
-                                    {/* Expiration date */}
-                                    {session.expiresAt && (
-                                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
-                                            <Calendar size={14} />
-                                            <span>Expires: {new Date(session.expiresAt).toLocaleDateString()}</span>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
-                        </motion.div>
+                        </div>
 
                         {/* Quick Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="bg-white rounded-xl border border-slate-200 p-4"
-                        >
+                        <div className="bg-white rounded-xl border border-slate-200 p-4">
                             <h3 className="font-bold text-slate-800 mb-4">Quick Stats</h3>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -513,15 +597,107 @@ const AdminDashboard: React.FC = () => {
                                     <span className="text-slate-500 text-sm">Total Votes</span>
                                     <span className="font-bold text-slate-800">{totalVotes}</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-500 text-sm">Active Polls</span>
-                                    <span className="font-bold text-emerald-600">{polls.length}</span>
-                                </div>
                             </div>
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
             </main>
+
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {showSettings && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={() => setShowSettings(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Settings size={24} className="text-slate-600" />
+                                    Settings
+                                </h2>
+                                <button 
+                                    onClick={() => setShowSettings(false)} 
+                                    className="p-2 hover:bg-slate-100 rounded-lg transition"
+                                >
+                                    <X size={20} className="text-slate-500" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                {/* PIN Protection Setting */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Lock size={20} className="text-amber-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Admin PIN Protection</p>
+                                                <p className="text-xs text-slate-500">Add a 6-digit PIN to admin links</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                alert('PIN Setup feature coming soon!\n\nThis will open a modal where you can set a 6-digit PIN to protect your admin links.');
+                                            }}
+                                            className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition"
+                                        >
+                                            {session?.hasPin ? 'Change' : 'Set PIN'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Create Access Tokens */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Users size={20} className="text-blue-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Team Access Tokens</p>
+                                                <p className="text-xs text-slate-500">Share view/edit access with others</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                alert('Token Management feature coming soon!\n\nThis will let you create Admin tokens (can edit) and Viewer tokens (read-only).');
+                                            }}
+                                            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition"
+                                        >
+                                            Manage
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Regenerate Dashboard Token */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Key size={20} className="text-slate-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Dashboard Link</p>
+                                                <p className="text-xs text-slate-500">Generate a new unique URL</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleRegenerateToken}
+                                            className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition"
+                                        >
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

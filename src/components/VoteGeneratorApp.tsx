@@ -4,10 +4,11 @@ import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, Re
 import LandingPage from './LandingPage';
 import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
+import AdminDashboard from './AdminDashboard';
+import RecoverAccess from './RecoverAccess';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
-import AdminDashboard from './AdminDashboard';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -286,12 +287,14 @@ const VoteGeneratorApp: React.FC = () => {
     return (
         <div className="min-h-screen pb-10">
             {/* ROUTE: /ad-wall - render AdWall component */}
-           {window.location.pathname.startsWith('/ad-wall') ? (
-            <AdWall />
+            {window.location.pathname.startsWith('/ad-wall') ? (
+                <AdWall />
             ) : window.location.pathname.startsWith('/checkout/success') ? (
-            <CheckoutSuccess />
-            ) : window.location.pathname === '/admin' ? (
-            <AdminDashboard />
+                <CheckoutSuccess />
+            ) : window.location.pathname.startsWith('/admin') ? (
+                <AdminDashboard />
+            ) : window.location.pathname === '/recover' ? (
+                <RecoverAccess />
             ) : (
             <>
             {/* Header */}

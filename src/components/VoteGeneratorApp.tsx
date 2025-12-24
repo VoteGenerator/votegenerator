@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Lock, Eye, EyeOff } from 'lucide-react';
 import LandingPage from './LandingPage';
 import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
@@ -20,6 +20,78 @@ type ViewState =
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'error'; message: string };
 
+// PIN Form Component for verification
+const PinForm: React.FC<{
+    onVerify: (pin: string) => boolean;
+    onCancel: () => void;
+    error?: string;
+}> = ({ onVerify, onCancel, error }) => {
+    const [pin, setPin] = useState('');
+    const [showPin, setShowPin] = useState(false);
+    const [attempts, setAttempts] = useState(0);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pin.length !== 6) return;
+        
+        const success = onVerify(pin);
+        if (!success) {
+            setAttempts(a => a + 1);
+            setPin('');
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="p-6">
+            <div className="relative mb-4">
+                <input
+                    type={showPin ? 'text' : 'password'}
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••••"
+                    className="w-full text-center text-3xl tracking-[0.5em] font-bold py-4 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none"
+                    autoFocus
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                    {showPin ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
+
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
+                    {error}
+                    {attempts >= 3 && (
+                        <p className="mt-1 text-xs">Too many attempts? Contact the poll creator.</p>
+                    )}
+                </div>
+            )}
+
+            <div className="flex gap-3">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={pin.length !== 6}
+                    className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50"
+                >
+                    Unlock
+                </button>
+            </div>
+        </form>
+    );
+};
+
 const VoteGeneratorApp: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
     const [copiedAdmin, setCopiedAdmin] = useState(false);
@@ -29,6 +101,14 @@ const VoteGeneratorApp: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
+    
+    // PIN verification state
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pinError, setPinError] = useState('');
+    const [pendingAdminView, setPendingAdminView] = useState<{
+        poll: Poll;
+        results: RunoffResult;
+    } | null>(null);
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
@@ -38,6 +118,42 @@ const VoteGeneratorApp: React.FC = () => {
             adminKey: params.get('admin')
         };
     }, []);
+
+    // ===== PIN VERIFICATION HELPERS =====
+    const getSession = () => {
+        try {
+            const stored = localStorage.getItem('vg_user_session');
+            return stored ? JSON.parse(stored) : null;
+        } catch { return null; }
+    };
+    
+    // Check if PIN is required for admin access (globally, not per-poll)
+    const isPinRequired = (): boolean => {
+        const session = getSession();
+        return !!(session?.hasPin && session?.pinHash);
+    };
+    
+    const isPinVerifiedThisSession = (): boolean => {
+        return sessionStorage.getItem('vg_pin_verified') === 'true';
+    };
+    
+    const setPinVerifiedThisSession = (): void => {
+        sessionStorage.setItem('vg_pin_verified', 'true');
+    };
+    
+    const verifyPin = (pin: string): boolean => {
+        const session = getSession();
+        if (!session?.pinHash) return true;
+        // Simple hash verification
+        let hash = 0;
+        for (let i = 0; i < pin.length; i++) {
+            const char = pin.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return session.pinHash === 'pin_' + Math.abs(hash).toString(16);
+    };
+    // ===== END PIN HELPERS =====
 
     const loadView = useCallback(async (silent = false) => {
         const { pollId, adminKey } = parseHash();
@@ -57,6 +173,17 @@ const VoteGeneratorApp: React.FC = () => {
             if (adminKey) {
                 poll = await getPollAsAdmin(pollId, adminKey);
                 isAdmin = true;
+                
+                // ===== PIN CHECK FOR ADMIN ACCESS =====
+                // If user has PIN enabled, require it for ANY admin link
+                if (isPinRequired() && !isPinVerifiedThisSession()) {
+                    const results = await getResults(pollId, adminKey);
+                    setPendingAdminView({ poll, results });
+                    setShowPinModal(true);
+                    return;
+                }
+                // ===== END PIN CHECK =====
+                
             } else {
                 poll = await getPoll(pollId);
             }
@@ -120,6 +247,36 @@ const VoteGeneratorApp: React.FC = () => {
         // Reload to switch to results view
         loadView(); 
     };
+
+    // ===== PIN VERIFICATION HANDLERS =====
+    const handlePinVerify = (pin: string): boolean => {
+        if (verifyPin(pin)) {
+            setPinVerifiedThisSession();
+            setShowPinModal(false);
+            setPinError('');
+            
+            if (pendingAdminView) {
+                setViewState({ 
+                    type: 'results', 
+                    poll: pendingAdminView.poll, 
+                    results: pendingAdminView.results, 
+                    isAdmin: true 
+                });
+                setPendingAdminView(null);
+            }
+            return true;
+        } else {
+            setPinError('Incorrect PIN. Please try again.');
+            return false;
+        }
+    };
+
+    const handlePinCancel = () => {
+        setShowPinModal(false);
+        setPendingAdminView(null);
+        window.location.href = '/';
+    };
+    // ===== END PIN HANDLERS =====
 
     const handleManualRefresh = async () => {
         setIsRefreshing(true);
@@ -625,6 +782,26 @@ const VoteGeneratorApp: React.FC = () => {
                 </AnimatePresence>
             </main>
             </>
+            )}
+            
+            {/* PIN Verification Modal */}
+            {showPinModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
+                    >
+                        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white text-center">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <Lock size={32} />
+                            </div>
+                            <h2 className="text-xl font-bold">PIN Required</h2>
+                            <p className="text-amber-100 text-sm mt-1">Enter the admin PIN to continue</p>
+                        </div>
+                        <PinForm onVerify={handlePinVerify} onCancel={handlePinCancel} error={pinError} />
+                    </motion.div>
+                </div>
             )}
         </div>
     );

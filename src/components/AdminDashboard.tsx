@@ -37,6 +37,7 @@ interface UserSession {
     polls: UserPoll[];
     createdAt: string;
     hasPin?: boolean;
+    pinHash?: string;
 }
 
 // ============================================================================
@@ -275,6 +276,11 @@ const AdminDashboard: React.FC = () => {
     const goHome = () => {
         window.location.href = '/';
     };
+    
+    const goToCreate = () => {
+        // Go to home and scroll to create section
+        window.location.href = '/#create';
+    };
 
     const canCreateMorePolls = () => {
         if (!session) return false;
@@ -410,7 +416,7 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                 )}
                                 {polls.length > 0 && canCreateMorePolls() && (
-                                    <button onClick={goHome} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
+                                    <button onClick={goToCreate} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
                                         <Plus size={18} /> New Poll
                                     </button>
                                 )}
@@ -431,7 +437,7 @@ const AdminDashboard: React.FC = () => {
                                             : "Welcome to VoteGenerator! Get started by creating a poll."
                                         }
                                     </p>
-                                    <button onClick={goHome} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}>
+                                    <button onClick={goToCreate} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}>
                                         <Plus size={22} /> Create New Poll
                                     </button>
                                 </div>
@@ -542,7 +548,7 @@ const AdminDashboard: React.FC = () => {
                                 {/* Create more button */}
                                 {canCreateMorePolls() && (
                                     <div className="mt-6 text-center">
-                                        <button onClick={goHome} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                                        <button onClick={goToCreate} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
                                             <PlusCircle size={20} /> Create Another Poll
                                         </button>
                                     </div>
@@ -758,9 +764,20 @@ const AdminDashboard: React.FC = () => {
                         isOpen={showPinSetup}
                         hasExistingPin={!!session?.hasPin}
                         onClose={() => setShowPinSetup(false)}
-                        onSuccess={(hasPin) => {
+                        onSuccess={(hasPin, pinValue) => {
                             if (session) {
-                                const updated = { ...session, hasPin };
+                                let pinHash: string | undefined = undefined;
+                                if (hasPin && pinValue) {
+                                    // Simple hash for PIN
+                                    let hash = 0;
+                                    for (let i = 0; i < pinValue.length; i++) {
+                                        const char = pinValue.charCodeAt(i);
+                                        hash = ((hash << 5) - hash) + char;
+                                        hash = hash & hash;
+                                    }
+                                    pinHash = 'pin_' + Math.abs(hash).toString(16);
+                                }
+                                const updated = { ...session, hasPin, pinHash };
                                 localStorage.setItem('vg_user_session', JSON.stringify(updated));
                                 setSession(updated);
                             }
@@ -797,7 +814,7 @@ const PinSetupModalInline: React.FC<{
     isOpen: boolean;
     hasExistingPin: boolean;
     onClose: () => void;
-    onSuccess: (hasPin: boolean) => void;
+    onSuccess: (hasPin: boolean, pinValue?: string) => void;
 }> = ({ isOpen, hasExistingPin, onClose, onSuccess }) => {
     const [pin, setPin] = useState('');
     const [confirmPin, setConfirmPin] = useState('');
@@ -818,8 +835,8 @@ const PinSetupModalInline: React.FC<{
                 setConfirmPin('');
                 return;
             }
-            // Save PIN (in real implementation, hash and send to backend)
-            onSuccess(true);
+            // Pass the PIN value to onSuccess for hashing
+            onSuccess(true, pin);
         }
     };
 

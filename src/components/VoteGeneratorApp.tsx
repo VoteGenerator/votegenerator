@@ -11,6 +11,14 @@ import {
 } from 'lucide-react';
 
 // =============================================================================
+// IMPORT YOUR ACTUAL COMPONENTS HERE
+// =============================================================================
+import VoteGeneratorCreate from './VoteGeneratorCreate';
+// import VoteGeneratorVote from './VoteGeneratorVote';
+// import VoteGeneratorResults from './VoteGeneratorResults';
+// import VoteGeneratorConfirmation from './VoteGeneratorConfirmation';
+
+// =============================================================================
 // TYPES
 // =============================================================================
 interface UserPoll {
@@ -596,59 +604,49 @@ function AdWall() {
 }
 
 // =============================================================================
-// PLACEHOLDER COMPONENTS - These fetch their own data from URL
+// PLACEHOLDER COMPONENTS - For routes you haven't built yet
+// These components fetch their own data from URL params
 // =============================================================================
 
-// These components should fetch poll data based on URL params
-// Replace with your actual implementations
-
-function VoteGeneratorCreatePlaceholder() {
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-800 mb-4">Create a Poll</h1>
-        <p className="text-slate-500">Replace with actual VoteGeneratorCreate import</p>
-      </div>
-    </div>
-  );
-}
-
-function VoteGeneratorVotePlaceholder() {
+function VoteGeneratorVote() {
   const pollId = window.location.pathname.split('/vote/')[1]?.split('/')[0];
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-800 mb-4">Vote</h1>
         <p className="text-slate-500">Poll ID: {pollId}</p>
+        <p className="text-slate-400 text-sm mt-2">Replace with your VoteGeneratorVote component</p>
       </div>
     </div>
   );
 }
 
-function VoteGeneratorResultsPlaceholder() {
+function VoteGeneratorResults() {
   const pollId = window.location.pathname.split('/results/')[1]?.split('/')[0];
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-800 mb-4">Results</h1>
         <p className="text-slate-500">Poll ID: {pollId}</p>
+        <p className="text-slate-400 text-sm mt-2">Replace with your VoteGeneratorResults component</p>
       </div>
     </div>
   );
 }
 
-function VoteGeneratorConfirmationPlaceholder() {
+function VoteGeneratorConfirmation() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="text-center">
         <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-slate-800">Vote Submitted!</h1>
+        <p className="text-slate-400 text-sm mt-2">Replace with your VoteGeneratorConfirmation component</p>
       </div>
     </div>
   );
 }
 
-function PollAdminViewPlaceholder() {
+function PollAdminView() {
   const pathParts = window.location.pathname.split('/');
   const pollId = pathParts[2];
   const adminKey = pathParts[3];
@@ -661,6 +659,7 @@ function PollAdminViewPlaceholder() {
         <a href="/admin" className="text-indigo-600 hover:text-indigo-700 font-medium">
           ← Back to Dashboard
         </a>
+        <p className="text-slate-400 text-sm mt-4">Replace with your poll-specific admin component</p>
       </div>
     </div>
   );
@@ -684,7 +683,7 @@ export default function VoteGeneratorApp() {
 
   // Route: /admin/:pollId/:adminKey (specific poll admin)
   if (path.match(/^\/admin\/[^/]+\/[^/]+/)) {
-    return <PollAdminViewPlaceholder />;
+    return <PollAdminView />;
   }
 
   // Route: /ad-wall
@@ -692,26 +691,26 @@ export default function VoteGeneratorApp() {
     return <AdWall />;
   }
 
-  // Route: /create
+  // Route: /create - Use actual VoteGeneratorCreate component
   if (path === '/create' || path === '/create/') {
-    return <VoteGeneratorCreatePlaceholder />;
+    return <VoteGeneratorCreate />;
   }
 
   // Route: /vote/:pollId
   if (path.startsWith('/vote/')) {
-    return <VoteGeneratorVotePlaceholder />;
+    return <VoteGeneratorVote />;
   }
 
   // Route: /results/:pollId
   if (path.startsWith('/results/')) {
-    return <VoteGeneratorResultsPlaceholder />;
+    return <VoteGeneratorResults />;
   }
 
   // Route: /confirmation
   if (path.startsWith('/confirmation')) {
-    return <VoteGeneratorConfirmationPlaceholder />;
+    return <VoteGeneratorConfirmation />;
   }
 
-  // Default: Create page
-  return <VoteGeneratorCreatePlaceholder />;
+  // Default: Homepage = Create page (your actual VoteGeneratorCreate)
+  return <VoteGeneratorCreate />;
 }

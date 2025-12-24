@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  BarChart3, Plus, Trash2, Crown, Sparkles, Star, AlertCircle,
-  ChevronDown, ChevronUp, Loader2, Check, Lock, ArrowRight,
-  Users, Clock, Info, Home, Zap
+  BarChart3, Copy, Check, ExternalLink, Trash2, Settings,
+  Crown, Loader2, Clock, Users, LayoutDashboard, Plus,
+  Calendar, Sparkles, AlertCircle, PlusCircle, ArrowRight,
+  CheckCircle, Star, Zap, Share2
 } from 'lucide-react';
 
 // =============================================================================
-// USER SESSION SERVICE - Inline to avoid import issues
+// IMPORT YOUR EXISTING COMPONENTS - Don't modify these!
 // =============================================================================
+import VoteGeneratorCreate from './VoteGeneratorCreate';
+// Uncomment these as needed for other routes:
+// import VoteGeneratorVote from './VoteGeneratorVote';
+// import VoteGeneratorResults from './VoteGeneratorResults';
+// import VoteGeneratorConfirmation from './VoteGeneratorConfirmation';
+
+// =============================================================================
+// NEW ROUTES ONLY - Admin Dashboard, Checkout Success, Ad Wall
+// =============================================================================
+
+// Types
 interface UserPoll {
   id: string;
   adminKey: string;
@@ -24,469 +36,292 @@ interface UserSession {
   expiresAt?: string;
   polls: UserPoll[];
   createdAt: string;
-  stripeSessionId?: string;
 }
 
-const SESSION_KEY = 'vg_user_session';
-const TIER_KEY = 'vg_purchased_tier';
-
-function getUserSession(): UserSession | null {
-  try {
-    const stored = localStorage.getItem(SESSION_KEY);
-    if (stored) {
-      return JSON.parse(stored) as UserSession;
-    }
-    const tier = localStorage.getItem(TIER_KEY);
-    if (tier) {
-      return {
-        tier: tier as UserSession['tier'],
-        polls: [],
-        createdAt: new Date().toISOString(),
-      };
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function saveUserSession(session: UserSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  localStorage.setItem(TIER_KEY, session.tier);
-}
-
-function addPollToSession(poll: UserPoll): UserSession {
-  let session = getUserSession();
-  if (!session) {
-    session = { tier: 'free', polls: [], createdAt: new Date().toISOString() };
-  }
-  const existingIndex = session.polls.findIndex(p => p.id === poll.id);
-  if (existingIndex >= 0) {
-    session.polls[existingIndex] = poll;
-  } else {
-    session.polls.unshift(poll);
-  }
-  saveUserSession(session);
-  return session;
-}
-
-function getUserTier(): UserSession['tier'] {
-  const session = getUserSession();
-  return session?.tier || 'free';
-}
-
-function isPaidUser(): boolean {
-  const tier = getUserTier();
-  return tier !== 'free';
-}
-
-function canCreateMorePolls(): boolean {
-  const session = getUserSession();
-  if (!session) return true;
-  const pollCount = session.polls.length;
-  switch (session.tier) {
-    case 'unlimited': return true;
-    case 'pro_event': return pollCount < 1; // 1 premium poll
-    case 'starter': return pollCount < 1; // 1 premium poll
-    case 'free':
-    default: return true; // Free users can always create (with ads)
-  }
-}
-
-// =============================================================================
-// POLL TYPES & TIER CONFIGURATION
-// =============================================================================
-const POLL_TYPES = [
-  { id: 'multiple_choice', name: 'Multiple Choice', tier: 'free', icon: '📊' },
-  { id: 'ranked_choice', name: 'Ranked Choice', tier: 'free', icon: '🏆' },
-  { id: 'this_or_that', name: 'This or That', tier: 'free', icon: '⚖️' },
-  { id: 'meeting_poll', name: 'Meeting Poll', tier: 'starter', icon: '📅' },
-  { id: 'dot_voting', name: 'Dot Voting', tier: 'starter', icon: '🔵' },
-  { id: 'rating_scale', name: 'Rating Scale', tier: 'starter', icon: '⭐' },
-  { id: 'approval_voting', name: 'Approval Voting', tier: 'starter', icon: '✅' },
-  { id: 'priority_matrix', name: 'Priority Matrix', tier: 'starter', icon: '📌' },
-  { id: 'quiz_poll', name: 'Quiz Poll', tier: 'pro_event', icon: '❓' },
-  { id: 'sentiment_check', name: 'Sentiment Check', tier: 'pro_event', icon: '💭' },
-  { id: 'visual_poll', name: 'Visual Poll', tier: 'pro_event', icon: '🖼️' },
-  { id: 'buy_a_feature', name: 'Buy a Feature', tier: 'unlimited', icon: '💰' },
-];
-
-const TIER_HIERARCHY = ['free', 'starter', 'pro_event', 'unlimited'];
-
-const TIER_CONFIG: Record<string, { label: string; gradient: string; icon: React.ReactNode }> = {
-  free: { label: 'Free', gradient: 'from-slate-400 to-slate-500', icon: <BarChart3 size={16} /> },
-  starter: { label: 'Starter', gradient: 'from-blue-500 to-indigo-500', icon: <Star size={16} /> },
-  pro_event: { label: 'Pro Event', gradient: 'from-purple-500 to-pink-500', icon: <Crown size={16} /> },
-  unlimited: { label: 'Unlimited', gradient: 'from-amber-500 to-orange-500', icon: <Sparkles size={16} /> },
+// Tier Config matching your pricing
+const TIER_CONFIG: Record<string, {
+  label: string;
+  gradient: string;
+  bgGradient: string;
+  icon: React.ReactNode;
+  activeDays: number;
+}> = {
+  free: { label: 'Free', gradient: 'from-slate-500 to-slate-600', bgGradient: 'from-slate-50 to-slate-100', icon: <BarChart3 size={18} />, activeDays: 7 },
+  starter: { label: 'Starter', gradient: 'from-blue-500 to-indigo-600', bgGradient: 'from-blue-50 to-indigo-50', icon: <Zap size={18} />, activeDays: 30 },
+  pro_event: { label: 'Pro Event', gradient: 'from-purple-500 to-pink-500', bgGradient: 'from-purple-50 to-pink-50', icon: <Crown size={18} />, activeDays: 60 },
+  unlimited: { label: 'Unlimited', gradient: 'from-amber-500 to-orange-500', bgGradient: 'from-amber-50 to-orange-50', icon: <Sparkles size={18} />, activeDays: 365 },
 };
 
-function canAccessPollType(userTier: string, pollTypeTier: string): boolean {
-  const userIndex = TIER_HIERARCHY.indexOf(userTier);
-  const pollIndex = TIER_HIERARCHY.indexOf(pollTypeTier);
-  return userIndex >= pollIndex;
-}
-
 // =============================================================================
-// MAIN COMPONENT
+// ADMIN DASHBOARD (NEW - for /admin route)
 // =============================================================================
-export default function VoteGeneratorCreate() {
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '']);
-  const [pollType, setPollType] = useState('multiple_choice');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [settings, setSettings] = useState({
-    allowMultiple: false,
-    hideResults: false,
-    requireNames: false,
-    endDate: '',
-  });
+function AdminDashboard() {
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const userTier = getUserTier();
-  const isPaid = isPaidUser();
-  const config = TIER_CONFIG[userTier];
-
-  const addOption = () => {
-    if (options.length < 10) {
-      setOptions([...options, '']);
-    }
-  };
-
-  const removeOption = (index: number) => {
-    if (options.length > 2) {
-      setOptions(options.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateOption = (index: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
-    setOptions(newOptions);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
-    if (!question.trim()) {
-      setError('Please enter a question');
-      return;
-    }
-    
-    const validOptions = options.filter(o => o.trim());
-    if (validOptions.length < 2) {
-      setError('Please add at least 2 options');
-      return;
-    }
-
-    const pollTypeConfig = POLL_TYPES.find(p => p.id === pollType);
-    if (pollTypeConfig && !canAccessPollType(userTier, pollTypeConfig.tier)) {
-      setError(`${pollTypeConfig.name} requires ${TIER_CONFIG[pollTypeConfig.tier].label} plan or higher`);
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  useEffect(() => {
     try {
-      const response = await fetch('/.netlify/functions/vg-create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: question.trim(),
-          options: validOptions,
-          pollType,
-          settings,
-          tier: userTier,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create poll');
-      }
-
-      const data = await response.json();
-      
-      // Add poll to user's session
-      addPollToSession({
-        id: data.pollId,
-        adminKey: data.adminKey,
-        title: question.trim(),
-        type: pollType,
-        createdAt: new Date().toISOString(),
-        responseCount: 0,
-        status: 'active',
-      });
-
-      // Route based on tier
-      if (isPaid) {
-        // Paid users go directly to their poll admin
-        window.location.href = `/admin/${data.pollId}/${data.adminKey}`;
+      const stored = localStorage.getItem('vg_user_session');
+      if (stored) {
+        setSession(JSON.parse(stored));
       } else {
-        // Free users go through ad wall first
-        const adminUrl = encodeURIComponent(`/admin/${data.pollId}/${data.adminKey}`);
-        window.location.href = `/ad-wall?redirect=${adminUrl}`;
+        const tier = localStorage.getItem('vg_purchased_tier');
+        if (tier) {
+          const newSession: UserSession = {
+            tier: tier as UserSession['tier'],
+            polls: [],
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem('vg_user_session', JSON.stringify(newSession));
+          setSession(newSession);
+        } else {
+          setSession({ tier: 'free', polls: [], createdAt: new Date().toISOString() });
+        }
       }
-    } catch (err) {
-      console.error('Create error:', err);
-      setError('Failed to create poll. Please try again.');
-      setIsSubmitting(false);
+    } catch {
+      setSession({ tier: 'free', polls: [], createdAt: new Date().toISOString() });
+    }
+    setLoading(false);
+  }, []);
+
+  const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
+    const url = type === 'admin' 
+      ? `${window.location.origin}/admin/${poll.id}/${poll.adminKey}`
+      : `${window.location.origin}/vote/${poll.id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(`${poll.id}-${type}`);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDeletePoll = (poll: UserPoll) => {
+    if (!confirm(`Delete "${poll.title}"?`)) return;
+    if (session) {
+      const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
+      localStorage.setItem('vg_user_session', JSON.stringify(updated));
+      setSession(updated);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 size={32} className="text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  const tier = session?.tier || 'free';
+  const config = TIER_CONFIG[tier];
+  const polls = session?.polls || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+    <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <a href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                <BarChart3 className="text-white" size={22} />
-              </div>
-              <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
-            </a>
-            
-            {isPaid && (
-              <a href="/admin" className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800">
-                <Home size={16} />
-                Dashboard
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-3">
+            <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" />
+            <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+          </a>
+          <div className="flex items-center gap-3">
+            <div className={`px-3 py-1.5 bg-gradient-to-r ${config.gradient} text-white rounded-full text-sm font-medium flex items-center gap-1.5`}>
+              {config.icon} {config.label}
+            </div>
+            {tier !== 'unlimited' && (
+              <a href="/pricing" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium">
+                Upgrade
               </a>
             )}
           </div>
         </div>
       </header>
 
-      {/* Paid Tier Banner */}
-      {isPaid && (
-        <div className={`bg-gradient-to-r ${config.gradient} text-white py-3`}>
-          <div className="max-w-3xl mx-auto px-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {config.icon}
-              <span className="font-medium">{config.label} Plan Active</span>
-              <span className="text-white/80">• No ads, premium features unlocked!</span>
-            </div>
-            <Check size={18} />
-          </div>
-        </div>
-      )}
-
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-xl p-6 md:p-8"
-        >
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Create a Poll</h1>
-          <p className="text-slate-500 mb-6">Get group decisions made quickly and fairly.</p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Question */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Your Question
-              </label>
-              <input
-                type="text"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="What should we have for dinner?"
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            {/* Poll Type */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Poll Type
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {POLL_TYPES.map((type) => {
-                  const canAccess = canAccessPollType(userTier, type.tier);
-                  const tierConfig = TIER_CONFIG[type.tier];
-                  
-                  return (
-                    <button
-                      key={type.id}
-                      type="button"
-                      onClick={() => canAccess && setPollType(type.id)}
-                      disabled={!canAccess || isSubmitting}
-                      className={`relative p-3 rounded-xl border-2 text-left transition ${
-                        pollType === type.id
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : canAccess
-                          ? 'border-slate-200 hover:border-slate-300'
-                          : 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{type.icon}</span>
-                        <span className={`text-sm font-medium ${canAccess ? 'text-slate-700' : 'text-slate-400'}`}>
-                          {type.name}
-                        </span>
-                      </div>
-                      
-                      {!canAccess && (
-                        <div className={`absolute top-1 right-1 px-1.5 py-0.5 bg-gradient-to-r ${tierConfig.gradient} text-white text-[10px] rounded-full flex items-center gap-1`}>
-                          <Lock size={8} />
-                          {tierConfig.label}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Save Link Banner */}
+        {tier !== 'free' && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={20} className="text-amber-600" />
+              <div>
+                <p className="font-bold text-amber-800">Save This Link!</p>
+                <p className="text-sm text-amber-600">Bookmark this page to access your polls anytime.</p>
               </div>
             </div>
-
-            {/* Options */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Options
-              </label>
-              <div className="space-y-2">
-                {options.map((option, index) => (
-                  <div key={index} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={option}
-                      onChange={(e) => updateOption(index, e.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                      className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                      disabled={isSubmitting}
-                    />
-                    {options.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOption(index)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                        disabled={isSubmitting}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {options.length < 10 && (
-                <button
-                  type="button"
-                  onClick={addOption}
-                  className="mt-2 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                  disabled={isSubmitting}
-                >
-                  <Plus size={16} />
-                  Add Option
-                </button>
-              )}
-            </div>
-
-            {/* Advanced Settings Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-800 text-sm"
-            >
-              {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              Advanced Settings
+            <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Copied!'); }}
+              className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2">
+              <Copy size={16} /> Copy URL
             </button>
+          </div>
+        )}
 
-            {/* Advanced Settings */}
-            <AnimatePresence>
-              {showAdvanced && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="p-4 bg-slate-50 rounded-xl space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.hideResults}
-                        onChange={(e) => setSettings({ ...settings, hideResults: e.target.checked })}
-                        className="w-4 h-4 text-indigo-600 rounded"
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-sm text-slate-700">Hide results until voting ends</span>
-                    </label>
-                    
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.requireNames}
-                        onChange={(e) => setSettings({ ...settings, requireNames: e.target.checked })}
-                        className="w-4 h-4 text-indigo-600 rounded"
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-sm text-slate-700">Require voter names</span>
-                    </label>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <LayoutDashboard size={28} className="text-indigo-600" /> My Dashboard
+            </h1>
+            <p className="text-slate-500">{polls.length === 0 ? 'Create your first poll' : `${polls.length} poll(s)`}</p>
+          </div>
+          {polls.length > 0 && (
+            <a href="/create" className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2`}>
+              <Plus size={18} /> New Poll
+            </a>
+          )}
+        </div>
 
-                    <div>
-                      <label className="block text-sm text-slate-700 mb-1">
-                        End Date (optional)
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={settings.endDate}
-                        onChange={(e) => setSettings({ ...settings, endDate: e.target.value })}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                        disabled={isSubmitting}
-                      />
+        {/* Content */}
+        {polls.length === 0 ? (
+          <div className="text-center py-16">
+            <div className={`w-24 h-24 bg-gradient-to-br ${config.gradient} rounded-3xl flex items-center justify-center mx-auto mb-8`}>
+              <PlusCircle size={48} className="text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-slate-800 mb-3">Create Your First Poll</h2>
+            <p className="text-slate-500 mb-8">Get started in seconds.</p>
+            <a href="/create" className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-2xl font-bold text-lg inline-flex items-center gap-3`}>
+              <Plus size={22} /> Create New Poll
+            </a>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {polls.map((poll) => (
+              <div key={poll.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-slate-800 text-lg">{poll.title}</h3>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                      <span className="flex items-center gap-1"><Clock size={14} /> {new Date(poll.createdAt).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1"><Users size={14} /> {poll.responseCount || 0} votes</span>
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Error Message */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
-              >
-                <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{error}</p>
-              </motion.div>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50`}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  Create Poll
-                  <ArrowRight size={20} />
-                </>
-              )}
-            </button>
-
-            {/* Info Note */}
-            {!isPaid && (
-              <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                <Info size={18} className="text-slate-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-slate-500">
-                  Free polls include a short ad before viewing your admin dashboard. 
-                  <a href="/pricing" className="text-indigo-600 hover:text-indigo-700 ml-1">
-                    Upgrade to skip ads →
-                  </a>
-                </p>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleCopyLink(poll, 'vote')} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg" title="Copy vote link">
+                      {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
+                    </button>
+                    <a href={`/admin/${poll.id}/${poll.adminKey}`} className="p-2 bg-slate-100 text-slate-600 rounded-lg" title="Open">
+                      <ExternalLink size={18} />
+                    </a>
+                    <button onClick={() => handleDeletePoll(poll)} className="p-2 bg-slate-100 text-slate-600 hover:text-red-600 rounded-lg" title="Delete">
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-          </form>
-        </motion.div>
+            ))}
+            <div className="text-center py-6">
+              <a href="/create" className="text-indigo-600 font-medium inline-flex items-center gap-2">
+                <PlusCircle size={20} /> Create Another Poll
+              </a>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
+}
+
+// =============================================================================
+// CHECKOUT SUCCESS (NEW - for /checkout/success route)
+// =============================================================================
+function CheckoutSuccess() {
+  const params = new URLSearchParams(window.location.search);
+  const tier = params.get('tier') || 'starter';
+  const config = TIER_CONFIG[tier] || TIER_CONFIG.starter;
+
+  useEffect(() => {
+    const session = {
+      tier,
+      expiresAt: new Date(Date.now() + config.activeDays * 24 * 60 * 60 * 1000).toISOString(),
+      polls: [],
+      createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem('vg_user_session', JSON.stringify(session));
+    localStorage.setItem('vg_purchased_tier', tier);
+  }, [tier, config.activeDays]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-full flex items-center justify-center mx-auto mb-6`}>
+          <CheckCircle size={40} className="text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-2">Payment Successful! 🎉</h1>
+        <p className="text-slate-500 mb-6">Welcome to VoteGenerator {config.label}</p>
+        <button onClick={() => window.location.href = '/admin'} className={`w-full py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold flex items-center justify-center gap-2`}>
+          Go to My Dashboard <ArrowRight size={20} />
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
+// =============================================================================
+// AD WALL (NEW - for /ad-wall route)
+// =============================================================================
+function AdWall() {
+  const params = new URLSearchParams(window.location.search);
+  const redirectUrl = params.get('redirect') || '/';
+  const [countdown, setCountdown] = useState(8);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-8 max-w-lg w-full text-center">
+        <div className="h-48 bg-slate-100 rounded-xl flex items-center justify-center mb-6 border-2 border-dashed border-slate-300">
+          <p className="text-slate-400">Ad Space</p>
+        </div>
+        {countdown > 0 ? (
+          <div>
+            <p className="text-slate-600 mb-2">Your poll is ready in...</p>
+            <p className="text-5xl font-bold text-indigo-600">{countdown}</p>
+          </div>
+        ) : (
+          <button onClick={() => window.location.href = decodeURIComponent(redirectUrl)} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold">
+            Go to My Poll →
+          </button>
+        )}
+        <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+          <p className="font-semibold text-amber-800 mb-2">Skip the wait!</p>
+          <a href="/pricing" className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium">
+            <Crown size={16} /> View Plans
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// MAIN ROUTER - Only routes, doesn't change your existing components
+// =============================================================================
+export default function VoteGeneratorApp() {
+  const path = window.location.pathname;
+
+  // NEW: /checkout/success
+  if (path.startsWith('/checkout/success')) {
+    return <CheckoutSuccess />;
+  }
+
+  // NEW: /admin (dashboard home)
+  if (path === '/admin' || path === '/admin/') {
+    return <AdminDashboard />;
+  }
+
+  // NEW: /ad-wall
+  if (path.startsWith('/ad-wall')) {
+    return <AdWall />;
+  }
+
+  // EXISTING: Everything else uses your existing VoteGeneratorCreate
+  // which has NavHeader, hero, footer, poll types, etc.
+  return <VoteGeneratorCreate />;
 }

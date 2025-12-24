@@ -9,10 +9,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Mail, ArrowRight, Loader2, CheckCircle, AlertCircle, 
-    Home, ShieldCheck, HelpCircle, Lock
+    Home, ShieldCheck, Lock
 } from 'lucide-react';
 
-type RecoveryStatus = 'idle' | 'loading' | 'success' | 'error' | 'not_found';
+type RecoveryStatus = 'idle' | 'loading' | 'success' | 'error';
 
 const RecoverAccess: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -36,10 +36,12 @@ const RecoverAccess: React.FC = () => {
 
             if (res.ok) {
                 setStatus('success');
-                setMessage(data.message || 'Check your email for your dashboard links!');
+                // Always show the same message regardless of whether email was found
+                setMessage('If an account exists with this email, recovery instructions have been sent.');
             } else if (res.status === 404) {
-                setStatus('not_found');
-                setMessage(data.error || 'No paid account found with this email.');
+                // Don't reveal that email doesn't exist - same message as success
+                setStatus('success');
+                setMessage('If an account exists with this email, recovery instructions have been sent.');
             } else {
                 setStatus('error');
                 setMessage(data.error || 'Something went wrong. Please try again.');
@@ -113,40 +115,6 @@ const RecoverAccess: React.FC = () => {
                                 >
                                     Try another email
                                 </button>
-                            </motion.div>
-                        ) : status === 'not_found' ? (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="text-center"
-                            >
-                                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <HelpCircle size={32} className="text-amber-600" />
-                                </div>
-                                <h2 className="text-xl font-bold text-slate-800 mb-2">No Account Found</h2>
-                                <p className="text-slate-500 mb-4">{message}</p>
-                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left text-sm text-amber-700 mb-6">
-                                    <p className="font-medium mb-2">This could mean:</p>
-                                    <ul className="space-y-1">
-                                        <li>• You used a different email at checkout</li>
-                                        <li>• You created a free poll (no recovery available)</li>
-                                        <li>• The email has a typo</li>
-                                    </ul>
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => { setStatus('idle'); setEmail(''); }}
-                                        className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
-                                    >
-                                        Try Again
-                                    </button>
-                                    <a
-                                        href="/#pricing"
-                                        className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition text-center"
-                                    >
-                                        Get a Plan
-                                    </a>
-                                </div>
                             </motion.div>
                         ) : (
                             <form onSubmit={handleSubmit}>

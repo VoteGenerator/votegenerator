@@ -1,313 +1,250 @@
-// ============================================================================
-// CheckoutSuccess - Success page after Stripe payment
-// Route: /checkout/success
-// ============================================================================
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Calendar, Crown, Star, Gift, Check, AlertCircle
-} from 'lucide-react';
-import NavHeader from './NavHeader';
+import { CheckCircle, Loader2, Crown, AlertCircle, ArrowRight, LayoutDashboard } from 'lucide-react';
 
-// Plan details for display
-const PLAN_DETAILS: Record<string, {
-    name: string;
-    icon: React.ElementType;
-    color: string;
-    features: string[];
-}> = {
-    'starter': {
-        name: 'Starter',
-        icon: Zap,
-        color: 'from-blue-500 to-indigo-600',
-        features: ['500 responses', '30 days active', '1 premium poll', 'CSV export', 'Device & geo stats']
-    },
-    'pro_event': {
-        name: 'Pro Event',
-        icon: Crown,
-        color: 'from-purple-500 to-pink-600',
-        features: ['2,000 responses', '60 days active', '1 premium poll', 'Visual Poll + PDF', 'Remove branding']
-    },
-    'unlimited': {
-        name: 'Unlimited',
-        icon: Star,
-        color: 'from-amber-500 to-orange-600',
-        features: ['5,000 responses per poll', 'Unlimited premium polls', '1 year per poll', 'Priority support', 'All features']
-    }
+// Tier configuration
+const TIER_CONFIG: Record<string, { label: string; color: string; gradient: string }> = {
+  starter: { label: 'Starter', color: 'text-blue-600', gradient: 'from-blue-500 to-indigo-500' },
+  pro_event: { label: 'Pro Event', color: 'text-purple-600', gradient: 'from-purple-500 to-pink-500' },
+  unlimited: { label: 'Unlimited', color: 'text-amber-600', gradient: 'from-amber-500 to-orange-500' },
 };
 
-const CheckoutSuccess: React.FC = () => {
-    const [loading, setLoading] = useState(true);
-    const [creatingPoll, setCreatingPoll] = useState(false);
-    const [tier, setTier] = useState<string | null>(null);
-    const [sessionId, setSessionId] = useState<string | null>(null);
-    const [pollData, setPollData] = useState<any>(null);
-    const [error, setError] = useState<string | null>(null);
+export default function CheckoutSuccess() {
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [tier, setTier] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const sid = params.get('session_id');
-        const tierParam = params.get('tier');
-        
-        setSessionId(sid);
-        setTier(tierParam);
-        
-        // Check for saved poll draft
-        const draft = localStorage.getItem('vg_poll_draft');
-        if (draft) {
-            try {
-                setPollData(JSON.parse(draft));
-            } catch (e) {
-                console.error('Error parsing poll draft:', e);
-            }
-        }
-        
-        setLoading(false);
-    }, []);
+  useEffect(() => {
+    const verifySession = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      const tierFromUrl = params.get('tier');
 
-    const createPollFromDraft = async () => {
-        if (!pollData) {
-            // No draft, just go to create page
-            window.location.href = '/create';
-            return;
+      if (!sessionId) {
+        // If no session_id but we have tier, user might have refreshed
+        const storedTier = localStorage.getItem('vg_purchased_tier');
+        if (storedTier) {
+          setTier(storedTier);
+          setStatus('success');
+          return;
         }
-        
-        setCreatingPoll(true);
-        
-        try {
-            const createData = {
-                title: pollData.title,
-                description: pollData.description || undefined,
-                options: pollData.options,
-                pollType: pollData.pollType,
-                settings: pollData.settings || {
-                    hideResults: false,
-                    allowMultiple: false
-                },
-                tier: tier || 'starter' // Use the tier from checkout
-            };
-            
-            const response = await fetch('/.netlify/functions/vg-create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(createData)
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                // Clear the draft
-                localStorage.removeItem('vg_poll_draft');
-                // Redirect to admin (skip ad wall for paid)
-                window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to create poll');
-                setCreatingPoll(false);
-            }
-        } catch (err) {
-            console.error('Error creating poll:', err);
-            setError('Failed to create poll. Please try again.');
-            setCreatingPoll(false);
+        setError('No session ID found');
+        setStatus('error');
+        return;
+      }
+
+      try {
+        // Verify the Stripe session
+        const response = await fetch('/.netlify/functions/vg-verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to verify payment');
         }
+
+        const data = await response.json();
+        
+        // Get tier from response or URL
+        const purchasedTier = data.tier || tierFromUrl || 'pro_event';
+        const expiresAt = data.expiresAt || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+        // Store user session in localStorage
+        const userSession = {
+          tier: purchasedTier,
+          expiresAt,
+          stripeSessionId: sessionId,
+          polls: [], // Empty initially, will be populated as they create polls
+          createdAt: new Date().toISOString(),
+        };
+
+        localStorage.setItem('vg_user_session', JSON.stringify(userSession));
+        
+        // Also keep individual keys for backward compatibility
+        localStorage.setItem('vg_purchased_tier', purchasedTier);
+        localStorage.setItem('vg_expires_at', expiresAt);
+
+        setTier(purchasedTier);
+        setStatus('success');
+      } catch (err) {
+        console.error('Verification error:', err);
+        
+        // Fallback: trust the tier from URL if verification fails
+        if (tierFromUrl) {
+          const userSession = {
+            tier: tierFromUrl,
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            polls: [],
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem('vg_user_session', JSON.stringify(userSession));
+          localStorage.setItem('vg_purchased_tier', tierFromUrl);
+          setTier(tierFromUrl);
+          setStatus('success');
+        } else {
+          setError('Payment verification failed. Please contact support.');
+          setStatus('error');
+        }
+      }
     };
 
-    const goToCreate = () => {
-        // Store the tier info so create page knows they're on paid
-        if (tier) {
-            localStorage.setItem('vg_purchased_tier', tier);
-            
-            // Calculate expiry date based on tier
-            const now = new Date();
-            let expiryDate: Date;
-            
-            switch (tier) {
-                case 'unlimited':
-                    expiryDate = new Date(now.setFullYear(now.getFullYear() + 1)); // 1 year
-                    break;
-                case 'pro_event':
-                    expiryDate = new Date(now.setDate(now.getDate() + 60)); // 60 days
-                    break;
-                case 'starter':
-                default:
-                    expiryDate = new Date(now.setDate(now.getDate() + 30)); // 30 days
-                    break;
-            }
-            
-            localStorage.setItem('vg_expires_at', expiryDate.toISOString());
-            localStorage.setItem('vg_purchased_at', new Date().toISOString());
-        }
-        window.location.href = '/create';
-    };
+    verifySession();
+  }, []);
 
-    const planDetails = tier ? PLAN_DETAILS[tier] : null;
-    const Icon = planDetails?.icon || Gift;
+  const handleGoToDashboard = () => {
+    // Redirect to Admin Dashboard (the user's home base)
+    window.location.href = '/admin';
+  };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-                <div className="text-center">
-                    <Loader2 size={48} className="animate-spin text-indigo-500 mx-auto mb-4" />
-                    <p className="text-slate-600">Confirming your purchase...</p>
-                </div>
-            </div>
-        );
-    }
-
+  if (status === 'loading') {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-            <NavHeader />
-
-            <div className="max-w-2xl mx-auto px-4 py-16">
-                {/* Success Animation */}
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", duration: 0.5 }}
-                    className="text-center mb-8"
-                >
-                    <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200">
-                        <CheckCircle size={48} className="text-white" />
-                    </div>
-                    <motion.h1 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-3xl font-bold text-slate-900 mb-2"
-                    >
-                        Payment Successful! 🎉
-                    </motion.h1>
-                    <motion.p 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="text-slate-600"
-                    >
-                        Thank you for your purchase. You're all set to create amazing polls!
-                    </motion.p>
-                </motion.div>
-
-                {/* Plan Details Card */}
-                {planDetails && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden mb-6"
-                    >
-                        <div className={`bg-gradient-to-r ${planDetails.color} p-6 text-white`}>
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                                    <Icon size={28} />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-bold">{planDetails.name}</h2>
-                                    <p className="text-white/80">Your plan is now active</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="p-6">
-                            <h3 className="font-semibold text-slate-800 mb-3">What's included:</h3>
-                            <ul className="space-y-2 mb-6">
-                                {planDetails.features.map((feature, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-slate-600">
-                                        <Check size={16} className="text-emerald-500" />
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            {/* Show saved poll info if exists */}
-                            {pollData && (
-                                <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-100">
-                                    <h4 className="font-semibold text-indigo-800 mb-2">Your Poll Draft:</h4>
-                                    <p className="text-indigo-700 font-medium">{pollData.title}</p>
-                                    <p className="text-indigo-600 text-sm">{pollData.options?.length || 0} options • {pollData.pollType}</p>
-                                </div>
-                            )}
-
-                            {/* Error message */}
-                            {error && (
-                                <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-100 flex items-start gap-2">
-                                    <AlertCircle size={20} className="text-red-500 mt-0.5" />
-                                    <div>
-                                        <p className="text-red-700 font-medium">Error creating poll</p>
-                                        <p className="text-red-600 text-sm">{error}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* CTA Button */}
-                            <button
-                                type="button"
-                                onClick={pollData ? createPollFromDraft : goToCreate}
-                                disabled={creatingPoll}
-                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
-                            >
-                                {creatingPoll ? (
-                                    <>
-                                        <Loader2 size={20} className="animate-spin" />
-                                        Creating Your Poll...
-                                    </>
-                                ) : pollData ? (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Create Your Poll Now
-                                        <ArrowRight size={20} />
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Start Creating Polls
-                                        <ArrowRight size={20} />
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* Fallback if no plan detected */}
-                {!planDetails && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 text-center"
-                    >
-                        <p className="text-slate-600 mb-6">
-                            Your payment was successful. A confirmation email has been sent.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={goToCreate}
-                            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all"
-                        >
-                            <Sparkles size={20} />
-                            Create Your Poll Now
-                            <ArrowRight size={20} />
-                        </button>
-                    </motion.div>
-                )}
-
-                {/* Additional Info */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="mt-8 text-center text-sm text-slate-500"
-                >
-                    <p>
-                        Questions? Contact us at{' '}
-                        <a href="mailto:support@votegenerator.com" className="text-indigo-600 hover:underline">
-                            support@votegenerator.com
-                        </a>
-                    </p>
-                </motion.div>
-            </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <Loader2 size={48} className="text-indigo-600 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800">Verifying Payment...</h2>
+          <p className="text-slate-500 mt-2">Just a moment while we confirm your purchase.</p>
+        </motion.div>
+      </div>
     );
-};
+  }
 
-export default CheckoutSuccess;
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={32} className="text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">Payment Issue</h2>
+          <p className="text-slate-500 mt-2">{error}</p>
+          <div className="mt-6 space-y-3">
+            <a
+              href="/pricing"
+              className="block w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition"
+            >
+              Try Again
+            </a>
+            <a
+              href="mailto:support@votegenerator.com"
+              className="block w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition"
+            >
+              Contact Support
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const config = tier ? TIER_CONFIG[tier] : TIER_CONFIG.pro_event;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full"
+      >
+        {/* Success Icon */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-full flex items-center justify-center mx-auto mb-6`}
+        >
+          <CheckCircle size={40} className="text-white" />
+        </motion.div>
+
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-center"
+        >
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">
+            Payment Successful! 🎉
+          </h1>
+          <p className="text-slate-500">
+            Welcome to VoteGenerator {config.label}
+          </p>
+        </motion.div>
+
+        {/* Plan Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className={`mt-6 p-4 bg-gradient-to-r ${config.gradient} rounded-xl text-white`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Crown size={24} />
+              <div>
+                <p className="font-bold">{config.label} Plan</p>
+                <p className="text-white/80 text-sm">
+                  {tier === 'unlimited' ? 'Unlimited polls forever' : 
+                   tier === 'pro_event' ? '3 premium polls/month' : 
+                   '1 premium poll/month'}
+                </p>
+              </div>
+            </div>
+            <div className="text-2xl">✨</div>
+          </div>
+        </motion.div>
+
+        {/* What's Next */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-6 p-4 bg-slate-50 rounded-xl"
+        >
+          <h3 className="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+            <LayoutDashboard size={18} className="text-indigo-600" />
+            Your Dashboard Awaits
+          </h3>
+          <ul className="text-sm text-slate-600 space-y-1">
+            <li>• Create and manage all your polls</li>
+            <li>• Access premium poll types</li>
+            <li>• Export results (CSV, PDF, PNG)</li>
+            <li>• <strong>Save this link</strong> - it's your home base!</li>
+          </ul>
+        </motion.div>
+
+        {/* CTA Button */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          onClick={handleGoToDashboard}
+          className={`mt-6 w-full py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2`}
+        >
+          Go to My Dashboard
+          <ArrowRight size={20} />
+        </motion.button>
+
+        {/* Note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="mt-4 text-xs text-center text-slate-400"
+        >
+          A confirmation email has been sent to your inbox
+        </motion.p>
+      </motion.div>
+    </div>
+  );
+}

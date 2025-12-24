@@ -1,627 +1,542 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
-import LandingPage from './LandingPage';
-import AdWall from './AdWall';
-import CheckoutSuccess from './CheckoutSuccess';
+import {
+  BarChart3, Plus, Copy, Check, ExternalLink, Trash2, Settings,
+  Crown, Loader2, Clock, Users, ChevronRight, LayoutDashboard,
+  Eye, EyeOff, Link2, Calendar, Sparkles, AlertCircle, Bell,
+  HelpCircle, PlusCircle, ArrowRight, CheckCircle, Star
+} from 'lucide-react';
+
+// Import sub-components (these would be separate files in real app)
+import VoteGeneratorCreate from './VoteGeneratorCreate';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
-import VoteGeneratorEdit from './VoteGeneratorEdit';
-import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
-import { Poll, RunoffResult } from '../types';
+import VoteGeneratorConfirmation from './VoteGeneratorConfirmation';
+import AdWall from './AdWall';
+import CheckoutSuccess from './CheckoutSuccess';
 
-type ViewState = 
-    | { type: 'create' }
-    | { type: 'loading' }
-    | { type: 'vote'; poll: Poll }
-    | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
-    | { type: 'edit'; poll: Poll; isAdmin: boolean }
-    | { type: 'error'; message: string };
+// Types
+interface UserPoll {
+  id: string;
+  adminKey: string;
+  title: string;
+  type: string;
+  createdAt: string;
+  responseCount?: number;
+  status?: 'active' | 'ended' | 'draft';
+}
 
-const VoteGeneratorApp: React.FC = () => {
-    const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
-    const [copiedAdmin, setCopiedAdmin] = useState(false);
-    const [copiedShare, setCopiedShare] = useState(false);
-    const [copiedCodes, setCopiedCodes] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
-    const [showQrModal, setShowQrModal] = useState(false);
-    const pollInterval = useRef<number | undefined>(undefined);
+interface UserSession {
+  tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
+  expiresAt?: string;
+  polls: UserPoll[];
+  createdAt: string;
+  stripeSessionId?: string;
+}
 
-    const parseHash = useCallback(() => {
-        const hash = window.location.hash.slice(1);
-        const params = new URLSearchParams(hash);
-        return {
-            pollId: params.get('id'),
-            adminKey: params.get('admin')
-        };
-    }, []);
-
-    const loadView = useCallback(async (silent = false) => {
-        const { pollId, adminKey } = parseHash();
-
-        if (!pollId) {
-            setViewState({ type: 'create' });
-            return;
-        }
-
-        if (!silent) setViewState({ type: 'loading' });
-
-        try {
-            let poll: Poll;
-            let isAdmin = false;
-
-            // If we have an admin key, try to fetch as admin
-            if (adminKey) {
-                poll = await getPollAsAdmin(pollId, adminKey);
-                isAdmin = true;
-            } else {
-                poll = await getPoll(pollId);
-            }
-
-            // Logic to determine what to show (Vote vs Results)
-            const userVoted = hasVoted(pollId);
-            const showResults = isAdmin || (userVoted && !poll.settings.hideResults);
-
-            if (showResults) {
-                const results = await getResults(pollId, adminKey || undefined);
-                setViewState({ type: 'results', poll, results, isAdmin });
-            } else if (userVoted && poll.settings.hideResults) {
-                 // Voted but results are hidden
-                 setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
-            } else {
-                // User hasn't voted yet, or results are not force-shown
-                setViewState({ type: 'vote', poll });
-            }
-
-        } catch (error) {
-            console.error('Failed to load poll:', error);
-            setViewState({ 
-                type: 'error', 
-                message: "Poll not found. It might have expired or the link is incorrect."
-            });
-        }
-    }, [parseHash]);
-
-    useEffect(() => {
-        // Initial Load
-        loadView();
-
-        const handleHashChange = () => loadView();
-        window.addEventListener('hashchange', handleHashChange);
-        
-        return () => {
-            window.removeEventListener('hashchange', handleHashChange);
-            window.clearInterval(pollInterval.current);
-        };
-    }, [loadView]);
-
-    // Auto-refresh logic for results view
-    useEffect(() => {
-        window.clearInterval(pollInterval.current);
-
-        if (viewState.type === 'results') {
-            // Refresh every 8 seconds
-            pollInterval.current = window.setInterval(() => {
-               loadView(true); // silent reload
-            }, 8000);
-        }
-
-        return () => window.clearInterval(pollInterval.current);
-    }, [viewState.type, loadView]);
-
-
-    const handleVoteSuccess = async () => {
-        const { pollId } = parseHash();
-        if(!pollId) return;
-        
-        // Reload to switch to results view
-        loadView(); 
-    };
-
-    const handleManualRefresh = async () => {
-        setIsRefreshing(true);
-        await loadView(true);
-        setTimeout(() => setIsRefreshing(false), 500);
-    };
-
-    const handleEditPoll = () => {
-        if(viewState.type === 'results' && viewState.isAdmin) {
-             setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
-        }
-    };
-
-    const handleVoteAgain = () => {
-        if(viewState.type === 'results') {
-            setViewState({ type: 'vote', poll: viewState.poll });
-        }
-    };
-
-    const handlePrintPDF = () => {
-        window.print();
-    };
-
-    const handleExportCSV = async () => {
-        if (viewState.type !== 'results' || !viewState.isAdmin) return;
-        
-        const { pollId, adminKey } = parseHash();
-        if (!pollId || !adminKey) return;
-
-        setIsExporting(true);
-        try {
-            const votes = await getRawVotes(pollId, adminKey);
-            
-            if (votes.length === 0) {
-                alert("No votes to export yet.");
-                setIsExporting(false);
-                return;
-            }
-
-            // Generate CSV content
-            const headers = ['Date', 'Time', 'Voter Name', 'Access Code', 'Choices (Ranked/Selected)', 'Comment'];
-            const csvRows = [headers.join(',')];
-
-            votes.forEach(vote => {
-                const date = new Date(vote.votedAt);
-                const dateStr = date.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString();
-                
-                // Map choice IDs to text
-                const choiceTexts = vote.choices.map(id => {
-                    const option = viewState.poll.options.find(o => o.id === id);
-                    return option ? option.text.replace(/,/g, ' ') : 'Unknown'; // simple escape for commas
-                });
-
-                const row = [
-                    dateStr,
-                    timeStr,
-                    `"${vote.voterName || 'Anonymous'}"`,
-                    `"${vote.usedCode || ''}"`,
-                    `"${choiceTexts.join('; ')}"`,
-                    `"${(vote.comment || '').replace(/"/g, '""')}"`
-                ];
-                csvRows.push(row.join(','));
-            });
-
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `poll_${pollId}_results.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-
-        } catch (e) {
-            console.error("Export failed", e);
-            alert("Failed to export data.");
-        } finally {
-            setIsExporting(false);
-        }
-    };
-
-    const copyToClipboard = (text: string, type: 'admin' | 'share' | 'codes') => {
-        navigator.clipboard.writeText(text);
-        if (type === 'admin') {
-            setCopiedAdmin(true);
-            setTimeout(() => setCopiedAdmin(false), 2000);
-        } else if (type === 'share') {
-            setCopiedShare(true);
-            setTimeout(() => setCopiedShare(false), 2000);
-        } else {
-            setCopiedCodes(true);
-            setTimeout(() => setCopiedCodes(false), 2000);
-        }
-    };
-
-    const goHome = () => {
-        window.location.hash = '';
-    };
-
-    const getShareUrl = () => {
-        const { pollId } = parseHash();
-        return `${window.location.origin}/#id=${pollId}`;
-    };
-
-    const getShareText = (title: string) => {
-        return `Vote in my poll "${title}": ${getShareUrl()}`;
-    };
-
-    const shareToWhatsapp = () => {
-        if(viewState.type !== 'results') return;
-        const text = getShareText(viewState.poll.title);
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    };
-
-    const shareToSms = () => {
-        if(viewState.type !== 'results') return;
-        const text = getShareText(viewState.poll.title);
-        window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank');
-    };
-
-    const shareToEmail = () => {
-        if(viewState.type !== 'results') return;
-        const subject = `Vote: ${viewState.poll.title}`;
-        const body = getShareText(viewState.poll.title);
-        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-    };
-    
-    const getQrUrl = () => {
-        const url = encodeURIComponent(getShareUrl());
-        return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&bgcolor=ffffff`;
-    };
-
-    const downloadQrCode = async () => {
-        try {
-            const response = await fetch(getQrUrl());
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'poll-qrcode.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("Failed to download QR", e);
-            alert("Could not download image automatically. Please right-click the image to save.");
-        }
-    };
-
-    const getPollTypeDetails = (type: string) => {
-        switch (type) {
-            case 'ranked': return { icon: ListOrdered, label: 'Ranked Choice', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' };
-            case 'multiple': return { icon: CheckSquare, label: 'Multiple Choice', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' };
-            case 'meeting': return { icon: Calendar, label: 'Meeting Poll', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' };
-            case 'dot': return { icon: Coins, label: 'Dot Voting', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' };
-            case 'matrix': return { icon: LayoutGrid, label: 'Priority Matrix', color: 'text-fuchsia-600', bg: 'bg-fuchsia-50', border: 'border-fuchsia-100' };
-            case 'pairwise': return { icon: GitCompare, label: 'Pairwise Comparison', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' };
-            case 'rating': return { icon: SlidersHorizontal, label: 'Continuous Rating', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100' };
-            default: return { icon: CheckSquare, label: 'Poll', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' };
-        }
-    };
-
-    return (
-        <div className="min-h-screen pb-10">
-            {/* ROUTE: /ad-wall - render AdWall component */}
-            {window.location.pathname.startsWith('/ad-wall') ? (
-                <AdWall />
-            ) : window.location.pathname.startsWith('/checkout/success') ? (
-                <CheckoutSuccess />
-            ) : (
-            <>
-            {/* Header */}
-            {viewState.type !== 'create' && viewState.type !== 'loading' && (
-                <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
-                    <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                        <button 
-                            onClick={goHome}
-                            className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 font-bold transition-colors"
-                        >
-                            <Home size={20} />
-                            <span className="hidden sm:inline">VoteGenerator</span>
-                        </button>
-                        
-                        <div className="flex items-center gap-2">
-                             {/* Only show share button if viewing results (not while voting) */}
-                             {viewState.type === 'results' && !viewState.isAdmin && (
-                                <button
-                                    onClick={() => copyToClipboard(getShareUrl(), 'share')}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    {copiedShare ? <Check size={16} /> : <Share2 size={16} />}
-                                    {copiedShare ? 'Copied!' : 'Share Poll'}
-                                </button>
-                             )}
-                             {/* Admin Indicator in Header */}
-                             {viewState.type === 'results' && viewState.isAdmin && (
-                                 <div className="flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
-                                     <ShieldCheck size={14} /> Admin Portal
-                                 </div>
-                             )}
-                        </div>
-                    </div>
-                </header>
-            )}
-
-            <main className="min-h-[calc(100vh-64px)]">
-                <AnimatePresence mode="wait">
-                    {viewState.type === 'loading' && (
-                        <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center pt-40"
-                        >
-                            <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-                            <p className="text-slate-500 font-medium">Loading...</p>
-                        </motion.div>
-                    )}
-
-                    {viewState.type === 'create' && (
-                        <motion.div key="create" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <LandingPage />
-                        </motion.div>
-                    )}
-
-                    {viewState.type === 'vote' && (
-                        <motion.div key="vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <VoteGeneratorVote 
-                                poll={viewState.poll} 
-                                onVoteSuccess={handleVoteSuccess} 
-                            />
-                        </motion.div>
-                    )}
-
-                    {viewState.type === 'edit' && (
-                         <motion.div key="edit" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                            <VoteGeneratorEdit
-                                poll={viewState.poll}
-                                onCancel={() => loadView(true)}
-                                onUpdate={() => loadView(false)}
-                            />
-                         </motion.div>
-                    )}
-
-                    {viewState.type === 'results' && (
-                        <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <div className="max-w-4xl mx-auto px-4 py-8">
-                                
-                                {/* --- ADMIN DASHBOARD HEADER & KEY --- */}
-                                {viewState.isAdmin && (
-                                    <div className="mb-8 print:hidden">
-                                        <div className="flex items-end justify-between mb-6">
-                                            <div>
-                                                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                                                    <LayoutDashboard className="text-indigo-600" size={28}/> 
-                                                    Admin Dashboard
-                                                </h2>
-                                                <p className="text-slate-500 text-sm mt-1 ml-10">Overview of your active polls</p>
-                                            </div>
-                                            <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">
-                                                Premium Enabled
-                                            </div>
-                                        </div>
-
-                                        {/* ADMIN KEY (Top Priority) */}
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-white text-amber-600 rounded-lg shadow-sm border border-amber-100">
-                                                    <Key size={20} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-amber-900">Private Admin Key</div>
-                                                    <div className="text-xs text-amber-700/80">
-                                                        Save this URL! It is the only way to manage this poll.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                onClick={() => copyToClipboard(window.location.href, 'admin')}
-                                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-100/50 rounded-lg text-sm font-bold transition-all shadow-sm"
-                                            >
-                                                {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} 
-                                                {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* --- POLL CONTAINER (Unified for Admin) --- */}
-                                <div className={viewState.isAdmin ? "bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition-all" : ""}>
-                                    
-                                    {/* ADMIN: Management Toolbar */}
-                                    {viewState.isAdmin && (
-                                        <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                                                        Current Poll Settings
-                                                    </h3>
-                                                    {(() => {
-                                                        const typeDetails = getPollTypeDetails(viewState.poll.pollType);
-                                                        const Icon = typeDetails.icon;
-                                                        return (
-                                                            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold border ${typeDetails.bg} ${typeDetails.color} ${typeDetails.border}`}>
-                                                                <Icon size={12} />
-                                                                {typeDetails.label}
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {viewState.poll.settings.deadline && (
-                                                        <span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-md text-slate-600 flex items-center gap-1">
-                                                            <Clock size={12}/> Ends: {new Date(viewState.poll.settings.deadline).toLocaleDateString()}
-                                                        </span>
-                                                    )}
-                                                    {viewState.poll.allowedCodes && (
-                                                        <span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-md text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100 transition-colors">
-                                                            <Key size={12}/> {viewState.poll.allowedCodes.length} Codes {copiedCodes ? '(Copied)' : ''}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="grid lg:grid-cols-2 gap-6">
-                                                
-                                                {/* Share Section */}
-                                                <div className="bg-white border border-indigo-100 rounded-xl p-5 shadow-sm">
-                                                     <div className="flex items-center justify-between mb-3">
-                                                         <h4 className="font-bold text-indigo-900 flex items-center gap-2">
-                                                             <Share2 size={18} className="text-indigo-600"/> Share Poll
-                                                         </h4>
-                                                     </div>
-                                                     <div className="flex gap-2 mb-3">
-                                                         <div className="relative flex-1">
-                                                             <Globe className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                                                             <input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600 focus:outline-none" />
-                                                         </div>
-                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors">
-                                                             {copiedShare ? 'Copied' : 'Copy'}
-                                                         </button>
-                                                     </div>
-                                                     <div className="grid grid-cols-2 gap-2">
-                                                         <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
-                                                         <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
-                                                         <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
-                                                         <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
-                                                     </div>
-                                                </div>
-
-                                                {/* Controls Section */}
-                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                                                             <Settings size={18} className="text-slate-600"/> Controls
-                                                         </h4>
-                                                     </div>
-                                                     <div className="grid grid-cols-2 gap-3">
-                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                             <Settings size={16}/> Edit
-                                                         </button>
-                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                             {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
-                                                         </button>
-                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                                                             <Download size={14}/> Download PDF
-                                                         </button>
-                                                     </div>
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Main Content Area (Title + Results) */}
-                                    <div className={viewState.isAdmin ? "p-6 md:p-10" : ""}>
-                                        {!viewState.isAdmin && (
-                                            <div className="flex justify-end mb-4 print:hidden">
-                                                <button 
-                                                    onClick={handleManualRefresh}
-                                                    className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
-                                                    disabled={isRefreshing}
-                                                >
-                                                    <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                                                    {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
-                                        {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
-                                        
-                                        <VoteGeneratorResults 
-                                            poll={viewState.poll} 
-                                            results={viewState.results}
-                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
-                                        />
-                                        
-                                         {/* Vote Again Button for Non-Admin with Security 'none' */}
-                                        {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (
-                                            <div className="mt-8 flex flex-col items-center justify-center print:hidden">
-                                                <button
-                                                    onClick={handleVoteAgain}
-                                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                                >
-                                                    <RotateCcw size={18} />
-                                                    Vote Again
-                                                </button>
-                                                <p className="text-slate-400 text-xs mt-2">
-                                                    Multiple votes are allowed for this poll.
-                                                </p>
-                                            </div>
-                                        )}
-                                        
-                                        {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (
-                                            <div className="mt-12 text-center print:hidden">
-                                                <button 
-                                                    onClick={goHome} 
-                                                    className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
-                                                >
-                                                    Create your own poll <ArrowRight size={14}/>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {viewState.type === 'error' && (
-                        <motion.div
-                            key="error"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="max-w-md mx-auto text-center pt-40 px-4"
-                        >
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <AlertTriangle className="text-slate-400" size={32} />
-                            </div>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-2">Notice</h2>
-                            <p className="text-slate-500 mb-8">{viewState.message}</p>
-                            <button
-                                onClick={goHome}
-                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors"
-                            >
-                                Create New Poll
-                            </button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                
-                {/* QR Code Modal */}
-                <AnimatePresence>
-                    {showQrModal && (
-                         <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-                            onClick={() => setShowQrModal(false)}
-                        >
-                             <motion.div 
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl"
-                                onClick={e => e.stopPropagation()}
-                             >
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-bold text-slate-800">Scan to Vote</h3>
-                                    <button onClick={() => setShowQrModal(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-1 rounded-full"><X size={20}/></button>
-                                </div>
-                                
-                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-center mb-6">
-                                     <img src={getQrUrl()} alt="QR Code" className="w-48 h-48 mix-blend-multiply" />
-                                </div>
-
-                                {viewState.type === 'results' && viewState.poll.settings.security === 'code' && (
-                                     <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg border border-amber-100 mb-6 flex gap-2">
-                                        <Key size={16} className="shrink-0 mt-0.5" />
-                                        <div>
-                                            <strong>Note:</strong> This QR code opens the voting page. Voters must still manually enter their unique Access Code after scanning.
-                                        </div>
-                                     </div>
-                                )}
-
-                                <div className="flex gap-2">
-                                     <button onClick={downloadQrCode} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2">
-                                         <Download size={18}/> Download PNG
-                                     </button>
-                                </div>
-                             </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </main>
-            </>
-            )}
-        </div>
-    );
+// Tier configuration
+const TIER_CONFIG: Record<string, {
+  label: string;
+  color: string;
+  gradient: string;
+  bgGradient: string;
+  icon: React.ReactNode;
+  pollLimit: number | 'unlimited';
+  canCreateMore: (pollCount: number) => boolean;
+}> = {
+  free: {
+    label: 'Free',
+    color: 'text-slate-600',
+    gradient: 'from-slate-400 to-slate-500',
+    bgGradient: 'from-slate-50 to-slate-100',
+    icon: <BarChart3 size={18} />,
+    pollLimit: 1,
+    canCreateMore: (count) => count < 1,
+  },
+  starter: {
+    label: 'Starter',
+    color: 'text-blue-600',
+    gradient: 'from-blue-500 to-indigo-500',
+    bgGradient: 'from-blue-50 to-indigo-50',
+    icon: <Star size={18} />,
+    pollLimit: 1,
+    canCreateMore: (count) => count < 1,
+  },
+  pro_event: {
+    label: 'Pro Event',
+    color: 'text-purple-600',
+    gradient: 'from-purple-500 to-pink-500',
+    bgGradient: 'from-purple-50 to-pink-50',
+    icon: <Crown size={18} />,
+    pollLimit: 3,
+    canCreateMore: (count) => count < 3,
+  },
+  unlimited: {
+    label: 'Unlimited',
+    color: 'text-amber-600',
+    gradient: 'from-amber-500 to-orange-500',
+    bgGradient: 'from-amber-50 to-orange-50',
+    icon: <Sparkles size={18} />,
+    pollLimit: 'unlimited',
+    canCreateMore: () => true,
+  },
 };
 
-export default VoteGeneratorApp;
+// Poll Card Component
+function PollCard({ 
+  poll, 
+  onCopyLink, 
+  onDelete, 
+  copiedId 
+}: { 
+  poll: UserPoll; 
+  onCopyLink: (poll: UserPoll) => void;
+  onDelete: (poll: UserPoll) => void;
+  copiedId: string | null;
+}) {
+  const adminUrl = `${window.location.origin}/admin/${poll.id}/${poll.adminKey}`;
+  const voteUrl = `${window.location.origin}/vote/${poll.id}`;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-slate-800 truncate">{poll.title}</h3>
+          <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+            <span className="px-2 py-0.5 bg-slate-100 rounded text-xs">{poll.type}</span>
+            <span>•</span>
+            <Clock size={12} />
+            <span>{new Date(poll.createdAt).toLocaleDateString()}</span>
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onCopyLink(poll)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition"
+            title="Copy admin link"
+          >
+            {copiedId === poll.id ? (
+              <Check size={16} className="text-green-600" />
+            ) : (
+              <Copy size={16} className="text-slate-400" />
+            )}
+          </button>
+          <a
+            href={adminUrl}
+            className="p-2 hover:bg-slate-100 rounded-lg transition"
+            title="Open dashboard"
+          >
+            <ExternalLink size={16} className="text-slate-400" />
+          </a>
+          <button
+            onClick={() => onDelete(poll)}
+            className="p-2 hover:bg-red-50 rounded-lg transition"
+            title="Delete poll"
+          >
+            <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Quick Stats */}
+      <div className="mt-3 flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-1 text-slate-500">
+          <Users size={14} />
+          <span>{poll.responseCount || 0} votes</span>
+        </div>
+        <a
+          href={voteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700"
+        >
+          <Link2 size={14} />
+          <span>Vote link</span>
+        </a>
+      </div>
+    </motion.div>
+  );
+}
+
+// Empty State Component
+function EmptyDashboard({ 
+  tier, 
+  onCreatePoll 
+}: { 
+  tier: string; 
+  onCreatePoll: () => void;
+}) {
+  const config = TIER_CONFIG[tier] || TIER_CONFIG.free;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center py-16"
+    >
+      <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+        <PlusCircle size={40} className="text-white" />
+      </div>
+      
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">
+        Create Your First Poll
+      </h2>
+      <p className="text-slate-500 max-w-md mx-auto mb-8">
+        Welcome to VoteGenerator {config.label}! Get started by creating your first poll. 
+        It only takes a minute.
+      </p>
+      
+      <button
+        onClick={onCreatePoll}
+        className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all inline-flex items-center gap-2`}
+      >
+        <Plus size={20} />
+        Create New Poll
+      </button>
+      
+      {/* Features Preview */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+        {[
+          { icon: <BarChart3 />, title: 'Multiple Poll Types', desc: 'Ranked choice, rating, approval & more' },
+          { icon: <Users />, title: 'Real-time Results', desc: 'Watch votes come in live' },
+          { icon: <Link2 />, title: 'Easy Sharing', desc: 'One link for voters, one for you' },
+        ].map((feature, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + i * 0.1 }}
+            className="p-4 bg-white rounded-xl border border-slate-200"
+          >
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 mx-auto mb-3">
+              {feature.icon}
+            </div>
+            <h3 className="font-semibold text-slate-800">{feature.title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{feature.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Main Admin Dashboard Component
+function AdminDashboard() {
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    // Load user session from localStorage
+    const loadSession = () => {
+      try {
+        const stored = localStorage.getItem('vg_user_session');
+        if (stored) {
+          const parsed = JSON.parse(stored) as UserSession;
+          setSession(parsed);
+        } else {
+          // Check for legacy storage (backward compatibility)
+          const tier = localStorage.getItem('vg_purchased_tier');
+          if (tier) {
+            const newSession: UserSession = {
+              tier: tier as UserSession['tier'],
+              expiresAt: localStorage.getItem('vg_expires_at') || undefined,
+              polls: [],
+              createdAt: new Date().toISOString(),
+            };
+            localStorage.setItem('vg_user_session', JSON.stringify(newSession));
+            setSession(newSession);
+          } else {
+            // No session - redirect to pricing or show free option
+            setSession({
+              tier: 'free',
+              polls: [],
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error loading session:', e);
+        setSession({
+          tier: 'free',
+          polls: [],
+          createdAt: new Date().toISOString(),
+        });
+      }
+      setLoading(false);
+    };
+
+    loadSession();
+  }, []);
+
+  const handleCopyLink = (poll: UserPoll) => {
+    const adminUrl = `${window.location.origin}/admin/${poll.id}/${poll.adminKey}`;
+    navigator.clipboard.writeText(adminUrl);
+    setCopiedId(poll.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDeletePoll = (poll: UserPoll) => {
+    if (!confirm(`Delete "${poll.title}"? This cannot be undone.`)) return;
+    
+    if (session) {
+      const updatedPolls = session.polls.filter(p => p.id !== poll.id);
+      const updatedSession = { ...session, polls: updatedPolls };
+      localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+      setSession(updatedSession);
+    }
+  };
+
+  const handleCreatePoll = () => {
+    // Navigate to create page
+    window.location.href = '/create';
+  };
+
+  const handleUpgrade = () => {
+    window.location.href = '/pricing';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={32} className="text-indigo-600 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const tier = session?.tier || 'free';
+  const config = TIER_CONFIG[tier];
+  const polls = session?.polls || [];
+  const canCreateMore = config.canCreateMore(polls.length);
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <a href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="text-white" size={22} />
+                </div>
+                <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+              </a>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Tier Badge */}
+              <div className={`px-3 py-1.5 bg-gradient-to-r ${config.gradient} text-white rounded-full text-sm font-medium flex items-center gap-1.5`}>
+                {config.icon}
+                {config.label}
+              </div>
+              
+              {tier !== 'unlimited' && (
+                <button
+                  onClick={handleUpgrade}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition"
+                >
+                  Upgrade
+                </button>
+              )}
+              
+              <button className="p-2 hover:bg-slate-100 rounded-lg transition">
+                <HelpCircle size={20} className="text-slate-500" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Save Link Warning - Show prominently for paid users */}
+        {tier !== 'free' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <AlertCircle size={20} className="text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-amber-800">Bookmark This Page!</h3>
+                <p className="text-sm text-amber-600">
+                  This is your dashboard. Save this URL to access your polls anytime.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Dashboard URL copied!');
+                }}
+                className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 transition font-medium flex items-center gap-2"
+              >
+                <Copy size={16} />
+                Copy Link
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Dashboard Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <LayoutDashboard size={28} className="text-indigo-600" />
+              My Dashboard
+            </h1>
+            <p className="text-slate-500 mt-1">
+              {polls.length === 0 
+                ? 'Get started by creating your first poll' 
+                : `${polls.length} poll${polls.length !== 1 ? 's' : ''} • ${config.pollLimit === 'unlimited' ? 'Unlimited' : `${config.pollLimit - polls.length} remaining`}`
+              }
+            </p>
+          </div>
+          
+          {polls.length > 0 && canCreateMore && (
+            <button
+              onClick={handleCreatePoll}
+              className={`px-4 py-2 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2`}
+            >
+              <Plus size={18} />
+              New Poll
+            </button>
+          )}
+        </div>
+
+        {/* Content */}
+        {polls.length === 0 ? (
+          <EmptyDashboard tier={tier} onCreatePoll={handleCreatePoll} />
+        ) : (
+          <div className="space-y-4">
+            {/* Polls List */}
+            <div className="grid gap-4">
+              {polls.map((poll) => (
+                <PollCard
+                  key={poll.id}
+                  poll={poll}
+                  onCopyLink={handleCopyLink}
+                  onDelete={handleDeletePoll}
+                  copiedId={copiedId}
+                />
+              ))}
+            </div>
+
+            {/* Create More CTA */}
+            {canCreateMore ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-8"
+              >
+                <button
+                  onClick={handleCreatePoll}
+                  className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  <PlusCircle size={20} />
+                  Create Another Poll
+                </button>
+              </motion.div>
+            ) : tier !== 'unlimited' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`p-6 bg-gradient-to-r ${config.bgGradient} rounded-xl border border-slate-200 text-center`}
+              >
+                <h3 className="font-bold text-slate-800 mb-2">
+                  You've reached your poll limit
+                </h3>
+                <p className="text-slate-600 mb-4">
+                  Upgrade to create more polls and unlock premium features.
+                </p>
+                <button
+                  onClick={handleUpgrade}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition"
+                >
+                  Upgrade Now
+                </button>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* Expiry Notice */}
+        {session?.expiresAt && tier !== 'free' && (
+          <div className="mt-8 text-center text-sm text-slate-500">
+            <Calendar size={14} className="inline mr-1" />
+            Plan {tier === 'unlimited' ? 'active' : 'expires'}: {new Date(session.expiresAt).toLocaleDateString()}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// Main App Router
+export default function VoteGeneratorApp() {
+  const path = window.location.pathname;
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Route: /checkout/success
+  if (path.startsWith('/checkout/success')) {
+    return <CheckoutSuccess />;
+  }
+
+  // Route: /admin (no poll ID = dashboard home)
+  if (path === '/admin' || path === '/admin/') {
+    return <AdminDashboard />;
+  }
+
+  // Route: /admin/:pollId/:adminKey (specific poll admin)
+  const adminMatch = path.match(/^\/admin\/([^/]+)\/([^/]+)/);
+  if (adminMatch) {
+    const [, pollId, adminKey] = adminMatch;
+    // This would render the specific poll admin view
+    // For now, return a placeholder that would fetch poll data
+    return (
+      <div className="min-h-screen bg-slate-50">
+        {/* Specific poll admin dashboard would go here */}
+        <AdminDashboard />
+      </div>
+    );
+  }
+
+  // Route: /ad-wall
+  if (path.startsWith('/ad-wall')) {
+    return <AdWall />;
+  }
+
+  // Route: /create
+  if (path === '/create' || path === '/create/') {
+    return <VoteGeneratorCreate />;
+  }
+
+  // Route: /vote/:pollId
+  if (path.startsWith('/vote/')) {
+    return <VoteGeneratorVote />;
+  }
+
+  // Route: /results/:pollId
+  if (path.startsWith('/results/')) {
+    return <VoteGeneratorResults />;
+  }
+
+  // Route: /confirmation
+  if (path.startsWith('/confirmation')) {
+    return <VoteGeneratorConfirmation />;
+  }
+
+  // Default: Homepage or Create
+  return <VoteGeneratorCreate />;
+}

@@ -1,88 +1,142 @@
+// ============================================================================
+// vg-list-tokens.ts - List all access tokens for a poll
+// Location: netlify/functions/vg-list-tokens.ts
+// Returns all tokens for master admin to view/manage
+// ============================================================================
+
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-interface AdminToken {
-    id: string;
-    key: string;
+interface AccessToken {
+    token: string;
+    role: 'admin' | 'viewer';
     label: string;
     createdAt: string;
     lastUsed?: string;
-    permissions: 'full' | 'edit' | 'view-only';
+    expiresAt?: string;
 }
 
 interface Poll {
     id: string;
-    masterKey: string;
-    adminTokens?: AdminToken[];
+    adminKey: string;
+    question: string;
+    options: string[];
+    type: string;
+    settings: Record<string, any>;
+    createdAt: string;
+    tier?: string;
+    accessTokens?: AccessToken[];
 }
 
+const MAX_TOKENS_PER_POLL = 10;
+
 export const handler: Handler = async (event) => {
-    if (event.httpMethod !== 'GET') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-    }
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Content-Type': 'application/json',
+    };
 
-    const pollId = event.queryStringParameters?.pollId;
-    const masterKey = event.queryStringParameters?.masterKey;
-
-    if (!pollId || !masterKey) {
-        return {
-            statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Missing pollId or masterKey' })
-        };
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers, body: '' };
     }
 
     try {
-        const store = getStore('polls');
-        const poll = await store.get(pollId, { type: 'json' }) as Poll | null;
+        // Support both GET and POST
+        let pollId: string | null = null;
+        let adminKey: string | null = null;
 
-        if (!poll) {
+        if (event.httpMethod === 'GET') {
+            const params = event.queryStringParameters || {};
+            pollId = params.pollId || null;
+            adminKey = params.adminKey || null;
+        } else if (event.httpMethod === 'POST') {
+            const body = JSON.parse(event.body || '{}');
+            pollId = body.pollId || null;
+            adminKey = body.adminKey || null;
+        }
+
+        if (!pollId || !adminKey) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Poll ID and admin key required' }),
+            };
+        }
+
+        const pollStore = getStore('polls');
+
+        // Fetch the poll
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+        
+        if (!pollData) {
             return {
                 statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Poll not found' })
+                headers,
+                body: JSON.stringify({ error: 'Poll not found' }),
             };
         }
 
-        // Only master can list tokens
-        const isValidMaster = poll.masterKey === masterKey || 
-            ((poll as any).adminKey === masterKey && !poll.masterKey);
-        
-        if (!isValidMaster) {
+        // Verify admin key (only master admin can list tokens)
+        if (pollData.adminKey !== adminKey) {
             return {
                 statusCode: 403,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Only the poll creator can view tokens' })
+                headers,
+                body: JSON.stringify({ error: 'Only the poll creator can view tokens.' }),
             };
         }
 
-        const tokens = (poll.adminTokens || []).map(token => ({
-            id: token.id,
-            label: token.label,
-            permissions: token.permissions,
-            createdAt: token.createdAt,
-            lastUsed: token.lastUsed || null
-            // Note: We don't return the actual key for security
-        }));
+        const tokens = pollData.accessTokens || [];
+        const baseUrl = process.env.URL || 'https://votegenerator.com';
 
-        const siteUrl = process.env.URL || 'https://votegenerator.com';
+        // Separate tokens by role
+        const adminTokens = tokens
+            .filter(t => t.role === 'admin')
+            .map(t => ({
+                ...t,
+                url: `${baseUrl}/#id=${pollId}&access=${t.token}`,
+                isExpired: t.expiresAt ? new Date(t.expiresAt) < new Date() : false,
+            }));
+
+        const viewerTokens = tokens
+            .filter(t => t.role === 'viewer')
+            .map(t => ({
+                ...t,
+                url: `${baseUrl}/#id=${pollId}&access=${t.token}`,
+                isExpired: t.expiresAt ? new Date(t.expiresAt) < new Date() : false,
+            }));
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({
-                tokens,
-                totalTokens: tokens.length,
-                maxTokens: 10,
-                masterUrl: `${siteUrl}/#id=${pollId}&master=${masterKey}`
-            })
+                success: true,
+                poll: {
+                    id: pollData.id,
+                    question: pollData.question,
+                    tier: pollData.tier,
+                },
+                tokens: {
+                    admin: adminTokens,
+                    viewer: viewerTokens,
+                },
+                summary: {
+                    total: tokens.length,
+                    adminCount: adminTokens.length,
+                    viewerCount: viewerTokens.length,
+                    maxTokens: MAX_TOKENS_PER_POLL,
+                    canCreateMore: tokens.length < MAX_TOKENS_PER_POLL,
+                },
+            }),
         };
+
     } catch (error) {
         console.error('List tokens error:', error);
         return {
             statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Failed to list tokens' })
+            headers,
+            body: JSON.stringify({ error: 'Failed to list tokens' }),
         };
     }
 };

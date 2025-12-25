@@ -1,203 +1,227 @@
 // ============================================================================
-// vg-validate-access.ts - Validate Access Level
+// vg-validate-access.ts - Validate access and return permissions
 // Location: netlify/functions/vg-validate-access.ts
-// Determines access level: master, admin, viewer, or none
-// Updates lastUsed timestamp for tokens
+// Checks admin key or access token and returns appropriate permissions
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
-// Your database imports
-// import { db } from '../lib/database';
-
-const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-};
-
-type AccessLevel = 'master' | 'admin' | 'viewer' | 'none';
-
-interface AccessResponse {
-    valid: boolean;
-    accessLevel: AccessLevel;
-    requiresPin?: boolean;
-    label?: string;
-    permissions: {
-        viewResults: boolean;
-        editPoll: boolean;
-        exportCsv: boolean;
-        closePoll: boolean;
-        deletePoll: boolean;
-        manageAccess: boolean;
-    };
+interface AccessToken {
+    token: string;
+    role: 'admin' | 'viewer';
+    label: string;
+    createdAt: string;
+    lastUsed?: string;
+    expiresAt?: string;
 }
 
-export const handler: Handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
-    }
+interface Poll {
+    id: string;
+    adminKey: string;
+    question: string;
+    options: string[];
+    type: string;
+    settings: Record<string, any>;
+    createdAt: string;
+    tier?: string;
+    accessTokens?: AccessToken[];
+    status?: 'draft' | 'live';
+}
 
-    if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+// Permission sets for each access level
+const PERMISSIONS = {
+    master: {
+        level: 'master',
+        viewResults: true,
+        editPoll: true,
+        closePoll: true,
+        deletePoll: true,
+        exportCsv: true,
+        exportPdf: true,
+        manageAccess: true,
+        viewTokens: true,
+        createTokens: true,
+        revokeTokens: true,
+        setPin: true,
+    },
+    admin: {
+        level: 'admin',
+        viewResults: true,
+        editPoll: true,
+        closePoll: false,
+        deletePoll: false,
+        exportCsv: true,
+        exportPdf: true,
+        manageAccess: false,
+        viewTokens: false,
+        createTokens: false,
+        revokeTokens: false,
+        setPin: false,
+    },
+    viewer: {
+        level: 'viewer',
+        viewResults: true,
+        editPoll: false,
+        closePoll: false,
+        deletePoll: false,
+        exportCsv: false,
+        exportPdf: false,
+        manageAccess: false,
+        viewTokens: false,
+        createTokens: false,
+        revokeTokens: false,
+        setPin: false,
+    },
+    none: {
+        level: 'none',
+        viewResults: false,
+        editPoll: false,
+        closePoll: false,
+        deletePoll: false,
+        exportCsv: false,
+        exportPdf: false,
+        manageAccess: false,
+        viewTokens: false,
+        createTokens: false,
+        revokeTokens: false,
+        setPin: false,
+    },
+};
+
+export const handler: Handler = async (event) => {
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Content-Type': 'application/json',
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers, body: '' };
     }
 
     try {
-        // Support both GET params and POST body
+        // Support both GET (query params) and POST (body)
         let pollId: string | null = null;
         let adminKey: string | null = null;
         let accessToken: string | null = null;
 
         if (event.httpMethod === 'GET') {
-            pollId = event.queryStringParameters?.pollId || null;
-            adminKey = event.queryStringParameters?.adminKey || null;
-            accessToken = event.queryStringParameters?.access || null;
-        } else {
+            const params = event.queryStringParameters || {};
+            pollId = params.pollId || null;
+            adminKey = params.adminKey || null;
+            accessToken = params.accessToken || null;
+        } else if (event.httpMethod === 'POST') {
             const body = JSON.parse(event.body || '{}');
-            pollId = body.pollId;
-            adminKey = body.adminKey;
-            accessToken = body.access;
+            pollId = body.pollId || null;
+            adminKey = body.adminKey || null;
+            accessToken = body.accessToken || null;
         }
 
         if (!pollId) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Poll ID is required' })
+                body: JSON.stringify({ error: 'Poll ID required' }),
             };
         }
 
-        // Get poll
-        const poll = await getPoll(pollId);
+        if (!adminKey && !accessToken) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Admin key or access token required' }),
+            };
+        }
 
-        if (!poll) {
+        const pollStore = getStore('polls');
+
+        // Fetch the poll
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+        
+        if (!pollData) {
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ error: 'Poll not found' }),
             };
         }
 
-        // Check access type in order of priority
-        let response: AccessResponse;
-
-        // 1. MASTER ADMIN (full control)
-        if (adminKey && poll.adminKey === adminKey) {
-            response = {
-                valid: true,
-                accessLevel: 'master',
-                requiresPin: !!(poll.settings?.adminPinHash),
-                permissions: {
-                    viewResults: true,
-                    editPoll: true,
-                    exportCsv: true,
-                    closePoll: true,
-                    deletePoll: true,
-                    manageAccess: true
-                }
-            };
-
+        // Check master admin key first
+        if (adminKey && pollData.adminKey === adminKey) {
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify(response)
+                body: JSON.stringify({
+                    valid: true,
+                    accessLevel: 'master',
+                    permissions: PERMISSIONS.master,
+                    poll: {
+                        id: pollData.id,
+                        question: pollData.question,
+                        status: pollData.status || 'live',
+                        tier: pollData.tier,
+                        tokenCount: (pollData.accessTokens || []).length,
+                    },
+                }),
             };
         }
 
-        // 2. ACCESS TOKEN (admin or viewer)
+        // Check access token
         if (accessToken) {
-            const tokens = poll.accessTokens || [];
-            const token = tokens.find((t: any) => t.token === accessToken);
+            const tokens = pollData.accessTokens || [];
+            const foundToken = tokens.find(t => t.token === accessToken);
 
-            if (token) {
-                // Check if token is expired
-                if (token.expiresAt && new Date(token.expiresAt) < new Date()) {
-                    response = {
-                        valid: false,
-                        accessLevel: 'none',
-                        permissions: {
-                            viewResults: false,
-                            editPoll: false,
-                            exportCsv: false,
-                            closePoll: false,
-                            deletePoll: false,
-                            manageAccess: false
-                        }
-                    };
-
+            if (foundToken) {
+                // Check expiration
+                if (foundToken.expiresAt && new Date(foundToken.expiresAt) < new Date()) {
                     return {
-                        statusCode: 401,
+                        statusCode: 403,
                         headers,
-                        body: JSON.stringify({
-                            ...response,
-                            error: 'This access link has expired'
-                        })
+                        body: JSON.stringify({ 
+                            valid: false,
+                            error: 'Token has expired',
+                            accessLevel: 'none',
+                            permissions: PERMISSIONS.none,
+                        }),
                     };
                 }
 
                 // Update lastUsed timestamp
-                await updateTokenLastUsed(pollId, accessToken);
+                foundToken.lastUsed = new Date().toISOString();
+                await pollStore.setJSON(pollId, pollData);
 
-                if (token.role === 'admin') {
-                    response = {
-                        valid: true,
-                        accessLevel: 'admin',
-                        label: token.label,
-                        permissions: {
-                            viewResults: true,
-                            editPoll: true,
-                            exportCsv: true,
-                            closePoll: false,
-                            deletePoll: false,
-                            manageAccess: false
-                        }
-                    };
-                } else {
-                    // Viewer
-                    response = {
-                        valid: true,
-                        accessLevel: 'viewer',
-                        label: token.label,
-                        permissions: {
-                            viewResults: true,
-                            editPoll: false,
-                            exportCsv: false,
-                            closePoll: false,
-                            deletePoll: false,
-                            manageAccess: false
-                        }
-                    };
-                }
+                const permissions = foundToken.role === 'admin' ? PERMISSIONS.admin : PERMISSIONS.viewer;
 
                 return {
                     statusCode: 200,
                     headers,
-                    body: JSON.stringify(response)
+                    body: JSON.stringify({
+                        valid: true,
+                        accessLevel: foundToken.role,
+                        tokenLabel: foundToken.label,
+                        permissions,
+                        poll: {
+                            id: pollData.id,
+                            question: pollData.question,
+                            status: pollData.status || 'live',
+                        },
+                    }),
                 };
             }
         }
 
-        // 3. NO VALID ACCESS
-        response = {
-            valid: false,
-            accessLevel: 'none',
-            permissions: {
-                viewResults: false,
-                editPoll: false,
-                exportCsv: false,
-                closePoll: false,
-                deletePoll: false,
-                manageAccess: false
-            }
-        };
-
+        // Invalid credentials
         return {
-            statusCode: 401,
+            statusCode: 403,
             headers,
             body: JSON.stringify({
-                ...response,
-                error: 'Invalid or missing access credentials'
-            })
+                valid: false,
+                error: 'Invalid credentials',
+                accessLevel: 'none',
+                permissions: PERMISSIONS.none,
+            }),
         };
 
     } catch (error) {
@@ -205,25 +229,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Internal server error' })
+            body: JSON.stringify({ error: 'Failed to validate access' }),
         };
     }
 };
-
-// ============================================================================
-// Database Functions - Replace with your implementation
-// ============================================================================
-
-async function getPoll(pollId: string): Promise<any> {
-    // Example:
-    // return await db.polls.findOne({ id: pollId });
-    return null;
-}
-
-async function updateTokenLastUsed(pollId: string, token: string): Promise<void> {
-    // Example:
-    // await db.polls.updateOne(
-    //     { id: pollId, 'accessTokens.token': token },
-    //     { $set: { 'accessTokens.$.lastUsed': new Date().toISOString() } }
-    // );
-}

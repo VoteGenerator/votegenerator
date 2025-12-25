@@ -1,161 +1,74 @@
 // ============================================================================
-// vg-recover-access.ts - Lost Link Recovery API
+// vg-recover-access.ts - Send recovery email with dashboard links
 // Location: netlify/functions/vg-recover-access.ts
-// Looks up polls by Stripe customer email, sends recovery email via Resend
+// Looks up customer by email and sends recovery links via Resend
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
-import { Resend } from 'resend';
+import { getStore } from '@netlify/blobs';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// Your database/storage imports here
-// import { db } from '../lib/database';
-
-interface PurchaseRecord {
-    email: string;
-    tier: string;
-    polls: Array<{
-        id: string;
-        adminKey: string;
-        title: string;
-        createdAt: string;
-    }>;
-    stripeCustomerId?: string;
+interface CustomerPoll {
+    id: string;
+    adminKey: string;
+    title: string;
+    type: string;
+    status: 'draft' | 'live';
     createdAt: string;
 }
 
-export const handler: Handler = async (event) => {
-    // CORS headers
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
-
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
-    }
-
-    if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            headers,
-            body: JSON.stringify({ error: 'Method not allowed' }) 
-        };
-    }
-
-    try {
-        const { email } = JSON.parse(event.body || '{}');
-
-        if (!email || typeof email !== 'string') {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Email is required' })
-            };
-        }
-
-        const normalizedEmail = email.trim().toLowerCase();
-
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(normalizedEmail)) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Invalid email format' })
-            };
-        }
-
-        // Look up purchase records by email
-        // Replace with your actual database lookup
-        const purchaseRecord = await lookupPurchaseByEmail(normalizedEmail);
-
-        if (!purchaseRecord || purchaseRecord.polls.length === 0) {
-            // Don't reveal whether email exists (security best practice)
-            // But we return 404 so the UI can show appropriate message
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'No paid account found with this email address.' 
-                })
-            };
-        }
-
-        // Generate recovery email HTML
-        const emailHtml = generateRecoveryEmail(purchaseRecord);
-
-        // Send email via Resend
-        const { error: sendError } = await resend.emails.send({
-            from: 'VoteGenerator <noreply@votegenerator.com>', // Update with your domain
-            to: normalizedEmail,
-            subject: '🔗 Your VoteGenerator Poll Links',
-            html: emailHtml
-        });
-
-        if (sendError) {
-            console.error('Resend error:', sendError);
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Failed to send email. Please try again.' })
-            };
-        }
-
-        // Log recovery request (optional, for analytics)
-        await logRecoveryRequest(normalizedEmail);
-
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                message: `Recovery email sent! Check ${maskEmail(normalizedEmail)} for your poll links.`
-            })
-        };
-
-    } catch (error) {
-        console.error('Recovery error:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'An error occurred. Please try again.' })
-        };
-    }
-};
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-function maskEmail(email: string): string {
-    const [local, domain] = email.split('@');
-    if (local.length <= 2) return `${local}***@${domain}`;
-    return `${local.slice(0, 2)}***@${domain}`;
+interface CustomerRecord {
+    email: string;
+    tier: string;
+    stripeCustomerId?: string;
+    dashboardToken: string;
+    polls: CustomerPoll[];
+    createdAt: string;
 }
 
-function generateRecoveryEmail(record: PurchaseRecord): string {
-    const baseUrl = process.env.URL || 'https://votegenerator.com';
-    const tierLabels: Record<string, string> = {
-        starter: 'Starter',
-        pro_event: 'Pro Event',
-        unlimited: 'Unlimited'
-    };
-    const tierLabel = tierLabels[record.tier] || record.tier;
+// Rate limiting: max 3 recovery attempts per email per hour
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-    const pollLinks = record.polls.map(poll => `
+const checkRateLimit = (email: string): boolean => {
+    const now = Date.now();
+    const key = email.toLowerCase();
+    const existing = rateLimitStore.get(key);
+
+    if (existing && existing.resetAt > now) {
+        if (existing.count >= 3) {
+            return false; // Rate limited
+        }
+        existing.count++;
+        return true;
+    }
+
+    // Reset or create new entry
+    rateLimitStore.set(key, {
+        count: 1,
+        resetAt: now + 60 * 60 * 1000, // 1 hour
+    });
+    return true;
+};
+
+const generateRecoveryEmail = (
+    customer: CustomerRecord,
+    baseUrl: string
+): string => {
+    const dashboardUrl = `${baseUrl}/admin?token=${customer.dashboardToken}`;
+    const tierLabel = customer.tier.charAt(0).toUpperCase() + customer.tier.slice(1).replace('_', ' ');
+    
+    const pollRows = customer.polls.map(poll => `
         <tr>
-            <td style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
-                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">
-                    ${escapeHtml(poll.title)}
-                </div>
-                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                    Created: ${new Date(poll.createdAt).toLocaleDateString()}
-                </div>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                <strong style="color: #1e293b;">${poll.title}</strong>
+                <br>
+                <span style="color: #64748b; font-size: 12px;">
+                    ${poll.type} • ${poll.status === 'live' ? '🟢 Live' : '📝 Draft'}
+                </span>
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">
                 <a href="${baseUrl}/#id=${poll.id}&admin=${poll.adminKey}" 
-                   style="display: inline-block; padding: 8px 16px; background: linear-gradient(to right, #6366f1, #8b5cf6); color: white; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
-                    Open Admin Dashboard →
+                   style="color: #6366f1; text-decoration: none; font-weight: 500;">
+                    Open →
                 </a>
             </td>
         </tr>
@@ -167,108 +80,203 @@ function generateRecoveryEmail(record: PurchaseRecord): string {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your VoteGenerator Access Links</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px;">
+    <div style="max-width: 560px; margin: 0 auto;">
         <!-- Header -->
-        <div style="text-align: center; margin-bottom: 32px;">
-            <img src="${baseUrl}/logo.png" alt="VoteGenerator" style="width: 60px; height: 60px; margin-bottom: 16px;">
-            <h1 style="color: #1e293b; font-size: 24px; margin: 0;">Your Poll Links</h1>
+        <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">🗳️ VoteGenerator</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">Access Recovery</p>
         </div>
-
-        <!-- Main Card -->
-        <div style="background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden;">
+        
+        <!-- Content -->
+        <div style="background: white; padding: 32px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+                Hi there! Here are your VoteGenerator access links:
+            </p>
             
             <!-- Plan Badge -->
-            <div style="background: linear-gradient(to right, #6366f1, #8b5cf6); padding: 16px; text-align: center;">
-                <span style="color: white; font-weight: 600; font-size: 14px;">
-                    ${tierLabel} Plan
-                </span>
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white; padding: 12px 20px; border-radius: 8px; display: inline-block; margin-bottom: 24px;">
+                <strong>${tierLabel} Plan</strong>
             </div>
-
-            <!-- Content -->
-            <div style="padding: 24px;">
-                <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-                    Hi there! 👋 Here are your VoteGenerator poll links. Bookmark them this time!
+            
+            <!-- Dashboard Link -->
+            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 12px 0; color: #92400e; font-weight: 600;">
+                    ⚠️ Your Dashboard Link (Save This!)
                 </p>
-
-                <!-- Poll Links Table -->
-                <table style="width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 12px; overflow: hidden;">
-                    ${pollLinks}
+                <a href="${dashboardUrl}" 
+                   style="display: block; background: #f59e0b; color: white; text-decoration: none; padding: 14px 20px; border-radius: 8px; text-align: center; font-weight: 600;">
+                    Open My Dashboard →
+                </a>
+                <p style="margin: 12px 0 0 0; font-size: 12px; color: #92400e; word-break: break-all;">
+                    ${dashboardUrl}
+                </p>
+            </div>
+            
+            <!-- Polls List -->
+            ${customer.polls.length > 0 ? `
+                <h3 style="color: #334155; font-size: 16px; margin: 0 0 16px 0;">Your Polls</h3>
+                <table style="width: 100%; border-collapse: collapse; background: #f8fafc; border-radius: 8px; overflow: hidden;">
+                    ${pollRows}
                 </table>
-
-                <!-- Tip Box -->
-                <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 12px; padding: 16px; margin-top: 24px;">
-                    <div style="display: flex; align-items: flex-start; gap: 12px;">
-                        <span style="font-size: 20px;">💡</span>
-                        <div>
-                            <div style="font-weight: 600; color: #92400e; margin-bottom: 4px;">Pro Tip</div>
-                            <div style="color: #a16207; font-size: 14px;">
-                                Bookmark your admin links or save this email. You can also add them to your password manager!
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            ` : `
+                <p style="color: #64748b; text-align: center; padding: 20px;">
+                    No polls created yet. Visit your dashboard to create one!
+                </p>
+            `}
+            
+            <!-- Tips -->
+            <div style="margin-top: 24px; padding: 16px; background: #f0f9ff; border-radius: 8px;">
+                <p style="margin: 0; color: #0369a1; font-size: 14px;">
+                    💡 <strong>Tip:</strong> Bookmark your dashboard link so you don't lose access again!
+                </p>
             </div>
         </div>
-
+        
         <!-- Footer -->
-        <div style="text-align: center; margin-top: 32px; color: #94a3b8; font-size: 12px;">
-            <p style="margin: 0 0 8px 0;">
-                You're receiving this because you requested a link recovery.
-            </p>
-            <p style="margin: 0;">
-                VoteGenerator • Quick polls, instant results
+        <div style="text-align: center; padding: 24px; color: #64748b; font-size: 12px;">
+            <p style="margin: 0;">Sent by VoteGenerator • votegenerator.com</p>
+            <p style="margin: 8px 0 0 0;">
+                You received this because someone requested access recovery for this email.
             </p>
         </div>
     </div>
 </body>
 </html>
     `;
-}
+};
 
-function escapeHtml(text: string): string {
-    const map: Record<string, string> = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
+export const handler: Handler = async (event) => {
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
 
-// ============================================================================
-// Database Functions - Replace with your actual implementation
-// ============================================================================
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers, body: '' };
+    }
 
-async function lookupPurchaseByEmail(email: string): Promise<PurchaseRecord | null> {
-    // Option 1: Using Netlify Blobs
-    // const { getStore } = await import('@netlify/blobs');
-    // const store = getStore('purchases');
-    // const record = await store.get(email, { type: 'json' });
-    // return record;
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' }),
+        };
+    }
 
-    // Option 2: Using Supabase
-    // const { data } = await supabase
-    //     .from('purchases')
-    //     .select('*, polls(*)')
-    //     .eq('email', email)
-    //     .single();
-    // return data;
+    try {
+        const { email } = JSON.parse(event.body || '{}');
 
-    // Option 3: Using your existing poll storage
-    // Look up all polls and filter by creator email
-    // This depends on how you store polls
+        if (!email) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Email is required' }),
+            };
+        }
 
-    // Placeholder - replace with actual implementation
-    console.log('Looking up:', email);
-    return null;
-}
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Invalid email format' }),
+            };
+        }
 
-async function logRecoveryRequest(email: string): Promise<void> {
-    // Optional: Log recovery requests for analytics
-    // await db.recoveryLogs.create({ email, timestamp: new Date() });
-    console.log('Recovery requested for:', maskEmail(email));
-}
+        // Check rate limit
+        if (!checkRateLimit(email)) {
+            // Still return success for security (don't reveal if email exists)
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    success: true,
+                    message: 'If an account exists with this email, recovery instructions have been sent.',
+                }),
+            };
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+        const customerStore = getStore('customers');
+
+        // Look up customer by email
+        let customer: CustomerRecord | null = null;
+        
+        try {
+            customer = await customerStore.get(normalizedEmail, { type: 'json' }) as CustomerRecord | null;
+        } catch {
+            // Customer not found - that's okay, we'll return generic message
+        }
+
+        // If customer found, send recovery email
+        if (customer) {
+            const RESEND_API_KEY = process.env.RESEND_API_KEY;
+            
+            if (!RESEND_API_KEY) {
+                console.error('RESEND_API_KEY not configured');
+                // Still return success for security
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        success: true,
+                        message: 'If an account exists with this email, recovery instructions have been sent.',
+                    }),
+                };
+            }
+
+            // Determine base URL
+            const baseUrl = process.env.URL || 'https://votegenerator.com';
+            
+            // Generate email HTML
+            const emailHtml = generateRecoveryEmail(customer, baseUrl);
+
+            // Send via Resend
+            const resendResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${RESEND_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    from: 'VoteGenerator <noreply@votegenerator.com>',
+                    to: [normalizedEmail],
+                    subject: '🗳️ Your VoteGenerator Access Links',
+                    html: emailHtml,
+                }),
+            });
+
+            if (!resendResponse.ok) {
+                const errorData = await resendResponse.json().catch(() => ({}));
+                console.error('Resend error:', errorData);
+                // Still return success for security
+            } else {
+                console.log(`Recovery email sent to ${normalizedEmail.substring(0, 3)}***`);
+            }
+        }
+
+        // Always return the same message for security
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                success: true,
+                message: 'If an account exists with this email, recovery instructions have been sent.',
+            }),
+        };
+
+    } catch (error) {
+        console.error('Recovery error:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Something went wrong. Please try again.' }),
+        };
+    }
+};

@@ -38,16 +38,21 @@ const generateDashboardToken = (): string => {
     return crypto.randomBytes(12).toString('base64url');
 };
 
-// Map Stripe price IDs to tiers
-const PRICE_TO_TIER: Record<string, string> = {
-    // Add your actual Stripe price IDs here
-    'price_starter_monthly': 'starter',
-    'price_pro_event_monthly': 'pro_event',
-    'price_unlimited_monthly': 'unlimited',
-    // One-time prices
-    'price_starter_once': 'starter',
-    'price_pro_event_once': 'pro_event',
-    'price_unlimited_once': 'unlimited',
+// Map Stripe price IDs to tiers (using environment variables)
+const getPriceToTier = (): Record<string, string> => {
+    const mapping: Record<string, string> = {};
+    
+    if (process.env.STRIPE_PRICE_STARTER) {
+        mapping[process.env.STRIPE_PRICE_STARTER] = 'starter';
+    }
+    if (process.env.STRIPE_PRICE_PRO_EVENT) {
+        mapping[process.env.STRIPE_PRICE_PRO_EVENT] = 'pro_event';
+    }
+    if (process.env.STRIPE_PRICE_UNLIMITED) {
+        mapping[process.env.STRIPE_PRICE_UNLIMITED] = 'unlimited';
+    }
+    
+    return mapping;
 };
 
 export const handler: Handler = async (event) => {
@@ -107,10 +112,11 @@ export const handler: Handler = async (event) => {
 
             // Determine tier from line items
             let tier = 'starter'; // Default
+            const priceToTier = getPriceToTier();
             
             if (session.line_items?.data?.[0]?.price?.id) {
                 const priceId = session.line_items.data[0].price.id;
-                tier = PRICE_TO_TIER[priceId] || 'starter';
+                tier = priceToTier[priceId] || 'starter';
             } else if (session.metadata?.tier) {
                 tier = session.metadata.tier;
             }

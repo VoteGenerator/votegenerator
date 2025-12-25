@@ -1,22 +1,12 @@
 // ============================================================================
-// vg-create-token.ts - Create Admin/Viewer Access Tokens
+// vg-create-token.ts - Create access token for team sharing
 // Location: netlify/functions/vg-create-token.ts
-// Unlimited users can create up to 10 access tokens per poll
+// Creates admin or viewer tokens for Unlimited users
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 import crypto from 'crypto';
-
-// Your database imports
-// import { db } from '../lib/database';
-
-const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-};
-
-const MAX_TOKENS_PER_POLL = 10;
 
 interface AccessToken {
     token: string;
@@ -27,24 +17,62 @@ interface AccessToken {
     expiresAt?: string;
 }
 
+interface Poll {
+    id: string;
+    adminKey: string;
+    question: string;
+    options: string[];
+    type: string;
+    settings: Record<string, any>;
+    createdAt: string;
+    tier?: string;
+    accessTokens?: AccessToken[];
+}
+
+const MAX_TOKENS_PER_POLL = 10;
+
+// Generate a secure random token
+const generateToken = (role: 'admin' | 'viewer'): string => {
+    const prefix = role === 'admin' ? 'adm_' : 'view_';
+    const randomPart = crypto.randomBytes(12).toString('base64url');
+    return prefix + randomPart;
+};
+
 export const handler: Handler = async (event) => {
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+    };
+
     if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
+        return { statusCode: 204, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' }),
+        };
     }
 
     try {
-        const { pollId, adminKey, role, label, expiresIn } = JSON.parse(event.body || '{}');
+        const { 
+            pollId, 
+            adminKey, 
+            role, 
+            label,
+            expiresAt 
+        } = JSON.parse(event.body || '{}');
 
         // Validation
         if (!pollId || !adminKey) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Poll ID and admin key are required' })
+                body: JSON.stringify({ error: 'Poll ID and admin key required' }),
             };
         }
 
@@ -52,95 +80,103 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Role must be "admin" or "viewer"' })
+                body: JSON.stringify({ error: 'Role must be "admin" or "viewer"' }),
             };
         }
 
-        if (!label || typeof label !== 'string' || label.trim().length === 0) {
+        if (!label || label.length > 50) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Label is required' })
+                body: JSON.stringify({ error: 'Label required (max 50 characters)' }),
             };
         }
 
-        if (label.length > 50) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Label must be 50 characters or less' })
-            };
-        }
+        const pollStore = getStore('polls');
 
-        // Get poll and verify master admin
-        const poll = await getPoll(pollId);
-
-        if (!poll) {
+        // Fetch the poll
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+        
+        if (!pollData) {
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ error: 'Poll not found' }),
             };
         }
 
-        if (poll.adminKey !== adminKey) {
+        // Verify admin key (only master admin can create tokens)
+        if (pollData.adminKey !== adminKey) {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'Invalid admin key. Only the poll creator can manage access.' })
+                body: JSON.stringify({ error: 'Invalid admin key. Only the poll creator can create tokens.' }),
             };
         }
 
-        // Check if user has Unlimited tier
-        if (poll.tier !== 'unlimited') {
+        // Check tier - only Unlimited can create tokens
+        const tier = pollData.tier || 'free';
+        if (tier !== 'unlimited') {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'Access tokens require Unlimited plan' })
+                body: JSON.stringify({ 
+                    error: 'Access tokens are only available for Unlimited plan users.',
+                    upgradeRequired: true,
+                }),
             };
         }
 
         // Check token limit
-        const existingTokens = poll.accessTokens || [];
+        const existingTokens = pollData.accessTokens || [];
         if (existingTokens.length >= MAX_TOKENS_PER_POLL) {
             return {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({ 
-                    error: `Maximum ${MAX_TOKENS_PER_POLL} tokens allowed. Revoke one to create more.` 
-                })
+                    error: `Maximum ${MAX_TOKENS_PER_POLL} tokens per poll reached.`,
+                    limitReached: true,
+                }),
             };
         }
 
         // Generate token
-        const prefix = role === 'admin' ? 'adm_' : 'view_';
-        const tokenValue = prefix + crypto.randomBytes(16).toString('base64url');
-
-        // Calculate expiration if specified
-        let expiresAt: string | undefined;
-        if (expiresIn && typeof expiresIn === 'number' && expiresIn > 0) {
-            expiresAt = new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000).toISOString();
-        }
-
         const newToken: AccessToken = {
-            token: tokenValue,
+            token: generateToken(role),
             role,
             label: label.trim(),
             createdAt: new Date().toISOString(),
-            expiresAt
         };
 
-        // Add token to poll
-        await addTokenToPoll(pollId, newToken);
+        // Add expiration if provided
+        if (expiresAt) {
+            const expDate = new Date(expiresAt);
+            if (expDate > new Date()) {
+                newToken.expiresAt = expDate.toISOString();
+            }
+        }
+
+        // Update poll with new token
+        pollData.accessTokens = [...existingTokens, newToken];
+        await pollStore.setJSON(pollId, pollData);
+
+        // Generate the access URL
+        const baseUrl = process.env.URL || 'https://votegenerator.com';
+        const accessUrl = `${baseUrl}/#id=${pollId}&access=${newToken.token}`;
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 success: true,
-                token: newToken,
-                url: `${process.env.URL || 'https://votegenerator.com'}/#id=${pollId}&access=${tokenValue}`
-            })
+                message: `${role === 'admin' ? 'Admin' : 'Viewer'} token created`,
+                token: {
+                    ...newToken,
+                    url: accessUrl,
+                },
+                totalTokens: pollData.accessTokens.length,
+                maxTokens: MAX_TOKENS_PER_POLL,
+            }),
         };
 
     } catch (error) {
@@ -148,25 +184,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Internal server error' })
+            body: JSON.stringify({ error: 'Failed to create token' }),
         };
     }
 };
-
-// ============================================================================
-// Database Functions - Replace with your implementation
-// ============================================================================
-
-async function getPoll(pollId: string): Promise<any> {
-    // Example:
-    // return await db.polls.findOne({ id: pollId });
-    return null;
-}
-
-async function addTokenToPoll(pollId: string, token: AccessToken): Promise<void> {
-    // Example:
-    // await db.polls.updateOne(
-    //     { id: pollId },
-    //     { $push: { accessTokens: token } }
-    // );
-}

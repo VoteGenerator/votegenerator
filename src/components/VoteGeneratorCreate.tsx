@@ -3,7 +3,7 @@
 // Uses sessionStorage for ad wall redirect to avoid URL encoding issues
 // ============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
@@ -147,6 +147,24 @@ const VoteGeneratorCreate: React.FC = () => {
     const isExpiringSoon = daysRemaining !== null && daysRemaining <= 14;
     const isExpiringVerySoon = daysRemaining !== null && daysRemaining <= 7;
 
+    // Ref for scrolling to this section when coming from dashboard
+    const createSectionRef = useRef<HTMLDivElement>(null);
+
+    // Scroll into view if coming from dashboard
+    useEffect(() => {
+        const shouldScroll = sessionStorage.getItem('vg_scroll_to_create');
+        if (shouldScroll) {
+            sessionStorage.removeItem('vg_scroll_to_create');
+            setTimeout(() => {
+                createSectionRef.current?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 100);
+        }
+    }, []);
+
+
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
     const currentTier = purchasedTier || selectedPollType?.tier || 'free';
     const maxDays = TIER_CONFIG[currentTier]?.maxDays || TIER_CONFIG['free'].maxDays;
@@ -176,25 +194,6 @@ const VoteGeneratorCreate: React.FC = () => {
         // Check if user can access this poll type
         if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
-            
-            // Reset options based on new poll type
-            if (id === 'pairwise') {
-                // This or That - only 2 options
-                setOptions(['', '']);
-            } else if (id === 'image') {
-                // Visual poll - reset image options
-                setImageOptions([]);
-                setOptions(['', '']);
-            } else if (id === 'rsvp' || id === 'rating') {
-                // These use fixed options, reset to empty
-                setOptions(['', '', '']);
-            } else {
-                // Standard poll types - reset to 3 empty options
-                setOptions(['', '', '']);
-            }
-            
-            // Clear any existing error
-            setError(null);
         } else {
             setShowPaywall(true);
         }
@@ -214,8 +213,7 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     const handleCreate = async () => {
-        // Use placeholder question if title is empty
-        const finalTitle = title.trim() || POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion;
+        if (!title.trim()) { setError('Please enter a question'); return; }
         
         // Validation based on poll type
         if (pollType === 'image') {
@@ -224,8 +222,6 @@ const VoteGeneratorCreate: React.FC = () => {
                 setError('Upload at least 2 images for visual poll'); 
                 return; 
             }
-        } else if (pollType === 'rsvp' || pollType === 'rating') {
-            // These types use fixed options - no validation needed
         } else {
             // Regular poll - need at least 2 text options
             const valid = options.filter(o => o.trim());
@@ -239,20 +235,12 @@ const VoteGeneratorCreate: React.FC = () => {
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            // Determine options based on poll type
-            let validOptions: string[];
-            if (pollType === 'image') {
-                validOptions = imageOptions.map((img, i) => img.label || `Option ${i + 1}`);
-            } else if (pollType === 'rsvp') {
-                validOptions = ['Going', 'Not Going', 'Maybe'];
-            } else if (pollType === 'rating') {
-                validOptions = ['1', '2', '3', '4', '5'];
-            } else {
-                validOptions = options.filter(o => o.trim());
-            }
+            const validOptions = pollType === 'image' 
+                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
+                : options.filter(o => o.trim());
             
             const pollData: any = { 
-                title: finalTitle, 
+                title: title.trim(), 
                 description: description.trim() || undefined, 
                 options: validOptions, 
                 pollType, 
@@ -310,7 +298,7 @@ const VoteGeneratorCreate: React.FC = () => {
     };
 
     return (
-        <>
+        <div ref={createSectionRef} id="create">
             <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
             
             {/* Expiry Warning Banner */}
@@ -934,7 +922,7 @@ const VoteGeneratorCreate: React.FC = () => {
                     </motion.div>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

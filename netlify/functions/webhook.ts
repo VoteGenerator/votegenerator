@@ -98,7 +98,7 @@ async function sendLicenseEmail(email: string, licenseKey: string, licenseUrl: s
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'VoteGenerator <noreply@votegenerator.com>',
+        from: 'VoteGenerator <noreply@mail.votegenerator.com>',
         to: email,
         subject: '🎉 Your VoteGenerator Unlimited License',
         html: `
@@ -174,7 +174,7 @@ async function sendDashboardEmail(email: string, tier: string, dashboardUrl: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'VoteGenerator <noreply@votegenerator.com>',
+        from: 'VoteGenerator <noreply@mail.votegenerator.com>',
         to: email,
         subject: `🗳️ Welcome to VoteGenerator ${tierLabel}!`,
         html: `

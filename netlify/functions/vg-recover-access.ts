@@ -245,7 +245,7 @@ export const handler: Handler = async (event) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    from: 'VoteGenerator <noreply@votegenerator.com>',
+                    from: 'VoteGenerator <noreply@mail.votegenerator.com>',
                     to: [normalizedEmail],
                     subject: '🗳️ Your VoteGenerator Access Links',
                     html: emailHtml,

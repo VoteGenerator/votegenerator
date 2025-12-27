@@ -16,6 +16,7 @@ import {
 import PromoBanner from './PromoBanner';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
+import VoteGeneratorCreate from './VoteGeneratorCreate';
 import { useGeoPricing } from '../geoPricing';
 
 // Calculate expiration date
@@ -678,6 +679,15 @@ function LandingPage(): React.ReactElement {
             <PromoBanner position="top" />
             <NavHeader />
             <HeroSection />
+            
+            {/* ============ CREATE POLL SECTION ============ */}
+            <section id="create" className="py-16 bg-gradient-to-b from-white to-slate-50">
+                <div className="max-w-6xl mx-auto px-4">
+                    <VoteGeneratorCreate />
+                </div>
+            </section>
+            {/* ============================================= */}
+            
             <TrustedBySection />
             <HowItWorksSection />
             <PollTypesSection />

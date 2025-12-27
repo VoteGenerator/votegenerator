@@ -286,10 +286,8 @@ const AdminDashboard: React.FC = () => {
                 localStorage.setItem('vg_tier_expires', session.expiresAt);
             }
         }
-        // Store flag to signal we want to scroll to create section
-        sessionStorage.setItem('vg_scroll_to_create', 'true');
-        // Navigate to home - the main app will handle scrolling
-        window.location.href = '/';
+        // Navigate to home with #create anchor to scroll to create section
+        window.location.href = '/#create';
     };
 
     const canCreateMorePolls = () => {

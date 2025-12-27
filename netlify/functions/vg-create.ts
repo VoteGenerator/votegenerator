@@ -28,18 +28,18 @@ const TIER_CONFIG: Record<string, {
 }> = {
   free: {
     maxResponses: 100,
-    expiresInDays: 30,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
+    expiresInDays: 7,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp'],
   },
   starter: {
     maxResponses: 500,
-    expiresInDays: 7,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
+    expiresInDays: 30,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp', 'dot_voting', 'approval_voting', 'priority_matrix'],
   },
   pro_event: {
     maxResponses: 2000,
-    expiresInDays: 30,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
+    expiresInDays: 60,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp', 'dot_voting', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll', 'image'],
   },
   unlimited: {
     maxResponses: 10000,
@@ -71,14 +71,28 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { question, options, pollType, settings, tier = 'free' } = body;
+    
+    // ====== FIX: Accept BOTH 'title' (from frontend) and 'question' ======
+    const question = body.title || body.question;
+    // =====================================================================
+    
+    const { 
+      options, 
+      pollType, 
+      settings, 
+      tier = 'free',
+      description,
+      buttonText,
+      imageUrls,
+      rsvpEvents
+    } = body;
 
     // Validation
-    if (!question || typeof question !== 'string') {
+    if (!question || typeof question !== 'string' || !question.trim()) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Question is required' }),
+        body: JSON.stringify({ error: 'Please enter a question' }),
       };
     }
 
@@ -93,15 +107,16 @@ export const handler: Handler = async (event) => {
     // Get tier config
     const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
 
-    // Validate poll type access
-    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {
+    // Validate poll type access (normalize pollType for checking)
+    const normalizedPollType = pollType || 'multiple_choice';
+    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(normalizedPollType)) {
       return {
         statusCode: 403,
         headers,
         body: JSON.stringify({ 
-          error: `Poll type "${pollType}" is not available in your tier`,
+          error: `Poll type "${normalizedPollType}" is not available in your tier`,
           requiredTier: Object.keys(TIER_CONFIG).find(t => 
-            TIER_CONFIG[t].features.includes(pollType) || TIER_CONFIG[t].features[0] === 'all'
+            TIER_CONFIG[t].features.includes(normalizedPollType) || TIER_CONFIG[t].features[0] === 'all'
           ),
         }),
       };
@@ -117,21 +132,23 @@ export const handler: Handler = async (event) => {
     ).toISOString();
 
     // Create poll object
-    const poll = {
+    const poll: Record<string, any> = {
       id: pollId,
       adminKey,
       question: question.trim(),
+      description: description?.trim() || undefined,
       options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
         id: `opt_${i}`,
         text: o.trim(),
       })),
-      pollType: pollType || 'multiple_choice',
+      pollType: normalizedPollType,
       settings: {
         allowMultiple: settings?.allowMultiple || false,
         hideResults: settings?.hideResults || false,
         requireNames: settings?.requireNames || false,
-        endDate: settings?.endDate || null,
+        endDate: settings?.endDate || settings?.deadline || null,
       },
+      buttonText: buttonText || 'Submit Vote',
       tier,
       maxResponses: tierConfig.maxResponses,
       expiresAt,
@@ -141,17 +158,28 @@ export const handler: Handler = async (event) => {
       status: 'active',
     };
 
+    // Add image URLs for visual polls
+    if (imageUrls && Array.isArray(imageUrls)) {
+      poll.imageUrls = imageUrls;
+    }
+
+    // Add RSVP events if provided
+    if (rsvpEvents && Array.isArray(rsvpEvents)) {
+      poll.rsvpEvents = rsvpEvents;
+    }
+
     // Store in Netlify Blobs
     const store = getStore('votegenerator-polls');
     await store.setJSON(pollId, poll);
 
-    // Return success response
+    // Return success response (using 'id' to match frontend expectation)
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        pollId,
+        id: pollId,           // Frontend expects 'id'
+        pollId,               // Keep for compatibility
         adminKey,
         voteUrl: `/vote/${pollId}`,
         adminUrl: `/admin/${pollId}/${adminKey}`,

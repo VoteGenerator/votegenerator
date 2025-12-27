@@ -278,6 +278,10 @@ const AdminDashboard: React.FC = () => {
     };
     
     const goToCreate = () => {
+        // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
+        if (session?.tier) {
+            localStorage.setItem('vg_purchased_tier', session.tier);
+        }
         // Go to home and scroll to create section
         window.location.href = '/#create';
     };

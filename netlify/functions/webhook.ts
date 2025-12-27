@@ -3,12 +3,13 @@
 // Handles checkout.session.completed events to:
 // 1. Upgrade existing polls to paid tier
 // 2. Create Unlimited license keys
-// 3. Optionally send email backup via Resend
+// 3. Register customer for dashboard access
+// 4. Optionally send email backup via Resend
 // ============================================================================
-
 import type { Handler } from '@netlify/functions';
 import Stripe from 'stripe';
 import { getStore } from '@netlify/blobs';
+import crypto from 'crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
@@ -20,14 +21,12 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // ============================================================================
 // Types
 // ============================================================================
-
 interface Poll {
   id: string;
   title: string;
   tier: string;
   tierUpgradedAt?: string;
   originalTier?: string;
-  // ... other poll fields
   [key: string]: any;
 }
 
@@ -42,6 +41,24 @@ interface License {
   used: boolean;
 }
 
+interface CustomerRecord {
+  email: string;
+  tier: string;
+  stripeCustomerId?: string;
+  stripeSessionId: string;
+  dashboardToken: string;
+  polls: {
+    id: string;
+    adminKey: string;
+    title: string;
+    type: string;
+    status: 'draft' | 'live';
+    createdAt: string;
+  }[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -54,6 +71,19 @@ function generateLicenseKey(): string {
     key += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return key;
+}
+
+// Generate a unique dashboard token
+function generateDashboardToken(): string {
+  return crypto.randomBytes(12).toString('base64url');
+}
+
+// Map price IDs to tiers using environment variables
+function getTierFromPriceId(priceId: string): string {
+  if (priceId === process.env.STRIPE_PRICE_STARTER) return 'starter';
+  if (priceId === process.env.STRIPE_PRICE_PRO_EVENT) return 'pro_event';
+  if (priceId === process.env.STRIPE_PRICE_UNLIMITED) return 'unlimited';
+  return 'starter'; // Default
 }
 
 // Send license email via Resend (optional)
@@ -124,10 +154,122 @@ async function sendLicenseEmail(email: string, licenseKey: string, licenseUrl: s
   }
 }
 
+// Send dashboard welcome email
+async function sendDashboardEmail(email: string, tier: string, dashboardUrl: string): Promise<boolean> {
+  if (!RESEND_API_KEY || !email) return false;
+  
+  const tierLabels: Record<string, string> = {
+    starter: 'Starter',
+    pro_event: 'Pro Event',
+    unlimited: 'Unlimited',
+  };
+  
+  const tierLabel = tierLabels[tier] || 'Starter';
+  
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'VoteGenerator <noreply@votegenerator.com>',
+        to: email,
+        subject: `🗳️ Welcome to VoteGenerator ${tierLabel}!`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #4F46E5;">Welcome to VoteGenerator ${tierLabel}! 🎉</h1>
+            
+            <p>Thank you for your purchase! Your dashboard is ready.</p>
+            
+            <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; margin: 20px 0;">
+              <p style="margin: 0 0 12px 0; color: #92400E; font-weight: bold;">
+                ⚠️ IMPORTANT: Save Your Dashboard Link!
+              </p>
+              <a href="${dashboardUrl}" 
+                 style="display: block; background: #F59E0B; color: white; text-decoration: none; padding: 14px 20px; border-radius: 8px; text-align: center; font-weight: bold;">
+                Open My Dashboard →
+              </a>
+              <p style="margin: 12px 0 0 0; font-size: 12px; color: #92400E; word-break: break-all;">
+                ${dashboardUrl}
+              </p>
+            </div>
+            
+            <p style="background: #F0F9FF; padding: 16px; border-radius: 8px; color: #0369A1;">
+              💡 <strong>Tip:</strong> Bookmark your dashboard link so you never lose access to your polls!
+            </p>
+            
+            <p>Questions? Reply to this email or contact <a href="mailto:support@votegenerator.com">support@votegenerator.com</a></p>
+            
+            <p style="color: #9CA3AF; font-size: 12px; margin-top: 40px;">
+              © ${new Date().getFullYear()} VoteGenerator. All rights reserved.
+            </p>
+          </div>
+        `,
+      }),
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to send dashboard email:', error);
+    return false;
+  }
+}
+
+// Register or update customer in the customers store
+async function registerCustomer(
+  email: string,
+  tier: string,
+  stripeCustomerId: string | null,
+  stripeSessionId: string
+): Promise<{ dashboardToken: string; isNew: boolean }> {
+  const customerStore = getStore('customers');
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  let customer: CustomerRecord | null = null;
+  
+  try {
+    customer = await customerStore.get(normalizedEmail, { type: 'json' }) as CustomerRecord | null;
+  } catch {
+    // Customer doesn't exist
+  }
+  
+  if (customer) {
+    // Update existing customer (upgrade scenario)
+    customer.tier = tier;
+    customer.stripeSessionId = stripeSessionId;
+    if (stripeCustomerId) customer.stripeCustomerId = stripeCustomerId;
+    customer.updatedAt = new Date().toISOString();
+    
+    await customerStore.setJSON(normalizedEmail, customer);
+    console.log(`Customer updated: ${normalizedEmail} -> ${tier}`);
+    
+    return { dashboardToken: customer.dashboardToken, isNew: false };
+  }
+  
+  // Create new customer
+  const dashboardToken = generateDashboardToken();
+  const newCustomer: CustomerRecord = {
+    email: normalizedEmail,
+    tier,
+    stripeSessionId,
+    dashboardToken,
+    polls: [],
+    createdAt: new Date().toISOString(),
+  };
+  
+  if (stripeCustomerId) newCustomer.stripeCustomerId = stripeCustomerId;
+  
+  await customerStore.setJSON(normalizedEmail, newCustomer);
+  console.log(`Customer registered: ${normalizedEmail} (${tier})`);
+  
+  return { dashboardToken, isNew: true };
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
-
 const headers = {
   'Content-Type': 'application/json',
 };
@@ -168,16 +310,48 @@ export const handler: Handler = async (event) => {
         tier: metadata.tier,
         pollId: metadata.pollId,
         licenseType: metadata.licenseType,
+        email: session.customer_details?.email,
       });
 
+      // Get customer email
+      const customerEmail = session.customer_email || session.customer_details?.email;
+      
+      // Determine tier from metadata or line items
+      let tier = metadata.tier || 'starter';
+      
+      // If no tier in metadata, try to determine from line items
+      if (!metadata.tier && session.line_items?.data?.[0]?.price?.id) {
+        tier = getTierFromPriceId(session.line_items.data[0].price.id);
+      }
+
       try {
-        // Case 1: Upgrading an existing poll
+        // ============================================================
+        // NEW: Register customer for dashboard access
+        // ============================================================
+        if (customerEmail) {
+          const { dashboardToken, isNew } = await registerCustomer(
+            customerEmail,
+            tier,
+            session.customer as string | null,
+            session.id
+          );
+          
+          // Send welcome email with dashboard link
+          const baseUrl = process.env.URL || 'https://votegenerator.com';
+          const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}`;
+          
+          const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardUrl);
+          console.log(`Dashboard email sent: ${emailSent}, isNew: ${isNew}`);
+        }
+
+        // ============================================================
+        // EXISTING: Upgrading an existing poll
+        // ============================================================
         if (metadata.pollId && metadata.upgradeType === 'existing_poll') {
           const pollStore = getStore('vg-polls');
           const pollData = await pollStore.get(metadata.pollId, { type: 'json' }) as Poll | null;
           
           if (pollData) {
-            // Upgrade the poll
             const upgradedPoll: Poll = {
               ...pollData,
               originalTier: pollData.tier,
@@ -193,7 +367,9 @@ export const handler: Handler = async (event) => {
           }
         }
         
-        // Case 2: Creating an Unlimited license
+        // ============================================================
+        // EXISTING: Creating an Unlimited license
+        // ============================================================
         if (metadata.licenseType === 'unlimited') {
           const licenseKey = generateLicenseKey();
           const now = new Date();
@@ -211,7 +387,6 @@ export const handler: Handler = async (event) => {
             used: false,
           };
           
-          // Store the license
           const licenseStore = getStore('vg-licenses');
           await licenseStore.setJSON(licenseKey, license);
           
@@ -234,6 +409,24 @@ export const handler: Handler = async (event) => {
         // Don't return error - we still want to acknowledge the webhook
       }
       
+      break;
+    }
+
+    case 'customer.subscription.updated': {
+      const subscription = stripeEvent.data.object as Stripe.Subscription;
+      console.log('Subscription updated:', subscription.id, subscription.status);
+      
+      // Handle subscription changes (upgrades, downgrades, etc.)
+      // You can expand this based on your needs
+      break;
+    }
+
+    case 'customer.subscription.deleted': {
+      const subscription = stripeEvent.data.object as Stripe.Subscription;
+      console.log('Subscription cancelled:', subscription.id);
+      
+      // Optionally mark customer as expired or downgrade
+      // You can expand this based on your needs
       break;
     }
 

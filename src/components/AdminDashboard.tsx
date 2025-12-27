@@ -281,9 +281,15 @@ const AdminDashboard: React.FC = () => {
         // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
         if (session?.tier) {
             localStorage.setItem('vg_purchased_tier', session.tier);
+            // Also store expiration info
+            if (session.expiresAt) {
+                localStorage.setItem('vg_tier_expires', session.expiresAt);
+            }
         }
-        // Go to home and scroll to create section
-        window.location.href = '/#create';
+        // Store flag to signal we want to scroll to create section
+        sessionStorage.setItem('vg_scroll_to_create', 'true');
+        // Navigate to home - the main app will handle scrolling
+        window.location.href = '/';
     };
 
     const canCreateMorePolls = () => {

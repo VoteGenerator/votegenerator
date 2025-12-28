@@ -71,9 +71,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    // Accept both 'title' (from frontend) and 'question' (original field name)
-    const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free' } = body;
+    const { question, options, pollType, settings, tier = 'free' } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -147,13 +145,12 @@ export const handler: Handler = async (event) => {
     const store = getStore('votegenerator-polls');
     await store.setJSON(pollId, poll);
 
-    // Return success response (include both 'id' and 'pollId' for compatibility)
+    // Return success response
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        id: pollId,
         pollId,
         adminKey,
         voteUrl: `/vote/${pollId}`,

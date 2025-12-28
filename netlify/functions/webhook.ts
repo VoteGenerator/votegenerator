@@ -75,8 +75,8 @@ async function sendDashboardEmail(
   const tierLabel = tierLabels[tier] || 'Starter';
   const baseUrl = process.env.URL || 'https://votegenerator.com';
   
-  // Use the same URL format as CheckoutSuccess
-  const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}&session_id=${sessionId}`;
+  // Shorter URL - just use session_id as the identifier
+  const dashboardUrl = `${baseUrl}/admin?s=${sessionId}`;
   
   const days = getTierDays(tier);
   const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {

@@ -148,10 +148,10 @@ const AdminDashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Get token and session_id from URL
+    // Get token and session_id from URL (supports both formats)
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
-    const urlSessionId = urlParams.get('session_id');
+    const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Support both long and short format
     const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited' | null;
 
     // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
@@ -167,26 +167,27 @@ const AdminDashboard: React.FC = () => {
         try {
             const stored = localStorage.getItem('vg_user_session');
             
-            // Case 1: Coming from email link with session_id but no localStorage
+            // Case 1: Coming from email link with session_id (short format: ?s=xxx)
             // Create session from URL params
-            if (!stored && urlSessionId && urlToken) {
+            if (!stored && urlSessionId) {
                 const expectedToken = generateDashboardToken(urlSessionId);
                 
-                // Verify token matches
-                if (urlToken !== expectedToken) {
+                // If token provided, verify it matches
+                if (urlToken && urlToken !== expectedToken) {
                     setError('Invalid dashboard link. The token is incorrect.');
                     setLoading(false);
                     return;
                 }
                 
-                // Determine tier (default to starter if not provided)
-                const tier = urlTier || 'starter';
+                // Determine tier (default to unlimited if not provided since email doesn't include tier)
+                // We'll fetch the real tier from backend later, for now assume unlimited
+                const tier = urlTier || 'unlimited';
                 const days = tier === 'unlimited' ? 365 : tier === 'pro_event' ? 60 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
                 // Create new session
                 const newSession: UserSession = {
-                    dashboardToken: urlToken,
+                    dashboardToken: expectedToken,
                     tier,
                     expiresAt,
                     polls: [],

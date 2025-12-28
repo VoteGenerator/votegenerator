@@ -80,7 +80,8 @@ const CheckoutSuccess: React.FC = () => {
         const dashboardToken = generateDashboardToken(sessionIdParam);
         
         const baseUrl = window.location.origin;
-        const url = `${baseUrl}/admin?token=${dashboardToken}&session_id=${sessionIdParam}`;
+        // Shorter URL - just use session_id
+        const url = `${baseUrl}/admin?s=${sessionIdParam}`;
         setDashboardUrl(url);
         
         // Save to localStorage

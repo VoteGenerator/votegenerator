@@ -28,18 +28,18 @@ const TIER_CONFIG: Record<string, {
 }> = {
   free: {
     maxResponses: 100,
-    expiresInDays: 7,
-    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp'],
+    expiresInDays: 30,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
   },
   starter: {
     maxResponses: 500,
-    expiresInDays: 30,
-    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp'],
+    expiresInDays: 7,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
   },
   pro_event: {
     maxResponses: 2000,
-    expiresInDays: 60,
-    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp', 'image'],
+    expiresInDays: 30,
+    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
   },
   unlimited: {
     maxResponses: 10000,
@@ -71,22 +71,12 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    
-    // Accept BOTH 'title' and 'question'
+    // Accept both 'title' (from frontend) and 'question' (original field name)
     const question = body.title || body.question;
-    const { 
-      options, 
-      pollType = 'multiple', 
-      settings, 
-      tier = 'free',
-      description,
-      buttonText,
-      imageUrls,
-      rsvpEvents
-    } = body;
+    const { options, pollType, settings, tier = 'free' } = body;
 
     // Validation
-    if (!question || typeof question !== 'string' || !question.trim()) {
+    if (!question || typeof question !== 'string') {
       return {
         statusCode: 400,
         headers,
@@ -105,6 +95,20 @@ export const handler: Handler = async (event) => {
     // Get tier config
     const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
 
+    // Validate poll type access
+    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify({ 
+          error: `Poll type "${pollType}" is not available in your tier`,
+          requiredTier: Object.keys(TIER_CONFIG).find(t => 
+            TIER_CONFIG[t].features.includes(pollType) || TIER_CONFIG[t].features[0] === 'all'
+          ),
+        }),
+      };
+    }
+
     // Generate IDs
     const pollId = generateId(8);
     const adminKey = generateAdminKey();
@@ -115,23 +119,21 @@ export const handler: Handler = async (event) => {
     ).toISOString();
 
     // Create poll object
-    const poll: Record<string, any> = {
+    const poll = {
       id: pollId,
       adminKey,
       question: question.trim(),
-      description: description?.trim() || undefined,
       options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
         id: `opt_${i}`,
         text: o.trim(),
       })),
-      pollType,
+      pollType: pollType || 'multiple_choice',
       settings: {
         allowMultiple: settings?.allowMultiple || false,
         hideResults: settings?.hideResults || false,
         requireNames: settings?.requireNames || false,
-        endDate: settings?.endDate || settings?.deadline || null,
+        endDate: settings?.endDate || null,
       },
-      buttonText: buttonText || 'Submit Vote',
       tier,
       maxResponses: tierConfig.maxResponses,
       expiresAt,
@@ -141,27 +143,17 @@ export const handler: Handler = async (event) => {
       status: 'active',
     };
 
-    // Add image URLs for visual polls
-    if (imageUrls && Array.isArray(imageUrls)) {
-      poll.imageUrls = imageUrls;
-    }
-
-    // Add RSVP events if provided
-    if (rsvpEvents && Array.isArray(rsvpEvents)) {
-      poll.rsvpEvents = rsvpEvents;
-    }
-
-    // Store in Netlify Blobs - EXACT same pattern as original working version
+    // Store in Netlify Blobs
     const store = getStore('votegenerator-polls');
     await store.setJSON(pollId, poll);
 
-    // Return success response
+    // Return success response (include both 'id' and 'pollId' for compatibility)
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        id: pollId,  // Frontend expects 'id'
+        id: pollId,
         pollId,
         adminKey,
         voteUrl: `/vote/${pollId}`,

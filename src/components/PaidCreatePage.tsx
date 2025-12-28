@@ -1,15 +1,15 @@
 // ============================================================================
 // PaidCreatePage - Dedicated create poll page for paid users
-// Shows: Paid nav, tier banner, create form ONLY
-// No hero, no landing page sections
+// Shows: Paid nav, ONE tier banner, create form ONLY
+// No hero, no landing page sections, no duplicate banners
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    BarChart3, Star, Crown, Zap, Calendar, ArrowLeft,
-    LayoutDashboard, HelpCircle, PlusCircle, Settings,
-    Menu, X, Copy, Check, ExternalLink
+    Star, Crown, Zap, Calendar, 
+    LayoutDashboard, HelpCircle, PlusCircle,
+    Menu, X, Copy, Check
 } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
@@ -48,7 +48,7 @@ const TIER_CONFIG: Record<PaidTier, {
         icon: Star,
         gradient: 'from-amber-500 to-orange-500',
         bgGradient: 'from-slate-900 via-amber-950 to-slate-900',
-        maxPolls: -1, // unlimited
+        maxPolls: -1,
         maxResponses: 10000,
         days: 365,
     },
@@ -65,21 +65,26 @@ const PaidCreatePage: React.FC = () => {
     const config = TIER_CONFIG[tier] || TIER_CONFIG.starter;
     const TierIcon = config.icon;
     
+    // Calculate expiration date
+    const expirationDate = expiresAt 
+        ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null;
+    
     // Calculate days remaining
     const daysRemaining = expiresAt 
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : config.days;
     
-    // Copy current page link
+    // Copy admin page link
     const copyLink = () => {
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(`${window.location.origin}/admin`);
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);
     };
 
     // Nav items for paid users
     const navItems = [
-        { label: 'Create Poll', href: '/#create', icon: PlusCircle, active: true },
+        { label: 'Create Poll', href: '/', icon: PlusCircle, active: true },
         { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
         { label: 'Help', href: '/help', icon: HelpCircle },
     ];
@@ -90,10 +95,20 @@ const PaidCreatePage: React.FC = () => {
             <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
+                        {/* Logo - using SVG from public folder */}
                         <a href="/" className="flex items-center gap-2 group">
-                            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <BarChart3 className="text-white" size={20} />
+                            <img 
+                                src="/logo.svg" 
+                                alt="VoteGenerator" 
+                                className="h-9 w-9"
+                                onError={(e) => {
+                                    // Fallback if logo not found
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                            />
+                            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl items-center justify-center shadow-lg hidden">
+                                <Star className="text-white" size={20} />
                             </div>
                             <span className="font-bold text-xl text-slate-900">
                                 Vote<span className="text-indigo-600">Generator</span>
@@ -171,7 +186,7 @@ const PaidCreatePage: React.FC = () => {
                 )}
             </header>
 
-            {/* Tier Status Banner */}
+            {/* SINGLE Tier Status Banner */}
             <div className={`bg-gradient-to-r ${config.bgGradient} text-white`}>
                 <div className="max-w-6xl mx-auto px-4 py-4">
                     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -195,12 +210,12 @@ const PaidCreatePage: React.FC = () => {
                         </div>
                         
                         <div className="flex items-center gap-4">
-                            {expiresAt && (
+                            {expirationDate && (
                                 <div className="text-right hidden sm:block">
                                     <p className={`text-xs ${tier === 'unlimited' ? 'text-amber-300/60' : 'text-white/60'}`}>Expires on</p>
                                     <p className={`text-sm font-semibold flex items-center gap-1 justify-end ${tier === 'unlimited' ? 'text-amber-200' : ''}`}>
                                         <Calendar size={14} />
-                                        {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        {expirationDate}
                                     </p>
                                 </div>
                             )}
@@ -230,9 +245,9 @@ const PaidCreatePage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Create Poll Form - MAIN CONTENT */}
+            {/* Create Poll Form - MAIN CONTENT (no extra banner) */}
             <main className="max-w-6xl mx-auto px-4 py-8">
-                <VoteGeneratorCreate />
+                <VoteGeneratorCreate hideTierBanner={true} />
             </main>
 
             {/* Simple Footer */}

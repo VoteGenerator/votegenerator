@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 
 interface VoteRequest {
     pollId: string;
@@ -70,14 +71,8 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get poll from storage
-        const { getStore } = await import('@netlify/blobs');
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        
+        // Get poll from storage - simple pattern, Netlify auto-detects context
+        const store = getStore('polls');
         const poll: Poll | null = await store.get(body.pollId, { type: 'json' });
 
         if (!poll) {

@@ -53,8 +53,12 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Simple pattern - Netlify auto-detects site context
-        const store = getStore('polls');
+        // Get poll from storage with explicit config
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
         
         console.log('Fetching poll from store...');
         const poll: Poll | null = await store.get(pollId, { type: 'json' });
@@ -68,12 +72,10 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Check if admin
         const isAdmin = adminKey && adminKey === poll.adminKey;
         console.log('Is admin:', isAdmin);
 
         if (isAdmin) {
-            // Admin gets everything
             return {
                 statusCode: 200,
                 headers,
@@ -83,7 +85,6 @@ export const handler: Handler = async (event) => {
                 })
             };
         } else {
-            // Public view - hide sensitive data
             const publicPoll = {
                 id: poll.id,
                 title: poll.title,

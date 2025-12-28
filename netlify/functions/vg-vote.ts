@@ -3,8 +3,8 @@ import { getStore } from '@netlify/blobs';
 
 interface VoteRequest {
     pollId: string;
-    rankedOptionIds?: string[];  // For ranked choice
-    selectedOptionIds?: string[]; // For multiple choice
+    rankedOptionIds?: string[];
+    selectedOptionIds?: string[];
 }
 
 interface Vote {
@@ -30,7 +30,6 @@ interface Poll {
     voteCount: number;
 }
 
-// Simple ID generator
 const generateVoteId = (): string => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -71,8 +70,13 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get poll from storage - simple pattern, Netlify auto-detects context
-        const store = getStore('polls');
+        // Get poll from storage with explicit config
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
         const poll: Poll | null = await store.get(body.pollId, { type: 'json' });
 
         if (!poll) {
@@ -83,7 +87,6 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Validate vote based on poll type
         const validOptionIds = new Set(poll.options.map(o => o.id));
 
         if (poll.pollType === 'ranked') {
@@ -104,7 +107,6 @@ export const handler: Handler = async (event) => {
                 };
             }
         } else {
-            // Multiple choice
             if (!Array.isArray(body.selectedOptionIds) || body.selectedOptionIds.length === 0) {
                 return {
                     statusCode: 400,
@@ -122,7 +124,6 @@ export const handler: Handler = async (event) => {
                 };
             }
 
-            // Check if multiple selections allowed
             if (!poll.settings.allowMultiple && body.selectedOptionIds.length > 1) {
                 return {
                     statusCode: 400,
@@ -132,7 +133,6 @@ export const handler: Handler = async (event) => {
             }
         }
 
-        // Create vote record
         const vote: Vote = {
             id: generateVoteId(),
             timestamp: new Date().toISOString()
@@ -144,7 +144,6 @@ export const handler: Handler = async (event) => {
             vote.selectedOptionIds = body.selectedOptionIds;
         }
 
-        // Save vote
         poll.votes.push(vote);
         poll.voteCount = poll.votes.length;
 

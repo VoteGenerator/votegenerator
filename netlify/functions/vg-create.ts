@@ -1,5 +1,5 @@
-import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+import type { Context } from '@netlify/functions';
 
 // Generate unique IDs
 function generateId(length: number = 8): string {
@@ -48,7 +48,8 @@ const TIER_CONFIG: Record<string, {
   },
 };
 
-export const handler: Handler = async (event) => {
+// Use new Netlify Functions format
+export default async (request: Request, context: Context) => {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -57,44 +58,37 @@ export const handler: Handler = async (event) => {
     'Content-Type': 'application/json',
   };
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
+  if (request.method === 'OPTIONS') {
+    return new Response('', { status: 204, headers });
   }
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers 
+    });
   }
 
   try {
-    const body = JSON.parse(event.body || '{}');
+    const body = await request.json();
     
-    // Debug logging
-    console.log('Received body keys:', Object.keys(body));
-    console.log('title:', body.title);
-    console.log('question:', body.question);
-    
+    // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
     const { options, pollType, settings, tier = 'free' } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Question is required' }),
-      };
+      return new Response(JSON.stringify({ error: 'Question is required' }), { 
+        status: 400, 
+        headers 
+      });
     }
 
     if (!options || !Array.isArray(options) || options.length < 2) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'At least 2 options are required' }),
-      };
+      return new Response(JSON.stringify({ error: 'At least 2 options are required' }), { 
+        status: 400, 
+        headers 
+      });
     }
 
     // Get tier config
@@ -102,16 +96,12 @@ export const handler: Handler = async (event) => {
 
     // Validate poll type access
     if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ 
-          error: `Poll type "${pollType}" is not available in your tier`,
-          requiredTier: Object.keys(TIER_CONFIG).find(t => 
-            TIER_CONFIG[t].features.includes(pollType) || TIER_CONFIG[t].features[0] === 'all'
-          ),
-        }),
-      };
+      return new Response(JSON.stringify({ 
+        error: `Poll type "${pollType}" is not available in your tier`,
+        requiredTier: Object.keys(TIER_CONFIG).find(t => 
+          TIER_CONFIG[t].features.includes(pollType) || TIER_CONFIG[t].features[0] === 'all'
+        ),
+      }), { status: 403, headers });
     }
 
     // Generate IDs
@@ -148,35 +138,34 @@ export const handler: Handler = async (event) => {
       status: 'active',
     };
 
-    // Store in Netlify Blobs
+    // Store in Netlify Blobs - use context for auto-config
     const store = getStore('votegenerator-polls');
     await store.setJSON(pollId, poll);
 
     // Return success response
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        pollId,
-        adminKey,
-        voteUrl: `/vote/${pollId}`,
-        adminUrl: `/admin/${pollId}/${adminKey}`,
-        resultsUrl: `/results/${pollId}`,
-        tier,
-        maxResponses: tierConfig.maxResponses,
-        expiresAt,
-      }),
-    };
+    return new Response(JSON.stringify({
+      success: true,
+      id: pollId,
+      pollId,
+      adminKey,
+      voteUrl: `/vote/${pollId}`,
+      adminUrl: `/admin/${pollId}/${adminKey}`,
+      resultsUrl: `/results/${pollId}`,
+      tier,
+      maxResponses: tierConfig.maxResponses,
+      expiresAt,
+    }), { status: 200, headers });
+
   } catch (error) {
     console.error('Create poll error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: 'Failed to create poll',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      }),
-    };
+    return new Response(JSON.stringify({ 
+      error: 'Failed to create poll',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }), { status: 500, headers });
   }
+};
+
+// Also export config for Netlify
+export const config = {
+  path: '/.netlify/functions/vg-create',
 };

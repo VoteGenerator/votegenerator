@@ -71,6 +71,8 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
+    
+    // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
     const { options, pollType, settings, tier = 'free' } = body;
 
@@ -117,11 +119,12 @@ export const handler: Handler = async (event) => {
       Date.now() + tierConfig.expiresInDays * 24 * 60 * 60 * 1000
     ).toISOString();
 
-    // Create poll object
+    // Create poll object - use 'title' field to match vg-get expectations
     const poll = {
       id: pollId,
       adminKey,
-      question: question.trim(),
+      title: question.trim(),  // vg-get expects 'title'
+      question: question.trim(), // Keep for compatibility
       options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
         id: `opt_${i}`,
         text: o.trim(),
@@ -138,13 +141,18 @@ export const handler: Handler = async (event) => {
       expiresAt,
       createdAt: new Date().toISOString(),
       votes: [],
+      voteCount: 0,  // vg-get expects 'voteCount'
       responseCount: 0,
       status: 'active',
     };
 
     // Store in Netlify Blobs
-    const store = getStore('votegenerator-polls');
+    // Use 'polls' - same store name as vg-vote and vg-get
+    // Simple pattern lets Netlify auto-detect site context
+    const store = getStore('polls');
     await store.setJSON(pollId, poll);
+
+    console.log(`Poll created: ${pollId}`);
 
     // Return success response
     return {
@@ -152,6 +160,7 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({
         success: true,
+        id: pollId,
         pollId,
         adminKey,
         voteUrl: `/vote/${pollId}`,

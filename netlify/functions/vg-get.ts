@@ -53,12 +53,8 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Same pattern as vg-create
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
+        // Simple pattern - Netlify auto-detects site context
+        const store = getStore('polls');
         
         console.log('Fetching poll from store...');
         const poll: Poll | null = await store.get(pollId, { type: 'json' });

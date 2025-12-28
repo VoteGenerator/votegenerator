@@ -38,6 +38,7 @@ interface UserSession {
     createdAt: string;
     hasPin?: boolean;
     pinHash?: string;
+    sessionId?: string;  // Stripe session ID for URL reconstruction
 }
 
 // ============================================================================
@@ -188,6 +189,7 @@ const AdminDashboard: React.FC = () => {
                 // Create new session
                 const newSession: UserSession = {
                     dashboardToken: expectedToken,
+                    sessionId: urlSessionId,  // Store for URL reconstruction
                     tier,
                     expiresAt,
                     polls: [],
@@ -275,8 +277,23 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const getDashboardUrl = () => {
-        if (!session?.dashboardToken) return window.location.origin + '/admin';
-        return `${window.location.origin}/admin?token=${session.dashboardToken}`;
+        // Use the current URL params if available, as they're already working
+        const currentUrl = new URL(window.location.href);
+        const currentSessionId = currentUrl.searchParams.get('session_id') || currentUrl.searchParams.get('s');
+        const currentToken = currentUrl.searchParams.get('token');
+        
+        if (currentToken && currentSessionId) {
+            // Use the same working URL format
+            return `${window.location.origin}/admin?token=${currentToken}&session_id=${currentSessionId}`;
+        } else if (currentToken) {
+            return `${window.location.origin}/admin?token=${currentToken}`;
+        } else if (session?.dashboardToken && session?.sessionId) {
+            // Use stored session data
+            return `${window.location.origin}/admin?token=${session.dashboardToken}&session_id=${session.sessionId}`;
+        } else if (session?.dashboardToken) {
+            return `${window.location.origin}/admin?token=${session.dashboardToken}`;
+        }
+        return window.location.origin + '/admin';
     };
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
@@ -402,19 +419,36 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
-            {/* Header */}
+            {/* Header with Paid Nav */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button onClick={goHome} className="flex items-center gap-3 hover:opacity-80 transition">
+                    <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
                         <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
-                        <div className={`ml-2 px-3 py-1 bg-gradient-to-r ${config.gradient} text-white rounded-full text-xs font-bold flex items-center gap-1.5`}>
-                            {config.icon} {config.label}
-                        </div>
-                    </button>
+                    </a>
+                    
+                    {/* Nav Links */}
+                    <nav className="hidden md:flex items-center gap-1">
+                        <a href="/" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
+                            <PlusCircle size={18} /> Create Poll
+                        </a>
+                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition">
+                            <LayoutDashboard size={18} /> My Dashboard
+                        </a>
+                        <a href="/help" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
+                            <AlertCircle size={18} /> Help
+                        </a>
+                    </nav>
+                    
                     <div className="flex items-center gap-3">
+                        <div className={`px-4 py-2 bg-gradient-to-r ${config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                            {config.icon} {config.label}
+                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">
+                                {session?.expiresAt ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd' : ''}
+                            </span>
+                        </div>
                         {tier !== 'unlimited' && (
-                            <a href="/#pricing" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition flex items-center gap-2">
+                            <a href="/#pricing" className="hidden md:flex px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition items-center gap-2">
                                 <Sparkles size={16} /> Upgrade
                             </a>
                         )}

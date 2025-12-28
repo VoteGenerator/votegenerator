@@ -180,6 +180,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         // Check if user can access this poll type
         if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
+            // Reset options when changing poll type
+            if (id === 'rating') {
+                // Rating doesn't need options - auto 1-5
+                setOptions(['']);
+            } else if (id === 'rsvp' || id === 'meeting') {
+                // Start with empty date slots
+                setOptions(['', '']);
+            } else if (id !== 'image') {
+                // Regular polls start with 3 empty options
+                setOptions(['', '', '']);
+            }
+            // Clear image options if switching away from visual poll
+            if (id !== 'image') {
+                setImageOptions([]);
+            }
         } else {
             setShowPaywall(true);
         }
@@ -203,9 +218,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         
         // Validation based on poll type
         if (pollType === 'image') {
-            // Visual poll - need at least 2 images
             if (imageOptions.length < 2) { 
                 setError('Upload at least 2 images for visual poll'); 
+                return; 
+            }
+        } else if (pollType === 'rating') {
+            // Rating polls don't need validation - auto 1-5 scale
+        } else if (pollType === 'rsvp' || pollType === 'meeting') {
+            // RSVP/Meeting need at least 1 valid date
+            const validDates = options.filter(o => o.split('|')[0]);
+            if (validDates.length < 1) { 
+                setError('Add at least one date'); 
                 return; 
             }
         } else {
@@ -217,13 +240,41 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         
         setIsCreating(true); setError(null);
         
-        // Use the already-loaded purchasedTier from component state
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            const validOptions = pollType === 'image' 
-                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
-                : options.filter(o => o.trim());
+            // Prepare options based on poll type
+            let validOptions: string[];
+            
+            if (pollType === 'image') {
+                validOptions = imageOptions.map((img, i) => img.label || `Option ${i + 1}`);
+            } else if (pollType === 'rating') {
+                // Auto-generate 1-5 star options
+                validOptions = ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'];
+            } else if (pollType === 'rsvp') {
+                // Format RSVP dates for display
+                validOptions = options.filter(o => o.split('|')[0]).map(o => {
+                    const [date, time] = o.split('|');
+                    const dateObj = new Date(date);
+                    const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    return time ? `${formatted} at ${time}` : formatted;
+                });
+            } else if (pollType === 'meeting') {
+                // Format Meeting time slots for display
+                validOptions = options.filter(o => o.split('|')[0]).map(o => {
+                    const [date, start, end] = o.split('|');
+                    const dateObj = new Date(date);
+                    const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    if (start && end) {
+                        return `${formatted} ${start}-${end}`;
+                    } else if (start) {
+                        return `${formatted} at ${start}`;
+                    }
+                    return formatted;
+                });
+            } else {
+                validOptions = options.filter(o => o.trim());
+            }
             
             const pollData: any = { 
                 title: title.trim(), 
@@ -243,6 +294,18 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             // Add image URLs for visual polls
             if (pollType === 'image') {
                 pollData.imageUrls = imageOptions.map(img => img.url);
+            }
+            
+            // Add raw event data for RSVP/Meeting
+            if (pollType === 'rsvp' || pollType === 'meeting') {
+                pollData.rsvpEvents = options.filter(o => o.split('|')[0]).map(o => {
+                    const parts = o.split('|');
+                    return {
+                        date: parts[0],
+                        startTime: parts[1] || null,
+                        endTime: parts[2] || null,
+                    };
+                });
             }
             
             const res = await fetch('/.netlify/functions/vg-create', { 
@@ -579,12 +642,101 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-semibold text-slate-700">Options *</label>
-                                {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
+                                <label className="block text-sm font-semibold text-slate-700">
+                                    {pollType === 'rating' ? 'Rating Scale' : pollType === 'rsvp' ? 'Event Date(s)' : pollType === 'meeting' ? 'Time Slots' : 'Options'} *
+                                </label>
+                                {hasDuplicates && pollType !== 'rating' && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
                             </div>
                             
-                            {/* Regular text options for non-image polls */}
-                            {pollType !== 'image' ? (
+                            {/* RATING SCALE - Auto generated 1-5 stars */}
+                            {pollType === 'rating' ? (
+                                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-200">
+                                    <p className="text-cyan-700 text-sm mb-3">Respondents will rate on a 1-5 star scale:</p>
+                                    <div className="flex justify-center gap-2">
+                                        {[1, 2, 3, 4, 5].map(n => (
+                                            <div key={n} className="flex flex-col items-center">
+                                                <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 font-bold">{n}</div>
+                                                <span className="text-xs text-cyan-600 mt-1">{n === 1 ? 'Poor' : n === 5 ? 'Great' : '⭐'}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : pollType === 'rsvp' ? (
+                                /* RSVP - Date/Time picker for event dates */
+                                <div className="space-y-3">
+                                    <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl p-4 border border-sky-200 mb-3">
+                                        <p className="text-sky-700 text-sm">Add dates for your event. Respondents will RSVP for each date.</p>
+                                    </div>
+                                    {options.map((opt, i) => (
+                                        <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                            <div className="flex-1 flex gap-2">
+                                                <input 
+                                                    type="date" 
+                                                    value={opt.split('|')[0] || ''} 
+                                                    onChange={(e) => {
+                                                        const time = opt.split('|')[1] || '';
+                                                        updateOption(i, `${e.target.value}|${time}`);
+                                                    }}
+                                                    className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-sky-500"
+                                                />
+                                                <input 
+                                                    type="time" 
+                                                    value={opt.split('|')[1] || ''} 
+                                                    onChange={(e) => {
+                                                        const date = opt.split('|')[0] || '';
+                                                        updateOption(i, `${date}|${e.target.value}`);
+                                                    }}
+                                                    placeholder="Time (optional)"
+                                                    className="w-32 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-sky-500"
+                                                />
+                                            </div>
+                                            {options.length > 1 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : pollType === 'meeting' ? (
+                                /* MEETING POLL - Date + Time range picker */
+                                <div className="space-y-3">
+                                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 mb-3">
+                                        <p className="text-amber-700 text-sm">Add time slots for your meeting. Respondents will select their availability.</p>
+                                    </div>
+                                    {options.map((opt, i) => {
+                                        const parts = opt.split('|');
+                                        const date = parts[0] || '';
+                                        const startTime = parts[1] || '';
+                                        const endTime = parts[2] || '';
+                                        return (
+                                            <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                                <div className="flex-1 flex gap-2">
+                                                    <input 
+                                                        type="date" 
+                                                        value={date}
+                                                        onChange={(e) => updateOption(i, `${e.target.value}|${startTime}|${endTime}`)}
+                                                        className="flex-1 px-3 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
+                                                    />
+                                                    <div className="flex items-center gap-1">
+                                                        <input 
+                                                            type="time" 
+                                                            value={startTime}
+                                                            onChange={(e) => updateOption(i, `${date}|${e.target.value}|${endTime}`)}
+                                                            className="w-28 px-2 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
+                                                        />
+                                                        <span className="text-slate-400">→</span>
+                                                        <input 
+                                                            type="time" 
+                                                            value={endTime}
+                                                            onChange={(e) => updateOption(i, `${date}|${startTime}|${e.target.value}`)}
+                                                            className="w-28 px-2 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {options.length > 1 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            ) : pollType !== 'image' ? (
+                                /* Regular text options for multiple/ranked/pairwise */
                                 <div className="space-y-3">
                                     {options.map((opt, i) => (
                                         <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
@@ -731,7 +883,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             )}
                             
-                            {pollType !== 'image' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                            {pollType !== 'image' && pollType !== 'rating' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add {pollType === 'meeting' ? 'Time Slot' : pollType === 'rsvp' ? 'Date' : 'Option'}</button>}
                         </div>
                     </motion.div>
 

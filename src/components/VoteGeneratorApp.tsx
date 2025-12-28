@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
+import AdminDashboard from './AdminDashboard';
 import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
 import VoteGeneratorVote from './VoteGeneratorVote';
@@ -229,6 +230,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <AdWall />
             ) : window.location.pathname.startsWith('/checkout/success') ? (
                 <CheckoutSuccess />
+            ) : window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin?') ? (
+                <AdminDashboard />
             ) : (
             <>
             {viewState.type !== 'create' && viewState.type !== 'loading' && (

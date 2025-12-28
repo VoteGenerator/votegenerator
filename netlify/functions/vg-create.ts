@@ -20,23 +20,6 @@ function generateAdminKey(): string {
   return result;
 }
 
-// Map frontend poll types to normalized types
-const POLL_TYPE_MAP: Record<string, string> = {
-  'multiple': 'multiple',
-  'multiple_choice': 'multiple',
-  'ranked': 'ranked',
-  'ranked_choice': 'ranked',
-  'pairwise': 'pairwise',
-  'this_or_that': 'pairwise',
-  'meeting': 'meeting',
-  'meeting_poll': 'meeting',
-  'rating': 'rating',
-  'rating_scale': 'rating',
-  'rsvp': 'rsvp',
-  'image': 'image',
-  'visual_poll': 'image',
-};
-
 // Tier limits and features
 const TIER_CONFIG: Record<string, {
   maxResponses: number;
@@ -89,12 +72,11 @@ export const handler: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     
-    // Accept BOTH 'title' (from frontend) and 'question'
+    // Accept BOTH 'title' and 'question'
     const question = body.title || body.question;
-    
     const { 
       options, 
-      pollType: rawPollType, 
+      pollType = 'multiple', 
       settings, 
       tier = 'free',
       description,
@@ -103,54 +85,25 @@ export const handler: Handler = async (event) => {
       rsvpEvents
     } = body;
 
-    // Normalize poll type
-    const pollType = POLL_TYPE_MAP[rawPollType] || rawPollType || 'multiple';
-
-    console.log('Creating poll:', { 
-      question: question?.substring(0, 50), 
-      rawPollType,
-      pollType, 
-      tier, 
-      optionsCount: options?.length 
-    });
-
     // Validation
     if (!question || typeof question !== 'string' || !question.trim()) {
-      console.log('Validation failed: missing question');
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Please enter a question' }),
+        body: JSON.stringify({ error: 'Question is required' }),
       };
     }
 
-    // Rating polls don't need options validation
-    if (pollType !== 'rating') {
-      if (!options || !Array.isArray(options) || options.length < 1) {
-        console.log('Validation failed: not enough options', options);
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'At least 1 option is required' }),
-        };
-      }
+    if (!options || !Array.isArray(options) || options.length < 2) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'At least 2 options are required' }),
+      };
     }
 
     // Get tier config
     const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
-
-    // Validate poll type access
-    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {
-      console.log('Poll type not allowed:', { pollType, tier, features: tierConfig.features });
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ 
-          error: `Poll type "${pollType}" requires an upgrade.`,
-          requiredTier: pollType === 'image' ? 'pro_event' : 'starter',
-        }),
-      };
-    }
 
     // Generate IDs
     const pollId = generateId(8);
@@ -161,30 +114,16 @@ export const handler: Handler = async (event) => {
       Date.now() + tierConfig.expiresInDays * 24 * 60 * 60 * 1000
     ).toISOString();
 
-    // Process options - handle rating polls specially
-    let processedOptions;
-    if (pollType === 'rating') {
-      processedOptions = [
-        { id: 'opt_1', text: '1 Star' },
-        { id: 'opt_2', text: '2 Stars' },
-        { id: 'opt_3', text: '3 Stars' },
-        { id: 'opt_4', text: '4 Stars' },
-        { id: 'opt_5', text: '5 Stars' },
-      ];
-    } else {
-      processedOptions = options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
-        id: `opt_${i}`,
-        text: o.trim(),
-      }));
-    }
-
     // Create poll object
     const poll: Record<string, any> = {
       id: pollId,
       adminKey,
       question: question.trim(),
       description: description?.trim() || undefined,
-      options: processedOptions,
+      options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
+        id: `opt_${i}`,
+        text: o.trim(),
+      })),
       pollType,
       settings: {
         allowMultiple: settings?.allowMultiple || false,
@@ -212,22 +151,9 @@ export const handler: Handler = async (event) => {
       poll.rsvpEvents = rsvpEvents;
     }
 
-    console.log('Attempting to store poll...');
-    
-    // Try to store in Netlify Blobs
-    let storageSuccess = false;
-    try {
-      const store = getStore('votegenerator-polls');
-      await store.setJSON(pollId, poll);
-      storageSuccess = true;
-      console.log('Poll stored in Blobs successfully:', pollId);
-    } catch (blobError: any) {
-      console.error('Blobs storage error (continuing anyway):', blobError.message);
-      // Continue - we'll return success so user can test the flow
-      // In production, you'd want to handle this differently
-    }
-
-    console.log('Poll created:', pollId, 'stored:', storageSuccess);
+    // Store in Netlify Blobs - EXACT same pattern as original working version
+    const store = getStore('votegenerator-polls');
+    await store.setJSON(pollId, poll);
 
     // Return success response
     return {
@@ -235,7 +161,7 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({
         success: true,
-        id: pollId,
+        id: pollId,  // Frontend expects 'id'
         pollId,
         adminKey,
         voteUrl: `/vote/${pollId}`,
@@ -244,7 +170,6 @@ export const handler: Handler = async (event) => {
         tier,
         maxResponses: tierConfig.maxResponses,
         expiresAt,
-        stored: storageSuccess,
       }),
     };
   } catch (error) {
@@ -253,7 +178,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: 'Failed to create poll. Please try again.',
+        error: 'Failed to create poll',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
     };

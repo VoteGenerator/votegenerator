@@ -148,9 +148,16 @@ const AdminDashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Get token from URL
+    // Get token and session_id from URL
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
+    const urlSessionId = urlParams.get('session_id');
+    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited' | null;
+
+    // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
+    const generateDashboardToken = (sessionId: string): string => {
+        return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
+    };
 
     useEffect(() => {
         validateAndLoadSession();
@@ -160,6 +167,43 @@ const AdminDashboard: React.FC = () => {
         try {
             const stored = localStorage.getItem('vg_user_session');
             
+            // Case 1: Coming from email link with session_id but no localStorage
+            // Create session from URL params
+            if (!stored && urlSessionId && urlToken) {
+                const expectedToken = generateDashboardToken(urlSessionId);
+                
+                // Verify token matches
+                if (urlToken !== expectedToken) {
+                    setError('Invalid dashboard link. The token is incorrect.');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Determine tier (default to starter if not provided)
+                const tier = urlTier || 'starter';
+                const days = tier === 'unlimited' ? 365 : tier === 'pro_event' ? 60 : 30;
+                const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+                
+                // Create new session
+                const newSession: UserSession = {
+                    dashboardToken: urlToken,
+                    tier,
+                    expiresAt,
+                    polls: [],
+                    createdAt: new Date().toISOString(),
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('vg_user_session', JSON.stringify(newSession));
+                localStorage.setItem('vg_purchased_tier', tier);
+                localStorage.setItem('vg_tier_expires', expiresAt);
+                
+                setSession(newSession);
+                setLoading(false);
+                return;
+            }
+            
+            // Case 2: No stored session and no valid URL params
             if (!stored) {
                 setError('No session found. Please purchase a plan first.');
                 setLoading(false);
@@ -168,12 +212,28 @@ const AdminDashboard: React.FC = () => {
 
             const sessionData: UserSession = JSON.parse(stored);
 
+            // Case 3: URL token provided - verify it matches stored session
             if (urlToken && sessionData.dashboardToken !== urlToken) {
-                setError('Invalid dashboard link. The token does not match.');
-                setLoading(false);
-                return;
+                // Check if it might be using the new session_id format
+                if (urlSessionId) {
+                    const expectedToken = generateDashboardToken(urlSessionId);
+                    if (urlToken === expectedToken) {
+                        // Token is valid via session_id, update stored session
+                        sessionData.dashboardToken = urlToken;
+                        localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                    } else {
+                        setError('Invalid dashboard link. The token does not match.');
+                        setLoading(false);
+                        return;
+                    }
+                } else {
+                    setError('Invalid dashboard link. The token does not match.');
+                    setLoading(false);
+                    return;
+                }
             }
 
+            // Case 4: Check if session has expired
             if (sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date()) {
                 setError('Your plan has expired. Please renew to continue.');
                 setLoading(false);

@@ -184,7 +184,10 @@ const VoteGeneratorCreate: React.FC = () => {
     const hasDuplicates = duplicateIndices.size > 0;
     const getMaxDeadline = () => { const m = new Date(); m.setDate(m.getDate() + maxDays); return m.toISOString().slice(0, 16); };
     const addOption = () => { if (options.length < 20) setOptions([...options, '']); };
-    const removeOption = (i: number) => { if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i)); };
+    const removeOption = (i: number) => { 
+        const minOptions = ['rsvp'].includes(pollType) ? 1 : 2;
+        if (options.length > minOptions) setOptions(options.filter((_, idx) => idx !== i)); 
+    };
     const updateOption = (i: number, v: string) => { const n = [...options]; n[i] = v; setOptions(n); if (error?.includes('Duplicate')) setError(null); };
 
     const handlePollTypeSelect = (id: string) => {
@@ -194,6 +197,20 @@ const VoteGeneratorCreate: React.FC = () => {
         // Check if user can access this poll type
         if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
+            
+            // Reset options when changing to special poll types
+            if (id === 'rsvp') {
+                setOptions(['']); // Single date option for RSVP
+            } else if (id === 'meeting') {
+                setOptions(['', '', '']); // 3 time slot options
+            } else if (id === 'rating') {
+                setOptions([]); // No options needed
+            } else if (id !== pollType) {
+                // Reset to default text options if coming from special poll
+                if (['rsvp', 'meeting', 'rating', 'image'].includes(pollType)) {
+                    setOptions(['', '', '']);
+                }
+            }
         } else {
             setShowPaywall(true);
         }
@@ -222,6 +239,16 @@ const VoteGeneratorCreate: React.FC = () => {
                 setError('Upload at least 2 images for visual poll'); 
                 return; 
             }
+        } else if (pollType === 'rating') {
+            // Rating poll - no options needed, uses 1-5 scale
+            // No validation needed
+        } else if (pollType === 'rsvp' || pollType === 'meeting') {
+            // RSVP/Meeting - need at least 1 date
+            const validDates = options.filter(o => o.split('|')[0]?.trim());
+            if (validDates.length < 1) { 
+                setError('Add at least 1 date/time'); 
+                return; 
+            }
         } else {
             // Regular poll - need at least 2 text options
             const valid = options.filter(o => o.trim());
@@ -235,9 +262,32 @@ const VoteGeneratorCreate: React.FC = () => {
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            const validOptions = pollType === 'image' 
-                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
-                : options.filter(o => o.trim());
+            // Process options based on poll type
+            let validOptions: string[];
+            if (pollType === 'image') {
+                validOptions = imageOptions.map((img, i) => img.label || `Option ${i + 1}`);
+            } else if (pollType === 'rating') {
+                validOptions = ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'];
+            } else if (pollType === 'rsvp' || pollType === 'meeting') {
+                // Format: date|time -> readable format
+                validOptions = options.filter(o => o.split('|')[0]?.trim()).map(o => {
+                    const parts = o.split('|');
+                    const date = parts[0];
+                    const time = parts[1] || '';
+                    const endTime = parts[2] || '';
+                    if (!date) return '';
+                    const dateObj = new Date(date);
+                    const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    if (pollType === 'meeting' && time && endTime) {
+                        return `${dateStr} ${time}-${endTime}`;
+                    } else if (time) {
+                        return `${dateStr} at ${time}`;
+                    }
+                    return dateStr;
+                }).filter(o => o);
+            } else {
+                validOptions = options.filter(o => o.trim());
+            }
             
             const pollData: any = { 
                 title: title.trim(), 
@@ -257,6 +307,19 @@ const VoteGeneratorCreate: React.FC = () => {
             // Add image URLs for visual polls
             if (pollType === 'image') {
                 pollData.imageUrls = imageOptions.map(img => img.url);
+            }
+            
+            // Add raw date/time data for RSVP/Meeting
+            if (pollType === 'rsvp' || pollType === 'meeting') {
+                pollData.rsvpEvents = options.filter(o => o.split('|')[0]?.trim()).map((o, i) => {
+                    const parts = o.split('|');
+                    return {
+                        id: `evt_${i}`,
+                        date: parts[0] || '',
+                        time: parts[1] || '',
+                        endTime: parts[2] || '',
+                    };
+                });
             }
             
             const res = await fetch('/.netlify/functions/vg-create', { 
@@ -592,26 +655,169 @@ const VoteGeneratorCreate: React.FC = () => {
                             <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add context..." rows={2} className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 resize-none bg-slate-50 focus:bg-white" />
                         </div>
                         <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-semibold text-slate-700">Options *</label>
-                                {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
-                            </div>
-                            
-                            {/* Regular text options for non-image polls */}
-                            {pollType !== 'image' ? (
-                                <div className="space-y-3">
-                                    {options.map((opt, i) => (
-                                        <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                                            <div className="flex-1 relative">
-                                                <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
-                                                    className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
-                                                <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
-                                            </div>
-                                            {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
-                                        </motion.div>
-                                    ))}
+                            {/* RSVP Poll - Date/Time Picker */}
+                            {pollType === 'rsvp' && (
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl p-4 border border-sky-200">
+                                        <div className="flex items-center gap-2 text-sky-700 mb-2">
+                                            <Users size={18} />
+                                            <span className="font-semibold">RSVP Poll - Event Details</span>
+                                        </div>
+                                        <p className="text-sky-600 text-sm">
+                                            Add event date(s) and time. Attendees will respond: Going, Not Going, or Maybe.
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Event Date(s) *</label>
+                                        <div className="space-y-3">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">{i + 1}</div>
+                                                        <div className="flex-1 grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="block text-xs text-slate-500 mb-1">📅 Date *</label>
+                                                                <input type="date" value={opt.split('|')[0] || ''} min={new Date().toISOString().split('T')[0]}
+                                                                    onChange={(e) => { const parts = opt.split('|'); parts[0] = e.target.value; updateOption(i, parts.join('|')); }}
+                                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-sky-500" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-slate-500 mb-1">🕐 Time (optional)</label>
+                                                                <input type="time" value={opt.split('|')[1] || ''}
+                                                                    onChange={(e) => { const parts = opt.split('|'); parts[1] = e.target.value; updateOption(i, parts.filter(p => p).join('|')); }}
+                                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-sky-500" />
+                                                            </div>
+                                                        </div>
+                                                        {options.length > 1 && <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {options.length < 10 && (
+                                            <button onClick={addOption} className="mt-3 w-full py-3 border-2 border-dashed border-sky-300 rounded-xl text-sky-600 hover:bg-sky-50 font-medium flex items-center justify-center gap-2">
+                                                <Plus size={20} /> Add Another Date
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="bg-slate-100 rounded-xl p-4">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Response Options (Fixed)</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium">✅ Going</span>
+                                            <span className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium">❌ Not Going</span>
+                                            <span className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium">🤔 Maybe</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
+                            )}
+                            
+                            {/* Meeting Poll - Time Slot Picker */}
+                            {pollType === 'meeting' && (
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                                        <div className="flex items-center gap-2 text-amber-700 mb-2">
+                                            <Calendar size={18} />
+                                            <span className="font-semibold">Meeting Poll - Find Best Time</span>
+                                        </div>
+                                        <p className="text-amber-600 text-sm">
+                                            Add time slots for attendees to vote on. They'll mark each as Available, Maybe, or Unavailable.
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Time Slots *</label>
+                                        <div className="space-y-3">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-200" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">{i + 1}</div>
+                                                        <div className="flex-1 grid grid-cols-3 gap-3">
+                                                            <div>
+                                                                <label className="block text-xs text-slate-500 mb-1">📅 Date *</label>
+                                                                <input type="date" value={opt.split('|')[0] || ''} min={new Date().toISOString().split('T')[0]}
+                                                                    onChange={(e) => { const parts = opt.split('|'); parts[0] = e.target.value; updateOption(i, parts.join('|')); }}
+                                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-slate-500 mb-1">🕐 Start Time</label>
+                                                                <input type="time" value={opt.split('|')[1] || ''}
+                                                                    onChange={(e) => { const parts = opt.split('|'); parts[1] = e.target.value; updateOption(i, parts.join('|')); }}
+                                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs text-slate-500 mb-1">🕑 End Time</label>
+                                                                <input type="time" value={opt.split('|')[2] || ''}
+                                                                    onChange={(e) => { const parts = opt.split('|'); parts[2] = e.target.value; updateOption(i, parts.join('|')); }}
+                                                                    className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500" />
+                                                            </div>
+                                                        </div>
+                                                        {options.length > 2 && <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {options.length < 15 && (
+                                            <button onClick={addOption} className="mt-3 w-full py-3 border-2 border-dashed border-amber-300 rounded-xl text-amber-600 hover:bg-amber-50 font-medium flex items-center justify-center gap-2">
+                                                <Plus size={20} /> Add Time Slot
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Rating Poll - No options needed */}
+                            {pollType === 'rating' && (
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-200">
+                                        <div className="flex items-center gap-2 text-cyan-700 mb-2">
+                                            <SlidersHorizontal size={18} />
+                                            <span className="font-semibold">Rating Poll - 1-5 Star Scale</span>
+                                        </div>
+                                        <p className="text-cyan-600 text-sm">
+                                            Voters will rate using a 1-5 star scale. No custom options needed.
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="bg-slate-100 rounded-xl p-4">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">Rating Scale (Fixed)</label>
+                                        <div className="flex items-center justify-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((n) => (
+                                                <div key={n} className="flex flex-col items-center gap-1">
+                                                    <Star size={28} className={n <= 3 ? 'text-amber-400 fill-amber-400' : 'text-slate-300'} />
+                                                    <span className="text-xs text-slate-500">{n}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <p className="text-center text-xs text-slate-500 mt-3">Voters will select 1-5 stars</p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Regular text options for multiple, ranked, pairwise */}
+                            {!['rsvp', 'meeting', 'rating', 'image'].includes(pollType) && (
+                                <>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="block text-sm font-semibold text-slate-700">Options *</label>
+                                        {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
+                                    </div>
+                                    <div className="space-y-3">
+                                        {options.map((opt, i) => (
+                                            <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                                <div className="flex-1 relative">
+                                                    <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
+                                                        className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
+                                                    <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
+                                                </div>
+                                                {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Visual Poll Image Upload */}
+                            {pollType === 'image' && (
                                 /* Visual Poll Image Upload Section */
                                 <div className="space-y-4">
                                     {/* Info Banner */}
@@ -745,7 +951,10 @@ const VoteGeneratorCreate: React.FC = () => {
                                 </div>
                             )}
                             
-                            {pollType !== 'image' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                            {/* Add Option button - only for text-based polls */}
+                            {!['rsvp', 'meeting', 'rating', 'image'].includes(pollType) && options.length < 20 && (
+                                <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>
+                            )}
                         </div>
                     </motion.div>
 

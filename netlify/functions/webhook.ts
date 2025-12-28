@@ -1,91 +1,50 @@
-// ============================================================================
-// VoteGenerator - Stripe Webhook Handler (RESILIENT VERSION)
-// Handles checkout.session.completed events to:
-// 1. FIRST: Send welcome email with dashboard link
-// 2. THEN: Try to register in Blobs (graceful failure)
-// 3. Upgrade existing polls / create licenses
-// ============================================================================
-import type { Handler } from '@netlify/functions';
+import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import Stripe from 'stripe';
 import { getStore } from '@netlify/blobs';
-import crypto from 'crypto';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Initialize Stripe
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 
-// Resend for email
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
-// ============================================================================
-// Types
-// ============================================================================
+// Poll type
 interface Poll {
   id: string;
-  title: string;
   tier: string;
-  tierUpgradedAt?: string;
   originalTier?: string;
+  tierUpgradedAt?: string;
+  stripeSessionId?: string;
   [key: string]: any;
 }
 
-interface License {
-  id: string;
-  key: string;
-  tier: 'unlimited';
-  createdAt: string;
-  expiresAt: string;
-  stripeSessionId: string;
-  customerEmail?: string;
-  used: boolean;
-}
-
-interface CustomerRecord {
-  email: string;
-  tier: string;
-  stripeCustomerId?: string;
-  stripeSessionId: string;
-  dashboardToken: string;
-  polls: {
-    id: string;
-    adminKey: string;
-    title: string;
-    type: string;
-    status: 'draft' | 'live';
-    createdAt: string;
-  }[];
-  createdAt: string;
-  updatedAt?: string;
-}
-
 // ============================================================================
-// Helpers
+// DETERMINISTIC TOKEN GENERATION
+// Both webhook and CheckoutSuccess use this same formula
 // ============================================================================
-
-// Generate a secure license key like: VG-7Kx9mP2nQ8wR
-function generateLicenseKey(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let key = 'VG-';
-  for (let i = 0; i < 12; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return key;
+function generateDashboardToken(sessionId: string): string {
+  // Use session ID directly - it's unique and both sides know it
+  // Add a prefix for easy identification
+  return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
 }
 
-// Generate a unique dashboard token
-function generateDashboardToken(): string {
-  return crypto.randomBytes(12).toString('base64url');
-}
-
-// Map price IDs to tiers using environment variables
+// Map price IDs to tiers (update with your actual price IDs)
 function getTierFromPriceId(priceId: string): string {
-  if (priceId === process.env.STRIPE_PRICE_STARTER) return 'starter';
-  if (priceId === process.env.STRIPE_PRICE_PRO_EVENT) return 'pro_event';
-  if (priceId === process.env.STRIPE_PRICE_UNLIMITED) return 'unlimited';
-  return 'starter'; // Default
+  const priceMap: Record<string, string> = {
+    'price_starter_monthly': 'starter',
+    'price_pro_monthly': 'pro_event',
+    'price_unlimited_monthly': 'unlimited',
+    'price_starter_yearly': 'starter',
+    'price_pro_yearly': 'pro_event', 
+    'price_unlimited_yearly': 'unlimited',
+  };
+  return priceMap[priceId] || 'starter';
 }
 
-// Get tier expiration days
+// Get days for tier
 function getTierDays(tier: string): number {
   switch (tier) {
     case 'starter': return 30;
@@ -96,7 +55,12 @@ function getTierDays(tier: string): number {
 }
 
 // Send dashboard welcome email via Resend
-async function sendDashboardEmail(email: string, tier: string, dashboardToken: string): Promise<boolean> {
+async function sendDashboardEmail(
+  email: string, 
+  tier: string, 
+  dashboardToken: string,
+  sessionId: string
+): Promise<boolean> {
   if (!RESEND_API_KEY || !email) {
     console.log('Skipping email: No API key or email');
     return false;
@@ -110,7 +74,10 @@ async function sendDashboardEmail(email: string, tier: string, dashboardToken: s
   
   const tierLabel = tierLabels[tier] || 'Starter';
   const baseUrl = process.env.URL || 'https://votegenerator.com';
-  const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}`;
+  
+  // Use the same URL format as CheckoutSuccess
+  const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}&session_id=${sessionId}`;
+  
   const days = getTierDays(tier);
   const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
     month: 'long',
@@ -119,7 +86,7 @@ async function sendDashboardEmail(email: string, tier: string, dashboardToken: s
   });
   
   try {
-    console.log(`Sending dashboard email to ${email.substring(0, 5)}...`);
+    console.log(`Sending dashboard email to ${email.substring(0, 5)}... with token ${dashboardToken.substring(0, 10)}...`);
     
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -198,138 +165,70 @@ async function sendDashboardEmail(email: string, tier: string, dashboardToken: s
   }
 }
 
-// Send license email via Resend (for Unlimited)
-async function sendLicenseEmail(email: string, licenseKey: string, licenseUrl: string): Promise<boolean> {
-  if (!RESEND_API_KEY || !email) return false;
-  
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'VoteGenerator <noreply@mail.votegenerator.com>',
-        to: email,
-        subject: '🎉 Your VoteGenerator Unlimited License',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #4F46E5;">Welcome to VoteGenerator Unlimited! 🎉</h1>
-            
-            <p>Thank you for your purchase! Here's your license information:</p>
-            
-            <div style="background: #F3F4F6; border-radius: 12px; padding: 20px; margin: 20px 0;">
-              <p style="margin: 0 0 10px 0; color: #6B7280; font-size: 14px;">Your License Key:</p>
-              <p style="margin: 0; font-family: monospace; font-size: 18px; font-weight: bold; color: #1F2937;">
-                ${licenseKey}
-              </p>
-            </div>
-            
-            <div style="background: #EEF2FF; border-radius: 12px; padding: 20px; margin: 20px 0;">
-              <p style="margin: 0 0 10px 0; color: #4F46E5; font-weight: bold;">⚠️ IMPORTANT: Save this link!</p>
-              <p style="margin: 0;">
-                <a href="${licenseUrl}" style="color: #4F46E5; word-break: break-all;">
-                  ${licenseUrl}
-                </a>
-              </p>
-              <p style="margin: 10px 0 0 0; font-size: 14px; color: #6B7280;">
-                Bookmark this link to access your unlimited polls anytime.
-              </p>
-            </div>
-            
-            <h3>What you get:</h3>
-            <ul>
-              <li>Unlimited polls for 1 year</li>
-              <li>10,000 responses per poll</li>
-              <li>Visual Poll support</li>
-              <li>All export options (CSV, PDF, PNG)</li>
-              <li>Custom branding & short links</li>
-              <li>Priority support</li>
-            </ul>
-            
-            <p>Questions? Reply to this email or contact <a href="mailto:support@votegenerator.com">support@votegenerator.com</a></p>
-            
-            <p style="color: #9CA3AF; font-size: 12px; margin-top: 40px;">
-              © ${new Date().getFullYear()} VoteGenerator. All rights reserved.
-            </p>
-          </div>
-        `,
-      }),
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.error('Failed to send license email:', error);
-    return false;
-  }
-}
-
-// Try to register customer in Blobs (graceful failure)
+// Try to register customer in Blobs (non-fatal if fails)
 async function tryRegisterCustomer(
   email: string,
   tier: string,
   stripeCustomerId: string | null,
-  stripeSessionId: string,
+  sessionId: string,
   dashboardToken: string
 ): Promise<boolean> {
   try {
-    const customerStore = getStore('customers');
-    const normalizedEmail = email.toLowerCase().trim();
+    const store = getStore('vg-customers');
     
-    let customer: CustomerRecord | null = null;
+    const customerData = {
+      email,
+      tier,
+      stripeCustomerId,
+      stripeSessionId: sessionId,
+      dashboardToken,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + getTierDays(tier) * 24 * 60 * 60 * 1000).toISOString(),
+      polls: [],
+    };
     
-    try {
-      customer = await customerStore.get(normalizedEmail, { type: 'json' }) as CustomerRecord | null;
-    } catch {
-      // Customer doesn't exist, create new
-    }
+    // Store by both email and token for lookups
+    await store.setJSON(`customer_${email}`, customerData);
+    await store.setJSON(`token_${dashboardToken}`, customerData);
+    await store.setJSON(`session_${sessionId}`, customerData);
     
-    if (customer) {
-      // Update existing customer
-      customer.tier = tier;
-      customer.stripeSessionId = stripeSessionId;
-      if (stripeCustomerId) customer.stripeCustomerId = stripeCustomerId;
-      customer.updatedAt = new Date().toISOString();
-    } else {
-      // Create new customer
-      customer = {
-        email: normalizedEmail,
-        tier,
-        stripeSessionId,
-        dashboardToken,
-        polls: [],
-        createdAt: new Date().toISOString(),
-      };
-      if (stripeCustomerId) customer.stripeCustomerId = stripeCustomerId;
-    }
-    
-    await customerStore.setJSON(normalizedEmail, customer);
-    console.log(`Customer registered in Blobs: ${normalizedEmail}`);
+    console.log('Customer registered in Blobs');
     return true;
-  } catch (error) {
-    console.error('Failed to register customer in Blobs (non-fatal):', error);
+  } catch (error: any) {
+    console.error('Blobs registration failed (non-fatal):', error.message);
     return false;
   }
 }
 
-// ============================================================================
-// Main Handler
-// ============================================================================
-const headers = {
-  'Content-Type': 'application/json',
-};
+// Main webhook handler
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+  };
 
-export const handler: Handler = async (event) => {
+  // Handle preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
   }
 
   const sig = event.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!sig || !webhookSecret) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing signature or secret' }) };
+  
+  if (!sig) {
+    console.error('No Stripe signature found');
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: 'No signature' }),
+    };
   }
 
   let stripeEvent: Stripe.Event;
@@ -338,160 +237,146 @@ export const handler: Handler = async (event) => {
     stripeEvent = stripe.webhooks.constructEvent(
       event.body!,
       sig,
-      webhookSecret
+      STRIPE_WEBHOOK_SECRET
     );
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
-    return { statusCode: 400, headers, body: JSON.stringify({ error: `Webhook Error: ${err.message}` }) };
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
+    };
   }
 
-  // Handle the event
-  switch (stripeEvent.type) {
-    case 'checkout.session.completed': {
-      const session = stripeEvent.data.object as Stripe.Checkout.Session;
-      const metadata = session.metadata || {};
-      
-      // Get customer email
-      const customerEmail = session.customer_email || session.customer_details?.email;
-      
-      // Determine tier from metadata or line items
-      let tier = metadata.tier || 'starter';
-      
-      // If no tier in metadata, try to determine from line items
-      if (!metadata.tier && session.line_items?.data?.[0]?.price?.id) {
-        tier = getTierFromPriceId(session.line_items.data[0].price.id);
-      }
-      
-      console.log('Checkout completed:', {
-        sessionId: session.id,
-        tier,
-        pollId: metadata.pollId,
-        licenseType: metadata.licenseType,
-        email: customerEmail,
-      });
+  console.log('Webhook received:', stripeEvent.type);
 
-      // Generate dashboard token FIRST (before any Blobs operations)
-      const dashboardToken = generateDashboardToken();
-      
-      // ================================================================
-      // STEP 1: SEND EMAIL FIRST (most important!)
-      // ================================================================
-      if (customerEmail) {
-        const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardToken);
-        console.log(`Dashboard email sent: ${emailSent}`);
-      }
-      
-      // ================================================================
-      // STEP 2: Try to register in Blobs (graceful failure)
-      // ================================================================
-      if (customerEmail) {
-        const registered = await tryRegisterCustomer(
-          customerEmail,
+  try {
+    switch (stripeEvent.type) {
+      case 'checkout.session.completed': {
+        const session = stripeEvent.data.object as Stripe.Checkout.Session;
+        const metadata = session.metadata || {};
+        
+        // Get customer email
+        const customerEmail = session.customer_email || session.customer_details?.email;
+        
+        // Determine tier from metadata or line items
+        let tier = metadata.tier || 'starter';
+        
+        // If no tier in metadata, try to determine from line items
+        if (!metadata.tier && session.line_items?.data?.[0]?.price?.id) {
+          tier = getTierFromPriceId(session.line_items.data[0].price.id);
+        }
+        
+        console.log('Checkout completed:', {
+          sessionId: session.id,
           tier,
-          session.customer as string | null,
-          session.id,
-          dashboardToken
-        );
-        console.log(`Customer registered in Blobs: ${registered}`);
-      }
+          pollId: metadata.pollId,
+          email: customerEmail ? customerEmail.substring(0, 5) + '...' : 'none',
+        });
 
-      // ================================================================
-      // STEP 3: Handle poll upgrades (if applicable)
-      // ================================================================
-      if (metadata.pollId && metadata.upgradeType === 'existing_poll') {
-        try {
-          const pollStore = getStore('vg-polls');
-          const pollData = await pollStore.get(metadata.pollId, { type: 'json' }) as Poll | null;
-          
-          if (pollData) {
-            const upgradedPoll: Poll = {
-              ...pollData,
-              originalTier: pollData.tier,
-              tier: metadata.tier,
-              tierUpgradedAt: new Date().toISOString(),
-              stripeSessionId: session.id,
-            };
-            
-            await pollStore.setJSON(metadata.pollId, upgradedPoll);
-            console.log(`Poll ${metadata.pollId} upgraded to ${metadata.tier}`);
-          } else {
-            console.error(`Poll ${metadata.pollId} not found for upgrade`);
-          }
-        } catch (error) {
-          console.error('Failed to upgrade poll (non-fatal):', error);
-        }
-      }
-      
-      // ================================================================
-      // STEP 4: Create Unlimited license (if applicable)
-      // ================================================================
-      if (metadata.licenseType === 'unlimited') {
-        const licenseKey = generateLicenseKey();
-        const now = new Date();
-        const expiresAt = new Date(now);
-        expiresAt.setDate(expiresAt.getDate() + 365);
+        // ================================================================
+        // GENERATE DETERMINISTIC TOKEN FROM SESSION ID
+        // This ensures webhook and CheckoutSuccess generate SAME token!
+        // ================================================================
+        const dashboardToken = generateDashboardToken(session.id);
+        console.log('Generated dashboard token:', dashboardToken.substring(0, 15) + '...');
         
-        try {
-          const license: License = {
-            id: licenseKey,
-            key: licenseKey,
-            tier: 'unlimited',
-            createdAt: now.toISOString(),
-            expiresAt: expiresAt.toISOString(),
-            stripeSessionId: session.id,
-            customerEmail: session.customer_details?.email || undefined,
-            used: false,
-          };
-          
-          const licenseStore = getStore('vg-licenses');
-          await licenseStore.setJSON(licenseKey, license);
-          console.log(`License ${licenseKey} created`);
-        } catch (error) {
-          console.error('Failed to create license in Blobs (non-fatal):', error);
+        // ================================================================
+        // STEP 1: SEND EMAIL FIRST (most important!)
+        // ================================================================
+        if (customerEmail) {
+          const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardToken, session.id);
+          console.log(`Dashboard email sent: ${emailSent}`);
         }
         
-        // Send license email
-        if (session.customer_details?.email) {
-          const baseUrl = process.env.URL || 'https://votegenerator.com';
-          const licenseUrl = `${baseUrl}/license/${licenseKey}`;
-          const emailSent = await sendLicenseEmail(
-            session.customer_details.email,
-            licenseKey,
-            licenseUrl
+        // ================================================================
+        // STEP 2: Try to register in Blobs (graceful failure)
+        // ================================================================
+        if (customerEmail) {
+          const registered = await tryRegisterCustomer(
+            customerEmail,
+            tier,
+            session.customer as string | null,
+            session.id,
+            dashboardToken
           );
-          console.log(`License email sent: ${emailSent}`);
+          console.log(`Customer registered in Blobs: ${registered}`);
         }
+
+        // ================================================================
+        // STEP 3: Handle poll upgrades (if applicable)
+        // ================================================================
+        if (metadata.pollId && metadata.upgradeType === 'existing_poll') {
+          try {
+            const pollStore = getStore('vg-polls');
+            const pollData = await pollStore.get(metadata.pollId, { type: 'json' }) as Poll | null;
+            
+            if (pollData) {
+              const upgradedPoll: Poll = {
+                ...pollData,
+                originalTier: pollData.tier,
+                tier: metadata.tier,
+                tierUpgradedAt: new Date().toISOString(),
+                stripeSessionId: session.id,
+              };
+              
+              await pollStore.setJSON(metadata.pollId, upgradedPoll);
+              console.log(`Poll ${metadata.pollId} upgraded to ${metadata.tier}`);
+            }
+          } catch (error: any) {
+            console.error('Poll upgrade failed (non-fatal):', error.message);
+          }
+        }
+
+        // ================================================================
+        // STEP 4: Handle Unlimited license (if applicable)
+        // ================================================================
+        if (metadata.licenseType === 'unlimited' && customerEmail) {
+          try {
+            const licenseStore = getStore('vg-licenses');
+            await licenseStore.setJSON(`license_${customerEmail}`, {
+              email: customerEmail,
+              type: 'unlimited',
+              purchasedAt: new Date().toISOString(),
+              expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+              stripeCustomerId: session.customer,
+              stripeSessionId: session.id,
+            });
+            console.log(`Unlimited license created for ${customerEmail.substring(0, 5)}...`);
+          } catch (error: any) {
+            console.error('License creation failed (non-fatal):', error.message);
+          }
+        }
+        
+        break;
       }
-      
-      break;
+
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = stripeEvent.data.object as Stripe.Subscription;
+        console.log('Subscription event:', stripeEvent.type, subscription.id);
+        // Handle subscription changes if needed
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${stripeEvent.type}`);
     }
 
-    case 'customer.subscription.updated': {
-      const subscription = stripeEvent.data.object as Stripe.Subscription;
-      console.log('Subscription updated:', subscription.id, subscription.status);
-      break;
-    }
+    // Always return 200 to Stripe to acknowledge receipt
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ received: true }),
+    };
 
-    case 'customer.subscription.deleted': {
-      const subscription = stripeEvent.data.object as Stripe.Subscription;
-      console.log('Subscription cancelled:', subscription.id);
-      break;
-    }
-
-    case 'payment_intent.payment_failed': {
-      const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
-      console.log('Payment failed:', paymentIntent.id);
-      break;
-    }
-
-    default:
-      console.log(`Unhandled event type: ${stripeEvent.type}`);
+  } catch (error: any) {
+    console.error('Webhook handler error:', error.message);
+    // Still return 200 to prevent Stripe from retrying
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ received: true, error: error.message }),
+    };
   }
-
-  // Return success to Stripe
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({ received: true }),
-  };
 };

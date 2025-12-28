@@ -29,17 +29,17 @@ const TIER_CONFIG: Record<string, {
   free: {
     maxResponses: 100,
     expiresInDays: 7,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp'],
+    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp'],
   },
   starter: {
     maxResponses: 500,
     expiresInDays: 30,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp', 'dot_voting', 'approval_voting', 'priority_matrix'],
+    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp'],
   },
   pro_event: {
     maxResponses: 2000,
     expiresInDays: 60,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'rating_scale', 'rsvp', 'dot_voting', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll', 'image'],
+    features: ['multiple', 'ranked', 'pairwise', 'meeting', 'rating', 'rsvp', 'image'],
   },
   unlimited: {
     maxResponses: 10000,
@@ -72,13 +72,11 @@ export const handler: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     
-    // ====== FIX: Accept BOTH 'title' (from frontend) and 'question' ======
+    // Accept BOTH 'title' and 'question'
     const question = body.title || body.question;
-    // =====================================================================
-    
     const { 
       options, 
-      pollType, 
+      pollType = 'multiple', 
       settings, 
       tier = 'free',
       description,
@@ -92,7 +90,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Please enter a question' }),
+        body: JSON.stringify({ error: 'Question is required' }),
       };
     }
 
@@ -106,21 +104,6 @@ export const handler: Handler = async (event) => {
 
     // Get tier config
     const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
-
-    // Validate poll type access (normalize pollType for checking)
-    const normalizedPollType = pollType || 'multiple_choice';
-    if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(normalizedPollType)) {
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ 
-          error: `Poll type "${normalizedPollType}" is not available in your tier`,
-          requiredTier: Object.keys(TIER_CONFIG).find(t => 
-            TIER_CONFIG[t].features.includes(normalizedPollType) || TIER_CONFIG[t].features[0] === 'all'
-          ),
-        }),
-      };
-    }
 
     // Generate IDs
     const pollId = generateId(8);
@@ -141,7 +124,7 @@ export const handler: Handler = async (event) => {
         id: `opt_${i}`,
         text: o.trim(),
       })),
-      pollType: normalizedPollType,
+      pollType,
       settings: {
         allowMultiple: settings?.allowMultiple || false,
         hideResults: settings?.hideResults || false,
@@ -168,18 +151,18 @@ export const handler: Handler = async (event) => {
       poll.rsvpEvents = rsvpEvents;
     }
 
-    // Store in Netlify Blobs
+    // Store in Netlify Blobs - EXACT same pattern as original working version
     const store = getStore('votegenerator-polls');
     await store.setJSON(pollId, poll);
 
-    // Return success response (using 'id' to match frontend expectation)
+    // Return success response
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        id: pollId,           // Frontend expects 'id'
-        pollId,               // Keep for compatibility
+        id: pollId,  // Frontend expects 'id'
+        pollId,
         adminKey,
         voteUrl: `/vote/${pollId}`,
         adminUrl: `/admin/${pollId}/${adminKey}`,

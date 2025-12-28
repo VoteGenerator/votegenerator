@@ -77,7 +77,12 @@ export const handler: Handler = async (event) => {
             token: process.env.NETLIFY_AUTH_TOKEN || ''
         });
         
+        console.log('vg-vote: Looking for poll:', body.pollId);
+        console.log('vg-vote: VG_SITE_ID configured:', !!process.env.VG_SITE_ID);
+        
         const poll: Poll | null = await store.get(body.pollId, { type: 'json' });
+        
+        console.log('vg-vote: Poll found:', !!poll);
 
         if (!poll) {
             return {

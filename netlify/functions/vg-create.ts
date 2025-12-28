@@ -71,7 +71,14 @@ export const handler: Handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { question, options, pollType, settings, tier = 'free' } = body;
+    
+    // Debug logging
+    console.log('Received body keys:', Object.keys(body));
+    console.log('title:', body.title);
+    console.log('question:', body.question);
+    
+    const question = body.title || body.question;
+    const { options, pollType, settings, tier = 'free' } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {

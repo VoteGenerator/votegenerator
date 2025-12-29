@@ -288,10 +288,14 @@ const VoteGeneratorApp: React.FC = () => {
                             <div className="max-w-4xl mx-auto px-4 py-8">
                                 {viewState.isAdmin && (
                                     <div className="mb-8 print:hidden">
+                                        {/* Back to Dashboard link */}
+                                        <a href="/admin" className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-4 font-medium">
+                                            <ArrowRight size={16} className="rotate-180" /> Back to Dashboard
+                                        </a>
                                         <div className="flex items-end justify-between mb-6">
                                             <div>
-                                                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><LayoutDashboard className="text-indigo-600" size={28}/> Admin Dashboard</h2>
-                                                <p className="text-slate-500 text-sm mt-1 ml-10">Overview of your active polls</p>
+                                                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><LayoutDashboard className="text-indigo-600" size={28}/> Poll Manager</h2>
+                                                <p className="text-slate-500 text-sm mt-1 ml-10">Manage and view results for this poll</p>
                                             </div>
                                             <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">Premium Enabled</div>
                                         </div>

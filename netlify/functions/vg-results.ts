@@ -1,11 +1,28 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+interface VoteAnalytics {
+    device?: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+    country?: string;
+    region?: string;
+    referrerDomain?: string;
+    utmSource?: string;
+    timestamp?: string;
+}
+
 interface Vote {
     id: string;
     rankedOptionIds?: string[];
     selectedOptionIds?: string[];
+    voterName?: string;
+    usedCode?: string;
+    comment?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
     timestamp: string;
+    analytics?: VoteAnalytics;
 }
 
 interface Poll {
@@ -14,10 +31,11 @@ interface Poll {
     title: string;
     description?: string;
     pollType: string;
-    options: { id: string; text: string }[];
+    options: { id: string; text: string; cost?: number }[];
     settings: {
         hideResults: boolean;
         allowMultiple: boolean;
+        allowComments?: boolean;
     };
     votes: Vote[];
     createdAt: string;
@@ -225,6 +243,156 @@ function calculateRunoff(poll: Poll): RunoffResult {
     return { rounds, winner: null, totalVotes };
 }
 
+/**
+ * Build simple counts for frontend compatibility
+ */
+function buildSimpleCounts(poll: Poll): Record<string, number> {
+    const counts: Record<string, number> = {};
+    poll.options.forEach(o => counts[o.id] = 0);
+    
+    for (const vote of poll.votes) {
+        if (vote.selectedOptionIds) {
+            for (const optionId of vote.selectedOptionIds) {
+                counts[optionId] = (counts[optionId] || 0) + 1;
+            }
+        }
+    }
+    
+    return counts;
+}
+
+/**
+ * Build maybe counts for meeting polls
+ */
+function buildMaybeCounts(poll: Poll): Record<string, number> {
+    const counts: Record<string, number> = {};
+    poll.options.forEach(o => counts[o.id] = 0);
+    
+    for (const vote of poll.votes) {
+        if (vote.choicesMaybe) {
+            for (const optionId of vote.choicesMaybe) {
+                counts[optionId] = (counts[optionId] || 0) + 1;
+            }
+        }
+    }
+    
+    return counts;
+}
+
+/**
+ * Extract comments from votes
+ */
+function extractComments(votes: Vote[]): { name: string; text: string; date: string }[] {
+    return votes
+        .filter(v => v.comment)
+        .map(v => ({
+            name: v.voterName || 'Anonymous',
+            text: v.comment!,
+            date: v.timestamp
+        }));
+}
+
+/**
+ * Calculate matrix averages
+ */
+function calculateMatrixAverages(poll: Poll): Record<string, { x: number; y: number; count: number }> {
+    const totals: Record<string, { sumX: number; sumY: number; count: number }> = {};
+    poll.options.forEach(o => totals[o.id] = { sumX: 0, sumY: 0, count: 0 });
+    
+    for (const vote of poll.votes) {
+        if (vote.matrixVotes) {
+            for (const [optionId, pos] of Object.entries(vote.matrixVotes)) {
+                if (totals[optionId]) {
+                    totals[optionId].sumX += pos.x;
+                    totals[optionId].sumY += pos.y;
+                    totals[optionId].count++;
+                }
+            }
+        }
+    }
+    
+    const averages: Record<string, { x: number; y: number; count: number }> = {};
+    for (const [id, data] of Object.entries(totals)) {
+        averages[id] = {
+            x: data.count > 0 ? Math.round(data.sumX / data.count) : 50,
+            y: data.count > 0 ? Math.round(data.sumY / data.count) : 50,
+            count: data.count
+        };
+    }
+    
+    return averages;
+}
+
+/**
+ * Calculate pairwise scores
+ */
+function calculatePairwiseScores(poll: Poll): Record<string, number> {
+    const scores: Record<string, number> = {};
+    poll.options.forEach(o => scores[o.id] = 0);
+    
+    for (const vote of poll.votes) {
+        if (vote.pairwiseVotes) {
+            for (const pv of vote.pairwiseVotes) {
+                scores[pv.winnerId] = (scores[pv.winnerId] || 0) + 1;
+            }
+        }
+    }
+    
+    return scores;
+}
+
+/**
+ * Calculate rating stats
+ */
+function calculateRatingStats(poll: Poll): Record<string, { average: number; count: number; sum: number }> {
+    const stats: Record<string, { sum: number; count: number }> = {};
+    poll.options.forEach(o => stats[o.id] = { sum: 0, count: 0 });
+    
+    for (const vote of poll.votes) {
+        if (vote.ratingVotes) {
+            for (const [optionId, rating] of Object.entries(vote.ratingVotes)) {
+                if (stats[optionId]) {
+                    stats[optionId].sum += rating;
+                    stats[optionId].count++;
+                }
+            }
+        }
+    }
+    
+    const result: Record<string, { average: number; count: number; sum: number }> = {};
+    for (const [id, data] of Object.entries(stats)) {
+        result[id] = {
+            average: data.count > 0 ? Math.round((data.sum / data.count) * 10) / 10 : 0,
+            count: data.count,
+            sum: data.sum
+        };
+    }
+    
+    return result;
+}
+
+/**
+ * Calculate budget stats
+ */
+function calculateBudgetStats(poll: Poll): Record<string, { totalValue: number; voteCount: number }> {
+    const stats: Record<string, { totalValue: number; voteCount: number }> = {};
+    poll.options.forEach(o => stats[o.id] = { totalValue: 0, voteCount: 0 });
+    
+    for (const vote of poll.votes) {
+        if (vote.selectedOptionIds) {
+            for (const optionId of vote.selectedOptionIds) {
+                if (stats[optionId]) {
+                    const option = poll.options.find(o => o.id === optionId);
+                    stats[optionId].totalValue += option?.cost || 1;
+                    stats[optionId].voteCount++;
+                }
+            }
+        }
+    }
+    
+    return stats;
+}
+
 export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -248,6 +416,7 @@ export const handler: Handler = async (event) => {
     try {
         const pollId = event.queryStringParameters?.id;
         const adminKey = event.queryStringParameters?.admin;
+        const rawVotes = event.queryStringParameters?.raw === 'true';
 
         if (!pollId) {
             return {
@@ -257,10 +426,10 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get poll - static import with env vars
+        // Get poll - USE VG_SITE_ID (not SITE_ID which is reserved)
         const store = getStore({
             name: 'polls',
-            siteID: process.env.SITE_ID || '',
+            siteID: process.env.VG_SITE_ID || '',
             token: process.env.NETLIFY_AUTH_TOKEN || ''
         });
         
@@ -288,6 +457,18 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // If requesting raw votes (admin only)
+        if (rawVotes && isAdmin) {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(poll.votes.map(v => ({
+                    ...v,
+                    votedAt: v.timestamp
+                })))
+            };
+        }
+
         if (poll.votes.length === 0) {
             return {
                 statusCode: 200,
@@ -296,9 +477,57 @@ export const handler: Handler = async (event) => {
                     pollId: poll.id,
                     pollType: poll.pollType,
                     totalVotes: 0,
+                    simpleCounts: {},
+                    maybeCounts: {},
+                    votes: [],
+                    comments: [],
                     message: 'No votes yet'
                 })
             };
+        }
+
+        // Build base response with all data needed by frontend
+        const baseResponse: any = {
+            pollId: poll.id,
+            pollType: poll.pollType,
+            totalVotes: poll.votes.length,
+            simpleCounts: buildSimpleCounts(poll),
+            maybeCounts: buildMaybeCounts(poll),
+            comments: extractComments(poll.votes),
+        };
+
+        // Include votes array for admin (needed for Grid view, Geography, Device breakdown)
+        if (isAdmin) {
+            baseResponse.votes = poll.votes.map(v => ({
+                id: v.id,
+                timestamp: v.timestamp,
+                votedAt: v.timestamp,
+                voterName: v.voterName,
+                comment: v.comment,
+                choices: v.selectedOptionIds || v.rankedOptionIds || [],
+                choicesMaybe: v.choicesMaybe,
+                matrixVotes: v.matrixVotes,
+                pairwiseVotes: v.pairwiseVotes,
+                ratingVotes: v.ratingVotes,
+                analytics: v.analytics // Include analytics for geography/device views
+            }));
+        }
+
+        // Add poll-type specific data
+        if (poll.pollType === 'matrix') {
+            baseResponse.matrixAverages = calculateMatrixAverages(poll);
+        }
+        
+        if (poll.pollType === 'pairwise') {
+            baseResponse.pairwiseScores = calculatePairwiseScores(poll);
+        }
+        
+        if (poll.pollType === 'rating') {
+            baseResponse.ratingStats = calculateRatingStats(poll);
+        }
+        
+        if (poll.pollType === 'budget') {
+            baseResponse.budgetStats = calculateBudgetStats(poll);
         }
 
         // Calculate results based on poll type
@@ -308,9 +537,9 @@ export const handler: Handler = async (event) => {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: 'ranked',
-                    ...runoffResult
+                    ...baseResponse,
+                    ...runoffResult,
+                    winnerId: runoffResult.winner?.id || null
                 })
             };
         } else {
@@ -319,9 +548,9 @@ export const handler: Handler = async (event) => {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    pollId: poll.id,
-                    pollType: poll.pollType,
-                    ...simpleResult
+                    ...baseResponse,
+                    ...simpleResult,
+                    winnerId: simpleResult.winner?.id || null
                 })
             };
         }

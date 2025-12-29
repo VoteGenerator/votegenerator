@@ -239,7 +239,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     }
 
     return (
-        <div className="space-y-6 print:space-y-4">
+        <>
+            {/* Print styles to preserve colors */}
+            <style>{`
+                @media print {
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                    }
+                    .bg-indigo-500, .bg-blue-500, .bg-green-500, .bg-purple-500,
+                    .bg-pink-500, .bg-cyan-500, .bg-lime-500, .bg-orange-500,
+                    .bg-red-500, .bg-teal-500, .bg-yellow-500 {
+                        background-color: inherit !important;
+                    }
+                }
+            `}</style>
+            <div className="space-y-6 print:space-y-4">
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
                     {isMatrix && (
@@ -979,13 +995,20 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <AnalyticsDashboard 
                             pollId={poll.id}
                             adminKey={adminKey}
-                            currentTier={(poll as any).premium?.tier || 'free'}
+                            currentTier={(() => {
+                                const tier = localStorage.getItem('vg_purchased_tier');
+                                if (tier === 'unlimited') return 'pro-plus';
+                                if (tier === 'pro_event') return 'pro';
+                                if (tier === 'starter') return 'one-time';
+                                return 'free';
+                            })()}
                         />
                     </motion.div>
                 )}
 
             </AnimatePresence>
         </div>
+        </>
     );
 };
 

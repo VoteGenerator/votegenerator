@@ -533,7 +533,7 @@ const AdminDashboard: React.FC = () => {
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                                    <LayoutDashboard size={28} className="text-indigo-600" /> My Dashboard
+                                    <LayoutDashboard size={28} className="text-indigo-600" /> Dashboard
                                 </h1>
                                 <p className="text-slate-500 mt-1">
                                     {polls.length === 0 ? 'Create your first poll' : 

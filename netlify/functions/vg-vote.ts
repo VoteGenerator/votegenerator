@@ -99,7 +99,7 @@ export const handler: Handler = async (event) => {
         }
 
         // Accept multiple field names for flexibility
-        const selectedIds = body.selectedOptionIds || (body as any).optionIds || (body as any).selections || (body as any).options;
+        const selectedIds = body.selectedOptionIds || (body as any).choices || (body as any).optionIds || (body as any).selections || (body as any).options;
         const rankedIds = body.rankedOptionIds || (body as any).rankings || (body as any).ranked;
         
         console.log('vg-vote: Normalized selectedIds:', selectedIds);

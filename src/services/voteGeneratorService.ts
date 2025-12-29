@@ -156,7 +156,11 @@ export const submitVote = async (
             method: 'POST',
             body: JSON.stringify(votePayload)
         });
-        if (response.ok) return;
+        if (response.ok) {
+            // Mark as voted in localStorage so hasVoted() returns true
+            localStorage.setItem(`${LS_PREFIX}has_voted_${pollId}`, 'true');
+            return;
+        }
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
         const polls = getLocalPolls();

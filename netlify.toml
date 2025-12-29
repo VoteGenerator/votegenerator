@@ -224,11 +224,11 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # ============================================================================
-# SPA Fallback - MUST BE LAST
+# SPA Routes - Specific routes MUST come before wildcard
 # ============================================================================
 
 [[redirects]]
-  from = "/*"
+  from = "/checkout/success"
   to = "/index.html"
   status = 200
 
@@ -244,5 +244,11 @@
 
 [[redirects]]
   from = "/recover"
+  to = "/index.html"
+  status = 200
+
+# SPA Fallback - MUST BE LAST
+[[redirects]]
+  from = "/*"
   to = "/index.html"
   status = 200

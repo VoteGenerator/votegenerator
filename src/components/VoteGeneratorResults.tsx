@@ -81,6 +81,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         return scores;
     })();
 
+    // Check for ties (multiple options with same top vote count)
+    const topVoteCount = simpleCounts ? Math.max(...Object.values(simpleCounts)) : 0;
+    const tiedOptions = simpleCounts ? Object.entries(simpleCounts).filter(([_, count]) => count === topVoteCount) : [];
+    const isTie = tiedOptions.length > 1 && topVoteCount > 0;
+
     const meetingWinnerId = isMeeting ? Object.keys(meetingScoreData).reduce((a, b) => meetingScoreData[a] > meetingScoreData[b] ? a : b, poll.options[0].id) : winnerId;
     const activeWinnerId = isMeeting ? meetingWinnerId : winnerId;
 
@@ -316,7 +321,42 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && activeWinnerId && !isDot && !isMatrix) && (
+                {/* Show TIE banner when there's a tie */}
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && isTie && !isDot && !isMatrix && !isRanked) && (
+                     <motion.div 
+                        key="tie"
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden print:border print:border-slate-300 print:bg-none print:text-black mb-6"
+                    >
+                        <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden">
+                            <Users size={120} />
+                        </div>
+                        <div className="relative z-10">
+                            <div className="uppercase tracking-widest text-sm font-semibold text-amber-200 mb-2 print:text-slate-500">
+                                It's a Tie!
+                            </div>
+                            <h2 className="text-2xl md:text-4xl font-black font-serif mb-4">
+                                {tiedOptions.length} options tied with {topVoteCount} vote{topVoteCount !== 1 ? 's' : ''} each
+                            </h2>
+                            <div className="flex flex-wrap justify-center gap-2 mt-4">
+                                {tiedOptions.map(([optId]) => (
+                                    <span key={optId} className="bg-white/20 px-4 py-2 rounded-full text-sm font-semibold">
+                                        {getOptionText(optId)}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm print:bg-slate-100 print:text-slate-900 mt-4">
+                                <Users size={18} />
+                                <span className="font-semibold">{totalVotes} Total Voters</span>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Show WINNER banner when there's a clear winner (no tie) */}
+                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && activeWinnerId && !isDot && !isMatrix && !isTie) && (
                      <motion.div 
                         key="winner"
                         initial={{ scale: 0.95, opacity: 0 }}

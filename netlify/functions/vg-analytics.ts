@@ -1,370 +1,350 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+interface VoteAnalytics {
+    device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+    country?: string;
+    region?: string;
+    referrerDomain?: string;
+    utmSource?: string;
+    timestamp: string;
+}
+
 interface Vote {
     id: string;
-    pollId: string;
-    vote: any;
     timestamp: string;
+    analytics?: VoteAnalytics;
     voterName?: string;
-    country?: string; // Aggregated only, not stored per-vote in database
+    comment?: string;
 }
 
 interface Poll {
     id: string;
-    masterKey?: string;
-    adminKey?: string;
-    premium?: {
-        tier: 'one-time' | 'pro' | 'pro-plus';
-        expiresAt: string;
-    };
+    adminKey: string;
+    votes: Vote[];
+    voteCount: number;
+    createdAt: string;
 }
 
-// Free tier: basic stats only
-// Pro tier: timeline, trends, peak hours
-// Pro+: hourly distribution, velocity, UTM tracking
+// Country code to name mapping
+const COUNTRY_NAMES: Record<string, string> = {
+    'US': 'United States',
+    'GB': 'United Kingdom',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'DE': 'Germany',
+    'FR': 'France',
+    'JP': 'Japan',
+    'IN': 'India',
+    'BR': 'Brazil',
+    'MX': 'Mexico',
+    'ES': 'Spain',
+    'IT': 'Italy',
+    'NL': 'Netherlands',
+    'SE': 'Sweden',
+    'NO': 'Norway',
+    'DK': 'Denmark',
+    'FI': 'Finland',
+    'PL': 'Poland',
+    'IE': 'Ireland',
+    'NZ': 'New Zealand',
+    'KR': 'South Korea',
+    'SG': 'Singapore',
+    'CH': 'Switzerland',
+    'AT': 'Austria',
+    'BE': 'Belgium',
+    'PT': 'Portugal',
+    'AR': 'Argentina',
+    'CL': 'Chile',
+    'CO': 'Colombia',
+    'PH': 'Philippines',
+    'ID': 'Indonesia',
+    'MY': 'Malaysia',
+    'TH': 'Thailand',
+    'VN': 'Vietnam',
+    'ZA': 'South Africa',
+    'IL': 'Israel',
+    'AE': 'United Arab Emirates',
+    'SA': 'Saudi Arabia',
+    'TR': 'Turkey',
+    'RU': 'Russia',
+    'UA': 'Ukraine',
+    'CZ': 'Czech Republic',
+    'RO': 'Romania',
+    'GR': 'Greece',
+    'HU': 'Hungary'
+};
+
+const getCountryName = (code: string): string => {
+    return COUNTRY_NAMES[code] || code;
+};
 
 export const handler: Handler = async (event) => {
-    if (event.httpMethod !== 'GET') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Content-Type': 'application/json'
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers, body: '' };
     }
 
-    const pollId = event.queryStringParameters?.pollId;
-    const adminKey = event.queryStringParameters?.adminKey;
-
-    if (!pollId) {
+    if (event.httpMethod !== 'GET') {
         return {
-            statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Missing pollId' })
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
 
     try {
-        const pollStore = getStore('polls');
-        const voteStore = getStore('votes');
+        const pollId = event.queryStringParameters?.pollId;
+        const adminKey = event.queryStringParameters?.adminKey;
+        const tier = event.queryStringParameters?.tier || 'unlimited'; // Default to unlimited for full analytics
 
-        const poll = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
-        
+        if (!pollId || !adminKey) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Poll ID and admin key are required' })
+            };
+        }
+
+        const store = getStore({
+            name: 'polls',
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+
+        const poll: Poll | null = await store.get(pollId, { type: 'json' });
+
         if (!poll) {
             return {
                 statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
 
-        // Check admin access
-        const isAdmin = adminKey && (poll.adminKey === adminKey || poll.masterKey === adminKey);
-        
-        // Determine tier
-        const isPremium = poll.premium && new Date(poll.premium.expiresAt) > new Date();
-        const tier = isPremium ? poll.premium!.tier : 'free';
-        const isPro = tier === 'pro' || tier === 'pro-plus';
-        const isProPlus = tier === 'pro-plus';
+        if (poll.adminKey !== adminKey) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Invalid admin key' })
+            };
+        }
 
-        // Get votes
-        const votesData = await voteStore.get(pollId, { type: 'json' }) as Vote[] | null;
-        const votes = votesData || [];
+        const votes = poll.votes || [];
+        const totalVotes = votes.length;
 
-        if (votes.length === 0) {
+        if (totalVotes === 0) {
             return {
                 statusCode: 200,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     tier,
                     totalVotes: 0,
-                    message: 'No votes yet'
+                    privacyInfo: {
+                        whatWeTrack: ['Vote timestamp', 'Device type (mobile/desktop)', 'Country (from IP, not stored)'],
+                        whatWeDontTrack: ['IP addresses', 'Personal identifiers', 'Browsing history', 'Cookies'],
+                        countryTracking: 'Country is derived from IP at vote time. The IP itself is never stored.'
+                    }
                 })
             };
         }
 
         // ============================================
-        // FREE TIER: Basic stats (always included)
+        // AGGREGATE ANALYTICS
         // ============================================
-        const basicStats = {
-            totalVotes: votes.length,
-            // Vote distribution is calculated in results, not here
+        
+        // Timestamps
+        const timestamps = votes.map(v => new Date(v.timestamp).getTime()).sort((a, b) => a - b);
+        const firstVote = new Date(timestamps[0]).toISOString();
+        const lastVote = new Date(timestamps[timestamps.length - 1]).toISOString();
+        const durationMs = timestamps[timestamps.length - 1] - timestamps[0];
+        const durationHours = Math.round(durationMs / (1000 * 60 * 60) * 10) / 10;
+        const durationDays = Math.round(durationMs / (1000 * 60 * 60 * 24) * 10) / 10;
+
+        // Hourly distribution
+        const hourlyDistribution: Record<number, number> = {};
+        for (let i = 0; i < 24; i++) hourlyDistribution[i] = 0;
+        
+        votes.forEach(v => {
+            const hour = new Date(v.timestamp).getHours();
+            hourlyDistribution[hour]++;
+        });
+
+        // Find peak hour
+        let peakHour = 0;
+        let peakHourVotes = 0;
+        Object.entries(hourlyDistribution).forEach(([hour, count]) => {
+            if (count > peakHourVotes) {
+                peakHour = parseInt(hour);
+                peakHourVotes = count;
+            }
+        });
+
+        const formatHour = (hour: number): string => {
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const h = hour % 12 || 12;
+            return `${h}:00 ${ampm}`;
         };
 
-        // If not admin or free tier without admin, return basic only
-        if (!isAdmin) {
-            return {
-                statusCode: 200,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tier: 'free',
-                    ...basicStats,
-                    upgradeMessage: 'Upgrade to Pro for detailed analytics'
-                })
-            };
-        }
+        // Hourly distribution formatted
+        const hourlyDistributionFormatted = Object.entries(hourlyDistribution).map(([hour, votes]) => ({
+            hour: parseInt(hour),
+            hourFormatted: formatHour(parseInt(hour)),
+            votes,
+            percentage: totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0
+        }));
 
-        // ============================================
-        // PRO TIER: Timeline & trends
-        // ============================================
-        let proAnalytics = {};
+        // Daily trend
+        const dailyTrend: Record<string, number> = {};
+        votes.forEach(v => {
+            const date = new Date(v.timestamp).toISOString().split('T')[0];
+            dailyTrend[date] = (dailyTrend[date] || 0) + 1;
+        });
+
+        const daysWithVotes = Object.keys(dailyTrend).length;
+        const dailyAverage = daysWithVotes > 0 ? Math.round((totalVotes / daysWithVotes) * 10) / 10 : 0;
+
+        // Day of week distribution
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayOfWeekDistribution: Record<string, number> = {};
+        dayNames.forEach(day => dayOfWeekDistribution[day] = 0);
         
-        if (isPro || isProPlus) {
-            const timestamps = votes.map(v => new Date(v.timestamp).getTime());
-            const firstVoteTime = Math.min(...timestamps);
-            const lastVoteTime = Math.max(...timestamps);
-            
-            // Daily trend
-            const dailyGroups: Record<string, number> = {};
-            votes.forEach(vote => {
-                const day = new Date(vote.timestamp).toISOString().split('T')[0];
-                dailyGroups[day] = (dailyGroups[day] || 0) + 1;
-            });
+        votes.forEach(v => {
+            const dayIndex = new Date(v.timestamp).getDay();
+            dayOfWeekDistribution[dayNames[dayIndex]]++;
+        });
 
-            // Peak hour (simple)
-            const hourGroups: Record<number, number> = {};
-            votes.forEach(vote => {
-                const hour = new Date(vote.timestamp).getHours();
-                hourGroups[hour] = (hourGroups[hour] || 0) + 1;
-            });
-            const peakHourEntry = Object.entries(hourGroups)
-                .sort((a, b) => b[1] - a[1])[0];
-
-            // Calculate duration
-            const durationMs = lastVoteTime - firstVoteTime;
-            const durationHours = Math.round(durationMs / (1000 * 60 * 60) * 10) / 10;
-            const durationDays = Math.round(durationMs / (1000 * 60 * 60 * 24) * 10) / 10;
-
-            // Daily average
-            const uniqueDays = Object.keys(dailyGroups).length;
-            const dailyAverage = Math.round(votes.length / Math.max(uniqueDays, 1) * 10) / 10;
-
-            proAnalytics = {
-                firstVote: new Date(firstVoteTime).toISOString(),
-                lastVote: new Date(lastVoteTime).toISOString(),
-                durationHours,
-                durationDays,
-                peakHour: parseInt(peakHourEntry[0]),
-                peakHourVotes: peakHourEntry[1],
-                peakHourFormatted: formatHour(parseInt(peakHourEntry[0])),
-                dailyTrend: dailyGroups,
-                dailyAverage,
-                uniqueDays
-            };
-        }
-
-        // ============================================
-        // PRO+ TIER: Advanced analytics
-        // ============================================
-        let proPlusAnalytics = {};
-
-        if (isProPlus) {
-            // Hourly distribution (full 24 hours)
-            const hourlyDistribution: Record<number, number> = {};
-            for (let i = 0; i < 24; i++) {
-                hourlyDistribution[i] = 0;
+        // Most active day
+        let mostActiveDay = { day: 'Monday', votes: 0 };
+        Object.entries(dayOfWeekDistribution).forEach(([day, count]) => {
+            if (count > mostActiveDay.votes) {
+                mostActiveDay = { day, votes: count };
             }
-            votes.forEach(vote => {
-                const hour = new Date(vote.timestamp).getHours();
-                hourlyDistribution[hour]++;
-            });
+        });
 
-            // Response velocity (votes per hour over time)
-            const velocityByDay: Record<string, number> = {};
-            votes.forEach(vote => {
-                const day = new Date(vote.timestamp).toISOString().split('T')[0];
-                velocityByDay[day] = (velocityByDay[day] || 0) + 1;
-            });
+        // Velocity trend (comparing last 24h to previous 24h)
+        const now = Date.now();
+        const last24h = votes.filter(v => now - new Date(v.timestamp).getTime() < 24 * 60 * 60 * 1000).length;
+        const prev24h = votes.filter(v => {
+            const age = now - new Date(v.timestamp).getTime();
+            return age >= 24 * 60 * 60 * 1000 && age < 48 * 60 * 60 * 1000;
+        }).length;
 
-            // Calculate velocity trend (is it speeding up or slowing down?)
-            const sortedDays = Object.entries(velocityByDay).sort((a, b) => a[0].localeCompare(b[0]));
-            let velocityTrend = 'stable';
-            if (sortedDays.length >= 3) {
-                const recentAvg = sortedDays.slice(-3).reduce((sum, [, count]) => sum + count, 0) / 3;
-                const earlierAvg = sortedDays.slice(0, 3).reduce((sum, [, count]) => sum + count, 0) / 3;
-                if (recentAvg > earlierAvg * 1.2) velocityTrend = 'increasing';
-                else if (recentAvg < earlierAvg * 0.8) velocityTrend = 'decreasing';
+        let velocityTrend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+        if (last24h > prev24h * 1.2) velocityTrend = 'increasing';
+        else if (last24h < prev24h * 0.8) velocityTrend = 'decreasing';
+
+        // Device breakdown
+        const deviceCounts: Record<string, number> = { mobile: 0, desktop: 0, tablet: 0, unknown: 0 };
+        votes.forEach(v => {
+            const device = v.analytics?.device || 'unknown';
+            deviceCounts[device]++;
+        });
+
+        // UTM Sources
+        const utmSources: Record<string, number> = { 'Direct': 0 };
+        votes.forEach(v => {
+            const source = v.analytics?.utmSource || v.analytics?.referrerDomain || 'Direct';
+            utmSources[source] = (utmSources[source] || 0) + 1;
+        });
+
+        // Country stats (GDPR-compliant: only aggregated counts, no PII)
+        const countryCounts: Record<string, number> = {};
+        votes.forEach(v => {
+            const country = v.analytics?.country;
+            if (country) {
+                const countryName = getCountryName(country);
+                countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
             }
+        });
 
-            // Day of week distribution
-            const dayOfWeekNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dayOfWeekDistribution: Record<string, number> = {};
-            dayOfWeekNames.forEach(day => dayOfWeekDistribution[day] = 0);
-            votes.forEach(vote => {
-                const dayOfWeek = new Date(vote.timestamp).getDay();
-                dayOfWeekDistribution[dayOfWeekNames[dayOfWeek]]++;
-            });
+        const topCountries = Object.entries(countryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([country, votes]) => ({
+                country,
+                votes,
+                percentage: Math.round((votes / totalVotes) * 100)
+            }));
 
-            // Find most active day of week
-            const mostActiveDay = Object.entries(dayOfWeekDistribution)
-                .sort((a, b) => b[1] - a[1])[0];
-
-            // UTM source tracking (if present in vote metadata)
-            const utmSources: Record<string, number> = {};
-            votes.forEach(vote => {
-                const source = (vote as any).utmSource || 'direct';
-                utmSources[source] = (utmSources[source] || 0) + 1;
-            });
-
-            proPlusAnalytics = {
-                hourlyDistribution,
-                hourlyDistributionFormatted: Object.entries(hourlyDistribution)
-                    .map(([hour, count]) => ({
-                        hour: parseInt(hour),
-                        hourFormatted: formatHour(parseInt(hour)),
-                        votes: count,
-                        percentage: Math.round(count / votes.length * 100)
-                    })),
-                velocityTrend,
-                velocityByDay,
-                dayOfWeekDistribution,
-                mostActiveDay: {
-                    day: mostActiveDay[0],
-                    votes: mostActiveDay[1]
-                },
-                utmSources,
-                // Time to first 50% of votes
-                medianVoteTime: calculateMedianVoteTime(votes),
-            };
-        }
+        const countriesRepresented = Object.keys(countryCounts).length;
 
         // ============================================
-        // AGGREGATED COUNTRY DATA (Pro+ only, privacy-first)
+        // BUILD RESPONSE
         // ============================================
-        let countryStats = {};
-        
-        if (isProPlus) {
-            // Note: Country is determined at vote time via IP lookup
-            // but we only store aggregated counts, never per-vote location
-            const countryCounts: Record<string, number> = {};
-            votes.forEach(vote => {
-                if ((vote as any).country) {
-                    const country = (vote as any).country;
-                    countryCounts[country] = (countryCounts[country] || 0) + 1;
-                }
-            });
-
-            if (Object.keys(countryCounts).length > 0) {
-                const sortedCountries = Object.entries(countryCounts)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10) // Top 10 countries
-                    .map(([country, count]) => ({
-                        country,
-                        votes: count,
-                        percentage: Math.round(count / votes.length * 100)
-                    }));
-
-                countryStats = {
-                    topCountries: sortedCountries,
-                    countriesRepresented: Object.keys(countryCounts).length,
-                    privacyNote: 'Country data is aggregated. Individual voter locations are never stored.'
-                };
+        const response: any = {
+            tier,
+            totalVotes,
+            firstVote,
+            lastVote,
+            durationHours,
+            durationDays,
+            peakHour,
+            peakHourFormatted: formatHour(peakHour),
+            peakHourVotes,
+            dailyTrend,
+            dailyAverage,
+            hourlyDistribution,
+            hourlyDistributionFormatted,
+            velocityTrend,
+            dayOfWeekDistribution,
+            mostActiveDay,
+            utmSources,
+            deviceBreakdown: deviceCounts,
+            countryStats: {
+                topCountries,
+                countriesRepresented,
+                privacyNote: 'Location data by ipinfo.io. Only country-level data is stored; IP addresses are never retained.'
+            },
+            privacyInfo: {
+                whatWeTrack: [
+                    'Vote timestamp',
+                    'Device type (mobile/desktop/tablet)',
+                    'Country (derived from IP at vote time)',
+                    'Referrer domain (where voter came from)',
+                    'UTM source (if present in URL)'
+                ],
+                whatWeDontTrack: [
+                    'IP addresses (used once for country lookup, then discarded)',
+                    'Personal identifiers',
+                    'Browser fingerprints',
+                    'Full URLs or browsing history',
+                    'Cookies or tracking pixels'
+                ],
+                countryTracking: 'Country is derived from IP at vote time using ipinfo.io. The IP itself is never stored, ensuring voter privacy.'
+            },
+            includedFeatures: {
+                included: [
+                    'Vote timeline',
+                    'Peak voting hours',
+                    'Daily trends',
+                    'Device breakdown',
+                    'Geographic distribution',
+                    'Traffic sources',
+                    'Velocity tracking'
+                ],
+                notIncluded: []
             }
-        }
+        };
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tier,
-                isAdmin: true,
-                ...basicStats,
-                ...(isPro || isProPlus ? proAnalytics : {}),
-                ...(isProPlus ? proPlusAnalytics : {}),
-                ...(isProPlus && Object.keys(countryStats).length > 0 ? { countryStats } : {}),
-                
-                // What's included transparency
-                includedFeatures: getIncludedFeatures(tier),
-                privacyInfo: {
-                    whatWeTrack: [
-                        'Vote timestamps',
-                        'Vote choices',
-                        'Optional voter names (if provided)'
-                    ],
-                    whatWeDontTrack: [
-                        'IP addresses (not stored)',
-                        'Device fingerprints',
-                        'Browser information',
-                        'Precise locations'
-                    ],
-                    countryTracking: isProPlus 
-                        ? 'Enabled (aggregated only, privacy-first)' 
-                        : 'Not enabled on this plan'
-                }
-            })
+            headers,
+            body: JSON.stringify(response)
         };
 
     } catch (error) {
-        console.error('Analytics error:', error);
+        console.error('Error fetching analytics:', error);
         return {
             statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ error: 'Failed to fetch analytics' })
         };
     }
 };
-
-// Helper functions
-function formatHour(hour: number): string {
-    if (hour === 0) return '12:00 AM';
-    if (hour === 12) return '12:00 PM';
-    if (hour < 12) return `${hour}:00 AM`;
-    return `${hour - 12}:00 PM`;
-}
-
-function calculateMedianVoteTime(votes: Vote[]): string | null {
-    if (votes.length < 2) return null;
-    
-    const sortedTimestamps = votes
-        .map(v => new Date(v.timestamp).getTime())
-        .sort((a, b) => a - b);
-    
-    const firstVote = sortedTimestamps[0];
-    const halfwayIndex = Math.floor(sortedTimestamps.length / 2);
-    const halfwayTime = sortedTimestamps[halfwayIndex];
-    
-    const hoursToHalfway = Math.round((halfwayTime - firstVote) / (1000 * 60 * 60) * 10) / 10;
-    
-    return `${hoursToHalfway} hours to reach 50% of votes`;
-}
-
-function getIncludedFeatures(tier: string): Record<string, string[]> {
-    const features = {
-        free: [
-            'Total vote count',
-            'Vote percentages',
-            'Real-time results',
-            'Basic bar/pie charts'
-        ],
-        'one-time': [
-            'Everything in Free',
-            'Vote timeline chart',
-            'First/last vote timestamps',
-            'Peak voting hour',
-            'Daily voting trends',
-            'Export with timestamps (CSV)'
-        ],
-        pro: [
-            'Everything in Free',
-            'Vote timeline chart',
-            'First/last vote timestamps',
-            'Peak voting hour',
-            'Daily voting trends',
-            'Export with timestamps (CSV/PDF)'
-        ],
-        'pro-plus': [
-            'Everything in Pro',
-            'Hourly distribution analysis',
-            'Day-of-week patterns',
-            'Response velocity metrics',
-            'UTM source tracking',
-            'Aggregated country stats (privacy-first)',
-            'Comparative analytics'
-        ]
-    };
-
-    return {
-        included: features[tier as keyof typeof features] || features.free,
-        notIncluded: tier === 'free' 
-            ? ['Detailed timeline', 'Peak hour analysis', 'Export options']
-            : tier === 'pro' || tier === 'one-time'
-                ? ['Hourly distribution', 'Country stats', 'UTM tracking']
-                : []
-    };
-}

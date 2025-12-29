@@ -5,13 +5,37 @@ interface VoteRequest {
     pollId: string;
     rankedOptionIds?: string[];
     selectedOptionIds?: string[];
+    voterName?: string;
+    code?: string;
+    comment?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
+}
+
+interface VoteAnalytics {
+    device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+    country?: string;
+    region?: string;
+    referrerDomain?: string;
+    utmSource?: string;
+    timestamp: string;
 }
 
 interface Vote {
     id: string;
     rankedOptionIds?: string[];
     selectedOptionIds?: string[];
+    voterName?: string;
+    usedCode?: string;
+    comment?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
     timestamp: string;
+    analytics?: VoteAnalytics;
 }
 
 interface Poll {
@@ -20,10 +44,13 @@ interface Poll {
     title: string;
     description?: string;
     pollType: string;
-    options: { id: string; text: string }[];
+    options: { id: string; text: string; cost?: number }[];
     settings: {
         hideResults: boolean;
         allowMultiple: boolean;
+        requireNames?: boolean;
+        security?: string;
+        allowComments?: boolean;
     };
     votes: Vote[];
     createdAt: string;
@@ -37,6 +64,72 @@ const generateVoteId = (): string => {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
+};
+
+// Detect device type from User-Agent (GDPR safe - no storage of full UA)
+const detectDevice = (userAgent: string | undefined): 'mobile' | 'desktop' | 'tablet' | 'unknown' => {
+    if (!userAgent) return 'unknown';
+    const ua = userAgent.toLowerCase();
+    
+    if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet';
+    if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) return 'mobile';
+    if (/windows|macintosh|linux/i.test(ua)) return 'desktop';
+    
+    return 'unknown';
+};
+
+// Extract domain from referrer (GDPR safe - no storage of full URL)
+const extractReferrerDomain = (referrer: string | undefined): string | undefined => {
+    if (!referrer) return undefined;
+    try {
+        const url = new URL(referrer);
+        return url.hostname;
+    } catch {
+        return undefined;
+    }
+};
+
+// Get country from IP using ipinfo.io (GDPR safe - IP is not stored, only country)
+const getGeoFromIP = async (ip: string | undefined): Promise<{ country?: string; region?: string }> => {
+    if (!ip || !process.env.IPINFO_TOKEN) {
+        return {};
+    }
+    
+    // Skip local/private IPs
+    if (ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === '::1') {
+        return {};
+    }
+    
+    try {
+        const response = await fetch(`https://ipinfo.io/${ip}?token=${process.env.IPINFO_TOKEN}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            console.log('ipinfo.io request failed:', response.status);
+            return {};
+        }
+        
+        const data = await response.json();
+        return {
+            country: data.country || undefined,
+            region: data.region || undefined
+        };
+    } catch (error) {
+        console.error('ipinfo.io error:', error);
+        return {};
+    }
+};
+
+// Extract UTM source from referrer URL
+const extractUtmSource = (referrer: string | undefined): string | undefined => {
+    if (!referrer) return undefined;
+    try {
+        const url = new URL(referrer);
+        return url.searchParams.get('utm_source') || undefined;
+    } catch {
+        return undefined;
+    }
 };
 
 export const handler: Handler = async (event) => {
@@ -160,16 +253,53 @@ export const handler: Handler = async (event) => {
             }
         }
 
-        const vote: Vote = {
-            id: generateVoteId(),
+        // ============================================
+        // COLLECT ANALYTICS (GDPR-COMPLIANT)
+        // ============================================
+        const userAgent = event.headers['user-agent'];
+        const referrer = event.headers['referer'] || event.headers['referrer'];
+        // Netlify provides client IP in x-nf-client-connection-ip or x-forwarded-for
+        const clientIP = event.headers['x-nf-client-connection-ip'] || 
+                         (event.headers['x-forwarded-for']?.split(',')[0]?.trim());
+        
+        // Collect analytics data (IP is used for lookup only, NOT stored)
+        const geoData = await getGeoFromIP(clientIP);
+        
+        const analytics: VoteAnalytics = {
+            device: detectDevice(userAgent),
+            country: geoData.country,
+            region: geoData.region,
+            referrerDomain: extractReferrerDomain(referrer),
+            utmSource: extractUtmSource(referrer),
             timestamp: new Date().toISOString()
         };
+        
+        console.log('vg-vote: Analytics collected:', JSON.stringify(analytics));
 
+        // ============================================
+        // CREATE VOTE RECORD
+        // ============================================
+        const vote: Vote = {
+            id: generateVoteId(),
+            timestamp: new Date().toISOString(),
+            analytics
+        };
+
+        // Add vote data based on poll type
         if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             vote.rankedOptionIds = body.rankedOptionIds;
         } else {
             vote.selectedOptionIds = body.selectedOptionIds;
         }
+
+        // Add optional fields
+        if (body.voterName) vote.voterName = body.voterName;
+        if (body.code) vote.usedCode = body.code;
+        if (body.comment && poll.settings.allowComments) vote.comment = body.comment;
+        if (body.choicesMaybe) vote.choicesMaybe = body.choicesMaybe;
+        if (body.matrixVotes) vote.matrixVotes = body.matrixVotes;
+        if (body.pairwiseVotes) vote.pairwiseVotes = body.pairwiseVotes;
+        if (body.ratingVotes) vote.ratingVotes = body.ratingVotes;
 
         poll.votes.push(vote);
         poll.voteCount = poll.votes.length;

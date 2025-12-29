@@ -4,6 +4,38 @@ import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, Mess
 import { RunoffResult, Poll } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
+// Helper: Get country name from code
+const COUNTRY_NAMES: Record<string, string> = {
+    'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia',
+    'DE': 'Germany', 'FR': 'France', 'JP': 'Japan', 'IN': 'India', 'BR': 'Brazil',
+    'MX': 'Mexico', 'ES': 'Spain', 'IT': 'Italy', 'NL': 'Netherlands', 'SE': 'Sweden',
+    'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'PL': 'Poland', 'IE': 'Ireland',
+    'NZ': 'New Zealand', 'KR': 'South Korea', 'SG': 'Singapore', 'CH': 'Switzerland',
+    'AT': 'Austria', 'BE': 'Belgium', 'PT': 'Portugal', 'AR': 'Argentina', 'CL': 'Chile',
+    'CO': 'Colombia', 'PH': 'Philippines', 'ID': 'Indonesia', 'MY': 'Malaysia',
+    'TH': 'Thailand', 'VN': 'Vietnam', 'ZA': 'South Africa', 'IL': 'Israel',
+    'AE': 'United Arab Emirates', 'SA': 'Saudi Arabia', 'TR': 'Turkey', 'RU': 'Russia',
+    'UA': 'Ukraine', 'CZ': 'Czech Republic', 'RO': 'Romania', 'GR': 'Greece', 'HU': 'Hungary'
+};
+
+const getCountryName = (code: string): string => COUNTRY_NAMES[code] || code;
+
+// Helper: Get country flag emoji
+const COUNTRY_FLAGS: Record<string, string> = {
+    'United States': '🇺🇸', 'United Kingdom': '🇬🇧', 'Canada': '🇨🇦', 'Australia': '🇦🇺',
+    'Germany': '🇩🇪', 'France': '🇫🇷', 'Japan': '🇯🇵', 'India': '🇮🇳', 'Brazil': '🇧🇷',
+    'Mexico': '🇲🇽', 'Spain': '🇪🇸', 'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Sweden': '🇸🇪',
+    'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Poland': '🇵🇱', 'Ireland': '🇮🇪',
+    'New Zealand': '🇳🇿', 'South Korea': '🇰🇷', 'Singapore': '🇸🇬', 'Switzerland': '🇨🇭',
+    'Austria': '🇦🇹', 'Belgium': '🇧🇪', 'Portugal': '🇵🇹', 'Argentina': '🇦🇷', 'Chile': '🇨🇱',
+    'Colombia': '🇨🇴', 'Philippines': '🇵🇭', 'Indonesia': '🇮🇩', 'Malaysia': '🇲🇾',
+    'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'South Africa': '🇿🇦', 'Israel': '🇮🇱',
+    'United Arab Emirates': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Turkey': '🇹🇷', 'Russia': '🇷🇺',
+    'Ukraine': '🇺🇦', 'Czech Republic': '🇨🇿', 'Romania': '🇷🇴', 'Greece': '🇬🇷', 'Hungary': '🇭🇺'
+};
+
+const getCountryFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
+
 interface Props {
     poll: Poll;
     results: RunoffResult;
@@ -678,39 +710,140 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <MapIcon size={24} className="text-indigo-500"/> Voter Geography
                             </h3>
-                            <div className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
-                                Demo Mode: Locations simulated
-                            </div>
                         </div>
                         
-                        <div className="relative w-full aspect-[2/1] bg-indigo-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center">
-                            <svg viewBox="0 0 100 50" className="w-full h-full opacity-30">
-                                <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
-                                <circle cx="25" cy="18" r="1" className="fill-indigo-600 animate-ping" />
-                                <circle cx="55" cy="15" r="1.5" className="fill-indigo-600 animate-ping" style={{animationDelay: '0.5s'}} />
-                                <circle cx="75" cy="25" r="0.8" className="fill-indigo-600 animate-ping" style={{animationDelay: '1s'}} />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                    <p className="text-indigo-900 font-bold text-lg">Global Reach</p>
-                                    <p className="text-slate-500 text-xs"> votes collected from 3 regions</p>
+                        {(() => {
+                            // Aggregate country data from votes with analytics
+                            const countryCounts: Record<string, number> = {};
+                            let votesWithLocation = 0;
+                            
+                            (votes || []).forEach((v: any) => {
+                                const country = v.analytics?.country;
+                                if (country) {
+                                    const countryName = getCountryName(country);
+                                    countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
+                                    votesWithLocation++;
+                                }
+                            });
+                            
+                            const sortedCountries = Object.entries(countryCounts)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 6);
+                            
+                            const totalWithLocation = votesWithLocation || 1;
+                            
+                            if (sortedCountries.length === 0) {
+                                return (
+                                    <div className="text-center py-12">
+                                        <MapIcon size={48} className="text-slate-300 mx-auto mb-4" />
+                                        <p className="text-slate-500 font-medium">No location data yet</p>
+                                        <p className="text-slate-400 text-sm mt-1">Geographic data will appear as votes come in</p>
+                                    </div>
+                                );
+                            }
+                            
+                            return (
+                                <>
+                                    <div className="relative w-full aspect-[2/1] bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center mb-6">
+                                        <svg viewBox="0 0 100 50" className="w-full h-full opacity-20">
+                                            <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
+                                        </svg>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="text-center">
+                                                <p className="text-indigo-900 font-bold text-2xl">{Object.keys(countryCounts).length}</p>
+                                                <p className="text-slate-500 text-sm">Countries represented</p>
+                                            </div>
+                                        </div>
+                                        {/* Animated dots for top countries */}
+                                        {sortedCountries.slice(0, 3).map((_, i) => (
+                                            <circle 
+                                                key={i}
+                                                cx={25 + i * 25} 
+                                                cy={18 + i * 5} 
+                                                r={1 + (2 - i) * 0.3}
+                                                className="absolute fill-indigo-600 animate-ping" 
+                                                style={{animationDelay: `${i * 0.5}s`}} 
+                                            />
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        {sortedCountries.map(([country, count]) => {
+                                            const percentage = Math.round((count / totalWithLocation) * 100);
+                                            return (
+                                                <div key={country} className="flex items-center gap-3">
+                                                    <span className="text-xl w-8">{getCountryFlag(country)}</span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-sm font-medium text-slate-700">{country}</span>
+                                                            <span className="text-xs text-slate-500">{count} votes ({percentage}%)</span>
+                                                        </div>
+                                                        <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                            <div 
+                                                                className="bg-indigo-500 h-full rounded-full transition-all"
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                                        <span className="flex items-center gap-1">
+                                            <Info size={12} />
+                                            Location data by ipinfo.io
+                                        </span>
+                                        <span>IP addresses are never stored</span>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </motion.div>
+                )}
+
+                {/* --- DEVICE BREAKDOWN (shown for admin when there's analytics) --- */}
+                {isAdmin && votes && votes.length > 0 && votes.some((v: any) => v.analytics?.device) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mt-6"
+                    >
+                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Settings size={20} className="text-indigo-500"/> Device Breakdown
+                        </h3>
+                        {(() => {
+                            const deviceCounts = { mobile: 0, desktop: 0, tablet: 0, unknown: 0 };
+                            (votes || []).forEach((v: any) => {
+                                const device = v.analytics?.device || 'unknown';
+                                deviceCounts[device as keyof typeof deviceCounts]++;
+                            });
+                            const total = Object.values(deviceCounts).reduce((a, b) => a + b, 0) || 1;
+                            
+                            const devices = [
+                                { key: 'mobile', label: 'Mobile', icon: '📱', color: 'bg-blue-500' },
+                                { key: 'desktop', label: 'Desktop', icon: '💻', color: 'bg-green-500' },
+                                { key: 'tablet', label: 'Tablet', icon: '📲', color: 'bg-purple-500' },
+                            ].filter(d => deviceCounts[d.key as keyof typeof deviceCounts] > 0);
+                            
+                            return (
+                                <div className="grid grid-cols-3 gap-4">
+                                    {devices.map(({ key, label, icon, color }) => {
+                                        const count = deviceCounts[key as keyof typeof deviceCounts];
+                                        const percentage = Math.round((count / total) * 100);
+                                        return (
+                                            <div key={key} className="text-center p-4 bg-slate-50 rounded-xl">
+                                                <div className="text-3xl mb-2">{icon}</div>
+                                                <div className="text-2xl font-black text-slate-800">{percentage}%</div>
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
+                                                <div className="text-xs text-slate-400 mt-1">{count} votes</div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            </div>
-                        </div>
-                        <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                                <div className="text-2xl font-black text-slate-700">65%</div>
-                                <div className="text-xs text-slate-400 uppercase tracking-wide">North America</div>
-                            </div>
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                                <div className="text-2xl font-black text-slate-700">25%</div>
-                                <div className="text-xs text-slate-400 uppercase tracking-wide">Europe</div>
-                            </div>
-                            <div className="p-3 bg-slate-50 rounded-lg">
-                                <div className="text-2xl font-black text-slate-700">10%</div>
-                                <div className="text-xs text-slate-400 uppercase tracking-wide">Asia</div>
-                            </div>
-                        </div>
+                            );
+                        })()}
                     </motion.div>
                 )}
 

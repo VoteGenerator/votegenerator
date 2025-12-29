@@ -102,7 +102,7 @@ const TIER_CONFIG: Record<string, {
         activeDays: 60,
         requiresActivation: true,
         features: [
-            { name: '7 poll types (+ Visual)', included: true },
+            { name: 'All poll types', included: true },
             { name: '2,000 responses', included: true },
             { name: '60 days active', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
@@ -118,8 +118,8 @@ const TIER_CONFIG: Record<string, {
         activeDays: 365,
         requiresActivation: false, // Unlimited doesn't need confirmation
         features: [
-            { name: '7 poll types (+ Visual)', included: true },
-            { name: '5,000 responses/poll', included: true },
+            { name: 'All poll types', included: true },
+            { name: '10,000 responses/poll', included: true },
             { name: '1 year active', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
@@ -163,6 +163,45 @@ const AdminDashboard: React.FC = () => {
     useEffect(() => {
         validateAndLoadSession();
     }, []);
+
+    // Refresh poll data from backend to get updated vote counts
+    const refreshPollData = async (sessionData: UserSession) => {
+        if (!sessionData.polls || sessionData.polls.length === 0) return;
+        
+        try {
+            const updatedPolls = await Promise.all(
+                sessionData.polls.map(async (poll) => {
+                    try {
+                        const response = await fetch(`/.netlify/functions/vg-get?id=${poll.id}&admin=${poll.adminKey}`);
+                        if (response.ok) {
+                            const freshData = await response.json();
+                            return {
+                                ...poll,
+                                responseCount: freshData.voteCount || freshData.responseCount || 0,
+                                status: freshData.status || poll.status,
+                            };
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to refresh poll ${poll.id}:`, e);
+                    }
+                    return poll;
+                })
+            );
+            
+            const updatedSession = { ...sessionData, polls: updatedPolls };
+            setSession(updatedSession);
+            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+        } catch (e) {
+            console.error('Failed to refresh poll data:', e);
+        }
+    };
+
+    // Refresh poll data when session is loaded
+    useEffect(() => {
+        if (session && !loading) {
+            refreshPollData(session);
+        }
+    }, [loading]);
 
     const validateAndLoadSession = () => {
         try {

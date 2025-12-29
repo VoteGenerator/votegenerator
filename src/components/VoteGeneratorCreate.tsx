@@ -320,15 +320,38 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // Clear purchased tier after use
-                if (purchasedTier) {
-                    localStorage.removeItem('vg_purchased_tier');
+                // Store poll in session for "My Dashboard"
+                try {
+                    const sessionStr = localStorage.getItem('vg_user_session');
+                    if (sessionStr) {
+                        const session = JSON.parse(sessionStr);
+                        const newPoll = {
+                            id: pollId,
+                            adminKey,
+                            title: title.trim(),
+                            pollType,
+                            createdAt: new Date().toISOString(),
+                            voteCount: 0,
+                            status: 'active'
+                        };
+                        session.polls = session.polls || [];
+                        session.polls.unshift(newPoll);
+                        localStorage.setItem('vg_user_session', JSON.stringify(session));
+                    }
+                } catch (e) {
+                    console.error('Failed to store poll in session:', e);
                 }
                 
-                // PAID USERS: Skip ad wall, go directly to admin dashboard
+                // Clear purchased tier after use (if single-use)
+                // Note: Don't clear for unlimited tier
+                if (purchasedTier && purchasedTier !== 'unlimited') {
+                    // Keep tier for now - might want to track poll count
+                }
+                
+                // PAID USERS: Go to poll admin view (with share options)
                 // FREE USERS: Go through ad wall
                 if (purchasedTier || effectiveTier !== 'free') {
-                    // Direct to admin dashboard (skip ad wall)
+                    // Direct to poll admin dashboard (shows share options, results)
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
                     // Free tier - show ad wall

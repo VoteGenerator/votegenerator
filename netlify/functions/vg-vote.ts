@@ -61,6 +61,9 @@ export const handler: Handler = async (event) => {
 
     try {
         const body: VoteRequest = JSON.parse(event.body || '{}');
+        
+        console.log('vg-vote: Received body:', JSON.stringify(body));
+        console.log('vg-vote: Body keys:', Object.keys(body));
 
         if (!body.pollId || typeof body.pollId !== 'string') {
             return {
@@ -83,6 +86,9 @@ export const handler: Handler = async (event) => {
         const poll: Poll | null = await store.get(body.pollId, { type: 'json' });
         
         console.log('vg-vote: Poll found:', !!poll);
+        console.log('vg-vote: Poll type:', poll?.pollType);
+        console.log('vg-vote: selectedOptionIds:', body.selectedOptionIds);
+        console.log('vg-vote: rankedOptionIds:', body.rankedOptionIds);
 
         if (!poll) {
             return {
@@ -92,10 +98,18 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // Accept multiple field names for flexibility
+        const selectedIds = body.selectedOptionIds || (body as any).optionIds || (body as any).selections || (body as any).options;
+        const rankedIds = body.rankedOptionIds || (body as any).rankings || (body as any).ranked;
+        
+        console.log('vg-vote: Normalized selectedIds:', selectedIds);
+        console.log('vg-vote: Normalized rankedIds:', rankedIds);
+
         const validOptionIds = new Set(poll.options.map(o => o.id));
 
-        if (poll.pollType === 'ranked') {
-            if (!Array.isArray(body.rankedOptionIds) || body.rankedOptionIds.length === 0) {
+        // Check for ranked polls (ranked, ranked_choice)
+        if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
+            if (!Array.isArray(rankedIds) || rankedIds.length === 0) {
                 return {
                     statusCode: 400,
                     headers,
@@ -103,7 +117,7 @@ export const handler: Handler = async (event) => {
                 };
             }
 
-            const invalidIds = body.rankedOptionIds.filter(id => !validOptionIds.has(id));
+            const invalidIds = rankedIds.filter((id: string) => !validOptionIds.has(id));
             if (invalidIds.length > 0) {
                 return {
                     statusCode: 400,
@@ -111,8 +125,12 @@ export const handler: Handler = async (event) => {
                     body: JSON.stringify({ error: 'Invalid options selected' })
                 };
             }
+            
+            // Use normalized field
+            body.rankedOptionIds = rankedIds;
         } else {
-            if (!Array.isArray(body.selectedOptionIds) || body.selectedOptionIds.length === 0) {
+            if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
+                console.log('vg-vote: VALIDATION FAILED - no selections found');
                 return {
                     statusCode: 400,
                     headers,
@@ -120,14 +138,18 @@ export const handler: Handler = async (event) => {
                 };
             }
 
-            const invalidIds = body.selectedOptionIds.filter(id => !validOptionIds.has(id));
+            const invalidIds = selectedIds.filter((id: string) => !validOptionIds.has(id));
             if (invalidIds.length > 0) {
+                console.log('vg-vote: VALIDATION FAILED - invalid option IDs:', invalidIds);
                 return {
                     statusCode: 400,
                     headers,
                     body: JSON.stringify({ error: 'Invalid options selected' })
                 };
             }
+
+            // Use normalized field
+            body.selectedOptionIds = selectedIds;
 
             if (!poll.settings.allowMultiple && body.selectedOptionIds.length > 1) {
                 return {
@@ -143,7 +165,7 @@ export const handler: Handler = async (event) => {
             timestamp: new Date().toISOString()
         };
 
-        if (poll.pollType === 'ranked') {
+        if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             vote.rankedOptionIds = body.rankedOptionIds;
         } else {
             vote.selectedOptionIds = body.selectedOptionIds;

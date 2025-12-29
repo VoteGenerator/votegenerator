@@ -354,7 +354,13 @@ const VoteGeneratorApp: React.FC = () => {
                                         {!viewState.isAdmin && (<div className="flex justify-end mb-4 print:hidden"><button onClick={handleManualRefresh} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium" disabled={isRefreshing}><RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />{isRefreshing ? 'Refreshing...' : 'Refresh Votes'}</button></div>)}
                                         <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
                                         {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
-                                        <VoteGeneratorResults poll={viewState.poll} results={viewState.results} onEdit={viewState.isAdmin ? handleEditPoll : undefined} />
+                                        <VoteGeneratorResults 
+                                            poll={viewState.poll} 
+                                            results={viewState.results} 
+                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined}
+                                            isAdmin={viewState.isAdmin}
+                                            adminKey={parseHash().adminKey}
+                                        />
                                         {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (<div className="mt-8 flex flex-col items-center justify-center print:hidden"><button onClick={handleVoteAgain} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200"><RotateCcw size={18} />Vote Again</button><p className="text-slate-400 text-xs mt-2">Multiple votes are allowed for this poll.</p></div>)}
                                         {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (<div className="mt-12 text-center print:hidden"><button onClick={goHome} className="text-slate-400 hover:text-indigo-600 font-medium inline-flex items-center gap-1">Create your own poll <ArrowRight size={14}/></button></div>)}
                                     </div>

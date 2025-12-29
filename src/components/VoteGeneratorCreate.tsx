@@ -348,11 +348,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     // Keep tier for now - might want to track poll count
                 }
                 
-                // PAID USERS: Go to poll admin view (with share options)
+                // PAID USERS: Go to new admin dashboard
                 // FREE USERS: Go through ad wall
                 if (purchasedTier || effectiveTier !== 'free') {
-                    // Direct to poll admin dashboard (shows share options, results)
-                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+                    // Go to new admin dashboard - poll is stored in session
+                    window.location.href = `/admin`;
                 } else {
                     // Free tier - show ad wall
                     window.location.href = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;

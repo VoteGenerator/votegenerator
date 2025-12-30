@@ -215,21 +215,26 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         const response = await fetch(`/.netlify/functions/vg-results?id=${pollId}${adminKey ? `&admin=${adminKey}` : ''}`);
         if(response.ok) {
             const data = await response.json();
-            // vg-results returns calculated results, not raw votes
+            // vg-results returns calculated results with votes for admin
             // Transform to match RunoffResult format
             return {
-                winnerId: data.winner?.id || null,
+                winnerId: data.winnerId || data.winner?.id || null,
                 rounds: data.rounds || [],
                 totalVotes: data.totalVotes || 0,
                 voters: [],
                 usedCodes: [],
-                comments: [],
-                simpleCounts: data.standings ? 
+                comments: data.comments || [],
+                simpleCounts: data.simpleCounts || (data.standings ? 
                     data.standings.reduce((acc: Record<string, number>, s: any) => {
                         acc[s.optionId] = s.voteCount;
                         return acc;
-                    }, {}) : {},
-                votes: []
+                    }, {}) : {}),
+                maybeCounts: data.maybeCounts || {},
+                votes: data.votes || [], // IMPORTANT: Pass votes for Map/Grid/Velocity views
+                matrixAverages: data.matrixAverages,
+                pairwiseScores: data.pairwiseScores,
+                ratingStats: data.ratingStats,
+                budgetStats: data.budgetStats
             };
         }
         throw new Error('API error');

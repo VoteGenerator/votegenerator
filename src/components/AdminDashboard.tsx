@@ -61,14 +61,14 @@ const TIER_CONFIG: Record<string, {
     free: {
         label: 'Free',
         gradient: 'from-slate-500 to-slate-600',
-        bgGradient: 'from-slate-50 to-slate-100',
+        bgGradient: 'from-slate-50 via-white to-slate-50',
         headerBg: 'bg-slate-100',
         icon: <BarChart3 size={16} />,
         maxPolls: 1,
         activeDays: 7,
         requiresActivation: false,
         features: [
-            { name: '6 poll types', included: true },
+            { name: 'All poll types', included: true },
             { name: '50 responses', included: true },
             { name: '7 days active', included: true },
             { name: 'Visual polls', included: false },
@@ -78,14 +78,14 @@ const TIER_CONFIG: Record<string, {
     starter: {
         label: 'Starter',
         gradient: 'from-blue-500 to-indigo-600',
-        bgGradient: 'from-blue-50 to-indigo-50',
+        bgGradient: 'from-blue-50/40 via-white to-indigo-50/40',
         headerBg: 'bg-blue-50',
         icon: <Zap size={16} />,
         maxPolls: 1,
         activeDays: 30,
         requiresActivation: true,
         features: [
-            { name: '6 poll types', included: true },
+            { name: 'All poll types', included: true },
             { name: '500 responses', included: true },
             { name: '30 days active', included: true },
             { name: 'Export to CSV', included: true },
@@ -95,7 +95,7 @@ const TIER_CONFIG: Record<string, {
     pro_event: {
         label: 'Pro Event',
         gradient: 'from-purple-500 to-pink-500',
-        bgGradient: 'from-purple-50 to-pink-50',
+        bgGradient: 'from-purple-50/40 via-white to-pink-50/40',
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: 3,
@@ -111,7 +111,7 @@ const TIER_CONFIG: Record<string, {
     unlimited: {
         label: 'Unlimited',
         gradient: 'from-amber-500 to-orange-500',
-        bgGradient: 'from-amber-50 to-orange-50',
+        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
@@ -316,23 +316,13 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const getDashboardUrl = () => {
-        // Use the current URL params if available, as they're already working
-        const currentUrl = new URL(window.location.href);
-        const currentSessionId = currentUrl.searchParams.get('session_id') || currentUrl.searchParams.get('s');
-        const currentToken = currentUrl.searchParams.get('token');
-        
-        if (currentToken && currentSessionId) {
-            // Use the same working URL format
-            return `${window.location.origin}/admin?token=${currentToken}&session_id=${currentSessionId}`;
-        } else if (currentToken) {
-            return `${window.location.origin}/admin?token=${currentToken}`;
-        } else if (session?.dashboardToken && session?.sessionId) {
-            // Use stored session data
-            return `${window.location.origin}/admin?token=${session.dashboardToken}&session_id=${session.sessionId}`;
-        } else if (session?.dashboardToken) {
-            return `${window.location.origin}/admin?token=${session.dashboardToken}`;
+        // Always use the short format with just token
+        const token = session?.dashboardToken;
+        if (token) {
+            return `${window.location.origin}/admin?token=${token}`;
         }
-        return window.location.origin + '/admin';
+        // Fallback to current URL
+        return window.location.href;
     };
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {

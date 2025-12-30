@@ -138,10 +138,20 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         if (!votes || votes.length === 0) return [];
         const sortedVotes = [...votes].sort((a, b) => getVoteTime(a) - getVoteTime(b));
         if(sortedVotes.length === 0) return [];
+        
         const startTime = getVoteTime(sortedVotes[0]);
         const endTime = Date.now();
-        const buckets = 10;
         const duration = endTime - startTime;
+        
+        // For very short durations (< 10 min), show each vote as a point
+        if (duration < 600000 || votes.length < 3) {
+            return sortedVotes.map(v => ({
+                time: new Date(getVoteTime(v)),
+                count: 1
+            }));
+        }
+        
+        const buckets = Math.min(10, votes.length);
         const bucketSize = Math.max(duration / buckets, 60000); 
         
         const data = Array(buckets).fill(0).map((_, i) => ({ 
@@ -773,9 +783,17 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <MapIcon size={24} className="text-indigo-500"/> Voter Geography
                             </h3>
+                            {isAdmin && (
+                                <span className="text-xs text-slate-400">
+                                    {votes.length} votes loaded
+                                </span>
+                            )}
                         </div>
                         
                         {(() => {
+                            // Debug: log what we have
+                            console.log('Map view - votes:', votes.length, 'first vote analytics:', votes[0]?.analytics);
+                            
                             // Aggregate country data from votes with analytics
                             const countryCounts: Record<string, number> = {};
                             let votesWithLocation = 0;
@@ -800,7 +818,17 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     <div className="text-center py-12">
                                         <MapIcon size={48} className="text-slate-300 mx-auto mb-4" />
                                         <p className="text-slate-500 font-medium">No location data yet</p>
-                                        <p className="text-slate-400 text-sm mt-1">Geographic data will appear as votes come in</p>
+                                        <p className="text-slate-400 text-sm mt-1">
+                                            {votes.length > 0 
+                                                ? `${votes.length} votes recorded, but no geo data attached`
+                                                : 'Geographic data will appear as votes come in'
+                                            }
+                                        </p>
+                                        {isAdmin && votes.length > 0 && (
+                                            <p className="text-slate-400 text-xs mt-2">
+                                                Tip: Only votes made AFTER analytics deployment have geo data
+                                            </p>
+                                        )}
                                     </div>
                                 );
                             }

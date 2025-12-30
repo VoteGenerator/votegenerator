@@ -60,6 +60,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     const isPairwise = poll.pollType === 'pairwise';
     const isRating = poll.pollType === 'rating';
     const isBudget = poll.pollType === 'budget';
+    // For this-or-that and multiple choice, check if it's a simple poll (not one of the special types)
+    const isSimplePoll = !isRanked && !isMeeting && !isDot && !isMatrix && !isPairwise && !isRating && !isBudget;
+    const isThisOrThat = isSimplePoll && poll.options.length === 2;
+    const isMultipleChoice = isSimplePoll && poll.options.length > 2;
     
     const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
         isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
@@ -836,7 +840,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         {(() => {
                             // Aggregate country data from votes with analytics
                             const countryCounts: Record<string, number> = {};
-                            const countryCodeCounts: Record<string, number> = {};
                             let votesWithLocation = 0;
                             
                             (votes || []).forEach((v: any) => {
@@ -844,7 +847,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 if (countryCode) {
                                     const countryName = getCountryName(countryCode);
                                     countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
-                                    countryCodeCounts[countryCode] = (countryCodeCounts[countryCode] || 0) + 1;
                                     votesWithLocation++;
                                 }
                             });
@@ -870,97 +872,52 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 );
                             }
                             
-                            // Simple world map regions with approximate positions
-                            const regionPositions: Record<string, { x: number; y: number }> = {
-                                'US': { x: 22, y: 38 }, 'CA': { x: 20, y: 28 }, 'MX': { x: 18, y: 48 },
-                                'BR': { x: 35, y: 65 }, 'AR': { x: 32, y: 78 }, 'CL': { x: 28, y: 75 },
-                                'GB': { x: 48, y: 30 }, 'FR': { x: 50, y: 36 }, 'DE': { x: 52, y: 32 },
-                                'ES': { x: 47, y: 40 }, 'IT': { x: 53, y: 40 }, 'NL': { x: 51, y: 30 },
-                                'PL': { x: 55, y: 32 }, 'SE': { x: 54, y: 24 }, 'NO': { x: 52, y: 22 },
-                                'RU': { x: 70, y: 28 }, 'UA': { x: 58, y: 34 }, 'TR': { x: 58, y: 42 },
-                                'IN': { x: 72, y: 48 }, 'CN': { x: 78, y: 40 }, 'JP': { x: 88, y: 38 },
-                                'KR': { x: 85, y: 40 }, 'AU': { x: 85, y: 72 }, 'NZ': { x: 92, y: 78 },
-                                'ZA': { x: 56, y: 75 }, 'NG': { x: 52, y: 55 }, 'EG': { x: 58, y: 48 },
-                                'SA': { x: 62, y: 50 }, 'AE': { x: 65, y: 50 }, 'IL': { x: 58, y: 45 },
-                                'SG': { x: 80, y: 58 }, 'ID': { x: 82, y: 62 }, 'PH': { x: 84, y: 52 },
-                                'TH': { x: 78, y: 52 }, 'VN': { x: 80, y: 52 }, 'MY': { x: 80, y: 58 },
-                            };
-                            
                             return (
                                 <>
-                                    {/* World Map SVG */}
-                                    <div className="relative w-full aspect-[2/1] bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-slate-200 overflow-hidden mb-6">
-                                        <svg viewBox="0 0 100 85" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-                                            {/* Simple world outline */}
-                                            <defs>
-                                                <linearGradient id="oceanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor="#e0f2fe" />
-                                                    <stop offset="100%" stopColor="#f0f9ff" />
-                                                </linearGradient>
-                                            </defs>
-                                            <rect fill="url(#oceanGradient)" width="100" height="85"/>
-                                            
-                                            {/* Simplified continent shapes */}
-                                            {/* North America */}
-                                            <path d="M5,15 Q15,10 25,15 L30,25 Q28,35 22,45 L15,50 Q8,45 5,35 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            {/* South America */}
-                                            <path d="M25,52 Q32,50 35,55 L38,70 Q35,80 30,82 L25,78 Q22,70 23,60 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            {/* Europe */}
-                                            <path d="M45,18 Q52,15 58,20 L60,30 Q58,38 52,40 L46,38 Q44,30 45,22 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            {/* Africa */}
-                                            <path d="M45,42 Q55,40 60,45 L62,60 Q58,75 52,78 L45,75 Q42,65 44,50 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            {/* Asia */}
-                                            <path d="M58,15 Q75,12 88,20 L92,35 Q88,50 78,55 L65,52 Q58,45 58,30 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            {/* Australia */}
-                                            <path d="M78,62 Q88,60 92,65 L94,72 Q90,78 84,78 L78,75 Q76,70 78,65 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
-                                            
-                                            {/* Country markers */}
-                                            {Object.entries(countryCodeCounts).map(([code, count]) => {
-                                                const pos = regionPositions[code];
-                                                if (!pos) return null;
-                                                const size = Math.min(3 + (count / totalWithLocation) * 5, 8);
-                                                return (
-                                                    <g key={code}>
-                                                        <circle 
-                                                            cx={pos.x} 
-                                                            cy={pos.y} 
-                                                            r={size} 
-                                                            fill="#6366f1" 
-                                                            fillOpacity="0.3"
-                                                        />
-                                                        <circle 
-                                                            cx={pos.x} 
-                                                            cy={pos.y} 
-                                                            r={size * 0.6} 
-                                                            fill="#6366f1"
-                                                        />
-                                                    </g>
-                                                );
-                                            })}
-                                        </svg>
-                                        
-                                        {/* Stats overlay */}
-                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
-                                            <p className="text-indigo-900 font-bold text-lg">{countryCount}</p>
-                                            <p className="text-slate-500 text-xs">{countryCount === 1 ? 'Country' : 'Countries'}</p>
+                                    {/* Summary Stats */}
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-black text-indigo-600">{countryCount}</div>
+                                            <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
+                                                {countryCount === 1 ? 'Country' : 'Countries'}
+                                            </div>
                                         </div>
+                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
+                                            <div className="text-3xl font-black text-emerald-600">{votesWithLocation}</div>
+                                            <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
+                                                With Location
+                                            </div>
+                                        </div>
+                                        {sortedCountries[0] && (
+                                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center col-span-2 md:col-span-1">
+                                                <div className="text-2xl mb-1">{getCountryFlag(sortedCountries[0][0])}</div>
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide">
+                                                    Top Country
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {/* Country list */}
+                                    {/* Country list with flags */}
                                     <div className="space-y-3">
-                                        {sortedCountries.slice(0, 6).map(([country, count]) => {
+                                        {sortedCountries.map(([country, count], idx) => {
                                             const percentage = Math.round((count / totalWithLocation) * 100);
                                             return (
-                                                <div key={country} className="flex items-center gap-3">
-                                                    <span className="text-xl w-8">{getCountryFlag(country)}</span>
-                                                    <div className="flex-1">
+                                                <div key={country} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}>
+                                                    <span className="text-3xl">{getCountryFlag(country)}</span>
+                                                    <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between mb-1">
-                                                            <span className="text-sm font-medium text-slate-700">{country}</span>
-                                                            <span className="text-xs text-slate-500">{count} vote{count !== 1 ? 's' : ''} ({percentage}%)</span>
+                                                            <span className={`font-semibold ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                                {country}
+                                                                {idx === 0 && <span className="ml-2 text-xs bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded-full">Top</span>}
+                                                            </span>
+                                                            <span className="text-sm text-slate-500 font-medium">
+                                                                {count} vote{count !== 1 ? 's' : ''} • {percentage}%
+                                                            </span>
                                                         </div>
-                                                        <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                        <div className="bg-slate-200 rounded-full h-2.5 overflow-hidden">
                                                             <div 
-                                                                className="bg-indigo-500 h-full rounded-full transition-all"
+                                                                className={`h-full rounded-full transition-all ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
                                                                 style={{ width: `${percentage}%` }}
                                                             />
                                                         </div>
@@ -1098,42 +1055,41 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             </div>
                         </div>
                         
-                        {/* Insights Section */}
-                        {votes.length > 0 && votes.some((v: any) => v.analytics?.country) && (
+                        {/* Insights Section - Show if we have votes with analytics */}
+                        {votes.length > 0 && (
                             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
                                 <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <Activity size={18} className="text-indigo-500" /> Quick Insights
+                                    <Activity size={18} className="text-indigo-500" /> Poll Insights
                                 </h4>
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {/* Top choice by country */}
+                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    
+                                    {/* Consensus Level */}
                                     {(() => {
-                                        const countryChoices: Record<string, Record<string, number>> = {};
+                                        const choiceCounts: Record<string, number> = {};
                                         votes.forEach((v: any) => {
-                                            const country = v.analytics?.country;
-                                            if (!country) return;
-                                            const countryName = getCountryName(country);
-                                            if (!countryChoices[countryName]) countryChoices[countryName] = {};
                                             const choices = v.choices || v.selectedOptionIds || [];
                                             choices.forEach((c: string) => {
-                                                countryChoices[countryName][c] = (countryChoices[countryName][c] || 0) + 1;
+                                                choiceCounts[c] = (choiceCounts[c] || 0) + 1;
                                             });
                                         });
-                                        
-                                        return Object.entries(countryChoices).slice(0, 3).map(([country, choices]) => {
-                                            const topChoice = Object.entries(choices).sort((a, b) => b[1] - a[1])[0];
-                                            if (!topChoice) return null;
-                                            return (
-                                                <div key={country} className="bg-white rounded-xl p-4 shadow-sm">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-xl">{getCountryFlag(country)}</span>
-                                                        <span className="font-medium text-slate-700">{country}</span>
-                                                    </div>
-                                                    <p className="text-sm text-slate-600">
-                                                        Top pick: <strong className="text-indigo-600">{getOptionText(topChoice[0])}</strong>
-                                                    </p>
+                                        const sorted = Object.entries(choiceCounts).sort((a, b) => b[1] - a[1]);
+                                        if (sorted.length === 0) return null;
+                                        const topCount = sorted[0][1];
+                                        const totalChoices = Object.values(choiceCounts).reduce((a, b) => a + b, 0);
+                                        const consensusPct = Math.round((topCount / totalChoices) * 100);
+                                        const consensusLevel = consensusPct >= 70 ? 'Strong' : consensusPct >= 50 ? 'Moderate' : 'Split';
+                                        const consensusColor = consensusPct >= 70 ? 'text-emerald-600' : consensusPct >= 50 ? 'text-amber-600' : 'text-red-500';
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">🎯</span>
+                                                    <span className="font-medium text-slate-700">Consensus</span>
                                                 </div>
-                                            );
-                                        });
+                                                <p className="text-sm text-slate-600">
+                                                    <strong className={consensusColor}>{consensusLevel}</strong> ({consensusPct}% agreement)
+                                                </p>
+                                            </div>
+                                        );
                                     })()}
                                     
                                     {/* Device preference */}
@@ -1151,11 +1107,419 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                             <div className="bg-white rounded-xl p-4 shadow-sm">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="text-xl">{icon}</span>
-                                                    <span className="font-medium text-slate-700">Most used device</span>
+                                                    <span className="font-medium text-slate-700">Top Device</span>
                                                 </div>
                                                 <p className="text-sm text-slate-600">
                                                     <strong className="text-indigo-600">{topDevice[0].charAt(0).toUpperCase() + topDevice[0].slice(1)}</strong> ({pct}%)
                                                 </p>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* Voting Velocity */}
+                                    {(() => {
+                                        if (votes.length < 2) return null;
+                                        const timestamps = votes.map((v: any) => getVoteTime(v)).filter(Boolean).sort((a, b) => a - b);
+                                        if (timestamps.length < 2) return null;
+                                        const firstVote = timestamps[0];
+                                        const lastVote = timestamps[timestamps.length - 1];
+                                        const durationHrs = (lastVote - firstVote) / (1000 * 60 * 60);
+                                        if (durationHrs < 0.1) return null;
+                                        const votesPerHour = (votes.length / durationHrs).toFixed(1);
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">⚡</span>
+                                                    <span className="font-medium text-slate-700">Velocity</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">
+                                                    <strong className="text-indigo-600">{votesPerHour}</strong> votes/hour avg
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* Geographic Reach */}
+                                    {(() => {
+                                        const countries = new Set<string>();
+                                        votes.forEach((v: any) => {
+                                            if (v.analytics?.country) countries.add(v.analytics.country);
+                                        });
+                                        if (countries.size === 0) return null;
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">🌍</span>
+                                                    <span className="font-medium text-slate-700">Reach</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">
+                                                    <strong className="text-indigo-600">{countries.size}</strong> {countries.size === 1 ? 'country' : 'countries'}
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* Top choice by top country */}
+                                    {(() => {
+                                        const countryChoices: Record<string, Record<string, number>> = {};
+                                        votes.forEach((v: any) => {
+                                            const country = v.analytics?.country;
+                                            if (!country) return;
+                                            const countryName = getCountryName(country);
+                                            if (!countryChoices[countryName]) countryChoices[countryName] = {};
+                                            const choices = v.choices || v.selectedOptionIds || [];
+                                            choices.forEach((c: string) => {
+                                                countryChoices[countryName][c] = (countryChoices[countryName][c] || 0) + 1;
+                                            });
+                                        });
+                                        
+                                        // Get top country
+                                        const countryCounts: Record<string, number> = {};
+                                        votes.forEach((v: any) => {
+                                            if (v.analytics?.country) {
+                                                const name = getCountryName(v.analytics.country);
+                                                countryCounts[name] = (countryCounts[name] || 0) + 1;
+                                            }
+                                        });
+                                        const topCountry = Object.entries(countryCounts).sort((a, b) => b[1] - a[1])[0];
+                                        if (!topCountry) return null;
+                                        
+                                        const choices = countryChoices[topCountry[0]];
+                                        const topChoice = Object.entries(choices || {}).sort((a, b) => b[1] - a[1])[0];
+                                        if (!topChoice) return null;
+                                        
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">{getCountryFlag(topCountry[0])}</span>
+                                                    <span className="font-medium text-slate-700">{topCountry[0]}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">
+                                                    Prefers: <strong className="text-indigo-600">{getOptionText(topChoice[0])}</strong>
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* Mobile vs Desktop choice difference */}
+                                    {(() => {
+                                        const mobileChoices: Record<string, number> = {};
+                                        const desktopChoices: Record<string, number> = {};
+                                        let mobileCount = 0, desktopCount = 0;
+                                        
+                                        votes.forEach((v: any) => {
+                                            const device = v.analytics?.device;
+                                            const choices = v.choices || v.selectedOptionIds || [];
+                                            if (device === 'mobile') {
+                                                mobileCount++;
+                                                choices.forEach((c: string) => {
+                                                    mobileChoices[c] = (mobileChoices[c] || 0) + 1;
+                                                });
+                                            } else if (device === 'desktop') {
+                                                desktopCount++;
+                                                choices.forEach((c: string) => {
+                                                    desktopChoices[c] = (desktopChoices[c] || 0) + 1;
+                                                });
+                                            }
+                                        });
+                                        
+                                        if (mobileCount < 2 || desktopCount < 2) return null;
+                                        
+                                        const topMobile = Object.entries(mobileChoices).sort((a, b) => b[1] - a[1])[0];
+                                        const topDesktop = Object.entries(desktopChoices).sort((a, b) => b[1] - a[1])[0];
+                                        
+                                        if (!topMobile || !topDesktop || topMobile[0] === topDesktop[0]) return null;
+                                        
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm col-span-2">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">📊</span>
+                                                    <span className="font-medium text-slate-700">Device Preference Split</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">
+                                                    📱 Mobile prefers <strong className="text-blue-600">{getOptionText(topMobile[0])}</strong> • 
+                                                    💻 Desktop prefers <strong className="text-green-600">{getOptionText(topDesktop[0])}</strong>
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* ========================================= */}
+                                    {/* TYPE-SPECIFIC INSIGHTS */}
+                                    {/* ========================================= */}
+                                    
+                                    {/* RANKED CHOICE: Vote Transfer Analysis */}
+                                    {isRanked && rounds && rounds.length > 1 && (() => {
+                                        // Find who got the most transferred votes
+                                        const transferGains: Record<string, number> = {};
+                                        for (let i = 1; i < rounds.length; i++) {
+                                            const prevCounts = rounds[i - 1].counts;
+                                            const currCounts = rounds[i].counts;
+                                            Object.keys(currCounts).forEach(optId => {
+                                                const gain = currCounts[optId] - (prevCounts[optId] || 0);
+                                                if (gain > 0) {
+                                                    transferGains[optId] = (transferGains[optId] || 0) + gain;
+                                                }
+                                            });
+                                        }
+                                        
+                                        const topGainer = Object.entries(transferGains).sort((a, b) => b[1] - a[1])[0];
+                                        if (!topGainer || topGainer[1] === 0) return null;
+                                        
+                                        // Find who got eliminated first
+                                        const eliminated = rounds.length > 1 ? rounds[0].eliminatedId : null;
+                                        
+                                        return (
+                                            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 shadow-sm col-span-2 border border-purple-100">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">🔄</span>
+                                                    <span className="font-medium text-purple-700">Ranked Choice Analysis</span>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-slate-600">
+                                                    <p>
+                                                        <strong className="text-purple-600">{getOptionText(topGainer[0])}</strong> gained the most transferred votes (+{topGainer[1]})
+                                                    </p>
+                                                    {eliminated && (
+                                                        <p className="text-slate-500">
+                                                            First eliminated: {getOptionText(eliminated)}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-xs text-purple-500 mt-2">
+                                                        {rounds.length} rounds needed to determine winner
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* RATING SCALE: Standard Deviation & Consensus */}
+                                    {isRating && ratingStats && (() => {
+                                        // Calculate overall stats
+                                        const allRatings: number[] = [];
+                                        const optionStats: Array<{ id: string; avg: number; stdDev: number }> = [];
+                                        
+                                        Object.entries(ratingStats).forEach(([optId, stats]: [string, any]) => {
+                                            if (stats.ratings && stats.ratings.length > 0) {
+                                                allRatings.push(...stats.ratings);
+                                                const avg = stats.ratings.reduce((a: number, b: number) => a + b, 0) / stats.ratings.length;
+                                                const variance = stats.ratings.reduce((sum: number, r: number) => sum + Math.pow(r - avg, 2), 0) / stats.ratings.length;
+                                                const stdDev = Math.sqrt(variance);
+                                                optionStats.push({ id: optId, avg, stdDev });
+                                            }
+                                        });
+                                        
+                                        if (optionStats.length === 0) return null;
+                                        
+                                        // Find most controversial (highest std dev) and most agreed upon (lowest std dev)
+                                        const sorted = [...optionStats].sort((a, b) => a.stdDev - b.stdDev);
+                                        const mostAgreed = sorted[0];
+                                        const mostControversial = sorted[sorted.length - 1];
+                                        
+                                        // Overall consensus level
+                                        const avgStdDev = optionStats.reduce((sum, o) => sum + o.stdDev, 0) / optionStats.length;
+                                        const consensusLevel = avgStdDev < 1 ? 'High' : avgStdDev < 2 ? 'Moderate' : 'Low';
+                                        const consensusColor = avgStdDev < 1 ? 'text-emerald-600' : avgStdDev < 2 ? 'text-amber-600' : 'text-red-500';
+                                        
+                                        return (
+                                            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 shadow-sm col-span-2 border border-cyan-100">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">⭐</span>
+                                                    <span className="font-medium text-cyan-700">Rating Analysis</span>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-slate-600">
+                                                    <p>
+                                                        Overall consensus: <strong className={consensusColor}>{consensusLevel}</strong>
+                                                    </p>
+                                                    {mostAgreed && mostControversial && mostAgreed.id !== mostControversial.id && (
+                                                        <>
+                                                            <p>
+                                                                Most agreed on: <strong className="text-emerald-600">{getOptionText(mostAgreed.id)}</strong>
+                                                                <span className="text-slate-400 ml-1">(avg {mostAgreed.avg.toFixed(1)})</span>
+                                                            </p>
+                                                            <p>
+                                                                Most divisive: <strong className="text-amber-600">{getOptionText(mostControversial.id)}</strong>
+                                                                <span className="text-slate-400 ml-1">(opinions vary widely)</span>
+                                                            </p>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* MEETING POLL: Availability Summary */}
+                                    {isMeeting && (() => {
+                                        // Calculate availability percentages
+                                        const availability: Array<{ id: string; yesCount: number; maybeCount: number; score: number }> = [];
+                                        
+                                        poll.options.forEach(opt => {
+                                            let yesCount = 0;
+                                            let maybeCount = 0;
+                                            votes.forEach((v: any) => {
+                                                const choices = v.choices || v.selectedOptionIds || [];
+                                                const maybes = v.choicesMaybe || [];
+                                                if (choices.includes(opt.id)) yesCount++;
+                                                if (maybes.includes(opt.id)) maybeCount++;
+                                            });
+                                            const score = yesCount + (maybeCount * 0.5);
+                                            availability.push({ id: opt.id, yesCount, maybeCount, score });
+                                        });
+                                        
+                                        const sorted = [...availability].sort((a, b) => b.score - a.score);
+                                        const best = sorted[0];
+                                        const bestPct = votes.length > 0 ? Math.round((best.yesCount / votes.length) * 100) : 0;
+                                        
+                                        // Find if there's a clear winner or multiple good options
+                                        const goodOptions = sorted.filter(o => o.score >= best.score * 0.8);
+                                        
+                                        // Find who can't make any times
+                                        const noAvailability = votes.filter((v: any) => {
+                                            const choices = v.choices || v.selectedOptionIds || [];
+                                            return choices.length === 0;
+                                        }).length;
+                                        
+                                        return (
+                                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 shadow-sm col-span-2 border border-emerald-100">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">📅</span>
+                                                    <span className="font-medium text-emerald-700">Meeting Availability</span>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-slate-600">
+                                                    <p>
+                                                        Best time: <strong className="text-emerald-600">{getOptionText(best.id)}</strong>
+                                                        <span className="text-slate-400 ml-1">({bestPct}% available, {best.maybeCount} maybes)</span>
+                                                    </p>
+                                                    {goodOptions.length > 1 && (
+                                                        <p className="text-slate-500">
+                                                            {goodOptions.length} time slots work well for the group
+                                                        </p>
+                                                    )}
+                                                    {noAvailability > 0 && (
+                                                        <p className="text-amber-600">
+                                                            ⚠️ {noAvailability} {noAvailability === 1 ? 'person has' : 'people have'} no availability
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* THIS OR THAT: Margin of Victory */}
+                                    {isThisOrThat && simpleCounts && (() => {
+                                        const option1 = poll.options[0];
+                                        const option2 = poll.options[1];
+                                        const count1 = simpleCounts[option1.id] || 0;
+                                        const count2 = simpleCounts[option2.id] || 0;
+                                        const total = count1 + count2;
+                                        
+                                        if (total === 0) return null;
+                                        
+                                        const winner = count1 >= count2 ? option1 : option2;
+                                        const loser = count1 >= count2 ? option2 : option1;
+                                        const winnerCount = Math.max(count1, count2);
+                                        const loserCount = Math.min(count1, count2);
+                                        
+                                        const margin = winnerCount - loserCount;
+                                        const marginPct = Math.round((margin / total) * 100);
+                                        const winnerPct = Math.round((winnerCount / total) * 100);
+                                        
+                                        const isLandslide = marginPct >= 40;
+                                        const isClose = marginPct <= 10;
+                                        const isTied = margin === 0;
+                                        
+                                        return (
+                                            <div className={`rounded-xl p-4 shadow-sm col-span-2 border ${
+                                                isTied ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100' :
+                                                isLandslide ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100' :
+                                                'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100'
+                                            }`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">{isTied ? '⚖️' : isLandslide ? '🏆' : '🤝'}</span>
+                                                    <span className={`font-medium ${
+                                                        isTied ? 'text-amber-700' : isLandslide ? 'text-emerald-700' : 'text-blue-700'
+                                                    }`}>
+                                                        {isTied ? 'Perfect Tie!' : isLandslide ? 'Clear Winner!' : 'Close Call!'}
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-slate-600">
+                                                    {isTied ? (
+                                                        <p>Both options received exactly <strong>{count1} votes</strong></p>
+                                                    ) : (
+                                                        <>
+                                                            <p>
+                                                                <strong className={isLandslide ? 'text-emerald-600' : 'text-blue-600'}>{getOptionText(winner.id)}</strong> wins with {winnerPct}%
+                                                            </p>
+                                                            <p className="text-slate-500">
+                                                                {isClose ? (
+                                                                    <>Only {margin} vote{margin !== 1 ? 's' : ''} separated them!</>
+                                                                ) : isLandslide ? (
+                                                                    <>Won by a {margin}-vote margin</>
+                                                                ) : (
+                                                                    <>Margin: {margin} vote{margin !== 1 ? 's' : ''} ({marginPct}%)</>
+                                                                )}
+                                                            </p>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                    
+                                    {/* MULTIPLE CHOICE (3+ options): Competition Analysis */}
+                                    {isMultipleChoice && !isThisOrThat && simpleCounts && (() => {
+                                        const sorted = Object.entries(simpleCounts)
+                                            .sort((a, b) => b[1] - a[1]);
+                                        
+                                        if (sorted.length < 3) return null;
+                                        
+                                        const [first, second] = sorted;
+                                        const total = sorted.reduce((sum, [_, c]) => sum + c, 0);
+                                        
+                                        if (total === 0) return null;
+                                        
+                                        const firstPct = Math.round((first[1] / total) * 100);
+                                        const secondPct = Math.round((second[1] / total) * 100);
+                                        const gap = first[1] - second[1];
+                                        const gapPct = Math.round((gap / total) * 100);
+                                        
+                                        // Check if it's competitive
+                                        const isCompetitive = gapPct <= 15;
+                                        const isDominant = firstPct >= 50;
+                                        
+                                        return (
+                                            <div className={`rounded-xl p-4 shadow-sm col-span-2 border ${
+                                                isDominant ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100' :
+                                                isCompetitive ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100' :
+                                                'bg-gradient-to-br from-slate-50 to-gray-50 border-slate-200'
+                                            }`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">{isDominant ? '👑' : isCompetitive ? '🔥' : '📈'}</span>
+                                                    <span className={`font-medium ${
+                                                        isDominant ? 'text-emerald-700' : isCompetitive ? 'text-amber-700' : 'text-slate-700'
+                                                    }`}>
+                                                        {isDominant ? 'Clear Favorite' : isCompetitive ? 'Tight Race' : 'Results Breakdown'}
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-slate-600">
+                                                    {isDominant ? (
+                                                        <p>
+                                                            <strong className="text-emerald-600">{getOptionText(first[0])}</strong> leads with majority support ({firstPct}%)
+                                                        </p>
+                                                    ) : isCompetitive ? (
+                                                        <>
+                                                            <p>
+                                                                Only <strong className="text-amber-600">{gap} vote{gap !== 1 ? 's' : ''}</strong> between top 2!
+                                                            </p>
+                                                            <p className="text-slate-500">
+                                                                {getOptionText(first[0])} ({firstPct}%) vs {getOptionText(second[0])} ({secondPct}%)
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p>
+                                                            <strong>{getOptionText(first[0])}</strong> leads at {firstPct}%, followed by {getOptionText(second[0])} at {secondPct}%
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })()}

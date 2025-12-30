@@ -732,7 +732,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     </motion.div>
                 )}
 
-                {/* --- VELOCITY VIEW (Line Chart) --- */}
+                {/* --- VELOCITY VIEW (Timeline) --- */}
                 {viewMode === 'velocity' && (
                     <motion.div
                         key="velocity"
@@ -741,33 +741,81 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
                     >
                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <TrendingUp size={24} className="text-indigo-500"/> Vote Velocity
+                            <TrendingUp size={24} className="text-indigo-500"/> Vote Timeline
                         </h3>
                         
-                        <div className="h-64 flex items-end gap-1 border-b border-l border-slate-200 p-4 relative">
-                             {/* Bars representing activity over time buckets */}
-                             {velocityData.map((d, i) => {
-                                 const maxVal = Math.max(...velocityData.map(v => v.count), 1);
-                                 const height = (d.count / maxVal) * 100;
-                                 return (
-                                     <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
-                                         <div 
-                                            className="w-full bg-indigo-500/50 hover:bg-indigo-500 rounded-t-md transition-all relative"
-                                            style={{ height: `${height}%` }}
-                                         >
-                                             <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs p-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none">
-                                                 {d.count} votes <br/> {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                             </div>
-                                         </div>
-                                     </div>
-                                 )
-                             })}
-                             {velocityData.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-slate-400">Not enough data yet</div>}
-                        </div>
-                        <div className="flex justify-between text-xs text-slate-400 mt-2">
-                            <span>First Vote</span>
-                            <span>Latest Vote</span>
-                        </div>
+                        {votes.length === 0 ? (
+                            <div className="h-64 flex items-center justify-center text-slate-400">
+                                <div className="text-center">
+                                    <Activity size={48} className="mx-auto mb-2 opacity-50" />
+                                    <p>No votes recorded yet</p>
+                                </div>
+                            </div>
+                        ) : votes.length < 3 ? (
+                            /* Timeline view for few votes */
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-500 mb-4">Vote activity timeline:</p>
+                                {[...votes].sort((a: any, b: any) => getVoteTime(a) - getVoteTime(b)).map((vote: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-4">
+                                        <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                                        <div className="flex-1 h-0.5 bg-indigo-200"></div>
+                                        <div className="bg-indigo-50 px-3 py-2 rounded-lg">
+                                            <span className="text-sm font-medium text-indigo-700">
+                                                {new Date(getVoteTime(vote)).toLocaleString([], { 
+                                                    month: 'short', day: 'numeric', 
+                                                    hour: '2-digit', minute: '2-digit' 
+                                                })}
+                                            </span>
+                                            {vote.analytics?.country && (
+                                                <span className="ml-2 text-xs text-slate-500">
+                                                    {getCountryFlag(getCountryName(vote.analytics.country))}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="mt-6 p-4 bg-slate-50 rounded-xl">
+                                    <p className="text-sm text-slate-600">
+                                        <strong>{votes.length}</strong> vote{votes.length !== 1 ? 's' : ''} total
+                                        {votes.length > 0 && (
+                                            <span className="text-slate-400 ml-2">
+                                                • First: {new Date(getVoteTime([...votes].sort((a: any, b: any) => getVoteTime(a) - getVoteTime(b))[0])).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Bar chart for more votes */
+                            <>
+                                <div className="h-64 flex items-end gap-2 border-b border-l border-slate-200 p-4 relative">
+                                    {velocityData.map((d, i) => {
+                                        const maxVal = Math.max(...velocityData.map(v => v.count), 1);
+                                        const height = Math.max((d.count / maxVal) * 100, d.count > 0 ? 10 : 0);
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
+                                                <div 
+                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-all cursor-pointer shadow-sm"
+                                                    style={{ height: `${height}%`, minHeight: d.count > 0 ? '8px' : '0' }}
+                                                >
+                                                    {d.count > 0 && (
+                                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                                                            <strong>{d.count}</strong> vote{d.count !== 1 ? 's' : ''}<br/>
+                                                            {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex justify-between text-xs text-slate-400 mt-2 px-4">
+                                    <span>{velocityData[0]?.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                    <span className="text-slate-500 font-medium">{votes.length} total votes</span>
+                                    <span>{velocityData[velocityData.length - 1]?.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                </div>
+                            </>
+                        )}
                     </motion.div>
                 )}
 
@@ -783,35 +831,29 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <MapIcon size={24} className="text-indigo-500"/> Voter Geography
                             </h3>
-                            {isAdmin && (
-                                <span className="text-xs text-slate-400">
-                                    {votes.length} votes loaded
-                                </span>
-                            )}
                         </div>
                         
                         {(() => {
-                            // Debug: log what we have
-                            console.log('Map view - votes:', votes.length, 'first vote analytics:', votes[0]?.analytics);
-                            
                             // Aggregate country data from votes with analytics
                             const countryCounts: Record<string, number> = {};
+                            const countryCodeCounts: Record<string, number> = {};
                             let votesWithLocation = 0;
                             
                             (votes || []).forEach((v: any) => {
-                                const country = v.analytics?.country;
-                                if (country) {
-                                    const countryName = getCountryName(country);
+                                const countryCode = v.analytics?.country;
+                                if (countryCode) {
+                                    const countryName = getCountryName(countryCode);
                                     countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
+                                    countryCodeCounts[countryCode] = (countryCodeCounts[countryCode] || 0) + 1;
                                     votesWithLocation++;
                                 }
                             });
                             
                             const sortedCountries = Object.entries(countryCounts)
-                                .sort((a, b) => b[1] - a[1])
-                                .slice(0, 6);
+                                .sort((a, b) => b[1] - a[1]);
                             
                             const totalWithLocation = votesWithLocation || 1;
+                            const countryCount = Object.keys(countryCounts).length;
                             
                             if (sortedCountries.length === 0) {
                                 return (
@@ -820,46 +862,93 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         <p className="text-slate-500 font-medium">No location data yet</p>
                                         <p className="text-slate-400 text-sm mt-1">
                                             {votes.length > 0 
-                                                ? `${votes.length} votes recorded, but no geo data attached`
+                                                ? `${votes.length} vote${votes.length !== 1 ? 's' : ''} recorded, but no geo data attached`
                                                 : 'Geographic data will appear as votes come in'
                                             }
                                         </p>
-                                        {isAdmin && votes.length > 0 && (
-                                            <p className="text-slate-400 text-xs mt-2">
-                                                Tip: Only votes made AFTER analytics deployment have geo data
-                                            </p>
-                                        )}
                                     </div>
                                 );
                             }
                             
+                            // Simple world map regions with approximate positions
+                            const regionPositions: Record<string, { x: number; y: number }> = {
+                                'US': { x: 22, y: 38 }, 'CA': { x: 20, y: 28 }, 'MX': { x: 18, y: 48 },
+                                'BR': { x: 35, y: 65 }, 'AR': { x: 32, y: 78 }, 'CL': { x: 28, y: 75 },
+                                'GB': { x: 48, y: 30 }, 'FR': { x: 50, y: 36 }, 'DE': { x: 52, y: 32 },
+                                'ES': { x: 47, y: 40 }, 'IT': { x: 53, y: 40 }, 'NL': { x: 51, y: 30 },
+                                'PL': { x: 55, y: 32 }, 'SE': { x: 54, y: 24 }, 'NO': { x: 52, y: 22 },
+                                'RU': { x: 70, y: 28 }, 'UA': { x: 58, y: 34 }, 'TR': { x: 58, y: 42 },
+                                'IN': { x: 72, y: 48 }, 'CN': { x: 78, y: 40 }, 'JP': { x: 88, y: 38 },
+                                'KR': { x: 85, y: 40 }, 'AU': { x: 85, y: 72 }, 'NZ': { x: 92, y: 78 },
+                                'ZA': { x: 56, y: 75 }, 'NG': { x: 52, y: 55 }, 'EG': { x: 58, y: 48 },
+                                'SA': { x: 62, y: 50 }, 'AE': { x: 65, y: 50 }, 'IL': { x: 58, y: 45 },
+                                'SG': { x: 80, y: 58 }, 'ID': { x: 82, y: 62 }, 'PH': { x: 84, y: 52 },
+                                'TH': { x: 78, y: 52 }, 'VN': { x: 80, y: 52 }, 'MY': { x: 80, y: 58 },
+                            };
+                            
                             return (
                                 <>
-                                    <div className="relative w-full aspect-[2/1] bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-100 overflow-hidden flex items-center justify-center mb-6">
-                                        <svg viewBox="0 0 100 50" className="w-full h-full opacity-20">
-                                            <path d="M20,15 Q25,5 35,15 T50,15 T65,10 T80,15 T90,25 T80,35 T60,40 T40,35 T20,40 T10,30 Z" fill="#6366f1" />
+                                    {/* World Map SVG */}
+                                    <div className="relative w-full aspect-[2/1] bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-slate-200 overflow-hidden mb-6">
+                                        <svg viewBox="0 0 100 85" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+                                            {/* Simple world outline */}
+                                            <defs>
+                                                <linearGradient id="oceanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#e0f2fe" />
+                                                    <stop offset="100%" stopColor="#f0f9ff" />
+                                                </linearGradient>
+                                            </defs>
+                                            <rect fill="url(#oceanGradient)" width="100" height="85"/>
+                                            
+                                            {/* Simplified continent shapes */}
+                                            {/* North America */}
+                                            <path d="M5,15 Q15,10 25,15 L30,25 Q28,35 22,45 L15,50 Q8,45 5,35 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            {/* South America */}
+                                            <path d="M25,52 Q32,50 35,55 L38,70 Q35,80 30,82 L25,78 Q22,70 23,60 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            {/* Europe */}
+                                            <path d="M45,18 Q52,15 58,20 L60,30 Q58,38 52,40 L46,38 Q44,30 45,22 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            {/* Africa */}
+                                            <path d="M45,42 Q55,40 60,45 L62,60 Q58,75 52,78 L45,75 Q42,65 44,50 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            {/* Asia */}
+                                            <path d="M58,15 Q75,12 88,20 L92,35 Q88,50 78,55 L65,52 Q58,45 58,30 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            {/* Australia */}
+                                            <path d="M78,62 Q88,60 92,65 L94,72 Q90,78 84,78 L78,75 Q76,70 78,65 Z" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.3"/>
+                                            
+                                            {/* Country markers */}
+                                            {Object.entries(countryCodeCounts).map(([code, count]) => {
+                                                const pos = regionPositions[code];
+                                                if (!pos) return null;
+                                                const size = Math.min(3 + (count / totalWithLocation) * 5, 8);
+                                                return (
+                                                    <g key={code}>
+                                                        <circle 
+                                                            cx={pos.x} 
+                                                            cy={pos.y} 
+                                                            r={size} 
+                                                            fill="#6366f1" 
+                                                            fillOpacity="0.3"
+                                                        />
+                                                        <circle 
+                                                            cx={pos.x} 
+                                                            cy={pos.y} 
+                                                            r={size * 0.6} 
+                                                            fill="#6366f1"
+                                                        />
+                                                    </g>
+                                                );
+                                            })}
                                         </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="text-center">
-                                                <p className="text-indigo-900 font-bold text-2xl">{Object.keys(countryCounts).length}</p>
-                                                <p className="text-slate-500 text-sm">Countries represented</p>
-                                            </div>
+                                        
+                                        {/* Stats overlay */}
+                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+                                            <p className="text-indigo-900 font-bold text-lg">{countryCount}</p>
+                                            <p className="text-slate-500 text-xs">{countryCount === 1 ? 'Country' : 'Countries'}</p>
                                         </div>
-                                        {/* Animated dots for top countries */}
-                                        {sortedCountries.slice(0, 3).map((_, i) => (
-                                            <circle 
-                                                key={i}
-                                                cx={25 + i * 25} 
-                                                cy={18 + i * 5} 
-                                                r={1 + (2 - i) * 0.3}
-                                                className="absolute fill-indigo-600 animate-ping" 
-                                                style={{animationDelay: `${i * 0.5}s`}} 
-                                            />
-                                        ))}
                                     </div>
                                     
+                                    {/* Country list */}
                                     <div className="space-y-3">
-                                        {sortedCountries.map(([country, count]) => {
+                                        {sortedCountries.slice(0, 6).map(([country, count]) => {
                                             const percentage = Math.round((count / totalWithLocation) * 100);
                                             return (
                                                 <div key={country} className="flex items-center gap-3">
@@ -867,7 +956,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className="text-sm font-medium text-slate-700">{country}</span>
-                                                            <span className="text-xs text-slate-500">{count} votes ({percentage}%)</span>
+                                                            <span className="text-xs text-slate-500">{count} vote{count !== 1 ? 's' : ''} ({percentage}%)</span>
                                                         </div>
                                                         <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
                                                             <div 
@@ -894,50 +983,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     </motion.div>
                 )}
 
-                {/* --- DEVICE BREAKDOWN (shown for admin when there's analytics) --- */}
-                {isAdmin && votes && votes.length > 0 && votes.some((v: any) => v.analytics?.device) && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mt-6"
-                    >
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Settings size={20} className="text-indigo-500"/> Device Breakdown
-                        </h3>
-                        {(() => {
-                            const deviceCounts = { mobile: 0, desktop: 0, tablet: 0, unknown: 0 };
-                            (votes || []).forEach((v: any) => {
-                                const device = v.analytics?.device || 'unknown';
-                                deviceCounts[device as keyof typeof deviceCounts]++;
-                            });
-                            const total = Object.values(deviceCounts).reduce((a, b) => a + b, 0) || 1;
-                            
-                            const devices = [
-                                { key: 'mobile', label: 'Mobile', icon: '📱', color: 'bg-blue-500' },
-                                { key: 'desktop', label: 'Desktop', icon: '💻', color: 'bg-green-500' },
-                                { key: 'tablet', label: 'Tablet', icon: '📲', color: 'bg-purple-500' },
-                            ].filter(d => deviceCounts[d.key as keyof typeof deviceCounts] > 0);
-                            
-                            return (
-                                <div className="grid grid-cols-3 gap-4">
-                                    {devices.map(({ key, label, icon, color }) => {
-                                        const count = deviceCounts[key as keyof typeof deviceCounts];
-                                        const percentage = Math.round((count / total) * 100);
-                                        return (
-                                            <div key={key} className="text-center p-4 bg-slate-50 rounded-xl">
-                                                <div className="text-3xl mb-2">{icon}</div>
-                                                <div className="text-2xl font-black text-slate-800">{percentage}%</div>
-                                                <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
-                                                <div className="text-xs text-slate-400 mt-1">{count} votes</div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })()}
-                    </motion.div>
-                )}
-
                 {/* --- GRID / TABLE VIEW --- */}
                 {viewMode === 'grid' && (
                     <motion.div
@@ -945,91 +990,181 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+                        className="space-y-6"
                     >
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-200">
-                                        <th className="p-4 font-bold text-slate-700 min-w-[150px] sticky left-0 bg-slate-50">Participant</th>
-                                        {poll.options.map(opt => (
-                                            <th key={opt.id} className="p-4 font-bold text-slate-700 min-w-[120px] text-center border-l border-slate-100">
-                                                {opt.text}
-                                            </th>
-                                        ))}
-                                         <th className="p-4 font-bold text-slate-700 min-w-[200px] border-l border-slate-100">Comment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {votes.map((vote: any, i: number) => (
-                                        <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                            <td className="p-4 font-medium text-slate-800 sticky left-0 bg-white group-hover:bg-slate-50 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                                {vote.voterName || 'Anonymous'}
-                                                <div className="text-xs text-slate-400 font-normal">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
-                                            </td>
-                                            {poll.options.map(opt => {
-                                                let cellContent = <span className="text-slate-300">-</span>;
-                                                const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
-                                                
-                                                if (isMatrix && vote.matrixVotes) {
-                                                    const pos = vote.matrixVotes[opt.id];
-                                                    if (pos) {
-                                                        cellContent = <div className="flex flex-col items-center"><span className="text-xs font-bold text-slate-600">X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}</span></div>;
-                                                    }
-                                                } else if (isPairwise && vote.pairwiseVotes) {
-                                                     const voterWins = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id).length;
-                                                     const voterMatches = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id || p.loserId === opt.id).length;
-                                                     if (voterMatches > 0) {
-                                                         cellContent = <span className="text-xs font-bold text-slate-600">{voterWins} / {voterMatches}</span>;
-                                                     }
-                                                } else if (isRating && vote.ratingVotes) {
-                                                    const val = vote.ratingVotes[opt.id];
-                                                    if (val !== undefined) {
-                                                        cellContent = <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded">{val}</span>;
-                                                    }
-                                                } else if (isRanked) {
-                                                    const rank = voteChoices.indexOf(opt.id);
-                                                    if (rank !== -1) {
-                                                        cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;
-                                                    }
-                                                } else if (isDot || isBudget) {
-                                                     const dots = voteChoices.filter((c: string) => c === opt.id).length;
-                                                     if(dots > 0) {
-                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{dots}</span>;
-                                                     }
-                                                } else if (isMeeting) {
-                                                     if (voteChoices.includes(opt.id)) {
-                                                         cellContent = <span className="text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded">Yes</span>;
-                                                     } else if (vote.choicesMaybe?.includes(opt.id)) {
-                                                         cellContent = <span className="text-amber-500 font-bold bg-amber-50 px-2 py-1 rounded">Maybe</span>;
-                                                     }
-                                                } else {
-                                                     if (voteChoices.includes(opt.id)) {
-                                                         cellContent = <Check size={20} className="text-emerald-500 mx-auto" />;
-                                                     }
-                                                }
-                                                
-                                                return (
-                                                    <td key={opt.id} className="p-4 text-center border-l border-slate-100">
-                                                        {cellContent}
+                        {/* Main Table */}
+                        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                                            <th className="p-4 font-bold text-slate-700 min-w-[140px] sticky left-0 bg-slate-50">#</th>
+                                            <th className="p-4 font-bold text-slate-700 min-w-[80px] text-center border-l border-slate-200">🌍</th>
+                                            <th className="p-4 font-bold text-slate-700 min-w-[80px] text-center border-l border-slate-200">📱</th>
+                                            {poll.options.map((opt, idx) => (
+                                                <th key={opt.id} className="p-4 font-bold text-slate-700 min-w-[100px] text-center border-l border-slate-200">
+                                                    <span className="inline-block w-6 h-6 rounded-full mr-1 align-middle" style={{ backgroundColor: `hsl(${idx * 360 / poll.options.length}, 70%, 80%)` }}></span>
+                                                    <span className="text-xs">{opt.text.length > 12 ? opt.text.substring(0, 12) + '...' : opt.text}</span>
+                                                </th>
+                                            ))}
+                                            <th className="p-4 font-bold text-slate-700 min-w-[150px] border-l border-slate-200">💬</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {votes.map((vote: any, i: number) => {
+                                            const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
+                                            const countryCode = vote.analytics?.country;
+                                            const device = vote.analytics?.device;
+                                            
+                                            return (
+                                                <tr key={i} className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                                                    <td className="p-3 font-medium text-slate-600 sticky left-0 bg-inherit border-r border-slate-100">
+                                                        <span className="text-slate-400 text-xs">#{i + 1}</span>
+                                                        <div className="text-xs text-slate-400">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
                                                     </td>
-                                                );
-                                            })}
-                                            <td className="p-4 text-slate-500 border-l border-slate-100 italic">
-                                                {vote.comment || ''}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {votes.length === 0 && (
-                                        <tr>
-                                             <td colSpan={poll.options.length + 2} className="p-8 text-center text-slate-400 italic">
-                                                 No votes recorded yet.
-                                             </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                                    <td className="p-3 text-center border-l border-slate-100">
+                                                        {countryCode ? (
+                                                            <span title={getCountryName(countryCode)} className="text-lg">
+                                                                {getCountryFlag(getCountryName(countryCode))}
+                                                            </span>
+                                                        ) : <span className="text-slate-300">-</span>}
+                                                    </td>
+                                                    <td className="p-3 text-center border-l border-slate-100">
+                                                        {device === 'mobile' ? '📱' : device === 'desktop' ? '💻' : device === 'tablet' ? '📲' : <span className="text-slate-300">-</span>}
+                                                    </td>
+                                                    {poll.options.map((opt, idx) => {
+                                                        let cellContent = <span className="text-slate-200">-</span>;
+                                                        const bgColor = `hsl(${idx * 360 / poll.options.length}, 70%, 95%)`;
+                                                        const textColor = `hsl(${idx * 360 / poll.options.length}, 70%, 35%)`;
+                                                        
+                                                        if (isMatrix && vote.matrixVotes) {
+                                                            const pos = vote.matrixVotes[opt.id];
+                                                            if (pos) {
+                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>({Math.round(pos.x)},{Math.round(pos.y)})</span>;
+                                                            }
+                                                        } else if (isPairwise && vote.pairwiseVotes) {
+                                                            const voterWins = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id).length;
+                                                            if (voterWins > 0) {
+                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>{voterWins}W</span>;
+                                                            }
+                                                        } else if (isRating && vote.ratingVotes) {
+                                                            const val = vote.ratingVotes[opt.id];
+                                                            if (val !== undefined) {
+                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>{val}</span>;
+                                                            }
+                                                        } else if (isRanked) {
+                                                            const rank = voteChoices.indexOf(opt.id);
+                                                            if (rank !== -1) {
+                                                                cellContent = <span className="font-bold w-6 h-6 rounded-full flex items-center justify-center mx-auto text-xs" style={{ backgroundColor: bgColor, color: textColor }}>{rank + 1}</span>;
+                                                            }
+                                                        } else if (isDot || isBudget) {
+                                                            const dots = voteChoices.filter((c: string) => c === opt.id).length;
+                                                            if (dots > 0) {
+                                                                cellContent = <span className="font-bold px-2 py-1 rounded-full text-xs" style={{ backgroundColor: bgColor, color: textColor }}>{dots}</span>;
+                                                            }
+                                                        } else if (isMeeting) {
+                                                            if (voteChoices.includes(opt.id)) {
+                                                                cellContent = <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
+                                                            } else if (vote.choicesMaybe?.includes(opt.id)) {
+                                                                cellContent = <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
+                                                            }
+                                                        } else {
+                                                            if (voteChoices.includes(opt.id)) {
+                                                                cellContent = <span className="font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
+                                                            }
+                                                        }
+                                                        
+                                                        return (
+                                                            <td key={opt.id} className="p-3 text-center border-l border-slate-100">
+                                                                {cellContent}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                    <td className="p-3 text-slate-500 border-l border-slate-100 text-xs max-w-[150px] truncate" title={vote.comment || ''}>
+                                                        {vote.comment ? `"${vote.comment.substring(0, 30)}${vote.comment.length > 30 ? '...' : ''}"` : ''}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {votes.length === 0 && (
+                                            <tr>
+                                                <td colSpan={poll.options.length + 4} className="p-8 text-center text-slate-400 italic">
+                                                    No votes recorded yet.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                        
+                        {/* Insights Section */}
+                        {votes.length > 0 && votes.some((v: any) => v.analytics?.country) && (
+                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
+                                <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Activity size={18} className="text-indigo-500" /> Quick Insights
+                                </h4>
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {/* Top choice by country */}
+                                    {(() => {
+                                        const countryChoices: Record<string, Record<string, number>> = {};
+                                        votes.forEach((v: any) => {
+                                            const country = v.analytics?.country;
+                                            if (!country) return;
+                                            const countryName = getCountryName(country);
+                                            if (!countryChoices[countryName]) countryChoices[countryName] = {};
+                                            const choices = v.choices || v.selectedOptionIds || [];
+                                            choices.forEach((c: string) => {
+                                                countryChoices[countryName][c] = (countryChoices[countryName][c] || 0) + 1;
+                                            });
+                                        });
+                                        
+                                        return Object.entries(countryChoices).slice(0, 3).map(([country, choices]) => {
+                                            const topChoice = Object.entries(choices).sort((a, b) => b[1] - a[1])[0];
+                                            if (!topChoice) return null;
+                                            return (
+                                                <div key={country} className="bg-white rounded-xl p-4 shadow-sm">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xl">{getCountryFlag(country)}</span>
+                                                        <span className="font-medium text-slate-700">{country}</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600">
+                                                        Top pick: <strong className="text-indigo-600">{getOptionText(topChoice[0])}</strong>
+                                                    </p>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                    
+                                    {/* Device preference */}
+                                    {(() => {
+                                        const deviceCounts: Record<string, number> = {};
+                                        votes.forEach((v: any) => {
+                                            const device = v.analytics?.device;
+                                            if (device) deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+                                        });
+                                        const topDevice = Object.entries(deviceCounts).sort((a, b) => b[1] - a[1])[0];
+                                        if (!topDevice) return null;
+                                        const icon = topDevice[0] === 'mobile' ? '📱' : topDevice[0] === 'desktop' ? '💻' : '📲';
+                                        const pct = Math.round((topDevice[1] / votes.length) * 100);
+                                        return (
+                                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-xl">{icon}</span>
+                                                    <span className="font-medium text-slate-700">Most used device</span>
+                                                </div>
+                                                <p className="text-sm text-slate-600">
+                                                    <strong className="text-indigo-600">{topDevice[0].charAt(0).toUpperCase() + topDevice[0].slice(1)}</strong> ({pct}%)
+                                                </p>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                                <p className="text-xs text-slate-400 mt-4 flex items-center gap-1">
+                                    <Info size={12} /> Insights based on anonymous aggregate data. No personal information stored.
+                                </p>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 

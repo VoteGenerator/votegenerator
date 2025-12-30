@@ -275,11 +275,11 @@ const AdminDashboard: React.FC = () => {
                 }
             }
 
-            // Case 4: Check if session has expired
-            if (sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date()) {
-                setError('Your plan has expired. Please renew to continue.');
-                setLoading(false);
-                return;
+            // Case 4: Check if session has expired - but still allow access to existing polls
+            const isExpired = sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date();
+            if (isExpired) {
+                // Mark as expired but don't block access
+                sessionData.isExpired = true;
             }
 
             setSession(sessionData);
@@ -290,6 +290,14 @@ const AdminDashboard: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Check if plan is expired
+    const isPlanExpired = useMemo(() => {
+        if (!session) return false;
+        if ((session as any).isExpired) return true;
+        if (session.expiresAt && new Date(session.expiresAt) < new Date()) return true;
+        return false;
+    }, [session]);
 
     // Filtered and paginated polls
     const filteredPolls = useMemo(() => {
@@ -399,6 +407,8 @@ const AdminDashboard: React.FC = () => {
 
     const canCreateMorePolls = () => {
         if (!session) return false;
+        // Block creation if plan is expired
+        if (isPlanExpired) return false;
         const config = TIER_CONFIG[session.tier];
         // For Starter/Pro, only count LIVE polls toward the limit
         if (config.requiresActivation) {
@@ -470,18 +480,23 @@ const AdminDashboard: React.FC = () => {
                     </nav>
                     
                     <div className="flex items-center gap-3">
-                        <div className={`px-4 py-2 bg-gradient-to-r ${config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                            {config.icon} {config.label}
-                            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">
-                                {session?.expiresAt ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd' : ''}
+                        <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                            {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
+                            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                {isPlanExpired 
+                                    ? 'Expired' 
+                                    : session?.expiresAt 
+                                        ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
+                                        : ''
+                                }
                             </span>
                         </div>
-                        {tier !== 'unlimited' && (
+                        {(tier !== 'unlimited' || isPlanExpired) && (
                             <a href="/#pricing" className="hidden md:flex px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition items-center gap-2">
-                                <Sparkles size={16} /> Upgrade
+                                <Sparkles size={16} /> {isPlanExpired ? 'Renew' : 'Upgrade'}
                             </a>
                         )}
-                        {isUnlimited && (
+                        {isUnlimited && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
@@ -518,6 +533,35 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </motion.div>
+
+                        {/* Plan Expired Banner */}
+                        {isPlanExpired && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-red-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-red-800">Your Plan Has Expired</p>
+                                                <p className="text-sm text-red-600">
+                                                    You can still view your existing polls and results, but you can't create new polls.
+                                                    Renew your plan to continue creating polls.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <a 
+                                            href="/#pricing" 
+                                            className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
+                                        >
+                                            <Sparkles size={16} />
+                                            Renew Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Dashboard Header with Search */}
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">

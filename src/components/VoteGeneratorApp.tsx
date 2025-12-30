@@ -152,12 +152,13 @@ const VoteGeneratorApp: React.FC = () => {
             const headers = ['#', 'Date', 'Time', 'Voter Name', 'Country', 'Device', 'Choices', 'Comment'];
             const csvRows = [headers.join(',')];
 
-            votes.forEach((vote, idx) => {
+            votes.forEach((v, idx) => {
+                const vote = v as any; // Cast to any for dynamic property access
                 const date = new Date(vote.votedAt || vote.timestamp || Date.now());
                 
                 // Handle different choice formats
                 const choices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
-                const choiceTexts = choices.map((id: string) => {
+                const choiceTexts = (choices as string[]).map((id: string) => {
                     const option = viewState.poll.options.find(o => o.id === id);
                     return option ? option.text.replace(/,/g, ' ').replace(/"/g, "'") : 'Unknown';
                 });

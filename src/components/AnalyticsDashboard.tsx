@@ -435,39 +435,52 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         )}
                     </div>
                     
-                    {/* Bar Chart */}
-                    <div className="h-32 flex items-end gap-1">
-                        {analytics.hourlyDistributionFormatted.map((item, i) => {
-                            const maxVotes = Math.max(...analytics.hourlyDistributionFormatted!.map(h => h.votes), 1);
-                            const height = (item.votes / maxVotes) * 100;
-                            const isCurrentHour = new Date().getHours() === item.hour;
-                            
-                            return (
-                                <div 
-                                    key={i} 
-                                    className="flex-1 flex flex-col items-center group relative"
-                                >
-                                    <div 
-                                        className={`w-full rounded-t transition-all ${
-                                            isCurrentHour ? 'bg-indigo-500' : 'bg-indigo-200 hover:bg-indigo-400'
-                                        }`}
-                                        style={{ height: `${Math.max(height, 2)}%` }}
-                                    />
-                                    {/* Tooltip */}
-                                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                                        {item.hourFormatted}: {item.votes} votes
-                                    </div>
-                                    {/* Hour label (every 6 hours) */}
-                                    {i % 6 === 0 && (
-                                        <div className="text-xs text-slate-400 mt-1">{item.hour}h</div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-2 text-center">
-                        Times shown in your local timezone
-                    </div>
+                    {/* Show message if votes are too concentrated */}
+                    {analytics.totalVotes < 10 && analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length < 3 ? (
+                        <div className="text-center py-6">
+                            <Clock size={32} className="text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm text-slate-500">Need more votes to show hourly patterns</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Currently {analytics.totalVotes} vote{analytics.totalVotes !== 1 ? 's' : ''} in {analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length} hour{analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Bar Chart */}
+                            <div className="h-32 flex items-end gap-1">
+                                {analytics.hourlyDistributionFormatted.map((item, i) => {
+                                    const maxVotes = Math.max(...analytics.hourlyDistributionFormatted!.map(h => h.votes), 1);
+                                    const height = (item.votes / maxVotes) * 100;
+                                    const isCurrentHour = new Date().getHours() === item.hour;
+                                    
+                                    return (
+                                        <div 
+                                            key={i} 
+                                            className="flex-1 flex flex-col items-center group relative"
+                                        >
+                                            <div 
+                                                className={`w-full rounded-t transition-all ${
+                                                    isCurrentHour ? 'bg-indigo-500' : item.votes > 0 ? 'bg-indigo-300 hover:bg-indigo-400' : 'bg-slate-100'
+                                                }`}
+                                                style={{ height: `${Math.max(height, item.votes > 0 ? 8 : 2)}%` }}
+                                            />
+                                            {/* Tooltip */}
+                                            <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                                                {item.hourFormatted}: {item.votes} vote{item.votes !== 1 ? 's' : ''}
+                                            </div>
+                                            {/* Hour label (every 6 hours) */}
+                                            {i % 6 === 0 && (
+                                                <div className="text-xs text-slate-400 mt-1">{item.hour}h</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-2 text-center">
+                                Times shown in your local timezone
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 

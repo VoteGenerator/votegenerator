@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle
+    Home, AlertTriangle, RefreshCw
 } from 'lucide-react';
 
 // ============================================================================
@@ -822,16 +822,52 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                 </div>
 
-                                {tier !== 'unlimited' && (
-                                    <a href="/#pricing" className="block w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium text-center transition mt-3">
+                                {tier !== 'unlimited' && !isPlanExpired && (
+                                    <a href="/#pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
                                         Upgrade Plan
                                     </a>
                                 )}
 
+                                {/* Extend/Renew Button - Smart logic */}
                                 {session.expiresAt && (
-                                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-500">
-                                        <Calendar size={14} />
-                                        <span>Expires: {new Date(session.expiresAt).toLocaleDateString()}</span>
+                                    <div className="mt-3 pt-3 border-t border-slate-100">
+                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar size={14} />
+                                                {isPlanExpired ? 'Expired' : 'Expires'}: {new Date(session.expiresAt).toLocaleDateString()}
+                                            </span>
+                                            {!isPlanExpired && (
+                                                <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                    Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30 
+                                                        ? 'bg-amber-100 text-amber-700' 
+                                                        : 'bg-emerald-100 text-emerald-700'
+                                                }`}>
+                                                    {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Show Extend button for same tier, or Renew if expired */}
+                                        <button 
+                                            onClick={() => {
+                                                // Navigate to pricing with current tier pre-selected
+                                                window.location.href = `/#pricing?extend=${tier}`;
+                                            }}
+                                            className={`w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 ${
+                                                isPlanExpired 
+                                                    ? 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white' 
+                                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                            }`}
+                                        >
+                                            <RefreshCw size={16} />
+                                            {isPlanExpired ? 'Renew Plan' : `Extend ${config.label}`}
+                                        </button>
+                                        
+                                        {!isPlanExpired && (
+                                            <p className="text-xs text-slate-400 mt-2 text-center">
+                                                Extend adds time to your current expiry date
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </div>

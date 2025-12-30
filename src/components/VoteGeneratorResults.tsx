@@ -949,8 +949,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                         cellContent = <div className="flex flex-col items-center"><span className="text-xs font-bold text-slate-600">X:{Math.round(pos.x)}, Y:{Math.round(pos.y)}</span></div>;
                                                     }
                                                 } else if (isPairwise && vote.pairwiseVotes) {
-                                                     const voterWins = vote.pairwiseVotes.filter(p => p.winnerId === opt.id).length;
-                                                     const voterMatches = vote.pairwiseVotes.filter(p => p.winnerId === opt.id || p.loserId === opt.id).length;
+                                                     const voterWins = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id).length;
+                                                     const voterMatches = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id || p.loserId === opt.id).length;
                                                      if (voterMatches > 0) {
                                                          cellContent = <span className="text-xs font-bold text-slate-600">{voterWins} / {voterMatches}</span>;
                                                      }
@@ -965,7 +965,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;
                                                     }
                                                 } else if (isDot || isBudget) {
-                                                     const dots = voteChoices.filter(c => c === opt.id).length;
+                                                     const dots = voteChoices.filter((c: string) => c === opt.id).length;
                                                      if(dots > 0) {
                                                          cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{dots}</span>;
                                                      }

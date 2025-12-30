@@ -35,7 +35,7 @@ interface AnalyticsData {
     peakHour?: number;
     peakHourFormatted?: string;
     peakHourVotes?: number;
-    dailyTrend?: Record<string, number>;
+    dailyTrend?: Array<{ date: string; count: number }>;
     dailyAverage?: number;
     hourlyDistribution?: Record<number, number>;
     hourlyDistributionFormatted?: Array<{ hour: number; hourFormatted: string; votes: number; percentage: number }>;
@@ -151,8 +151,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         if (analytics.countryStats?.topCountries) {
             rows.push('GEOGRAPHIC DISTRIBUTION');
             rows.push('Country,Votes,Percentage');
-            analytics.countryStats.topCountries.forEach((c: any) => {
-                rows.push(`${c.country},${c.count},${c.percentage}%`);
+            analytics.countryStats.topCountries.forEach((c) => {
+                rows.push(`${c.country},${c.votes},${c.percentage}%`);
             });
             rows.push('');
         }
@@ -161,8 +161,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         if (analytics.hourlyDistributionFormatted) {
             rows.push('HOURLY DISTRIBUTION (UTC)');
             rows.push('Hour,Votes');
-            analytics.hourlyDistributionFormatted.forEach((h: any) => {
-                rows.push(`${h.hour},${h.count}`);
+            analytics.hourlyDistributionFormatted.forEach((h) => {
+                rows.push(`${h.hour},${h.votes}`);
             });
             rows.push('');
         }
@@ -171,7 +171,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         if (analytics.dailyTrend) {
             rows.push('DAILY TREND');
             rows.push('Date,Votes');
-            analytics.dailyTrend.forEach((d: any) => {
+            analytics.dailyTrend.forEach((d) => {
                 rows.push(`${d.date},${d.count}`);
             });
             rows.push('');

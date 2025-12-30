@@ -14,7 +14,15 @@ import {
     Eye,
     EyeOff,
     Crown,
-    Sparkles
+    Sparkles,
+    Smartphone,
+    Monitor,
+    Tablet,
+    Download,
+    Calendar,
+    Users,
+    Zap,
+    ExternalLink
 } from 'lucide-react';
 
 interface AnalyticsData {
@@ -35,6 +43,7 @@ interface AnalyticsData {
     dayOfWeekDistribution?: Record<string, number>;
     mostActiveDay?: { day: string; votes: number };
     utmSources?: Record<string, number>;
+    deviceBreakdown?: Record<string, number>;
     countryStats?: {
         topCountries: Array<{ country: string; votes: number; percentage: number }>;
         countriesRepresented: number;
@@ -54,8 +63,16 @@ interface AnalyticsData {
 interface AnalyticsDashboardProps {
     pollId: string;
     adminKey: string;
-    currentTier?: 'free' | 'one-time' | 'pro' | 'pro-plus';
+    currentTier?: 'free' | 'starter' | 'pro_event' | 'unlimited';
 }
+
+// Tier display config
+const TIER_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+    'free': { label: 'Free', color: 'text-slate-600', bgColor: 'bg-slate-100' },
+    'starter': { label: 'Starter', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+    'pro_event': { label: 'Pro Event', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    'unlimited': { label: 'Unlimited', color: 'text-amber-700', bgColor: 'bg-amber-100' }
+};
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ 
     pollId, 
@@ -67,8 +84,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
 
-    const isPro = currentTier === 'pro' || currentTier === 'pro-plus' || currentTier === 'one-time';
-    const isProPlus = currentTier === 'pro-plus';
+    // All paid tiers get analytics
+    const isPaid = currentTier !== 'free';
+    const isUnlimited = currentTier === 'unlimited';
+    const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG['free'];
 
     useEffect(() => {
         fetchAnalytics();
@@ -92,6 +111,35 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         } finally {
             setLoading(false);
         }
+    };
+
+    const exportAnalytics = () => {
+        if (!analytics) return;
+        
+        const exportData = {
+            pollId,
+            exportedAt: new Date().toISOString(),
+            summary: {
+                totalVotes: analytics.totalVotes,
+                firstVote: analytics.firstVote,
+                lastVote: analytics.lastVote,
+                peakHour: analytics.peakHourFormatted,
+                velocityTrend: analytics.velocityTrend
+            },
+            deviceBreakdown: analytics.deviceBreakdown,
+            countryStats: analytics.countryStats?.topCountries,
+            hourlyDistribution: analytics.hourlyDistributionFormatted,
+            dailyTrend: analytics.dailyTrend,
+            trafficSources: analytics.utmSources
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `poll-analytics-${pollId}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     if (loading) {
@@ -137,32 +185,57 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        if (diffMins < 60) return `${diffMins} min ago`;
-        if (diffHours < 24) return `${diffHours} hours ago`;
-        return `${diffDays} days ago`;
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return `${diffDays}d ago`;
     };
+
+    // Convert UTC peak hour to local time
+    const getLocalPeakHour = (utcHour: number) => {
+        const now = new Date();
+        now.setUTCHours(utcHour, 0, 0, 0);
+        return now.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+    };
+
+    // Get velocity change percentage
+    const getVelocityInfo = () => {
+        const trend = analytics.velocityTrend;
+        if (trend === 'increasing') return { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'Increasing', desc: 'More votes in last 24h vs previous' };
+        if (trend === 'decreasing') return { icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-50', text: 'Decreasing', desc: 'Fewer votes in last 24h vs previous' };
+        return { icon: Minus, color: 'text-slate-500', bg: 'bg-slate-50', text: 'Stable', desc: 'Similar activity as previous 24h' };
+    };
+
+    const velocityInfo = getVelocityInfo();
+    const VelocityIcon = velocityInfo.icon;
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <BarChart3 size={20} className="text-indigo-600" />
                     Analytics
-                    {isPro && (
-                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
-                            {isProPlus ? 'PRO+' : 'PRO'}
-                        </span>
-                    )}
+                    <span className={`px-2 py-0.5 ${tierConfig.bgColor} ${tierConfig.color} text-xs font-bold rounded-full`}>
+                        {tierConfig.label}
+                    </span>
                 </h3>
-                <button
-                    onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
-                    className="flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
-                >
-                    <Info size={14} />
-                    Privacy Info
-                    {showPrivacyInfo ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={exportAnalytics}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
+                        <Download size={14} />
+                        Export
+                    </button>
+                    <button
+                        onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
+                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
+                    >
+                        <Info size={14} />
+                        Privacy
+                        {showPrivacyInfo ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                </div>
             </div>
 
             {/* Privacy Info Panel */}
@@ -194,270 +267,262 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                             <ul className="space-y-1 text-slate-500">
                                 {analytics.privacyInfo.whatWeDontTrack.map((item, i) => (
                                     <li key={i} className="flex items-center gap-2">
-                                        <EyeOff size={12} className="text-slate-400" />
+                                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
                                         {item}
                                     </li>
                                 ))}
                             </ul>
                         </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-400">
-                        {analytics.privacyInfo.countryTracking}
-                    </p>
                 </motion.div>
             )}
 
             {/* ============================================ */}
-            {/* FREE TIER: Basic Stats */}
+            {/* KEY METRICS - Always visible */}
             {/* ============================================ */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <div className="flex items-center gap-2 mb-4">
-                    <Sparkles size={16} className="text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        Basic Stats
-                    </span>
-                    <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
-                        FREE
-                    </span>
-                </div>
-                
-                <div className="text-center">
-                    <div className="text-5xl font-black text-slate-800 mb-1">
-                        {analytics.totalVotes.toLocaleString()}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Total Votes */}
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                        <Users size={14} />
+                        Total Votes
                     </div>
-                    <div className="text-slate-500">Total Votes</div>
+                    <div className="text-2xl font-black text-slate-800">{analytics.totalVotes}</div>
+                </div>
+
+                {/* First Vote */}
+                {analytics.firstVote && (
+                    <div className="bg-white rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                            <Calendar size={14} />
+                            First Vote
+                        </div>
+                        <div className="text-lg font-bold text-slate-800">{formatTimeAgo(analytics.firstVote)}</div>
+                        <div className="text-xs text-slate-400">{formatDate(analytics.firstVote)}</div>
+                    </div>
+                )}
+
+                {/* Last Vote */}
+                {analytics.lastVote && (
+                    <div className="bg-white rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                            <Clock size={14} />
+                            Last Vote
+                        </div>
+                        <div className="text-lg font-bold text-slate-800">{formatTimeAgo(analytics.lastVote)}</div>
+                        <div className="text-xs text-slate-400">{formatDate(analytics.lastVote)}</div>
+                    </div>
+                )}
+
+                {/* Velocity Trend */}
+                <div className={`rounded-xl border p-4 ${velocityInfo.bg} border-slate-200`}>
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                        <Zap size={14} />
+                        Velocity
+                    </div>
+                    <div className={`text-lg font-bold flex items-center gap-2 ${velocityInfo.color}`}>
+                        <VelocityIcon size={18} />
+                        {velocityInfo.text}
+                    </div>
+                    <div className="text-xs text-slate-500">{velocityInfo.desc}</div>
                 </div>
             </div>
 
             {/* ============================================ */}
-            {/* PRO TIER: Timeline & Trends */}
+            {/* DEVICE BREAKDOWN */}
             {/* ============================================ */}
-            {isPro && analytics.firstVote ? (
+            {analytics.deviceBreakdown && Object.values(analytics.deviceBreakdown).some(v => v > 0) && (
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                        <Clock size={16} className="text-indigo-500" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Vote Timeline
-                        </span>
-                        <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded">
-                            PRO
-                        </span>
+                        <Monitor size={16} className="text-blue-500" />
+                        <span className="text-sm font-semibold text-slate-700">Device Breakdown</span>
                     </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-slate-50 rounded-lg p-3">
-                            <div className="text-xs text-slate-500 mb-1">First Vote</div>
-                            <div className="font-semibold text-slate-800">{formatDate(analytics.firstVote)}</div>
-                        </div>
-                        <div className="bg-slate-50 rounded-lg p-3">
-                            <div className="text-xs text-slate-500 mb-1">Last Vote</div>
-                            <div className="font-semibold text-slate-800">{formatDate(analytics.lastVote!)}</div>
-                            <div className="text-xs text-slate-400">{formatTimeAgo(analytics.lastVote!)}</div>
-                        </div>
-                        <div className="bg-slate-50 rounded-lg p-3">
-                            <div className="text-xs text-slate-500 mb-1">Peak Hour</div>
-                            <div className="font-semibold text-slate-800">{analytics.peakHourFormatted}</div>
-                            <div className="text-xs text-slate-400">{analytics.peakHourVotes} votes</div>
-                        </div>
-                        <div className="bg-slate-50 rounded-lg p-3">
-                            <div className="text-xs text-slate-500 mb-1">Daily Average</div>
-                            <div className="font-semibold text-slate-800">{analytics.dailyAverage}</div>
-                            <div className="text-xs text-slate-400">votes/day</div>
-                        </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        {[
+                            { key: 'mobile', label: 'Mobile', icon: Smartphone, color: 'text-blue-600', bg: 'bg-blue-50' },
+                            { key: 'desktop', label: 'Desktop', icon: Monitor, color: 'text-green-600', bg: 'bg-green-50' },
+                            { key: 'tablet', label: 'Tablet', icon: Tablet, color: 'text-purple-600', bg: 'bg-purple-50' }
+                        ].map(({ key, label, icon: Icon, color, bg }) => {
+                            const count = analytics.deviceBreakdown?.[key] || 0;
+                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a, b) => a + b, 0) || 1;
+                            const percentage = Math.round((count / total) * 100);
+                            
+                            if (count === 0) return null;
+                            
+                            return (
+                                <div key={key} className={`text-center p-4 ${bg} rounded-xl`}>
+                                    <Icon size={24} className={`${color} mx-auto mb-2`} />
+                                    <div className="text-2xl font-black text-slate-800">{percentage}%</div>
+                                    <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
+                                    <div className="text-xs text-slate-400 mt-1">{count} votes</div>
+                                </div>
+                            );
+                        })}
                     </div>
-
-                    {/* Daily Trend Chart */}
-                    {analytics.dailyTrend && Object.keys(analytics.dailyTrend).length > 1 && (
-                        <div>
-                            <div className="text-xs font-medium text-slate-500 mb-2">Daily Voting Trend</div>
-                            <div className="flex items-end gap-1 h-24">
-                                {Object.entries(analytics.dailyTrend)
-                                    .sort((a, b) => a[0].localeCompare(b[0]))
-                                    .slice(-14) // Last 14 days
-                                    .map(([day, count], i) => {
-                                        const maxCount = Math.max(...Object.values(analytics.dailyTrend!));
-                                        const height = (count / maxCount) * 100;
-                                        return (
-                                            <div key={day} className="flex-1 flex flex-col items-center">
-                                                <div 
-                                                    className="w-full bg-indigo-500 rounded-t transition-all hover:bg-indigo-600"
-                                                    style={{ height: `${Math.max(height, 4)}%` }}
-                                                    title={`${day}: ${count} votes`}
-                                                />
-                                                {i % 2 === 0 && (
-                                                    <div className="text-[10px] text-slate-400 mt-1">
-                                                        {new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        </div>
-                    )}
                 </div>
-            ) : !isPro && (
-                <LockedFeature 
-                    title="Vote Timeline"
-                    features={['First/last vote timestamps', 'Peak voting hour', 'Daily trends chart']}
-                    requiredTier="Pro"
-                />
             )}
 
             {/* ============================================ */}
-            {/* PRO+ TIER: Advanced Analytics */}
+            {/* HOURLY DISTRIBUTION - Bar Chart */}
             {/* ============================================ */}
-            {isProPlus && analytics.hourlyDistributionFormatted ? (
+            {analytics.hourlyDistributionFormatted && analytics.hourlyDistributionFormatted.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Clock size={16} className="text-indigo-500" />
+                            <span className="text-sm font-semibold text-slate-700">Hourly Distribution</span>
+                        </div>
+                        {analytics.peakHour !== undefined && (
+                            <div className="text-xs text-slate-500">
+                                Peak: <span className="font-semibold text-indigo-600">{getLocalPeakHour(analytics.peakHour)}</span>
+                                {analytics.peakHourVotes && ` (${analytics.peakHourVotes} votes)`}
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Bar Chart */}
+                    <div className="h-32 flex items-end gap-1">
+                        {analytics.hourlyDistributionFormatted.map((item, i) => {
+                            const maxVotes = Math.max(...analytics.hourlyDistributionFormatted!.map(h => h.votes), 1);
+                            const height = (item.votes / maxVotes) * 100;
+                            const isCurrentHour = new Date().getHours() === item.hour;
+                            
+                            return (
+                                <div 
+                                    key={i} 
+                                    className="flex-1 flex flex-col items-center group relative"
+                                >
+                                    <div 
+                                        className={`w-full rounded-t transition-all ${
+                                            isCurrentHour ? 'bg-indigo-500' : 'bg-indigo-200 hover:bg-indigo-400'
+                                        }`}
+                                        style={{ height: `${Math.max(height, 2)}%` }}
+                                    />
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                                        {item.hourFormatted}: {item.votes} votes
+                                    </div>
+                                    {/* Hour label (every 6 hours) */}
+                                    {i % 6 === 0 && (
+                                        <div className="text-xs text-slate-400 mt-1">{item.hour}h</div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2 text-center">
+                        Times shown in your local timezone
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================ */}
+            {/* DAILY TREND */}
+            {/* ============================================ */}
+            {analytics.dailyTrend && Object.keys(analytics.dailyTrend).length > 1 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-emerald-500" />
+                            <span className="text-sm font-semibold text-slate-700">Daily Trend</span>
+                        </div>
+                        {analytics.dailyAverage && (
+                            <div className="text-xs text-slate-500">
+                                Average: <span className="font-semibold text-emerald-600">{analytics.dailyAverage} votes/day</span>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                        {Object.entries(analytics.dailyTrend)
+                            .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+                            .slice(0, 7)
+                            .map(([date, count]) => {
+                                const maxCount = Math.max(...Object.values(analytics.dailyTrend!), 1);
+                                const percentage = (count / maxCount) * 100;
+                                const dateObj = new Date(date);
+                                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                
+                                return (
+                                    <div key={date} className="flex items-center gap-3">
+                                        <div className="w-20 text-xs text-slate-500">
+                                            <span className="font-medium">{dayName}</span> {dateStr}
+                                        </div>
+                                        <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                            <div 
+                                                className="bg-emerald-500 h-full rounded-full transition-all"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                        <div className="w-12 text-xs text-slate-600 text-right font-medium">{count}</div>
+                                    </div>
+                                );
+                            })}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================ */}
+            {/* TRAFFIC SOURCES */}
+            {/* ============================================ */}
+            {analytics.utmSources && Object.keys(analytics.utmSources).length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
                     <div className="flex items-center gap-2 mb-4">
-                        <TrendingUp size={16} className="text-purple-500" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Advanced Analytics
-                        </span>
-                        <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-                            PRO+
-                        </span>
+                        <ExternalLink size={16} className="text-purple-500" />
+                        <span className="text-sm font-semibold text-slate-700">Traffic Sources</span>
                     </div>
-
-                    {/* Velocity Indicator */}
-                    {analytics.velocityTrend && (
-                        <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50 rounded-lg">
-                            <div className={`p-2 rounded-full ${
-                                analytics.velocityTrend === 'increasing' ? 'bg-green-100' :
-                                analytics.velocityTrend === 'decreasing' ? 'bg-red-100' : 'bg-slate-100'
-                            }`}>
-                                {analytics.velocityTrend === 'increasing' ? (
-                                    <TrendingUp size={18} className="text-green-600" />
-                                ) : analytics.velocityTrend === 'decreasing' ? (
-                                    <TrendingDown size={18} className="text-red-600" />
-                                ) : (
-                                    <Minus size={18} className="text-slate-500" />
-                                )}
-                            </div>
-                            <div>
-                                <div className="font-medium text-slate-800">
-                                    Voting is {analytics.velocityTrend}
-                                </div>
-                                <div className="text-xs text-slate-500">
-                                    Compared to when poll started
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Hourly Distribution */}
-                    <div className="mb-6">
-                        <div className="text-xs font-medium text-slate-500 mb-2">Hourly Distribution</div>
-                        <div className="grid grid-cols-12 gap-1">
-                            {analytics.hourlyDistributionFormatted
-                                .filter((_, i) => i % 2 === 0) // Show every 2 hours
-                                .map(({ hour, hourFormatted, votes, percentage }) => (
-                                    <div key={hour} className="text-center">
-                                        <div 
-                                            className="bg-purple-500 rounded-t mx-auto transition-all"
-                                            style={{ 
-                                                height: `${Math.max(percentage, 2)}px`,
-                                                maxHeight: '60px',
-                                                width: '100%'
-                                            }}
-                                            title={`${hourFormatted}: ${votes} votes (${percentage}%)`}
-                                        />
-                                        <div className="text-[9px] text-slate-400 mt-1">
-                                            {hour}
+                    
+                    <div className="space-y-3">
+                        {Object.entries(analytics.utmSources)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5)
+                            .map(([source, count]) => {
+                                const percentage = Math.round((count / analytics.totalVotes) * 100);
+                                return (
+                                    <div key={source} className="flex items-center gap-3">
+                                        <div className="w-28 text-sm text-slate-700 font-medium truncate" title={source}>
+                                            {source}
+                                        </div>
+                                        <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                            <div 
+                                                className="bg-purple-500 h-full rounded-full"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                        <div className="w-16 text-xs text-slate-500 text-right">
+                                            {count} ({percentage}%)
                                         </div>
                                     </div>
-                                ))}
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                            <span>12 AM</span>
-                            <span>12 PM</span>
-                            <span>11 PM</span>
-                        </div>
+                                );
+                            })}
                     </div>
-
-                    {/* Day of Week */}
-                    {analytics.dayOfWeekDistribution && (
-                        <div className="mb-6">
-                            <div className="text-xs font-medium text-slate-500 mb-2">Day of Week</div>
-                            <div className="grid grid-cols-7 gap-2">
-                                {Object.entries(analytics.dayOfWeekDistribution).map(([day, count]) => {
-                                    const maxCount = Math.max(...Object.values(analytics.dayOfWeekDistribution!));
-                                    const isMax = count === maxCount && count > 0;
-                                    return (
-                                        <div key={day} className="text-center">
-                                            <div className={`text-xs font-medium mb-1 ${isMax ? 'text-purple-600' : 'text-slate-400'}`}>
-                                                {day.slice(0, 3)}
-                                            </div>
-                                            <div className={`py-2 rounded ${isMax ? 'bg-purple-100 text-purple-700 font-bold' : 'bg-slate-50 text-slate-600'}`}>
-                                                {count}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {analytics.mostActiveDay && (
-                                <div className="text-xs text-slate-500 mt-2">
-                                    Most active: <span className="font-medium">{analytics.mostActiveDay.day}s</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* UTM Sources */}
-                    {analytics.utmSources && Object.keys(analytics.utmSources).length > 1 && (
-                        <div>
-                            <div className="text-xs font-medium text-slate-500 mb-2">Traffic Sources</div>
-                            <div className="space-y-2">
-                                {Object.entries(analytics.utmSources)
-                                    .sort((a, b) => b[1] - a[1])
-                                    .slice(0, 5)
-                                    .map(([source, count]) => (
-                                        <div key={source} className="flex items-center gap-2">
-                                            <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                                <div 
-                                                    className="bg-purple-500 h-full rounded-full"
-                                                    style={{ width: `${(count / analytics.totalVotes) * 100}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-xs text-slate-600 w-20 truncate">{source}</span>
-                                            <span className="text-xs text-slate-400">{count}</span>
-                                        </div>
-                                    ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
-            ) : !isProPlus && isPro && (
-                <LockedFeature 
-                    title="Advanced Analytics"
-                    features={['Hourly distribution', 'Day of week patterns', 'Response velocity', 'UTM tracking']}
-                    requiredTier="Pro+"
-                />
             )}
 
             {/* ============================================ */}
-            {/* PRO+ TIER: Country Stats (Privacy-First) */}
+            {/* GEOGRAPHIC DISTRIBUTION */}
             {/* ============================================ */}
-            {isProPlus && analytics.countryStats && analytics.countryStats.topCountries.length > 0 && (
+            {analytics.countryStats && analytics.countryStats.topCountries.length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Globe size={16} className="text-emerald-500" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Geographic Distribution
-                        </span>
-                        <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
-                            PRO+
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Globe size={16} className="text-emerald-500" />
+                            <span className="text-sm font-semibold text-slate-700">Geographic Distribution</span>
+                        </div>
+                        <span className="text-xs text-slate-500">
+                            {analytics.countryStats.countriesRepresented} {analytics.countryStats.countriesRepresented === 1 ? 'country' : 'countries'}
                         </span>
                     </div>
 
                     <div className="space-y-2 mb-4">
                         {analytics.countryStats.topCountries.map(({ country, votes, percentage }) => (
                             <div key={country} className="flex items-center gap-3">
-                                <span className="text-lg">{getCountryFlag(country)}</span>
+                                <span className="text-lg w-8">{getCountryFlag(country)}</span>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-sm font-medium text-slate-700">{country}</span>
-                                        <span className="text-xs text-slate-500">{votes} votes ({percentage}%)</span>
+                                        <span className="text-xs text-slate-500">{votes} ({percentage}%)</span>
                                     </div>
                                     <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                         <div 
@@ -506,86 +571,19 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     );
 };
 
-// Locked Feature Component
-const LockedFeature: React.FC<{
-    title: string;
-    features: string[];
-    requiredTier: string;
-}> = ({ title, features, requiredTier }) => (
-    <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent backdrop-blur-[1px]" />
-        <div className="relative">
-            <div className="flex items-center gap-2 mb-3">
-                <Lock size={16} className="text-slate-400" />
-                <span className="text-sm font-semibold text-slate-500">{title}</span>
-                <span className="px-1.5 py-0.5 bg-slate-200 text-slate-600 text-xs font-medium rounded">
-                    {requiredTier}
-                </span>
-            </div>
-            <ul className="space-y-1 text-sm text-slate-500 mb-4">
-                {features.map((f, i) => (
-                    <li key={i}>• {f}</li>
-                ))}
-            </ul>
-            <a 
-                href="#pricing"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-                <Crown size={14} />
-                Upgrade to {requiredTier}
-            </a>
-        </div>
-    </div>
-);
-
 // Helper: Get country flag emoji
 function getCountryFlag(country: string): string {
     const flags: Record<string, string> = {
-        'United States': '🇺🇸',
-        'United Kingdom': '🇬🇧',
-        'Canada': '🇨🇦',
-        'Australia': '🇦🇺',
-        'Germany': '🇩🇪',
-        'France': '🇫🇷',
-        'Japan': '🇯🇵',
-        'India': '🇮🇳',
-        'Brazil': '🇧🇷',
-        'Mexico': '🇲🇽',
-        'Spain': '🇪🇸',
-        'Italy': '🇮🇹',
-        'Netherlands': '🇳🇱',
-        'Sweden': '🇸🇪',
-        'Norway': '🇳🇴',
-        'Denmark': '🇩🇰',
-        'Finland': '🇫🇮',
-        'Poland': '🇵🇱',
-        'Ireland': '🇮🇪',
-        'New Zealand': '🇳🇿',
-        'South Korea': '🇰🇷',
-        'Singapore': '🇸🇬',
-        'Switzerland': '🇨🇭',
-        'Austria': '🇦🇹',
-        'Belgium': '🇧🇪',
-        'Portugal': '🇵🇹',
-        'Argentina': '🇦🇷',
-        'Chile': '🇨🇱',
-        'Colombia': '🇨🇴',
-        'Philippines': '🇵🇭',
-        'Indonesia': '🇮🇩',
-        'Malaysia': '🇲🇾',
-        'Thailand': '🇹🇭',
-        'Vietnam': '🇻🇳',
-        'South Africa': '🇿🇦',
-        'Israel': '🇮🇱',
-        'United Arab Emirates': '🇦🇪',
-        'Saudi Arabia': '🇸🇦',
-        'Turkey': '🇹🇷',
-        'Russia': '🇷🇺',
-        'Ukraine': '🇺🇦',
-        'Czech Republic': '🇨🇿',
-        'Romania': '🇷🇴',
-        'Greece': '🇬🇷',
-        'Hungary': '🇭🇺',
+        'United States': '🇺🇸', 'United Kingdom': '🇬🇧', 'Canada': '🇨🇦', 'Australia': '🇦🇺',
+        'Germany': '🇩🇪', 'France': '🇫🇷', 'Japan': '🇯🇵', 'India': '🇮🇳', 'Brazil': '🇧🇷',
+        'Mexico': '🇲🇽', 'Spain': '🇪🇸', 'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Sweden': '🇸🇪',
+        'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Poland': '🇵🇱', 'Ireland': '🇮🇪',
+        'New Zealand': '🇳🇿', 'South Korea': '🇰🇷', 'Singapore': '🇸🇬', 'Switzerland': '🇨🇭',
+        'Austria': '🇦🇹', 'Belgium': '🇧🇪', 'Portugal': '🇵🇹', 'Argentina': '🇦🇷', 'Chile': '🇨🇱',
+        'Colombia': '🇨🇴', 'Philippines': '🇵🇭', 'Indonesia': '🇮🇩', 'Malaysia': '🇲🇾',
+        'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'South Africa': '🇿🇦', 'Israel': '🇮🇱',
+        'United Arab Emirates': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Turkey': '🇹🇷', 'Russia': '🇷🇺',
+        'Ukraine': '🇺🇦', 'Czech Republic': '🇨🇿', 'Romania': '🇷🇴', 'Greece': '🇬🇷', 'Hungary': '🇭🇺',
         'Unknown': '🌍'
     };
     return flags[country] || '🌍';

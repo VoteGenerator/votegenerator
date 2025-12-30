@@ -45,7 +45,7 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes = [], comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
@@ -129,9 +129,13 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     const velocityData = (() => {
         if (!votes || votes.length === 0) return [];
-        const sortedVotes = [...votes].sort((a,b) => new Date(a.votedAt).getTime() - new Date(b.votedAt).getTime());
+        const sortedVotes = [...votes].sort((a,b) => {
+            const timeA = new Date(a.votedAt || a.timestamp).getTime();
+            const timeB = new Date(b.votedAt || b.timestamp).getTime();
+            return timeA - timeB;
+        });
         if(sortedVotes.length === 0) return [];
-        const startTime = new Date(sortedVotes[0].votedAt).getTime();
+        const startTime = new Date(sortedVotes[0].votedAt || sortedVotes[0].timestamp).getTime();
         const endTime = new Date().getTime();
         const buckets = 10;
         const duration = endTime - startTime;
@@ -143,7 +147,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         }));
 
         sortedVotes.forEach(v => {
-            const time = new Date(v.votedAt).getTime();
+            const time = new Date(v.votedAt || v.timestamp).getTime();
             const bucketIndex = Math.min(Math.floor((time - startTime) / bucketSize), buckets - 1);
             if(bucketIndex >= 0) data[bucketIndex].count++;
         });
@@ -930,10 +934,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                             <td className="p-4 font-medium text-slate-800 sticky left-0 bg-white group-hover:bg-slate-50 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                                 {vote.voterName || 'Anonymous'}
-                                                <div className="text-xs text-slate-400 font-normal">{new Date(vote.votedAt).toLocaleDateString()}</div>
+                                                <div className="text-xs text-slate-400 font-normal">{new Date(vote.votedAt || vote.timestamp).toLocaleDateString()}</div>
                                             </td>
                                             {poll.options.map(opt => {
                                                 let cellContent = <span className="text-slate-300">-</span>;
+                                                const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
                                                 
                                                 if (isMatrix && vote.matrixVotes) {
                                                     const pos = vote.matrixVotes[opt.id];
@@ -952,23 +957,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                         cellContent = <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded">{val}</span>;
                                                     }
                                                 } else if (isRanked) {
-                                                    const rank = vote.choices.indexOf(opt.id);
+                                                    const rank = voteChoices.indexOf(opt.id);
                                                     if (rank !== -1) {
                                                         cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center mx-auto">{rank + 1}</span>;
                                                     }
                                                 } else if (isDot || isBudget) {
-                                                     const dots = vote.choices.filter(c => c === opt.id).length;
+                                                     const dots = voteChoices.filter(c => c === opt.id).length;
                                                      if(dots > 0) {
                                                          cellContent = <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{dots}</span>;
                                                      }
                                                 } else if (isMeeting) {
-                                                     if (vote.choices.includes(opt.id)) {
+                                                     if (voteChoices.includes(opt.id)) {
                                                          cellContent = <span className="text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded">Yes</span>;
                                                      } else if (vote.choicesMaybe?.includes(opt.id)) {
                                                          cellContent = <span className="text-amber-500 font-bold bg-amber-50 px-2 py-1 rounded">Maybe</span>;
                                                      }
                                                 } else {
-                                                     if (vote.choices.includes(opt.id)) {
+                                                     if (voteChoices.includes(opt.id)) {
                                                          cellContent = <Check size={20} className="text-emerald-500 mx-auto" />;
                                                      }
                                                 }
@@ -1037,9 +1042,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             adminKey={adminKey}
                             currentTier={(() => {
                                 const tier = localStorage.getItem('vg_purchased_tier');
-                                if (tier === 'unlimited') return 'pro-plus';
-                                if (tier === 'pro_event') return 'pro';
-                                if (tier === 'starter') return 'one-time';
+                                // Return actual tier names
+                                if (tier === 'unlimited') return 'unlimited';
+                                if (tier === 'pro_event') return 'pro_event';
+                                if (tier === 'starter') return 'starter';
                                 return 'free';
                             })()}
                         />

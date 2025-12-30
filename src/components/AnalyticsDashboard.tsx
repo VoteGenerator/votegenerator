@@ -35,7 +35,7 @@ interface AnalyticsData {
     peakHour?: number;
     peakHourFormatted?: string;
     peakHourVotes?: number;
-    dailyTrend?: Array<{ date: string; count: number }>;
+    dailyTrend?: Record<string, number>;
     dailyAverage?: number;
     hourlyDistribution?: Record<number, number>;
     hourlyDistributionFormatted?: Array<{ hour: number; hourFormatted: string; votes: number; percentage: number }>;
@@ -171,8 +171,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         if (analytics.dailyTrend) {
             rows.push('DAILY TREND');
             rows.push('Date,Votes');
-            analytics.dailyTrend.forEach((d) => {
-                rows.push(`${d.date},${d.count}`);
+            Object.entries(analytics.dailyTrend).forEach(([date, count]) => {
+                rows.push(`${date},${count}`);
             });
             rows.push('');
         }

@@ -60,8 +60,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     const isPairwise = poll.pollType === 'pairwise';
     const isRating = poll.pollType === 'rating';
     const isBudget = poll.pollType === 'budget';
-    const isThisOrThat = poll.pollType === 'multiple_choice' && poll.options.length === 2;
-    const isMultipleChoice = poll.pollType === 'multiple_choice';
+    // For this-or-that and multiple choice, check if it's a simple poll (not one of the special types)
+    const isSimplePoll = !isRanked && !isMeeting && !isDot && !isMatrix && !isPairwise && !isRating && !isBudget;
+    const isThisOrThat = isSimplePoll && poll.options.length === 2;
+    const isMultipleChoice = isSimplePoll && poll.options.length > 2;
     
     const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
         isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
@@ -1403,7 +1405,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     })()}
                                     
                                     {/* THIS OR THAT: Margin of Victory */}
-                                    {isThisOrThat && (() => {
+                                    {isThisOrThat && simpleCounts && (() => {
                                         const option1 = poll.options[0];
                                         const option2 = poll.options[1];
                                         const count1 = simpleCounts[option1.id] || 0;
@@ -1464,7 +1466,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     })()}
                                     
                                     {/* MULTIPLE CHOICE (3+ options): Competition Analysis */}
-                                    {isMultipleChoice && !isThisOrThat && (() => {
+                                    {isMultipleChoice && !isThisOrThat && simpleCounts && (() => {
                                         const sorted = Object.entries(simpleCounts)
                                             .sort((a, b) => b[1] - a[1]);
                                         

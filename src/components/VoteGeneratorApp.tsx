@@ -143,42 +143,54 @@ const VoteGeneratorApp: React.FC = () => {
         setIsExporting(true);
         try {
             const votes = await getRawVotes(pollId, adminKey);
-            if (votes.length === 0) {
+            if (!votes || votes.length === 0) {
                 alert("No votes to export yet.");
                 setIsExporting(false);
                 return;
             }
 
-            const headers = ['Date', 'Time', 'Voter Name', 'Access Code', 'Choices (Ranked/Selected)', 'Comment'];
+            const headers = ['#', 'Date', 'Time', 'Voter Name', 'Country', 'Device', 'Choices', 'Comment'];
             const csvRows = [headers.join(',')];
 
-            votes.forEach(vote => {
-                const date = new Date(vote.votedAt);
-                const choiceTexts = vote.choices.map(id => {
+            votes.forEach((vote, idx) => {
+                const date = new Date(vote.votedAt || vote.timestamp || Date.now());
+                
+                // Handle different choice formats
+                const choices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
+                const choiceTexts = choices.map((id: string) => {
                     const option = viewState.poll.options.find(o => o.id === id);
-                    return option ? option.text.replace(/,/g, ' ') : 'Unknown';
+                    return option ? option.text.replace(/,/g, ' ').replace(/"/g, "'") : 'Unknown';
                 });
+                
+                // Get analytics data if available
+                const country = vote.analytics?.country || '';
+                const device = vote.analytics?.device || '';
+                
                 const row = [
+                    idx + 1,
                     date.toLocaleDateString(),
                     date.toLocaleTimeString(),
-                    `"${vote.voterName || 'Anonymous'}"`,
-                    `"${vote.usedCode || ''}"`,
+                    `"${(vote.voterName || 'Anonymous').replace(/"/g, "'")}"`,
+                    country,
+                    device,
                     `"${choiceTexts.join('; ')}"`,
                     `"${(vote.comment || '').replace(/"/g, '""')}"`
                 ];
                 csvRows.push(row.join(','));
             });
 
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `poll_${pollId}_results.csv`;
+            a.download = `poll_${pollId}_votes.csv`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         } catch (e) {
             console.error("Export failed", e);
-            alert("Failed to export data.");
+            alert("Failed to export data. Please try again.");
         } finally {
             setIsExporting(false);
         }
@@ -297,16 +309,6 @@ const VoteGeneratorApp: React.FC = () => {
                                                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><LayoutDashboard className="text-indigo-600" size={28}/> Poll Manager</h2>
                                                 <p className="text-slate-500 text-sm mt-1 ml-10">Manage and view results for this poll</p>
                                             </div>
-                                            <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">Premium Enabled</div>
-                                        </div>
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-white text-amber-600 rounded-lg shadow-sm border border-amber-100"><Key size={20} /></div>
-                                                <div><div className="font-bold text-amber-900">Private Admin Key</div><div className="text-xs text-amber-700/80">Save this URL! It is the only way to manage this poll.</div></div>
-                                            </div>
-                                            <button onClick={() => copyToClipboard(window.location.href, 'admin')} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-100/50 rounded-lg text-sm font-bold transition-all shadow-sm">
-                                                {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
-                                            </button>
                                         </div>
                                     </div>
                                 )}

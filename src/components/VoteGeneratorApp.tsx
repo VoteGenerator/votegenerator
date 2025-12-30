@@ -356,7 +356,7 @@ const VoteGeneratorApp: React.FC = () => {
                                         {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
                                         <VoteGeneratorResults 
                                             poll={viewState.poll} 
-                                            results={viewState.results} 
+                                            results={viewState.results as any} 
                                             onEdit={viewState.isAdmin ? handleEditPoll : undefined}
                                             isAdmin={viewState.isAdmin}
                                             adminKey={parseHash().adminKey}

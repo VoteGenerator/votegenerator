@@ -4,29 +4,6 @@ import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, Mess
 import { RunoffResult, Poll } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
-// Extended Vote interface for this component (includes analytics fields)
-interface Vote {
-    id: string;
-    votedAt?: string;
-    timestamp?: string;
-    voterName?: string;
-    comment?: string;
-    choices?: string[];
-    selectedOptionIds?: string[];
-    rankedOptionIds?: string[];
-    choicesMaybe?: string[];
-    matrixVotes?: Record<string, { x: number; y: number }>;
-    pairwiseVotes?: { winnerId: string; loserId: string }[];
-    ratingVotes?: Record<string, number>;
-    analytics?: {
-        device?: 'mobile' | 'desktop' | 'tablet' | 'unknown';
-        country?: string;
-        region?: string;
-        referrerDomain?: string;
-        utmSource?: string;
-    };
-}
-
 // Helper: Get country name from code
 const COUNTRY_NAMES: Record<string, string> = {
     'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia',
@@ -59,21 +36,23 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 const getCountryFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
 
-// Extended results interface that includes votes array
-interface ResultsWithVotes extends RunoffResult {
-    votes?: Vote[];
-}
+// Helper to safely get timestamp from vote
+const getVoteTime = (vote: any): number => {
+    const timeStr = vote.votedAt || vote.timestamp;
+    return timeStr ? new Date(timeStr).getTime() : Date.now();
+};
 
 interface Props {
     poll: Poll;
-    results: ResultsWithVotes;
+    results: RunoffResult & { votes?: any[] };
     onEdit?: () => void;
     adminKey?: string | null;
     isAdmin?: boolean;
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes = [] as Vote[], comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
+    const votes: any[] = (results as any).votes || [];
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';
@@ -157,14 +136,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     const velocityData = (() => {
         if (!votes || votes.length === 0) return [];
-        const sortedVotes = [...votes].sort((a,b) => {
-            const timeA = new Date(a.votedAt || a.timestamp).getTime();
-            const timeB = new Date(b.votedAt || b.timestamp).getTime();
-            return timeA - timeB;
-        });
+        const sortedVotes = [...votes].sort((a, b) => getVoteTime(a) - getVoteTime(b));
         if(sortedVotes.length === 0) return [];
-        const startTime = new Date(sortedVotes[0].votedAt || sortedVotes[0].timestamp).getTime();
-        const endTime = new Date().getTime();
+        const startTime = getVoteTime(sortedVotes[0]);
+        const endTime = Date.now();
         const buckets = 10;
         const duration = endTime - startTime;
         const bucketSize = Math.max(duration / buckets, 60000); 
@@ -175,7 +150,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         }));
 
         sortedVotes.forEach(v => {
-            const time = new Date(v.votedAt || v.timestamp).getTime();
+            const time = getVoteTime(v);
             const bucketIndex = Math.min(Math.floor((time - startTime) / bucketSize), buckets - 1);
             if(bucketIndex >= 0) data[bucketIndex].count++;
         });
@@ -958,11 +933,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {votes.map((vote, i) => (
+                                    {votes.map((vote: any, i: number) => (
                                         <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                             <td className="p-4 font-medium text-slate-800 sticky left-0 bg-white group-hover:bg-slate-50 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                                 {vote.voterName || 'Anonymous'}
-                                                <div className="text-xs text-slate-400 font-normal">{new Date(vote.votedAt || vote.timestamp).toLocaleDateString()}</div>
+                                                <div className="text-xs text-slate-400 font-normal">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
                                             </td>
                                             {poll.options.map(opt => {
                                                 let cellContent = <span className="text-slate-300">-</span>;
@@ -1050,7 +1025,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                             {comment.name.charAt(0).toUpperCase()}
                                         </div>
                                         <span className="font-bold text-slate-600">{comment.name}</span>
-                                        <span className="text-slate-400 text-xs">• {new Date(comment.date).toLocaleDateString()}</span>
+                                        <span className="text-slate-400 text-xs">• {comment.date ? new Date(comment.date).toLocaleDateString() : ''}</span>
                                     </div>
                                 </div>
                             ))}

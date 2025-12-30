@@ -4,6 +4,29 @@ import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, Mess
 import { RunoffResult, Poll } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
+// Extended Vote interface for this component (includes analytics fields)
+interface Vote {
+    id: string;
+    votedAt?: string;
+    timestamp?: string;
+    voterName?: string;
+    comment?: string;
+    choices?: string[];
+    selectedOptionIds?: string[];
+    rankedOptionIds?: string[];
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
+    analytics?: {
+        device?: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+        country?: string;
+        region?: string;
+        referrerDomain?: string;
+        utmSource?: string;
+    };
+}
+
 // Helper: Get country name from code
 const COUNTRY_NAMES: Record<string, string> = {
     'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia',
@@ -36,16 +59,21 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 const getCountryFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
 
+// Extended results interface that includes votes array
+interface ResultsWithVotes extends RunoffResult {
+    votes?: Vote[];
+}
+
 interface Props {
     poll: Poll;
-    results: RunoffResult;
+    results: ResultsWithVotes;
     onEdit?: () => void;
     adminKey?: string | null;
     isAdmin?: boolean;
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes = [], comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
+    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, votes = [] as Vote[], comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
     const isRanked = poll.pollType === 'ranked';
     const isMeeting = poll.pollType === 'meeting';
     const isDot = poll.pollType === 'dot';

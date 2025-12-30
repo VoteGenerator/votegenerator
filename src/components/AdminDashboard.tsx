@@ -275,12 +275,8 @@ const AdminDashboard: React.FC = () => {
                 }
             }
 
-            // Case 4: Check if session has expired - but still allow access to existing polls
-            const isExpired = sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date();
-            if (isExpired) {
-                // Mark as expired but don't block access
-                sessionData.isExpired = true;
-            }
+            // Case 4: Expired sessions can still access dashboard (read-only)
+            // isPlanExpired will handle the UI restrictions
 
             setSession(sessionData);
             setLoading(false);
@@ -294,7 +290,6 @@ const AdminDashboard: React.FC = () => {
     // Check if plan is expired
     const isPlanExpired = useMemo(() => {
         if (!session) return false;
-        if ((session as any).isExpired) return true;
         if (session.expiresAt && new Date(session.expiresAt) < new Date()) return true;
         return false;
     }, [session]);

@@ -399,7 +399,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                             { key: 'tablet', label: 'Tablet', icon: Tablet, color: 'text-purple-600', bg: 'bg-purple-50' }
                         ].map(({ key, label, icon: Icon, color, bg }) => {
                             const count = analytics.deviceBreakdown?.[key] || 0;
-                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a, b) => a + b, 0) || 1;
+                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a: number, b: number) => a + b, 0) || 1;
                             const percentage = Math.round((count / total) * 100);
                             
                             if (count === 0) return null;

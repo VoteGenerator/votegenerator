@@ -113,31 +113,85 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         }
     };
 
-    const exportAnalytics = () => {
+    const exportAnalyticsCSV = () => {
         if (!analytics) return;
         
-        const exportData = {
-            pollId,
-            exportedAt: new Date().toISOString(),
-            summary: {
-                totalVotes: analytics.totalVotes,
-                firstVote: analytics.firstVote,
-                lastVote: analytics.lastVote,
-                peakHour: analytics.peakHourFormatted,
-                velocityTrend: analytics.velocityTrend
-            },
-            deviceBreakdown: analytics.deviceBreakdown,
-            countryStats: analytics.countryStats?.topCountries,
-            hourlyDistribution: analytics.hourlyDistributionFormatted,
-            dailyTrend: analytics.dailyTrend,
-            trafficSources: analytics.utmSources
-        };
+        // Build CSV content
+        const rows: string[] = [];
         
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        // Summary section
+        rows.push('POLL ANALYTICS EXPORT');
+        rows.push(`Poll ID,${pollId}`);
+        rows.push(`Exported At,${new Date().toISOString()}`);
+        rows.push('');
+        
+        // Summary stats
+        rows.push('SUMMARY');
+        rows.push('Metric,Value');
+        rows.push(`Total Votes,${analytics.totalVotes}`);
+        rows.push(`First Vote,${analytics.firstVote || 'N/A'}`);
+        rows.push(`Last Vote,${analytics.lastVote || 'N/A'}`);
+        rows.push(`Peak Hour,${analytics.peakHourFormatted || 'N/A'}`);
+        rows.push(`Velocity Trend,${analytics.velocityTrend || 'N/A'}`);
+        rows.push('');
+        
+        // Device breakdown
+        if (analytics.deviceBreakdown) {
+            rows.push('DEVICE BREAKDOWN');
+            rows.push('Device,Count,Percentage');
+            const total = Object.values(analytics.deviceBreakdown).reduce((a: number, b: number) => a + b, 0) || 1;
+            Object.entries(analytics.deviceBreakdown).forEach(([device, count]) => {
+                const pct = ((count as number) / total * 100).toFixed(1);
+                rows.push(`${device},${count},${pct}%`);
+            });
+            rows.push('');
+        }
+        
+        // Country stats
+        if (analytics.countryStats?.topCountries) {
+            rows.push('GEOGRAPHIC DISTRIBUTION');
+            rows.push('Country,Votes,Percentage');
+            analytics.countryStats.topCountries.forEach((c) => {
+                rows.push(`${c.country},${c.votes},${c.percentage}%`);
+            });
+            rows.push('');
+        }
+        
+        // Hourly distribution
+        if (analytics.hourlyDistributionFormatted) {
+            rows.push('HOURLY DISTRIBUTION (UTC)');
+            rows.push('Hour,Votes');
+            analytics.hourlyDistributionFormatted.forEach((h) => {
+                rows.push(`${h.hour},${h.votes}`);
+            });
+            rows.push('');
+        }
+        
+        // Daily trend
+        if (analytics.dailyTrend) {
+            rows.push('DAILY TREND');
+            rows.push('Date,Votes');
+            Object.entries(analytics.dailyTrend).forEach(([date, count]) => {
+                rows.push(`${date},${count}`);
+            });
+            rows.push('');
+        }
+        
+        // Traffic sources
+        if (analytics.utmSources && Object.keys(analytics.utmSources).length > 0) {
+            rows.push('TRAFFIC SOURCES');
+            rows.push('Source,Visits');
+            Object.entries(analytics.utmSources).forEach(([source, count]) => {
+                rows.push(`${source},${count}`);
+            });
+        }
+        
+        const csvContent = rows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `poll-analytics-${pollId}.json`;
+        a.download = `poll-analytics-${pollId}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -222,11 +276,11 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 </h3>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={exportAnalytics}
+                        onClick={exportAnalyticsCSV}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                     >
                         <Download size={14} />
-                        Export
+                        Export CSV
                     </button>
                     <button
                         onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
@@ -345,7 +399,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                             { key: 'tablet', label: 'Tablet', icon: Tablet, color: 'text-purple-600', bg: 'bg-purple-50' }
                         ].map(({ key, label, icon: Icon, color, bg }) => {
                             const count = analytics.deviceBreakdown?.[key] || 0;
-                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a, b) => a + b, 0) || 1;
+                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a: number, b: number) => a + b, 0) || 1;
                             const percentage = Math.round((count / total) * 100);
                             
                             if (count === 0) return null;

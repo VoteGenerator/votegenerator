@@ -74,7 +74,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free' } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -91,6 +91,22 @@ export const handler: Handler = async (event) => {
         headers,
         body: JSON.stringify({ error: 'At least 2 options are required' }),
       };
+    }
+
+    // Check if plan has expired (for paid tiers)
+    if (tier !== 'free' && planExpiresAt) {
+      const expiryDate = new Date(planExpiresAt);
+      if (expiryDate < new Date()) {
+        return {
+          statusCode: 403,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Your plan has expired. Please renew to create new polls.',
+            expired: true,
+            expiredAt: planExpiresAt
+          }),
+        };
+      }
     }
 
     // Get tier config

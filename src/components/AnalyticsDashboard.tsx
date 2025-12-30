@@ -185,6 +185,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+        if (diffMins < 1) return 'just now';
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffHours < 24) return `${diffHours}h ago`;
         return `${diffDays}d ago`;
@@ -473,25 +474,27 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         <span className="text-sm font-semibold text-slate-700">Traffic Sources</span>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {Object.entries(analytics.utmSources)
                             .sort((a, b) => b[1] - a[1])
                             .slice(0, 5)
                             .map(([source, count]) => {
                                 const percentage = Math.round((count / analytics.totalVotes) * 100);
                                 return (
-                                    <div key={source} className="flex items-center gap-3">
-                                        <div className="w-28 text-sm text-slate-700 font-medium truncate" title={source}>
-                                            {source}
+                                    <div key={source} className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-slate-700 font-medium truncate max-w-[200px]" title={source}>
+                                                {source}
+                                            </span>
+                                            <span className="text-xs text-slate-500 ml-2 whitespace-nowrap">
+                                                {count} ({percentage}%)
+                                            </span>
                                         </div>
-                                        <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                        <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
                                             <div 
-                                                className="bg-purple-500 h-full rounded-full"
+                                                className="bg-purple-500 h-full rounded-full transition-all"
                                                 style={{ width: `${percentage}%` }}
                                             />
-                                        </div>
-                                        <div className="w-16 text-xs text-slate-500 text-right">
-                                            {count} ({percentage}%)
                                         </div>
                                     </div>
                                 );

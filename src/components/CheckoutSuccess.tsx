@@ -110,8 +110,8 @@ const CheckoutSuccess: React.FC = () => {
         localStorage.setItem('vg_expires_at', expiryDate.toISOString());
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        // Generate dashboard URL
-        const url = `${window.location.origin}/admin?session_id=${sessionId}&token=${dashboardToken}`;
+        // Generate SHORT dashboard URL (token only, no session_id needed)
+        const url = `${window.location.origin}/admin?token=${dashboardToken}`;
         setDashboardUrl(url);
         
         console.log('CheckoutSuccess: Session created:', session);

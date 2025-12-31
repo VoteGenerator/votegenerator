@@ -7,6 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
+import LogoUpload from './LogoUpload';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
@@ -131,6 +132,18 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [showPaywall, setShowPaywall] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
     
+    // Custom slug (Unlimited tier only)
+    const [customSlug, setCustomSlug] = useState('');
+    const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+    const [slugError, setSlugError] = useState<string | null>(null);
+    const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null);
+    
+    // Unlisted option (hide from search engines)
+    const [unlisted, setUnlisted] = useState(false);
+    
+    // Logo URL (paid tiers only)
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -150,6 +163,58 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const daysRemaining = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
     const isExpiringSoon = daysRemaining !== null && daysRemaining <= 14;
     const isExpiringVerySoon = daysRemaining !== null && daysRemaining <= 7;
+    
+    // Check slug availability
+    const checkSlugAvailability = async (slug: string) => {
+        if (!slug || slug.length < 4) {
+            setSlugStatus('idle');
+            setSlugError(null);
+            return;
+        }
+        
+        setSlugStatus('checking');
+        setSlugError(null);
+        setSlugSuggestion(null);
+        
+        try {
+            const res = await fetch('/.netlify/functions/vg-check-slug', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug, tier: purchasedTier })
+            });
+            
+            const data = await res.json();
+            
+            if (res.status === 429) {
+                setSlugStatus('invalid');
+                setSlugError('Too many requests. Please wait a moment.');
+                return;
+            }
+            
+            if (data.available) {
+                setSlugStatus('available');
+                setSlugError(null);
+            } else {
+                setSlugStatus('taken');
+                setSlugError(data.error || 'This link is not available');
+                if (data.suggestion) setSlugSuggestion(data.suggestion);
+            }
+        } catch (err) {
+            setSlugStatus('invalid');
+            setSlugError('Failed to check availability');
+        }
+    };
+    
+    // Debounce slug check
+    React.useEffect(() => {
+        if (!customSlug || purchasedTier !== 'unlimited') return;
+        
+        const timer = setTimeout(() => {
+            checkSlugAvailability(customSlug);
+        }, 500);
+        
+        return () => clearTimeout(timer);
+    }, [customSlug, purchasedTier]);
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
     const currentTier = purchasedTier || selectedPollType?.tier || 'free';
@@ -288,7 +353,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     deadline: deadline ? new Date(deadline).toISOString() : undefined 
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
-                tier: effectiveTier 
+                tier: effectiveTier,
+                // Custom slug (Unlimited tier only)
+                customSlug: effectiveTier === 'unlimited' && customSlug && slugStatus === 'available' ? customSlug.trim().toLowerCase() : undefined,
+                // Unlisted option
+                unlisted: unlisted,
+                // Logo URL (paid tiers)
+                logoUrl: logoUrl || undefined
             };
             
             // Add image URLs for visual polls
@@ -933,6 +1004,71 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             {showAdvanced && (
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
                                     <div className="p-6 space-y-4">
+                                        {/* Custom Link (Unlimited tier only) */}
+                                        {purchasedTier === 'unlimited' && (
+                                            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                                <label className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-2">
+                                                    <Crown size={16} className="text-amber-600" />
+                                                    Custom Poll Link
+                                                    <span className="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Unlimited</span>
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-slate-500 text-sm whitespace-nowrap">votegenerator.com/p/</span>
+                                                    <div className="relative flex-1">
+                                                        <input 
+                                                            type="text" 
+                                                            value={customSlug}
+                                                            onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                                            placeholder="my-team-poll"
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
+                                                                slugStatus === 'available' ? 'border-emerald-400 bg-emerald-50' :
+                                                                slugStatus === 'taken' || slugStatus === 'invalid' ? 'border-red-300 bg-red-50' :
+                                                                'border-slate-200'
+                                                            }`}
+                                                        />
+                                                        {slugStatus === 'checking' && (
+                                                            <div className="absolute right-3 top-2.5">
+                                                                <Loader2 size={16} className="animate-spin text-slate-400" />
+                                                            </div>
+                                                        )}
+                                                        {slugStatus === 'available' && (
+                                                            <div className="absolute right-3 top-2.5">
+                                                                <Check size={16} className="text-emerald-500" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {slugStatus === 'available' && (
+                                                    <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                                                        <Check size={12} /> This link is available!
+                                                    </p>
+                                                )}
+                                                {slugError && (
+                                                    <p className="text-xs text-red-600 mt-1">{slugError}</p>
+                                                )}
+                                                {slugSuggestion && (
+                                                    <button 
+                                                        onClick={() => { setCustomSlug(slugSuggestion); setSlugSuggestion(null); }}
+                                                        className="text-xs text-amber-600 hover:text-amber-700 mt-1 underline"
+                                                    >
+                                                        Try: {slugSuggestion}
+                                                    </button>
+                                                )}
+                                                <p className="text-xs text-slate-500 mt-2">Leave blank to use a random secure link</p>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Logo Upload (paid tiers only) */}
+                                        {purchasedTier && purchasedTier !== 'free' && (
+                                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                                <LogoUpload
+                                                    currentLogo={logoUrl}
+                                                    onLogoChange={setLogoUrl}
+                                                    tier={purchasedTier}
+                                                />
+                                            </div>
+                                        )}
+                                        
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="flex items-center justify-between mb-2"><span className="text-sm font-semibold text-slate-700">Close poll on</span><span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Max {maxDays} days</span></label>
                                             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
@@ -951,6 +1087,16 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <span className="font-medium text-slate-700">Hide results until closed</span>
                                             <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
                                         </label>
+                                        
+                                        {/* Unlisted option */}
+                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                            <div>
+                                                <span className="font-medium text-slate-700 block">Hide from search engines</span>
+                                                <span className="text-xs text-slate-500">Poll won't appear in Google or other search results</span>
+                                            </div>
+                                            <input type="checkbox" checked={unlisted} onChange={(e) => setUnlisted(e.target.checked)} className="w-5 h-5 rounded" />
+                                        </label>
+                                        
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
                                             <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />

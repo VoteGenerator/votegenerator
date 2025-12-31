@@ -11,6 +11,16 @@ function generateId(length: number = 8): string {
   return result;
 }
 
+// Generate secure random ID (for default poll IDs)
+function generateSecureId(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 function generateAdminKey(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -18,6 +28,18 @@ function generateAdminKey(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Validate custom slug
+function isValidSlug(slug: string): boolean {
+  if (!slug || typeof slug !== 'string') return false;
+  const trimmed = slug.trim().toLowerCase();
+  if (trimmed.length < 4 || trimmed.length > 50) return false;
+  if (!/^[a-z0-9-]+$/.test(trimmed)) return false;
+  if (trimmed.startsWith('-') || trimmed.endsWith('-')) return false;
+  if (trimmed.includes('--')) return false;
+  const reserved = ['admin', 'api', 'vote', 'poll', 'results', 'create', 'pricing', 'help', 'about', 'terms', 'privacy', 'contact', 'dashboard', 'login', 'signup', 'checkout', 'success', 'cancel', 'embed'];
+  return !reserved.includes(trimmed);
 }
 
 // Tier limits and features
@@ -74,7 +96,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -126,8 +148,48 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Generate IDs
-    const pollId = generateId(8);
+    // Handle custom slug (Unlimited tier only)
+    let pollId: string;
+    let hasCustomSlug = false;
+    
+    if (customSlug && tier === 'unlimited') {
+      const normalizedSlug = customSlug.trim().toLowerCase();
+      
+      if (!isValidSlug(normalizedSlug)) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Invalid custom link format' }),
+        };
+      }
+      
+      // Check if slug is already taken
+      const slugStore = getStore({
+        name: 'poll-slugs',
+        siteID: process.env.VG_SITE_ID || '',
+        token: process.env.NETLIFY_AUTH_TOKEN || ''
+      });
+      
+      const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
+      
+      if (existingPollId) {
+        return {
+          statusCode: 409,
+          headers,
+          body: JSON.stringify({ 
+            error: 'This custom link is already taken',
+            suggestion: `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`
+          }),
+        };
+      }
+      
+      pollId = normalizedSlug;
+      hasCustomSlug = true;
+    } else {
+      // Generate secure random ID
+      pollId = generateSecureId();
+    }
+    
     const adminKey = generateAdminKey();
 
     // Calculate expiry
@@ -141,6 +203,7 @@ export const handler: Handler = async (event) => {
       adminKey,
       title: question.trim(),
       question: question.trim(),
+      description: body.description || null,
       options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
         id: `opt_${i}`,
         text: o.trim(),
@@ -151,7 +214,9 @@ export const handler: Handler = async (event) => {
         hideResults: settings?.hideResults || false,
         requireNames: settings?.requireNames || false,
         endDate: settings?.endDate || null,
+        unlisted: unlisted || false, // Hide from search engines
       },
+      customSlug: hasCustomSlug ? pollId : null,
       tier,
       maxResponses: tierConfig.maxResponses,
       expiresAt,
@@ -159,7 +224,12 @@ export const handler: Handler = async (event) => {
       votes: [],
       voteCount: 0,
       responseCount: 0,
-      status: 'active',
+      // Default to draft mode for paid tiers, live for free
+      status: tier !== 'free' ? 'draft' : 'live',
+      // Logo URL (paid feature)
+      logoUrl: body.logoUrl || null,
+      // Notification settings
+      notificationSettings: body.notificationSettings || null,
     };
 
     // Store in Netlify Blobs with explicit config
@@ -170,8 +240,18 @@ export const handler: Handler = async (event) => {
     });
     
     await store.setJSON(pollId, poll);
+    
+    // If custom slug, also store in slug index for lookup
+    if (hasCustomSlug) {
+      const slugStore = getStore({
+        name: 'poll-slugs',
+        siteID: process.env.VG_SITE_ID || '',
+        token: process.env.NETLIFY_AUTH_TOKEN || ''
+      });
+      await slugStore.set(pollId, pollId); // slug -> pollId mapping
+    }
 
-    console.log(`Poll created: ${pollId}`);
+    console.log(`Poll created: ${pollId}${hasCustomSlug ? ' (custom slug)' : ''}`);
 
     // Return success response
     return {
@@ -182,12 +262,15 @@ export const handler: Handler = async (event) => {
         id: pollId,
         pollId,
         adminKey,
+        customSlug: hasCustomSlug ? pollId : null,
         voteUrl: `/vote/${pollId}`,
         adminUrl: `/admin/${pollId}/${adminKey}`,
         resultsUrl: `/results/${pollId}`,
+        shareUrl: hasCustomSlug ? `/p/${pollId}` : `/#id=${pollId}`,
         tier,
         maxResponses: tierConfig.maxResponses,
         expiresAt,
+        unlisted: unlisted || false,
       }),
     };
   } catch (error) {

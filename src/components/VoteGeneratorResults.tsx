@@ -875,36 +875,29 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             return (
                                 <>
                                     {/* Summary Stats */}
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                                    <div className="grid grid-cols-2 gap-4 mb-6">
                                         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center">
                                             <div className="text-3xl font-black text-indigo-600">{countryCount}</div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
-                                                {countryCount === 1 ? 'Country' : 'Countries'}
+                                                {countryCount === 1 ? 'Country' : 'Countries'} Represented
                                             </div>
                                         </div>
                                         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
                                             <div className="text-3xl font-black text-emerald-600">{votesWithLocation}</div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
-                                                With Location
+                                                Vote{votesWithLocation !== 1 ? 's' : ''} Tracked
                                             </div>
                                         </div>
-                                        {sortedCountries[0] && (
-                                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center col-span-2 md:col-span-1">
-                                                <div className="text-2xl mb-1">{getCountryFlag(sortedCountries[0][0])}</div>
-                                                <div className="text-xs text-slate-500 uppercase tracking-wide">
-                                                    Top Country
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                     
                                     {/* Country list with flags */}
                                     <div className="space-y-3">
                                         {sortedCountries.map(([country, count], idx) => {
                                             const percentage = Math.round((count / totalWithLocation) * 100);
+                                            const flag = getCountryFlag(country);
                                             return (
                                                 <div key={country} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}>
-                                                    <span className="text-3xl">{getCountryFlag(country)}</span>
+                                                    <span className="text-3xl">{flag}</span>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className={`font-semibold ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
@@ -1054,14 +1047,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 </table>
                             </div>
                         </div>
-                        
-                        {/* Insights Section - Show if we have votes with analytics */}
-                        {votes.length > 0 && (
-                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
-                                <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <Activity size={18} className="text-indigo-500" /> Poll Insights
-                                </h4>
-                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    </motion.div>
+                )}
+                
+                {/* ============================================ */}
+                {/* POLL INSIGHTS SECTION - Shows for all views */}
+                {/* ============================================ */}
+                {votes.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-6"
+                    >
+                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
+                            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <Activity size={18} className="text-indigo-500" /> Poll Insights
+                            </h4>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     
                                     {/* Consensus Level */}
                                     {(() => {
@@ -1074,11 +1076,30 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         });
                                         const sorted = Object.entries(choiceCounts).sort((a, b) => b[1] - a[1]);
                                         if (sorted.length === 0) return null;
+                                        
+                                        // Check for tie at the top
                                         const topCount = sorted[0][1];
+                                        const tiedAtTop = sorted.filter(([_, count]) => count === topCount).length;
                                         const totalChoices = Object.values(choiceCounts).reduce((a, b) => a + b, 0);
+                                        
+                                        // If there's a tie at the top, it's split
+                                        if (tiedAtTop > 1) {
+                                            return (
+                                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xl">⚖️</span>
+                                                        <span className="font-medium text-slate-700">Consensus</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600">
+                                                        <strong className="text-amber-600">Tied</strong> ({tiedAtTop} options equal)
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        
                                         const consensusPct = Math.round((topCount / totalChoices) * 100);
-                                        const consensusLevel = consensusPct >= 70 ? 'Strong' : consensusPct >= 50 ? 'Moderate' : 'Split';
-                                        const consensusColor = consensusPct >= 70 ? 'text-emerald-600' : consensusPct >= 50 ? 'text-amber-600' : 'text-red-500';
+                                        const consensusLevel = consensusPct >= 70 ? 'Strong' : consensusPct > 50 ? 'Moderate' : 'Split';
+                                        const consensusColor = consensusPct >= 70 ? 'text-emerald-600' : consensusPct > 50 ? 'text-amber-600' : 'text-red-500';
                                         return (
                                             <div className="bg-white rounded-xl p-4 shadow-sm">
                                                 <div className="flex items-center gap-2 mb-2">
@@ -1185,8 +1206,26 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         if (!topCountry) return null;
                                         
                                         const choices = countryChoices[topCountry[0]];
-                                        const topChoice = Object.entries(choices || {}).sort((a, b) => b[1] - a[1])[0];
-                                        if (!topChoice) return null;
+                                        const sortedChoices = Object.entries(choices || {}).sort((a, b) => b[1] - a[1]);
+                                        if (sortedChoices.length === 0) return null;
+                                        
+                                        const topChoice = sortedChoices[0];
+                                        // Check for tie
+                                        const tiedChoices = sortedChoices.filter(([_, count]) => count === topChoice[1]);
+                                        
+                                        if (tiedChoices.length > 1) {
+                                            return (
+                                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xl">{getCountryFlag(topCountry[0])}</span>
+                                                        <span className="font-medium text-slate-700">{topCountry[0]}</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-600">
+                                                        <strong className="text-amber-600">Split</strong> ({tiedChoices.length} options tied)
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
                                         
                                         return (
                                             <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -1470,12 +1509,31 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         const sorted = Object.entries(simpleCounts)
                                             .sort((a, b) => b[1] - a[1]);
                                         
-                                        if (sorted.length < 3) return null;
+                                        if (sorted.length < 2) return null;
                                         
                                         const [first, second] = sorted;
                                         const total = sorted.reduce((sum, [_, c]) => sum + c, 0);
                                         
                                         if (total === 0) return null;
+                                        
+                                        // Check for tie at top
+                                        const tiedAtTop = sorted.filter(([_, count]) => count === first[1]).length;
+                                        
+                                        if (tiedAtTop > 1) {
+                                            return (
+                                                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 shadow-sm col-span-2 border border-amber-100">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-xl">⚖️</span>
+                                                        <span className="font-medium text-amber-700">It's a Tie!</span>
+                                                    </div>
+                                                    <div className="space-y-1 text-sm text-slate-600">
+                                                        <p>
+                                                            <strong className="text-amber-600">{tiedAtTop} options</strong> tied with {first[1]} vote{first[1] !== 1 ? 's' : ''} each
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
                                         
                                         const firstPct = Math.round((first[1] / total) * 100);
                                         const secondPct = Math.round((second[1] / total) * 100);
@@ -1528,7 +1586,6 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     <Info size={12} /> Insights based on anonymous aggregate data. No personal information stored.
                                 </p>
                             </div>
-                        )}
                     </motion.div>
                 )}
 

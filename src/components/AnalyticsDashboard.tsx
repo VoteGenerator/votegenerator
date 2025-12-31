@@ -196,6 +196,10 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         URL.revokeObjectURL(url);
     };
 
+    // Note: PNG/PDF export requires html2canvas and jspdf packages
+    // Install with: npm install html2canvas jspdf
+    // Then uncomment the export functions below
+
     if (loading) {
         return (
             <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -335,7 +339,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             {/* ============================================ */}
             {/* KEY METRICS - Always visible */}
             {/* ============================================ */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="analytics-metrics">
                 {/* Total Votes */}
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                     <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
@@ -637,6 +642,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     )}
                 </div>
             )}
+            </div>
         </div>
     );
 };

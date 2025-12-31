@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
 import AdminDashboard from './AdminDashboard';
@@ -9,6 +9,8 @@ import CheckoutSuccess from './CheckoutSuccess';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+import NotificationSettings from './NotificationSettings';
+import DraftLiveToggle from './DraftLiveToggle';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -26,22 +28,54 @@ const VoteGeneratorApp: React.FC = () => {
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [copiedShare, setCopiedShare] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
+    const [copiedEmbed, setCopiedEmbed] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+    const [isEmbedMode, setIsEmbedMode] = useState(false);
+    const [verificationStatus, setVerificationStatus] = useState<'success' | 'expired' | 'invalid' | 'error' | null>(null);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
         const params = new URLSearchParams(hash);
+        
+        // Also check URL path for custom slug route: /p/{slug}
+        const pathname = window.location.pathname;
+        const slugMatch = pathname.match(/^\/p\/([a-z0-9-]+)\/?$/);
+        
+        // Check for embed mode in query params
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEmbed = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
+        
+        // Check for verification status
+        const verification = params.get('verification') as 'success' | 'expired' | 'invalid' | 'error' | null;
+        
         return {
-            pollId: params.get('id'),
-            adminKey: params.get('admin')
+            pollId: slugMatch ? slugMatch[1] : params.get('id'),
+            adminKey: params.get('admin'),
+            isEmbed,
+            verification
         };
     }, []);
 
     const loadView = useCallback(async (silent = false) => {
-        const { pollId, adminKey } = parseHash();
+        const { pollId, adminKey, isEmbed, verification } = parseHash();
+        
+        // Handle verification status from email confirmation
+        if (verification) {
+            setVerificationStatus(verification);
+            // Clear the verification param from URL after a delay
+            setTimeout(() => {
+                const newHash = window.location.hash.replace(/[&?]?verification=[^&]+/, '').replace(/^#&/, '#');
+                window.history.replaceState(null, '', newHash || window.location.pathname);
+            }, 100);
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => setVerificationStatus(null), 5000);
+        }
+        
+        // Set embed mode
+        setIsEmbedMode(isEmbed);
 
         if (!pollId) {
             setViewState({ type: 'create' });
@@ -143,42 +177,55 @@ const VoteGeneratorApp: React.FC = () => {
         setIsExporting(true);
         try {
             const votes = await getRawVotes(pollId, adminKey);
-            if (votes.length === 0) {
+            if (!votes || votes.length === 0) {
                 alert("No votes to export yet.");
                 setIsExporting(false);
                 return;
             }
 
-            const headers = ['Date', 'Time', 'Voter Name', 'Access Code', 'Choices (Ranked/Selected)', 'Comment'];
+            const headers = ['#', 'Date', 'Time', 'Voter Name', 'Country', 'Device', 'Choices', 'Comment'];
             const csvRows = [headers.join(',')];
 
-            votes.forEach(vote => {
-                const date = new Date(vote.votedAt);
-                const choiceTexts = vote.choices.map(id => {
+            votes.forEach((v, idx) => {
+                const vote = v as any; // Cast to any for dynamic property access
+                const date = new Date(vote.votedAt || vote.timestamp || Date.now());
+                
+                // Handle different choice formats
+                const choices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
+                const choiceTexts = (choices as string[]).map((id: string) => {
                     const option = viewState.poll.options.find(o => o.id === id);
-                    return option ? option.text.replace(/,/g, ' ') : 'Unknown';
+                    return option ? option.text.replace(/,/g, ' ').replace(/"/g, "'") : 'Unknown';
                 });
+                
+                // Get analytics data if available
+                const country = vote.analytics?.country || '';
+                const device = vote.analytics?.device || '';
+                
                 const row = [
+                    idx + 1,
                     date.toLocaleDateString(),
                     date.toLocaleTimeString(),
-                    `"${vote.voterName || 'Anonymous'}"`,
-                    `"${vote.usedCode || ''}"`,
+                    `"${(vote.voterName || 'Anonymous').replace(/"/g, "'")}"`,
+                    country,
+                    device,
                     `"${choiceTexts.join('; ')}"`,
                     `"${(vote.comment || '').replace(/"/g, '""')}"`
                 ];
                 csvRows.push(row.join(','));
             });
 
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `poll_${pollId}_results.csv`;
+            a.download = `poll_${pollId}_votes.csv`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         } catch (e) {
             console.error("Export failed", e);
-            alert("Failed to export data.");
+            alert("Failed to export data. Please try again.");
         } finally {
             setIsExporting(false);
         }
@@ -226,6 +273,58 @@ const VoteGeneratorApp: React.FC = () => {
 
     return (
         <div className="min-h-screen pb-10">
+            {/* Email Verification Toast */}
+            <AnimatePresence>
+                {verificationStatus && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] max-w-md w-full mx-4"
+                    >
+                        <div className={`rounded-xl shadow-lg border-2 p-4 flex items-center gap-3 ${
+                            verificationStatus === 'success' 
+                                ? 'bg-emerald-50 border-emerald-200' 
+                                : 'bg-red-50 border-red-200'
+                        }`}>
+                            <div className={`p-2 rounded-full ${
+                                verificationStatus === 'success' ? 'bg-emerald-100' : 'bg-red-100'
+                            }`}>
+                                {verificationStatus === 'success' ? (
+                                    <Check className="text-emerald-600" size={20} />
+                                ) : (
+                                    <AlertTriangle className="text-red-600" size={20} />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-bold ${
+                                    verificationStatus === 'success' ? 'text-emerald-800' : 'text-red-800'
+                                }`}>
+                                    {verificationStatus === 'success' && '✓ Email Verified!'}
+                                    {verificationStatus === 'expired' && 'Link Expired'}
+                                    {verificationStatus === 'invalid' && 'Invalid Link'}
+                                    {verificationStatus === 'error' && 'Verification Failed'}
+                                </p>
+                                <p className={`text-sm ${
+                                    verificationStatus === 'success' ? 'text-emerald-600' : 'text-red-600'
+                                }`}>
+                                    {verificationStatus === 'success' && "You'll now receive poll notifications."}
+                                    {verificationStatus === 'expired' && 'This verification link has expired. Ask for a new one.'}
+                                    {verificationStatus === 'invalid' && 'This verification link is not valid.'}
+                                    {verificationStatus === 'error' && 'Something went wrong. Please try again.'}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setVerificationStatus(null)}
+                                className="p-1 hover:bg-white/50 rounded"
+                            >
+                                <X size={18} className="text-slate-400" />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
             ) : window.location.pathname.startsWith('/checkout/success') ? (
@@ -297,16 +396,6 @@ const VoteGeneratorApp: React.FC = () => {
                                                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3"><LayoutDashboard className="text-indigo-600" size={28}/> Poll Manager</h2>
                                                 <p className="text-slate-500 text-sm mt-1 ml-10">Manage and view results for this poll</p>
                                             </div>
-                                            <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">Premium Enabled</div>
-                                        </div>
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-white text-amber-600 rounded-lg shadow-sm border border-amber-100"><Key size={20} /></div>
-                                                <div><div className="font-bold text-amber-900">Private Admin Key</div><div className="text-xs text-amber-700/80">Save this URL! It is the only way to manage this poll.</div></div>
-                                            </div>
-                                            <button onClick={() => copyToClipboard(window.location.href, 'admin')} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-100/50 rounded-lg text-sm font-bold transition-all shadow-sm">
-                                                {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
-                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -331,11 +420,33 @@ const VoteGeneratorApp: React.FC = () => {
                                                          <div className="relative flex-1"><Globe className="absolute left-3 top-2.5 text-slate-400" size={16} /><input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600" /></div>
                                                          <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100">{copiedShare ? 'Copied' : 'Copy'}</button>
                                                      </div>
-                                                     <div className="grid grid-cols-2 gap-2">
+                                                     <div className="grid grid-cols-2 gap-2 mb-3">
                                                          <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
                                                          <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
                                                          <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
                                                          <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
+                                                     </div>
+                                                     {/* Embed Code */}
+                                                     <div className="pt-3 border-t border-slate-100">
+                                                         <label className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Code size={12}/> Embed Code</label>
+                                                         <div className="flex gap-2">
+                                                             <input 
+                                                                 type="text" 
+                                                                 readOnly 
+                                                                 value={`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`}
+                                                                 className="flex-1 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono"
+                                                             />
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     navigator.clipboard.writeText(`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`);
+                                                                     setCopiedEmbed(true);
+                                                                     setTimeout(() => setCopiedEmbed(false), 2000);
+                                                                 }}
+                                                                 className="px-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200"
+                                                             >
+                                                                 {copiedEmbed ? <Check size={14}/> : <Copy size={14}/>}
+                                                             </button>
+                                                         </div>
                                                      </div>
                                                 </div>
                                                 <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
@@ -347,11 +458,43 @@ const VoteGeneratorApp: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                            
+                                            {/* Draft/Live Toggle & Notifications - Show for paid tiers */}
+                                            {viewState.poll.tier && viewState.poll.tier !== 'free' && (
+                                                <div className="grid lg:grid-cols-2 gap-6 mt-6">
+                                                    <DraftLiveToggle
+                                                        pollId={viewState.poll.id}
+                                                        adminKey={parseHash().adminKey || ''}
+                                                        status={(viewState.poll as any).status || 'live'}
+                                                        voteCount={viewState.poll.voteCount || 0}
+                                                        onStatusChange={() => loadView(true)}
+                                                    />
+                                                    {viewState.poll.tier === 'unlimited' && (
+                                                        <NotificationSettings
+                                                            pollId={viewState.poll.id}
+                                                            adminKey={parseHash().adminKey || ''}
+                                                            pollTitle={viewState.poll.title}
+                                                            currentSettings={(viewState.poll as any).notificationSettings}
+                                                            tier={viewState.poll.tier}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
                                     <div className={viewState.isAdmin ? "p-6 md:p-10" : ""}>
                                         {!viewState.isAdmin && (<div className="flex justify-end mb-4 print:hidden"><button onClick={handleManualRefresh} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium" disabled={isRefreshing}><RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />{isRefreshing ? 'Refreshing...' : 'Refresh Votes'}</button></div>)}
+                                        {/* Logo if present */}
+                                        {(viewState.poll as any).logoUrl && (
+                                            <div className="mb-6 flex justify-center">
+                                                <img 
+                                                    src={(viewState.poll as any).logoUrl} 
+                                                    alt="Poll logo" 
+                                                    className="max-h-20 max-w-56 object-contain"
+                                                />
+                                            </div>
+                                        )}
                                         <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
                                         {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
                                         <VoteGeneratorResults 

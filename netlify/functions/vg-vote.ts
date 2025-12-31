@@ -55,6 +55,94 @@ interface Poll {
     votes: Vote[];
     createdAt: string;
     voteCount: number;
+    tier?: string;
+    maxResponses?: number;
+    status?: 'draft' | 'live' | 'paused' | 'closed';
+    notificationSettings?: {
+        enabled: boolean;
+        emails: Array<{
+            email: string;
+            verified: boolean;
+            addedAt?: string;
+            verifiedAt?: string;
+        }>;
+        skipFirstVotes: number;
+        notifyOn: {
+            milestones: boolean;
+            dailyDigest: boolean;
+            pollClosed: boolean;
+            limitReached: boolean;
+            newComment: boolean;
+        };
+    };
+}
+
+// Milestone points for notifications
+const MILESTONE_POINTS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+
+// Check if vote count hit a milestone
+function checkMilestone(voteCount: number): number | null {
+    return MILESTONE_POINTS.includes(voteCount) ? voteCount : null;
+}
+
+// Check if approaching response limit
+function checkLimitApproaching(voteCount: number, maxResponses: number): number | null {
+    const percent80 = Math.floor(maxResponses * 0.8);
+    const percent100 = maxResponses;
+    
+    if (voteCount === percent100) return 100;
+    if (voteCount === percent80) return 80;
+    return null;
+}
+
+// Fire notification (non-blocking)
+async function triggerNotification(
+    poll: Poll,
+    type: 'milestone' | 'limit' | 'comment',
+    data: Record<string, any>
+): Promise<void> {
+    if (!poll.notificationSettings?.enabled || !poll.notificationSettings?.emails?.length) {
+        return;
+    }
+    
+    const settings = poll.notificationSettings;
+    
+    // Check if we have any VERIFIED emails
+    const verifiedEmails = settings.emails.filter((e: any) => e.verified === true);
+    if (verifiedEmails.length === 0) {
+        console.log(`No verified emails for poll ${poll.id} - skipping notification`);
+        return;
+    }
+    
+    // Check if we should skip (test votes)
+    if (poll.voteCount <= settings.skipFirstVotes) {
+        console.log(`Skipping notification - vote ${poll.voteCount} <= skipFirstVotes ${settings.skipFirstVotes}`);
+        return;
+    }
+    
+    // Check if this notification type is enabled
+    if (type === 'milestone' && !settings.notifyOn.milestones) return;
+    if (type === 'limit' && !settings.notifyOn.limitReached) return;
+    if (type === 'comment' && !settings.notifyOn.newComment) return;
+    
+    try {
+        // Fire and forget - don't wait for response
+        const baseUrl = process.env.URL || 'https://votegenerator.com';
+        fetch(`${baseUrl}/.netlify/functions/vg-notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pollId: poll.id,
+                adminKey: poll.adminKey,
+                type,
+                data
+            })
+        }).catch(err => console.error('Notification trigger failed:', err));
+        
+        console.log(`Notification triggered: ${type} for poll ${poll.id} to ${verifiedEmails.length} verified recipient(s)`);
+    } catch (error) {
+        console.error('Failed to trigger notification:', error);
+    }
 }
 
 const generateVoteId = (): string => {
@@ -191,6 +279,32 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // Check poll status - block voting on paused or closed polls
+        if (poll.status === 'paused') {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'This poll is currently paused' })
+            };
+        }
+        
+        if (poll.status === 'closed') {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'This poll has been closed' })
+            };
+        }
+        
+        // Check response limit
+        if (poll.maxResponses && poll.voteCount >= poll.maxResponses) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'This poll has reached its response limit' })
+            };
+        }
+
         // Accept multiple field names for flexibility
         const selectedIds = body.selectedOptionIds || (body as any).choices || (body as any).optionIds || (body as any).selections || (body as any).options;
         const rankedIds = body.rankedOptionIds || (body as any).rankings || (body as any).ranked;
@@ -307,6 +421,40 @@ export const handler: Handler = async (event) => {
         await store.setJSON(body.pollId, poll);
 
         console.log(`Vote recorded for poll ${body.pollId}. Total: ${poll.voteCount}`);
+
+        // ============================================
+        // TRIGGER NOTIFICATIONS (non-blocking)
+        // ============================================
+        if (poll.tier === 'unlimited' && poll.notificationSettings?.enabled) {
+            // Check for milestone
+            const milestone = checkMilestone(poll.voteCount);
+            if (milestone) {
+                triggerNotification(poll, 'milestone', {
+                    milestone,
+                    voteCount: poll.voteCount
+                });
+            }
+            
+            // Check for response limit approaching
+            if (poll.maxResponses) {
+                const limitPercent = checkLimitApproaching(poll.voteCount, poll.maxResponses);
+                if (limitPercent) {
+                    triggerNotification(poll, 'limit', {
+                        limitPercent,
+                        currentVotes: poll.voteCount,
+                        maxVotes: poll.maxResponses
+                    });
+                }
+            }
+            
+            // Check for new comment
+            if (vote.comment && poll.notificationSettings.notifyOn.newComment) {
+                triggerNotification(poll, 'comment', {
+                    commentText: vote.comment,
+                    commentAuthor: vote.voterName || 'Anonymous'
+                });
+            }
+        }
 
         return {
             statusCode: 200,

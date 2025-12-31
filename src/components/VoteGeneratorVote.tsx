@@ -278,6 +278,16 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600 flex items-center"><DollarSign size={12}/>{budgetRemaining}</span>
                         </div>
                     )}
+                    {/* Logo if present */}
+                    {(poll as any).logoUrl && (
+                        <div className="mb-4 flex justify-center">
+                            <img 
+                                src={(poll as any).logoUrl} 
+                                alt="Poll logo" 
+                                className="max-h-16 max-w-48 object-contain"
+                            />
+                        </div>
+                    )}
                     <h1 className={`text-2xl md:text-3xl font-black text-slate-800 font-serif mb-2 ${poll.pollType === 'budget' ? 'pt-6' : ''}`}>
                         {poll.title}
                     </h1>

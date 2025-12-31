@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause, Image as ImageIcon, Search, HelpCircle, FileQuestion, ArrowLeft } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
 import AdminDashboard from './AdminDashboard';
@@ -11,6 +11,10 @@ import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
 import NotificationSettings from './NotificationSettings';
 import DraftLiveToggle from './DraftLiveToggle';
+import LogoUpload from './LogoUpload';
+import DevModePanel from './DevModePanel';
+import PollRecoveryModal from './PollRecoveryModal';
+import EmailAdminLink from './EmailAdminLink';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -20,7 +24,8 @@ type ViewState =
     | { type: 'vote'; poll: Poll }
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
-    | { type: 'error'; message: string };
+    | { type: 'error'; message: string; errorType?: 'not_found' | 'invalid_admin' | 'expired' | 'generic'; pollId?: string }
+    | { type: 'recover' };
 
 const VoteGeneratorApp: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
@@ -32,6 +37,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
     const [isEmbedMode, setIsEmbedMode] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<'success' | 'expired' | 'invalid' | 'error' | null>(null);
     const pollInterval = useRef<number | undefined>(undefined);
@@ -84,13 +90,57 @@ const VoteGeneratorApp: React.FC = () => {
 
         if (!silent) setViewState({ type: 'loading' });
 
+        // Helper to save admin link to localStorage
+        const saveAdminLink = (pId: string, aKey: string, title: string) => {
+            try {
+                const saved = JSON.parse(localStorage.getItem('vg_admin_links') || '{}');
+                saved[pId] = { adminKey: aKey, title, savedAt: new Date().toISOString() };
+                localStorage.setItem('vg_admin_links', JSON.stringify(saved));
+            } catch (e) { console.error('Failed to save admin link', e); }
+        };
+
+        // Helper to get saved admin key
+        const getSavedAdminKey = (pId: string): string | null => {
+            try {
+                const saved = JSON.parse(localStorage.getItem('vg_admin_links') || '{}');
+                return saved[pId]?.adminKey || null;
+            } catch { return null; }
+        };
+
         try {
             let poll: Poll;
             let isAdmin = false;
+            let usedAdminKey = adminKey;
 
+            // If we have an admin key, try it
             if (adminKey) {
-                poll = await getPollAsAdmin(pollId, adminKey);
-                isAdmin = true;
+                try {
+                    poll = await getPollAsAdmin(pollId, adminKey);
+                    isAdmin = true;
+                    // Save successful admin link
+                    saveAdminLink(pollId, adminKey, poll.title);
+                } catch (adminError: any) {
+                    // Admin key might be wrong - try public access
+                    if (adminError?.message?.includes('403') || adminError?.message?.includes('Invalid')) {
+                        // Try saved admin key as backup
+                        const savedKey = getSavedAdminKey(pollId);
+                        if (savedKey && savedKey !== adminKey) {
+                            try {
+                                poll = await getPollAsAdmin(pollId, savedKey);
+                                isAdmin = true;
+                                usedAdminKey = savedKey;
+                                // Update URL with correct admin key
+                                window.location.hash = `id=${pollId}&admin=${savedKey}`;
+                            } catch {
+                                throw adminError; // Original error
+                            }
+                        } else {
+                            throw adminError;
+                        }
+                    } else {
+                        throw adminError;
+                    }
+                }
             } else {
                 poll = await getPoll(pollId);
             }
@@ -99,19 +149,38 @@ const VoteGeneratorApp: React.FC = () => {
             const showResults = isAdmin || (userVoted && !poll.settings.hideResults);
 
             if (showResults) {
-                const results = await getResults(pollId, adminKey || undefined);
+                const results = await getResults(pollId, usedAdminKey || undefined);
                 setViewState({ type: 'results', poll, results, isAdmin });
             } else if (userVoted && poll.settings.hideResults) {
-                 setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
+                 setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer.", errorType: 'generic' });
             } else {
                 setViewState({ type: 'vote', poll });
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load poll:', error);
+            const errorMsg = error?.message || '';
+            
+            // Determine error type
+            let errorType: 'not_found' | 'invalid_admin' | 'expired' | 'generic' = 'generic';
+            let message = "Something went wrong. Please try again.";
+            
+            if (errorMsg.includes('404') || errorMsg.includes('not found') || errorMsg.includes('Not found')) {
+                errorType = 'not_found';
+                message = "This poll doesn't exist or has been deleted.";
+            } else if (errorMsg.includes('403') || errorMsg.includes('Invalid admin') || errorMsg.includes('Unauthorized')) {
+                errorType = 'invalid_admin';
+                message = "Invalid admin link. The admin key may be incorrect or the poll was recreated.";
+            } else if (errorMsg.includes('expired') || errorMsg.includes('Expired')) {
+                errorType = 'expired';
+                message = "This poll has expired and is no longer available.";
+            }
+            
             setViewState({ 
                 type: 'error', 
-                message: "Poll not found. It might have expired or the link is incorrect."
+                message,
+                errorType,
+                pollId
             });
         }
     }, [parseHash]);
@@ -456,19 +525,57 @@ const VoteGeneratorApp: React.FC = () => {
                                                          <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium text-slate-600">{isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV</button>
                                                          <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium"><Download size={14}/> Download PDF</button>
                                                     </div>
+                                                    {/* Email Admin Link backup */}
+                                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                                        <EmailAdminLink
+                                                            pollId={viewState.poll.id}
+                                                            adminKey={parseHash().adminKey || ''}
+                                                            pollTitle={viewState.poll.title}
+                                                            currentEmail={(viewState.poll as any).ownerEmail}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                             
                                             {/* Draft/Live Toggle & Notifications - Show for paid tiers */}
                                             {viewState.poll.tier && viewState.poll.tier !== 'free' && (
-                                                <div className="grid lg:grid-cols-2 gap-6 mt-6">
-                                                    <DraftLiveToggle
-                                                        pollId={viewState.poll.id}
-                                                        adminKey={parseHash().adminKey || ''}
-                                                        status={(viewState.poll as any).status || 'live'}
-                                                        voteCount={viewState.poll.voteCount || 0}
-                                                        onStatusChange={() => loadView(true)}
-                                                    />
+                                                <div className="space-y-6 mt-6">
+                                                    <div className="grid lg:grid-cols-2 gap-6">
+                                                        <DraftLiveToggle
+                                                            pollId={viewState.poll.id}
+                                                            adminKey={parseHash().adminKey || ''}
+                                                            status={(viewState.poll as any).status || 'live'}
+                                                            voteCount={viewState.poll.voteCount || 0}
+                                                            onStatusChange={() => loadView(true)}
+                                                        />
+                                                        {/* Logo Upload for paid tiers */}
+                                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                                                <ImageIcon size={18} className="text-slate-600"/> Poll Logo
+                                                            </h4>
+                                                            <LogoUpload
+                                                                currentLogo={(viewState.poll as any).logoUrl}
+                                                                onLogoChange={async (url) => {
+                                                                    // Save logo via API
+                                                                    try {
+                                                                        await fetch('/.netlify/functions/vg-update-settings', {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({
+                                                                                pollId: viewState.poll.id,
+                                                                                adminKey: parseHash().adminKey,
+                                                                                logoUrl: url
+                                                                            })
+                                                                        });
+                                                                        loadView(true);
+                                                                    } catch (e) {
+                                                                        console.error('Failed to update logo', e);
+                                                                    }
+                                                                }}
+                                                                tier={viewState.poll.tier}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                     {viewState.poll.tier === 'unlimited' && (
                                                         <NotificationSettings
                                                             pollId={viewState.poll.id}
@@ -513,11 +620,121 @@ const VoteGeneratorApp: React.FC = () => {
                     )}
 
                     {viewState.type === 'error' && (
-                        <motion.div key="error" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md mx-auto text-center pt-40 px-4">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6"><AlertTriangle className="text-slate-400" size={32} /></div>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-2">Notice</h2>
-                            <p className="text-slate-500 mb-8">{viewState.message}</p>
-                            <button onClick={goHome} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">Create New Poll</button>
+                        <motion.div key="error" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-lg mx-auto text-center pt-20 px-4">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                                viewState.errorType === 'not_found' ? 'bg-slate-100' :
+                                viewState.errorType === 'invalid_admin' ? 'bg-amber-100' :
+                                viewState.errorType === 'expired' ? 'bg-red-100' : 'bg-slate-100'
+                            }`}>
+                                {viewState.errorType === 'not_found' && <FileQuestion className="text-slate-400" size={40} />}
+                                {viewState.errorType === 'invalid_admin' && <Key className="text-amber-500" size={40} />}
+                                {viewState.errorType === 'expired' && <Clock className="text-red-400" size={40} />}
+                                {(!viewState.errorType || viewState.errorType === 'generic') && <AlertTriangle className="text-slate-400" size={40} />}
+                            </div>
+                            
+                            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                                {viewState.errorType === 'not_found' && "Poll Not Found"}
+                                {viewState.errorType === 'invalid_admin' && "Admin Access Denied"}
+                                {viewState.errorType === 'expired' && "Poll Expired"}
+                                {(!viewState.errorType || viewState.errorType === 'generic') && "Oops!"}
+                            </h2>
+                            
+                            <p className="text-slate-500 mb-6">{viewState.message}</p>
+                            
+                            {/* Helpful tips based on error type */}
+                            {viewState.errorType === 'not_found' && (
+                                <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left">
+                                    <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <HelpCircle size={16} /> What might have happened?
+                                    </h3>
+                                    <ul className="text-sm text-slate-500 space-y-1">
+                                        <li>• The poll was deleted by its creator</li>
+                                        <li>• The poll ID in the link is incorrect</li>
+                                        <li>• Free polls expire after 7 days</li>
+                                    </ul>
+                                </div>
+                            )}
+                            
+                            {viewState.errorType === 'invalid_admin' && (
+                                <div className="bg-amber-50 rounded-xl p-4 mb-6 text-left border border-amber-100">
+                                    <h3 className="font-semibold text-amber-800 mb-2 flex items-center gap-2">
+                                        <Key size={16} /> Admin Link Issues
+                                    </h3>
+                                    <ul className="text-sm text-amber-700 space-y-1">
+                                        <li>• The admin key in your link may be incorrect</li>
+                                        <li>• Check if you copied the full link including the admin= part</li>
+                                        <li>• If you saved the link elsewhere, try that version</li>
+                                    </ul>
+                                    {viewState.pollId && (
+                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                            <p className="text-xs text-amber-600 mb-2">Try viewing as a regular voter:</p>
+                                            <button 
+                                                onClick={() => window.location.hash = `id=${viewState.pollId}`}
+                                                className="text-sm text-amber-700 underline hover:no-underline"
+                                            >
+                                                View poll without admin access →
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Check saved admin links */}
+                            {(() => {
+                                try {
+                                    const saved = JSON.parse(localStorage.getItem('vg_admin_links') || '{}');
+                                    const entries = Object.entries(saved);
+                                    if (entries.length > 0) {
+                                        return (
+                                            <div className="bg-indigo-50 rounded-xl p-4 mb-6 text-left border border-indigo-100">
+                                                <h3 className="font-semibold text-indigo-800 mb-3 flex items-center gap-2">
+                                                    <Search size={16} /> Your Recent Polls
+                                                </h3>
+                                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                    {entries.slice(-5).reverse().map(([pId, data]: [string, any]) => (
+                                                        <button 
+                                                            key={pId}
+                                                            onClick={() => window.location.hash = `id=${pId}&admin=${data.adminKey}`}
+                                                            className="w-full text-left px-3 py-2 bg-white rounded-lg border border-indigo-100 hover:border-indigo-300 transition-colors"
+                                                        >
+                                                            <p className="font-medium text-slate-700 truncate text-sm">{data.title || 'Untitled Poll'}</p>
+                                                            <p className="text-xs text-slate-400">ID: {pId}</p>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                } catch { }
+                                return null;
+                            })()}
+                            
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                <button 
+                                    onClick={goHome} 
+                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+                                >
+                                    <Home size={18} /> Create New Poll
+                                </button>
+                                <button 
+                                    onClick={() => setShowRecoveryModal(true)} 
+                                    className="px-6 py-3 bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold rounded-xl flex items-center justify-center gap-2"
+                                >
+                                    <Mail size={18} /> Recover My Polls
+                                </button>
+                            </div>
+                            
+                            <button 
+                                onClick={() => window.history.back()} 
+                                className="text-slate-500 hover:text-slate-700 text-sm mt-4 flex items-center gap-1 mx-auto"
+                            >
+                                <ArrowLeft size={14} /> Go Back
+                            </button>
+                            
+                            {/* Contact support link */}
+                            <p className="text-xs text-slate-400 mt-8">
+                                Need help? <a href="mailto:support@votegenerator.com" className="text-indigo-500 hover:underline">Contact Support</a>
+                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -537,6 +754,17 @@ const VoteGeneratorApp: React.FC = () => {
             </main>
             </>
             )}
+            
+            {/* Poll Recovery Modal */}
+            <PollRecoveryModal 
+                isOpen={showRecoveryModal} 
+                onClose={() => setShowRecoveryModal(false)} 
+            />
+            
+            {/* Dev Mode Panel - Only visible in dev/test environments */}
+            <DevModePanel onTierChange={(tier) => {
+                setIsPaidUser(tier !== null && tier !== 'free');
+            }} />
         </div>
     );
 };

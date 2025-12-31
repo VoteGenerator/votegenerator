@@ -2,7 +2,7 @@ import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'notifications@votegenerator.com';
+const FROM_EMAIL = 'noreply@mail.votegenerator.com';
 const SITE_URL = process.env.URL || 'https://votegenerator.com';
 
 // Generate secure token

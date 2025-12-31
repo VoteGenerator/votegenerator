@@ -12,7 +12,7 @@ export interface PollSettings {
     hideResults: boolean;
     allowMultiple: boolean;
     requireNames?: boolean;
-    security?: 'none' | 'code' | 'ip' | 'fingerprint' | 'pin';
+    security?: 'none' | 'code' | 'ip' | 'fingerprint' | 'pin' | 'browser';
     allowComments?: boolean;
     publicComments?: boolean;
     deadline?: string;
@@ -95,6 +95,9 @@ export interface Poll {
     
     // Response count
     responseCount?: number;
+    
+    // Voter count (for results)
+    voters?: number;
 }
 
 export interface Vote {
@@ -120,12 +123,14 @@ export interface Vote {
 }
 
 export interface RoundLog {
-    round: number;
-    votes: Record<string, number>;
+    round?: number;
+    roundNumber?: number;
+    votes?: Record<string, number>;
     counts?: Record<string, number>;
-    eliminated?: string;
-    eliminatedId?: string;
-    winner?: string;
+    eliminated?: string | null;
+    eliminatedId?: string | null;
+    winner?: string | null;
+    winnerId?: string | null;
 }
 
 export interface SimpleCounts {
@@ -138,9 +143,12 @@ export interface MaybeCounts {
 
 export interface Comment {
     id?: string;
-    text: string;
-    voterName?: string;
-    timestamp: string;
+    text?: string | null;
+    voterName?: string | null;
+    timestamp?: string | null;
+    // Alternative property names used by the service
+    name?: string | null;
+    date?: string | null;
 }
 
 export interface MatrixAverage {
@@ -155,6 +163,7 @@ export interface PairwiseScore {
     wins: number;
     losses: number;
     score: number;
+    matches?: number;
 }
 
 export interface RatingStat {
@@ -164,6 +173,7 @@ export interface RatingStat {
     min: number;
     max: number;
     count: number;
+    stdDev?: number;
     distribution?: Record<number, number>;
 }
 
@@ -171,14 +181,15 @@ export interface BudgetStat {
     optionId: string;
     optionText?: string;
     totalSpent: number;
+    totalValue?: number;
     purchaseCount: number;
     averageSpent: number;
 }
 
 export interface RunoffResult {
     rounds: RoundLog[];
-    winner?: string;
-    winnerId?: string;
+    winner?: string | null;
+    winnerId?: string | null;
     totalVotes: number;
     results?: Array<{
         optionId: string;
@@ -198,6 +209,10 @@ export interface RunoffResult {
     dateVotes?: Record<string, { yes: number; maybe: number; no: number }>;
     // Dot voting specific
     dotTotals?: Record<string, number>;
+    // Additional properties from service
+    voters?: string[];
+    usedCodes?: string[];
+    votes?: any[];
 }
 
 export interface AnalyticsData {
@@ -245,11 +260,11 @@ export interface StoredVote {
     pollId: string;
     choices: string[];
     votedAt: string;
-    voterName?: string;
-    usedCode?: string;
-    comment?: string;
+    voterName: string | null;
+    usedCode: string | null;
+    comment: string | null;
     choicesMaybe?: string[];
-    matrixVotes?: Record<string, { x: number; y: number }>;
+    matrixVotes?: Record<string, number>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
 }

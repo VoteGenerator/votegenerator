@@ -1,4 +1,4 @@
-import { Poll, PollSettings, RunoffResult, RoundLog, Vote } from '../types';
+import { Poll, PollSettings, RunoffResult, RoundLog, Vote, StoredVote, Comment } from '../types';
 
 const LS_PREFIX = 'votegenerator_';
 
@@ -186,7 +186,7 @@ export const hasVoted = (pollId: string): boolean => {
     return localStorage.getItem(`${LS_PREFIX}has_voted_${pollId}`) === 'true';
 };
 
-export const getRawVotes = async (pollId: string, adminKey: string): Promise<Vote[]> => {
+export const getRawVotes = async (pollId: string, adminKey: string): Promise<any[]> => {
     try {
         const response = await fetch(`/.netlify/functions/vg-results?id=${pollId}&admin=${adminKey}&raw=true`);
         if(response.ok) {

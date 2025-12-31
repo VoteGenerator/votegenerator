@@ -227,15 +227,16 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 ...s,
                 stdDev: s.stdDev ?? 0
             }));
-            // Ensure all budgetStats have totalValue
+            // Ensure all budgetStats have totalValue and totalQuantity
             const budgetStats = data.budgetStats?.map((s: any) => ({
                 ...s,
-                totalValue: s.totalValue ?? s.totalSpent ?? 0
+                totalValue: s.totalValue ?? s.totalSpent ?? 0,
+                totalQuantity: s.totalQuantity ?? s.purchaseCount ?? 0
             }));
             // Ensure all pairwiseScores have matches
             const pairwiseScores = data.pairwiseScores?.map((s: any) => ({
                 ...s,
-                matches: s.matches ?? (s.wins + s.losses) ?? 0
+                matches: s.matches ?? ((s.wins || 0) + (s.losses || 0))
             }));
             // Ensure all comments have required fields
             const comments: Comment[] = (data.comments || []).map((c: any) => ({

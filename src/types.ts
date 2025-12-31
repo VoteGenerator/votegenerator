@@ -182,6 +182,7 @@ export interface BudgetStat {
     optionText?: string;
     totalSpent: number;
     totalValue: number;  // Required - always provide at least 0
+    totalQuantity: number;  // Required - always provide at least 0
     purchaseCount: number;
     averageSpent: number;
 }

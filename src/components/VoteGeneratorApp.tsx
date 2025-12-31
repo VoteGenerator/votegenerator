@@ -496,133 +496,161 @@ const VoteGeneratorApp: React.FC = () => {
 
                                 <div className={viewState.isAdmin ? "bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition-all" : ""}>
                                     {viewState.isAdmin && (
-                                        <div className="bg-slate-50/80 border-b border-slate-200 p-6 print:hidden">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Current Poll Settings</h3>
-                                                    {(() => { const typeDetails = getPollTypeDetails(viewState.poll.pollType); const Icon = typeDetails.icon; return (<div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold border ${typeDetails.bg} ${typeDetails.color} ${typeDetails.border}`}><Icon size={12} />{typeDetails.label}</div>); })()}
+                                        <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-6 print:hidden">
+                                            {/* Top Bar: Poll Type + Quick Actions */}
+                                            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    {(() => { const typeDetails = getPollTypeDetails(viewState.poll.pollType); const Icon = typeDetails.icon; return (<div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${typeDetails.bg} ${typeDetails.color} ${typeDetails.border}`}><Icon size={14} />{typeDetails.label}</div>); })()}
+                                                    {viewState.poll.settings.deadline && (<span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-lg text-slate-500 flex items-center gap-1"><Clock size={12}/> {new Date(viewState.poll.settings.deadline).toLocaleDateString()}</span>)}
+                                                    {viewState.poll.allowedCodes && (<span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-lg text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100"><Key size={12}/> {viewState.poll.allowedCodes.length} Codes</span>)}
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    {viewState.poll.settings.deadline && (<span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-md text-slate-600 flex items-center gap-1"><Clock size={12}/> Ends: {new Date(viewState.poll.settings.deadline).toLocaleDateString()}</span>)}
-                                                    {viewState.poll.allowedCodes && (<span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-md text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100"><Key size={12}/> {viewState.poll.allowedCodes.length} Codes {copiedCodes ? '(Copied)' : ''}</span>)}
-                                                </div>
-                                            </div>
-                                            <div className="grid lg:grid-cols-2 gap-6">
-                                                <div className="bg-white border border-indigo-100 rounded-xl p-5 shadow-sm">
-                                                     <h4 className="font-bold text-indigo-900 flex items-center gap-2 mb-3"><Share2 size={18} className="text-indigo-600"/> Share Poll</h4>
-                                                     <div className="flex gap-2 mb-3">
-                                                         <div className="relative flex-1"><Globe className="absolute left-3 top-2.5 text-slate-400" size={16} /><input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600" /></div>
-                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100">{copiedShare ? 'Copied' : 'Copy'}</button>
-                                                     </div>
-                                                     <div className="grid grid-cols-2 gap-2 mb-3">
-                                                         <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
-                                                         <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
-                                                         <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
-                                                         <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
-                                                     </div>
-                                                     {/* Custom Slug (Unlimited only) */}
-                                                     {viewState.poll.tier === 'unlimited' && (
-                                                         <div className="pt-3 border-t border-slate-100 mb-3">
-                                                             <CustomSlugInput
-                                                                 pollId={viewState.poll.id}
-                                                                 adminKey={parseHash().adminKey || ''}
-                                                                 currentSlug={(viewState.poll as any).customSlug}
-                                                                 tier={viewState.poll.tier}
-                                                             />
-                                                         </div>
-                                                     )}
-                                                     {/* Embed Code */}
-                                                     <div className="pt-3 border-t border-slate-100">
-                                                         <label className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Code size={12}/> Embed Code</label>
-                                                         <div className="flex gap-2">
-                                                             <input 
-                                                                 type="text" 
-                                                                 readOnly 
-                                                                 value={`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`}
-                                                                 className="flex-1 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono"
-                                                             />
-                                                             <button 
-                                                                 onClick={() => {
-                                                                     navigator.clipboard.writeText(`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`);
-                                                                     setCopiedEmbed(true);
-                                                                     setTimeout(() => setCopiedEmbed(false), 2000);
-                                                                 }}
-                                                                 className="px-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200"
-                                                             >
-                                                                 {copiedEmbed ? <Check size={14}/> : <Copy size={14}/>}
-                                                             </button>
-                                                         </div>
-                                                     </div>
-                                                </div>
-                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                                                    <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-3"><Settings size={18} className="text-slate-600"/> Controls</h4>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium text-slate-600"><Settings size={16}/> Edit</button>
-                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium text-slate-600">{isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV</button>
-                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium"><Download size={14}/> Download PDF</button>
-                                                    </div>
-                                                    {/* Email Admin Link backup */}
-                                                    <div className="mt-4 pt-4 border-t border-slate-100">
-                                                        <EmailAdminLink
-                                                            pollId={viewState.poll.id}
-                                                            adminKey={parseHash().adminKey || ''}
-                                                            pollTitle={viewState.poll.title}
-                                                            currentEmail={(viewState.poll as any).ownerEmail}
-                                                        />
-                                                    </div>
-                                                </div>
+                                                {/* View Poll Button */}
+                                                <a 
+                                                    href={getShareUrl()} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm"
+                                                >
+                                                    <Eye size={16} /> View Poll
+                                                </a>
                                             </div>
                                             
-                                            {/* Draft/Live Toggle & Notifications - Show for paid tiers */}
-                                            {viewState.poll.tier && viewState.poll.tier !== 'free' && (
-                                                <div className="space-y-6 mt-6">
-                                                    <div className="grid lg:grid-cols-2 gap-6">
-                                                        <DraftLiveToggle
-                                                            pollId={viewState.poll.id}
-                                                            adminKey={parseHash().adminKey || ''}
-                                                            status={(viewState.poll as any).status || 'live'}
-                                                            voteCount={viewState.poll.voteCount || 0}
-                                                            onStatusChange={() => loadView(true)}
-                                                        />
-                                                        {/* Logo Upload for paid tiers */}
-                                                        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
-                                                                <ImageIcon size={18} className="text-slate-600"/> Poll Logo
-                                                            </h4>
-                                                            <LogoUpload
-                                                                currentLogo={(viewState.poll as any).logoUrl}
-                                                                onLogoChange={async (url) => {
-                                                                    // Save logo via API
-                                                                    try {
-                                                                        await fetch('/.netlify/functions/vg-update-settings', {
-                                                                            method: 'POST',
-                                                                            headers: { 'Content-Type': 'application/json' },
-                                                                            body: JSON.stringify({
-                                                                                pollId: viewState.poll.id,
-                                                                                adminKey: parseHash().adminKey,
-                                                                                logoUrl: url
-                                                                            })
-                                                                        });
-                                                                        loadView(true);
-                                                                    } catch (e) {
-                                                                        console.error('Failed to update logo', e);
-                                                                    }
-                                                                }}
-                                                                tier={viewState.poll.tier}
-                                                            />
+                                            {/* Main Actions Row */}
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                                                <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="py-2.5 px-3 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                                                    {copiedShare ? <Check size={14} className="text-green-600"/> : <Copy size={14}/>} {copiedShare ? 'Copied!' : 'Copy Link'}
+                                                </button>
+                                                <button onClick={() => setShowQrModal(true)} className="py-2.5 px-3 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                                                    <QrCode size={14}/> QR Code
+                                                </button>
+                                                <button onClick={handleEditPoll} className="py-2.5 px-3 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                                                    <Settings size={14}/> Edit Poll
+                                                </button>
+                                                <button onClick={handleExportCSV} disabled={isExporting} className="py-2.5 px-3 bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                                                    {isExporting ? <Loader2 size={14} className="animate-spin"/> : <FileSpreadsheet size={14}/>} Export CSV
+                                                </button>
+                                            </div>
+
+                                            {/* Collapsible Sections */}
+                                            <div className="space-y-3">
+                                                {/* Share Options Section */}
+                                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                    <button 
+                                                        onClick={() => toggleSection('share')}
+                                                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                    >
+                                                        <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                                            <Share2 size={16} className="text-indigo-600"/> Share & Distribute
+                                                        </span>
+                                                        {expandedSections.share ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                    </button>
+                                                    {expandedSections.share && (
+                                                        <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                            <div className="grid grid-cols-4 gap-2 mb-3">
+                                                                <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex flex-col items-center gap-1"><MessageCircle size={16}/> WhatsApp</button>
+                                                                <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex flex-col items-center gap-1"><Smartphone size={16}/> SMS</button>
+                                                                <button onClick={shareToEmail} className="py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 flex flex-col items-center gap-1"><Mail size={16}/> Email</button>
+                                                                <button onClick={handlePrintPDF} className="py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 flex flex-col items-center gap-1"><Download size={16}/> PDF</button>
+                                                            </div>
+                                                            {/* Embed Code - Compact */}
+                                                            <div className="flex gap-2 items-center">
+                                                                <Code size={14} className="text-slate-400 flex-shrink-0"/>
+                                                                <input type="text" readOnly value={`<iframe src="${getShareUrl()}?embed=true" ...>`} className="flex-1 px-2 py-1.5 text-[10px] bg-slate-50 border border-slate-200 rounded text-slate-500 font-mono"/>
+                                                                <button onClick={() => { navigator.clipboard.writeText(`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`); setCopiedEmbed(true); setTimeout(() => setCopiedEmbed(false), 2000); }} className="px-2 py-1.5 bg-slate-100 text-slate-600 rounded text-xs font-bold hover:bg-slate-200">{copiedEmbed ? <Check size={12}/> : 'Embed'}</button>
+                                                            </div>
+                                                            {/* Custom Slug (Unlimited only) */}
+                                                            {viewState.poll.tier === 'unlimited' && (
+                                                                <div className="mt-3 pt-3 border-t border-slate-100">
+                                                                    <CustomSlugInput
+                                                                        pollId={viewState.poll.id}
+                                                                        adminKey={parseHash().adminKey || ''}
+                                                                        currentSlug={(viewState.poll as any).customSlug}
+                                                                        tier={viewState.poll.tier}
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    </div>
-                                                    {viewState.poll.tier === 'unlimited' && (
-                                                        <NotificationSettings
-                                                            pollId={viewState.poll.id}
-                                                            adminKey={parseHash().adminKey || ''}
-                                                            pollTitle={viewState.poll.title}
-                                                            currentSettings={(viewState.poll as any).notificationSettings}
-                                                            tier={viewState.poll.tier}
-                                                        />
                                                     )}
                                                 </div>
-                                            )}
+
+                                                {/* Paid Features Section */}
+                                                {viewState.poll.tier && viewState.poll.tier !== 'free' && (
+                                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                        <button 
+                                                            onClick={() => toggleSection('controls')}
+                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                        >
+                                                            <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                                                <SlidersHorizontal size={16} className="text-purple-600"/> Poll Controls
+                                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
+                                                            </span>
+                                                            {expandedSections.controls ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                        </button>
+                                                        {expandedSections.controls && (
+                                                            <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                                <div className="grid md:grid-cols-2 gap-4">
+                                                                    <DraftLiveToggle
+                                                                        pollId={viewState.poll.id}
+                                                                        adminKey={parseHash().adminKey || ''}
+                                                                        status={(viewState.poll as any).status || 'live'}
+                                                                        voteCount={viewState.poll.voteCount || 0}
+                                                                        onStatusChange={() => loadView(true)}
+                                                                    />
+                                                                    <div>
+                                                                        <label className="text-xs font-semibold text-slate-600 mb-2 block flex items-center gap-1">
+                                                                            <ImageIcon size={12}/> Poll Logo
+                                                                        </label>
+                                                                        <LogoUpload
+                                                                            currentLogo={(viewState.poll as any).logoUrl}
+                                                                            onLogoChange={async (url) => {
+                                                                                try {
+                                                                                    await fetch('/.netlify/functions/vg-update-settings', {
+                                                                                        method: 'POST',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify({
+                                                                                            pollId: viewState.poll.id,
+                                                                                            adminKey: parseHash().adminKey,
+                                                                                            logoUrl: url
+                                                                                        })
+                                                                                    });
+                                                                                    loadView(true);
+                                                                                } catch (e) { console.error('Failed to save logo', e); }
+                                                                            }}
+                                                                            tier={viewState.poll.tier}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Notifications Section */}
+                                                {viewState.poll.tier && viewState.poll.tier !== 'free' && (
+                                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                        <button 
+                                                            onClick={() => toggleSection('advanced')}
+                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                        >
+                                                            <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                                                <Bell size={16} className="text-amber-600"/> Email Notifications
+                                                            </span>
+                                                            {expandedSections.advanced ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                        </button>
+                                                        {expandedSections.advanced && (
+                                                            <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                                <NotificationSettings
+                                                                    pollId={viewState.poll.id}
+                                                                    adminKey={parseHash().adminKey || ''}
+                                                                    currentSettings={(viewState.poll as any).notificationSettings}
+                                                                    onSettingsChange={() => loadView(true)}
+                                                                    tier={viewState.poll.tier}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
 

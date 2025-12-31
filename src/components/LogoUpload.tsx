@@ -35,8 +35,10 @@ const LogoUpload: React.FC<Props> = ({
     const uploadToCloudinary = async (file: File): Promise<string | null> => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', 'votegenerator_logos'); // Must be UNSIGNED preset in Cloudinary
+        formData.append('upload_preset', 'votegenerator_logo'); // Must be UNSIGNED preset in Cloudinary
         formData.append('folder', 'poll-logos');
+        // Optimize images to save space
+        formData.append('transformation', 'c_limit,w_400,h_200,q_auto,f_auto');
 
         // Cloud name should match your Cloudinary account
         const cloudName = 'votegenerator';
@@ -54,7 +56,7 @@ const LogoUpload: React.FC<Props> = ({
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Cloudinary error response:', errorData);
                 
-                if (response.status === 401) {
+                if (response.status === 401 || response.status === 400) {
                     throw new Error('CLOUDINARY_SETUP_REQUIRED');
                 }
                 throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);

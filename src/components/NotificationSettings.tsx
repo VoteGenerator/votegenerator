@@ -48,6 +48,7 @@ interface Props {
     pollTitle?: string;
     currentSettings?: NotificationSettingsData;
     onSave?: (settings: NotificationSettingsData) => void;
+    onSettingsChange?: () => void; // Callback when settings are saved
     tier?: string;
 }
 
@@ -72,6 +73,7 @@ const NotificationSettings: React.FC<Props> = ({
     pollTitle,
     currentSettings,
     onSave,
+    onSettingsChange,
     tier = 'free'
 }) => {
     const [settings, setSettings] = useState<NotificationSettingsData>(currentSettings || DEFAULT_SETTINGS);
@@ -252,6 +254,7 @@ const NotificationSettings: React.FC<Props> = ({
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
             onSave?.(settings);
+            onSettingsChange?.(); // Trigger refresh
         } catch (error) {
             console.error('Failed to save notification settings:', error);
         } finally {

@@ -126,7 +126,7 @@ export interface RoundLog {
     round?: number;
     roundNumber?: number;
     votes?: Record<string, number>;
-    counts?: Record<string, number>;
+    counts: Record<string, number>;  // Required - always provide at least {}
     eliminated?: string | null;
     eliminatedId?: string | null;
     winner?: string | null;
@@ -143,12 +143,12 @@ export interface MaybeCounts {
 
 export interface Comment {
     id?: string;
-    text?: string | null;
-    voterName?: string | null;
-    timestamp?: string | null;
+    text: string;  // Required - default ''
+    voterName: string;  // Required - default 'Anonymous'
+    timestamp: string;  // Required - default ''
     // Alternative property names used by the service
-    name?: string | null;
-    date?: string | null;
+    name: string;  // Required - default 'Anonymous'
+    date: string;  // Required - default ''
 }
 
 export interface MatrixAverage {
@@ -163,7 +163,7 @@ export interface PairwiseScore {
     wins: number;
     losses: number;
     score: number;
-    matches?: number;
+    matches: number;  // Required - always provide at least 0
 }
 
 export interface RatingStat {
@@ -173,7 +173,7 @@ export interface RatingStat {
     min: number;
     max: number;
     count: number;
-    stdDev?: number;
+    stdDev: number;  // Required - always provide at least 0
     distribution?: Record<number, number>;
 }
 
@@ -181,7 +181,7 @@ export interface BudgetStat {
     optionId: string;
     optionText?: string;
     totalSpent: number;
-    totalValue?: number;
+    totalValue: number;  // Required - always provide at least 0
     purchaseCount: number;
     averageSpent: number;
 }
@@ -197,14 +197,14 @@ export interface RunoffResult {
         votes: number;
         percentage: number;
     }>;
-    // Extended result types
-    simpleCounts?: SimpleCounts;
-    maybeCounts?: MaybeCounts;
+    // Extended result types - Record format keyed by optionId
+    simpleCounts?: Record<string, number>;
+    maybeCounts?: Record<string, number>;
     comments?: Comment[];
-    matrixAverages?: MatrixAverage[];
-    pairwiseScores?: PairwiseScore[];
-    ratingStats?: RatingStat[];
-    budgetStats?: BudgetStat[];
+    matrixAverages?: Record<string, MatrixAverage>;
+    pairwiseScores?: Record<string, PairwiseScore>;
+    ratingStats?: Record<string, RatingStat>;
+    budgetStats?: Record<string, BudgetStat>;
     // Meeting poll specific
     dateVotes?: Record<string, { yes: number; maybe: number; no: number }>;
     // Dot voting specific

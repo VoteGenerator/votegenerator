@@ -217,13 +217,41 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
             const data = await response.json();
             // vg-results returns calculated results with votes for admin
             // Transform to match RunoffResult format
+            // Ensure all rounds have counts property
+            const rounds: RoundLog[] = (data.rounds || []).map((r: any) => ({
+                ...r,
+                counts: r.counts || r.votes || {}
+            }));
+            // Ensure all ratingStats have stdDev
+            const ratingStats = data.ratingStats?.map((s: any) => ({
+                ...s,
+                stdDev: s.stdDev ?? 0
+            }));
+            // Ensure all budgetStats have totalValue
+            const budgetStats = data.budgetStats?.map((s: any) => ({
+                ...s,
+                totalValue: s.totalValue ?? s.totalSpent ?? 0
+            }));
+            // Ensure all pairwiseScores have matches
+            const pairwiseScores = data.pairwiseScores?.map((s: any) => ({
+                ...s,
+                matches: s.matches ?? (s.wins + s.losses) ?? 0
+            }));
+            // Ensure all comments have required fields
+            const comments: Comment[] = (data.comments || []).map((c: any) => ({
+                name: c.name || c.voterName || 'Anonymous',
+                voterName: c.name || c.voterName || 'Anonymous',
+                text: c.text || c.comment || '',
+                date: c.date || c.timestamp || '',
+                timestamp: c.timestamp || c.date || ''
+            }));
             return {
                 winnerId: data.winnerId || data.winner?.id || null,
-                rounds: data.rounds || [],
+                rounds,
                 totalVotes: data.totalVotes || 0,
                 voters: [],
                 usedCodes: [],
-                comments: data.comments || [],
+                comments,
                 simpleCounts: data.simpleCounts || (data.standings ? 
                     data.standings.reduce((acc: Record<string, number>, s: any) => {
                         acc[s.optionId] = s.voteCount;
@@ -232,9 +260,9 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 maybeCounts: data.maybeCounts || {},
                 votes: data.votes || [], // IMPORTANT: Pass votes for Map/Grid/Velocity views
                 matrixAverages: data.matrixAverages,
-                pairwiseScores: data.pairwiseScores,
-                ratingStats: data.ratingStats,
-                budgetStats: data.budgetStats
+                pairwiseScores,
+                ratingStats,
+                budgetStats
             };
         }
         throw new Error('API error');
@@ -247,12 +275,14 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
         }
 
         const voters = votes.map((v: any) => v.voterName).filter((n: any) => !!n) as string[];
-        const comments = votes
+        const comments: Comment[] = votes
             .filter((v: any) => !!v.comment)
             .map((v: any) => ({
                 name: v.voterName || 'Anonymous',
-                text: v.comment,
-                date: v.votedAt
+                voterName: v.voterName || 'Anonymous',
+                text: v.comment || '',
+                date: v.votedAt || '',
+                timestamp: v.votedAt || ''
             }));
             
         const usedCodes = votes.map((v: any) => v.usedCode).filter((c: any) => !!c) as string[];

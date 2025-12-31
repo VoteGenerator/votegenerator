@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     BarChart3,
@@ -22,29 +22,8 @@ import {
     Calendar,
     Users,
     Zap,
-    ExternalLink,
-    FileText,
-    Image as ImageIcon,
-    Loader2,
-    Camera
+    ExternalLink
 } from 'lucide-react';
-
-// Declare modules for dynamic imports (packages installed at runtime)
-declare module 'html2canvas' {
-    const html2canvas: (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
-    export default html2canvas;
-}
-declare module 'jspdf' {
-    export class jsPDF {
-        constructor(options?: any);
-        internal: { pageSize: { getWidth: () => number; getHeight: () => number } };
-        setFontSize(size: number): void;
-        setTextColor(r: number, g: number, b: number): void;
-        text(text: string, x: number, y: number, options?: any): void;
-        addImage(data: string, format: string, x: number, y: number, w: number, h: number): void;
-        save(filename: string): void;
-    }
-}
 
 interface AnalyticsData {
     tier: string;
@@ -217,100 +196,9 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         URL.revokeObjectURL(url);
     };
 
-    // Export as PNG using html2canvas
-    const [exportingPng, setExportingPng] = useState(false);
-    const [exportingPdf, setExportingPdf] = useState(false);
-    const dashboardRef = useRef<HTMLDivElement>(null);
-
-    const exportAsPng = async (sectionId?: string) => {
-        setExportingPng(true);
-        try {
-            // Dynamically import html2canvas
-            const html2canvas = (await import('html2canvas')).default;
-            
-            const element = sectionId 
-                ? document.getElementById(sectionId) 
-                : dashboardRef.current;
-            
-            if (!element) {
-                console.error('Element not found');
-                setExportingPng(false);
-                return;
-            }
-
-            const canvas = await html2canvas(element, {
-                backgroundColor: '#ffffff',
-                scale: 2, // Higher quality
-                logging: false,
-                useCORS: true
-            });
-
-            const link = document.createElement('a');
-            link.download = `poll-analytics-${sectionId || 'full'}-${pollId}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch (error) {
-            console.error('PNG export failed:', error);
-            alert('Failed to export PNG. Please try again.');
-        } finally {
-            setExportingPng(false);
-        }
-    };
-
-    const exportAsPdf = async () => {
-        setExportingPdf(true);
-        try {
-            // Dynamically import libraries
-            const html2canvas = (await import('html2canvas')).default;
-            const { jsPDF } = await import('jspdf');
-            
-            const element = dashboardRef.current;
-            if (!element) {
-                setExportingPdf(false);
-                return;
-            }
-
-            const canvas = await html2canvas(element, {
-                backgroundColor: '#ffffff',
-                scale: 2,
-                logging: false,
-                useCORS: true
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-            const imgX = (pdfWidth - imgWidth * ratio) / 2;
-            const imgY = 10;
-
-            // Add title
-            pdf.setFontSize(16);
-            pdf.setTextColor(30, 41, 59);
-            pdf.text('Poll Analytics Report', pdfWidth / 2, 15, { align: 'center' });
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 116, 139);
-            pdf.text(`Generated ${new Date().toLocaleDateString()}`, pdfWidth / 2, 22, { align: 'center' });
-
-            // Add image
-            pdf.addImage(imgData, 'PNG', imgX, 30, imgWidth * ratio * 0.9, imgHeight * ratio * 0.9);
-
-            pdf.save(`poll-analytics-${pollId}.pdf`);
-        } catch (error) {
-            console.error('PDF export failed:', error);
-            alert('Failed to export PDF. Please try again.');
-        } finally {
-            setExportingPdf(false);
-        }
-    };
+    // Note: PNG/PDF export requires html2canvas and jspdf packages
+    // Install with: npm install html2canvas jspdf
+    // Then uncomment the export functions below
 
     if (loading) {
         return (
@@ -391,34 +279,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     </span>
                 </h3>
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                        <button
-                            onClick={exportAnalyticsCSV}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all"
-                            title="Export as CSV"
-                        >
-                            <Download size={14} />
-                            CSV
-                        </button>
-                        <button
-                            onClick={() => exportAsPng()}
-                            disabled={exportingPng}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-emerald-600 hover:bg-white rounded-md transition-all disabled:opacity-50"
-                            title="Export as PNG image"
-                        >
-                            {exportingPng ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
-                            PNG
-                        </button>
-                        <button
-                            onClick={exportAsPdf}
-                            disabled={exportingPdf}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-white rounded-md transition-all disabled:opacity-50"
-                            title="Export as PDF"
-                        >
-                            {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
-                            PDF
-                        </button>
-                    </div>
+                    <button
+                        onClick={exportAnalyticsCSV}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
+                        <Download size={14} />
+                        Export CSV
+                    </button>
                     <button
                         onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
                         className="flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
@@ -472,7 +339,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             {/* ============================================ */}
             {/* KEY METRICS - Always visible */}
             {/* ============================================ */}
-            <div ref={dashboardRef} className="space-y-6 bg-white p-4 rounded-xl">
+            <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="analytics-metrics">
                 {/* Total Votes */}
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -775,7 +642,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     )}
                 </div>
             )}
-            </div>{/* End of dashboardRef */}
+            </div>
         </div>
     );
 };

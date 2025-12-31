@@ -1,4 +1,5 @@
 // Poll and voting types for VoteGenerator
+// This file must match all properties used across components and services
 
 export interface PollOption {
     id: string;
@@ -11,10 +12,21 @@ export interface PollSettings {
     hideResults: boolean;
     allowMultiple: boolean;
     requireNames?: boolean;
-    security?: 'none' | 'code' | 'ip' | 'fingerprint';
+    security?: 'none' | 'code' | 'ip' | 'fingerprint' | 'pin';
     allowComments?: boolean;
+    publicComments?: boolean;
     deadline?: string;
     unlisted?: boolean;
+    // Voting limits
+    maxVotes?: number;
+    // Timezone
+    timezone?: string;
+    // Security
+    blockVpn?: boolean;
+    // Dot voting
+    dotBudget?: number;
+    // Budget voting
+    budgetLimit?: number;
 }
 
 export interface EmailEntry {
@@ -75,10 +87,14 @@ export interface Poll {
     
     // Access codes
     accessCodes?: string[];
+    allowedCodes?: string[];
     
     // Theme
     theme?: string;
     buttonText?: string;
+    
+    // Response count
+    responseCount?: number;
 }
 
 export interface Vote {
@@ -103,14 +119,66 @@ export interface Vote {
     };
 }
 
-export interface RunoffResult {
-    rounds: Array<{
-        round: number;
-        votes: Record<string, number>;
-        eliminated?: string;
-        winner?: string;
-    }>;
+export interface RoundLog {
+    round: number;
+    votes: Record<string, number>;
+    counts?: Record<string, number>;
+    eliminated?: string;
+    eliminatedId?: string;
     winner?: string;
+}
+
+export interface SimpleCounts {
+    [optionId: string]: number;
+}
+
+export interface MaybeCounts {
+    [optionId: string]: number;
+}
+
+export interface Comment {
+    id?: string;
+    text: string;
+    voterName?: string;
+    timestamp: string;
+}
+
+export interface MatrixAverage {
+    optionId: string;
+    x: number;
+    y: number;
+    count: number;
+}
+
+export interface PairwiseScore {
+    optionId: string;
+    wins: number;
+    losses: number;
+    score: number;
+}
+
+export interface RatingStat {
+    optionId: string;
+    optionText?: string;
+    average: number;
+    min: number;
+    max: number;
+    count: number;
+    distribution?: Record<number, number>;
+}
+
+export interface BudgetStat {
+    optionId: string;
+    optionText?: string;
+    totalSpent: number;
+    purchaseCount: number;
+    averageSpent: number;
+}
+
+export interface RunoffResult {
+    rounds: RoundLog[];
+    winner?: string;
+    winnerId?: string;
     totalVotes: number;
     results?: Array<{
         optionId: string;
@@ -118,6 +186,18 @@ export interface RunoffResult {
         votes: number;
         percentage: number;
     }>;
+    // Extended result types
+    simpleCounts?: SimpleCounts;
+    maybeCounts?: MaybeCounts;
+    comments?: Comment[];
+    matrixAverages?: MatrixAverage[];
+    pairwiseScores?: PairwiseScore[];
+    ratingStats?: RatingStat[];
+    budgetStats?: BudgetStat[];
+    // Meeting poll specific
+    dateVotes?: Record<string, { yes: number; maybe: number; no: number }>;
+    // Dot voting specific
+    dotTotals?: Record<string, number>;
 }
 
 export interface AnalyticsData {
@@ -158,4 +238,18 @@ export interface AnalyticsData {
         included: string[];
         notIncluded: string[];
     };
+}
+
+// Local storage vote record
+export interface StoredVote {
+    pollId: string;
+    choices: string[];
+    votedAt: string;
+    voterName?: string;
+    usedCode?: string;
+    comment?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
 }

@@ -1,1201 +1,668 @@
-// ============================================================================
-// AdminDashboard.tsx - Complete with search, pagination, draft/live
-// Location: src/components/AdminDashboard.tsx
-// ============================================================================
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
-    BarChart3, Plus, Copy, Check, ExternalLink, Trash2,
-    Crown, Loader2, Clock, Users, LayoutDashboard,
-    Calendar, Sparkles, AlertCircle, PlusCircle,
-    Zap, Share2, Settings, X, CheckCircle, Link2,
-    Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
-    Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw
+    BarChart3,
+    Clock,
+    TrendingUp,
+    TrendingDown,
+    Minus,
+    Globe,
+    Lock,
+    Info,
+    ChevronDown,
+    ChevronUp,
+    Eye,
+    EyeOff,
+    Crown,
+    Sparkles,
+    Smartphone,
+    Monitor,
+    Tablet,
+    Download,
+    Calendar,
+    Users,
+    Zap,
+    ExternalLink
 } from 'lucide-react';
 
-// ============================================================================
-// Types
-// ============================================================================
+interface AnalyticsData {
+    tier: string;
+    totalVotes: number;
+    firstVote?: string;
+    lastVote?: string;
+    durationHours?: number;
+    durationDays?: number;
+    peakHour?: number;
+    peakHourFormatted?: string;
+    peakHourVotes?: number;
+    dailyTrend?: Record<string, number>;
+    dailyAverage?: number;
+    hourlyDistribution?: Record<number, number>;
+    hourlyDistributionFormatted?: Array<{ hour: number; hourFormatted: string; votes: number; percentage: number }>;
+    velocityTrend?: 'increasing' | 'decreasing' | 'stable';
+    dayOfWeekDistribution?: Record<string, number>;
+    mostActiveDay?: { day: string; votes: number };
+    utmSources?: Record<string, number>;
+    deviceBreakdown?: Record<string, number>;
+    countryStats?: {
+        topCountries: Array<{ country: string; votes: number; percentage: number }>;
+        countriesRepresented: number;
+        privacyNote: string;
+    };
+    includedFeatures?: {
+        included: string[];
+        notIncluded: string[];
+    };
+    privacyInfo?: {
+        whatWeTrack: string[];
+        whatWeDontTrack: string[];
+        countryTracking: string;
+    };
+}
 
-interface UserPoll {
-    id: string;
+interface AnalyticsDashboardProps {
+    pollId: string;
     adminKey: string;
-    title: string;
-    type: string;
-    createdAt: string;
-    responseCount?: number;
-    status?: 'draft' | 'live';  // For Starter/Pro polls
-    expiresAt?: string;
+    currentTier?: 'free' | 'starter' | 'pro_event' | 'unlimited';
 }
 
-interface UserSession {
-    dashboardToken: string;
-    tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
-    expiresAt?: string;
-    polls: UserPoll[];
-    createdAt: string;
-    hasPin?: boolean;
-    pinHash?: string;
-    sessionId?: string;  // Stripe session ID for URL reconstruction
-}
-
-// ============================================================================
-// Configuration
-// ============================================================================
-
-const POLLS_PER_PAGE = 10;
-
-const TIER_CONFIG: Record<string, {
-    label: string;
-    gradient: string;
-    bgGradient: string;
-    headerBg: string;
-    icon: React.ReactNode;
-    maxPolls: number;
-    activeDays: number;
-    requiresActivation: boolean; // Does this tier need draft→live flow?
-    features: { name: string; included: boolean }[];
-}> = {
-    free: {
-        label: 'Free',
-        gradient: 'from-slate-500 to-slate-600',
-        bgGradient: 'from-slate-50 via-white to-slate-50',
-        headerBg: 'bg-slate-100',
-        icon: <BarChart3 size={16} />,
-        maxPolls: 1,
-        activeDays: 7,
-        requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '50 responses', included: true },
-            { name: '7 days active', included: true },
-            { name: 'Visual polls', included: false },
-            { name: 'Export to CSV', included: false },
-        ]
-    },
-    starter: {
-        label: 'Starter',
-        gradient: 'from-blue-500 to-indigo-600',
-        bgGradient: 'from-blue-50/40 via-white to-indigo-50/40',
-        headerBg: 'bg-blue-50',
-        icon: <Zap size={16} />,
-        maxPolls: 1,
-        activeDays: 30,
-        requiresActivation: true,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '500 responses', included: true },
-            { name: '30 days active', included: true },
-            { name: 'Export to CSV', included: true },
-            { name: 'Visual polls', included: false },
-        ]
-    },
-    pro_event: {
-        label: 'Pro Event',
-        gradient: 'from-purple-500 to-pink-500',
-        bgGradient: 'from-purple-50/40 via-white to-pink-50/40',
-        headerBg: 'bg-purple-50',
-        icon: <Crown size={16} />,
-        maxPolls: 3,
-        activeDays: 60,
-        requiresActivation: true,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '2,000 responses', included: true },
-            { name: '60 days active', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-        ]
-    },
-    unlimited: {
-        label: 'Unlimited',
-        gradient: 'from-amber-500 to-orange-500',
-        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
-        headerBg: 'bg-amber-50',
-        icon: <Sparkles size={16} />,
-        maxPolls: Infinity,
-        activeDays: 365,
-        requiresActivation: false, // Unlimited doesn't need confirmation
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '10,000 responses/poll', included: true },
-            { name: '1 year active', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'PIN protection', included: true },
-            { name: 'Team tokens (10)', included: true },
-        ]
-    },
+// Tier display config
+const TIER_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+    'free': { label: 'Free', color: 'text-slate-600', bgColor: 'bg-slate-100' },
+    'starter': { label: 'Starter', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+    'pro_event': { label: 'Pro Event', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    'unlimited': { label: 'Unlimited', color: 'text-amber-700', bgColor: 'bg-amber-100' }
 };
 
-// ============================================================================
-// Main Component
-// ============================================================================
-
-const AdminDashboard: React.FC = () => {
-    const [session, setSession] = useState<UserSession | null>(null);
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ 
+    pollId, 
+    adminKey,
+    currentTier = 'free'
+}) => {
+    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [copiedDashboard, setCopiedDashboard] = useState(false);
-    
-    // UI State
-    const [showSettings, setShowSettings] = useState(false);
-    const [showAccessPanel, setShowAccessPanel] = useState(true);
-    const [showPinSetup, setShowPinSetup] = useState(false);
-    const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
-    
-    // Search & Pagination
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
 
-    // Get token and session_id from URL (supports both formats)
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('token');
-    const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Support both long and short format
-    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited' | null;
-
-    // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
-    const generateDashboardToken = (sessionId: string): string => {
-        return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
-    };
+    // All paid tiers get analytics
+    const isPaid = currentTier !== 'free';
+    const isUnlimited = currentTier === 'unlimited';
+    const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG['free'];
 
     useEffect(() => {
-        validateAndLoadSession();
-    }, []);
+        fetchAnalytics();
+    }, [pollId, adminKey]);
 
-    // Refresh poll data from backend to get updated vote counts
-    const refreshPollData = async (sessionData: UserSession) => {
-        if (!sessionData.polls || sessionData.polls.length === 0) return;
-        
+    const fetchAnalytics = async () => {
         try {
-            const updatedPolls = await Promise.all(
-                sessionData.polls.map(async (poll) => {
-                    try {
-                        const response = await fetch(`/.netlify/functions/vg-get?id=${poll.id}&admin=${poll.adminKey}`);
-                        if (response.ok) {
-                            const freshData = await response.json();
-                            return {
-                                ...poll,
-                                responseCount: freshData.voteCount || freshData.responseCount || 0,
-                                status: freshData.status || poll.status,
-                            };
-                        }
-                    } catch (e) {
-                        console.warn(`Failed to refresh poll ${poll.id}:`, e);
-                    }
-                    return poll;
-                })
+            setLoading(true);
+            const response = await fetch(
+                `/.netlify/functions/vg-analytics?pollId=${pollId}&adminKey=${adminKey}`
             );
+            const data = await response.json();
             
-            const updatedSession = { ...sessionData, polls: updatedPolls };
-            setSession(updatedSession);
-            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
-        } catch (e) {
-            console.error('Failed to refresh poll data:', e);
-        }
-    };
-
-    // Refresh poll data when session is loaded
-    useEffect(() => {
-        if (session && !loading) {
-            refreshPollData(session);
-        }
-    }, [loading]);
-
-    const validateAndLoadSession = () => {
-        try {
-            const stored = localStorage.getItem('vg_user_session');
-            
-            // Case 1: Coming from email link with session_id (short format: ?s=xxx)
-            // Create session from URL params
-            if (!stored && urlSessionId) {
-                const expectedToken = generateDashboardToken(urlSessionId);
-                
-                // If token provided, verify it matches
-                if (urlToken && urlToken !== expectedToken) {
-                    setError('Invalid dashboard link. The token is incorrect.');
-                    setLoading(false);
-                    return;
-                }
-                
-                // Determine tier (default to unlimited if not provided since email doesn't include tier)
-                // We'll fetch the real tier from backend later, for now assume unlimited
-                const tier = urlTier || 'unlimited';
-                const days = tier === 'unlimited' ? 365 : tier === 'pro_event' ? 60 : 30;
-                const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-                
-                // Create new session
-                const newSession: UserSession = {
-                    dashboardToken: expectedToken,
-                    sessionId: urlSessionId,  // Store for URL reconstruction
-                    tier,
-                    expiresAt,
-                    polls: [],
-                    createdAt: new Date().toISOString(),
-                };
-                
-                // Save to localStorage
-                localStorage.setItem('vg_user_session', JSON.stringify(newSession));
-                localStorage.setItem('vg_purchased_tier', tier);
-                localStorage.setItem('vg_tier_expires', expiresAt);
-                
-                setSession(newSession);
-                setLoading(false);
-                return;
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch analytics');
             }
             
-            // Case 2: No stored session and no valid URL params
-            if (!stored) {
-                setError('No session found. Please purchase a plan first.');
-                setLoading(false);
-                return;
-            }
-
-            const sessionData: UserSession = JSON.parse(stored);
-
-            // Case 3: URL token provided - verify it matches stored session
-            if (urlToken && sessionData.dashboardToken !== urlToken) {
-                // Check if it might be using the new session_id format
-                if (urlSessionId) {
-                    const expectedToken = generateDashboardToken(urlSessionId);
-                    if (urlToken === expectedToken) {
-                        // Token is valid via session_id, update stored session
-                        sessionData.dashboardToken = urlToken;
-                        localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
-                    } else {
-                        setError('Invalid dashboard link. The token does not match.');
-                        setLoading(false);
-                        return;
-                    }
-                } else {
-                    setError('Invalid dashboard link. The token does not match.');
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            // Case 4: Expired sessions can still access dashboard (read-only)
-            // isPlanExpired will handle the UI restrictions
-
-            setSession(sessionData);
-            setLoading(false);
+            setAnalytics(data);
         } catch (err) {
-            console.error('Session load error:', err);
-            setError('Failed to load session. Please try again.');
+            setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        } finally {
             setLoading(false);
         }
     };
 
-    // Check if plan is expired
-    const isPlanExpired = useMemo(() => {
-        if (!session) return false;
-        if (session.expiresAt && new Date(session.expiresAt) < new Date()) return true;
-        return false;
-    }, [session]);
-
-    // Filtered and paginated polls
-    const filteredPolls = useMemo(() => {
-        if (!session) return [];
-        const polls = session.polls || [];
-        if (!searchQuery.trim()) return polls;
-        const query = searchQuery.toLowerCase();
-        return polls.filter(p => 
-            p.title.toLowerCase().includes(query) ||
-            p.type?.toLowerCase().includes(query)
-        );
-    }, [session, searchQuery]);
-
-    const totalPages = Math.ceil(filteredPolls.length / POLLS_PER_PAGE);
-    const paginatedPolls = useMemo(() => {
-        const start = (currentPage - 1) * POLLS_PER_PAGE;
-        return filteredPolls.slice(start, start + POLLS_PER_PAGE);
-    }, [filteredPolls, currentPage]);
-
-    // Count live polls (for Starter/Pro limit)
-    const livePolls = useMemo(() => {
-        if (!session) return [];
-        return (session.polls || []).filter(p => p.status === 'live' || !session.tier.match(/starter|pro_event/));
-    }, [session]);
-
-    const getDashboardUrl = () => {
-        // Include session_id so the link works even after cache clear
-        const sessionId = session?.sessionId;
-        if (sessionId) {
-            return `${window.location.origin}/admin?s=${sessionId}`;
-        }
-        // Fallback to token-only (won't survive cache clear)
-        const token = session?.dashboardToken;
-        if (token) {
-            return `${window.location.origin}/admin?token=${token}`;
-        }
-        // Fallback to current URL
-        return window.location.href;
-    };
-
-    const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
-        const url = type === 'admin'
-            ? `${window.location.origin}/#id=${poll.id}&admin=${poll.adminKey}`
-            : `${window.location.origin}/#id=${poll.id}`;
-        navigator.clipboard.writeText(url);
-        setCopiedId(`${poll.id}-${type}`);
-        setTimeout(() => setCopiedId(null), 2000);
-    };
-
-    const handleCopyDashboardLink = () => {
-        navigator.clipboard.writeText(getDashboardUrl());
-        setCopiedDashboard(true);
-        setTimeout(() => setCopiedDashboard(false), 2000);
-    };
-
-    const handleDeletePoll = (poll: UserPoll) => {
-        if (!confirm(`Remove "${poll.title}" from your dashboard?`)) return;
-        if (session) {
-            const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
-            localStorage.setItem('vg_user_session', JSON.stringify(updated));
-            setSession(updated);
-        }
-    };
-
-    const handleGoLive = async (pollId: string) => {
-        if (!session) return;
+    const exportAnalyticsCSV = () => {
+        if (!analytics) return;
         
-        // Update poll status to live
-        const updatedPolls = session.polls.map(p => 
-            p.id === pollId ? { ...p, status: 'live' as const } : p
-        );
-        const updated = { ...session, polls: updatedPolls };
-        localStorage.setItem('vg_user_session', JSON.stringify(updated));
-        setSession(updated);
-        setShowGoLiveModal(null);
+        // Build CSV content
+        const rows: string[] = [];
         
-        // TODO: Call backend to activate poll
-        // await fetch('/.netlify/functions/vg-activate-poll', { ... });
-    };
-
-    const handleRegenerateToken = () => {
-        if (!session) return;
-        if (!confirm('Generate new dashboard link? Your old link will stop working.')) return;
+        // Summary section
+        rows.push('POLL ANALYTICS EXPORT');
+        rows.push(`Poll ID,${pollId}`);
+        rows.push(`Exported At,${new Date().toISOString()}`);
+        rows.push('');
         
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-        let newToken = '';
-        for (let i = 0; i < 16; i++) {
-            newToken += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Summary stats
+        rows.push('SUMMARY');
+        rows.push('Metric,Value');
+        rows.push(`Total Votes,${analytics.totalVotes}`);
+        rows.push(`First Vote,${analytics.firstVote || 'N/A'}`);
+        rows.push(`Last Vote,${analytics.lastVote || 'N/A'}`);
+        rows.push(`Peak Hour,${analytics.peakHourFormatted || 'N/A'}`);
+        rows.push(`Velocity Trend,${analytics.velocityTrend || 'N/A'}`);
+        rows.push('');
+        
+        // Device breakdown
+        if (analytics.deviceBreakdown) {
+            rows.push('DEVICE BREAKDOWN');
+            rows.push('Device,Count,Percentage');
+            const total = Object.values(analytics.deviceBreakdown).reduce((a: number, b: number) => a + b, 0) || 1;
+            Object.entries(analytics.deviceBreakdown).forEach(([device, count]) => {
+                const pct = ((count as number) / total * 100).toFixed(1);
+                rows.push(`${device},${count},${pct}%`);
+            });
+            rows.push('');
         }
         
-        const updated = { ...session, dashboardToken: newToken };
-        localStorage.setItem('vg_user_session', JSON.stringify(updated));
-        window.location.href = `/admin?token=${newToken}`;
-    };
-
-    const goHome = () => {
-        window.location.href = '/';
-    };
-    
-    const goToCreate = () => {
-        // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
-        if (session?.tier) {
-            localStorage.setItem('vg_purchased_tier', session.tier);
-            // Also store expiration info
-            if (session.expiresAt) {
-                localStorage.setItem('vg_tier_expires', session.expiresAt);
-            }
+        // Country stats
+        if (analytics.countryStats?.topCountries) {
+            rows.push('GEOGRAPHIC DISTRIBUTION');
+            rows.push('Country,Votes,Percentage');
+            analytics.countryStats.topCountries.forEach((c) => {
+                rows.push(`${c.country},${c.votes},${c.percentage}%`);
+            });
+            rows.push('');
         }
-        // Navigate to home with #create anchor to scroll to create section
-        window.location.href = '/#create';
-    };
-
-    const canCreateMorePolls = () => {
-        if (!session) return false;
-        // Block creation if plan is expired
-        if (isPlanExpired) return false;
-        const config = TIER_CONFIG[session.tier];
-        // For Starter/Pro, only count LIVE polls toward the limit
-        if (config.requiresActivation) {
-            return livePolls.length < config.maxPolls;
+        
+        // Hourly distribution
+        if (analytics.hourlyDistributionFormatted) {
+            rows.push('HOURLY DISTRIBUTION (UTC)');
+            rows.push('Hour,Votes');
+            analytics.hourlyDistributionFormatted.forEach((h) => {
+                rows.push(`${h.hour},${h.votes}`);
+            });
+            rows.push('');
         }
-        return session.polls.length < config.maxPolls;
+        
+        // Daily trend
+        if (analytics.dailyTrend) {
+            rows.push('DAILY TREND');
+            rows.push('Date,Votes');
+            Object.entries(analytics.dailyTrend).forEach(([date, count]) => {
+                rows.push(`${date},${count}`);
+            });
+            rows.push('');
+        }
+        
+        // Traffic sources
+        if (analytics.utmSources && Object.keys(analytics.utmSources).length > 0) {
+            rows.push('TRAFFIC SOURCES');
+            rows.push('Source,Visits');
+            Object.entries(analytics.utmSources).forEach(([source, count]) => {
+                rows.push(`${source},${count}`);
+            });
+        }
+        
+        const csvContent = rows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `poll-analytics-${pollId}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
-    // Loading state
+    // Note: PNG/PDF export requires html2canvas and jspdf packages
+    // Install with: npm install html2canvas jspdf
+    // Then uncomment the export functions below
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <Loader2 size={32} className="text-indigo-600 animate-spin" />
-            </div>
-        );
-    }
-
-    // Error state
-    if (error || !session) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle size={32} className="text-red-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
-                    <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
-                    <div className="flex gap-3">
-                        <a href="/recover" className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center">
-                            Recover Link
-                        </a>
-                        <button onClick={goHome} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">
-                            Go Home
-                        </button>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-6 bg-slate-200 rounded w-1/3"></div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="h-20 bg-slate-100 rounded"></div>
+                        <div className="h-20 bg-slate-100 rounded"></div>
+                        <div className="h-20 bg-slate-100 rounded"></div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    const tier = session.tier;
-    const config = TIER_CONFIG[tier];
-    const polls = session.polls || [];
-    const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isUnlimited = tier === 'unlimited';
-    const showSearch = isUnlimited && polls.length > 5;
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                {error}
+            </div>
+        );
+    }
+
+    if (!analytics) return null;
+
+    const formatDate = (isoString: string) => {
+        const date = new Date(isoString);
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    };
+
+    const formatTimeAgo = (isoString: string) => {
+        const date = new Date(isoString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return `${diffDays}d ago`;
+    };
+
+    // Convert UTC peak hour to local time
+    const getLocalPeakHour = (utcHour: number) => {
+        const now = new Date();
+        now.setUTCHours(utcHour, 0, 0, 0);
+        return now.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+    };
+
+    // Get velocity change percentage
+    const getVelocityInfo = () => {
+        const trend = analytics.velocityTrend;
+        if (trend === 'increasing') return { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'Increasing', desc: 'More votes in last 24h vs previous' };
+        if (trend === 'decreasing') return { icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-50', text: 'Decreasing', desc: 'Fewer votes in last 24h vs previous' };
+        return { icon: Minus, color: 'text-slate-500', bg: 'bg-slate-50', text: 'Stable', desc: 'Similar activity as previous 24h' };
+    };
+
+    const velocityInfo = getVelocityInfo();
+    const VelocityIcon = velocityInfo.icon;
 
     return (
-        <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
-            {/* Header with Paid Nav */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
-                    </a>
-                    
-                    {/* Nav Links */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        <a href="/" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <PlusCircle size={18} /> Create Poll
-                        </a>
-                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition">
-                            <LayoutDashboard size={18} /> My Dashboard
-                        </a>
-                        <a href="/help" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <AlertCircle size={18} /> Help
-                        </a>
-                    </nav>
-                    
-                    <div className="flex items-center gap-3">
-                        <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                            {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
-                            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
-                                {isPlanExpired 
-                                    ? 'Expired' 
-                                    : session?.expiresAt 
-                                        ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
-                                        : ''
-                                }
-                            </span>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <BarChart3 size={20} className="text-indigo-600" />
+                    Analytics
+                    <span className={`px-2 py-0.5 ${tierConfig.bgColor} ${tierConfig.color} text-xs font-bold rounded-full`}>
+                        {tierConfig.label}
+                    </span>
+                </h3>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={exportAnalyticsCSV}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
+                        <Download size={14} />
+                        Export CSV
+                    </button>
+                    <button
+                        onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
+                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
+                    >
+                        <Info size={14} />
+                        Privacy
+                        {showPrivacyInfo ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                </div>
+            </div>
+
+            {/* Privacy Info Panel */}
+            {showPrivacyInfo && analytics.privacyInfo && (
+                <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-slate-50 rounded-xl p-4 border border-slate-200"
+                >
+                    <h4 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <Eye size={16} className="text-green-600" />
+                        Privacy-First Analytics
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="font-medium text-slate-600 mb-2">✓ What we track:</p>
+                            <ul className="space-y-1 text-slate-500">
+                                {analytics.privacyInfo.whatWeTrack.map((item, i) => (
+                                    <li key={i} className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                        {(tier !== 'unlimited' || isPlanExpired) && (
-                            <a href="/#pricing" className="hidden md:flex px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition items-center gap-2">
-                                <Sparkles size={16} /> {isPlanExpired ? 'Renew' : 'Upgrade'}
-                            </a>
-                        )}
-                        {isUnlimited && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
-                                <Settings size={20} className="text-slate-500" />
-                            </button>
-                        )}
+                        <div>
+                            <p className="font-medium text-slate-600 mb-2">✗ What we don't track:</p>
+                            <ul className="space-y-1 text-slate-500">
+                                {analytics.privacyInfo.whatWeDontTrack.map((item, i) => (
+                                    <li key={i} className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* ============================================ */}
+            {/* KEY METRICS - Always visible */}
+            {/* ============================================ */}
+            <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="analytics-metrics">
+                {/* Total Votes */}
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                        <Users size={14} />
+                        Total Votes
+                    </div>
+                    <div className="text-2xl font-black text-slate-800">{analytics.totalVotes}</div>
+                </div>
+
+                {/* First Vote */}
+                {analytics.firstVote && (
+                    <div className="bg-white rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                            <Calendar size={14} />
+                            First Vote
+                        </div>
+                        <div className="text-lg font-bold text-slate-800">{formatTimeAgo(analytics.firstVote)}</div>
+                        <div className="text-xs text-slate-400">{formatDate(analytics.firstVote)}</div>
+                    </div>
+                )}
+
+                {/* Last Vote */}
+                {analytics.lastVote && (
+                    <div className="bg-white rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                            <Clock size={14} />
+                            Last Vote
+                        </div>
+                        <div className="text-lg font-bold text-slate-800">{formatTimeAgo(analytics.lastVote)}</div>
+                        <div className="text-xs text-slate-400">{formatDate(analytics.lastVote)}</div>
+                    </div>
+                )}
+
+                {/* Velocity Trend */}
+                <div className={`rounded-xl border p-4 ${velocityInfo.bg} border-slate-200`}>
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-1">
+                        <Zap size={14} />
+                        Velocity
+                    </div>
+                    <div className={`text-lg font-bold flex items-center gap-2 ${velocityInfo.color}`}>
+                        <VelocityIcon size={18} />
+                        {velocityInfo.text}
+                    </div>
+                    <div className="text-xs text-slate-500">{velocityInfo.desc}</div>
+                </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* DEVICE BREAKDOWN */}
+            {/* ============================================ */}
+            {analytics.deviceBreakdown && Object.values(analytics.deviceBreakdown).some(v => v > 0) && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Monitor size={16} className="text-blue-500" />
+                        <span className="text-sm font-semibold text-slate-700">Device Breakdown</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        {[
+                            { key: 'mobile', label: 'Mobile', icon: Smartphone, color: 'text-blue-600', bg: 'bg-blue-50' },
+                            { key: 'desktop', label: 'Desktop', icon: Monitor, color: 'text-green-600', bg: 'bg-green-50' },
+                            { key: 'tablet', label: 'Tablet', icon: Tablet, color: 'text-purple-600', bg: 'bg-purple-50' }
+                        ].map(({ key, label, icon: Icon, color, bg }) => {
+                            const count = analytics.deviceBreakdown?.[key] || 0;
+                            const total = Object.values(analytics.deviceBreakdown || {}).reduce((a: number, b: number) => a + b, 0) || 1;
+                            const percentage = Math.round((count / total) * 100);
+                            
+                            if (count === 0) return null;
+                            
+                            return (
+                                <div key={key} className={`text-center p-4 ${bg} rounded-xl`}>
+                                    <Icon size={24} className={`${color} mx-auto mb-2`} />
+                                    <div className="text-2xl font-black text-slate-800">{percentage}%</div>
+                                    <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
+                                    <div className="text-xs text-slate-400 mt-1">{count} votes</div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
-            </header>
+            )}
 
-            <main className="max-w-6xl mx-auto px-4 py-8">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Main Content */}
-                    <div className="flex-1">
-                        {/* Save Dashboard Link Banner */}
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
-                                <div className="flex items-start justify-between gap-4 flex-wrap">
-                                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <AlertCircle size={20} className="text-amber-600" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-amber-800">Save Your Dashboard Link!</p>
-                                            <p className="text-sm text-amber-600 mb-2">Bookmark this — it's the only way to access your polls.</p>
-                                            <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
-                                                <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-xs text-amber-700 font-mono truncate">{getDashboardUrl()}</code>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onClick={handleCopyDashboardLink} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
-                                        {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedDashboard ? 'Copied!' : 'Copy'}
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Plan Expired Banner */}
-                        {isPlanExpired && (
-                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl">
-                                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                                            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <AlertTriangle size={20} className="text-red-600" />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-red-800">Your Plan Has Expired</p>
-                                                <p className="text-sm text-red-600">
-                                                    You can still view your existing polls and results, but you can't create new polls.
-                                                    Renew your plan to continue creating polls.
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <a 
-                                            href="/#pricing" 
-                                            className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
-                                        >
-                                            <Sparkles size={16} />
-                                            Renew Now
-                                        </a>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* Dashboard Header with Search */}
-                        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                                    <LayoutDashboard size={28} className="text-indigo-600" /> Dashboard
-                                </h1>
-                                <p className="text-slate-500 mt-1">
-                                    {polls.length === 0 ? 'Create your first poll' : 
-                                     config.requiresActivation 
-                                        ? `${livePolls.length} of ${config.maxPolls} polls active`
-                                        : `${polls.length} poll${polls.length !== 1 ? 's' : ''}`
-                                    }
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                {/* Search bar for Unlimited with many polls */}
-                                {showSearch && (
-                                    <div className="relative">
-                                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                                            placeholder="Search polls..."
-                                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 w-64"
-                                        />
-                                    </div>
-                                )}
-                                {polls.length > 0 && canCreateMorePolls() && (
-                                    <button onClick={goToCreate} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
-                                        <Plus size={18} /> New Poll
-                                    </button>
-                                )}
-                            </div>
+            {/* ============================================ */}
+            {/* HOURLY DISTRIBUTION - Bar Chart */}
+            {/* ============================================ */}
+            {analytics.hourlyDistributionFormatted && analytics.hourlyDistributionFormatted.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Clock size={16} className="text-indigo-500" />
+                            <span className="text-sm font-semibold text-slate-700">Hourly Distribution</span>
                         </div>
-
-                        {/* Polls List or Empty State */}
-                        {polls.length === 0 ? (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12">
-                                <div className="text-center">
-                                    <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-                                        <PlusCircle size={40} className="text-white" />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Create Your First Poll</h2>
-                                    <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                                        {config.requiresActivation 
-                                            ? "Create a poll and preview it. When you're happy, go live to start collecting votes."
-                                            : "Welcome to VoteGenerator! Get started by creating a poll."
-                                        }
-                                    </p>
-                                    <button onClick={goToCreate} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}>
-                                        <Plus size={22} /> Create New Poll
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <>
-                                <div className="space-y-4">
-                                    {paginatedPolls.map((poll, index) => {
-                                        const isDraft = config.requiresActivation && poll.status !== 'live';
-                                        return (
-                                            <motion.div
-                                                key={poll.id}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.03 }}
-                                                className={`bg-white rounded-xl border p-5 hover:shadow-md transition ${
-                                                    isDraft ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'
-                                                }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <h3 className="font-semibold text-slate-800 text-lg truncate">{poll.title}</h3>
-                                                            {isDraft && (
-                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
-                                                                    <FileEdit size={12} /> Draft
-                                                                </span>
-                                                            )}
-                                                            {!isDraft && config.requiresActivation && (
-                                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1">
-                                                                    <Rocket size={12} /> Live
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                                                            <span className="flex items-center gap-1.5">
-                                                                <Clock size={14} />
-                                                                {new Date(poll.createdAt).toLocaleDateString()}
-                                                            </span>
-                                                            <span className="flex items-center gap-1.5">
-                                                                <Users size={14} />
-                                                                {poll.responseCount || 0} votes
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2">
-                                                        {isDraft ? (
-                                                            <button
-                                                                onClick={() => setShowGoLiveModal(poll.id)}
-                                                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
-                                                            >
-                                                                <Rocket size={16} /> Go Live
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => handleCopyLink(poll, 'vote')}
-                                                                className="p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition"
-                                                                title="Copy vote link"
-                                                            >
-                                                                {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
-                                                            </button>
-                                                        )}
-                                                        <a
-                                                            href={`/#id=${poll.id}&admin=${poll.adminKey}`}
-                                                            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                                                            title={isDraft ? "Preview & Edit" : "Open admin view"}
-                                                        >
-                                                            <ExternalLink size={18} />
-                                                        </a>
-                                                        <button
-                                                            onClick={() => handleDeletePoll(poll)}
-                                                            className="p-2.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition"
-                                                            title="Remove from dashboard"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Pagination */}
-                                {totalPages > 1 && (
-                                    <div className="mt-6 flex items-center justify-center gap-2">
-                                        <button
-                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                            disabled={currentPage === 1}
-                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                        <span className="px-4 py-2 text-sm text-slate-600">
-                                            Page {currentPage} of {totalPages}
-                                        </span>
-                                        <button
-                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                            disabled={currentPage === totalPages}
-                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Create more button */}
-                                {canCreateMorePolls() && (
-                                    <div className="mt-6 text-center">
-                                        <button onClick={goToCreate} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
-                                            <PlusCircle size={20} /> Create Another Poll
-                                        </button>
-                                    </div>
-                                )}
-
-                                {!canCreateMorePolls() && tier !== 'unlimited' && (
-                                    <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
-                                        <p className="text-slate-600 mb-2">
-                                            You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
-                                        </p>
-                                        <a href="/#pricing" className="text-purple-600 font-medium hover:text-purple-700">
-                                            Upgrade for more →
-                                        </a>
-                                    </div>
-                                )}
-                            </>
+                        {analytics.peakHour !== undefined && (
+                            <div className="text-xs text-slate-500">
+                                Peak: <span className="font-semibold text-indigo-600">{getLocalPeakHour(analytics.peakHour)}</span>
+                                {analytics.peakHourVotes && ` (${analytics.peakHourVotes} votes)`}
+                            </div>
                         )}
-
-                        {/* Feature Cards */}
-                        <div className="grid grid-cols-3 gap-4 mt-8">
-                            {[
-                                { icon: BarChart3, title: '7 Poll Types', desc: 'Multiple choice to visual', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                                { icon: Users, title: 'Real-time Results', desc: 'Watch votes live', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { icon: Zap, title: 'Instant Setup', desc: 'No signup for voters', color: 'text-amber-600', bg: 'bg-amber-50' },
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 text-center">
-                                    <div className={`w-12 h-12 ${item.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}>
-                                        <item.icon size={24} className={item.color} />
-                                    </div>
-                                    <h3 className="font-bold text-slate-800 text-sm">{item.title}</h3>
-                                    <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
-                                </div>
-                            ))}
-                        </div>
                     </div>
-
-                    {/* Right Sidebar */}
-                    <div className="w-full lg:w-80 space-y-6">
-                        {/* Unlimited: Security & Access */}
-                        {isUnlimited && (
-                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                            <Shield size={20} className="text-amber-600" />
-                                        </div>
-                                        <div className="text-left">
-                                            <h3 className="font-bold text-slate-800">Security & Access</h3>
-                                            <p className="text-xs text-slate-500">PIN & team tokens</p>
-                                        </div>
-                                    </div>
-                                    {showAccessPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                                </button>
-
-                                {showAccessPanel && (
-                                    <div className="p-4 pt-0 border-t border-slate-100">
-                                        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
-                                                    <span className="text-sm font-medium text-slate-700">Admin PIN</span>
-                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                        {session.hasPin ? 'Active' : 'Off'}
-                                                    </span>
-                                                </div>
-                                                <button onClick={() => setShowPinSetup(true)} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
-                                                    {session.hasPin ? 'Change' : 'Set up'}
-                                                </button>
+                    
+                    {/* Show message if votes are too concentrated */}
+                    {analytics.totalVotes < 10 && analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length < 3 ? (
+                        <div className="text-center py-6">
+                            <Clock size={32} className="text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm text-slate-500">Need more votes to show hourly patterns</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                                Currently {analytics.totalVotes} vote{analytics.totalVotes !== 1 ? 's' : ''} in {analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length} hour{analytics.hourlyDistributionFormatted.filter(h => h.votes > 0).length !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Bar Chart */}
+                            <div className="h-32 flex items-end gap-1">
+                                {analytics.hourlyDistributionFormatted.map((item, i) => {
+                                    const maxVotes = Math.max(...analytics.hourlyDistributionFormatted!.map(h => h.votes), 1);
+                                    const height = (item.votes / maxVotes) * 100;
+                                    const isCurrentHour = new Date().getHours() === item.hour;
+                                    
+                                    return (
+                                        <div 
+                                            key={i} 
+                                            className="flex-1 flex flex-col items-center group relative"
+                                        >
+                                            <div 
+                                                className={`w-full rounded-t transition-all ${
+                                                    isCurrentHour ? 'bg-indigo-500' : item.votes > 0 ? 'bg-indigo-300 hover:bg-indigo-400' : 'bg-slate-100'
+                                                }`}
+                                                style={{ height: `${Math.max(height, item.votes > 0 ? 8 : 2)}%` }}
+                                            />
+                                            {/* Tooltip */}
+                                            <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                                                {item.hourFormatted}: {item.votes} vote{item.votes !== 1 ? 's' : ''}
                                             </div>
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1">
-                                                <Plus size={14} /> Admin Token
-                                            </button>
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center justify-center gap-1">
-                                                <Plus size={14} /> Viewer Token
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Plan Card */}
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                            <div className={`p-4 ${config.headerBg} border-b border-slate-200`}>
-                                <div className="flex items-center gap-2">
-                                    {config.icon}
-                                    <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
-                                </div>
-                            </div>
-                            <div className="p-4">
-                                <div className="space-y-2 mb-4">
-                                    {config.features.map((feature, i) => (
-                                        <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
-                                            {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
-                                            <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {tier !== 'unlimited' && !isPlanExpired && (
-                                    <a href="/#pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
-                                        Upgrade Plan
-                                    </a>
-                                )}
-
-                                {/* Extend/Renew Button - Smart logic */}
-                                {session.expiresAt && (
-                                    <div className="mt-3 pt-3 border-t border-slate-100">
-                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-                                            <span className="flex items-center gap-1">
-                                                <Calendar size={14} />
-                                                {isPlanExpired ? 'Expired' : 'Expires'}: {new Date(session.expiresAt).toLocaleDateString()}
-                                            </span>
-                                            {!isPlanExpired && (
-                                                <span className={`px-2 py-0.5 rounded-full font-medium ${
-                                                    Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30 
-                                                        ? 'bg-amber-100 text-amber-700' 
-                                                        : 'bg-emerald-100 text-emerald-700'
-                                                }`}>
-                                                    {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
-                                                </span>
+                                            {/* Hour label (every 6 hours) */}
+                                            {i % 6 === 0 && (
+                                                <div className="text-xs text-slate-400 mt-1">{item.hour}h</div>
                                             )}
                                         </div>
-                                        
-                                        {/* Show Extend button for same tier, or Renew if expired */}
-                                        <button 
-                                            onClick={() => {
-                                                // Navigate to pricing with current tier pre-selected
-                                                window.location.href = `/#pricing?extend=${tier}`;
-                                            }}
-                                            className={`w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 ${
-                                                isPlanExpired 
-                                                    ? 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white' 
-                                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                            }`}
-                                        >
-                                            <RefreshCw size={16} />
-                                            {isPlanExpired ? 'Renew Plan' : `Extend ${config.label}`}
-                                        </button>
-                                        
-                                        {!isPlanExpired && (
-                                            <p className="text-xs text-slate-400 mt-2 text-center">
-                                                Extend adds time to your current expiry date
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
+                                    );
+                                })}
                             </div>
-                        </div>
+                            <div className="text-xs text-slate-400 mt-2 text-center">
+                                Times shown in your local timezone
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
-                        {/* Quick Stats */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h3 className="font-bold text-slate-800 mb-4">Quick Stats</h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-500 text-sm">Total Polls</span>
-                                    <span className="font-bold text-slate-800">{polls.length}</span>
-                                </div>
-                                {config.requiresActivation && (
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-500 text-sm">Live Polls</span>
-                                        <span className="font-bold text-emerald-600">{livePolls.length}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-500 text-sm">Total Votes</span>
-                                    <span className="font-bold text-slate-800">{totalVotes}</span>
-                                </div>
-                            </div>
+            {/* ============================================ */}
+            {/* DAILY TREND */}
+            {/* ============================================ */}
+            {analytics.dailyTrend && Object.keys(analytics.dailyTrend).length > 1 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Calendar size={16} className="text-emerald-500" />
+                            <span className="text-sm font-semibold text-slate-700">Daily Trend</span>
                         </div>
+                        {analytics.dailyAverage && (
+                            <div className="text-xs text-slate-500">
+                                Average: <span className="font-semibold text-emerald-600">{analytics.dailyAverage} votes/day</span>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                        {Object.entries(analytics.dailyTrend)
+                            .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+                            .slice(0, 7)
+                            .map(([date, count]) => {
+                                const maxCount = Math.max(...Object.values(analytics.dailyTrend!), 1);
+                                const percentage = (count / maxCount) * 100;
+                                const dateObj = new Date(date);
+                                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                                const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                
+                                return (
+                                    <div key={date} className="flex items-center gap-3">
+                                        <div className="w-20 text-xs text-slate-500">
+                                            <span className="font-medium">{dayName}</span> {dateStr}
+                                        </div>
+                                        <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                            <div 
+                                                className="bg-emerald-500 h-full rounded-full transition-all"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                        <div className="w-12 text-xs text-slate-600 text-right font-medium">{count}</div>
+                                    </div>
+                                );
+                            })}
                     </div>
                 </div>
-            </main>
+            )}
 
-            {/* Settings Modal */}
-            <AnimatePresence>
-                {showSettings && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                    <Settings size={24} className="text-slate-600" /> Settings
-                                </h2>
-                                <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-lg transition">
-                                    <X size={20} className="text-slate-500" />
-                                </button>
+            {/* ============================================ */}
+            {/* TRAFFIC SOURCES */}
+            {/* ============================================ */}
+            {analytics.utmSources && Object.keys(analytics.utmSources).length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <ExternalLink size={16} className="text-purple-500" />
+                        <span className="text-sm font-semibold text-slate-700">Traffic Sources</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        {Object.entries(analytics.utmSources)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5)
+                            .map(([source, count]) => {
+                                const percentage = Math.round((count / analytics.totalVotes) * 100);
+                                return (
+                                    <div key={source} className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-slate-700 font-medium truncate max-w-[200px]" title={source}>
+                                                {source}
+                                            </span>
+                                            <span className="text-xs text-slate-500 ml-2 whitespace-nowrap">
+                                                {count} ({percentage}%)
+                                            </span>
+                                        </div>
+                                        <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
+                                            <div 
+                                                className="bg-purple-500 h-full rounded-full transition-all"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================ */}
+            {/* GEOGRAPHIC DISTRIBUTION */}
+            {/* ============================================ */}
+            {analytics.countryStats && analytics.countryStats.topCountries.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Globe size={16} className="text-emerald-500" />
+                            <span className="text-sm font-semibold text-slate-700">Geographic Distribution</span>
+                        </div>
+                        <span className="text-xs text-slate-500">
+                            {analytics.countryStats.countriesRepresented} {analytics.countryStats.countriesRepresented === 1 ? 'country' : 'countries'}
+                        </span>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                        {analytics.countryStats.topCountries.map(({ country, votes, percentage }) => (
+                            <div key={country} className="flex items-center gap-3">
+                                <span className="text-lg w-8">{getCountryFlag(country)}</span>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm font-medium text-slate-700">{country}</span>
+                                        <span className="text-xs text-slate-500">{votes} ({percentage}%)</span>
+                                    </div>
+                                    <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div 
+                                            className="bg-emerald-500 h-full rounded-full transition-all"
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-6 space-y-4">
-                                {/* PIN Protection */}
-                                <div className="p-4 bg-slate-50 rounded-xl">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Lock size={20} className="text-amber-600" />
-                                            <div>
-                                                <p className="font-medium text-slate-800">Admin PIN Protection</p>
-                                                <p className="text-xs text-slate-500">Add a 6-digit PIN to admin links</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => { setShowSettings(false); setShowPinSetup(true); }} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">
-                                            {session?.hasPin ? 'Change' : 'Set PIN'}
-                                        </button>
-                                    </div>
-                                </div>
+                        ))}
+                    </div>
 
-                                {/* Team Access Tokens */}
-                                <div className="p-4 bg-slate-50 rounded-xl">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Users size={20} className="text-blue-600" />
-                                            <div>
-                                                <p className="font-medium text-slate-800">Team Access Tokens</p>
-                                                <p className="text-xs text-slate-500">Share view/edit access with others</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => alert('Token management coming in next update!')} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
-                                            Manage
-                                        </button>
-                                    </div>
-                                </div>
+                    <div className="text-xs text-slate-400 flex items-center gap-2 pt-3 border-t border-slate-100">
+                        <EyeOff size={12} />
+                        {analytics.countryStats.privacyNote}
+                    </div>
+                </div>
+            )}
 
-                                {/* Regenerate Dashboard Token */}
-                                <div className="p-4 bg-slate-50 rounded-xl">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Key size={20} className="text-slate-600" />
-                                            <div>
-                                                <p className="font-medium text-slate-800">Dashboard Link</p>
-                                                <p className="text-xs text-slate-500">Generate a new unique URL</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={handleRegenerateToken} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
-                                            Regenerate
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* PIN Setup Modal */}
-            <AnimatePresence>
-                {showPinSetup && (
-                    <PinSetupModalInline
-                        isOpen={showPinSetup}
-                        hasExistingPin={!!session?.hasPin}
-                        onClose={() => setShowPinSetup(false)}
-                        onSuccess={(hasPin, pinValue) => {
-                            if (session) {
-                                let pinHash: string | undefined = undefined;
-                                if (hasPin && pinValue) {
-                                    // Simple hash for PIN
-                                    let hash = 0;
-                                    for (let i = 0; i < pinValue.length; i++) {
-                                        const char = pinValue.charCodeAt(i);
-                                        hash = ((hash << 5) - hash) + char;
-                                        hash = hash & hash;
-                                    }
-                                    pinHash = 'pin_' + Math.abs(hash).toString(16);
-                                }
-                                const updated = { ...session, hasPin, pinHash };
-                                localStorage.setItem('vg_user_session', JSON.stringify(updated));
-                                setSession(updated);
-                            }
-                            setShowPinSetup(false);
-                        }}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Go Live Modal */}
-            <AnimatePresence>
-                {showGoLiveModal && (
-                    <GoLiveModalInline
-                        isOpen={!!showGoLiveModal}
-                        pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
-                        tier={tier as 'starter' | 'pro_event'}
-                        pollsUsed={livePolls.length}
-                        pollsMax={config.maxPolls}
-                        activeDays={config.activeDays}
-                        onClose={() => setShowGoLiveModal(null)}
-                        onConfirm={() => handleGoLive(showGoLiveModal)}
-                    />
-                )}
-            </AnimatePresence>
+            {/* What's Included */}
+            {analytics.includedFeatures && (
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                        Your Plan Includes
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {analytics.includedFeatures.included.map((feature, i) => (
+                            <span 
+                                key={i}
+                                className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600"
+                            >
+                                ✓ {feature}
+                            </span>
+                        ))}
+                    </div>
+                    {analytics.includedFeatures.notIncluded.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                            <a href="#pricing" className="text-xs text-indigo-600 hover:text-indigo-700">
+                                Upgrade to unlock: {analytics.includedFeatures.notIncluded.join(', ')} →
+                            </a>
+                        </div>
+                    )}
+                </div>
+            )}
+            </div>
         </div>
     );
 };
 
-// ============================================================================
-// Inline PIN Setup Modal (self-contained)
-// ============================================================================
-
-const PinSetupModalInline: React.FC<{
-    isOpen: boolean;
-    hasExistingPin: boolean;
-    onClose: () => void;
-    onSuccess: (hasPin: boolean, pinValue?: string) => void;
-}> = ({ isOpen, hasExistingPin, onClose, onSuccess }) => {
-    const [pin, setPin] = useState('');
-    const [confirmPin, setConfirmPin] = useState('');
-    const [step, setStep] = useState<'enter' | 'confirm'>('enter');
-    const [error, setError] = useState('');
-
-    const handleSubmit = () => {
-        if (step === 'enter') {
-            if (pin.length !== 6 || !/^\d+$/.test(pin)) {
-                setError('PIN must be exactly 6 digits');
-                return;
-            }
-            setStep('confirm');
-            setError('');
-        } else {
-            if (pin !== confirmPin) {
-                setError('PINs do not match');
-                setConfirmPin('');
-                return;
-            }
-            // Pass the PIN value to onSuccess for hashing
-            onSuccess(true, pin);
-        }
+// Helper: Get country flag emoji
+function getCountryFlag(country: string): string {
+    const flags: Record<string, string> = {
+        'United States': '🇺🇸', 'United Kingdom': '🇬🇧', 'Canada': '🇨🇦', 'Australia': '🇦🇺',
+        'Germany': '🇩🇪', 'France': '🇫🇷', 'Japan': '🇯🇵', 'India': '🇮🇳', 'Brazil': '🇧🇷',
+        'Mexico': '🇲🇽', 'Spain': '🇪🇸', 'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Sweden': '🇸🇪',
+        'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Poland': '🇵🇱', 'Ireland': '🇮🇪',
+        'New Zealand': '🇳🇿', 'South Korea': '🇰🇷', 'Singapore': '🇸🇬', 'Switzerland': '🇨🇭',
+        'Austria': '🇦🇹', 'Belgium': '🇧🇪', 'Portugal': '🇵🇹', 'Argentina': '🇦🇷', 'Chile': '🇨🇱',
+        'Colombia': '🇨🇴', 'Philippines': '🇵🇭', 'Indonesia': '🇮🇩', 'Malaysia': '🇲🇾',
+        'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'South Africa': '🇿🇦', 'Israel': '🇮🇱',
+        'United Arab Emirates': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Turkey': '🇹🇷', 'Russia': '🇷🇺',
+        'Ukraine': '🇺🇦', 'Czech Republic': '🇨🇿', 'Romania': '🇷🇴', 'Greece': '🇬🇷', 'Hungary': '🇭🇺',
+        'Unknown': '🌍'
     };
+    return flags[country] || '🌍';
+}
 
-    const handleRemove = () => {
-        if (confirm('Remove PIN protection?')) {
-            onSuccess(false);
-        }
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Lock size={24} />
-                            <h2 className="font-bold text-lg">{hasExistingPin ? 'Change PIN' : 'Set Admin PIN'}</h2>
-                        </div>
-                        <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={20} /></button>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <p className="text-slate-600 text-sm mb-4">
-                        {step === 'enter' ? 'Enter a 6-digit PIN to protect your admin links:' : 'Confirm your PIN:'}
-                    </p>
-                    <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={step === 'enter' ? pin : confirmPin}
-                        onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '');
-                            step === 'enter' ? setPin(val) : setConfirmPin(val);
-                            setError('');
-                        }}
-                        placeholder="••••••"
-                        className="w-full text-center text-2xl tracking-[0.5em] font-bold py-4 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
-                        autoFocus
-                    />
-                    {error && <p className="text-red-600 text-sm mt-2 text-center">{error}</p>}
-                    <div className="mt-6 flex gap-3">
-                        {hasExistingPin && step === 'enter' && (
-                            <button onClick={handleRemove} className="px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition">
-                                Remove
-                            </button>
-                        )}
-                        {step === 'confirm' && (
-                            <button onClick={() => { setStep('enter'); setConfirmPin(''); }} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">
-                                Back
-                            </button>
-                        )}
-                        <button onClick={handleSubmit} disabled={step === 'enter' ? pin.length !== 6 : confirmPin.length !== 6} className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50">
-                            {step === 'enter' ? 'Continue' : 'Set PIN'}
-                        </button>
-                    </div>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
-
-// ============================================================================
-// Inline Go Live Modal (self-contained)
-// ============================================================================
-
-const GoLiveModalInline: React.FC<{
-    isOpen: boolean;
-    pollTitle: string;
-    tier: 'starter' | 'pro_event';
-    pollsUsed: number;
-    pollsMax: number;
-    activeDays: number;
-    onClose: () => void;
-    onConfirm: () => void;
-}> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
-    const [confirmed, setConfirmed] = useState(false);
-    const isLastPoll = pollsMax - pollsUsed === 1;
-    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-600';
-
-    if (!isOpen) return null;
-
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                <div className={`bg-gradient-to-r ${gradient} p-6 text-white`}>
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                            <Rocket size={28} />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold">Ready to Go Live?</h2>
-                            <p className="text-white/80 text-sm">Launch for real voting</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <div className="mb-4 p-4 bg-slate-50 rounded-xl">
-                        <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Poll</p>
-                        <p className="font-bold text-slate-800 truncate">{pollTitle}</p>
-                    </div>
-
-                    <div className="mb-4 space-y-3">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle size={18} className="text-emerald-500" />
-                            <span className="text-slate-700 text-sm">Real voting will be enabled</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Calendar size={18} className="text-blue-500" />
-                            <span className="text-slate-700 text-sm">{activeDays}-day countdown starts</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Lock size={18} className="text-amber-500" />
-                            <span className="text-slate-700 text-sm">Uses 1 of {pollsMax} poll credits</span>
-                        </div>
-                    </div>
-
-                    <div className={`mb-4 p-4 rounded-xl ${isLastPoll ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
-                        <div className="flex items-start gap-3">
-                            <AlertTriangle size={20} className={isLastPoll ? 'text-red-500' : 'text-amber-500'} />
-                            <div>
-                                <p className={`font-semibold ${isLastPoll ? 'text-red-700' : 'text-amber-700'}`}>
-                                    {isLastPoll ? '⚠️ This is your last poll!' : 'This cannot be undone'}
-                                </p>
-                                <p className={`text-sm ${isLastPoll ? 'text-red-600' : 'text-amber-600'}`}>
-                                    {isLastPoll ? 'After this, upgrade for more.' : 'Cannot revert to draft after going live.'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <label className="flex items-start gap-3 mb-6 cursor-pointer">
-                        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600" />
-                        <span className="text-sm text-slate-600">I understand this will use 1 poll credit and cannot be undone.</span>
-                    </label>
-
-                    <div className="flex gap-3">
-                        <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
-                        <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
-                            <Rocket size={18} /> Go Live
-                        </button>
-                    </div>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
-
-export default AdminDashboard;
+export default AnalyticsDashboard;

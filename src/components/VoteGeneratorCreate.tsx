@@ -107,8 +107,13 @@ const PaywallModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
     );
 };
 
+// Props interface
+interface VoteGeneratorCreateProps {
+    hideTierBanner?: boolean;
+}
+
 // Main Component
-const VoteGeneratorCreate: React.FC = () => {
+const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanner = false }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
@@ -322,7 +327,7 @@ const VoteGeneratorCreate: React.FC = () => {
             )}
             
             {/* Paid Tier Hub Header */}
-            {purchasedTier && (
+            {!hideTierBanner && purchasedTier && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }} 
                     animate={{ opacity: 1, y: 0 }}

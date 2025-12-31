@@ -35,11 +35,11 @@ const LogoUpload: React.FC<Props> = ({
     const uploadToCloudinary = async (file: File): Promise<string | null> => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', 'votegenerator_logos');
+        formData.append('upload_preset', 'votegenerator_logos'); // Must be UNSIGNED preset in Cloudinary
         formData.append('folder', 'poll-logos');
 
-        // Cloud name should be configured - use your Cloudinary cloud name
-        const cloudName = (window as any).CLOUDINARY_CLOUD_NAME || 'votegenerator';
+        // Cloud name should match your Cloudinary account
+        const cloudName = 'votegenerator';
 
         try {
             const response = await fetch(
@@ -51,13 +51,22 @@ const LogoUpload: React.FC<Props> = ({
             );
 
             if (!response.ok) {
-                throw new Error('Upload failed');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Cloudinary error response:', errorData);
+                
+                if (response.status === 401) {
+                    throw new Error('CLOUDINARY_SETUP_REQUIRED');
+                }
+                throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
             }
 
             const data = await response.json();
             return data.secure_url;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cloudinary upload error:', error);
+            if (error.message === 'CLOUDINARY_SETUP_REQUIRED') {
+                throw error;
+            }
             return null;
         }
     };
@@ -86,14 +95,24 @@ const LogoUpload: React.FC<Props> = ({
 
         // Upload
         setIsUploading(true);
-        const uploadedUrl = await uploadToCloudinary(file);
-        setIsUploading(false);
+        try {
+            const uploadedUrl = await uploadToCloudinary(file);
+            setIsUploading(false);
 
-        if (uploadedUrl) {
-            setPreviewUrl(uploadedUrl);
-            onLogoChange(uploadedUrl);
-        } else {
-            setError('Failed to upload image. Please try again.');
+            if (uploadedUrl) {
+                setPreviewUrl(uploadedUrl);
+                onLogoChange(uploadedUrl);
+            } else {
+                setError('Failed to upload image. Please try again.');
+                setPreviewUrl(currentLogo || null);
+            }
+        } catch (error: any) {
+            setIsUploading(false);
+            if (error.message === 'CLOUDINARY_SETUP_REQUIRED') {
+                setError('Logo upload is not configured yet. Please contact support or check Cloudinary setup.');
+            } else {
+                setError('Failed to upload image. Please try again.');
+            }
             setPreviewUrl(currentLogo || null);
         }
     };

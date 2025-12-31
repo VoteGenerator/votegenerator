@@ -279,7 +279,15 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Check poll status - block voting on paused or closed polls
+        // Check poll status - block voting on draft, paused or closed polls
+        if (poll.status === 'draft') {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'This poll is not yet open for voting. The organizer is still setting it up.' })
+            };
+        }
+        
         if (poll.status === 'paused') {
             return {
                 statusCode: 403,

@@ -265,6 +265,24 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
         );
     }
 
+    // Check if poll is in draft mode
+    if ((poll as any).status === 'draft') {
+        return (
+            <div className="max-w-2xl mx-auto px-4 pt-20 text-center">
+                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Clock size={32} className="text-amber-500" />
+                </div>
+                <h1 className="text-3xl font-black text-slate-800 mb-2">Coming Soon!</h1>
+                <p className="text-slate-500 mb-4">
+                    This poll is being set up by the organizer and isn't open for voting yet.
+                </p>
+                <p className="text-sm text-slate-400">
+                    Check back later or contact the poll creator for more information.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
             <motion.div

@@ -53,6 +53,7 @@ export interface NotificationSettings {
 export interface Poll {
     id: string;
     title: string;
+    displayName?: string;  // Internal name for admin dashboard (shorter than title)
     description?: string;
     pollType: string;
     options: PollOption[];

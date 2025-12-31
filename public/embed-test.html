@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoteGenerator Embed Test</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        .btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .preview-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .preview-title {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .size-indicator {
+            font-size: 12px;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .iframe-wrapper {
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fafafa;
+        }
+        iframe {
+            display: block;
+            border: none;
+            width: 100%;
+        }
+        .code-section {
+            margin-top: 20px;
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .code-label {
+            color: #9ca3af;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .copy-btn {
+            background: #374151;
+            color: #d1d5db;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .copy-btn:hover {
+            background: #4b5563;
+        }
+        pre {
+            color: #a5f3fc;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .tips {
+            margin-top: 20px;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .tips h3 {
+            color: #92400e;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .tips ul {
+            color: #a16207;
+            font-size: 13px;
+            padding-left: 20px;
+        }
+        .tips li {
+            margin-bottom: 5px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 15px;
+        }
+        .flex-row > * {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗳️ Embed Test Tool</h1>
+        <p class="subtitle">Test how your poll will look when embedded on other websites</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Poll ID</label>
+                <input type="text" id="pollId" placeholder="Enter poll ID (e.g., abc123xy)" value="">
+            </div>
+            <div class="flex-row">
+                <div class="control-group">
+                    <label>Width</label>
+                    <select id="width">
+                        <option value="100%">Full Width (100%)</option>
+                        <option value="600px">Medium (600px)</option>
+                        <option value="400px">Small (400px)</option>
+                        <option value="800px">Large (800px)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Height</label>
+                    <select id="height">
+                        <option value="500px">Medium (500px)</option>
+                        <option value="400px">Small (400px)</option>
+                        <option value="600px">Tall (600px)</option>
+                        <option value="700px">Extra Tall (700px)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn" onclick="loadEmbed()">🔄 Load Embed Preview</button>
+        </div>
+        
+        <div class="preview-container">
+            <div class="preview-header">
+                <span class="preview-title">📱 Live Preview</span>
+                <span class="size-indicator" id="sizeIndicator">100% × 500px</span>
+            </div>
+            <div class="iframe-wrapper" id="iframeWrapper">
+                <div style="padding: 60px; text-align: center; color: #9ca3af;">
+                    <p style="font-size: 48px; margin-bottom: 10px;">🗳️</p>
+                    <p>Enter a Poll ID and click "Load Embed Preview"</p>
+                </div>
+            </div>
+            
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-label">Embed Code</span>
+                    <button class="copy-btn" onclick="copyCode()">📋 Copy</button>
+                </div>
+                <pre id="embedCode">&lt;!-- Enter a Poll ID to generate embed code --&gt;</pre>
+            </div>
+            
+            <div class="tips">
+                <h3>💡 Tips for Embedding</h3>
+                <ul>
+                    <li>The embed shows a clean, minimal version of your poll</li>
+                    <li>Voters can vote directly within the embed</li>
+                    <li>Results update in real-time</li>
+                    <li>Works on any website that allows iframes</li>
+                    <li>Mobile responsive - adjusts to container width</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get poll ID from URL hash if present
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                document.getElementById('pollId').value = hash;
+                loadEmbed();
+            }
+        });
+
+        function loadEmbed() {
+            const pollId = document.getElementById('pollId').value.trim();
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+            
+            if (!pollId) {
+                alert('Please enter a Poll ID');
+                return;
+            }
+            
+            // Update size indicator
+            document.getElementById('sizeIndicator').textContent = `${width} × ${height}`;
+            
+            // Generate embed URL
+            const baseUrl = window.location.origin;
+            const embedUrl = `${baseUrl}/#id=${pollId}&embed=true`;
+            
+            // Create iframe
+            const wrapper = document.getElementById('iframeWrapper');
+            wrapper.innerHTML = `<iframe src="${embedUrl}" style="width: ${width}; height: ${height};" allowtransparency="true"></iframe>`;
+            
+            // Update embed code
+            const embedCode = `<iframe 
+    src="${embedUrl}" 
+    width="${width}" 
+    height="${height}" 
+    frameborder="0"
+    style="border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+    allowtransparency="true">
+</iframe>`;
+            document.getElementById('embedCode').textContent = embedCode;
+        }
+        
+        function copyCode() {
+            const code = document.getElementById('embedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            });
+        }
+    </script>
+</body>
+</html>

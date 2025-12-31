@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
 import AdminDashboard from './AdminDashboard';
@@ -26,22 +26,37 @@ const VoteGeneratorApp: React.FC = () => {
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [copiedShare, setCopiedShare] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
+    const [copiedEmbed, setCopiedEmbed] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+    const [isEmbedMode, setIsEmbedMode] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
         const params = new URLSearchParams(hash);
+        
+        // Also check URL path for custom slug route: /p/{slug}
+        const pathname = window.location.pathname;
+        const slugMatch = pathname.match(/^\/p\/([a-z0-9-]+)\/?$/);
+        
+        // Check for embed mode in query params
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEmbed = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
+        
         return {
-            pollId: params.get('id'),
-            adminKey: params.get('admin')
+            pollId: slugMatch ? slugMatch[1] : params.get('id'),
+            adminKey: params.get('admin'),
+            isEmbed
         };
     }, []);
 
     const loadView = useCallback(async (silent = false) => {
-        const { pollId, adminKey } = parseHash();
+        const { pollId, adminKey, isEmbed } = parseHash();
+        
+        // Set embed mode
+        setIsEmbedMode(isEmbed);
 
         if (!pollId) {
             setViewState({ type: 'create' });
@@ -334,11 +349,33 @@ const VoteGeneratorApp: React.FC = () => {
                                                          <div className="relative flex-1"><Globe className="absolute left-3 top-2.5 text-slate-400" size={16} /><input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600" /></div>
                                                          <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100">{copiedShare ? 'Copied' : 'Copy'}</button>
                                                      </div>
-                                                     <div className="grid grid-cols-2 gap-2">
+                                                     <div className="grid grid-cols-2 gap-2 mb-3">
                                                          <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
                                                          <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
                                                          <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
                                                          <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
+                                                     </div>
+                                                     {/* Embed Code */}
+                                                     <div className="pt-3 border-t border-slate-100">
+                                                         <label className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Code size={12}/> Embed Code</label>
+                                                         <div className="flex gap-2">
+                                                             <input 
+                                                                 type="text" 
+                                                                 readOnly 
+                                                                 value={`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`}
+                                                                 className="flex-1 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-500 font-mono"
+                                                             />
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     navigator.clipboard.writeText(`<iframe src="${getShareUrl()}?embed=true" width="100%" height="600" frameborder="0"></iframe>`);
+                                                                     setCopiedEmbed(true);
+                                                                     setTimeout(() => setCopiedEmbed(false), 2000);
+                                                                 }}
+                                                                 className="px-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200"
+                                                             >
+                                                                 {copiedEmbed ? <Check size={14}/> : <Copy size={14}/>}
+                                                             </button>
+                                                         </div>
                                                      </div>
                                                 </div>
                                                 <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">

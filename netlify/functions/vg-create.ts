@@ -96,7 +96,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -224,8 +224,8 @@ export const handler: Handler = async (event) => {
       votes: [],
       voteCount: 0,
       responseCount: 0,
-      // Default to draft mode for paid tiers, live for free
-      status: tier !== 'free' ? 'draft' : 'live',
+      // Default to live for free tier, use requested status for paid tiers
+      status: tier === 'free' ? 'live' : (requestedStatus || 'live'),
       // Logo URL (paid feature)
       logoUrl: body.logoUrl || null,
       // Notification settings

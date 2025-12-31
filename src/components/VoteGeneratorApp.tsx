@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause, Image as ImageIcon, Search, HelpCircle, FileQuestion, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause, Image as ImageIcon, Search, HelpCircle, FileQuestion, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
 import AdminDashboard from './AdminDashboard';
@@ -15,6 +15,7 @@ import LogoUpload from './LogoUpload';
 import DevModePanel from './DevModePanel';
 import PollRecoveryModal from './PollRecoveryModal';
 import EmailAdminLink from './EmailAdminLink';
+import CustomSlugInput from './CustomSlugInput';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -40,7 +41,17 @@ const VoteGeneratorApp: React.FC = () => {
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
     const [isEmbedMode, setIsEmbedMode] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<'success' | 'expired' | 'invalid' | 'error' | null>(null);
+    // Collapsible admin sections
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        share: true,
+        controls: true,
+        advanced: false
+    });
     const pollInterval = useRef<number | undefined>(undefined);
+    
+    const toggleSection = (section: string) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
@@ -54,26 +65,40 @@ const VoteGeneratorApp: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const isEmbed = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
         
-        // Check for verification status
+        // Check for verification status and poll redirect
         const verification = params.get('verification') as 'success' | 'expired' | 'invalid' | 'error' | null;
+        const verificationPollId = params.get('poll'); // Poll to redirect to after verification
         
         return {
-            pollId: slugMatch ? slugMatch[1] : params.get('id'),
+            pollId: slugMatch ? slugMatch[1] : (params.get('id') || verificationPollId),
             adminKey: params.get('admin'),
             isEmbed,
-            verification
+            verification,
+            verificationPollId
         };
     }, []);
 
     const loadView = useCallback(async (silent = false) => {
-        const { pollId, adminKey, isEmbed, verification } = parseHash();
+        const { pollId, adminKey, isEmbed, verification, verificationPollId } = parseHash();
         
         // Handle verification status from email confirmation
         if (verification) {
             setVerificationStatus(verification);
+            
+            // If verification successful and we have a poll ID, redirect to it
+            if (verification === 'success' && verificationPollId && !pollId) {
+                setTimeout(() => {
+                    window.location.hash = `id=${verificationPollId}&verification=success`;
+                }, 100);
+                return;
+            }
+            
             // Clear the verification param from URL after a delay
             setTimeout(() => {
-                const newHash = window.location.hash.replace(/[&?]?verification=[^&]+/, '').replace(/^#&/, '#');
+                const newHash = window.location.hash
+                    .replace(/[&?]?verification=[^&]+/, '')
+                    .replace(/[&?]?poll=[^&]+/, '')
+                    .replace(/^#&/, '#');
                 window.history.replaceState(null, '', newHash || window.location.pathname);
             }, 100);
             // Auto-dismiss after 5 seconds
@@ -495,6 +520,17 @@ const VoteGeneratorApp: React.FC = () => {
                                                          <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
                                                          <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
                                                      </div>
+                                                     {/* Custom Slug (Unlimited only) */}
+                                                     {viewState.poll.tier === 'unlimited' && (
+                                                         <div className="pt-3 border-t border-slate-100 mb-3">
+                                                             <CustomSlugInput
+                                                                 pollId={viewState.poll.id}
+                                                                 adminKey={parseHash().adminKey || ''}
+                                                                 currentSlug={(viewState.poll as any).customSlug}
+                                                                 tier={viewState.poll.tier}
+                                                             />
+                                                         </div>
+                                                     )}
                                                      {/* Embed Code */}
                                                      <div className="pt-3 border-t border-slate-100">
                                                          <label className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Code size={12}/> Embed Code</label>

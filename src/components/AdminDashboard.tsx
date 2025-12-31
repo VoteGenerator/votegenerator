@@ -319,7 +319,12 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const getDashboardUrl = () => {
-        // Always use the short format with just token
+        // Include session_id so the link works even after cache clear
+        const sessionId = session?.sessionId;
+        if (sessionId) {
+            return `${window.location.origin}/admin?s=${sessionId}`;
+        }
+        // Fallback to token-only (won't survive cache clear)
         const token = session?.dashboardToken;
         if (token) {
             return `${window.location.origin}/admin?token=${token}`;

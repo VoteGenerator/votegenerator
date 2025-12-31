@@ -7,7 +7,6 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
-import LogoUpload from './LogoUpload';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
@@ -109,11 +108,7 @@ const PaywallModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
 };
 
 // Main Component
-interface VoteGeneratorCreateProps {
-    hideTierBanner?: boolean;
-}
-
-const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanner = false }) => {
+const VoteGeneratorCreate: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
@@ -131,18 +126,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
-    
-    // Custom slug (Unlimited tier only)
-    const [customSlug, setCustomSlug] = useState('');
-    const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
-    const [slugError, setSlugError] = useState<string | null>(null);
-    const [slugSuggestion, setSlugSuggestion] = useState<string | null>(null);
-    
-    // Unlisted option (hide from search engines)
-    const [unlisted, setUnlisted] = useState(false);
-    
-    // Logo URL (paid tiers only)
-    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [startAsDraft, setStartAsDraft] = useState(false); // For paid tiers - start in draft mode
     
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
@@ -163,58 +147,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const daysRemaining = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
     const isExpiringSoon = daysRemaining !== null && daysRemaining <= 14;
     const isExpiringVerySoon = daysRemaining !== null && daysRemaining <= 7;
-    
-    // Check slug availability
-    const checkSlugAvailability = async (slug: string) => {
-        if (!slug || slug.length < 4) {
-            setSlugStatus('idle');
-            setSlugError(null);
-            return;
-        }
-        
-        setSlugStatus('checking');
-        setSlugError(null);
-        setSlugSuggestion(null);
-        
-        try {
-            const res = await fetch('/.netlify/functions/vg-check-slug', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slug, tier: purchasedTier })
-            });
-            
-            const data = await res.json();
-            
-            if (res.status === 429) {
-                setSlugStatus('invalid');
-                setSlugError('Too many requests. Please wait a moment.');
-                return;
-            }
-            
-            if (data.available) {
-                setSlugStatus('available');
-                setSlugError(null);
-            } else {
-                setSlugStatus('taken');
-                setSlugError(data.error || 'This link is not available');
-                if (data.suggestion) setSlugSuggestion(data.suggestion);
-            }
-        } catch (err) {
-            setSlugStatus('invalid');
-            setSlugError('Failed to check availability');
-        }
-    };
-    
-    // Debounce slug check
-    React.useEffect(() => {
-        if (!customSlug || purchasedTier !== 'unlimited') return;
-        
-        const timer = setTimeout(() => {
-            checkSlugAvailability(customSlug);
-        }, 500);
-        
-        return () => clearTimeout(timer);
-    }, [customSlug, purchasedTier]);
 
     const selectedPollType = POLL_TYPES.find(p => p.id === pollType);
     const currentTier = purchasedTier || selectedPollType?.tier || 'free';
@@ -245,21 +177,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         // Check if user can access this poll type
         if (isPollTypeUnlocked(type.tier)) {
             setPollType(id);
-            // Reset options when changing poll type
-            if (id === 'rating') {
-                // Rating doesn't need options - auto 1-5
-                setOptions(['']);
-            } else if (id === 'rsvp' || id === 'meeting') {
-                // Start with empty date slots
-                setOptions(['', '']);
-            } else if (id !== 'image') {
-                // Regular polls start with 3 empty options
-                setOptions(['', '', '']);
-            }
-            // Clear image options if switching away from visual poll
-            if (id !== 'image') {
-                setImageOptions([]);
-            }
         } else {
             setShowPaywall(true);
         }
@@ -283,17 +200,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         
         // Validation based on poll type
         if (pollType === 'image') {
+            // Visual poll - need at least 2 images
             if (imageOptions.length < 2) { 
                 setError('Upload at least 2 images for visual poll'); 
-                return; 
-            }
-        } else if (pollType === 'rating') {
-            // Rating polls don't need validation - auto 1-5 scale
-        } else if (pollType === 'rsvp' || pollType === 'meeting') {
-            // RSVP/Meeting need at least 1 valid date
-            const validDates = options.filter(o => o.split('|')[0]);
-            if (validDates.length < 1) { 
-                setError('Add at least one date'); 
                 return; 
             }
         } else {
@@ -305,41 +214,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         
         setIsCreating(true); setError(null);
         
+        // Use the already-loaded purchasedTier from component state
         const effectiveTier = purchasedTier || currentTier;
         
         try {
-            // Prepare options based on poll type
-            let validOptions: string[];
-            
-            if (pollType === 'image') {
-                validOptions = imageOptions.map((img, i) => img.label || `Option ${i + 1}`);
-            } else if (pollType === 'rating') {
-                // Auto-generate 1-5 star options
-                validOptions = ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'];
-            } else if (pollType === 'rsvp') {
-                // Format RSVP dates for display
-                validOptions = options.filter(o => o.split('|')[0]).map(o => {
-                    const [date, time] = o.split('|');
-                    const dateObj = new Date(date);
-                    const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                    return time ? `${formatted} at ${time}` : formatted;
-                });
-            } else if (pollType === 'meeting') {
-                // Format Meeting time slots for display
-                validOptions = options.filter(o => o.split('|')[0]).map(o => {
-                    const [date, start, end] = o.split('|');
-                    const dateObj = new Date(date);
-                    const formatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                    if (start && end) {
-                        return `${formatted} ${start}-${end}`;
-                    } else if (start) {
-                        return `${formatted} at ${start}`;
-                    }
-                    return formatted;
-                });
-            } else {
-                validOptions = options.filter(o => o.trim());
-            }
+            const validOptions = pollType === 'image' 
+                ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
+                : options.filter(o => o.trim());
             
             const pollData: any = { 
                 title: title.trim(), 
@@ -354,29 +235,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier,
-                // Custom slug (Unlimited tier only)
-                customSlug: effectiveTier === 'unlimited' && customSlug && slugStatus === 'available' ? customSlug.trim().toLowerCase() : undefined,
-                // Unlisted option
-                unlisted: unlisted,
-                // Logo URL (paid tiers)
-                logoUrl: logoUrl || undefined
+                // For paid tiers: allow starting in draft mode
+                status: (purchasedTier && startAsDraft) ? 'draft' : 'live'
             };
             
             // Add image URLs for visual polls
             if (pollType === 'image') {
                 pollData.imageUrls = imageOptions.map(img => img.url);
-            }
-            
-            // Add raw event data for RSVP/Meeting
-            if (pollType === 'rsvp' || pollType === 'meeting') {
-                pollData.rsvpEvents = options.filter(o => o.split('|')[0]).map(o => {
-                    const parts = o.split('|');
-                    return {
-                        date: parts[0],
-                        startTime: parts[1] || null,
-                        endTime: parts[2] || null,
-                    };
-                });
             }
             
             const res = await fetch('/.netlify/functions/vg-create', { 
@@ -391,39 +256,16 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // Store poll in session for "My Dashboard"
-                try {
-                    const sessionStr = localStorage.getItem('vg_user_session');
-                    if (sessionStr) {
-                        const session = JSON.parse(sessionStr);
-                        const newPoll = {
-                            id: pollId,
-                            adminKey,
-                            title: title.trim(),
-                            pollType,
-                            createdAt: new Date().toISOString(),
-                            voteCount: 0,
-                            status: 'active'
-                        };
-                        session.polls = session.polls || [];
-                        session.polls.unshift(newPoll);
-                        localStorage.setItem('vg_user_session', JSON.stringify(session));
-                    }
-                } catch (e) {
-                    console.error('Failed to store poll in session:', e);
+                // Clear purchased tier after use
+                if (purchasedTier) {
+                    localStorage.removeItem('vg_purchased_tier');
                 }
                 
-                // Clear purchased tier after use (if single-use)
-                // Note: Don't clear for unlimited tier
-                if (purchasedTier && purchasedTier !== 'unlimited') {
-                    // Keep tier for now - might want to track poll count
-                }
-                
-                // PAID USERS: Go to new admin dashboard
+                // PAID USERS: Skip ad wall, go directly to admin dashboard
                 // FREE USERS: Go through ad wall
                 if (purchasedTier || effectiveTier !== 'free') {
-                    // Go to new admin dashboard - poll is stored in session
-                    window.location.href = `/admin`;
+                    // Direct to admin dashboard (skip ad wall)
+                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
                     // Free tier - show ad wall
                     window.location.href = `/ad-wall?pollId=${pollId}&adminKey=${adminKey}`;
@@ -479,8 +321,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 </motion.div>
             )}
             
-            {/* Paid Tier Hub Header - hidden when parent provides banner */}
-            {!hideTierBanner && purchasedTier && (
+            {/* Paid Tier Hub Header */}
+            {purchasedTier && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }} 
                     animate={{ opacity: 1, y: 0 }}
@@ -523,7 +365,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     
                                     <div className="text-right hidden sm:block">
                                         <p className="text-amber-300/60 text-xs">Plan includes</p>
-                                        <p className="text-sm font-semibold text-amber-200">10,000 responses</p>
+                                        <p className="text-sm font-semibold text-amber-200">5,000 responses</p>
                                     </div>
                                     
                                     {/* COPY LINK BUTTON */}
@@ -736,101 +578,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-semibold text-slate-700">
-                                    {pollType === 'rating' ? 'Rating Scale' : pollType === 'rsvp' ? 'Event Date(s)' : pollType === 'meeting' ? 'Time Slots' : 'Options'} *
-                                </label>
-                                {hasDuplicates && pollType !== 'rating' && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
+                                <label className="block text-sm font-semibold text-slate-700">Options *</label>
+                                {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
                             </div>
                             
-                            {/* RATING SCALE - Auto generated 1-5 stars */}
-                            {pollType === 'rating' ? (
-                                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-200">
-                                    <p className="text-cyan-700 text-sm mb-3">Respondents will rate on a 1-5 star scale:</p>
-                                    <div className="flex justify-center gap-2">
-                                        {[1, 2, 3, 4, 5].map(n => (
-                                            <div key={n} className="flex flex-col items-center">
-                                                <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 font-bold">{n}</div>
-                                                <span className="text-xs text-cyan-600 mt-1">{n === 1 ? 'Poor' : n === 5 ? 'Great' : '⭐'}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : pollType === 'rsvp' ? (
-                                /* RSVP - Date/Time picker for event dates */
-                                <div className="space-y-3">
-                                    <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl p-4 border border-sky-200 mb-3">
-                                        <p className="text-sky-700 text-sm">Add dates for your event. Respondents will RSVP for each date.</p>
-                                    </div>
-                                    {options.map((opt, i) => (
-                                        <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                                            <div className="flex-1 flex gap-2">
-                                                <input 
-                                                    type="date" 
-                                                    value={opt.split('|')[0] || ''} 
-                                                    onChange={(e) => {
-                                                        const time = opt.split('|')[1] || '';
-                                                        updateOption(i, `${e.target.value}|${time}`);
-                                                    }}
-                                                    className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-sky-500"
-                                                />
-                                                <input 
-                                                    type="time" 
-                                                    value={opt.split('|')[1] || ''} 
-                                                    onChange={(e) => {
-                                                        const date = opt.split('|')[0] || '';
-                                                        updateOption(i, `${date}|${e.target.value}`);
-                                                    }}
-                                                    placeholder="Time (optional)"
-                                                    className="w-32 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-sky-500"
-                                                />
-                                            </div>
-                                            {options.length > 1 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            ) : pollType === 'meeting' ? (
-                                /* MEETING POLL - Date + Time range picker */
-                                <div className="space-y-3">
-                                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 mb-3">
-                                        <p className="text-amber-700 text-sm">Add time slots for your meeting. Respondents will select their availability.</p>
-                                    </div>
-                                    {options.map((opt, i) => {
-                                        const parts = opt.split('|');
-                                        const date = parts[0] || '';
-                                        const startTime = parts[1] || '';
-                                        const endTime = parts[2] || '';
-                                        return (
-                                            <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                                                <div className="flex-1 flex gap-2">
-                                                    <input 
-                                                        type="date" 
-                                                        value={date}
-                                                        onChange={(e) => updateOption(i, `${e.target.value}|${startTime}|${endTime}`)}
-                                                        className="flex-1 px-3 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
-                                                    />
-                                                    <div className="flex items-center gap-1">
-                                                        <input 
-                                                            type="time" 
-                                                            value={startTime}
-                                                            onChange={(e) => updateOption(i, `${date}|${e.target.value}|${endTime}`)}
-                                                            className="w-28 px-2 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
-                                                        />
-                                                        <span className="text-slate-400">→</span>
-                                                        <input 
-                                                            type="time" 
-                                                            value={endTime}
-                                                            onChange={(e) => updateOption(i, `${date}|${startTime}|${e.target.value}`)}
-                                                            className="w-28 px-2 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                {options.length > 1 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
-                                            </motion.div>
-                                        );
-                                    })}
-                                </div>
-                            ) : pollType !== 'image' ? (
-                                /* Regular text options for multiple/ranked/pairwise */
+                            {/* Regular text options for non-image polls */}
+                            {pollType !== 'image' ? (
                                 <div className="space-y-3">
                                     {options.map((opt, i) => (
                                         <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
@@ -977,7 +730,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             )}
                             
-                            {pollType !== 'image' && pollType !== 'rating' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add {pollType === 'meeting' ? 'Time Slot' : pollType === 'rsvp' ? 'Date' : 'Option'}</button>}
+                            {pollType !== 'image' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
                         </div>
                     </motion.div>
 
@@ -1004,71 +757,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             {showAdvanced && (
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
                                     <div className="p-6 space-y-4">
-                                        {/* Custom Link (Unlimited tier only) */}
-                                        {purchasedTier === 'unlimited' && (
-                                            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
-                                                <label className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-2">
-                                                    <Crown size={16} className="text-amber-600" />
-                                                    Custom Poll Link
-                                                    <span className="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Unlimited</span>
-                                                </label>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-slate-500 text-sm whitespace-nowrap">votegenerator.com/p/</span>
-                                                    <div className="relative flex-1">
-                                                        <input 
-                                                            type="text" 
-                                                            value={customSlug}
-                                                            onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                                            placeholder="my-team-poll"
-                                                            className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
-                                                                slugStatus === 'available' ? 'border-emerald-400 bg-emerald-50' :
-                                                                slugStatus === 'taken' || slugStatus === 'invalid' ? 'border-red-300 bg-red-50' :
-                                                                'border-slate-200'
-                                                            }`}
-                                                        />
-                                                        {slugStatus === 'checking' && (
-                                                            <div className="absolute right-3 top-2.5">
-                                                                <Loader2 size={16} className="animate-spin text-slate-400" />
-                                                            </div>
-                                                        )}
-                                                        {slugStatus === 'available' && (
-                                                            <div className="absolute right-3 top-2.5">
-                                                                <Check size={16} className="text-emerald-500" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {slugStatus === 'available' && (
-                                                    <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
-                                                        <Check size={12} /> This link is available!
-                                                    </p>
-                                                )}
-                                                {slugError && (
-                                                    <p className="text-xs text-red-600 mt-1">{slugError}</p>
-                                                )}
-                                                {slugSuggestion && (
-                                                    <button 
-                                                        onClick={() => { setCustomSlug(slugSuggestion); setSlugSuggestion(null); }}
-                                                        className="text-xs text-amber-600 hover:text-amber-700 mt-1 underline"
-                                                    >
-                                                        Try: {slugSuggestion}
-                                                    </button>
-                                                )}
-                                                <p className="text-xs text-slate-500 mt-2">Leave blank to use a random secure link</p>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Logo Upload (paid tiers only) */}
-                                        {purchasedTier && purchasedTier !== 'free' && (
-                                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                                                <LogoUpload
-                                                    currentLogo={logoUrl}
-                                                    onLogoChange={setLogoUrl}
-                                                    tier={purchasedTier}
-                                                />
-                                            </div>
-                                        )}
-                                        
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="flex items-center justify-between mb-2"><span className="text-sm font-semibold text-slate-700">Close poll on</span><span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Max {maxDays} days</span></label>
                                             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
@@ -1087,16 +775,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <span className="font-medium text-slate-700">Hide results until closed</span>
                                             <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
                                         </label>
-                                        
-                                        {/* Unlisted option */}
-                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 cursor-pointer border border-slate-200">
-                                            <div>
-                                                <span className="font-medium text-slate-700 block">Hide from search engines</span>
-                                                <span className="text-xs text-slate-500">Poll won't appear in Google or other search results</span>
-                                            </div>
-                                            <input type="checkbox" checked={unlisted} onChange={(e) => setUnlisted(e.target.checked)} className="w-5 h-5 rounded" />
-                                        </label>
-                                        
+                                        {/* Draft Mode - only for paid tiers */}
+                                        {purchasedTier && purchasedTier !== 'free' && (
+                                            <label className="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-200 cursor-pointer">
+                                                <div>
+                                                    <span className="font-medium text-amber-800 flex items-center gap-2">
+                                                        Start as Draft
+                                                        <span className="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Premium</span>
+                                                    </span>
+                                                    <p className="text-xs text-amber-600 mt-1">
+                                                        Test your poll before going live. Voters can't access draft polls.
+                                                    </p>
+                                                </div>
+                                                <input type="checkbox" checked={startAsDraft} onChange={(e) => setStartAsDraft(e.target.checked)} className="w-5 h-5 rounded accent-amber-600" />
+                                            </label>
+                                        )}
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
                                             <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />

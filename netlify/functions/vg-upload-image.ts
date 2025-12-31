@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
+import crypto from 'crypto';
 
 const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -48,7 +49,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 500,
                 headers,
-                body: JSON.stringify({ error: 'Image upload service not configured' })
+                body: JSON.stringify({ error: 'Image upload service not configured. Missing CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET.' })
             };
         }
 
@@ -56,49 +57,65 @@ export const handler: Handler = async (event) => {
         const timestamp = Math.floor(Date.now() / 1000);
         const folder = 'visual-polls';
         
-        // Create signature string (sorted alphabetically)
-        const signatureString = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+        // Parameters that must be included in signature (sorted alphabetically)
+        const paramsToSign = {
+            folder: folder,
+            timestamp: timestamp.toString(),
+        };
         
-        // Generate SHA1 signature
-        const crypto = await import('crypto');
+        // Create signature string
+        const sortedParams = Object.keys(paramsToSign)
+            .sort()
+            .map(key => `${key}=${paramsToSign[key as keyof typeof paramsToSign]}`)
+            .join('&');
+        const signatureString = sortedParams + apiSecret;
         const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
 
-        // Prepare form data for Cloudinary
-        const formData = new URLSearchParams();
-        formData.append('file', image);
-        formData.append('api_key', apiKey);
-        formData.append('timestamp', timestamp.toString());
-        formData.append('signature', signature);
-        formData.append('folder', folder);
-        // Optimize images to save space
-        formData.append('transformation', 'c_limit,w_800,h_600,q_auto,f_auto');
+        // Build the upload request body
+        const uploadData = {
+            file: image,
+            api_key: apiKey,
+            timestamp: timestamp,
+            signature: signature,
+            folder: folder,
+        };
 
-        // Upload to Cloudinary
+        // Upload to Cloudinary using JSON
         const cloudinaryResponse = await fetch(
             `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
             {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/json'
                 },
-                body: formData.toString()
+                body: JSON.stringify(uploadData)
             }
         );
 
+        const responseText = await cloudinaryResponse.text();
+        let result;
+        
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            console.error('Failed to parse Cloudinary response:', responseText);
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Invalid response from image service' })
+            };
+        }
+
         if (!cloudinaryResponse.ok) {
-            const errorData = await cloudinaryResponse.json().catch(() => ({}));
-            console.error('Cloudinary error:', errorData);
+            console.error('Cloudinary error:', result);
             return {
                 statusCode: 500,
                 headers,
                 body: JSON.stringify({ 
-                    error: 'Failed to upload image',
-                    details: errorData.error?.message || 'Unknown error'
+                    error: result.error?.message || 'Failed to upload image'
                 })
             };
         }
-
-        const result = await cloudinaryResponse.json();
 
         return {
             statusCode: 200,
@@ -112,12 +129,12 @@ export const handler: Handler = async (event) => {
             })
         };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Upload error:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Failed to process image upload' })
+            body: JSON.stringify({ error: error.message || 'Failed to process image upload' })
         };
     }
 };

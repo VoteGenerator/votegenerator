@@ -111,7 +111,7 @@ const CustomSlugInput: React.FC<Props> = ({
             <div className="flex items-center gap-2 mb-2">
                 <Link2 size={14} className="text-amber-600" />
                 <span className="text-xs font-semibold text-slate-600">Custom Link</span>
-                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
+                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">UNLIMITED</span>
             </div>
 
             {savedSlug ? (
@@ -149,6 +149,10 @@ const CustomSlugInput: React.FC<Props> = ({
             ) : (
                 // Input form
                 <div className="space-y-2">
+                    {/* Show full URL preview */}
+                    <p className="text-[10px] text-slate-500 font-mono truncate">
+                        {window.location.host}/p/<span className="text-indigo-600">{slug || 'your-custom-name'}</span>
+                    </p>
                     <div className="flex items-stretch gap-1">
                         {/* Fixed prefix */}
                         <div className="bg-slate-100 border border-slate-200 border-r-0 rounded-l-lg px-2 flex items-center">

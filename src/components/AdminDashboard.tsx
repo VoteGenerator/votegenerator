@@ -245,6 +245,18 @@ const AdminDashboard: React.FC = () => {
                 return;
             }
             
+            // Case 1b: Have stored session but URL has session_id - update session with it
+            if (stored && urlSessionId) {
+                const sessionData: UserSession = JSON.parse(stored);
+                if (!sessionData.sessionId) {
+                    sessionData.sessionId = urlSessionId;
+                    localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                }
+                setSession(sessionData);
+                setLoading(false);
+                return;
+            }
+            
             // Case 2: No stored session and no valid URL params
             if (!stored) {
                 setError('No session found. Please purchase a plan first.');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause, Image as ImageIcon, Search, HelpCircle, FileQuestion, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Code, Bell, Eye, Play, Pause, Image as ImageIcon, Search, HelpCircle, FileQuestion, ArrowLeft, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import LandingPage from './LandingPage';
 import PaidCreatePage from './PaidCreatePage';
 import AdminDashboard from './AdminDashboard';
@@ -26,7 +26,8 @@ type ViewState =
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'error'; message: string; errorType?: 'not_found' | 'invalid_admin' | 'expired' | 'generic'; pollId?: string }
-    | { type: 'recover' };
+    | { type: 'recover' }
+    | { type: 'verification_success'; pollId: string };
 
 const VoteGeneratorApp: React.FC = () => {
     const [viewState, setViewState] = useState<ViewState>({ type: 'loading' });
@@ -43,9 +44,10 @@ const VoteGeneratorApp: React.FC = () => {
     const [verificationStatus, setVerificationStatus] = useState<'success' | 'expired' | 'invalid' | 'error' | null>(null);
     // Collapsible admin sections
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-        share: true,
-        controls: true,
-        advanced: false
+        share: false,
+        controls: false,
+        advanced: false,
+        results: true  // Results expanded by default
     });
     const pollInterval = useRef<number | undefined>(undefined);
     
@@ -81,18 +83,18 @@ const VoteGeneratorApp: React.FC = () => {
     const loadView = useCallback(async (silent = false) => {
         const { pollId, adminKey, isEmbed, verification, verificationPollId } = parseHash();
         
-        // Handle verification status from email confirmation
+        // Handle verification status from email confirmation - show dedicated success page
+        if (verification === 'success') {
+            setViewState({ 
+                type: 'verification_success', 
+                pollId: verificationPollId || pollId || '' 
+            } as any);
+            return;
+        }
+        
+        // Handle other verification statuses
         if (verification) {
             setVerificationStatus(verification);
-            
-            // If verification successful and we have a poll ID, redirect to it
-            if (verification === 'success' && verificationPollId && !pollId) {
-                setTimeout(() => {
-                    window.location.hash = `id=${verificationPollId}&verification=success`;
-                }, 100);
-                return;
-            }
-            
             // Clear the verification param from URL after a delay
             setTimeout(() => {
                 const newHash = window.location.hash
@@ -458,6 +460,55 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
+                    {/* Email Verification Success */}
+                    {viewState.type === 'verification_success' && (
+                        <motion.div key="verification" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center pt-20 px-4">
+                            <div className="bg-white rounded-3xl shadow-xl border border-green-100 p-8 md:p-12 max-w-lg text-center">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Check className="text-green-600" size={40} />
+                                </div>
+                                <h1 className="text-3xl font-black text-slate-900 mb-3">Email Verified! ✅</h1>
+                                <p className="text-slate-600 mb-6">
+                                    Your email has been verified successfully. You will now receive notifications about poll activity until the poll is closed.
+                                </p>
+                                <div className="bg-green-50 rounded-xl p-4 mb-6">
+                                    <p className="text-sm text-green-700">
+                                        <strong>What happens next?</strong><br/>
+                                        You'll receive email updates when votes come in, milestones are reached, or the poll closes.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                    <button
+                                        onClick={() => window.location.href = '/'}
+                                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors"
+                                    >
+                                        Go to Homepage
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            // Try to find admin link from localStorage
+                                            const saved = localStorage.getItem('vg_admin_links');
+                                            if (saved && viewState.pollId) {
+                                                const links = JSON.parse(saved);
+                                                if (links[viewState.pollId]) {
+                                                    window.location.hash = `id=${viewState.pollId}&admin=${links[viewState.pollId].adminKey}`;
+                                                    return;
+                                                }
+                                            }
+                                            window.location.hash = `id=${viewState.pollId}`;
+                                        }}
+                                        className="px-6 py-3 border-2 border-slate-200 hover:border-indigo-300 text-slate-700 font-bold rounded-xl transition-colors"
+                                    >
+                                        View Poll
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-6">
+                                    To unsubscribe, visit the poll's admin page and remove your email from notifications.
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {viewState.type === 'create' && (
                         <motion.div key="create" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             {isPaidUser ? <PaidCreatePage /> : <LandingPage />}
@@ -504,14 +555,14 @@ const VoteGeneratorApp: React.FC = () => {
                                                     {viewState.poll.settings.deadline && (<span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-lg text-slate-500 flex items-center gap-1"><Clock size={12}/> {new Date(viewState.poll.settings.deadline).toLocaleDateString()}</span>)}
                                                     {viewState.poll.allowedCodes && (<span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-lg text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100"><Key size={12}/> {viewState.poll.allowedCodes.length} Codes</span>)}
                                                 </div>
-                                                {/* View Poll Button */}
+                                                {/* View Poll Button - includes admin key so drafts can be previewed */}
                                                 <a 
-                                                    href={getShareUrl()} 
+                                                    href={`${getShareUrl()}&admin=${parseHash().adminKey}`}
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm"
                                                 >
-                                                    <Eye size={16} /> View Poll
+                                                    <Eye size={16} /> {(viewState.poll as any).status === 'draft' ? 'Preview Draft' : 'View Poll'}
                                                 </a>
                                             </div>
                                             
@@ -533,19 +584,19 @@ const VoteGeneratorApp: React.FC = () => {
 
                                             {/* Collapsible Sections */}
                                             <div className="space-y-3">
-                                                {/* Share Options Section */}
-                                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                {/* Share Options Section - Blue */}
+                                                <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
                                                     <button 
                                                         onClick={() => toggleSection('share')}
-                                                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50 bg-blue-50/50"
                                                     >
-                                                        <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
-                                                            <Share2 size={16} className="text-indigo-600"/> Share & Distribute
+                                                        <span className="font-semibold text-blue-800 flex items-center gap-2 text-sm">
+                                                            <Share2 size={16} className="text-blue-600"/> Share & Distribute
                                                         </span>
-                                                        {expandedSections.share ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                        {expandedSections.share ? <ChevronUp size={18} className="text-blue-400"/> : <ChevronDown size={18} className="text-blue-400"/>}
                                                     </button>
                                                     {expandedSections.share && (
-                                                        <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                        <div className="px-4 pb-4 border-t border-blue-100 pt-3">
                                                             <div className="grid grid-cols-4 gap-2 mb-3">
                                                                 <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex flex-col items-center gap-1"><MessageCircle size={16}/> WhatsApp</button>
                                                                 <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex flex-col items-center gap-1"><Smartphone size={16}/> SMS</button>
@@ -573,21 +624,21 @@ const VoteGeneratorApp: React.FC = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Paid Features Section */}
+                                                {/* Paid Features Section - Purple */}
                                                 {viewState.poll.tier && viewState.poll.tier !== 'free' && (
-                                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                    <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden">
                                                         <button 
                                                             onClick={() => toggleSection('controls')}
-                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-purple-50 bg-purple-50/50"
                                                         >
-                                                            <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                                            <span className="font-semibold text-purple-800 flex items-center gap-2 text-sm">
                                                                 <SlidersHorizontal size={16} className="text-purple-600"/> Poll Controls
-                                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
+                                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">UNLIMITED</span>
                                                             </span>
-                                                            {expandedSections.controls ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                            {expandedSections.controls ? <ChevronUp size={18} className="text-purple-400"/> : <ChevronDown size={18} className="text-purple-400"/>}
                                                         </button>
                                                         {expandedSections.controls && (
-                                                            <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                            <div className="px-4 pb-4 border-t border-purple-100 pt-3">
                                                                 <div className="grid md:grid-cols-2 gap-4">
                                                                     <DraftLiveToggle
                                                                         pollId={viewState.poll.id}
@@ -625,20 +676,21 @@ const VoteGeneratorApp: React.FC = () => {
                                                     </div>
                                                 )}
 
-                                                {/* Notifications Section */}
+                                                {/* Notifications Section - Amber */}
                                                 {viewState.poll.tier && viewState.poll.tier !== 'free' && (
-                                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                                    <div className="bg-white rounded-xl border-2 border-amber-200 overflow-hidden">
                                                         <button 
                                                             onClick={() => toggleSection('advanced')}
-                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50"
+                                                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-50 bg-amber-50/50"
                                                         >
-                                                            <span className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                                            <span className="font-semibold text-amber-800 flex items-center gap-2 text-sm">
                                                                 <Bell size={16} className="text-amber-600"/> Email Notifications
+                                                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">UNLIMITED</span>
                                                             </span>
-                                                            {expandedSections.advanced ? <ChevronUp size={18} className="text-slate-400"/> : <ChevronDown size={18} className="text-slate-400"/>}
+                                                            {expandedSections.advanced ? <ChevronUp size={18} className="text-amber-400"/> : <ChevronDown size={18} className="text-amber-400"/>}
                                                         </button>
                                                         {expandedSections.advanced && (
-                                                            <div className="px-4 pb-4 border-t border-slate-100 pt-3">
+                                                            <div className="px-4 pb-4 border-t border-amber-100 pt-3">
                                                                 <NotificationSettings
                                                                     pollId={viewState.poll.id}
                                                                     adminKey={parseHash().adminKey || ''}
@@ -654,7 +706,7 @@ const VoteGeneratorApp: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className={viewState.isAdmin ? "p-6 md:p-10" : ""}>
+                                    <div className={viewState.isAdmin ? "p-4 md:p-6" : ""}>
                                         {!viewState.isAdmin && (<div className="flex justify-end mb-4 print:hidden"><button onClick={handleManualRefresh} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium" disabled={isRefreshing}><RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />{isRefreshing ? 'Refreshing...' : 'Refresh Votes'}</button></div>)}
                                         {/* Logo if present */}
                                         {(viewState.poll as any).logoUrl && (
@@ -666,15 +718,44 @@ const VoteGeneratorApp: React.FC = () => {
                                                 />
                                             </div>
                                         )}
-                                        <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
-                                        {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
-                                        <VoteGeneratorResults 
-                                            poll={viewState.poll} 
-                                            results={viewState.results as any} 
-                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined}
-                                            isAdmin={viewState.isAdmin}
-                                            adminKey={parseHash().adminKey}
-                                        />
+                                        <h1 className="text-2xl md:text-4xl font-black text-slate-900 mb-3 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
+                                        {viewState.poll.description && <p className="text-slate-500 text-center mb-6 max-w-2xl mx-auto">{viewState.poll.description}</p>}
+                                        
+                                        {/* Collapsible Results for Admin */}
+                                        {viewState.isAdmin ? (
+                                            <div className="bg-white rounded-xl border-2 border-emerald-200 overflow-hidden">
+                                                <button 
+                                                    onClick={() => toggleSection('results')}
+                                                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-emerald-50 bg-emerald-50/50"
+                                                >
+                                                    <span className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+                                                        <BarChart3 size={16} className="text-emerald-600"/> Poll Results
+                                                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">{viewState.poll.voteCount || 0} votes</span>
+                                                    </span>
+                                                    {expandedSections.results ? <ChevronUp size={18} className="text-emerald-400"/> : <ChevronDown size={18} className="text-emerald-400"/>}
+                                                </button>
+                                                {expandedSections.results && (
+                                                    <div className="p-4 border-t border-emerald-100">
+                                                        <VoteGeneratorResults 
+                                                            poll={viewState.poll} 
+                                                            results={viewState.results as any} 
+                                                            onEdit={handleEditPoll}
+                                                            isAdmin={true}
+                                                            adminKey={parseHash().adminKey}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <VoteGeneratorResults 
+                                                poll={viewState.poll} 
+                                                results={viewState.results as any} 
+                                                onEdit={undefined}
+                                                isAdmin={false}
+                                                adminKey={parseHash().adminKey}
+                                            />
+                                        )}
+                                        
                                         {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (<div className="mt-8 flex flex-col items-center justify-center print:hidden"><button onClick={handleVoteAgain} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200"><RotateCcw size={18} />Vote Again</button><p className="text-slate-400 text-xs mt-2">Multiple votes are allowed for this poll.</p></div>)}
                                         {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (<div className="mt-12 text-center print:hidden"><button onClick={goHome} className="text-slate-400 hover:text-indigo-600 font-medium inline-flex items-center gap-1">Create your own poll <ArrowRight size={14}/></button></div>)}
                                     </div>

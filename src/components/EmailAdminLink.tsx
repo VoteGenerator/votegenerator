@@ -67,23 +67,23 @@ const EmailAdminLink: React.FC<EmailAdminLinkProps> = ({
         return (
             <button
                 onClick={() => setIsExpanded(true)}
-                className="flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
+                className="flex items-center gap-2 text-xs text-slate-500 hover:text-indigo-600 transition-colors"
             >
-                <Mail size={14} />
-                <span>Email admin link to myself</span>
+                <Mail size={12} />
+                <span>Email poll links to myself</span>
             </button>
         );
     }
 
     return (
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-            <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <ShieldCheck size={16} className="text-indigo-600" />
+        <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <ShieldCheck size={12} className="text-indigo-600" />
                 </div>
                 <div>
-                    <h4 className="font-semibold text-slate-700 text-sm">Backup Admin Link</h4>
-                    <p className="text-xs text-slate-500">Send admin access to your email for safekeeping</p>
+                    <h4 className="font-semibold text-slate-700 text-xs">Backup Poll Links</h4>
+                    <p className="text-[10px] text-slate-500">Send admin & share links to your email</p>
                 </div>
             </div>
 

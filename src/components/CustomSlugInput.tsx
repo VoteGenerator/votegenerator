@@ -23,7 +23,6 @@ const CustomSlugInput: React.FC<Props> = ({
     const [copied, setCopied] = useState(false);
 
     const isUnlimited = tier === 'unlimited';
-    const baseUrl = window.location.origin;
 
     // Debounced availability check
     useEffect(() => {
@@ -83,11 +82,13 @@ const CustomSlugInput: React.FC<Props> = ({
         }
     };
 
+    const getFullUrl = () => {
+        const baseUrl = window.location.origin;
+        return savedSlug ? `${baseUrl}/p/${savedSlug}` : `${baseUrl}/#id=${pollId}`;
+    };
+
     const handleCopy = () => {
-        const url = savedSlug 
-            ? `${baseUrl}/p/${savedSlug}`
-            : `${baseUrl}/#id=${pollId}`;
-        navigator.clipboard.writeText(url);
+        navigator.clipboard.writeText(getFullUrl());
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -102,102 +103,97 @@ const CustomSlugInput: React.FC<Props> = ({
     };
 
     if (!isUnlimited) {
-        return (
-            <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Link2 size={14} />
-                    <span>Custom poll links available with Unlimited plan</span>
-                </div>
-            </div>
-        );
+        return null; // Don't show for non-unlimited tiers
     }
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <Link2 size={16} className="text-indigo-600" />
-                <span className="text-sm font-semibold text-slate-700">Custom Poll Link</span>
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Unlimited</span>
+        <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+                <Link2 size={14} className="text-amber-600" />
+                <span className="text-xs font-semibold text-slate-600">Custom Link</span>
+                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
             </div>
 
             {savedSlug ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs text-green-600 font-medium mb-1">Your custom link:</p>
-                            <p className="text-sm font-mono text-green-800">
-                                {baseUrl}/p/{savedSlug}
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleCopy}
-                                className="p-2 bg-green-100 hover:bg-green-200 rounded-lg text-green-700 transition-colors"
-                            >
-                                {copied ? <Check size={16} /> : <Copy size={16} />}
-                            </button>
-                            <a
-                                href={`/p/${savedSlug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 bg-green-100 hover:bg-green-200 rounded-lg text-green-700 transition-colors"
-                            >
-                                <ExternalLink size={16} />
-                            </a>
-                        </div>
+                // Saved slug display
+                <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                    <div className="flex items-center gap-2">
+                        <Check size={14} className="text-green-600 flex-shrink-0" />
+                        <span className="text-xs text-green-700 font-mono truncate flex-1">
+                            /p/{savedSlug}
+                        </span>
+                        <button
+                            onClick={handleCopy}
+                            className="p-1 hover:bg-green-100 rounded text-green-600"
+                            title="Copy link"
+                        >
+                            {copied ? <Check size={12} /> : <Copy size={12} />}
+                        </button>
+                        <a
+                            href={`/p/${savedSlug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 hover:bg-green-100 rounded text-green-600"
+                            title="Open in new tab"
+                        >
+                            <ExternalLink size={12} />
+                        </a>
                     </div>
                     <button
-                        onClick={() => setSavedSlug('')}
-                        className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
+                        onClick={() => { setSavedSlug(''); setSlug(''); }}
+                        className="text-[10px] text-green-600 hover:underline mt-1"
                     >
-                        Change custom link
+                        Change
                     </button>
                 </div>
             ) : (
-                <>
-                    <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                                {baseUrl}/p/
-                            </span>
+                // Input form
+                <div className="space-y-2">
+                    <div className="flex items-stretch gap-1">
+                        {/* Fixed prefix */}
+                        <div className="bg-slate-100 border border-slate-200 border-r-0 rounded-l-lg px-2 flex items-center">
+                            <span className="text-xs text-slate-500 font-mono whitespace-nowrap">/p/</span>
+                        </div>
+                        {/* Editable slug input */}
+                        <div className="relative flex-1">
                             <input
                                 type="text"
                                 value={slug}
                                 onChange={(e) => setSlug(formatSlug(e.target.value))}
-                                placeholder="my-cool-poll"
-                                className="w-full pl-[140px] pr-10 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
-                                style={{ paddingLeft: `${baseUrl.length * 7 + 40}px` }}
+                                placeholder="my-poll"
+                                className={`w-full px-2 py-1.5 border rounded-r-lg text-xs font-mono focus:outline-none focus:ring-1 ${
+                                    isAvailable === true ? 'border-green-300 focus:ring-green-300 bg-green-50' :
+                                    isAvailable === false ? 'border-red-300 focus:ring-red-300 bg-red-50' :
+                                    'border-slate-200 focus:ring-indigo-300'
+                                }`}
                             />
-                            {isChecking && (
-                                <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin" />
-                            )}
-                            {!isChecking && isAvailable === true && (
-                                <Check size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
-                            )}
-                            {!isChecking && isAvailable === false && (
-                                <X size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />
-                            )}
+                            {/* Status indicator */}
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                {isChecking && <Loader2 size={12} className="text-slate-400 animate-spin" />}
+                                {!isChecking && isAvailable === true && <Check size={12} className="text-green-500" />}
+                                {!isChecking && isAvailable === false && <X size={12} className="text-red-500" />}
+                            </div>
                         </div>
+                        {/* Save button */}
                         <button
                             onClick={handleSave}
                             disabled={!isAvailable || isSaving || !slug}
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-medium rounded-lg text-sm transition-colors"
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg transition-colors"
                         >
-                            {isSaving ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
+                            {isSaving ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
                         </button>
                     </div>
 
                     {error && (
-                        <div className="flex items-center gap-2 text-xs text-red-600">
-                            <AlertCircle size={12} />
-                            {error}
-                        </div>
+                        <p className="text-[10px] text-red-600 flex items-center gap-1">
+                            <AlertCircle size={10} /> {error}
+                        </p>
                     )}
-
-                    <p className="text-xs text-slate-400">
-                        Use letters, numbers, and dashes. Example: team-vote-2024
+                    
+                    <p className="text-[10px] text-slate-400">
+                        Letters, numbers, dashes only. Example: team-vote-2024
                     </p>
-                </>
+                </div>
             )}
         </div>
     );

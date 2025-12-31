@@ -96,7 +96,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -207,8 +207,12 @@ export const handler: Handler = async (event) => {
       options: options.filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
         id: `opt_${i}`,
         text: o.trim(),
+        // Add image URL if this is a visual poll
+        imageUrl: (pollType === 'image' && imageUrls && imageUrls[i]) ? imageUrls[i] : undefined,
       })),
       pollType: pollType || 'multiple_choice',
+      // Store imageUrls at poll level too for easy access
+      imageUrls: (pollType === 'image' && imageUrls) ? imageUrls : undefined,
       settings: {
         allowMultiple: settings?.allowMultiple || false,
         hideResults: settings?.hideResults || false,

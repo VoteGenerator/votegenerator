@@ -97,7 +97,9 @@ export const handler: Handler = async (event) => {
                 },
                 createdAt: poll.createdAt,
                 voteCount: poll.voteCount,
-                isAdmin: false
+                isAdmin: false,
+                logoUrl: poll.logoUrl || null,
+                status: poll.status || 'live'
             };
 
             return {

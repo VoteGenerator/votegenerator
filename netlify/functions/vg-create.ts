@@ -224,7 +224,12 @@ export const handler: Handler = async (event) => {
       votes: [],
       voteCount: 0,
       responseCount: 0,
-      status: 'active',
+      // Default to draft mode for paid tiers, live for free
+      status: tier !== 'free' ? 'draft' : 'live',
+      // Logo URL (paid feature)
+      logoUrl: body.logoUrl || null,
+      // Notification settings
+      notificationSettings: body.notificationSettings || null,
     };
 
     // Store in Netlify Blobs with explicit config

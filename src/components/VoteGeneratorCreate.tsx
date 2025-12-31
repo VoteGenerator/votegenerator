@@ -7,6 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
+import LogoUpload from './LogoUpload';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
@@ -139,6 +140,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     
     // Unlisted option (hide from search engines)
     const [unlisted, setUnlisted] = useState(false);
+    
+    // Logo URL (paid tiers only)
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
     
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
@@ -353,7 +357,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 // Custom slug (Unlimited tier only)
                 customSlug: effectiveTier === 'unlimited' && customSlug && slugStatus === 'available' ? customSlug.trim().toLowerCase() : undefined,
                 // Unlisted option
-                unlisted: unlisted
+                unlisted: unlisted,
+                // Logo URL (paid tiers)
+                logoUrl: logoUrl || undefined
             };
             
             // Add image URLs for visual polls
@@ -1049,6 +1055,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     </button>
                                                 )}
                                                 <p className="text-xs text-slate-500 mt-2">Leave blank to use a random secure link</p>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Logo Upload (paid tiers only) */}
+                                        {purchasedTier && purchasedTier !== 'free' && (
+                                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                                <LogoUpload
+                                                    currentLogo={logoUrl}
+                                                    onLogoChange={setLogoUrl}
+                                                    tier={purchasedTier}
+                                                />
                                             </div>
                                         )}
                                         

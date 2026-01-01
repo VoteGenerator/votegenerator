@@ -1,153 +1,184 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Reserved slugs that can't be used
-const RESERVED_SLUGS = [
-    'pricing', 'demo', 'blog', 'help', 'about', 'api', 'admin',
-    'login', 'signup', 'register', 'account', 'settings', 'dashboard',
-    'create', 'vote', 'results', 'embed', 'terms', 'privacy', 'contact'
-];
+// Simple in-memory rate limiting (resets on function cold start)
+// In production, use Redis or similar for persistent rate limiting
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 10; // 10 requests per minute per IP
 
-interface CustomSlug {
-    slug: string;
-    pollId: string;
-    adminKey: string;
-    createdAt: string;
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || record.resetAt < now) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+}
+
+// Validate slug format
+function isValidSlug(slug: string): { valid: boolean; error?: string } {
+  if (!slug || typeof slug !== 'string') {
+    return { valid: false, error: 'Slug is required' };
+  }
+  
+  const trimmed = slug.trim().toLowerCase();
+  
+  if (trimmed.length < 4) {
+    return { valid: false, error: 'Slug must be at least 4 characters' };
+  }
+  
+  if (trimmed.length > 50) {
+    return { valid: false, error: 'Slug must be 50 characters or less' };
+  }
+  
+  // Only allow lowercase letters, numbers, and hyphens
+  if (!/^[a-z0-9-]+$/.test(trimmed)) {
+    return { valid: false, error: 'Slug can only contain letters, numbers, and hyphens' };
+  }
+  
+  // Can't start or end with hyphen
+  if (trimmed.startsWith('-') || trimmed.endsWith('-')) {
+    return { valid: false, error: 'Slug cannot start or end with a hyphen' };
+  }
+  
+  // No consecutive hyphens
+  if (trimmed.includes('--')) {
+    return { valid: false, error: 'Slug cannot have consecutive hyphens' };
+  }
+  
+  // Reserved slugs
+  const reserved = ['admin', 'api', 'vote', 'poll', 'results', 'create', 'pricing', 'help', 'about', 'terms', 'privacy', 'contact', 'dashboard', 'login', 'signup', 'checkout', 'success', 'cancel', 'embed'];
+  if (reserved.includes(trimmed)) {
+    return { valid: false, error: 'This slug is reserved' };
+  }
+  
+  return { valid: true };
 }
 
 export const handler: Handler = async (event) => {
-    // Only allow POST
-    if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Content-Type': 'application/json',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Rate limiting
+  const clientIP = event.headers['x-forwarded-for']?.split(',')[0] || 
+                   event.headers['client-ip'] || 
+                   'unknown';
+  
+  if (isRateLimited(clientIP)) {
+    return {
+      statusCode: 429,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Too many requests. Please wait a moment before trying again.',
+        available: false 
+      }),
+    };
+  }
+
+  try {
+    let slug: string;
+    let pollId: string | undefined;
+
+    // Support both GET (query params) and POST (body)
+    if (event.httpMethod === 'GET') {
+      slug = event.queryStringParameters?.slug || '';
+      pollId = event.queryStringParameters?.pollId;
+    } else if (event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      slug = body.slug || '';
+      pollId = body.pollId;
+    } else {
+      return {
+        statusCode: 405,
+        headers,
+        body: JSON.stringify({ error: 'Method not allowed' }),
+      };
     }
 
-    try {
-        const body = JSON.parse(event.body || '{}');
-        const { slug, pollId, adminKey } = body;
-
-        // Validate required fields
-        if (!slug || !pollId || !adminKey) {
-            return {
-                statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    error: 'Missing required fields: slug, pollId, adminKey' 
-                })
-            };
-        }
-
-        // Sanitize and validate slug
-        const cleanSlug = slug
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9-]/g, '-')  // Replace invalid chars with dash
-            .replace(/-+/g, '-')           // Collapse multiple dashes
-            .replace(/^-|-$/g, '')         // Remove leading/trailing dashes
-            .substring(0, 50);             // Max 50 chars
-
-        // Validation checks
-        if (cleanSlug.length < 3) {
-            return {
-                statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    error: 'Slug must be at least 3 characters long' 
-                })
-            };
-        }
-
-        if (RESERVED_SLUGS.includes(cleanSlug)) {
-            return {
-                statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    error: 'This slug is reserved. Please choose another.' 
-                })
-            };
-        }
-
-        // Check if slug looks like a UUID (prevent confusion)
-        if (/^[0-9a-f]{8}-[0-9a-f]{4}/.test(cleanSlug)) {
-            return {
-                statusCode: 400,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    error: 'Slug cannot look like a system ID. Please use a readable name.' 
-                })
-            };
-        }
-
-        const store = getStore('custom-slugs');
-
-        // Check if slug already exists
-        const existing = await store.get(cleanSlug);
-        if (existing) {
-            return {
-                statusCode: 409,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    error: 'This slug is already taken. Please choose another.' 
-                })
-            };
-        }
-
-        // Verify the poll exists and adminKey is valid
-        const pollStore = getStore('polls');
-        const poll = await pollStore.get(pollId, { type: 'json' });
-        
-        if (!poll) {
-            return {
-                statusCode: 404,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Poll not found' })
-            };
-        }
-
-        // Verify admin key matches
-        if ((poll as any).adminKey !== adminKey) {
-            return {
-                statusCode: 403,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Invalid admin key' })
-            };
-        }
-
-        // Create the slug record
-        const slugRecord: CustomSlug = {
-            slug: cleanSlug,
-            pollId,
-            adminKey,
-            createdAt: new Date().toISOString()
-        };
-
-        await store.setJSON(cleanSlug, slugRecord);
-
-        // Also store reverse lookup (pollId -> slug) for easy access
-        const reverseStore = getStore('poll-slugs');
-        await reverseStore.set(pollId, cleanSlug);
-
-        // Get the site URL for the response
-        const siteUrl = process.env.URL || 'https://votegenerator.com';
-
-        return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                success: true,
-                slug: cleanSlug,
-                shortUrl: `${siteUrl}/v/${cleanSlug}`,
-                adminUrl: `${siteUrl}/v/${cleanSlug}?admin=${adminKey}`
-            })
-        };
-    } catch (error) {
-        console.error('Create slug error:', error);
-        return {
-            statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Failed to create short link' })
-        };
+    // Validate slug format
+    const validation = isValidSlug(slug);
+    if (!validation.valid) {
+      return {
+        statusCode: 200, // Return 200 with available: false for UI
+        headers,
+        body: JSON.stringify({ 
+          error: validation.error,
+          available: false 
+        }),
+      };
     }
+
+    const normalizedSlug = slug.trim().toLowerCase();
+
+    // Check if slug exists in our index
+    const slugStore = getStore({
+      name: 'poll-slugs',
+      siteID: process.env.VG_SITE_ID || '',
+      token: process.env.NETLIFY_AUTH_TOKEN || ''
+    });
+
+    const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
+
+    // If slug exists but belongs to the same poll, it's still "available" (they own it)
+    if (existingPollId && existingPollId === pollId) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          available: true,
+          slug: normalizedSlug,
+          ownedByCurrentPoll: true
+        }),
+      };
+    }
+
+    if (existingPollId) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          available: false,
+          reason: 'This custom link is already taken',
+          suggestion: `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`
+        }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        available: true,
+        slug: normalizedSlug
+      }),
+    };
+
+  } catch (error) {
+    console.error('Check slug error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Failed to check slug availability',
+        available: false
+      }),
+    };
+  }
 };

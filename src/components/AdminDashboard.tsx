@@ -331,13 +331,16 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const getDashboardUrl = () => {
-        // Include session_id so the link works even after cache clear
+        // Include BOTH token and session_id so the link always works
         const sessionId = session?.sessionId;
+        const token = session?.dashboardToken;
+        
+        if (sessionId && token) {
+            return `${window.location.origin}/admin?token=${token}&session_id=${sessionId}`;
+        }
         if (sessionId) {
             return `${window.location.origin}/admin?s=${sessionId}`;
         }
-        // Fallback to token-only (won't survive cache clear)
-        const token = session?.dashboardToken;
         if (token) {
             return `${window.location.origin}/admin?token=${token}`;
         }

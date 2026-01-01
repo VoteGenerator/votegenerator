@@ -289,10 +289,35 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     localStorage.removeItem('vg_purchased_tier');
                 }
                 
+                // ADD POLL TO USER SESSION (so it shows in Admin Dashboard)
+                if (purchasedTier || effectiveTier !== 'free') {
+                    try {
+                        const storedSession = localStorage.getItem('vg_user_session');
+                        if (storedSession) {
+                            const sessionData = JSON.parse(storedSession);
+                            const newPoll = {
+                                id: pollId,
+                                adminKey: adminKey,
+                                title: title.trim(),
+                                type: pollType,
+                                createdAt: new Date().toISOString(),
+                                responseCount: 0,
+                                status: startAsDraft ? 'draft' : 'live'
+                            };
+                            sessionData.polls = sessionData.polls || [];
+                            sessionData.polls.unshift(newPoll); // Add to beginning
+                            localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                            console.log('Poll added to session:', newPoll);
+                        }
+                    } catch (e) {
+                        console.error('Failed to add poll to session:', e);
+                    }
+                }
+                
                 // PAID USERS: Skip ad wall, go directly to admin dashboard
                 // FREE USERS: Go through ad wall
                 if (purchasedTier || effectiveTier !== 'free') {
-                    // Direct to admin dashboard (skip ad wall)
+                    // Direct to poll admin view
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
                     // Free tier - show ad wall

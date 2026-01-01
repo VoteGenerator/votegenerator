@@ -618,21 +618,79 @@ const AdminDashboard: React.FC = () => {
 
                         {/* Polls List or Empty State */}
                         {polls.length === 0 ? (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12">
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 border-2 border-dashed border-slate-200 rounded-3xl p-8 md:p-12">
                                 <div className="text-center">
-                                    <div className={`w-20 h-20 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-                                        <PlusCircle size={40} className="text-white" />
+                                    {/* Illustration */}
+                                    <div className="relative w-48 h-48 mx-auto mb-8">
+                                        {/* Ballot box */}
+                                        <svg viewBox="0 0 200 200" className="w-full h-full">
+                                            {/* Shadow */}
+                                            <ellipse cx="100" cy="175" rx="60" ry="12" fill="#e2e8f0" />
+                                            
+                                            {/* Box body */}
+                                            <rect x="40" y="80" width="120" height="90" rx="8" fill="url(#boxGradient)" />
+                                            <rect x="45" y="85" width="110" height="80" rx="6" fill="#f8fafc" opacity="0.3" />
+                                            
+                                            {/* Slot */}
+                                            <rect x="60" y="75" width="80" height="12" rx="6" fill="#334155" />
+                                            <rect x="65" y="78" width="70" height="6" rx="3" fill="#1e293b" />
+                                            
+                                            {/* Falling ballot papers */}
+                                            <g className="animate-bounce" style={{ animationDuration: '2s' }}>
+                                                <rect x="85" y="30" width="30" height="40" rx="3" fill="#818cf8" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="38" width="22" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="45" width="18" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="52" width="14" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                            </g>
+                                            
+                                            {/* Check marks floating */}
+                                            <circle cx="150" cy="50" r="12" fill="#10b981" opacity="0.8" />
+                                            <path d="M144 50l4 4 8-8" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                            
+                                            <circle cx="50" cy="65" r="10" fill="#f59e0b" opacity="0.8" />
+                                            <path d="M45 65l3 3 6-6" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                            
+                                            {/* Stars/sparkles */}
+                                            <path d="M165 90l2-6 2 6 6 2-6 2-2 6-2-6-6-2z" fill="#fbbf24" />
+                                            <path d="M30 100l1.5-4.5 1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5z" fill="#a78bfa" />
+                                            
+                                            {/* Gradient definition */}
+                                            <defs>
+                                                <linearGradient id="boxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#6366f1" />
+                                                    <stop offset="100%" stopColor="#8b5cf6" />
+                                                </linearGradient>
+                                            </defs>
+                                        </svg>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Create Your First Poll</h2>
-                                    <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                                    
+                                    <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-3">Create Your First Poll! 🎉</h2>
+                                    <p className="text-slate-500 mb-8 max-w-md mx-auto">
                                         {config.requiresActivation 
                                             ? "Create a poll and preview it. When you're happy, go live to start collecting votes."
-                                            : "Welcome to VoteGenerator! Get started by creating a poll."
+                                            : "Welcome to VoteGenerator! Get started by creating your first poll in seconds."
                                         }
                                     </p>
-                                    <button onClick={goToCreate} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl transition`}>
+                                    
+                                    <button onClick={goToCreate} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl hover:scale-105 transition-all shadow-lg`}>
                                         <Plus size={22} /> Create New Poll
                                     </button>
+                                    
+                                    {/* Quick tips */}
+                                    <div className="mt-10 pt-8 border-t border-slate-100">
+                                        <p className="text-xs text-slate-400 mb-4 font-medium">QUICK TIPS</p>
+                                        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
+                                                <Zap size={14} className="text-amber-500" /> Instant results
+                                            </span>
+                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
+                                                <Users size={14} className="text-blue-500" /> Share anywhere
+                                            </span>
+                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
+                                                <Shield size={14} className="text-emerald-500" /> Privacy first
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         ) : (

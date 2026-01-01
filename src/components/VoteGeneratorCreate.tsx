@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -133,6 +133,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [copiedLink, setCopiedLink] = useState(false);
     const [startAsDraft, setStartAsDraft] = useState(false); // For paid tiers - start in draft mode
     
+    // Security options (Pro Event & Unlimited)
+    const [securityType, setSecurityType] = useState<'none' | 'pin' | 'code'>('none');
+    const [pollPin, setPollPin] = useState('');
+    const [accessCodes, setAccessCodes] = useState<string[]>([]);
+    const [showCodeGenerator, setShowCodeGenerator] = useState(false);
+    const [codeCount, setCodeCount] = useState(10);
+    const [codePrefix, setCodePrefix] = useState('');
+    
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -217,6 +225,16 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             if (hasDuplicates) { setError('Remove duplicate options'); return; }
         }
         
+        // Security validation
+        if (securityType === 'pin' && pollPin.length < 4) {
+            setError('PIN must be at least 4 digits');
+            return;
+        }
+        if (securityType === 'code' && accessCodes.length === 0) {
+            setError('Add at least one access code');
+            return;
+        }
+        
         setIsCreating(true); setError(null);
         
         // Use the already-loaded purchasedTier from component state
@@ -236,12 +254,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     allowMultiple: multipleSelection, 
                     requireNames, 
                     hideResults, 
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined 
+                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
+                    security: securityType
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier,
                 // For paid tiers: allow starting in draft mode
-                status: (purchasedTier && startAsDraft) ? 'draft' : 'live'
+                status: (purchasedTier && startAsDraft) ? 'draft' : 'live',
+                // Security: PIN (Pro Event & Unlimited)
+                pin: securityType === 'pin' ? pollPin : undefined,
+                // Security: Unique codes (Unlimited only)
+                allowedCodes: securityType === 'code' ? accessCodes : undefined
             };
             
             // Add image URLs for visual polls
@@ -795,6 +818,249 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 <input type="checkbox" checked={startAsDraft} onChange={(e) => setStartAsDraft(e.target.checked)} className="w-5 h-5 rounded accent-amber-600" />
                                             </label>
                                         )}
+                                        
+                                        {/* Security Options - Pro Event & Unlimited */}
+                                        {purchasedTier && (purchasedTier === 'pro_event' || purchasedTier === 'unlimited') && (
+                                            <div className="p-4 bg-gradient-to-br from-slate-50 to-indigo-50/30 rounded-xl border border-indigo-100">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <Lock size={16} className="text-indigo-600" />
+                                                    <span className="font-semibold text-slate-700">Poll Security</span>
+                                                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                                                        {purchasedTier === 'unlimited' ? 'UNLIMITED' : 'PRO'}
+                                                    </span>
+                                                </div>
+                                                
+                                                {/* Security Type Selector */}
+                                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSecurityType('none')}
+                                                        className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                                                            securityType === 'none' 
+                                                                ? 'bg-indigo-600 text-white shadow-md' 
+                                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'
+                                                        }`}
+                                                    >
+                                                        <Users size={18} className="mx-auto mb-1" />
+                                                        Public
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSecurityType('pin')}
+                                                        className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                                                            securityType === 'pin' 
+                                                                ? 'bg-indigo-600 text-white shadow-md' 
+                                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'
+                                                        }`}
+                                                    >
+                                                        <Lock size={18} className="mx-auto mb-1" />
+                                                        PIN
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (purchasedTier === 'unlimited') {
+                                                                setSecurityType('code');
+                                                            } else {
+                                                                alert('Unique codes are only available with Unlimited tier');
+                                                            }
+                                                        }}
+                                                        className={`p-3 rounded-lg text-sm font-medium transition-all relative ${
+                                                            securityType === 'code' 
+                                                                ? 'bg-indigo-600 text-white shadow-md' 
+                                                                : purchasedTier !== 'unlimited'
+                                                                    ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                                                                    : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'
+                                                        }`}
+                                                        disabled={purchasedTier !== 'unlimited'}
+                                                    >
+                                                        <Key size={18} className="mx-auto mb-1" />
+                                                        Codes
+                                                        {purchasedTier !== 'unlimited' && (
+                                                            <span className="absolute -top-1 -right-1 text-[8px] bg-amber-500 text-white px-1 rounded">∞</span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                
+                                                {/* PIN Input */}
+                                                {securityType === 'pin' && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }} 
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        className="space-y-2"
+                                                    >
+                                                        <label className="block text-sm text-slate-600">
+                                                            Set a 4-6 digit PIN
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={pollPin}
+                                                            onChange={(e) => setPollPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                            placeholder="e.g. 1234"
+                                                            maxLength={6}
+                                                            inputMode="numeric"
+                                                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg text-center text-2xl font-mono tracking-widest focus:border-indigo-500 focus:outline-none"
+                                                        />
+                                                        <p className="text-xs text-slate-500">
+                                                            Share this PIN verbally or on screen. All voters use the same PIN.
+                                                        </p>
+                                                        {pollPin.length > 0 && pollPin.length < 4 && (
+                                                            <p className="text-xs text-amber-600 flex items-center gap-1">
+                                                                <AlertTriangle size={12} /> PIN must be at least 4 digits
+                                                            </p>
+                                                        )}
+                                                    </motion.div>
+                                                )}
+                                                
+                                                {/* Unique Codes Section */}
+                                                {securityType === 'code' && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }} 
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        className="space-y-3"
+                                                    >
+                                                        {/* Code Generator */}
+                                                        <div className="bg-white rounded-lg p-3 border border-slate-200">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-sm font-medium text-slate-700">Generate Codes</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowCodeGenerator(!showCodeGenerator)}
+                                                                    className="text-xs text-indigo-600 hover:underline"
+                                                                >
+                                                                    {showCodeGenerator ? 'Hide' : 'Show'} Generator
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            {showCodeGenerator && (
+                                                                <div className="space-y-2 pt-2 border-t border-slate-100">
+                                                                    <div className="flex gap-2">
+                                                                        <div className="flex-1">
+                                                                            <label className="text-xs text-slate-500 block mb-1">Prefix (optional)</label>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={codePrefix}
+                                                                                onChange={(e) => setCodePrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
+                                                                                placeholder="VOTE"
+                                                                                maxLength={5}
+                                                                                className="w-full px-2 py-1.5 border border-slate-200 rounded text-sm font-mono"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="w-24">
+                                                                            <label className="text-xs text-slate-500 block mb-1">Count</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={codeCount}
+                                                                                onChange={(e) => setCodeCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
+                                                                                min={1}
+                                                                                max={100}
+                                                                                className="w-full px-2 py-1.5 border border-slate-200 rounded text-sm"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newCodes: string[] = [];
+                                                                            for (let i = 0; i < codeCount; i++) {
+                                                                                const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                                                                newCodes.push(codePrefix ? `${codePrefix}-${random}` : random);
+                                                                            }
+                                                                            setAccessCodes(prev => [...prev, ...newCodes]);
+                                                                        }}
+                                                                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                                                                    >
+                                                                        <Sparkles size={14} /> Generate {codeCount} Codes
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Manual Add */}
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Add code manually..."
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                                                        setAccessCodes(prev => [...prev, e.currentTarget.value.trim().toUpperCase()]);
+                                                                        e.currentTarget.value = '';
+                                                                    }
+                                                                }}
+                                                                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                                                    if (input.value.trim()) {
+                                                                        setAccessCodes(prev => [...prev, input.value.trim().toUpperCase()]);
+                                                                        input.value = '';
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                                                            >
+                                                                <Plus size={18} />
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        {/* Codes List */}
+                                                        {accessCodes.length > 0 && (
+                                                            <div className="bg-white rounded-lg border border-slate-200 max-h-40 overflow-y-auto">
+                                                                <div className="p-2 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white">
+                                                                    <span className="text-xs font-medium text-slate-600">
+                                                                        {accessCodes.length} codes
+                                                                    </span>
+                                                                    <div className="flex gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                navigator.clipboard.writeText(accessCodes.join('\n'));
+                                                                            }}
+                                                                            className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
+                                                                        >
+                                                                            <Copy size={10} /> Copy All
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setAccessCodes([])}
+                                                                            className="text-xs text-red-600 hover:underline"
+                                                                        >
+                                                                            Clear
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="p-2 grid grid-cols-2 gap-1">
+                                                                    {accessCodes.map((code, i) => (
+                                                                        <div key={i} className="flex items-center justify-between bg-slate-50 px-2 py-1 rounded text-xs font-mono">
+                                                                            <span>{code}</span>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setAccessCodes(prev => prev.filter((_, j) => j !== i))}
+                                                                                className="text-slate-400 hover:text-red-500"
+                                                                            >
+                                                                                <X size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <p className="text-xs text-slate-500">
+                                                            Each code can only be used once. Distribute codes individually to voters.
+                                                        </p>
+                                                    </motion.div>
+                                                )}
+                                                
+                                                {securityType === 'none' && (
+                                                    <p className="text-xs text-slate-500">
+                                                        Anyone with the link can vote. Use browser cookie to prevent repeat votes.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                        
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
                                             <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />

@@ -289,10 +289,35 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     localStorage.removeItem('vg_purchased_tier');
                 }
                 
+                // ADD POLL TO USER SESSION (so it shows in Admin Dashboard)
+                if (purchasedTier || effectiveTier !== 'free') {
+                    try {
+                        const storedSession = localStorage.getItem('vg_user_session');
+                        if (storedSession) {
+                            const sessionData = JSON.parse(storedSession);
+                            const newPoll = {
+                                id: pollId,
+                                adminKey: adminKey,
+                                title: title.trim(),
+                                type: pollType,
+                                createdAt: new Date().toISOString(),
+                                responseCount: 0,
+                                status: startAsDraft ? 'draft' : 'live'
+                            };
+                            sessionData.polls = sessionData.polls || [];
+                            sessionData.polls.unshift(newPoll); // Add to beginning
+                            localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                            console.log('Poll added to session:', newPoll);
+                        }
+                    } catch (e) {
+                        console.error('Failed to add poll to session:', e);
+                    }
+                }
+                
                 // PAID USERS: Skip ad wall, go directly to admin dashboard
                 // FREE USERS: Go through ad wall
                 if (purchasedTier || effectiveTier !== 'free') {
-                    // Direct to admin dashboard (skip ad wall)
+                    // Direct to poll admin view
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
                     // Free tier - show ad wall
@@ -696,38 +721,36 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             const compressedFile = await compressToTargetSize(file, 2);
                                                             console.log(`Compressed: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`);
                                                             
-                                                            // Convert to base64
-                                                            const reader = new FileReader();
-                                                            reader.onload = async () => {
-                                                                try {
-                                                                    const base64 = reader.result as string;
-                                                                    
-                                                                    // Upload to Cloudinary via API
-                                                                    const response = await fetch('/.netlify/functions/vg-upload-image', {
+                                                            // Upload directly to Cloudinary (unsigned preset)
+                                                            const formData = new FormData();
+                                                            formData.append('file', compressedFile);
+                                                            formData.append('upload_preset', 'votegenerator');
+                                                            
+                                                            try {
+                                                                console.log('Uploading to Cloudinary with preset: votegenerator');
+                                                                const response = await fetch(
+                                                                    'https://api.cloudinary.com/v1_1/dqp5iwehp/image/upload',
+                                                                    {
                                                                         method: 'POST',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ image: base64 })
-                                                                    });
-                                                                    
-                                                                    if (response.ok) {
-                                                                        const data = await response.json();
-                                                                        setImageOptions([...imageOptions, { url: data.url, label: '' }]);
-                                                                    } else {
-                                                                        const err = await response.json();
-                                                                        setError(err.error || 'Failed to upload image');
+                                                                        body: formData
                                                                     }
-                                                                } catch (err) {
-                                                                    console.error('Upload error:', err);
-                                                                    setError('Failed to upload image. Please try again.');
-                                                                } finally {
-                                                                    setUploadingImage(false);
+                                                                );
+                                                                
+                                                                if (response.ok) {
+                                                                    const data = await response.json();
+                                                                    console.log('Upload success:', data.secure_url);
+                                                                    setImageOptions([...imageOptions, { url: data.secure_url, label: '' }]);
+                                                                } else {
+                                                                    const err = await response.json();
+                                                                    console.error('Cloudinary error:', err);
+                                                                    setError(err.error?.message || 'Failed to upload image');
                                                                 }
-                                                            };
-                                                            reader.onerror = () => {
-                                                                setError('Failed to read image file');
+                                                            } catch (err) {
+                                                                console.error('Upload error:', err);
+                                                                setError('Failed to upload image. Please try again.');
+                                                            } finally {
                                                                 setUploadingImage(false);
-                                                            };
-                                                            reader.readAsDataURL(compressedFile);
+                                                            }
                                                             
                                                         } catch (err) {
                                                             console.error('Compression error:', err);

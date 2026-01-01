@@ -38,27 +38,27 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Use unsigned preset - same as already configured in Cloudinary
-        const cloudName = 'votegenerator';
+        // Cloudinary config - your actual cloud name
+        const cloudName = 'dqp5iwehp';
         const uploadPreset = 'votegenerator'; // Your existing unsigned preset
 
-        // Build the upload request - unsigned presets don't need API key/secret
-        const uploadData = {
-            file: image,
-            upload_preset: uploadPreset
-        };
-
         console.log('Uploading to Cloudinary with unsigned preset:', uploadPreset);
+        console.log('Cloud name:', cloudName);
 
-        // Upload to Cloudinary using JSON
+        // For unsigned uploads, use form-urlencoded (works better than JSON)
+        const params = new URLSearchParams();
+        params.append('file', image);
+        params.append('upload_preset', uploadPreset);
+
+        // Upload to Cloudinary
         const cloudinaryResponse = await fetch(
             `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
             {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: JSON.stringify(uploadData)
+                body: params.toString()
             }
         );
 
@@ -78,11 +78,37 @@ export const handler: Handler = async (event) => {
 
         if (!cloudinaryResponse.ok) {
             console.error('Cloudinary error:', result);
+            
+            // Check for specific errors
+            const errorMsg = result.error?.message || '';
+            
+            if (errorMsg.includes('Upload preset') || errorMsg.includes('preset')) {
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ 
+                        error: 'Upload preset "votegenerator" not found or not set to UNSIGNED mode in Cloudinary.',
+                        setup: 'Go to Cloudinary Dashboard → Settings → Upload → Upload Presets → Create/Edit "votegenerator" → Set Signing Mode to UNSIGNED'
+                    })
+                };
+            }
+            
+            if (errorMsg.includes('API key') || errorMsg.includes('Unauthorized')) {
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ 
+                        error: 'Upload preset must be UNSIGNED. Signed uploads require API key.',
+                        setup: 'Go to Cloudinary Dashboard → Settings → Upload → Upload Presets → Edit "votegenerator" → Change Signing Mode from SIGNED to UNSIGNED'
+                    })
+                };
+            }
+            
             return {
                 statusCode: 500,
                 headers,
                 body: JSON.stringify({ 
-                    error: result.error?.message || 'Failed to upload image'
+                    error: errorMsg || 'Failed to upload image'
                 })
             };
         }

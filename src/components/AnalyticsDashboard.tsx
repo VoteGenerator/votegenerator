@@ -71,6 +71,7 @@ const TIER_CONFIG: Record<string, { label: string; color: string; bgColor: strin
     'free': { label: 'Free', color: 'text-slate-600', bgColor: 'bg-slate-100' },
     'starter': { label: 'Starter', color: 'text-blue-700', bgColor: 'bg-blue-100' },
     'pro_event': { label: 'Pro Event', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    'unlimited_event': { label: 'Unlimited Event', color: 'text-orange-700', bgColor: 'bg-orange-100' },
     'unlimited': { label: 'Unlimited', color: 'text-amber-700', bgColor: 'bg-amber-100' }
 };
 

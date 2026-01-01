@@ -44,7 +44,7 @@ interface UserPoll {
 
 interface UserSession {
     dashboardToken: string;
-    tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
+    tier: 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
     expiresAt?: string;
     polls: UserPoll[];
     createdAt: string;
@@ -185,7 +185,7 @@ const AdminDashboard: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Support both long and short format
-    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited' | null;
+    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited' | null;
 
     // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
     const generateDashboardToken = (sessionId: string): string => {
@@ -1192,7 +1192,7 @@ const AdminDashboard: React.FC = () => {
                     <GoLiveModalInline
                         isOpen={!!showGoLiveModal}
                         pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
-                        tier={tier as 'starter' | 'pro_event'}
+                        tier={tier as 'starter' | 'pro_event' | 'unlimited_event'}
                         pollsUsed={livePolls.length}
                         pollsMax={config.maxPolls}
                         activeDays={config.activeDays}
@@ -1306,7 +1306,7 @@ const PinSetupModalInline: React.FC<{
 const GoLiveModalInline: React.FC<{
     isOpen: boolean;
     pollTitle: string;
-    tier: 'starter' | 'pro_event';
+    tier: 'starter' | 'pro_event' | 'unlimited_event';
     pollsUsed: number;
     pollsMax: number;
     activeDays: number;
@@ -1315,7 +1315,7 @@ const GoLiveModalInline: React.FC<{
 }> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
     const [confirmed, setConfirmed] = useState(false);
     const isLastPoll = pollsMax - pollsUsed === 1;
-    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-600';
+    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : tier === 'unlimited_event' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
 
     if (!isOpen) return null;
 

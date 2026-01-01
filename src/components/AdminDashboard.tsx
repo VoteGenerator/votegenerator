@@ -141,7 +141,9 @@ const AdminDashboard: React.FC = () => {
     
     // UI State
     const [showSettings, setShowSettings] = useState(false);
-    const [showAccessPanel, setShowAccessPanel] = useState(true);
+    const [showAccessPanel, setShowAccessPanel] = useState(false); // Start collapsed
+    const [showPlanPanel, setShowPlanPanel] = useState(true);
+    const [showStatsPanel, setShowStatsPanel] = useState(true);
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
     
@@ -778,71 +780,104 @@ const AdminDashboard: React.FC = () => {
 
                     {/* Right Sidebar */}
                     <div className="w-full lg:w-80 space-y-6">
-                        {/* Unlimited: Security & Access */}
+                        {/* Unlimited: Security & Access - Premium styling */}
                         {isUnlimited && (
-                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition">
+                            <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl border-2 border-amber-200 overflow-hidden shadow-lg shadow-amber-100/50">
+                                <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-amber-50/50 transition">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                            <Shield size={20} className="text-amber-600" />
+                                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
+                                            <Shield size={22} className="text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <h3 className="font-bold text-slate-800">Security & Access</h3>
-                                            <p className="text-xs text-slate-500">PIN & team tokens</p>
+                                            <h3 className="font-bold text-amber-900 flex items-center gap-2">
+                                                Security & Access
+                                                <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
+                                            </h3>
+                                            <p className="text-xs text-amber-700">PIN protection & team tokens</p>
                                         </div>
                                     </div>
-                                    {showAccessPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                                    {showAccessPanel ? <ChevronUp size={20} className="text-amber-500" /> : <ChevronDown size={20} className="text-amber-500" />}
                                 </button>
 
                                 {showAccessPanel && (
-                                    <div className="p-4 pt-0 border-t border-slate-100">
-                                        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                                    <div className="p-4 pt-0 border-t border-amber-200/50">
+                                        {/* PIN Status */}
+                                        <div className="mb-4 p-3 bg-white/80 rounded-xl border border-amber-100 shadow-sm">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
-                                                    <span className="text-sm font-medium text-slate-700">Admin PIN</span>
-                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                        {session.hasPin ? 'Active' : 'Off'}
-                                                    </span>
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${session.hasPin ? 'bg-emerald-100' : 'bg-slate-100'}`}>
+                                                        <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-sm font-bold text-slate-800">Admin PIN</span>
+                                                        <span className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                                                            {session.hasPin ? '✓ ACTIVE' : 'OFF'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <button onClick={() => setShowPinSetup(true)} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+                                                <button onClick={() => setShowPinSetup(true)} className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-bold transition">
                                                     {session.hasPin ? 'Change' : 'Set up'}
                                                 </button>
                                             </div>
                                         </div>
 
+                                        {/* Token Buttons */}
                                         <div className="flex gap-2">
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-blue-200 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1">
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200">
                                                 <Plus size={14} /> Admin Token
                                             </button>
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2 border-2 border-dashed border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition flex items-center justify-center gap-1">
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1">
                                                 <Plus size={14} /> Viewer Token
                                             </button>
                                         </div>
+                                        
+                                        <p className="text-[10px] text-amber-600 mt-3 text-center">
+                                            🔒 Tokens let team members access without your main dashboard link
+                                        </p>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Plan Card */}
-                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                            <div className={`p-4 ${config.headerBg} border-b border-slate-200`}>
-                                <div className="flex items-center gap-2">
-                                    {config.icon}
-                                    <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
+                        {/* Plan Card - Collapsible */}
+                        <div className={`rounded-2xl border-2 overflow-hidden ${
+                            tier === 'unlimited' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
+                            tier === 'pro_event' ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-emerald-200' :
+                            tier === 'starter' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-blue-200' :
+                            'bg-white border-slate-200'
+                        }`}>
+                            <button 
+                                onClick={() => setShowPlanPanel(!showPlanPanel)}
+                                className={`w-full p-4 flex items-center justify-between hover:opacity-90 transition ${config.headerBg}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${config.gradient} text-white shadow-lg`}>
+                                        {config.icon}
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
+                                        {session?.expiresAt && !isPlanExpired && (
+                                            <p className="text-xs text-slate-500">
+                                                {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="p-4">
-                                <div className="space-y-2 mb-4">
-                                    {config.features.map((feature, i) => (
-                                        <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
-                                            {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
-                                            <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                {showPlanPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                            </button>
+                            
+                            {showPlanPanel && (
+                                <div className="p-4 border-t border-slate-100">
+                                    <div className="space-y-2 mb-4">
+                                        {config.features.map((feature, i) => (
+                                            <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
+                                                {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
+                                                <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
 
-                                {tier !== 'unlimited' && !isPlanExpired && (
+                                    {tier !== 'unlimited' && !isPlanExpired && (
                                     <a href="/#pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
                                         Upgrade Plan
                                     </a>
@@ -851,67 +886,108 @@ const AdminDashboard: React.FC = () => {
                                 {/* Extend/Renew Button - Smart logic */}
                                 {session.expiresAt && (
                                     <div className="mt-3 pt-3 border-t border-slate-100">
-                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-                                            <span className="flex items-center gap-1">
-                                                <Calendar size={14} />
-                                                {isPlanExpired ? 'Expired' : 'Expires'}: {new Date(session.expiresAt).toLocaleDateString()}
-                                            </span>
-                                            {!isPlanExpired && (
-                                                <span className={`px-2 py-0.5 rounded-full font-medium ${
-                                                    Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30 
-                                                        ? 'bg-amber-100 text-amber-700' 
-                                                        : 'bg-emerald-100 text-emerald-700'
-                                                }`}>
-                                                    {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Show Extend button for same tier, or Renew if expired */}
-                                        <button 
-                                            onClick={() => {
-                                                // Navigate to pricing with current tier pre-selected
-                                                window.location.href = `/#pricing?extend=${tier}`;
-                                            }}
-                                            className={`w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 ${
-                                                isPlanExpired 
-                                                    ? 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white' 
-                                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                            }`}
-                                        >
-                                            <RefreshCw size={16} />
-                                            {isPlanExpired ? 'Renew Plan' : `Extend ${config.label}`}
-                                        </button>
-                                        
-                                        {!isPlanExpired && (
-                                            <p className="text-xs text-slate-400 mt-2 text-center">
-                                                Extend adds time to your current expiry date
-                                            </p>
-                                        )}
+                                        {(() => {
+                                            const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                                            const canExtend = daysLeft <= 30; // Only allow extend when ≤30 days remaining
+                                            
+                                            return (
+                                                <>
+                                                    <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar size={14} />
+                                                            {isPlanExpired ? 'Expired' : 'Expires'}: {new Date(session.expiresAt).toLocaleDateString()}
+                                                        </span>
+                                                        {!isPlanExpired && (
+                                                            <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                                daysLeft <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                                            }`}>
+                                                                {daysLeft} days left
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Renew button - always show when expired */}
+                                                    {isPlanExpired && (
+                                                        <button 
+                                                            onClick={() => window.location.href = `/pricing?renew=${tier}`}
+                                                            className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                            Renew Plan
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Extend button - only show when ≤30 days remaining */}
+                                                    {!isPlanExpired && canExtend && (
+                                                        <button 
+                                                            onClick={() => window.location.href = `/pricing?extend=${tier}`}
+                                                            className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-700"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                            Extend {config.label}
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Message when extend not yet available - non-Unlimited tiers */}
+                                                    {!isPlanExpired && !canExtend && tier !== 'unlimited' && (
+                                                        <p className="text-xs text-slate-400 text-center py-2">
+                                                            Extend option available when ≤30 days remaining
+                                                        </p>
+                                                    )}
+                                                    
+                                                    {/* Unlimited tier - show best plan message when not near expiry */}
+                                                    {!isPlanExpired && !canExtend && tier === 'unlimited' && (
+                                                        <div className="text-center py-2 text-xs text-emerald-600 font-medium flex items-center justify-center gap-1">
+                                                            <CheckCircle size={14} /> You have the best plan!
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
+                        )}
                         </div>
 
-                        {/* Quick Stats */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h3 className="font-bold text-slate-800 mb-4">Quick Stats</h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-500 text-sm">Total Polls</span>
-                                    <span className="font-bold text-slate-800">{polls.length}</span>
-                                </div>
-                                {config.requiresActivation && (
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-500 text-sm">Live Polls</span>
-                                        <span className="font-bold text-emerald-600">{livePolls.length}</span>
+                        {/* Quick Stats - Collapsible */}
+                        <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl border-2 border-slate-200 overflow-hidden">
+                            <button 
+                                onClick={() => setShowStatsPanel(!showStatsPanel)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                        <BarChart3 size={18} />
                                     </div>
-                                )}
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-500 text-sm">Total Votes</span>
-                                    <span className="font-bold text-slate-800">{totalVotes}</span>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-800">Quick Stats</h3>
+                                        <p className="text-xs text-slate-500">{polls.length} polls • {totalVotes} votes</p>
+                                    </div>
                                 </div>
-                            </div>
+                                {showStatsPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                            </button>
+                            
+                            {showStatsPanel && (
+                                <div className="p-4 pt-0 border-t border-slate-100">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                            <span className="text-slate-500 text-sm">Total Polls</span>
+                                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{polls.length}</span>
+                                        </div>
+                                        {config.requiresActivation && (
+                                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                                <span className="text-slate-500 text-sm">Live Polls</span>
+                                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{livePolls.length}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                            <span className="text-slate-500 text-sm">Total Votes</span>
+                                            <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{totalVotes}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

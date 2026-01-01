@@ -68,20 +68,12 @@ export const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json',
   };
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
   }
 
   // Rate limiting
@@ -101,19 +93,22 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    const { slug, tier } = body;
+    let slug: string;
+    let pollId: string | undefined;
 
-    // Only unlimited tier can use custom slugs
-    if (tier !== 'unlimited') {
+    // Support both GET (query params) and POST (body)
+    if (event.httpMethod === 'GET') {
+      slug = event.queryStringParameters?.slug || '';
+      pollId = event.queryStringParameters?.pollId;
+    } else if (event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      slug = body.slug || '';
+      pollId = body.pollId;
+    } else {
       return {
-        statusCode: 403,
+        statusCode: 405,
         headers,
-        body: JSON.stringify({ 
-          error: 'Custom slugs are only available for Unlimited tier',
-          available: false,
-          requiresUpgrade: true
-        }),
+        body: JSON.stringify({ error: 'Method not allowed' }),
       };
     }
 
@@ -121,7 +116,7 @@ export const handler: Handler = async (event) => {
     const validation = isValidSlug(slug);
     if (!validation.valid) {
       return {
-        statusCode: 400,
+        statusCode: 200, // Return 200 with available: false for UI
         headers,
         body: JSON.stringify({ 
           error: validation.error,
@@ -141,13 +136,26 @@ export const handler: Handler = async (event) => {
 
     const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
 
+    // If slug exists but belongs to the same poll, it's still "available" (they own it)
+    if (existingPollId && existingPollId === pollId) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          available: true,
+          slug: normalizedSlug,
+          ownedByCurrentPoll: true
+        }),
+      };
+    }
+
     if (existingPollId) {
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({ 
           available: false,
-          error: 'This custom link is already taken',
+          reason: 'This custom link is already taken',
           suggestion: `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`
         }),
       };
@@ -158,8 +166,7 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         available: true,
-        slug: normalizedSlug,
-        previewUrl: `votegenerator.com/p/${normalizedSlug}`
+        slug: normalizedSlug
       }),
     };
 

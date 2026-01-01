@@ -96,7 +96,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls, pin, allowedCodes } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -219,7 +219,12 @@ export const handler: Handler = async (event) => {
         requireNames: settings?.requireNames || false,
         endDate: settings?.endDate || null,
         unlisted: unlisted || false, // Hide from search engines
+        security: settings?.security || 'none', // none, browser, pin, code
       },
+      // Single PIN for simple access control (Pro Event & Unlimited)
+      pin: pin || null,
+      // Unique access codes (Unlimited only)
+      allowedCodes: allowedCodes || null,
       customSlug: hasCustomSlug ? pollId : null,
       tier,
       maxResponses: tierConfig.maxResponses,

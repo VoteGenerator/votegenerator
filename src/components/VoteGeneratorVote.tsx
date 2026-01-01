@@ -249,6 +249,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
 
     if (poll.settings.requireNames && voterName.trim().length === 0) canSubmit = false;
     if (poll.settings.security === 'code' && accessCode.trim().length === 0) canSubmit = false;
+    if (poll.settings.security === 'pin' && accessCode.trim().length < 4) canSubmit = false;
 
     if (isClosed) {
         return (
@@ -571,13 +572,34 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
 
                     {/* Meta Inputs */}
                     <div className="space-y-4 mt-8 pt-6 border-t border-slate-100">
+                        {/* Single PIN access */}
+                        {poll.settings.security === 'pin' && (
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Poll PIN *</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3.5 text-slate-400" size={20} />
+                                    <input 
+                                        type="text" 
+                                        value={accessCode} 
+                                        onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
+                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono text-center text-lg tracking-widest" 
+                                        placeholder="• • • • • •" 
+                                        maxLength={6}
+                                        inputMode="numeric"
+                                    />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Enter the PIN shared by the organizer</p>
+                            </div>
+                        )}
+                        {/* Unique access codes */}
                         {poll.settings.security === 'code' && (
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Access Code *</label>
                                 <div className="relative">
                                     <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />
-                                    <input type="text" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono" placeholder="Enter code" />
+                                    <input type="text" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono" placeholder="Enter your unique code" />
                                 </div>
+                                <p className="text-xs text-slate-500 mt-1">Enter the unique code you received</p>
                             </div>
                         )}
                         {poll.settings.requireNames && (

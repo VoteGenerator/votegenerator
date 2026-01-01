@@ -4,7 +4,6 @@
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
-import crypto from 'crypto';
 
 const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -39,46 +38,17 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Cloudinary credentials from environment
-        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'votegenerator';
-        const apiKey = process.env.CLOUDINARY_API_KEY;
-        const apiSecret = process.env.CLOUDINARY_API_SECRET;
+        // Use unsigned preset - same as already configured in Cloudinary
+        const cloudName = 'votegenerator';
+        const uploadPreset = 'votegenerator'; // Your existing unsigned preset
 
-        if (!apiKey || !apiSecret) {
-            console.error('Cloudinary credentials not configured');
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Image upload service not configured. Missing CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET.' })
-            };
-        }
-
-        // Generate signature for signed upload
-        const timestamp = Math.floor(Date.now() / 1000);
-        const folder = 'visual-polls';
-        
-        // Parameters that must be included in signature (sorted alphabetically)
-        const paramsToSign = {
-            folder: folder,
-            timestamp: timestamp.toString(),
-        };
-        
-        // Create signature string
-        const sortedParams = Object.keys(paramsToSign)
-            .sort()
-            .map(key => `${key}=${paramsToSign[key as keyof typeof paramsToSign]}`)
-            .join('&');
-        const signatureString = sortedParams + apiSecret;
-        const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
-
-        // Build the upload request body
+        // Build the upload request - unsigned presets don't need API key/secret
         const uploadData = {
             file: image,
-            api_key: apiKey,
-            timestamp: timestamp,
-            signature: signature,
-            folder: folder,
+            upload_preset: uploadPreset
         };
+
+        console.log('Uploading to Cloudinary with unsigned preset:', uploadPreset);
 
         // Upload to Cloudinary using JSON
         const cloudinaryResponse = await fetch(
@@ -116,6 +86,8 @@ export const handler: Handler = async (event) => {
                 })
             };
         }
+
+        console.log('Upload successful:', result.secure_url);
 
         return {
             statusCode: 200,

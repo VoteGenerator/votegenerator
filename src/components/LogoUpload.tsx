@@ -36,14 +36,13 @@ const LogoUpload: React.FC<Props> = ({
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', 'votegenerator_logo'); // Must be UNSIGNED preset in Cloudinary
-        formData.append('folder', 'poll-logos');
-        // Optimize images to save space
-        formData.append('transformation', 'c_limit,w_400,h_200,q_auto,f_auto');
+        // Note: folder and transformation should be configured in the preset itself
 
         // Cloud name should match your Cloudinary account
         const cloudName = 'votegenerator';
 
         try {
+            console.log('Uploading to Cloudinary with preset: votegenerator_logo');
             const response = await fetch(
                 `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
                 {
@@ -63,6 +62,7 @@ const LogoUpload: React.FC<Props> = ({
             }
 
             const data = await response.json();
+            console.log('Cloudinary upload success:', data.secure_url);
             return data.secure_url;
         } catch (error: any) {
             console.error('Cloudinary upload error:', error);

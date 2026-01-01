@@ -49,7 +49,7 @@ interface Poll {
         hideResults: boolean;
         allowMultiple: boolean;
         requireNames?: boolean;
-        security?: string;
+        security?: 'none' | 'browser' | 'pin' | 'code';
         allowComments?: boolean;
     };
     votes: Vote[];
@@ -58,6 +58,10 @@ interface Poll {
     tier?: string;
     maxResponses?: number;
     status?: 'draft' | 'live' | 'paused' | 'closed';
+    // Security
+    pin?: string;
+    allowedCodes?: string[];
+    usedCodes?: string[];
     notificationSettings?: {
         enabled: boolean;
         emails: Array<{
@@ -313,6 +317,49 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // Security: Validate PIN
+        if (poll.settings.security === 'pin' && poll.pin) {
+            if (!body.code || body.code !== poll.pin) {
+                return {
+                    statusCode: 403,
+                    headers,
+                    body: JSON.stringify({ error: 'Invalid PIN. Please check with the poll organizer.' })
+                };
+            }
+        }
+
+        // Security: Validate unique access code
+        if (poll.settings.security === 'code' && poll.allowedCodes && poll.allowedCodes.length > 0) {
+            if (!body.code) {
+                return {
+                    statusCode: 403,
+                    headers,
+                    body: JSON.stringify({ error: 'Access code required' })
+                };
+            }
+            
+            const normalizedCode = body.code.trim().toUpperCase();
+            const validCodes = poll.allowedCodes.map((c: string) => c.toUpperCase());
+            
+            if (!validCodes.includes(normalizedCode)) {
+                return {
+                    statusCode: 403,
+                    headers,
+                    body: JSON.stringify({ error: 'Invalid access code' })
+                };
+            }
+            
+            // Check if code already used
+            const usedCodes = poll.usedCodes || [];
+            if (usedCodes.map((c: string) => c.toUpperCase()).includes(normalizedCode)) {
+                return {
+                    statusCode: 403,
+                    headers,
+                    body: JSON.stringify({ error: 'This access code has already been used' })
+                };
+            }
+        }
+
         // Accept multiple field names for flexibility
         const selectedIds = body.selectedOptionIds || (body as any).choices || (body as any).optionIds || (body as any).selections || (body as any).options;
         const rankedIds = body.rankedOptionIds || (body as any).rankings || (body as any).ranked;
@@ -422,6 +469,12 @@ export const handler: Handler = async (event) => {
         if (body.matrixVotes) vote.matrixVotes = body.matrixVotes;
         if (body.pairwiseVotes) vote.pairwiseVotes = body.pairwiseVotes;
         if (body.ratingVotes) vote.ratingVotes = body.ratingVotes;
+
+        // Track used unique code (if applicable)
+        if (poll.settings.security === 'code' && body.code) {
+            poll.usedCodes = poll.usedCodes || [];
+            poll.usedCodes.push(body.code.trim().toUpperCase());
+        }
 
         poll.votes.push(vote);
         poll.voteCount = poll.votes.length;

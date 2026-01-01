@@ -89,6 +89,10 @@ export interface Poll {
     // Access codes
     accessCodes?: string[];
     allowedCodes?: string[];
+    usedCodes?: string[];
+    
+    // Single PIN (simpler than unique codes)
+    pin?: string;
     
     // Theme
     theme?: string;

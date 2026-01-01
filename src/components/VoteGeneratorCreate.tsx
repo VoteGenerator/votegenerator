@@ -381,64 +381,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 </motion.div>
             )}
             
-            
-            <HowItWorks />
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-xl font-bold">⚡ Starter Plan</h2>
-                                            <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 rounded-full text-xs font-bold">
-                                                ACTIVE
-                                            </span>
-                                        </div>
-                                        <p className="text-white/80 text-sm mt-0.5">
-                                            Extended limits • No ads • Create your poll below
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-4">
-                                    {expiresAt && (
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-white/60 text-xs">Expires on</p>
-                                            <p className="text-sm font-semibold flex items-center gap-1 justify-end">
-                                                <Calendar size={14} />
-                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </p>
-                                            <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-white/60 text-xs">Plan includes</p>
-                                        <p className="text-sm font-semibold">500 responses</p>
-                                    </div>
-                                    
-                                    <a 
-                                        href="/.netlify/functions/vg-checkout?tier=pro_event"
-                                        className="px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white rounded-lg text-sm font-bold transition flex items-center gap-1 shadow-lg"
-                                    >
-                                        <Crown size={14} /> Upgrade
-                                    </a>
-                                    
-                                    {/* COPY LINK BUTTON */}
-                                    <button 
-                                        onClick={copyLink}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
-                                            copiedLink 
-                                                ? 'bg-emerald-500 text-white' 
-                                                : 'bg-white/20 hover:bg-white/30 text-white'
-                                        }`}
-                                    >
-                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedLink ? 'Copied!' : 'Save Link'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </motion.div>
-            )}
-            
             <HowItWorks />
             <div className="grid lg:grid-cols-5 gap-8">
                 <div className="lg:col-span-3 space-y-6">

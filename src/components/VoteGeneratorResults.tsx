@@ -48,7 +48,7 @@ const getVoteTime = (vote: any): number => {
 
 // Parse meeting time slot text to extract date/time info
 // Handles formats like: "Monday, Jan 15 at 2:00 PM", "2025-01-15 14:00", "Friday 3pm", etc.
-const parseMeetingTimeSlot = (slotText: string): { start: Date; end: Date } | null => {
+const parseMeetingTimeSlot = (slotText: string): { start: Date } | null => {
     try {
         const now = new Date();
         let start: Date | null = null;

@@ -16,7 +16,8 @@ type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimite
 const TIER_CONFIG: Record<PollTier, { label: string; colors: string; maxDays: number }> = {
     free: { label: '', colors: '', maxDays: 7 },
     starter: { label: 'STARTER', colors: 'bg-blue-500 text-white', maxDays: 30 },
-    pro_event: { label: 'PRO', colors: 'bg-purple-600 text-white', maxDays: 60 },
+    pro_event: { label: 'PRO', colors: 'bg-purple-600 text-white', maxDays: 30 },
+    unlimited_event: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-orange-400 to-amber-500 text-white', maxDays: 30 },
     unlimited: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white', maxDays: 365 }
 };
 

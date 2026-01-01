@@ -24,6 +24,7 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     const [title, setTitle] = useState(poll.title);
     const [description, setDescription] = useState(poll.description || '');
     const [deadline, setDeadline] = useState(poll.settings?.deadline || '');
+    const [meetingDuration, setMeetingDuration] = useState<15 | 30 | 45 | 60 | 90 | 120>(poll.meetingDuration || 60);
     const [hideResults, setHideResults] = useState(poll.settings?.hideResults || false);
     const [requireNames, setRequireNames] = useState(poll.settings?.requireNames || false);
     const [allowMultiple, setAllowMultiple] = useState(poll.settings?.allowMultiple || false);
@@ -33,6 +34,8 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     const [status, setStatus] = useState<'draft' | 'live'>(
         (poll.status === 'draft' || poll.status === 'live') ? poll.status : 'live'
     );
+    
+    const isMeetingPoll = poll.pollType === 'meeting';
     
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,6 +75,7 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                         theme: selectedTheme,
                         logoUrl: pollLogo,
                         status: status,
+                        meetingDuration: isMeetingPoll ? meetingDuration : undefined,
                         settings: {
                             ...poll.settings,
                             deadline: deadline || undefined,
@@ -208,6 +212,39 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                             className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
                         />
                     </div>
+                    
+                    {/* Meeting Duration - only for meeting polls */}
+                    {isMeetingPoll && (
+                        <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                            <label className="block text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
+                                <Calendar size={16} className="text-amber-600" /> Meeting Duration
+                            </label>
+                            <p className="text-xs text-amber-600 mb-3">Used when adding the winning time to calendars</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { value: 15, label: '15 min' },
+                                    { value: 30, label: '30 min' },
+                                    { value: 45, label: '45 min' },
+                                    { value: 60, label: '1 hour' },
+                                    { value: 90, label: '1.5 hours' },
+                                    { value: 120, label: '2 hours' },
+                                ].map(({ value, label }) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => setMeetingDuration(value as typeof meetingDuration)}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                            meetingDuration === value
+                                                ? 'bg-amber-500 text-white shadow-md'
+                                                : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     
                     {/* Voting Options */}
                     <div className="space-y-3">

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
@@ -40,6 +40,172 @@ const getCountryFlag = (country: string): string => COUNTRY_FLAGS[country] || 'ð
 const getVoteTime = (vote: any): number => {
     const timeStr = vote.votedAt || vote.timestamp;
     return timeStr ? new Date(timeStr).getTime() : Date.now();
+};
+
+// ============================================================================
+// Calendar Integration Helpers
+// ============================================================================
+
+// Parse meeting time slot text to extract date/time info
+// Handles formats like: "Monday, Jan 15 at 2:00 PM", "2025-01-15 14:00", "Friday 3pm", etc.
+const parseMeetingTimeSlot = (slotText: string): { start: Date; end: Date } | null => {
+    try {
+        const now = new Date();
+        let start: Date | null = null;
+        
+        // Try ISO format first (2025-01-15T14:00)
+        if (/^\d{4}-\d{2}-\d{2}/.test(slotText)) {
+            start = new Date(slotText);
+        }
+        
+        // Try parsing natural language with date
+        if (!start || isNaN(start.getTime())) {
+            // Look for patterns like "Jan 15", "January 15", "1/15", etc.
+            const dateMatch = slotText.match(/(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?/i);
+            const timeMatch = slotText.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+            
+            if (dateMatch) {
+                const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                const monthStr = dateMatch[1].toLowerCase().slice(0, 3);
+                const monthIndex = monthNames.indexOf(monthStr);
+                const day = parseInt(dateMatch[2]);
+                const year = dateMatch[3] ? parseInt(dateMatch[3]) : now.getFullYear();
+                
+                if (monthIndex !== -1 && day >= 1 && day <= 31) {
+                    start = new Date(year, monthIndex, day);
+                    
+                    // Add time if found
+                    if (timeMatch) {
+                        let hour = parseInt(timeMatch[1]);
+                        const minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+                        const ampm = timeMatch[3]?.toLowerCase();
+                        
+                        if (ampm === 'pm' && hour < 12) hour += 12;
+                        if (ampm === 'am' && hour === 12) hour = 0;
+                        
+                        start.setHours(hour, minute, 0, 0);
+                    } else {
+                        start.setHours(12, 0, 0, 0); // Default to noon
+                    }
+                }
+            }
+        }
+        
+        // If still no valid date, try just time for "next occurrence"
+        if (!start || isNaN(start.getTime())) {
+            const timeOnlyMatch = slotText.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+            if (timeOnlyMatch) {
+                start = new Date(now);
+                let hour = parseInt(timeOnlyMatch[1]);
+                const minute = timeOnlyMatch[2] ? parseInt(timeOnlyMatch[2]) : 0;
+                const ampm = timeOnlyMatch[3].toLowerCase();
+                
+                if (ampm === 'pm' && hour < 12) hour += 12;
+                if (ampm === 'am' && hour === 12) hour = 0;
+                
+                start.setHours(hour, minute, 0, 0);
+                
+                // If time has passed today, set for tomorrow
+                if (start < now) {
+                    start.setDate(start.getDate() + 1);
+                }
+            }
+        }
+        
+        if (!start || isNaN(start.getTime())) {
+            return null;
+        }
+        
+        // Return just the start - duration will be applied by caller
+        return { start };
+    } catch {
+        return null;
+    }
+};
+
+// Format date for Google Calendar (YYYYMMDDTHHmmssZ)
+const formatGoogleDate = (date: Date): string => {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+};
+
+// Generate Google Calendar link
+const generateGoogleCalendarLink = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
+    const parsed = parseMeetingTimeSlot(slotText);
+    if (!parsed) return null;
+    
+    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
+    
+    const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: pollTitle || title,
+        dates: `${formatGoogleDate(parsed.start)}/${formatGoogleDate(end)}`,
+        details: `Scheduled via VoteGenerator\nTime slot: ${slotText}\nDuration: ${durationMinutes} minutes`,
+    });
+    
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
+
+// Generate Outlook Calendar link
+const generateOutlookCalendarLink = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
+    const parsed = parseMeetingTimeSlot(slotText);
+    if (!parsed) return null;
+    
+    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
+    
+    const params = new URLSearchParams({
+        path: '/calendar/action/compose',
+        rru: 'addevent',
+        subject: pollTitle || title,
+        startdt: parsed.start.toISOString(),
+        enddt: end.toISOString(),
+        body: `Scheduled via VoteGenerator\nTime slot: ${slotText}\nDuration: ${durationMinutes} minutes`,
+    });
+    
+    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+};
+
+// Generate .ics file content
+const generateICSContent = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
+    const parsed = parseMeetingTimeSlot(slotText);
+    if (!parsed) return null;
+    
+    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
+    
+    const formatICSDate = (date: Date): string => {
+        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+    
+    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@votegenerator.com`;
+    const now = formatICSDate(new Date());
+    
+    return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//VoteGenerator//Meeting Poll//EN
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${now}
+DTSTART:${formatICSDate(parsed.start)}
+DTEND:${formatICSDate(end)}
+SUMMARY:${pollTitle || title}
+DESCRIPTION:Scheduled via VoteGenerator\\nTime slot: ${slotText}\\nDuration: ${durationMinutes} minutes
+END:VEVENT
+END:VCALENDAR`;
+};
+
+// Download .ics file
+const downloadICS = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60) => {
+    const content = generateICSContent(title, slotText, pollTitle, durationMinutes);
+    if (!content) return;
+    
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(pollTitle || title).replace(/[^a-z0-9]/gi, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
 
 interface Props {
@@ -708,6 +874,63 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
                                 </div>
                             )}
+                            
+                            {/* Calendar Integration - Meeting Polls Only */}
+                            {isMeeting && activeWinnerId && (() => {
+                                const duration = poll.meetingDuration || 60;
+                                const durationLabel = duration < 60 ? `${duration} min` : duration === 60 ? '1 hour' : `${duration / 60} hours`;
+                                const slotText = getOptionText(activeWinnerId);
+                                
+                                return (
+                                    <div className="mt-6 print:hidden">
+                                        <p className="text-indigo-200 text-xs mb-3 uppercase tracking-wide">
+                                            Add to Calendar <span className="opacity-60">({durationLabel} meeting)</span>
+                                        </p>
+                                        <div className="flex flex-wrap justify-center gap-2">
+                                            {/* Google Calendar */}
+                                            {generateGoogleCalendarLink(slotText, slotText, poll.title, duration) && (
+                                                <a
+                                                    href={generateGoogleCalendarLink(slotText, slotText, poll.title, duration) || '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
+                                                >
+                                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm1-8h4v2h-6V7h2v5z"/>
+                                                    </svg>
+                                                    Google
+                                                </a>
+                                            )}
+                                            
+                                            {/* Outlook Calendar */}
+                                            {generateOutlookCalendarLink(slotText, slotText, poll.title, duration) && (
+                                                <a
+                                                    href={generateOutlookCalendarLink(slotText, slotText, poll.title, duration) || '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
+                                                >
+                                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M21.5 3h-19C1.67 3 1 3.67 1 4.5v15c0 .83.67 1.5 1.5 1.5h19c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zm-14 16H3V7h4.5v12zm7 0h-5V7h5v12zm5 0h-3.5V7H20v12z"/>
+                                                    </svg>
+                                                    Outlook
+                                                </a>
+                                            )}
+                                            
+                                            {/* Download .ics */}
+                                            <button
+                                                onClick={() => downloadICS(slotText, slotText, poll.title, duration)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
+                                            >
+                                                <Download size={16} />
+                                                Download .ics
+                                            </button>
+                                        </div>
+                                        <p className="text-indigo-300/60 text-xs mt-2">Works with Apple Calendar, Outlook Desktop & more</p>
+                                    </div>
+                                );
+                            })()}
+                            
                             {isPairwise && pairwiseScores && pairwiseScores[activeWinnerId] && (
                                 <div className="mt-2 text-indigo-200 text-sm">
                                     Win Rate: {pairwiseScores[activeWinnerId].score.toFixed(1)}% ({pairwiseScores[activeWinnerId].wins} wins)

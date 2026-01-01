@@ -71,14 +71,20 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    const barChartData = (() => {
+    const barChartData: Record<string, number> = (() => {
         if (isBudget && budgetStats) {
             const data: Record<string, number> = {};
-            Object.entries(budgetStats).forEach(([id, stat]) => data[id] = stat.totalValue);
+            Object.entries(budgetStats).forEach(([id, stat]) => {
+                const value = (stat as any).totalValue ?? (stat as any).totalSpent ?? 0;
+                data[id] = typeof value === 'number' ? value : 0;
+            });
             return data;
         }
         if (simpleCounts) return simpleCounts;
-        if (isRanked && rounds.length > 0) return rounds[0].counts;
+        if (isRanked && rounds.length > 0) {
+            const firstRoundCounts = rounds[0].counts;
+            return firstRoundCounts ?? {};
+        }
         const counts: Record<string, number> = {};
         poll.options.forEach(o => counts[o.id] = 0);
         return counts;
@@ -178,13 +184,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         const canvasHeight = 400;
         const roundWidth = 150;
         const gap = 10;
-        const firstRoundTotal = Object.values(rounds[0].counts).reduce((a, b) => a + b, 0);
+        const firstCounts: Record<string, number> = rounds[0].counts || {};
+        const firstRoundTotal = Object.values(firstCounts).reduce((a: number, b: number) => a + b, 0);
 
         rounds.forEach((round, roundIdx) => {
             let yOffset = 0;
-            const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);
+            const counts: Record<string, number> = round.counts || {};
+            const sortedIds = Object.keys(counts).sort((a,b) => (counts[b] || 0) - (counts[a] || 0));
             sortedIds.forEach(id => {
-                const count = round.counts[id];
+                const count = counts[id] || 0;
                 const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; 
                 if (count >= 0) {
                     nodes.push({ id: `${roundIdx}-${id}`, optionId: id, round: roundIdx, value: count, x: roundIdx * roundWidth, y: yOffset, height: Math.max(height, 2), color: getHexColor(id) });
@@ -197,12 +205,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
             const currentRound = rounds[i];
             const nextRound = rounds[i+1];
             const eliminatedId = currentRound.eliminatedId;
-            const currentMap = currentRound.counts;
-            const nextMap = nextRound.counts;
+            const currentMap: Record<string, number> = currentRound.counts || {};
+            const nextMap: Record<string, number> = nextRound.counts || {};
 
             Object.keys(nextMap).forEach(id => {
                 const prevCount = currentMap[id] || 0;
-                const newCount = nextMap[id];
+                const newCount = nextMap[id] || 0;
                 const delta = newCount - prevCount;
                 if (prevCount > 0) {
                     links.push({ source: `${i}-${id}`, target: `${i+1}-${id}`, value: prevCount, color: getHexColor(id), opacity: 0.5 });
@@ -282,6 +290,51 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 }
             `}</style>
             <div className="space-y-6 print:space-y-4">
+            
+            {/* Results Summary Cards - Admin Only */}
+            {isAdmin && totalVotes > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Users size={16} className="text-indigo-500" />
+                            <span className="text-xs font-medium text-indigo-600">Total Responses</span>
+                        </div>
+                        <p className="text-2xl font-black text-indigo-900">{totalVotes}</p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
+                        <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp size={16} className="text-emerald-500" />
+                            <span className="text-xs font-medium text-emerald-600">Options</span>
+                        </div>
+                        <p className="text-2xl font-black text-emerald-900">{poll.options.length}</p>
+                    </div>
+                    
+                    {activeWinnerId && !isTie && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Trophy size={16} className="text-amber-500" />
+                                <span className="text-xs font-medium text-amber-600">{isMeeting ? 'Best Time' : 'Leading'}</span>
+                            </div>
+                            <p className="text-lg font-bold text-amber-900 truncate">{getOptionText(activeWinnerId)}</p>
+                            {simpleCounts && simpleCounts[activeWinnerId] !== undefined && (
+                                <p className="text-xs text-amber-600">{simpleCounts[activeWinnerId]} votes ({totalVotes > 0 ? Math.round((simpleCounts[activeWinnerId] / totalVotes) * 100) : 0}%)</p>
+                            )}
+                        </div>
+                    )}
+                    
+                    {isTie && tiedOptions.length > 0 && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Users size={16} className="text-amber-500" />
+                                <span className="text-xs font-medium text-amber-600">It's a Tie!</span>
+                            </div>
+                            <p className="text-sm font-bold text-amber-900">{tiedOptions.length} options with {topVoteCount} votes each</p>
+                        </div>
+                    )}
+                </div>
+            )}
+            
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
                     {isMatrix && (
@@ -399,7 +452,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 <Users size={18} />
                                 <span className="font-semibold">{totalVotes} Total Voters</span>
                             </div>
-                            {isMeeting && (
+                            {isMeeting && meetingScoreData[activeWinnerId] !== undefined && (
                                 <div className="mt-2 text-indigo-200 text-sm">
                                     Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
                                 </div>
@@ -417,7 +470,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             {isBudget && budgetStats && budgetStats[activeWinnerId] && (
                                 <div className="mt-2 text-indigo-200 text-sm flex items-center justify-center gap-1">
                                     <DollarSign size={16} />
-                                    Total Value: ${budgetStats[activeWinnerId].totalValue.toLocaleString()} ({budgetStats[activeWinnerId].totalQuantity} purchased)
+                                    Total Value: ${(budgetStats[activeWinnerId].totalValue ?? 0).toLocaleString()} ({(budgetStats[activeWinnerId] as any).totalQuantity ?? budgetStats[activeWinnerId].purchaseCount ?? 0} purchased)
                                 </div>
                             )}
                         </div>
@@ -468,22 +521,24 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     transition={{ duration: 1, ease: "easeOut" }}
                                                     className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
                                                 />
-                                                {stats.count > 1 && (
+                                                {stats.count > 1 && typeof stats.stdDev === 'number' && (() => {
+                                                    const stdDev = stats.stdDev || 0;
+                                                    return (
                                                     <div 
                                                         className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
                                                         style={{ 
-                                                            left: `${Math.max(0, stats.average - stats.stdDev)}%`, 
-                                                            width: `${Math.min(100 - (stats.average - stats.stdDev), stats.stdDev * 2)}%`
+                                                            left: `${Math.max(0, stats.average - stdDev)}%`, 
+                                                            width: `${Math.min(100 - (stats.average - stdDev), stdDev * 2)}%`
                                                         }}
                                                     >
                                                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
                                                         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
                                                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
                                                     </div>
-                                                )}
+                                                )})()}
                                             </div>
                                             <div className="text-xs text-slate-400 mt-1 flex justify-between">
-                                                <span>Std Dev: {stats.stdDev.toFixed(1)}</span>
+                                                <span>Std Dev: {(stats.stdDev || 0).toFixed(1)}</span>
                                                 <span>{stats.count} votes</span>
                                             </div>
                                         </div>
@@ -522,7 +577,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     </span>
                                                 </div>
                                                 <span className="text-slate-600 font-bold">
-                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins / {data.matches} matches)</span>
+                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins{data.matches ? ` / ${data.matches} matches` : ''})</span>
                                                 </span>
                                             </div>
                                             <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
@@ -1292,10 +1347,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         // Find who got the most transferred votes
                                         const transferGains: Record<string, number> = {};
                                         for (let i = 1; i < rounds.length; i++) {
-                                            const prevCounts = rounds[i - 1].counts;
-                                            const currCounts = rounds[i].counts;
+                                            const prevCounts: Record<string, number> = rounds[i - 1].counts || {};
+                                            const currCounts: Record<string, number> = rounds[i].counts || {};
                                             Object.keys(currCounts).forEach(optId => {
-                                                const gain = currCounts[optId] - (prevCounts[optId] || 0);
+                                                const gain = (currCounts[optId] || 0) - (prevCounts[optId] || 0);
                                                 if (gain > 0) {
                                                     transferGains[optId] = (transferGains[optId] || 0) + gain;
                                                 }
@@ -1600,19 +1655,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             <MessageSquare size={24} className="text-indigo-500"/> Comments
                         </h3>
                         <div className="grid md:grid-cols-2 gap-4">
-                            {comments!.map((comment, i) => (
+                            {comments!.map((comment, i) => {
+                                const name = String(comment.name || comment.voterName || 'Anonymous');
+                                const text = String(comment.text || '');
+                                const date = comment.date || comment.timestamp;
+                                return (
                                 <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100 relative group hover:border-indigo-100 transition-colors">
                                     <Quote size={20} className="text-indigo-200 absolute top-4 right-4" />
-                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{comment.text}"</p>
+                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{text}"</p>
                                     <div className="flex items-center gap-2 text-sm">
                                         <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs">
-                                            {comment.name.charAt(0).toUpperCase()}
+                                            {name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-bold text-slate-600">{comment.name}</span>
-                                        <span className="text-slate-400 text-xs">• {comment.date ? new Date(comment.date).toLocaleDateString() : ''}</span>
+                                        <span className="font-bold text-slate-600">{name}</span>
+                                        <span className="text-slate-400 text-xs">• {date ? new Date(date).toLocaleDateString() : ''}</span>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </motion.div>
                 )}

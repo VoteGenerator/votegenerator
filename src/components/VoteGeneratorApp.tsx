@@ -437,7 +437,7 @@ const VoteGeneratorApp: React.FC = () => {
                             <span className="hidden sm:inline">VoteGenerator</span>
                         </button>
                         <div className="flex items-center gap-4">
-                            <a href="/demo" className="text-sm text-slate-600 hover:text-indigo-600 transition-colors">Demo</a>
+                            <a href="/admin" className="text-sm text-slate-600 hover:text-indigo-600 transition-colors">Dashboard</a>
                             <a href="/help" className="text-sm text-slate-600 hover:text-indigo-600 transition-colors">Help</a>
                              {viewState.type === 'results' && !viewState.isAdmin && (
                                 <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors">
@@ -445,7 +445,7 @@ const VoteGeneratorApp: React.FC = () => {
                                 </button>
                              )}
                              {viewState.type === 'results' && viewState.isAdmin && (
-                                 <div className="flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100"><ShieldCheck size={14} /> Admin Portal</div>
+                                 <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200"><LayoutDashboard size={14} /> Poll Manager</div>
                              )}
                         </div>
                     </div>
@@ -486,15 +486,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            // Try to find admin link from localStorage
-                                            const saved = localStorage.getItem('vg_admin_links');
-                                            if (saved && viewState.pollId) {
-                                                const links = JSON.parse(saved);
-                                                if (links[viewState.pollId]) {
-                                                    window.location.hash = `id=${viewState.pollId}&admin=${links[viewState.pollId].adminKey}`;
-                                                    return;
-                                                }
-                                            }
+                                            // Go directly to poll (voting view)
                                             window.location.hash = `id=${viewState.pollId}`;
                                         }}
                                         className="px-6 py-3 border-2 border-slate-200 hover:border-indigo-300 text-slate-700 font-bold rounded-xl transition-colors"
@@ -548,6 +540,40 @@ const VoteGeneratorApp: React.FC = () => {
                                 <div className={viewState.isAdmin ? "bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition-all" : ""}>
                                     {viewState.isAdmin && (
                                         <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-6 print:hidden">
+                                            {/* Poll Status Banner - Live or Draft */}
+                                            {(viewState.poll as any).status === 'live' ? (
+                                                <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse">
+                                                            <Play size={18} className="text-white ml-0.5" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-emerald-800 flex items-center gap-2">
+                                                                Poll is Live
+                                                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                                            </p>
+                                                            <p className="text-xs text-emerald-600">Collecting responses • Share link below</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-2xl font-black text-emerald-700">{(viewState.results as any)?.totalVotes || 0}</p>
+                                                        <p className="text-xs text-emerald-600">responses</p>
+                                                    </div>
+                                                </div>
+                                            ) : (viewState.poll as any).status === 'draft' ? (
+                                                <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center">
+                                                            <Pause size={18} className="text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-amber-800">Draft Mode</p>
+                                                            <p className="text-xs text-amber-600">Not visible to voters • Go live when ready</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : null}
+                                            
                                             {/* Top Bar: Poll Type + Quick Actions */}
                                             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                                                 <div className="flex items-center gap-2">
@@ -555,9 +581,9 @@ const VoteGeneratorApp: React.FC = () => {
                                                     {viewState.poll.settings.deadline && (<span className="text-xs bg-white border border-slate-200 px-2 py-1 rounded-lg text-slate-500 flex items-center gap-1"><Clock size={12}/> {new Date(viewState.poll.settings.deadline).toLocaleDateString()}</span>)}
                                                     {viewState.poll.allowedCodes && (<span onClick={() => copyToClipboard(viewState.poll.allowedCodes!.join('\n'), 'codes')} className="text-xs bg-purple-50 border border-purple-100 px-2 py-1 rounded-lg text-purple-600 flex items-center gap-1 cursor-pointer hover:bg-purple-100"><Key size={12}/> {viewState.poll.allowedCodes.length} Codes</span>)}
                                                 </div>
-                                                {/* View Poll Button - includes admin key so drafts can be previewed */}
+                                                {/* View Poll Button - shows actual poll (voting view) */}
                                                 <a 
-                                                    href={`${getShareUrl()}&admin=${parseHash().adminKey}`}
+                                                    href={getShareUrl()}
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
                                                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg flex items-center gap-2 shadow-sm"
@@ -591,17 +617,28 @@ const VoteGeneratorApp: React.FC = () => {
                                                         className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50 bg-blue-50/50"
                                                     >
                                                         <span className="font-semibold text-blue-800 flex items-center gap-2 text-sm">
-                                                            <Share2 size={16} className="text-blue-600"/> Share & Distribute
+                                                            <Share2 size={16} className="text-blue-600"/> Share Poll Link
+                                                            <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Collect Votes</span>
                                                         </span>
                                                         {expandedSections.share ? <ChevronUp size={18} className="text-blue-400"/> : <ChevronDown size={18} className="text-blue-400"/>}
                                                     </button>
                                                     {expandedSections.share && (
                                                         <div className="px-4 pb-4 border-t border-blue-100 pt-3">
+                                                            {/* Share link preview */}
+                                                            <div className="mb-3 p-2 bg-blue-50 rounded-lg flex items-center gap-2">
+                                                                <Globe size={14} className="text-blue-500 flex-shrink-0"/>
+                                                                <code className="text-xs text-blue-700 font-mono truncate flex-1">{getShareUrl()}</code>
+                                                                <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-bold hover:bg-blue-700">
+                                                                    {copiedShare ? <Check size={12}/> : <Copy size={12}/>}
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            <p className="text-xs text-slate-500 mb-2">Share via:</p>
                                                             <div className="grid grid-cols-4 gap-2 mb-3">
                                                                 <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex flex-col items-center gap-1"><MessageCircle size={16}/> WhatsApp</button>
                                                                 <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex flex-col items-center gap-1"><Smartphone size={16}/> SMS</button>
                                                                 <button onClick={shareToEmail} className="py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 flex flex-col items-center gap-1"><Mail size={16}/> Email</button>
-                                                                <button onClick={handlePrintPDF} className="py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 flex flex-col items-center gap-1"><Download size={16}/> PDF</button>
+                                                                <button onClick={handlePrintPDF} className="py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 flex flex-col items-center gap-1"><Download size={16}/> Poster</button>
                                                             </div>
                                                             {/* Embed Code - Compact */}
                                                             <div className="flex gap-2 items-center">

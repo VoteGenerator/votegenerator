@@ -1,7 +1,18 @@
+// ============================================================================
+// VoteGeneratorEdit - Edit Poll Settings
+// Location: src/components/VoteGeneratorEdit.tsx
+// ============================================================================
+
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Eye, EyeOff, Clock, Hash, Lock, Plus, Trash2, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+    ArrowLeft, Save, Loader2, AlertCircle, Calendar, Clock, 
+    Lock, Users, Eye, EyeOff, Image as ImageIcon, SlidersHorizontal,
+    Play, Pause, CheckSquare, X
+} from 'lucide-react';
 import { Poll } from '../types';
-import { updatePoll } from '../services/voteGeneratorService';
+import ThemeSelector from './ThemeSelector';
+import LogoUpload from './LogoUpload';
 
 interface Props {
     poll: Poll;
@@ -12,228 +23,306 @@ interface Props {
 const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     const [title, setTitle] = useState(poll.title);
     const [description, setDescription] = useState(poll.description || '');
-    const [options, setOptions] = useState(poll.options.map(o => o.text));
-    const [deadline, setDeadline] = useState(poll.settings.deadline ? new Date(poll.settings.deadline).toISOString().slice(0, 16) : '');
-    const [maxVotes, setMaxVotes] = useState<number | ''>(poll.settings.maxVotes || '');
-    const [hideResults, setHideResults] = useState(poll.settings.hideResults);
-    const [isSaving, setIsSaving] = useState(false);
+    const [deadline, setDeadline] = useState(poll.settings?.deadline || '');
+    const [hideResults, setHideResults] = useState(poll.settings?.hideResults || false);
+    const [requireNames, setRequireNames] = useState(poll.settings?.requireNames || false);
+    const [allowMultiple, setAllowMultiple] = useState(poll.settings?.allowMultiple || false);
+    const [buttonText, setButtonText] = useState(poll.buttonText || 'Submit Vote');
+    const [selectedTheme, setSelectedTheme] = useState(poll.theme || 'default');
+    const [pollLogo, setPollLogo] = useState<string | null>(poll.logo || null);
+    const [status, setStatus] = useState<'draft' | 'live'>(poll.status || 'live');
     
-    // Check if votes exist to lock certain fields
-    const hasVotes = poll.voteCount > 0;
-
-    const handleOptionChange = (index: number, value: string) => {
-        const newOptions = [...options];
-        newOptions[index] = value;
-        setOptions(newOptions);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    
+    // Get admin key from URL
+    const getAdminKey = () => {
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        return params.get('admin') || '';
     };
-
-    const removeOption = (index: number) => {
-        if (options.length <= 2) return;
-        setOptions(options.filter((_, i) => i !== index));
-    };
-
-    const addOption = () => {
-        if (options.length >= 20) return;
-        setOptions([...options, '']);
-    };
-
+    
+    const isPaidTier = poll.tier && poll.tier !== 'free';
+    const isUnlimited = poll.tier === 'unlimited';
+    const isProOrHigher = poll.tier === 'pro_event' || poll.tier === 'unlimited';
+    
     const handleSave = async () => {
-        if (!title.trim()) return;
-        const validOptions = options.filter(o => o.trim() !== '');
-        if (validOptions.length < 2) {
-            alert("You need at least 2 valid options.");
+        if (!title.trim()) {
+            setError('Title is required');
             return;
         }
-
+        
         setIsSaving(true);
+        setError(null);
+        
         try {
-            // Reconstruct options array preserving IDs where possible
-            // If hasVotes is true, we technically shouldn't be here if we disabled inputs, but for safety:
-            let updatedOptions = poll.options;
-            
-            if (!hasVotes) {
-                 updatedOptions = options.filter(t => t.trim() !== '').map((text, i) => {
-                    // Try to preserve ID if index matches, otherwise generate new or use existing? 
-                    // To keep it simple for this edit: reuse existing IDs for first N items, generate new for others.
-                    // This might break if they reorder completely, but simple edit is usually fixing typos or appending.
-                    const existingId = poll.options[i]?.id;
-                    return {
-                        id: existingId || Math.random().toString(36).substr(2, 6),
-                        text
-                    };
-                 });
-            }
-
-            await updatePoll(poll.id, poll.adminKey!, {
-                title,
-                description,
-                options: hasVotes ? undefined : updatedOptions, // Do not update options if votes exist
-                settings: {
-                    ...poll.settings,
-                    hideResults,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
-                    maxVotes: maxVotes === '' ? undefined : Number(maxVotes)
-                }
+            const response = await fetch('/.netlify/functions/vg-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: getAdminKey(),
+                    updates: {
+                        title: title.trim(),
+                        description: description.trim() || undefined,
+                        buttonText: buttonText || 'Submit Vote',
+                        theme: selectedTheme,
+                        logo: pollLogo,
+                        status: status,
+                        settings: {
+                            ...poll.settings,
+                            deadline: deadline || undefined,
+                            hideResults,
+                            requireNames,
+                            allowMultiple
+                        }
+                    }
+                })
             });
-            onUpdate();
+            
+            if (response.ok) {
+                setSuccess(true);
+                setTimeout(() => {
+                    onUpdate();
+                }, 1000);
+            } else {
+                const data = await response.json();
+                setError(data.error || 'Failed to save changes');
+            }
         } catch (e) {
-            console.error(e);
+            setError('Network error. Please try again.');
+        } finally {
             setIsSaving(false);
-            alert("Failed to update poll. Please try again.");
         }
     };
-
+    
     return (
         <div className="max-w-2xl mx-auto px-4 py-8">
-            <button onClick={onCancel} className="mb-6 flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors">
-                <ArrowLeft size={20} /> Back to Results
-            </button>
+            <div className="mb-6">
+                <button 
+                    onClick={onCancel}
+                    className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium mb-4"
+                >
+                    <ArrowLeft size={18} /> Back to Poll
+                </button>
+                <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                    <SlidersHorizontal className="text-indigo-600" size={28} />
+                    Edit Poll Settings
+                </h1>
+                <p className="text-slate-500 mt-1">Update your poll's appearance and behavior</p>
+            </div>
             
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-                <div className="p-6 md:p-8 bg-indigo-50 border-b border-indigo-100">
-                    <h1 className="text-2xl font-black text-indigo-900 mb-2">Edit Poll</h1>
-                    <p className="text-indigo-700/80 text-sm">Update settings for your active poll.</p>
-                </div>
-
-                <div className="p-6 md:p-8 space-y-6">
-                    {hasVotes && (
-                        <div className="bg-amber-50 text-amber-800 p-4 rounded-xl flex gap-3 text-sm border border-amber-100">
-                            <Lock size={20} className="shrink-0 mt-0.5" />
-                            <div>
-                                <strong>Options are locked.</strong><br/>
-                                Because voting has already started ({poll.voteCount} votes), you cannot add, remove, or edit options to ensure fairness. You can still update the title, description, and deadline.
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Title */}
+            {success && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3"
+                >
+                    <CheckSquare className="text-emerald-600" size={20} />
+                    <p className="text-emerald-700 font-medium">Changes saved successfully!</p>
+                </motion.div>
+            )}
+            
+            {error && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3"
+                >
+                    <AlertCircle className="text-red-600" size={20} />
+                    <p className="text-red-700 font-medium">{error}</p>
+                </motion.div>
+            )}
+            
+            <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-lg overflow-hidden">
+                <div className="p-6 space-y-6">
+                    {/* Basic Info */}
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            Question / Title
-                        </label>
-                        <input 
-                            type="text" 
-                            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all font-bold text-lg"
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Poll Question</label>
+                        <input
+                            type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-lg focus:border-indigo-500 focus:outline-none"
+                            placeholder="Your poll question..."
                         />
                     </div>
-
-                    {/* Description */}
+                    
                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                            Details
-                        </label>
-                        <textarea 
-                            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition-all h-24 resize-none"
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Description (optional)</label>
+                        <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            rows={2}
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none"
+                            placeholder="Add more context..."
                         />
                     </div>
-
-                    {/* Options Editing */}
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">
-                            Options
-                        </label>
-                        <div className="space-y-3">
-                            {options.map((opt, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <input 
-                                        type="text" 
-                                        value={opt}
-                                        onChange={(e) => handleOptionChange(i, e.target.value)}
-                                        disabled={hasVotes}
-                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-all font-medium ${
-                                            hasVotes 
-                                                ? 'bg-slate-50 text-slate-500 border-slate-100 cursor-not-allowed' 
-                                                : 'border-slate-200 focus:border-indigo-500'
-                                        }`}
-                                        placeholder={`Option ${i + 1}`}
-                                    />
-                                    {!hasVotes && options.length > 2 && (
-                                        <button 
-                                            onClick={() => removeOption(i)}
-                                            className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
+                    
+                    {/* Status Toggle - Paid tiers only */}
+                    {isPaidTier && (
+                        <div className="p-4 bg-gradient-to-r from-slate-50 to-indigo-50 rounded-xl border border-slate-200">
+                            <label className="block text-sm font-semibold text-slate-700 mb-3">Poll Status</label>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setStatus('live')}
+                                    className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                                        status === 'live'
+                                            ? 'bg-emerald-500 text-white shadow-lg'
+                                            : 'bg-white border-2 border-slate-200 text-slate-600 hover:border-emerald-300'
+                                    }`}
+                                >
+                                    <Play size={18} /> Live
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStatus('draft')}
+                                    className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                                        status === 'draft'
+                                            ? 'bg-amber-500 text-white shadow-lg'
+                                            : 'bg-white border-2 border-slate-200 text-slate-600 hover:border-amber-300'
+                                    }`}
+                                >
+                                    <Pause size={18} /> Draft
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                                {status === 'draft' ? 'Voters cannot access this poll yet' : 'Poll is accepting votes'}
+                            </p>
                         </div>
+                    )}
+                    
+                    {/* Deadline */}
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <Clock size={16} /> Close poll on
+                        </label>
+                        <input
+                            type="datetime-local"
+                            value={deadline ? new Date(deadline).toISOString().slice(0, 16) : ''}
+                            onChange={(e) => setDeadline(e.target.value ? new Date(e.target.value).toISOString() : '')}
+                            className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
+                        />
+                    </div>
+                    
+                    {/* Voting Options */}
+                    <div className="space-y-3">
+                        <label className="block text-sm font-semibold text-slate-700">Voting Options</label>
                         
-                        {!hasVotes && options.length < 20 && (
-                            <button
-                                onClick={addOption}
-                                className="mt-3 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors p-2 hover:bg-indigo-50 rounded-lg -ml-2"
-                            >
-                                <Plus size={16} /> Add another option
-                            </button>
+                        {poll.pollType === 'multiple' && (
+                            <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-indigo-50 cursor-pointer transition">
+                                <span className="font-medium text-slate-700">Allow multiple selections</span>
+                                <input
+                                    type="checkbox"
+                                    checked={allowMultiple}
+                                    onChange={(e) => setAllowMultiple(e.target.checked)}
+                                    className="w-5 h-5 rounded accent-indigo-600"
+                                />
+                            </label>
+                        )}
+                        
+                        <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-indigo-50 cursor-pointer transition">
+                            <div className="flex items-center gap-2">
+                                <Users size={18} className="text-slate-500" />
+                                <span className="font-medium text-slate-700">Require voter names</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={requireNames}
+                                onChange={(e) => setRequireNames(e.target.checked)}
+                                className="w-5 h-5 rounded accent-indigo-600"
+                            />
+                        </label>
+                        
+                        <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-indigo-50 cursor-pointer transition">
+                            <div className="flex items-center gap-2">
+                                {hideResults ? <EyeOff size={18} className="text-slate-500" /> : <Eye size={18} className="text-slate-500" />}
+                                <span className="font-medium text-slate-700">Hide results until closed</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={hideResults}
+                                onChange={(e) => setHideResults(e.target.checked)}
+                                className="w-5 h-5 rounded accent-indigo-600"
+                            />
+                        </label>
+                    </div>
+                    
+                    {/* Button Text */}
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
+                        <input
+                            type="text"
+                            value={buttonText}
+                            onChange={(e) => setButtonText(e.target.value)}
+                            placeholder="Submit Vote"
+                            className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
+                        />
+                    </div>
+                    
+                    {/* Custom Branding - Pro Event & Unlimited */}
+                    <div className={`p-4 rounded-xl border ${
+                        isProOrHigher
+                            ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
+                            : 'bg-slate-50 border-slate-200'
+                    }`}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <ImageIcon size={16} className={isProOrHigher ? 'text-purple-600' : 'text-slate-400'} />
+                            <span className="font-semibold text-slate-700">Custom Branding</span>
+                            {isProOrHigher ? (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                    isUnlimited 
+                                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
+                                        : 'bg-purple-600 text-white'
+                                }`}>
+                                    {isUnlimited ? 'UNLIMITED' : 'PRO'}
+                                </span>
+                            ) : (
+                                <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-bold">PRO+</span>
+                            )}
+                        </div>
+                        {isProOrHigher ? (
+                            <LogoUpload 
+                                currentLogo={pollLogo}
+                                onLogoChange={setPollLogo}
+                                tier={poll.tier}
+                            />
+                        ) : (
+                            <div className="text-center py-4 opacity-60">
+                                <ImageIcon size={32} className="mx-auto mb-2 text-slate-300" />
+                                <p className="text-sm text-slate-500">Add your logo to polls</p>
+                                <p className="text-xs text-slate-400">Available on Pro Event & Unlimited</p>
+                            </div>
                         )}
                     </div>
-
-                    <div className="pt-6 border-t border-slate-100 space-y-4">
-                        <h3 className="font-bold text-slate-900">Poll Settings</h3>
-                        
-                        {/* Deadline */}
-                        <div>
-                            <div className="flex items-center gap-2 font-bold text-slate-700 mb-2 text-sm">
-                                <Clock size={16} className="text-slate-400" /> Close automatically on date
-                            </div>
-                            <input 
-                                type="datetime-local" 
-                                value={deadline}
-                                onChange={(e) => setDeadline(e.target.value)}
-                                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
-                            />
-                             {deadline && (
-                                <p className="text-emerald-600 text-xs mt-1 font-bold flex items-center gap-1">
-                                    <Check size={12} /> Selected: {new Date(deadline).toLocaleString()}
-                                </p>
-                            )}
-                        </div>
-
-                         {/* Max Votes */}
-                         <div>
-                            <div className="flex items-center gap-2 font-bold text-slate-700 mb-2 text-sm">
-                                <Hash size={16} className="text-slate-400" /> Close automatically after X votes
-                            </div>
-                            <input 
-                                type="number" 
-                                min={poll.voteCount + 1}
-                                value={maxVotes}
-                                onChange={(e) => setMaxVotes(e.target.value === '' ? '' : parseInt(e.target.value))}
-                                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-700"
-                                placeholder="Unlimited"
-                            />
-                            {hasVotes && (
-                                <p className="text-xs text-slate-400 mt-1">Must be greater than current votes ({poll.voteCount}).</p>
-                            )}
-                        </div>
-
-                        {/* Hide Results */}
-                        <label className="flex items-center justify-between cursor-pointer group p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors border border-slate-100">
-                            <div className="flex-1 flex items-center gap-2">
-                                {hideResults ? <EyeOff size={18} className="text-amber-500" /> : <Eye size={18} className="text-slate-400" />}
-                                <div>
-                                    <div className="font-bold text-slate-700">Hide results from voters</div>
-                                    <div className="text-xs text-slate-500 font-normal">Only admin sees results</div>
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <input type="checkbox" checked={hideResults} onChange={e => setHideResults(e.target.checked)} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            </div>
-                        </label>
+                    
+                    {/* Theme */}
+                    <div className="pt-4 border-t">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label>
+                        <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
                     </div>
-
-                    <button 
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex gap-3">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition flex items-center justify-center gap-2"
+                    >
+                        <X size={18} /> Cancel
+                    </button>
+                    <button
                         onClick={handleSave}
                         disabled={isSaving || !title.trim()}
-                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 text-lg"
+                        className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
                     >
-                        {isSaving ? 'Saving...' : <><Save size={20} /> Update Poll</>}
+                        {isSaving ? (
+                            <><Loader2 size={18} className="animate-spin" /> Saving...</>
+                        ) : (
+                            <><Save size={18} /> Save Changes</>
+                        )}
                     </button>
                 </div>
             </div>

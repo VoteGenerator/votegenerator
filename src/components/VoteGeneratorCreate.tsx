@@ -5,8 +5,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key, Play } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
+import LogoUpload from './LogoUpload';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
@@ -141,6 +142,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [codeCount, setCodeCount] = useState(10);
     const [codePrefix, setCodePrefix] = useState('');
     
+    // Custom branding (Pro Event & Unlimited)
+    const [pollLogo, setPollLogo] = useState<string | null>(null);
+    
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -259,6 +263,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier,
+                theme: selectedTheme,
+                // Custom branding (Pro Event & Unlimited)
+                logo: pollLogo || undefined,
                 // For paid tiers: allow starting in draft mode
                 status: (purchasedTier && startAsDraft) ? 'draft' : 'live',
                 // Security: PIN (Pro Event & Unlimited)
@@ -374,140 +381,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 </motion.div>
             )}
             
-            {/* Paid Tier Hub Header */}
-            {!hideTierBanner && purchasedTier && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }} 
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6"
-                >
-                    {/* UNLIMITED - Premium dark design with gold accents */}
-                    {purchasedTier === 'unlimited' && (
-                        <div className="p-5 rounded-2xl shadow-xl bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white border border-amber-500/30">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                                        <Star size={28} className="text-amber-950" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                                                ⭐ Unlimited Plan
-                                            </h2>
-                                            <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-xs font-bold animate-pulse">
-                                                ACTIVE
-                                            </span>
-                                        </div>
-                                        <p className="text-amber-200/80 text-sm mt-0.5">
-                                            All premium features unlocked • No ads • Create your poll below
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-4">
-                                    {expiresAt && (
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-amber-300/60 text-xs">Expires on</p>
-                                            <p className="text-sm font-semibold text-amber-200 flex items-center gap-1 justify-end">
-                                                <Calendar size={14} />
-                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </p>
-                                            <p className="text-amber-300/60 text-xs">({daysRemaining} days left)</p>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-amber-300/60 text-xs">Plan includes</p>
-                                        <p className="text-sm font-semibold text-amber-200">5,000 responses</p>
-                                    </div>
-                                    
-                                    {/* COPY LINK BUTTON */}
-                                    <button 
-                                        onClick={copyLink}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
-                                            copiedLink 
-                                                ? 'bg-emerald-500 text-white' 
-                                                : 'bg-amber-400 hover:bg-amber-300 text-amber-900'
-                                        }`}
-                                    >
-                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedLink ? 'Copied!' : 'Save Link'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* PRO EVENT - Purple/Pink */}
-                    {purchasedTier === 'pro_event' && (
-                        <div className="p-5 rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-                                        <Crown size={28} className="text-white" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="text-xl font-bold">👑 Pro Event Plan</h2>
-                                            <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 rounded-full text-xs font-bold">
-                                                ACTIVE
-                                            </span>
-                                        </div>
-                                        <p className="text-white/80 text-sm mt-0.5">
-                                            All premium features unlocked • No ads • Create your poll below
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-4">
-                                    {expiresAt && (
-                                        <div className="text-right hidden sm:block">
-                                            <p className="text-white/60 text-xs">Expires on</p>
-                                            <p className="text-sm font-semibold flex items-center gap-1 justify-end">
-                                                <Calendar size={14} />
-                                                {new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </p>
-                                            <p className="text-white/60 text-xs">({daysRemaining} days left)</p>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-white/60 text-xs">Plan includes</p>
-                                        <p className="text-sm font-semibold">2,000 responses</p>
-                                    </div>
-                                    
-                                    <a 
-                                        href="/.netlify/functions/vg-checkout?tier=unlimited"
-                                        className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition flex items-center gap-1 shadow-lg"
-                                    >
-                                        <Star size={14} /> Upgrade
-                                    </a>
-                                    
-                                    {/* COPY LINK BUTTON */}
-                                    <button 
-                                        onClick={copyLink}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
-                                            copiedLink 
-                                                ? 'bg-emerald-500 text-white' 
-                                                : 'bg-white/20 hover:bg-white/30 text-white'
-                                        }`}
-                                    >
-                                        {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedLink ? 'Copied!' : 'Save Link'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* STARTER - Blue */}
-                    {purchasedTier === 'starter' && (
-                        <div className="p-5 rounded-2xl shadow-lg bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-                                        <Zap size={28} className="text-white" />
-                                    </div>
+            
+            <HowItWorks />
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h2 className="text-xl font-bold">⚡ Starter Plan</h2>
@@ -826,13 +701,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <span className="font-medium text-slate-700">Hide results until closed</span>
                                             <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
                                         </label>
-                                        {/* Draft Mode - only for paid tiers */}
-                                        {purchasedTier && purchasedTier !== 'free' && (
-                                            <label className="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-200 cursor-pointer">
+                                        {/* Draft Mode - only for Unlimited tier */}
+                                        {purchasedTier === 'unlimited' && (
+                                            <label className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 cursor-pointer">
                                                 <div>
                                                     <span className="font-medium text-amber-800 flex items-center gap-2">
+                                                        <Play size={16} className="text-amber-600" />
                                                         Start as Draft
-                                                        <span className="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">Premium</span>
+                                                        <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
                                                     </span>
                                                     <p className="text-xs text-amber-600 mt-1">
                                                         Test your poll before going live. Voters can't access draft polls.
@@ -840,6 +716,22 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 </div>
                                                 <input type="checkbox" checked={startAsDraft} onChange={(e) => setStartAsDraft(e.target.checked)} className="w-5 h-5 rounded accent-amber-600" />
                                             </label>
+                                        )}
+                                        {/* Show locked draft mode for non-unlimited paid tiers */}
+                                        {purchasedTier && purchasedTier !== 'free' && purchasedTier !== 'unlimited' && (
+                                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200 opacity-60">
+                                                <div>
+                                                    <span className="font-medium text-slate-500 flex items-center gap-2">
+                                                        <Play size={16} />
+                                                        Start as Draft
+                                                        <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
+                                                    </span>
+                                                    <p className="text-xs text-slate-400 mt-1">
+                                                        Upgrade to Unlimited to test polls before going live
+                                                    </p>
+                                                </div>
+                                                <Lock size={18} className="text-slate-400" />
+                                            </div>
                                         )}
                                         
                                         {/* Security Options - Pro Event & Unlimited */}
@@ -1088,6 +980,43 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
                                             <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
                                         </div>
+                                        
+                                        {/* Custom Branding - Pro Event & Unlimited */}
+                                        <div className={`p-4 rounded-xl border ${
+                                            purchasedTier === 'pro_event' || purchasedTier === 'unlimited'
+                                                ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <ImageIcon size={16} className={purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? 'text-purple-600' : 'text-slate-400'} />
+                                                <span className="font-semibold text-slate-700">Custom Branding</span>
+                                                {purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? (
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                                        purchasedTier === 'unlimited' 
+                                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
+                                                            : 'bg-purple-600 text-white'
+                                                    }`}>
+                                                        {purchasedTier === 'unlimited' ? 'UNLIMITED' : 'PRO'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-bold">PRO+</span>
+                                                )}
+                                            </div>
+                                            {purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? (
+                                                <LogoUpload 
+                                                    currentLogo={pollLogo}
+                                                    onLogoChange={setPollLogo}
+                                                    tier={purchasedTier}
+                                                />
+                                            ) : (
+                                                <div className="text-center py-4 opacity-60">
+                                                    <ImageIcon size={32} className="mx-auto mb-2 text-slate-300" />
+                                                    <p className="text-sm text-slate-500">Add your logo to polls</p>
+                                                    <p className="text-xs text-slate-400">Available on Pro Event & Unlimited</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
                                         <div className="pt-4 border-t"><label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label><ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} /></div>
                                     </div>
                                 </motion.div>

@@ -99,7 +99,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '500 responses', included: true },
-            { name: '30 days active', included: true },
+            { name: '30 days access', included: true },
             { name: 'Export to CSV', included: true },
             { name: 'Visual polls', included: false },
         ]
@@ -111,13 +111,31 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: 3,
-        activeDays: 60,
+        activeDays: 30,
         requiresActivation: true,
         features: [
             { name: 'All poll types', included: true },
             { name: '2,000 responses', included: true },
-            { name: '60 days active', included: true },
+            { name: '30 days access', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
+        ]
+    },
+    unlimited_event: {
+        label: 'Unlimited Event',
+        gradient: 'from-amber-400 to-orange-400',
+        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
+        headerBg: 'bg-amber-50',
+        icon: <Sparkles size={16} />,
+        maxPolls: 1,
+        activeDays: 30,
+        requiresActivation: true,
+        features: [
+            { name: 'All poll types', included: true },
+            { name: '10,000 responses', included: true },
+            { name: '30 days access', included: true },
+            { name: 'All features included', included: true },
+            { name: 'PIN protection', included: true },
+            { name: 'Custom branding', included: true },
         ]
     },
     unlimited: {
@@ -132,7 +150,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '10,000 responses/poll', included: true },
-            { name: '1 year active', included: true },
+            { name: '1 year access', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
             { name: 'Team tokens (10)', included: true },
@@ -236,7 +254,7 @@ const AdminDashboard: React.FC = () => {
                 // Determine tier (default to unlimited if not provided since email doesn't include tier)
                 // We'll fetch the real tier from backend later, for now assume unlimited
                 const tier = urlTier || 'unlimited';
-                const days = tier === 'unlimited' ? 365 : tier === 'pro_event' ? 60 : 30;
+                const days = tier === 'unlimited' ? 365 : tier === 'unlimited_event' ? 30 : tier === 'pro_event' ? 30 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
                 // Create new session
@@ -492,7 +510,7 @@ const AdminDashboard: React.FC = () => {
     const config = TIER_CONFIG[tier];
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isUnlimited = tier === 'unlimited';
+    const isUnlimited = tier === 'unlimited' || tier === 'unlimited_event';
     const showSearch = isUnlimited && polls.length > 5;
 
     return (
@@ -919,6 +937,7 @@ const AdminDashboard: React.FC = () => {
                         {/* Plan Card - Collapsible */}
                         <div className={`rounded-2xl border-2 overflow-hidden ${
                             tier === 'unlimited' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
+                            tier === 'unlimited_event' ? 'bg-gradient-to-br from-orange-50 via-white to-amber-50 border-orange-200' :
                             tier === 'pro_event' ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-emerald-200' :
                             tier === 'starter' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-blue-200' :
                             'bg-white border-slate-200'

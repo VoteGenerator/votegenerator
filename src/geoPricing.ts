@@ -1,107 +1,170 @@
 // ============================================================================
-// Geo Pricing - TELL BELLA IF THESE PRICES NEED ADJUSTING
-// These should match your Stripe price objects
+// Geo-based Pricing Hook
+// Detects user location and adjusts currency/prices accordingly
 // ============================================================================
 
 import { useState, useEffect } from 'react';
 
-export type Currency = 'USD' | 'CAD' | 'EUR' | 'GBP' | 'AUD';
+// Base prices in USD (whole numbers)
+const BASE_PRICES = {
+    starter: 9,
+    proEvent: 19,
+    unlimitedEvent: 49,
+    unlimited: 199,
+};
 
-export interface GeoPrice {
-    currency: Currency;
-    symbol: string;
-    starter: number;
-    proEvent: number;
-    unlimited: number;
-}
-
-// ============================================================================
-// PRICES - UPDATE THESE TO MATCH YOUR STRIPE PRICES
-// ============================================================================
-export const GEO_PRICES: Record<Currency, GeoPrice> = {
-    USD: { currency: 'USD', symbol: '$', starter: 9.99, proEvent: 19.99, unlimited: 199 },
-    CAD: { currency: 'CAD', symbol: '$', starter: 13.99, proEvent: 27.99, unlimited: 279 },
-    EUR: { currency: 'EUR', symbol: '€', starter: 9.49, proEvent: 18.99, unlimited: 189 },
-    GBP: { currency: 'GBP', symbol: '£', starter: 7.99, proEvent: 15.99, unlimited: 159 },
-    AUD: { currency: 'AUD', symbol: '$', starter: 15.99, proEvent: 31.99, unlimited: 319 },
+// Currency configurations with ACTUAL exchange rates + 5% buffer for fluctuations
+// Base rates (approx Jan 2026): CAD 1.36, AUD 1.53, EUR 0.92, GBP 0.79
+// Multiplier = exchange_rate × 1.05
+const CURRENCY_CONFIG: Record<string, { symbol: string; multiplier: number; code: string }> = {
+    USD: { symbol: '$', multiplier: 1.00, code: 'USD' },
+    CAD: { symbol: 'CA$', multiplier: 1.43, code: 'CAD' },  // 1.36 × 1.05 = 1.428
+    AUD: { symbol: 'A$', multiplier: 1.61, code: 'AUD' },   // 1.53 × 1.05 = 1.6065
+    EUR: { symbol: '€', multiplier: 0.97, code: 'EUR' },    // 0.92 × 1.05 = 0.966
+    GBP: { symbol: '£', multiplier: 0.83, code: 'GBP' },    // 0.79 × 1.05 = 0.8295
 };
 
 // Country to currency mapping
-const COUNTRY_TO_CURRENCY: Record<string, Currency> = {
+const COUNTRY_CURRENCY: Record<string, string> = {
     US: 'USD',
     CA: 'CAD',
-    AT: 'EUR', BE: 'EUR', CY: 'EUR', EE: 'EUR', FI: 'EUR', FR: 'EUR', DE: 'EUR',
-    GR: 'EUR', IE: 'EUR', IT: 'EUR', LV: 'EUR', LT: 'EUR', LU: 'EUR', MT: 'EUR',
-    NL: 'EUR', PT: 'EUR', SK: 'EUR', SI: 'EUR', ES: 'EUR',
-    GB: 'GBP', UK: 'GBP',
     AU: 'AUD',
+    NZ: 'AUD',
+    // Eurozone countries
+    DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR',
+    BE: 'EUR', AT: 'EUR', PT: 'EUR', IE: 'EUR', FI: 'EUR',
+    GR: 'EUR', LU: 'EUR', SK: 'EUR', SI: 'EUR', EE: 'EUR',
+    LV: 'EUR', LT: 'EUR', MT: 'EUR', CY: 'EUR',
+    // UK
+    GB: 'GBP',
 };
 
-const DEFAULT_CURRENCY: Currency = 'USD';
-const GEO_CACHE_KEY = 'vg_geo_currency';
-const GEO_CACHE_EXPIRY = 24 * 60 * 60 * 1000;
+// Round to nice whole number price points
+const roundPrice = (price: number): number => {
+    // Round to nearest whole number
+    return Math.round(price);
+};
 
-function getCachedCurrency(): Currency | null {
-    try {
-        const cached = localStorage.getItem(GEO_CACHE_KEY);
-        if (cached) {
-            const data = JSON.parse(cached);
-            if (Date.now() - data.timestamp < GEO_CACHE_EXPIRY) {
-                return data.currency;
-            }
-        }
-    } catch (e) {}
-    return null;
-}
-
-function setCachedCurrency(currency: Currency): void {
-    try {
-        localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ currency, timestamp: Date.now() }));
-    } catch (e) {}
-}
-
-async function detectCountry(): Promise<string | null> {
-    try {
-        const response = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
-        if (response.ok) {
-            const data = await response.json();
-            return data.country_code || null;
-        }
-    } catch (e) {}
-    return null;
-}
-
-export async function detectUserCurrency(): Promise<Currency> {
-    const cached = getCachedCurrency();
-    if (cached) return cached;
+// Calculate prices for a currency
+const calculatePrices = (currencyCode: string) => {
+    const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
     
-    const country = await detectCountry();
-    const currency = country ? (COUNTRY_TO_CURRENCY[country] || DEFAULT_CURRENCY) : DEFAULT_CURRENCY;
-    setCachedCurrency(currency);
-    return currency;
-}
+    return {
+        starter: roundPrice(BASE_PRICES.starter * config.multiplier),
+        proEvent: roundPrice(BASE_PRICES.proEvent * config.multiplier),
+        unlimitedEvent: roundPrice(BASE_PRICES.unlimitedEvent * config.multiplier),
+        unlimited: roundPrice(BASE_PRICES.unlimited * config.multiplier),
+        symbol: config.symbol,
+    };
+};
 
-// React Hook
-export interface UseGeoPricingResult {
-    loading: boolean;
-    currency: Currency;
-    prices: GeoPrice;
-}
-
-export function useGeoPricing(): UseGeoPricingResult {
+// Geo pricing hook
+export const useGeoPricing = () => {
     const [loading, setLoading] = useState(true);
-    const [currency, setCurrency] = useState<Currency>('USD');
+    const [currency, setCurrency] = useState('USD');
+    const [countryCode, setCountryCode] = useState('US');
+    const [prices, setPrices] = useState(calculatePrices('USD'));
 
     useEffect(() => {
-        let mounted = true;
-        detectUserCurrency().then((detected) => {
-            if (mounted) {
-                setCurrency(detected);
+        const detectLocation = async () => {
+            try {
+                // Try to get country from various sources
+                let detectedCountry = 'US';
+
+                // Method 1: Check if we have it cached
+                const cached = localStorage.getItem('vg_detected_country');
+                if (cached) {
+                    detectedCountry = cached;
+                } else {
+                    // Method 2: Use timezone to guess country
+                    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    if (timezone.startsWith('America/Toronto') || timezone.startsWith('America/Vancouver') || timezone.startsWith('America/Montreal')) {
+                        detectedCountry = 'CA';
+                    } else if (timezone.startsWith('Australia/')) {
+                        detectedCountry = 'AU';
+                    } else if (timezone.startsWith('Europe/London')) {
+                        detectedCountry = 'GB';
+                    } else if (timezone.startsWith('Europe/')) {
+                        detectedCountry = 'DE'; // Default to EUR for Europe
+                    } else if (timezone.startsWith('Pacific/Auckland')) {
+                        detectedCountry = 'NZ';
+                    }
+
+                    // Method 3: Try IP geolocation (free service)
+                    try {
+                        const response = await fetch('https://ipapi.co/json/', { 
+                            signal: AbortSignal.timeout(3000) 
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.country_code) {
+                                detectedCountry = data.country_code;
+                            }
+                        }
+                    } catch {
+                        // Ignore geo detection errors, use timezone fallback
+                    }
+
+                    // Cache for future visits
+                    localStorage.setItem('vg_detected_country', detectedCountry);
+                }
+
+                setCountryCode(detectedCountry);
+                const detectedCurrency = COUNTRY_CURRENCY[detectedCountry] || 'USD';
+                setCurrency(detectedCurrency);
+                setPrices(calculatePrices(detectedCurrency));
+            } catch (error) {
+                // Default to USD on any error
+                console.warn('Geo detection failed, defaulting to USD');
+            } finally {
                 setLoading(false);
             }
-        });
-        return () => { mounted = false; };
+        };
+
+        detectLocation();
     }, []);
 
-    return { loading, currency, prices: GEO_PRICES[currency] };
-}
+    return {
+        loading,
+        currency,
+        countryCode,
+        prices,
+    };
+};
+
+// Export price table for Stripe configuration reference
+// Calculated: USD × exchange_rate × 1.05 (buffer), rounded to whole numbers
+export const STRIPE_PRICES = {
+    USD: {
+        starter: 9,
+        proEvent: 19,
+        unlimitedEvent: 49,
+        unlimited: 199,
+    },
+    CAD: {
+        starter: 13,    // $9 × 1.36 × 1.05 = $12.85 → $13
+        proEvent: 27,   // $19 × 1.36 × 1.05 = $27.13 → $27
+        unlimitedEvent: 70,  // $49 × 1.36 × 1.05 = $69.97 → $70
+        unlimited: 285, // $199 × 1.36 × 1.05 = $284.15 → $285
+    },
+    AUD: {
+        starter: 15,    // $9 × 1.53 × 1.05 = $14.46 → $15
+        proEvent: 31,   // $19 × 1.53 × 1.05 = $30.52 → $31
+        unlimitedEvent: 79,  // $49 × 1.53 × 1.05 = $78.72 → $79
+        unlimited: 320, // $199 × 1.53 × 1.05 = $319.79 → $320
+    },
+    EUR: {
+        starter: 9,     // $9 × 0.92 × 1.05 = €8.69 → €9
+        proEvent: 19,   // $19 × 0.92 × 1.05 = €18.35 → €19
+        unlimitedEvent: 49,  // $49 × 0.92 × 1.05 = €47.33 → €49
+        unlimited: 195, // $199 × 0.92 × 1.05 = €192.28 → €195
+    },
+    GBP: {
+        starter: 8,     // $9 × 0.79 × 1.05 = £7.47 → £8
+        proEvent: 16,   // $19 × 0.79 × 1.05 = £15.76 → £16
+        unlimitedEvent: 41,  // $49 × 0.79 × 1.05 = £40.64 → £41
+        unlimited: 165, // $199 × 0.79 × 1.05 = £165.07 → £165
+    },
+};
+
+export default useGeoPricing;

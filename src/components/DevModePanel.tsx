@@ -19,9 +19,10 @@ interface DevModePanelProps {
 
 const TIERS = [
     { id: 'free', name: 'Free', color: 'bg-slate-100 text-slate-700', features: ['25 responses', '7 days', 'Basic analytics'] },
-    { id: 'starter', name: 'Starter ($4.99)', color: 'bg-blue-100 text-blue-700', features: ['500 responses', '30 days', 'Full analytics'] },
-    { id: 'pro_event', name: 'Pro Event ($9.99)', color: 'bg-purple-100 text-purple-700', features: ['2,000 responses', '90 days', 'All features'] },
-    { id: 'unlimited', name: 'Unlimited ($29.99)', color: 'bg-amber-100 text-amber-700', features: ['∞ responses', '1 year', 'Notifications'] },
+    { id: 'starter', name: 'Starter ($9)', color: 'bg-blue-100 text-blue-700', features: ['500 responses', '30 days', 'Full analytics'] },
+    { id: 'pro_event', name: 'Pro Event ($19)', color: 'bg-purple-100 text-purple-700', features: ['2,000 responses', '30 days', 'All features'] },
+    { id: 'unlimited_event', name: 'Unlimited Event ($49)', color: 'bg-orange-100 text-orange-700', features: ['10,000 responses', '30 days', 'ALL features'] },
+    { id: 'unlimited', name: 'Unlimited ($199)', color: 'bg-amber-100 text-amber-700', features: ['∞ responses', '1 year', 'Notifications'] },
 ];
 
 const DevModePanel: React.FC<DevModePanelProps> = ({ onTierChange }) => {

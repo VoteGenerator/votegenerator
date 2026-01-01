@@ -21,20 +21,22 @@ const getExpirationDate = (days: number): string => {
 
 const FEATURE_COMPARISON = [
     { category: 'Limits', icon: BarChart3, features: [
-        { name: 'Responses per poll', free: '50', starter: '500', proEvent: '2,000', unlimited: '10,000' },
-        { name: 'Poll duration', free: '7 days', starter: '30 days', proEvent: '60 days', unlimited: '1 year' },
-        { name: 'Polls included', free: '1', starter: '1 poll', proEvent: '3 polls', unlimited: 'Unlimited' },
+        { name: 'Responses per poll', free: '50', starter: '500', proEvent: '2,000', unlimitedEvent: '10,000', unlimited: '10,000' },
+        { name: 'Poll duration', free: '7 days', starter: '30 days', proEvent: '30 days', unlimitedEvent: '30 days', unlimited: '1 year' },
+        { name: 'Polls included', free: '1', starter: '1 poll', proEvent: '3 polls', unlimitedEvent: '1 poll', unlimited: 'Unlimited' },
     ]},
     { category: 'Poll Types', icon: CheckSquare, features: [
-        { name: 'Multiple Choice', free: true, starter: true, proEvent: true, unlimited: true },
-        { name: 'Visual Poll (images)', free: false, starter: false, proEvent: true, unlimited: true },
+        { name: 'Multiple Choice', free: true, starter: true, proEvent: true, unlimitedEvent: true, unlimited: true },
+        { name: 'Visual Poll (images)', free: false, starter: false, proEvent: true, unlimitedEvent: true, unlimited: true },
     ]},
     { category: 'Export', icon: Share2, features: [
-        { name: 'Export CSV', free: false, starter: true, proEvent: true, unlimited: true },
-        { name: 'Export PDF & PNG', free: false, starter: false, proEvent: true, unlimited: true },
+        { name: 'Export CSV', free: false, starter: true, proEvent: true, unlimitedEvent: true, unlimited: true },
+        { name: 'Export PDF & PNG', free: false, starter: false, proEvent: true, unlimitedEvent: true, unlimited: true },
     ]},
     { category: 'Customization', icon: Palette, features: [
-        { name: 'Remove branding', free: false, starter: false, proEvent: true, unlimited: true },
+        { name: 'Remove branding', free: false, starter: false, proEvent: true, unlimitedEvent: true, unlimited: true },
+        { name: 'PIN protection', free: false, starter: false, proEvent: false, unlimitedEvent: true, unlimited: true },
+        { name: 'Custom branding', free: false, starter: false, proEvent: false, unlimitedEvent: true, unlimited: true },
     ]},
 ];
 
@@ -64,7 +66,7 @@ function PricingPage(): React.ReactElement {
             activeDays: 7,
             features: { 
                 responses: '50 responses', 
-                duration: '7 days active', 
+                duration: '7 days access', 
                 polls: '1 poll',
                 highlights: ['6 poll types', 'QR code sharing', 'Real-time results', 'Embed on your site'] 
             }
@@ -83,7 +85,7 @@ function PricingPage(): React.ReactElement {
             activeDays: 30,
             features: { 
                 responses: '500 responses', 
-                duration: '30 days active', 
+                duration: '30 days access', 
                 polls: '1 poll included',
                 highlights: ['Everything in Free', 'Export to CSV', 'Device breakdown stats', 'No ads'] 
             }
@@ -100,12 +102,32 @@ function PricingPage(): React.ReactElement {
             ctaLink: '/.netlify/functions/vg-checkout?tier=pro_event', 
             badge: 'One-Time',
             pollCount: 3,
-            activeDays: 60,
+            activeDays: 30,
             features: { 
                 responses: '2,000 responses/poll', 
-                duration: '60 days per poll', 
+                duration: '30 days access', 
                 polls: '3 polls included',
                 highlights: ['Everything in Starter', 'Visual Poll (images)', 'Export PDF & PNG', 'Remove VG branding', 'Custom short link'] 
+            }
+        },
+        { 
+            id: 'unlimited_event', 
+            name: 'Unlimited Event', 
+            tagline: 'All features, one event', 
+            price: prices.unlimitedEvent, 
+            periodNote: '30 days access', 
+            icon: Sparkles, 
+            color: 'orange', 
+            cta: 'Get Unlimited Event', 
+            ctaLink: '/.netlify/functions/vg-checkout?tier=unlimited_event', 
+            badge: 'Try Everything',
+            pollCount: 1,
+            activeDays: 30,
+            features: { 
+                responses: '10,000 responses', 
+                duration: '30 days access', 
+                polls: '1 poll included',
+                highlights: ['ALL premium features', 'PIN protection', 'Custom branding', 'Team tokens', 'Priority support', 'Perfect for trying Unlimited'] 
             }
         },
         { 
@@ -134,6 +156,7 @@ function PricingPage(): React.ReactElement {
         slate: { bg: 'bg-slate-100', text: 'text-slate-600', button: 'bg-slate-800 hover:bg-slate-900 text-white', light: 'bg-slate-50', border: 'border-slate-200' },
         blue: { bg: 'bg-blue-100', text: 'text-blue-600', button: 'bg-blue-600 hover:bg-blue-700 text-white', light: 'bg-blue-50', border: 'border-blue-200' },
         purple: { bg: 'bg-purple-100', text: 'text-purple-600', button: 'bg-purple-600 hover:bg-purple-700 text-white', light: 'bg-purple-50', border: 'border-purple-200' },
+        orange: { bg: 'bg-orange-100', text: 'text-orange-600', button: 'bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white', light: 'bg-orange-50', border: 'border-orange-200' },
         amber: { bg: 'bg-amber-100', text: 'text-amber-600', button: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white', light: 'bg-amber-50', border: 'border-amber-200' },
     };
 
@@ -156,6 +179,15 @@ function PricingPage(): React.ReactElement {
                     <div className="text-left">
                         <p className="text-emerald-900 font-bold">One-Time Payment • Not a Subscription</p>
                         <p className="text-emerald-700 text-sm">Pay once, use your poll credits anytime before expiration</p>
+                    </div>
+                </motion.div>
+                
+                {/* Try Risk-Free badge */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="inline-flex items-center gap-3 px-6 py-3 bg-blue-50 border border-blue-200 rounded-xl mb-4 ml-0 md:ml-4">
+                    <Shield className="text-blue-600" size={24} />
+                    <div className="text-left">
+                        <p className="text-blue-900 font-bold">Try It Risk-Free</p>
+                        <p className="text-blue-700 text-sm">7-day refund if it's not the right fit*</p>
                     </div>
                 </motion.div>
                 
@@ -367,9 +399,10 @@ function PricingPage(): React.ReactElement {
                 <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">Frequently Asked Questions</h2>
                 <div className="space-y-4">
                     {[
-                        { q: 'Are these really one-time payments?', a: 'Yes! Starter, Pro Event, and Unlimited are all one-time payments. No subscriptions, no recurring charges, no auto-renewal.' },
-                        { q: 'What does "3 polls included" mean for Pro Event?', a: 'Pro Event gives you 3 poll credits. Each poll you create uses 1 credit. Your polls stay active for 60 days each, and you can create them anytime before your plan expires.' },
-                        { q: 'When does my plan expire?', a: 'Starter: 30 days from purchase. Pro Event: 60 days. Unlimited: 1 year. The expiration date shown is based on if you purchase today.' },
+                        { q: 'Are these really one-time payments?', a: 'Yes! All plans are one-time payments. No subscriptions, no recurring charges, no auto-renewal.' },
+                        { q: 'What does "3 polls included" mean for Pro Event?', a: 'Pro Event gives you 3 poll credits. Each poll you create uses 1 credit. Your polls stay active for 30 days each, and you can create them anytime before your plan expires.' },
+                        { q: 'When does my plan expire?', a: 'Starter, Pro Event, and Unlimited Event all give you 30 days access. Unlimited gives you 1 year access.' },
+                        { q: 'Can I get a refund?', a: 'Yes! Try it risk-free. You have 7 days to try VoteGenerator. If it doesn\'t meet your needs before your poll takes off, we\'ll give you a full refund. Refunds are available for polls with fewer than 50 responses.' },
                         { q: 'What currency will I be charged in?', a: `Prices are shown in ${currency}. Stripe handles the secure checkout.` },
                         { q: 'Do I need to create an account?', a: 'Nope! VoteGenerator is privacy-first. No signup, no email required. You\'ll get a unique dashboard link after purchase.' },
                     ].map((faq, i) => (

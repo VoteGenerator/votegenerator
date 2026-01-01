@@ -696,38 +696,36 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             const compressedFile = await compressToTargetSize(file, 2);
                                                             console.log(`Compressed: ${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)}`);
                                                             
-                                                            // Convert to base64
-                                                            const reader = new FileReader();
-                                                            reader.onload = async () => {
-                                                                try {
-                                                                    const base64 = reader.result as string;
-                                                                    
-                                                                    // Upload to Cloudinary via API
-                                                                    const response = await fetch('/.netlify/functions/vg-upload-image', {
+                                                            // Upload directly to Cloudinary (unsigned preset)
+                                                            const formData = new FormData();
+                                                            formData.append('file', compressedFile);
+                                                            formData.append('upload_preset', 'votegenerator');
+                                                            
+                                                            try {
+                                                                console.log('Uploading to Cloudinary with preset: votegenerator');
+                                                                const response = await fetch(
+                                                                    'https://api.cloudinary.com/v1_1/dqp5iwehp/image/upload',
+                                                                    {
                                                                         method: 'POST',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ image: base64 })
-                                                                    });
-                                                                    
-                                                                    if (response.ok) {
-                                                                        const data = await response.json();
-                                                                        setImageOptions([...imageOptions, { url: data.url, label: '' }]);
-                                                                    } else {
-                                                                        const err = await response.json();
-                                                                        setError(err.error || 'Failed to upload image');
+                                                                        body: formData
                                                                     }
-                                                                } catch (err) {
-                                                                    console.error('Upload error:', err);
-                                                                    setError('Failed to upload image. Please try again.');
-                                                                } finally {
-                                                                    setUploadingImage(false);
+                                                                );
+                                                                
+                                                                if (response.ok) {
+                                                                    const data = await response.json();
+                                                                    console.log('Upload success:', data.secure_url);
+                                                                    setImageOptions([...imageOptions, { url: data.secure_url, label: '' }]);
+                                                                } else {
+                                                                    const err = await response.json();
+                                                                    console.error('Cloudinary error:', err);
+                                                                    setError(err.error?.message || 'Failed to upload image');
                                                                 }
-                                                            };
-                                                            reader.onerror = () => {
-                                                                setError('Failed to read image file');
+                                                            } catch (err) {
+                                                                console.error('Upload error:', err);
+                                                                setError('Failed to upload image. Please try again.');
+                                                            } finally {
                                                                 setUploadingImage(false);
-                                                            };
-                                                            reader.readAsDataURL(compressedFile);
+                                                            }
                                                             
                                                         } catch (err) {
                                                             console.error('Compression error:', err);

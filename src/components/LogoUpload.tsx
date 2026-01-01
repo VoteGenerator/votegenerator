@@ -39,7 +39,7 @@ const LogoUpload: React.FC<Props> = ({
         // Note: folder and transformation should be configured in the preset itself
 
         // Cloud name should match your Cloudinary account
-        const cloudName = 'votegenerator';
+        const cloudName = 'dqp5iwehp';
 
         try {
             console.log('Uploading to Cloudinary with preset: votegenerator_logo');
@@ -55,10 +55,20 @@ const LogoUpload: React.FC<Props> = ({
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Cloudinary error response:', errorData);
                 
-                if (response.status === 401 || response.status === 400) {
-                    throw new Error('CLOUDINARY_SETUP_REQUIRED');
+                const errorMsg = errorData.error?.message || '';
+                
+                // Check for unsigned preset issues
+                if (errorMsg.includes('API key') || response.status === 401) {
+                    console.error('Preset is likely set to SIGNED instead of UNSIGNED');
+                    throw new Error('CLOUDINARY_PRESET_SIGNED');
                 }
-                throw new Error(`Upload failed: ${errorData.error?.message || response.statusText}`);
+                
+                if (errorMsg.includes('preset') || response.status === 400) {
+                    console.error('Upload preset not found');
+                    throw new Error('CLOUDINARY_PRESET_MISSING');
+                }
+                
+                throw new Error(`Upload failed: ${errorMsg || response.statusText}`);
             }
 
             const data = await response.json();
@@ -66,10 +76,7 @@ const LogoUpload: React.FC<Props> = ({
             return data.secure_url;
         } catch (error: any) {
             console.error('Cloudinary upload error:', error);
-            if (error.message === 'CLOUDINARY_SETUP_REQUIRED') {
-                throw error;
-            }
-            return null;
+            throw error;
         }
     };
 
@@ -110,8 +117,10 @@ const LogoUpload: React.FC<Props> = ({
             }
         } catch (error: any) {
             setIsUploading(false);
-            if (error.message === 'CLOUDINARY_SETUP_REQUIRED') {
-                setError('Logo upload is not configured yet. Please contact support or check Cloudinary setup.');
+            if (error.message === 'CLOUDINARY_PRESET_SIGNED') {
+                setError('Upload preset must be UNSIGNED in Cloudinary. Check dashboard settings.');
+            } else if (error.message === 'CLOUDINARY_PRESET_MISSING') {
+                setError('Upload preset "votegenerator_logo" not found in Cloudinary.');
             } else {
                 setError('Failed to upload image. Please try again.');
             }

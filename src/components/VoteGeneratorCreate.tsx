@@ -265,7 +265,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 tier: effectiveTier,
                 theme: selectedTheme,
                 // Custom branding (Pro Event & Unlimited)
-                logo: pollLogo || undefined,
+                logoUrl: pollLogo || undefined,
                 // For paid tiers: allow starting in draft mode
                 status: (purchasedTier && startAsDraft) ? 'draft' : 'live',
                 // Security: PIN (Pro Event & Unlimited)

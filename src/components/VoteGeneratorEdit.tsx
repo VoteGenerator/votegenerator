@@ -29,8 +29,10 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     const [allowMultiple, setAllowMultiple] = useState(poll.settings?.allowMultiple || false);
     const [buttonText, setButtonText] = useState(poll.buttonText || 'Submit Vote');
     const [selectedTheme, setSelectedTheme] = useState(poll.theme || 'default');
-    const [pollLogo, setPollLogo] = useState<string | null>(poll.logo || null);
-    const [status, setStatus] = useState<'draft' | 'live'>(poll.status || 'live');
+    const [pollLogo, setPollLogo] = useState<string | null>(poll.logoUrl || null);
+    const [status, setStatus] = useState<'draft' | 'live'>(
+        (poll.status === 'draft' || poll.status === 'live') ? poll.status : 'live'
+    );
     
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,7 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                         description: description.trim() || undefined,
                         buttonText: buttonText || 'Submit Vote',
                         theme: selectedTheme,
-                        logo: pollLogo,
+                        logoUrl: pollLogo,
                         status: status,
                         settings: {
                             ...poll.settings,

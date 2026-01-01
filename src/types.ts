@@ -64,7 +64,7 @@ export interface Poll {
     adminKey?: string;
     
     // Tier and premium features
-    tier?: 'free' | 'starter' | 'pro_event' | 'unlimited';
+    tier?: 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
     maxResponses?: number;
     expiresAt?: string;
     

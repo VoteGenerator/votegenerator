@@ -12,8 +12,20 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw
+    Home, AlertTriangle, RefreshCw,
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
+
+// Poll type display helper
+const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+    multiple: { label: 'Multiple Choice', icon: CheckSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
+    ranked: { label: 'Ranked', icon: ListOrdered, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    pairwise: { label: 'This or That', icon: ArrowLeftRight, color: 'text-orange-600', bg: 'bg-orange-50' },
+    meeting: { label: 'Meeting', icon: Calendar, color: 'text-amber-600', bg: 'bg-amber-50' },
+    rating: { label: 'Rating', icon: SlidersHorizontal, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    rsvp: { label: 'RSVP', icon: Users, color: 'text-sky-600', bg: 'bg-sky-50' },
+    image: { label: 'Visual', icon: ImageIcon, color: 'text-pink-600', bg: 'bg-pink-50' },
+};
 
 // ============================================================================
 // Types
@@ -32,7 +44,7 @@ interface UserPoll {
 
 interface UserSession {
     dashboardToken: string;
-    tier: 'free' | 'starter' | 'pro_event' | 'unlimited';
+    tier: 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
     expiresAt?: string;
     polls: UserPoll[];
     createdAt: string;
@@ -87,7 +99,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '500 responses', included: true },
-            { name: '30 days active', included: true },
+            { name: '30 days access', included: true },
             { name: 'Export to CSV', included: true },
             { name: 'Visual polls', included: false },
         ]
@@ -99,13 +111,31 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: 3,
-        activeDays: 60,
+        activeDays: 30,
         requiresActivation: true,
         features: [
             { name: 'All poll types', included: true },
             { name: '2,000 responses', included: true },
-            { name: '60 days active', included: true },
+            { name: '30 days access', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
+        ]
+    },
+    unlimited_event: {
+        label: 'Unlimited Event',
+        gradient: 'from-amber-400 to-orange-400',
+        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
+        headerBg: 'bg-amber-50',
+        icon: <Sparkles size={16} />,
+        maxPolls: 1,
+        activeDays: 30,
+        requiresActivation: true,
+        features: [
+            { name: 'All poll types', included: true },
+            { name: '10,000 responses', included: true },
+            { name: '30 days access', included: true },
+            { name: 'All features included', included: true },
+            { name: 'PIN protection', included: true },
+            { name: 'Custom branding', included: true },
         ]
     },
     unlimited: {
@@ -120,7 +150,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '10,000 responses/poll', included: true },
-            { name: '1 year active', included: true },
+            { name: '1 year access', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
             { name: 'Team tokens (10)', included: true },
@@ -155,7 +185,7 @@ const AdminDashboard: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Support both long and short format
-    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited' | null;
+    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited' | null;
 
     // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
     const generateDashboardToken = (sessionId: string): string => {
@@ -224,7 +254,7 @@ const AdminDashboard: React.FC = () => {
                 // Determine tier (default to unlimited if not provided since email doesn't include tier)
                 // We'll fetch the real tier from backend later, for now assume unlimited
                 const tier = urlTier || 'unlimited';
-                const days = tier === 'unlimited' ? 365 : tier === 'pro_event' ? 60 : 30;
+                const days = tier === 'unlimited' ? 365 : tier === 'unlimited_event' ? 30 : tier === 'pro_event' ? 30 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
                 // Create new session
@@ -349,6 +379,16 @@ const AdminDashboard: React.FC = () => {
         // Fallback to current URL
         return window.location.href;
     };
+    
+    // Short admin link (like tinyurl)
+    const getShortAdminLink = () => {
+        const sessionId = session?.sessionId;
+        if (sessionId) {
+            // Use short format: /admin?s=SESSION_ID
+            return `${window.location.origin}/admin?s=${sessionId}`;
+        }
+        return getDashboardUrl();
+    };
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
         const url = type === 'admin'
@@ -470,7 +510,7 @@ const AdminDashboard: React.FC = () => {
     const config = TIER_CONFIG[tier];
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isUnlimited = tier === 'unlimited';
+    const isUnlimited = tier === 'unlimited' || tier === 'unlimited_event';
     const showSearch = isUnlimited && polls.length > 5;
 
     return (
@@ -539,11 +579,15 @@ const AdminDashboard: React.FC = () => {
                                             <p className="text-sm text-amber-600 mb-2">Bookmark this — it's the only way to access your polls.</p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-xs text-amber-700 font-mono truncate">{getDashboardUrl()}</code>
+                                                <code className="text-sm text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={handleCopyDashboardLink} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
+                                    <button onClick={() => {
+                                        navigator.clipboard.writeText(getShortAdminLink());
+                                        setCopiedDashboard(true);
+                                        setTimeout(() => setCopiedDashboard(false), 2000);
+                                    }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
                                         {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
                                         {copiedDashboard ? 'Copied!' : 'Copy'}
                                     </button>
@@ -676,18 +720,18 @@ const AdminDashboard: React.FC = () => {
                                         <Plus size={22} /> Create New Poll
                                     </button>
                                     
-                                    {/* Quick tips */}
+                                    {/* What to do next */}
                                     <div className="mt-10 pt-8 border-t border-slate-100">
-                                        <p className="text-xs text-slate-400 mb-4 font-medium">QUICK TIPS</p>
-                                        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
-                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
-                                                <Zap size={14} className="text-amber-500" /> Instant results
+                                        <p className="text-xs text-slate-400 mb-4 font-medium">WHAT TO DO NEXT</p>
+                                        <div className="flex flex-wrap justify-center gap-3 text-sm">
+                                            <span className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full border border-indigo-200 font-medium">
+                                                <span className="w-5 h-5 bg-indigo-600 text-white rounded-full text-xs flex items-center justify-center">1</span> Create a poll
                                             </span>
-                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
-                                                <Users size={14} className="text-blue-500" /> Share anywhere
+                                            <span className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-4 py-2 rounded-full border border-purple-200 font-medium">
+                                                <span className="w-5 h-5 bg-purple-600 text-white rounded-full text-xs flex items-center justify-center">2</span> Share the link
                                             </span>
-                                            <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200">
-                                                <Shield size={14} className="text-emerald-500" /> Privacy first
+                                            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full border border-emerald-200 font-medium">
+                                                <span className="w-5 h-5 bg-emerald-600 text-white rounded-full text-xs flex items-center justify-center">3</span> Collect responses
                                             </span>
                                         </div>
                                     </div>
@@ -704,21 +748,30 @@ const AdminDashboard: React.FC = () => {
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.03 }}
-                                                className={`bg-white rounded-xl border p-5 hover:shadow-md transition ${
-                                                    isDraft ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'
+                                                className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
+                                                    isDraft 
+                                                        ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                        : 'border-slate-200 hover:border-indigo-200'
                                                 }`}
                                             >
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <h3 className="font-semibold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <h3 className="font-bold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                            {/* Poll Type Badge */}
+                                                            {poll.type && POLL_TYPE_CONFIG[poll.type] && (
+                                                                <span className={`px-2 py-0.5 ${POLL_TYPE_CONFIG[poll.type].bg} ${POLL_TYPE_CONFIG[poll.type].color} text-xs font-bold rounded-full flex items-center gap-1`}>
+                                                                    {React.createElement(POLL_TYPE_CONFIG[poll.type].icon, { size: 12 })}
+                                                                    {POLL_TYPE_CONFIG[poll.type].label}
+                                                                </span>
+                                                            )}
                                                             {isDraft && (
                                                                 <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
                                                                     <FileEdit size={12} /> Draft
                                                                 </span>
                                                             )}
                                                             {!isDraft && config.requiresActivation && (
-                                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1 animate-pulse">
                                                                     <Rocket size={12} /> Live
                                                                 </span>
                                                             )}
@@ -754,10 +807,11 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}
-                                                            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition"
-                                                            title={isDraft ? "Preview & Edit" : "Open admin view"}
+                                                            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
+                                                            title={isDraft ? "Preview & Edit" : "Manage Poll"}
                                                         >
-                                                            <ExternalLink size={18} />
+                                                            <ExternalLink size={16} />
+                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
@@ -817,23 +871,6 @@ const AdminDashboard: React.FC = () => {
                                 )}
                             </>
                         )}
-
-                        {/* Feature Cards */}
-                        <div className="grid grid-cols-3 gap-4 mt-8">
-                            {[
-                                { icon: BarChart3, title: '7 Poll Types', desc: 'Multiple choice to visual', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                                { icon: Users, title: 'Real-time Results', desc: 'Watch votes live', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { icon: Zap, title: 'Instant Setup', desc: 'No signup for voters', color: 'text-amber-600', bg: 'bg-amber-50' },
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 text-center">
-                                    <div className={`w-12 h-12 ${item.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}>
-                                        <item.icon size={24} className={item.color} />
-                                    </div>
-                                    <h3 className="font-bold text-slate-800 text-sm">{item.title}</h3>
-                                    <p className="text-xs text-slate-500 mt-1">{item.desc}</p>
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Right Sidebar */}
@@ -900,6 +937,7 @@ const AdminDashboard: React.FC = () => {
                         {/* Plan Card - Collapsible */}
                         <div className={`rounded-2xl border-2 overflow-hidden ${
                             tier === 'unlimited' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
+                            tier === 'unlimited_event' ? 'bg-gradient-to-br from-orange-50 via-white to-amber-50 border-orange-200' :
                             tier === 'pro_event' ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-emerald-200' :
                             tier === 'starter' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-blue-200' :
                             'bg-white border-slate-200'
@@ -1154,7 +1192,7 @@ const AdminDashboard: React.FC = () => {
                     <GoLiveModalInline
                         isOpen={!!showGoLiveModal}
                         pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
-                        tier={tier as 'starter' | 'pro_event'}
+                        tier={tier as 'starter' | 'pro_event' | 'unlimited_event'}
                         pollsUsed={livePolls.length}
                         pollsMax={config.maxPolls}
                         activeDays={config.activeDays}
@@ -1268,7 +1306,7 @@ const PinSetupModalInline: React.FC<{
 const GoLiveModalInline: React.FC<{
     isOpen: boolean;
     pollTitle: string;
-    tier: 'starter' | 'pro_event';
+    tier: 'starter' | 'pro_event' | 'unlimited_event';
     pollsUsed: number;
     pollsMax: number;
     activeDays: number;
@@ -1277,7 +1315,7 @@ const GoLiveModalInline: React.FC<{
 }> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
     const [confirmed, setConfirmed] = useState(false);
     const isLastPoll = pollsMax - pollsUsed === 1;
-    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-600';
+    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : tier === 'unlimited_event' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
 
     if (!isOpen) return null;
 

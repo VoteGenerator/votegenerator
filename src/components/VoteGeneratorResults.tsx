@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { RunoffResult, Poll } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 
@@ -71,14 +71,20 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
 
-    const barChartData = (() => {
+    const barChartData: Record<string, number> = (() => {
         if (isBudget && budgetStats) {
             const data: Record<string, number> = {};
-            Object.entries(budgetStats).forEach(([id, stat]) => data[id] = stat.totalValue);
+            Object.entries(budgetStats).forEach(([id, stat]) => {
+                const value = (stat as any).totalValue ?? (stat as any).totalSpent ?? 0;
+                data[id] = typeof value === 'number' ? value : 0;
+            });
             return data;
         }
         if (simpleCounts) return simpleCounts;
-        if (isRanked && rounds.length > 0) return rounds[0].counts;
+        if (isRanked && rounds.length > 0) {
+            const firstRoundCounts = rounds[0].counts;
+            return firstRoundCounts ?? {};
+        }
         const counts: Record<string, number> = {};
         poll.options.forEach(o => counts[o.id] = 0);
         return counts;
@@ -99,6 +105,88 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     const meetingWinnerId = isMeeting ? Object.keys(meetingScoreData).reduce((a, b) => meetingScoreData[a] > meetingScoreData[b] ? a : b, poll.options[0].id) : winnerId;
     const activeWinnerId = isMeeting ? meetingWinnerId : winnerId;
+
+    // === FREE ANALYTICS COMPUTATIONS ===
+    const [showInsights, setShowInsights] = useState(false);
+    
+    // Device breakdown (computed from user agent in votes)
+    const deviceStats = useMemo(() => {
+        if (!votes.length) return { mobile: 0, desktop: 0, tablet: 0 };
+        let mobile = 0, desktop = 0, tablet = 0;
+        votes.forEach(v => {
+            const ua = v.userAgent || v.device || '';
+            if (/iPad|Android(?!.*Mobile)|Tablet/i.test(ua)) tablet++;
+            else if (/Mobile|iPhone|Android/i.test(ua)) mobile++;
+            else desktop++;
+        });
+        return { mobile, desktop, tablet };
+    }, [votes]);
+
+    // Hourly distribution (peak voting times)
+    const hourlyStats = useMemo(() => {
+        if (!votes.length) return [];
+        const hours: Record<number, number> = {};
+        for (let i = 0; i < 24; i++) hours[i] = 0;
+        votes.forEach(v => {
+            const time = getVoteTime(v);
+            const hour = new Date(time).getHours();
+            hours[hour]++;
+        });
+        return Object.entries(hours).map(([h, count]) => ({ hour: parseInt(h), count }));
+    }, [votes]);
+
+    const peakHour = useMemo(() => {
+        if (!hourlyStats.length) return null;
+        const peak = hourlyStats.reduce((a, b) => a.count > b.count ? a : b);
+        return peak.count > 0 ? peak : null;
+    }, [hourlyStats]);
+
+    // Geographic breakdown
+    const geoStats = useMemo(() => {
+        if (!votes.length) return [];
+        const countries: Record<string, number> = {};
+        votes.forEach(v => {
+            const country = v.country || v.geo?.country || 'Unknown';
+            countries[country] = (countries[country] || 0) + 1;
+        });
+        return Object.entries(countries)
+            .map(([country, count]) => ({ country: getCountryName(country), count, percentage: Math.round((count / votes.length) * 100) }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+    }, [votes]);
+
+    // Response timeline (votes per day)
+    const timelineStats = useMemo(() => {
+        if (!votes.length) return [];
+        const days: Record<string, number> = {};
+        votes.forEach(v => {
+            const time = getVoteTime(v);
+            const day = new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            days[day] = (days[day] || 0) + 1;
+        });
+        return Object.entries(days).map(([day, count]) => ({ day, count }));
+    }, [votes]);
+
+    // Recent momentum (last 24h vs previous 24h)
+    const momentum = useMemo(() => {
+        if (!votes.length) return null;
+        const now = Date.now();
+        const last24h = votes.filter(v => now - getVoteTime(v) < 24 * 60 * 60 * 1000).length;
+        const prev24h = votes.filter(v => {
+            const age = now - getVoteTime(v);
+            return age >= 24 * 60 * 60 * 1000 && age < 48 * 60 * 60 * 1000;
+        }).length;
+        if (prev24h === 0 && last24h === 0) return null;
+        const change = prev24h === 0 ? 100 : Math.round(((last24h - prev24h) / prev24h) * 100);
+        return { last24h, prev24h, change };
+    }, [votes]);
+
+    // Format hour for display
+    const formatHour = (h: number) => {
+        if (h === 0) return '12 AM';
+        if (h === 12) return '12 PM';
+        return h < 12 ? `${h} AM` : `${h - 12} PM`;
+    };
 
     const CHART_COLORS = [
         '#6366f1', '#ec4899', '#06b6d4', '#84cc16', 
@@ -178,13 +266,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         const canvasHeight = 400;
         const roundWidth = 150;
         const gap = 10;
-        const firstRoundTotal = Object.values(rounds[0].counts).reduce((a, b) => a + b, 0);
+        const firstCounts: Record<string, number> = rounds[0].counts || {};
+        const firstRoundTotal = Object.values(firstCounts).reduce((a: number, b: number) => a + b, 0);
 
         rounds.forEach((round, roundIdx) => {
             let yOffset = 0;
-            const sortedIds = Object.keys(round.counts).sort((a,b) => round.counts[b] - round.counts[a]);
+            const counts: Record<string, number> = round.counts || {};
+            const sortedIds = Object.keys(counts).sort((a,b) => (counts[b] || 0) - (counts[a] || 0));
             sortedIds.forEach(id => {
-                const count = round.counts[id];
+                const count = counts[id] || 0;
                 const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; 
                 if (count >= 0) {
                     nodes.push({ id: `${roundIdx}-${id}`, optionId: id, round: roundIdx, value: count, x: roundIdx * roundWidth, y: yOffset, height: Math.max(height, 2), color: getHexColor(id) });
@@ -197,12 +287,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
             const currentRound = rounds[i];
             const nextRound = rounds[i+1];
             const eliminatedId = currentRound.eliminatedId;
-            const currentMap = currentRound.counts;
-            const nextMap = nextRound.counts;
+            const currentMap: Record<string, number> = currentRound.counts || {};
+            const nextMap: Record<string, number> = nextRound.counts || {};
 
             Object.keys(nextMap).forEach(id => {
                 const prevCount = currentMap[id] || 0;
-                const newCount = nextMap[id];
+                const newCount = nextMap[id] || 0;
                 const delta = newCount - prevCount;
                 if (prevCount > 0) {
                     links.push({ source: `${i}-${id}`, target: `${i+1}-${id}`, value: prevCount, color: getHexColor(id), opacity: 0.5 });
@@ -282,6 +372,220 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 }
             `}</style>
             <div className="space-y-6 print:space-y-4">
+            
+            {/* Results Summary Cards - Admin Only */}
+            {isAdmin && totalVotes > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Users size={16} className="text-indigo-500" />
+                            <span className="text-xs font-medium text-indigo-600">Total Responses</span>
+                        </div>
+                        <p className="text-2xl font-black text-indigo-900">{totalVotes}</p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
+                        <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp size={16} className="text-emerald-500" />
+                            <span className="text-xs font-medium text-emerald-600">Options</span>
+                        </div>
+                        <p className="text-2xl font-black text-emerald-900">{poll.options.length}</p>
+                    </div>
+                    
+                    {activeWinnerId && !isTie && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Trophy size={16} className="text-amber-500" />
+                                <span className="text-xs font-medium text-amber-600">{isMeeting ? 'Best Time' : 'Leading'}</span>
+                            </div>
+                            <p className="text-lg font-bold text-amber-900 truncate">{getOptionText(activeWinnerId)}</p>
+                            {simpleCounts && simpleCounts[activeWinnerId] !== undefined && (
+                                <p className="text-xs text-amber-600">{simpleCounts[activeWinnerId]} votes ({totalVotes > 0 ? Math.round((simpleCounts[activeWinnerId] / totalVotes) * 100) : 0}%)</p>
+                            )}
+                        </div>
+                    )}
+                    
+                    {isTie && tiedOptions.length > 0 && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Users size={16} className="text-amber-500" />
+                                <span className="text-xs font-medium text-amber-600">It's a Tie!</span>
+                            </div>
+                            <p className="text-sm font-bold text-amber-900">{tiedOptions.length} options with {topVoteCount} votes each</p>
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {/* Insights Panel - Admin Only */}
+            {isAdmin && totalVotes >= 3 && votes.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
+                    <button 
+                        onClick={() => setShowInsights(!showInsights)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Activity size={18} className="text-indigo-500" />
+                            <span className="font-semibold text-slate-700">Poll Insights</span>
+                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">Free Analytics</span>
+                        </div>
+                        {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                    </button>
+                    
+                    <AnimatePresence>
+                        {showInsights && (
+                            <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="border-t border-slate-100"
+                            >
+                                <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {/* Device Breakdown */}
+                                    <div className="bg-slate-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Smartphone size={14} className="text-blue-500" />
+                                            <span className="text-xs font-medium text-slate-600">Devices</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
+                                                <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
+                                                <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
+                                            </div>
+                                            {deviceStats.tablet > 0 && (
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span>Tablet</span>
+                                                    <span className="font-semibold">{deviceStats.tablet}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Peak Hour */}
+                                    <div className="bg-slate-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Clock size={14} className="text-purple-500" />
+                                            <span className="text-xs font-medium text-slate-600">Peak Time</span>
+                                        </div>
+                                        {peakHour ? (
+                                            <div>
+                                                <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
+                                                <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400">Not enough data</p>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Geographic */}
+                                    <div className="bg-slate-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Globe size={14} className="text-emerald-500" />
+                                            <span className="text-xs font-medium text-slate-600">Top Locations</span>
+                                        </div>
+                                        {geoStats.length > 0 ? (
+                                            <div className="space-y-1">
+                                                {geoStats.slice(0, 3).map(g => (
+                                                    <div key={g.country} className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1">
+                                                            {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
+                                                        </span>
+                                                        <span className="font-semibold">{g.percentage}%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400">No location data</p>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Momentum */}
+                                    <div className="bg-slate-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Zap size={14} className="text-amber-500" />
+                                            <span className="text-xs font-medium text-slate-600">24h Activity</span>
+                                        </div>
+                                        {momentum ? (
+                                            <div>
+                                                <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
+                                                <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                    {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400">Tracking activity...</p>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* Response Timeline */}
+                                {timelineStats.length > 1 && (
+                                    <div className="px-4 pb-4">
+                                        <div className="bg-slate-50 rounded-lg p-3">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <TrendingUp size={14} className="text-indigo-500" />
+                                                <span className="text-xs font-medium text-slate-600">Response Timeline</span>
+                                            </div>
+                                            <div className="flex items-end gap-1 h-16">
+                                                {timelineStats.map((t, i) => {
+                                                    const maxCount = Math.max(...timelineStats.map(s => s.count));
+                                                    const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
+                                                    return (
+                                                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                                            <div 
+                                                                className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
+                                                                style={{ height: `${Math.max(height, 4)}%` }}
+                                                                title={`${t.day}: ${t.count} votes`}
+                                                            />
+                                                            <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Hourly Distribution */}
+                                {hourlyStats.some(h => h.count > 0) && (
+                                    <div className="px-4 pb-4">
+                                        <div className="bg-slate-50 rounded-lg p-3">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Clock size={14} className="text-purple-500" />
+                                                <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
+                                            </div>
+                                            <div className="flex items-end gap-px h-12">
+                                                {hourlyStats.map((h, i) => {
+                                                    const maxCount = Math.max(...hourlyStats.map(s => s.count));
+                                                    const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
+                                                    return (
+                                                        <div 
+                                                            key={i} 
+                                                            className="flex-1 bg-purple-300 rounded-t transition-all hover:bg-purple-400 cursor-pointer"
+                                                            style={{ height: `${Math.max(height, 2)}%`, opacity: height > 0 ? 1 : 0.3 }}
+                                                            title={`${formatHour(h.hour)}: ${h.count} votes`}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="flex justify-between mt-1">
+                                                <span className="text-[9px] text-slate-400">12 AM</span>
+                                                <span className="text-[9px] text-slate-400">12 PM</span>
+                                                <span className="text-[9px] text-slate-400">11 PM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            )}
+            
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
                     {isMatrix && (
@@ -399,7 +703,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 <Users size={18} />
                                 <span className="font-semibold">{totalVotes} Total Voters</span>
                             </div>
-                            {isMeeting && (
+                            {isMeeting && meetingScoreData[activeWinnerId] !== undefined && (
                                 <div className="mt-2 text-indigo-200 text-sm">
                                     Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
                                 </div>
@@ -417,7 +721,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             {isBudget && budgetStats && budgetStats[activeWinnerId] && (
                                 <div className="mt-2 text-indigo-200 text-sm flex items-center justify-center gap-1">
                                     <DollarSign size={16} />
-                                    Total Value: ${budgetStats[activeWinnerId].totalValue.toLocaleString()} ({budgetStats[activeWinnerId].totalQuantity} purchased)
+                                    Total Value: ${(budgetStats[activeWinnerId].totalValue ?? 0).toLocaleString()} ({(budgetStats[activeWinnerId] as any).totalQuantity ?? budgetStats[activeWinnerId].purchaseCount ?? 0} purchased)
                                 </div>
                             )}
                         </div>
@@ -468,22 +772,24 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     transition={{ duration: 1, ease: "easeOut" }}
                                                     className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
                                                 />
-                                                {stats.count > 1 && (
+                                                {stats.count > 1 && typeof stats.stdDev === 'number' && (() => {
+                                                    const stdDev = stats.stdDev || 0;
+                                                    return (
                                                     <div 
                                                         className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
                                                         style={{ 
-                                                            left: `${Math.max(0, stats.average - stats.stdDev)}%`, 
-                                                            width: `${Math.min(100 - (stats.average - stats.stdDev), stats.stdDev * 2)}%`
+                                                            left: `${Math.max(0, stats.average - stdDev)}%`, 
+                                                            width: `${Math.min(100 - (stats.average - stdDev), stdDev * 2)}%`
                                                         }}
                                                     >
                                                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
                                                         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
                                                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
                                                     </div>
-                                                )}
+                                                )})()}
                                             </div>
                                             <div className="text-xs text-slate-400 mt-1 flex justify-between">
-                                                <span>Std Dev: {stats.stdDev.toFixed(1)}</span>
+                                                <span>Std Dev: {(stats.stdDev || 0).toFixed(1)}</span>
                                                 <span>{stats.count} votes</span>
                                             </div>
                                         </div>
@@ -522,7 +828,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     </span>
                                                 </div>
                                                 <span className="text-slate-600 font-bold">
-                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins / {data.matches} matches)</span>
+                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins{data.matches ? ` / ${data.matches} matches` : ''})</span>
                                                 </span>
                                             </div>
                                             <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
@@ -1292,10 +1598,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         // Find who got the most transferred votes
                                         const transferGains: Record<string, number> = {};
                                         for (let i = 1; i < rounds.length; i++) {
-                                            const prevCounts = rounds[i - 1].counts;
-                                            const currCounts = rounds[i].counts;
+                                            const prevCounts: Record<string, number> = rounds[i - 1].counts || {};
+                                            const currCounts: Record<string, number> = rounds[i].counts || {};
                                             Object.keys(currCounts).forEach(optId => {
-                                                const gain = currCounts[optId] - (prevCounts[optId] || 0);
+                                                const gain = (currCounts[optId] || 0) - (prevCounts[optId] || 0);
                                                 if (gain > 0) {
                                                     transferGains[optId] = (transferGains[optId] || 0) + gain;
                                                 }
@@ -1600,19 +1906,23 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             <MessageSquare size={24} className="text-indigo-500"/> Comments
                         </h3>
                         <div className="grid md:grid-cols-2 gap-4">
-                            {comments!.map((comment, i) => (
+                            {comments!.map((comment, i) => {
+                                const name = String(comment.name || comment.voterName || 'Anonymous');
+                                const text = String(comment.text || '');
+                                const date = comment.date || comment.timestamp;
+                                return (
                                 <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100 relative group hover:border-indigo-100 transition-colors">
                                     <Quote size={20} className="text-indigo-200 absolute top-4 right-4" />
-                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{comment.text}"</p>
+                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{text}"</p>
                                     <div className="flex items-center gap-2 text-sm">
                                         <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs">
-                                            {comment.name.charAt(0).toUpperCase()}
+                                            {name.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-bold text-slate-600">{comment.name}</span>
-                                        <span className="text-slate-400 text-xs">• {comment.date ? new Date(comment.date).toLocaleDateString() : ''}</span>
+                                        <span className="font-bold text-slate-600">{name}</span>
+                                        <span className="text-slate-400 text-xs">• {date ? new Date(date).toLocaleDateString() : ''}</span>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </motion.div>
                 )}

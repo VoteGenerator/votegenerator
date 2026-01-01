@@ -56,6 +56,12 @@ const NavHeader: React.FC = () => {
             colors: 'text-purple-600',
             gradient: 'from-purple-500 to-pink-600'
         },
+        unlimited_event: { 
+            label: 'Unlimited Event', 
+            icon: Star, 
+            colors: 'text-orange-600',
+            gradient: 'from-orange-400 to-amber-500'
+        },
         unlimited: { 
             label: 'Unlimited', 
             icon: Star, 
@@ -94,12 +100,11 @@ const NavHeader: React.FC = () => {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <a href="/" className="flex items-center gap-2 group">
-                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/30 transition-shadow">
-                            <BarChart3 className="text-white" size={20} />
-                        </div>
-                        <span className="font-bold text-xl text-slate-900">
-                            Vote<span className="text-indigo-600">Generator</span>
-                        </span>
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className="h-9 w-auto"
+                        />
                     </a>
 
                     {/* Desktop Nav */}

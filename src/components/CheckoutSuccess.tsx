@@ -25,7 +25,7 @@ const PLAN_DETAILS: Record<string, {
         icon: Zap,
         color: 'text-blue-600',
         gradient: 'from-blue-500 to-indigo-600',
-        features: ['500 responses', '30 days active', '1 premium poll', 'CSV export', 'Device & geo stats'],
+        features: ['500 responses', '30 days access', '1 premium poll', 'CSV export', 'Device & geo stats'],
         maxPolls: 1,
         activeDays: 30
     },
@@ -34,16 +34,25 @@ const PLAN_DETAILS: Record<string, {
         icon: Crown,
         color: 'text-purple-600',
         gradient: 'from-purple-500 to-pink-600',
-        features: ['2,000 responses', '60 days active', '3 premium polls', 'All poll types', 'Export CSV/PDF/PNG'],
+        features: ['2,000 responses', '30 days access', '3 premium polls', 'All poll types', 'Export CSV/PDF/PNG'],
         maxPolls: 3,
-        activeDays: 60
+        activeDays: 30
+    },
+    'unlimited_event': {
+        name: 'Unlimited Event',
+        icon: Star,
+        color: 'text-amber-600',
+        gradient: 'from-amber-400 to-orange-500',
+        features: ['10,000 responses', '30 days access', 'ALL features', 'PIN protection', 'Custom branding'],
+        maxPolls: 1,
+        activeDays: 30
     },
     'unlimited': {
         name: 'Unlimited',
         icon: Star,
         color: 'text-amber-600',
         gradient: 'from-amber-500 to-orange-600',
-        features: ['10,000 responses per poll', 'Unlimited premium polls', '1 year per poll', 'Priority support', 'All features'],
+        features: ['10,000 responses per poll', 'Unlimited premium polls', '1 year access', 'Priority support', 'All features'],
         maxPolls: Infinity,
         activeDays: 365
     }
@@ -86,8 +95,11 @@ const CheckoutSuccess: React.FC = () => {
             case 'unlimited':
                 expiryDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
                 break;
+            case 'unlimited_event':
+                expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+                break;
             case 'pro_event':
-                expiryDate = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 days
+                expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
                 break;
             case 'starter':
             default:

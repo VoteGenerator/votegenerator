@@ -133,7 +133,11 @@ export const handler: Handler = async (event) => {
             }
 
             // Get or create customer record
-            const customerStore = getStore('customers');
+            const customerStore = getStore({
+                name: 'customers',
+                siteID: process.env.VG_SITE_ID || '',
+                token: process.env.NETLIFY_AUTH_TOKEN || ''
+            });
             const normalizedEmail = email.toLowerCase().trim();
 
             let customer: CustomerRecord | null = null;

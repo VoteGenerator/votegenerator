@@ -723,7 +723,7 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         </div>
                                         <a 
-                                            href="/#pricing" 
+                                            href="/pricing" 
                                             className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
                                         >
                                             <Sparkles size={16} />
@@ -981,7 +981,7 @@ const AdminDashboard: React.FC = () => {
                                         <p className="text-slate-600 mb-2">
                                             You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
                                         </p>
-                                        <a href="/#pricing" className="text-purple-600 font-medium hover:text-purple-700">
+                                        <a href="/pricing" className="text-purple-600 font-medium hover:text-purple-700">
                                             Upgrade for more →
                                         </a>
                                     </div>
@@ -1091,7 +1091,7 @@ const AdminDashboard: React.FC = () => {
                                     </div>
 
                                     {tier !== 'unlimited' && !isPlanExpired && (
-                                    <a href="/#pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
+                                    <a href="/pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
                                         Upgrade Plan
                                     </a>
                                 )}
@@ -1123,7 +1123,7 @@ const AdminDashboard: React.FC = () => {
                                                     {/* Renew button - always show when expired */}
                                                     {isPlanExpired && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/#pricing`}
+                                                            onClick={() => window.location.href = `/pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg"
                                                         >
                                                             <RefreshCw size={16} />
@@ -1134,7 +1134,7 @@ const AdminDashboard: React.FC = () => {
                                                     {/* Extend button - only for Unlimited when ≤30 days remaining */}
                                                     {!isPlanExpired && canExtend && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/#pricing`}
+                                                            onClick={() => window.location.href = `/pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-700"
                                                         >
                                                             <RefreshCw size={16} />

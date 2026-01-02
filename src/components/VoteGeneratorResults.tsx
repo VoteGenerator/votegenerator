@@ -4,6 +4,24 @@ import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, Mess
 import { RunoffResult, Poll, SurveyResponse } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SurveyResults from './SurveyResults';
+import { THEMES, ThemeConfig } from './ThemeSelector';
+
+// Get theme config from theme ID
+const getThemeConfig = (themeId?: string): ThemeConfig => {
+    if (!themeId) return THEMES[0];
+    return THEMES.find(t => t.id === themeId) || THEMES[0];
+};
+
+// Generate CSS classes for special effects
+const getSpecialEffectClasses = (effect?: string): string => {
+    switch (effect) {
+        case 'glow': return 'shadow-2xl';
+        case 'shimmer': return 'relative overflow-hidden';
+        case 'glass': return 'backdrop-blur-xl bg-opacity-80';
+        case 'shadow-lg': return 'shadow-2xl';
+        default: return '';
+    }
+};
 
 // Helper: Get country name from code
 const COUNTRY_NAMES: Record<string, string> = {
@@ -218,6 +236,10 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
+    // Get theme configuration
+    const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
+    const isDarkTheme = theme.cardBg?.includes('slate-9') || theme.cardBg?.includes('slate-950');
+    
     const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
     const votes: any[] = (results as any).votes || [];
     const isRanked = poll.pollType === 'ranked';
@@ -1196,36 +1218,47 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 print:shadow-none print:border-slate-300"
+                        className={`rounded-3xl shadow-xl p-6 md:p-8 print:shadow-none print:border-slate-300 ${
+                            isDarkTheme 
+                                ? 'bg-slate-900 border-2 border-slate-700' 
+                                : theme.cardBg || 'bg-white border border-slate-100'
+                        } ${getSpecialEffectClasses(theme.specialEffect)}`}
+                        style={theme.specialEffect === 'glow' ? {
+                            boxShadow: `0 0 40px ${theme.primary}25, 0 0 80px ${theme.primary}10`
+                        } : undefined}
                     >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <BarChart size={24} className="text-indigo-500"/> 
+                        <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
+                            <BarChart size={24} style={{ color: theme.primary }}/> 
                             {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : isBudget ? 'Value Allocated' : 'Vote Breakdown'}
                         </h3>
                         
                         <div className="space-y-4">
                             {Object.entries(barChartData)
                                 .sort(([, a], [, b]) => b - a)
-                                .map(([id, value]) => {
+                                .map(([id, value], index) => {
                                     const denominator = isDot || isBudget ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
                                     const percentage = denominator > 0 ? (value / denominator) * 100 : 0;
                                     
                                     return (
                                         <div key={id} className="relative break-inside-avoid">
                                             <div className="flex justify-between text-sm font-medium mb-1">
-                                                <span className="text-slate-800 font-bold text-lg">
+                                                <span className={`font-bold text-lg ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
                                                     {getOptionText(id)}
                                                 </span>
-                                                <span className="text-slate-600 font-bold">
-                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className="text-slate-400 font-normal text-xs ml-1">({percentage.toFixed(0)}%)</span>
+                                                <span className={`font-bold ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className={`font-normal text-xs ml-1 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>({percentage.toFixed(0)}%)</span>
                                                 </span>
                                             </div>
-                                            <div className="h-6 bg-slate-100 rounded-lg overflow-hidden print:border print:border-slate-200">
+                                            <div className={`h-6 rounded-lg overflow-hidden print:border print:border-slate-200 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-100'}`}>
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${percentage}%` }}
                                                     transition={{ duration: 1, ease: "easeOut" }}
-                                                    className={`h-full rounded-lg ${getBarColorClass(id)} opacity-90 print:bg-slate-600`}
+                                                    className="h-full rounded-lg print:bg-slate-600"
+                                                    style={{ 
+                                                        backgroundColor: index === 0 ? theme.primary : theme.accent || theme.secondary,
+                                                        opacity: 1 - (index * 0.1)
+                                                    }}
                                                 />
                                             </div>
                                         </div>

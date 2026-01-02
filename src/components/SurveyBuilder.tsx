@@ -830,39 +830,51 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     
     return (
         <div className="space-y-6">
-            {/* Header Stats */}
-            <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl">
-                        <FileText size={18} className="text-indigo-600" />
-                        <span className="font-semibold text-indigo-600">
-                            {sections.length} Section{sections.length !== 1 ? 's' : ''}
-                        </span>
-                        {maxSections !== Infinity && (
-                            <span className="text-xs text-indigo-400">/ {maxSections} max</span>
-                        )}
+            {/* Header Stats & Actions */}
+            <div className="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-4 border border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    {/* Stats */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-indigo-100">
+                            <FileText size={18} className="text-indigo-600" />
+                            <span className="font-semibold text-indigo-600">
+                                {sections.length} Section{sections.length !== 1 ? 's' : ''}
+                            </span>
+                            {maxSections !== Infinity && (
+                                <span className="text-xs text-indigo-400">/ {maxSections}</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-purple-100">
+                            <HelpCircle size={18} className="text-purple-600" />
+                            <span className="font-semibold text-purple-600">
+                                {totalQuestions} Question{totalQuestions !== 1 ? 's' : ''}
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl">
-                        <HelpCircle size={18} className="text-purple-600" />
-                        <span className="font-semibold text-purple-600">
-                            {totalQuestions} Question{totalQuestions !== 1 ? 's' : ''}
-                        </span>
+                    
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowTemplates(!showTemplates)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition font-medium ${
+                                showTemplates 
+                                    ? 'bg-amber-500 text-white shadow-md' 
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-700'
+                            }`}
+                        >
+                            <Sparkles size={16} /> Templates
+                        </button>
+                        <button
+                            onClick={() => setShowSettings(!showSettings)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition font-medium ${
+                                showSettings
+                                    ? 'bg-slate-700 text-white shadow-md'
+                                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}
+                        >
+                            <Settings2 size={16} /> Settings
+                        </button>
                     </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setShowTemplates(!showTemplates)}
-                        className="flex items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl transition"
-                    >
-                        <Sparkles size={16} /> Templates
-                    </button>
-                    <button
-                        onClick={() => setShowSettings(!showSettings)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition"
-                    >
-                        <Settings2 size={16} /> Settings
-                    </button>
                 </div>
             </div>
             

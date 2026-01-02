@@ -652,11 +652,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     
                                     {/* Meeting Duration */}
                                     <div className="p-4 bg-white rounded-xl border border-amber-200">
-                                        <label className="flex items-center gap-2 mb-3">
+                                        <label className="flex items-center gap-2 mb-2">
                                             <Clock size={16} className="text-amber-600" />
                                             <span className="text-sm font-semibold text-slate-700">Meeting Duration</span>
                                         </label>
-                                        <p className="text-xs text-slate-500 mb-3">Used when adding to calendars</p>
+                                        <p className="text-xs text-slate-500 mb-3">
+                                            📅 When participants add the winning time to their calendar (Google, Outlook, etc.), 
+                                            this sets how long the event will be.
+                                        </p>
                                         <div className="grid grid-cols-3 gap-2">
                                             {[
                                                 { value: 15, label: '15m' },
@@ -918,12 +921,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         Upgrade to unlock draft mode
                                                     </p>
                                                 </div>
-                                                <Lock size={18} className="text-slate-400" />
+                                                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-sm">
+                                                    <Lock size={14} className="text-white" />
+                                                </div>
                                             </div>
                                         ) : null}
                                         
-                                        {/* Security Options - Pro Event & Unlimited */}
-                                        {purchasedTier && (purchasedTier === 'pro_event' || purchasedTier === 'unlimited') && (
+                                        {/* Security Options - Show for all, locked for lower tiers */}
+                                        {purchasedTier && (purchasedTier === 'pro_event' || purchasedTier === 'unlimited' || purchasedTier === 'unlimited_event') ? (
                                             <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -1162,7 +1167,37 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     </p>
                                                 )}
                                             </div>
-                                        )}
+                                        ) : purchasedTier === 'starter' ? (
+                                            /* Locked Poll Security for Starter */
+                                            <div className="p-4 bg-slate-100 rounded-xl border border-slate-200">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <div className="w-6 h-6 bg-slate-300 rounded-full flex items-center justify-center">
+                                                        <Lock size={12} className="text-slate-500" />
+                                                    </div>
+                                                    <span className="font-semibold text-slate-500">Poll Security</span>
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-sm ml-auto">
+                                                        <Lock size={14} className="text-white" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 mb-3 opacity-50">
+                                                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-center">
+                                                        <Users size={18} className="mx-auto mb-1 text-slate-400" />
+                                                        <span className="text-xs text-slate-400">Public</span>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-center">
+                                                        <Lock size={18} className="mx-auto mb-1 text-slate-400" />
+                                                        <span className="text-xs text-slate-400">PIN</span>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg bg-white border border-slate-200 text-center">
+                                                        <Key size={18} className="mx-auto mb-1 text-slate-400" />
+                                                        <span className="text-xs text-slate-400">Codes</span>
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-slate-500 text-center">
+                                                    Upgrade to Pro Event to add PIN protection or access codes
+                                                </p>
+                                            </div>
+                                        ) : null}
                                         
                                         <div className="p-4 bg-slate-50 rounded-xl">
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
@@ -1183,7 +1218,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         <Check size={12} className="text-white" />
                                                     </span>
                                                 ) : (
-                                                    <Lock size={16} className="text-slate-400 ml-auto" />
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-sm ml-auto">
+                                                        <Lock size={14} className="text-white" />
+                                                    </div>
                                                 )}
                                             </div>
                                             {purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? (

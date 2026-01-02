@@ -53,19 +53,19 @@ const TIER_CONFIG: Record<string, {
     maxResponses: 50,
     expiresInDays: 7,
     maxPolls: 1,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
+    features: ['multiple_choice', 'ranked_choice', 'rating'],
   },
   starter: {
     maxResponses: 500,
     expiresInDays: 30,
     maxPolls: 1,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
+    features: ['all'], // All poll types available for paid tiers
   },
   pro_event: {
     maxResponses: 2000,
     expiresInDays: 30,
     maxPolls: 3,
-    features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
+    features: ['all'],
   },
   unlimited_event: {
     maxResponses: 5000,

@@ -1,16 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, DollarSign, ZoomIn, X } from 'lucide-react';
 import { Poll, PollOption, SurveyResponse } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 import SurveyVote from './SurveyVote';
+import { THEMES, ThemeConfig } from './ThemeSelector';
 
 interface Props {
     poll: Poll;
     onVoteSuccess: () => void;
 }
 
+// Get theme config from theme ID
+const getThemeConfig = (themeId?: string): ThemeConfig => {
+    if (!themeId) return THEMES[0]; // Default classic theme
+    return THEMES.find(t => t.id === themeId) || THEMES[0];
+};
+
+// Generate CSS classes for special effects
+const getSpecialEffectClasses = (effect?: string): string => {
+    switch (effect) {
+        case 'glow':
+            return 'shadow-2xl shadow-blue-500/20';
+        case 'shimmer':
+            return 'relative overflow-hidden';
+        case 'glass':
+            return 'backdrop-blur-xl bg-opacity-80';
+        case 'shadow-lg':
+            return 'shadow-2xl';
+        case 'gradient-border':
+            return 'ring-2 ring-offset-2';
+        default:
+            return '';
+    }
+};
+
 const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
+    // Get theme configuration
+    const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
+    const isPremiumTheme = theme.isPremium || false;
+    
     const shuffle = <T,>(array: T[]): T[] => {
         const newArr = [...array];
         for (let i = newArr.length - 1; i > 0; i--) {
@@ -387,12 +416,45 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
 
     return (
         <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
+            {/* Shimmer effect overlay for premium themes */}
+            {theme.specialEffect === 'shimmer' && (
+                <style>{`
+                    @keyframes shimmer {
+                        0% { background-position: -200% 0; }
+                        100% { background-position: 200% 0; }
+                    }
+                    .shimmer-effect::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                        background-size: 200% 100%;
+                        animation: shimmer 3s infinite;
+                        pointer-events: none;
+                        z-index: 1;
+                    }
+                `}</style>
+            )}
+            
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+                className={`rounded-3xl shadow-xl overflow-hidden relative ${
+                    theme.specialEffect === 'shimmer' ? 'shimmer-effect' : ''
+                } ${getSpecialEffectClasses(theme.specialEffect)} ${
+                    theme.cardBg || 'bg-white'
+                } ${theme.cardBorder ? `border-2 ${theme.cardBorder}` : 'border border-slate-100'}`}
+                style={theme.specialEffect === 'glow' ? {
+                    boxShadow: `0 0 40px ${theme.primary}30, 0 0 80px ${theme.primary}15`
+                } : undefined}
             >
-                <div className="p-6 md:p-8 bg-slate-50 border-b border-slate-100 relative">
+                {/* Header with theme styling */}
+                <div className={`p-6 md:p-8 border-b relative ${
+                    theme.headerStyle || 'bg-slate-50 border-slate-100'
+                } ${theme.id === 'midnight' || theme.id === 'neon' ? 'text-white' : ''}`}>
                     {poll.pollType === 'budget' && (
                         <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-sm font-bold text-green-800 border-b border-green-100 flex items-center justify-center gap-2">
                             Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600 flex items-center"><DollarSign size={12}/>{budgetRemaining}</span>
@@ -408,15 +470,21 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                             />
                         </div>
                     )}
-                    <h1 className={`text-2xl md:text-3xl font-black text-slate-800 font-serif mb-2 ${poll.pollType === 'budget' ? 'pt-6' : ''}`}>
+                    <h1 className={`text-2xl md:text-3xl font-black font-serif mb-2 ${poll.pollType === 'budget' ? 'pt-6' : ''} ${
+                        theme.headerStyle ? '' : 'text-slate-800'
+                    }`}>
                         {poll.title}
                     </h1>
                     {poll.description && (
-                        <p className="text-slate-600 leading-relaxed">{poll.description}</p>
+                        <p className={`leading-relaxed ${theme.headerStyle ? 'opacity-90' : 'text-slate-600'}`}>{poll.description}</p>
                     )}
                     
                     <div className="flex flex-wrap gap-2 mt-4">
-                        <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full w-fit">
+                        <div className={`flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-full w-fit ${
+                            theme.headerStyle 
+                                ? 'bg-white/20 text-white' 
+                                : 'text-indigo-600 bg-indigo-50'
+                        }`} style={!theme.headerStyle ? { backgroundColor: `${theme.primary}15`, color: theme.primary } : undefined}>
                             {poll.pollType === 'image' && "Click image to select"}
                             {poll.pollType === 'ranked' && "Drag to Rank Options"}
                             {poll.pollType === 'multiple' && (poll.settings.allowMultiple ? "Select Options" : "Select One")}
@@ -429,7 +497,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         </div>
 
                         {poll.settings.deadline && (
-                            <div className="flex items-center gap-2 text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
+                            <div className={`flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-full w-fit ${
+                                theme.headerStyle ? 'bg-white/20 text-white' : 'text-amber-600 bg-amber-50'
+                            }`}>
                                 <Clock size={14} /> Ends: {new Date(poll.settings.deadline).toLocaleDateString()}
                             </div>
                         )}
@@ -498,12 +568,25 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         <Reorder.Group axis="y" values={items} onReorder={setItems} className="space-y-3">
                             {items.map((item, index) => (
                                 <Reorder.Item key={item.id} value={item} className="relative z-0">
-                                    <div className="flex items-center gap-4 p-4 bg-white border-2 border-slate-100 rounded-xl shadow-sm hover:border-indigo-300 transition-all cursor-grab active:cursor-grabbing group select-none">
-                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors ml-2">
+                                    <div className={`flex items-center gap-4 p-4 rounded-xl shadow-sm transition-all cursor-grab active:cursor-grabbing group select-none border-2 ${
+                                        theme.optionStyle || 'bg-white border-slate-100 hover:border-indigo-300'
+                                    } ${theme.cardBg?.includes('slate-9') ? 'bg-slate-800/50 border-slate-600 hover:border-blue-400' : ''}`}>
+                                        <div 
+                                            className={`flex flex-col items-center justify-center w-8 h-8 rounded-full font-bold text-sm transition-colors ml-2 ${
+                                                theme.cardBg?.includes('slate-9') 
+                                                    ? 'bg-slate-700 text-slate-300 group-hover:bg-blue-500/30 group-hover:text-blue-300' 
+                                                    : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
+                                            }`}
+                                            style={!theme.cardBg?.includes('slate-9') ? {
+                                                backgroundColor: `${theme.primary}10`,
+                                            } : undefined}
+                                        >
                                             {index + 1}
                                         </div>
-                                        <span className="flex-1 font-medium text-slate-800 text-lg">{item.text}</span>
-                                        <GripVertical className="text-slate-300 group-hover:text-indigo-400" />
+                                        <span className={`flex-1 font-medium text-lg ${
+                                            theme.cardBg?.includes('slate-9') ? 'text-white' : 'text-slate-800'
+                                        }`}>{item.text}</span>
+                                        <GripVertical className={theme.cardBg?.includes('slate-9') ? 'text-slate-500 group-hover:text-blue-400' : 'text-slate-300 group-hover:text-indigo-400'} />
                                     </div>
                                 </Reorder.Item>
                             ))}
@@ -555,13 +638,47 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 const isMaybe = maybeIds.has(opt.id);
                                 const isMeeting = poll.pollType === 'meeting';
                                 return (
-                                    <button key={opt.id} onClick={() => isMeeting ? toggleMeetingSelection(opt.id) : toggleSelection(opt.id)} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group ${isSelected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : isMaybe ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50'}`}>
-                                        <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'bg-emerald-500 border-emerald-500 text-white' : isMaybe ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-300 bg-white'}`}>
+                                    <button 
+                                        key={opt.id} 
+                                        onClick={() => isMeeting ? toggleMeetingSelection(opt.id) : toggleSelection(opt.id)} 
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left group ${
+                                            isSelected 
+                                                ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
+                                                : isMaybe 
+                                                    ? 'border-amber-400 bg-amber-50 shadow-sm' 
+                                                    : theme.optionStyle || 'border-slate-100 hover:border-indigo-200 hover:bg-slate-50'
+                                        } ${theme.cardBg?.includes('slate-9') ? 'bg-slate-800/50' : ''}`}
+                                        style={!isSelected && !isMaybe && !theme.optionStyle ? {
+                                            borderColor: 'transparent',
+                                        } : undefined}
+                                    >
+                                        <div 
+                                            className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center border transition-all ${
+                                                isSelected 
+                                                    ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                                    : isMaybe 
+                                                        ? 'bg-amber-400 border-amber-400 text-white' 
+                                                        : theme.cardBg?.includes('slate-9') 
+                                                            ? 'border-slate-500 bg-slate-700' 
+                                                            : 'border-slate-300 bg-white'
+                                            }`}
+                                            style={!isSelected && !isMaybe && !theme.cardBg?.includes('slate-9') ? {
+                                                borderColor: `${theme.primary}40`
+                                            } : undefined}
+                                        >
                                             {isSelected && <Check size={18} strokeWidth={3} />}
                                             {isMaybe && <HelpCircle size={18} strokeWidth={3} />}
                                         </div>
-                                        <span className={`font-medium text-lg flex-1 ${isSelected ? 'text-emerald-900' : isMaybe ? 'text-amber-900' : 'text-slate-700'}`}>{opt.text}</span>
-                                        {isMeeting && <Calendar size={20} className={isSelected ? 'text-emerald-400' : isMaybe ? 'text-amber-400' : 'text-slate-300'} />}
+                                        <span className={`font-medium text-lg flex-1 ${
+                                            isSelected 
+                                                ? 'text-emerald-900' 
+                                                : isMaybe 
+                                                    ? 'text-amber-900' 
+                                                    : theme.cardBg?.includes('slate-9') 
+                                                        ? 'text-white' 
+                                                        : 'text-slate-700'
+                                        }`}>{opt.text}</span>
+                                        {isMeeting && <Calendar size={20} className={isSelected ? 'text-emerald-400' : isMaybe ? 'text-amber-400' : theme.cardBg?.includes('slate-9') ? 'text-slate-400' : 'text-slate-300'} />}
                                     </button>
                                 )
                             })}
@@ -617,16 +734,39 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                         <div className="space-y-6">
                             {poll.options.map((opt) => {
                                 const val = ratingAllocations[opt.id] ?? 50;
+                                const isDarkTheme = theme.cardBg?.includes('slate-9');
                                 return (
-                                    <div key={opt.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div key={opt.id} className={`p-4 rounded-xl border shadow-sm ${
+                                        isDarkTheme 
+                                            ? 'bg-slate-800/50 border-slate-600' 
+                                            : theme.optionStyle 
+                                                ? theme.optionStyle.split(' ')[0] 
+                                                : 'bg-white border-slate-200'
+                                    }`}>
                                         <div className="flex justify-between items-center mb-3">
-                                            <span className="text-lg font-bold text-slate-800">{opt.text}</span>
-                                            <span className="text-lg font-bold text-cyan-600 bg-cyan-50 px-2 py-1 rounded-lg min-w-[3rem] text-center">{val}</span>
+                                            <span className={`text-lg font-bold ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>{opt.text}</span>
+                                            <span 
+                                                className="text-lg font-bold px-2 py-1 rounded-lg min-w-[3rem] text-center"
+                                                style={{ 
+                                                    backgroundColor: `${theme.primary}15`,
+                                                    color: isDarkTheme ? theme.accent : theme.primary 
+                                                }}
+                                            >{val}</span>
                                         </div>
-                                        <div className="relative h-2 bg-slate-100 rounded-full">
+                                        <div className={`relative h-2 rounded-full ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-100'}`}>
                                             <input type="range" min="0" max="100" value={val} onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                            <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${val}%` }} />
-                                            <div className="absolute top-1/2 -mt-2 w-4 h-4 bg-white border-2 border-cyan-500 rounded-full shadow-md transition-all pointer-events-none" style={{ left: `calc(${val}% - 8px)` }} />
+                                            <div 
+                                                className="h-full rounded-full transition-all" 
+                                                style={{ width: `${val}%`, backgroundColor: theme.primary }} 
+                                            />
+                                            <div 
+                                                className="absolute top-1/2 -mt-2 w-4 h-4 bg-white rounded-full shadow-md transition-all pointer-events-none" 
+                                                style={{ 
+                                                    left: `calc(${val}% - 8px)`,
+                                                    borderWidth: '2px',
+                                                    borderColor: theme.primary
+                                                }} 
+                                            />
                                         </div>
                                     </div>
                                 )
@@ -728,10 +868,19 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     {alreadyVotedBrowser ? (
                         <div className="mt-8 p-4 bg-amber-50 text-amber-800 rounded-xl text-center border border-amber-200">
                             <strong>You have already voted.</strong><br/>
-                            <div className="mt-2"><button onClick={onVoteSuccess} className="text-indigo-600 underline text-sm font-bold">See Results</button></div>
+                            <div className="mt-2"><button onClick={onVoteSuccess} style={{ color: theme.primary }} className="underline text-sm font-bold">See Results</button></div>
                         </div>
                     ) : (
-                        <button onClick={handleSubmit} disabled={isSubmitting || !canSubmit} className="w-full mt-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-indigo-200 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-lg">
+                        <button 
+                            onClick={handleSubmit} 
+                            disabled={isSubmitting || !canSubmit} 
+                            className={`w-full mt-8 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-lg disabled:bg-slate-300 disabled:cursor-not-allowed disabled:shadow-none ${
+                                theme.buttonBg || 'bg-indigo-600 hover:bg-indigo-700'
+                            } ${theme.buttonText || 'text-white'}`}
+                            style={!isSubmitting && canSubmit ? {
+                                boxShadow: `0 10px 25px -5px ${theme.primary}40, 0 4px 6px -2px ${theme.primary}20`
+                            } : undefined}
+                        >
                             {isSubmitting ? <><Loader2 className="animate-spin" size={24} /> Submitting...</> : <>Submit Vote <ArrowRight size={24} /></>}
                         </button>
                     )}

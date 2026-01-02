@@ -76,7 +76,7 @@ const sendWelcomeEmail = async (
     
     const tierLabel = getTierLabel(tier);
     const baseUrl = process.env.URL || 'https://votegenerator.com';
-    const dashboardUrl = `${baseUrl}/admin?s=${sessionId}`;
+    const dashboardUrl = `${baseUrl}/admin?t=${sessionId}`; // sessionId is actually the token now
     const expirationDate = new Date(expiresAt).toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
@@ -300,13 +300,18 @@ export const handler: Handler = async (event) => {
             }
 
             await customerStore.setJSON(normalizedEmail, customer);
+            
+            // Also store by token for short URL lookup
+            await customerStore.setJSON(`token_${customer.dashboardToken}`, customer);
+            
             console.log(`Customer registered/updated: ${normalizedEmail} (${tier}) expires: ${customer.expiresAt}`);
+            console.log(`Dashboard token: ${customer.dashboardToken}`);
 
-            // Send welcome email
+            // Send welcome email with SHORT token URL
             const emailSent = await sendWelcomeEmail(
                 normalizedEmail,
                 tier,
-                session.id,
+                customer.dashboardToken, // Use token instead of session ID!
                 customer.expiresAt
             );
             console.log(`Welcome email sent: ${emailSent}`);

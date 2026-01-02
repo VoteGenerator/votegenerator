@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key, Play, FileText } from 'lucide-react';
-import ThemeSelector from './ThemeSelector';
+import ThemeSelector, { getTheme } from './ThemeSelector';
 import LogoUpload from './LogoUpload';
 import SurveyBuilder from './SurveyBuilder';
 import { useGeoPricing } from '../geoPricing';
@@ -135,6 +135,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [buttonText, setButtonText] = useState('Submit Vote');
     const [deadline, setDeadline] = useState('');
     const [meetingDuration, setMeetingDuration] = useState<15 | 30 | 45 | 60 | 90 | 120>(60); // Default 1 hour
+    const [ratingStyle, setRatingStyle] = useState<'stars' | 'hearts' | 'thumbs' | 'numbers' | 'emojis'>('stars');
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
@@ -249,6 +250,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 setError('All questions must have text');
                 return;
             }
+        } else if (pollType === 'rating') {
+            // Rating poll - no options needed, just the question
+            // Validation already passed (title exists)
         } else {
             // Regular poll - need at least 2 text options
             const valid = options.filter(o => o.trim());
@@ -293,6 +297,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier,
                 theme: selectedTheme,
+                // Rating style (for rating polls)
+                ratingStyle: pollType === 'rating' ? ratingStyle : undefined,
                 // Meeting duration (for calendar integration)
                 meetingDuration: pollType === 'meeting' ? meetingDuration : undefined,
                 // Custom branding (Pro Event & Unlimited)
@@ -306,7 +312,20 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 // Survey mode
                 isSurvey: pollType === 'survey' ? true : undefined,
                 sections: pollType === 'survey' ? surveySections : undefined,
-                surveySettings: pollType === 'survey' ? surveySettings : undefined
+                surveySettings: pollType === 'survey' ? surveySettings : undefined,
+                // For poll limit enforcement - get from localStorage
+                dashboardToken: (() => {
+                    try {
+                        const session = localStorage.getItem('vg_user_session');
+                        return session ? JSON.parse(session).dashboardToken : undefined;
+                    } catch { return undefined; }
+                })(),
+                sessionId: (() => {
+                    try {
+                        const session = localStorage.getItem('vg_user_session');
+                        return session ? JSON.parse(session).sessionId : undefined;
+                    } catch { return undefined; }
+                })()
             };
             
             // Add image URLs for visual polls
@@ -367,7 +386,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 }
                 return;
             } else { 
-                setError(responseData.error || 'Failed to create poll. Please try again.'); 
+                // Handle specific error types
+                if (responseData.upgradeRequired) {
+                    // Poll limit reached - show upgrade prompt
+                    setError(`${responseData.error} Click "Upgrade" in the sidebar to get more polls.`);
+                } else if (responseData.expired) {
+                    setError(responseData.error || 'Your plan has expired. Please renew to create polls.');
+                } else {
+                    setError(responseData.error || 'Failed to create poll. Please try again.');
+                }
                 setIsCreating(false);
             }
         } catch (e: any) { 
@@ -445,12 +472,24 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 return (
                                     <motion.div key={type.id} className="relative" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
                                         {isNew && <span className="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 bg-gradient-to-r from-emerald-500 to-teal-500 text-white">NEW</span>}
-                                        {tierConfig.label && !purchasedTier && !isNew && <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 ${tierConfig.colors}`}>{tierConfig.label}</span>}
                                         <button onClick={() => handlePollTypeSelect(type.id)}
-                                            className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : isLocked ? 'border-purple-200 hover:border-purple-400 bg-purple-50/30' : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'}`}>
-                                            {isLocked && <div className="absolute top-2 left-2"><Lock size={12} className="text-purple-500" /></div>}
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-gradient-to-br ${type.gradient} shadow-md`}><Icon className="text-white" size={20} /></div>
-                                            <div className="font-semibold text-sm">{type.name}</div>
+                                            className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${
+                                                isSelected ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : 
+                                                isLocked ? 'border-slate-200 bg-slate-50' : 
+                                                'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'
+                                            }`}>
+                                            {/* Lock overlay for locked types */}
+                                            {isLocked && (
+                                                <div className="absolute inset-0 bg-slate-100/60 rounded-xl flex items-center justify-center z-10">
+                                                    <div className="bg-slate-700 rounded-full p-2 shadow-lg">
+                                                        <Lock size={16} className="text-white" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-gradient-to-br ${type.gradient} shadow-md ${isLocked ? 'opacity-50' : ''}`}>
+                                                <Icon className="text-white" size={20} />
+                                            </div>
+                                            <div className={`font-semibold text-sm ${isLocked ? 'text-slate-400' : ''}`}>{type.name}</div>
                                             <div className="text-[11px] text-slate-500 mt-1">{type.shortDesc}</div>
                                         </button>
                                     </motion.div>
@@ -506,6 +545,142 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         }}
                                         tier={currentTier}
                                     />
+                                </div>
+                            ) : pollType === 'rating' ? (
+                                /* Rating Poll Configuration */
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-200">
+                                        <div className="flex items-center gap-2 text-cyan-700 mb-2">
+                                            <Star size={18} />
+                                            <span className="font-semibold">Rating Poll</span>
+                                        </div>
+                                        <p className="text-cyan-600 text-sm mb-4">
+                                            Let voters rate on a 1-5 scale. Choose your preferred rating style:
+                                        </p>
+                                        
+                                        {/* Rating Style Selector */}
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {[
+                                                { id: 'stars', icon: '⭐', label: 'Stars' },
+                                                { id: 'hearts', icon: '❤️', label: 'Hearts' },
+                                                { id: 'thumbs', icon: '👍', label: 'Thumbs' },
+                                                { id: 'numbers', icon: '5', label: 'Numbers' },
+                                                { id: 'emojis', icon: '😊', label: 'Emojis' },
+                                            ].map((style) => (
+                                                <button
+                                                    key={style.id}
+                                                    type="button"
+                                                    onClick={() => setRatingStyle(style.id as typeof ratingStyle)}
+                                                    className={`p-3 rounded-xl text-center transition-all ${
+                                                        ratingStyle === style.id
+                                                            ? 'bg-cyan-500 text-white shadow-lg scale-105'
+                                                            : 'bg-white text-slate-600 border border-cyan-200 hover:border-cyan-400'
+                                                    }`}
+                                                >
+                                                    <span className="text-xl block mb-1">{style.icon}</span>
+                                                    <span className="text-xs font-medium">{style.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* Preview */}
+                                        <div className="mt-4 p-3 bg-white rounded-lg border border-cyan-100">
+                                            <p className="text-xs text-slate-500 mb-2 text-center">Preview</p>
+                                            <div className="flex justify-center gap-1 text-2xl">
+                                                {ratingStyle === 'stars' && ['⭐', '⭐', '⭐', '⭐', '⭐'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'hearts' && ['❤️', '❤️', '❤️', '❤️', '❤️'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'thumbs' && ['👍', '👍', '👍', '👍', '👍'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'numbers' && ['1', '2', '3', '4', '5'].map((s, i) => (
+                                                    <span key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i < 4 ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-400'}`}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'emojis' && ['😢', '😕', '😐', '🙂', '😍'].map((s, i) => (
+                                                    <span key={i} className={i === 3 ? 'opacity-100 scale-125' : i < 3 ? 'opacity-50' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : pollType === 'meeting' ? (
+                                /* Meeting Poll Configuration */
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                                        <div className="flex items-center gap-2 text-amber-700 mb-2">
+                                            <Calendar size={18} />
+                                            <span className="font-semibold">Meeting Poll - Find the Best Time</span>
+                                        </div>
+                                        <p className="text-amber-600 text-sm">
+                                            Add time slots for participants to vote on. Include date and time for clarity.
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Time Slots */}
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-semibold text-slate-700">Time Slots *</label>
+                                        {options.map((opt, i) => (
+                                            <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                                                    <Calendar size={18} className="text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <input 
+                                                        type="text" 
+                                                        value={opt} 
+                                                        onChange={(e) => updateOption(i, e.target.value)} 
+                                                        placeholder={`e.g., Monday Jan 6, 2pm EST`}
+                                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:border-amber-500"
+                                                    />
+                                                </div>
+                                                {options.length > 2 && (
+                                                    <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl">
+                                                        <Trash2 size={20} />
+                                                    </button>
+                                                )}
+                                            </motion.div>
+                                        ))}
+                                        {options.length < 10 && (
+                                            <button onClick={addOption} className="flex items-center gap-2 px-4 py-2 text-amber-600 hover:bg-amber-50 rounded-xl text-sm font-semibold border-2 border-dashed border-amber-200 w-full justify-center">
+                                                <Plus size={18} />Add Time Slot
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Meeting Duration */}
+                                    <div className="p-4 bg-white rounded-xl border border-amber-200">
+                                        <label className="flex items-center gap-2 mb-3">
+                                            <Clock size={16} className="text-amber-600" />
+                                            <span className="text-sm font-semibold text-slate-700">Meeting Duration</span>
+                                        </label>
+                                        <p className="text-xs text-slate-500 mb-3">Used when adding to calendars</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { value: 15, label: '15m' },
+                                                { value: 30, label: '30m' },
+                                                { value: 45, label: '45m' },
+                                                { value: 60, label: '1h' },
+                                                { value: 90, label: '1.5h' },
+                                                { value: 120, label: '2h' },
+                                            ].map(({ value, label }) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    onClick={() => setMeetingDuration(value as typeof meetingDuration)}
+                                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                                        meetingDuration === value
+                                                            ? 'bg-amber-500 text-white shadow-md'
+                                                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-amber-50'
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -660,7 +835,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             )}
                             
-                            {pollType !== 'image' && pollType !== 'survey' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                            {pollType !== 'image' && pollType !== 'survey' && pollType !== 'rating' && pollType !== 'meeting' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
                                 </>
                             )}
                         </div>
@@ -694,95 +869,69 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
                                         </div>
                                         
-                                        {/* Meeting Duration - only for meeting polls */}
-                                        {pollType === 'meeting' && (
-                                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                                                <label className="flex items-center gap-2 mb-3">
-                                                    <Clock size={16} className="text-amber-600" />
-                                                    <span className="text-sm font-semibold text-amber-800">Meeting Duration</span>
-                                                </label>
-                                                <p className="text-xs text-amber-600 mb-3">Used when adding the winning time to calendars</p>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {[
-                                                        { value: 15, label: '15 min' },
-                                                        { value: 30, label: '30 min' },
-                                                        { value: 45, label: '45 min' },
-                                                        { value: 60, label: '1 hour' },
-                                                        { value: 90, label: '1.5 hours' },
-                                                        { value: 120, label: '2 hours' },
-                                                    ].map(({ value, label }) => (
-                                                        <button
-                                                            key={value}
-                                                            type="button"
-                                                            onClick={() => setMeetingDuration(value as typeof meetingDuration)}
-                                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                                                                meetingDuration === value
-                                                                    ? 'bg-amber-500 text-white shadow-md'
-                                                                    : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-100'
-                                                            }`}
-                                                        >
-                                                            {label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                        
                                         {pollType === 'multiple' && (
-                                            <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                            <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer border border-slate-100">
                                                 <span className="font-medium text-slate-700">Allow multiple selections</span>
-                                                <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded" />
+                                                <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded accent-indigo-600" />
                                             </label>
                                         )}
-                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                        <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer border border-slate-100">
                                             <span className="font-medium text-slate-700">Require voter names</span>
-                                            <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded" />
+                                            <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded accent-indigo-600" />
                                         </label>
-                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                        <label className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer border border-slate-100">
                                             <span className="font-medium text-slate-700">Hide results until closed</span>
-                                            <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
+                                            <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded accent-indigo-600" />
                                         </label>
+                                        
+                                        {/* Hint about Poll Manager */}
+                                        <p className="text-xs text-slate-500 text-center py-2">
+                                            💡 You can also edit settings anytime in the Poll Manager
+                                        </p>
+                                        
                                         {/* Draft Mode - only for Unlimited tier */}
-                                        {purchasedTier === 'unlimited' && (
+                                        {purchasedTier === 'unlimited' ? (
                                             <label className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 cursor-pointer">
                                                 <div>
                                                     <span className="font-medium text-amber-800 flex items-center gap-2">
                                                         <Play size={16} className="text-amber-600" />
                                                         Start as Draft
-                                                        <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
+                                                        <span className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                                                            <Check size={10} className="text-white" />
+                                                        </span>
                                                     </span>
                                                     <p className="text-xs text-amber-600 mt-1">
-                                                        Test your poll before going live. Voters can't access draft polls.
+                                                        Test your poll before going live
                                                     </p>
                                                 </div>
                                                 <input type="checkbox" checked={startAsDraft} onChange={(e) => setStartAsDraft(e.target.checked)} className="w-5 h-5 rounded accent-amber-600" />
                                             </label>
-                                        )}
-                                        {/* Show locked draft mode for non-unlimited paid tiers */}
-                                        {purchasedTier && purchasedTier !== 'free' && purchasedTier !== 'unlimited' && (
-                                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200 opacity-60">
+                                        ) : purchasedTier && purchasedTier !== 'free' ? (
+                                            /* Show locked draft mode for non-unlimited paid tiers */
+                                            <div className="flex items-center justify-between p-4 rounded-xl bg-slate-100 border border-slate-200">
                                                 <div>
                                                     <span className="font-medium text-slate-500 flex items-center gap-2">
                                                         <Play size={16} />
                                                         Start as Draft
-                                                        <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
                                                     </span>
                                                     <p className="text-xs text-slate-400 mt-1">
-                                                        Upgrade to Unlimited to test polls before going live
+                                                        Upgrade to unlock draft mode
                                                     </p>
                                                 </div>
                                                 <Lock size={18} className="text-slate-400" />
                                             </div>
-                                        )}
+                                        ) : null}
                                         
                                         {/* Security Options - Pro Event & Unlimited */}
                                         {purchasedTier && (purchasedTier === 'pro_event' || purchasedTier === 'unlimited') && (
-                                            <div className="p-4 bg-gradient-to-br from-slate-50 to-indigo-50/30 rounded-xl border border-indigo-100">
+                                            <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
                                                 <div className="flex items-center gap-2 mb-3">
-                                                    <Lock size={16} className="text-indigo-600" />
+                                                    <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                                                        <Lock size={12} className="text-white" />
+                                                    </div>
                                                     <span className="font-semibold text-slate-700">Poll Security</span>
-                                                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
-                                                        {purchasedTier === 'unlimited' ? 'UNLIMITED' : 'PRO'}
+                                                    <span className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center ml-auto">
+                                                        <Check size={10} className="text-white" />
                                                     </span>
                                                 </div>
                                                 
@@ -817,8 +966,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         onClick={() => {
                                                             if (purchasedTier === 'unlimited') {
                                                                 setSecurityType('code');
-                                                            } else {
-                                                                alert('Unique codes are only available with Unlimited tier');
                                                             }
                                                         }}
                                                         className={`p-3 rounded-lg text-sm font-medium transition-all relative ${
@@ -833,7 +980,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         <Key size={18} className="mx-auto mb-1" />
                                                         Codes
                                                         {purchasedTier !== 'unlimited' && (
-                                                            <span className="absolute -top-1 -right-1 text-[8px] bg-amber-500 text-white px-1 rounded">∞</span>
+                                                            <Lock size={10} className="absolute top-1 right-1 text-slate-400" />
                                                         )}
                                                     </button>
                                                 </div>
@@ -1026,21 +1173,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         <div className={`p-4 rounded-xl border ${
                                             purchasedTier === 'pro_event' || purchasedTier === 'unlimited'
                                                 ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
-                                                : 'bg-slate-50 border-slate-200'
+                                                : 'bg-slate-100 border-slate-200'
                                         }`}>
                                             <div className="flex items-center gap-2 mb-3">
                                                 <ImageIcon size={16} className={purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? 'text-purple-600' : 'text-slate-400'} />
                                                 <span className="font-semibold text-slate-700">Custom Branding</span>
                                                 {purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? (
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                                        purchasedTier === 'unlimited' 
-                                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
-                                                            : 'bg-purple-600 text-white'
-                                                    }`}>
-                                                        {purchasedTier === 'unlimited' ? 'UNLIMITED' : 'PRO'}
+                                                    <span className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center ml-auto">
+                                                        <Check size={12} className="text-white" />
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-bold">PRO+</span>
+                                                    <Lock size={16} className="text-slate-400 ml-auto" />
                                                 )}
                                             </div>
                                             {purchasedTier === 'pro_event' || purchasedTier === 'unlimited' ? (
@@ -1050,15 +1193,24 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     tier={purchasedTier}
                                                 />
                                             ) : (
-                                                <div className="text-center py-4 opacity-60">
-                                                    <ImageIcon size={32} className="mx-auto mb-2 text-slate-300" />
+                                                <div className="text-center py-4">
+                                                    <div className="w-12 h-12 bg-slate-200 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                                                        <ImageIcon size={24} className="text-slate-400" />
+                                                    </div>
                                                     <p className="text-sm text-slate-500">Add your logo to polls</p>
-                                                    <p className="text-xs text-slate-400">Available on Pro Event & Unlimited</p>
+                                                    <p className="text-xs text-slate-400 mt-1">Upgrade to unlock</p>
                                                 </div>
                                             )}
                                         </div>
                                         
-                                        <div className="pt-4 border-t"><label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label><ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} /></div>
+                                        <div className="pt-4 border-t">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Poll Theme</label>
+                                            <ThemeSelector 
+                                                selectedTheme={selectedTheme} 
+                                                onThemeChange={setSelectedTheme}
+                                                tier={purchasedTier || undefined}
+                                            />
+                                        </div>
                                     </div>
                                 </motion.div>
                             )}
@@ -1071,6 +1223,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         disabled={isCreating || !title.trim() || (
                             pollType === 'image' ? imageOptions.length < 2 : 
                             pollType === 'survey' ? (surveySections.length === 0 || !surveySections.some(s => s.questions.length > 0 && s.questions.some(q => q.question.trim()))) :
+                            pollType === 'rating' ? false :
                             (options.filter(o => o.trim()).length < 2 || hasDuplicates)
                         )} 
                         whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
@@ -1127,11 +1280,23 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             </div>
                                         ))
                                     ) : pollType === 'rating' ? (
-                                        // Rating preview
+                                        // Rating preview - uses selected style
                                         <div className="p-4 border-2 border-slate-200 rounded-xl text-center">
                                             <div className="flex justify-center gap-1 text-2xl">
-                                                {['⭐', '⭐', '⭐', '⭐', '⭐'].map((star, i) => (
-                                                    <span key={i} className={i < 3 ? 'opacity-100' : 'opacity-30'}>{star}</span>
+                                                {ratingStyle === 'stars' && ['⭐', '⭐', '⭐', '⭐', '⭐'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'hearts' && ['❤️', '❤️', '❤️', '❤️', '❤️'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'thumbs' && ['👍', '👍', '👍', '👍', '👍'].map((s, i) => (
+                                                    <span key={i} className={i < 4 ? 'opacity-100' : 'opacity-30'}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'numbers' && ['1', '2', '3', '4', '5'].map((s, i) => (
+                                                    <span key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i < 4 ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-400'}`}>{s}</span>
+                                                ))}
+                                                {ratingStyle === 'emojis' && ['😢', '😕', '😐', '🙂', '😍'].map((s, i) => (
+                                                    <span key={i} className={i === 3 ? 'opacity-100 scale-125' : i < 3 ? 'opacity-50' : 'opacity-30'}>{s}</span>
                                                 ))}
                                             </div>
                                             <p className="text-sm text-slate-500 mt-2">Click to rate</p>
@@ -1198,7 +1363,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         ))
                                     )}
                                 </div>
-                                <button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl">
+                                <button className={`w-full py-3 font-bold rounded-xl transition-all ${
+                                    (() => {
+                                        const theme = getTheme(selectedTheme);
+                                        return `${theme.buttonBg || 'bg-gradient-to-r from-indigo-600 to-purple-600'} ${theme.buttonText || 'text-white'}`;
+                                    })()
+                                }`}>
                                     {pollType === 'rsvp' ? 'Submit RSVP' : 
                                      pollType === 'rating' ? 'Submit Rating' :
                                      pollType === 'meeting' ? 'Submit Availability' :
@@ -1208,8 +1378,61 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             </div>
                         </div>
                         <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
-                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2"><Zap size={16} />Tips</h4>
-                            <ul className="text-sm text-amber-700 space-y-1"><li>• Keep questions clear</li><li>• 4-6 options works best</li><li>• Save your admin link</li></ul>
+                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                                <Zap size={16} />
+                                Tips for {POLL_TYPES.find(p => p.id === pollType)?.name || 'Your Poll'}
+                            </h4>
+                            <ul className="text-sm text-amber-700 space-y-1">
+                                {pollType === 'survey' ? (
+                                    <>
+                                        <li>• Start with a template or build from scratch</li>
+                                        <li>• Group related questions into sections</li>
+                                        <li>• Use required fields sparingly</li>
+                                    </>
+                                ) : pollType === 'meeting' ? (
+                                    <>
+                                        <li>• Suggest 3-5 time slots</li>
+                                        <li>• Include timezone if participants are remote</li>
+                                        <li>• Set a deadline for responses</li>
+                                    </>
+                                ) : pollType === 'rating' ? (
+                                    <>
+                                        <li>• Keep rating items focused</li>
+                                        <li>• 5-star scale is most familiar</li>
+                                        <li>• Ask for optional comments</li>
+                                    </>
+                                ) : pollType === 'ranked' ? (
+                                    <>
+                                        <li>• Limit to 5-7 options for easier ranking</li>
+                                        <li>• Make options clearly distinct</li>
+                                        <li>• Results show winner by elimination</li>
+                                    </>
+                                ) : pollType === 'image' ? (
+                                    <>
+                                        <li>• Use high-quality images</li>
+                                        <li>• Keep image sizes similar</li>
+                                        <li>• Add captions for context</li>
+                                    </>
+                                ) : pollType === 'rsvp' ? (
+                                    <>
+                                        <li>• Add event details in description</li>
+                                        <li>• Enable "Maybe" option for flexibility</li>
+                                        <li>• Set a response deadline</li>
+                                    </>
+                                ) : pollType === 'pairwise' ? (
+                                    <>
+                                        <li>• Great for narrowing down favorites</li>
+                                        <li>• 4-8 items works best</li>
+                                        <li>• Each voter sees random pairs</li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li>• Keep questions clear and concise</li>
+                                        <li>• 4-6 options works best</li>
+                                        <li>• Save your admin link!</li>
+                                    </>
+                                )}
+                            </ul>
                         </div>
                         <div className="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
                             <h4 className="font-bold text-emerald-800 mb-2">You'll Get</h4>

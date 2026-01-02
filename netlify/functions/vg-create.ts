@@ -46,26 +46,37 @@ function isValidSlug(slug: string): boolean {
 const TIER_CONFIG: Record<string, {
   maxResponses: number;
   expiresInDays: number;
+  maxPolls: number;
   features: string[];
 }> = {
   free: {
-    maxResponses: 100,
-    expiresInDays: 30,
+    maxResponses: 50,
+    expiresInDays: 7,
+    maxPolls: 1,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
   },
   starter: {
     maxResponses: 500,
-    expiresInDays: 7,
+    expiresInDays: 30,
+    maxPolls: 1,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
   },
   pro_event: {
     maxResponses: 2000,
     expiresInDays: 30,
+    maxPolls: 3,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
+  },
+  unlimited_event: {
+    maxResponses: 5000,
+    expiresInDays: 30,
+    maxPolls: -1,
+    features: ['all'],
   },
   unlimited: {
     maxResponses: 10000,
     expiresInDays: 365,
+    maxPolls: -1,
     features: ['all'],
   },
 };
@@ -96,7 +107,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls, pin, allowedCodes } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls, pin, allowedCodes, dashboardToken, sessionId } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -133,6 +144,63 @@ export const handler: Handler = async (event) => {
 
     // Get tier config
     const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.free;
+
+    // ========================================================================
+    // POLL LIMIT ENFORCEMENT
+    // ========================================================================
+    if (tierConfig.maxPolls > 0 && (dashboardToken || sessionId)) {
+      const siteId = process.env.VG_SITE_ID;
+      if (siteId) {
+        const customerStore = getStore({
+          name: 'vg-customers',
+          siteID: siteId,
+          token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+
+        let customerData = null;
+
+        // Try to find customer by dashboard token
+        if (dashboardToken) {
+          customerData = await customerStore.get(`token_${dashboardToken}`, { type: 'json' });
+        }
+
+        // Fallback: search by session ID
+        if (!customerData && sessionId) {
+          const list = await customerStore.list();
+          for (const key of list.blobs) {
+            if (key.key.startsWith('token_')) continue;
+            try {
+              const customer = await customerStore.get(key.key, { type: 'json' }) as any;
+              if (customer && customer.stripeSessionId === sessionId) {
+                customerData = customer;
+                break;
+              }
+            } catch (e) {
+              // Skip invalid entries
+            }
+          }
+        }
+
+        if (customerData && customerData.polls) {
+          const existingPollCount = customerData.polls.length;
+          
+          if (existingPollCount >= tierConfig.maxPolls) {
+            const tierLabel = tier === 'free' ? 'Free' : tier === 'starter' ? 'Starter' : 'Pro Event';
+            return {
+              statusCode: 403,
+              headers,
+              body: JSON.stringify({ 
+                error: `You've reached the maximum of ${tierConfig.maxPolls} poll${tierConfig.maxPolls > 1 ? 's' : ''} for your ${tierLabel} plan.`,
+                pollLimit: tierConfig.maxPolls,
+                currentPolls: existingPollCount,
+                upgradeRequired: true
+              }),
+            };
+          }
+        }
+      }
+    }
+    // ========================================================================
 
     // Validate poll type access
     if (tierConfig.features[0] !== 'all' && !tierConfig.features.includes(pollType)) {

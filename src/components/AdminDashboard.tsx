@@ -54,6 +54,7 @@ interface UserSession {
     hasPin?: boolean;
     pinHash?: string;
     sessionId?: string;  // Stripe session ID for URL reconstruction
+    email?: string;      // Partial email for display
 }
 
 // ============================================================================
@@ -185,15 +186,59 @@ const AdminDashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Get token and session_id from URL (supports both formats)
+    // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('token');
-    const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Support both long and short format
+    const urlDashboardToken = urlParams.get('t'); // NEW: Short token format from email
+    const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
     const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited' | null;
 
     // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
     const generateDashboardToken = (sessionId: string): string => {
         return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
+    };
+    
+    // Fetch customer data by dashboard token OR session ID from backend
+    const fetchCustomerByToken = async (token: string): Promise<UserSession | null> => {
+        try {
+            const response = await fetch(`/.netlify/functions/vg-get-customer?token=${encodeURIComponent(token)}`);
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    dashboardToken: data.dashboardToken || token,
+                    tier: data.tier,
+                    expiresAt: data.expiresAt,
+                    polls: data.polls || [],
+                    createdAt: data.createdAt,
+                    email: data.email,
+                };
+            }
+        } catch (e) {
+            console.error('Failed to fetch customer by token:', e);
+        }
+        return null;
+    };
+    
+    // Fetch customer data by session ID (legacy support)
+    const fetchCustomerBySessionId = async (sessionId: string): Promise<UserSession | null> => {
+        try {
+            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    dashboardToken: data.dashboardToken,
+                    sessionId: sessionId, // Keep for backwards compatibility
+                    tier: data.tier,
+                    expiresAt: data.expiresAt,
+                    polls: data.polls || [],
+                    createdAt: data.createdAt,
+                    email: data.email,
+                };
+            }
+        } catch (e) {
+            console.error('Failed to fetch customer by session ID:', e);
+        }
+        return null;
     };
 
     useEffect(() => {
@@ -239,94 +284,117 @@ const AdminDashboard: React.FC = () => {
         }
     }, [loading]);
 
-    const validateAndLoadSession = () => {
+    const validateAndLoadSession = async () => {
         try {
             const stored = localStorage.getItem('vg_user_session');
             
-            // Case 1: Coming from email link with session_id (short format: ?s=xxx)
-            // Create session from URL params
-            if (!stored && urlSessionId) {
-                const expectedToken = generateDashboardToken(urlSessionId);
+            // Case 0: NEW - Coming from email link with dashboard token (?t=xxx)
+            if (urlDashboardToken) {
+                // Try to fetch customer data from backend using token
+                const customerData = await fetchCustomerByToken(urlDashboardToken);
                 
-                // If token provided, verify it matches
-                if (urlToken && urlToken !== expectedToken) {
-                    setError('Invalid dashboard link. The token is incorrect.');
+                if (customerData) {
+                    // Save to localStorage
+                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
+                    localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
+                    
+                    setSession(customerData);
+                    setLoading(false);
+                    
+                    // Clean URL - remove token parameter
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                } else {
+                    // Token lookup failed - maybe check localStorage as fallback
+                    if (stored) {
+                        const sessionData: UserSession = JSON.parse(stored);
+                        setSession(sessionData);
+                        setLoading(false);
+                        return;
+                    }
+                    setError('Invalid or expired dashboard link.');
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            // Case 1: Coming from email link with session_id (legacy format: ?s=xxx)
+            // Fetch real customer data from backend
+            if (urlSessionId) {
+                const customerData = await fetchCustomerBySessionId(urlSessionId);
+                
+                if (customerData) {
+                    // Save to localStorage with real data
+                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
+                    localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
+                    
+                    setSession(customerData);
+                    setLoading(false);
+                    
+                    // Clean URL - redirect to short token URL
+                    if (customerData.dashboardToken) {
+                        window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
+                    } else {
+                        window.history.replaceState({}, '', '/admin');
+                    }
+                    return;
+                }
+                
+                // Backend lookup failed - try localStorage fallback
+                if (stored) {
+                    const sessionData: UserSession = JSON.parse(stored);
+                    setSession(sessionData);
                     setLoading(false);
                     return;
                 }
                 
-                // Determine tier (default to unlimited if not provided since email doesn't include tier)
-                // We'll fetch the real tier from backend later, for now assume unlimited
+                // No data found - create temporary session (will be replaced when webhook completes)
                 const tier = urlTier || 'unlimited';
-                const days = tier === 'unlimited' ? 365 : tier === 'unlimited_event' ? 30 : tier === 'pro_event' ? 30 : 30;
+                const days = tier === 'unlimited' ? 365 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
-                // Create new session
-                const newSession: UserSession = {
-                    dashboardToken: expectedToken,
-                    sessionId: urlSessionId,  // Store for URL reconstruction
+                const tempSession: UserSession = {
+                    dashboardToken: generateDashboardToken(urlSessionId),
+                    sessionId: urlSessionId,
                     tier,
                     expiresAt,
                     polls: [],
                     createdAt: new Date().toISOString(),
                 };
                 
-                // Save to localStorage
-                localStorage.setItem('vg_user_session', JSON.stringify(newSession));
+                localStorage.setItem('vg_user_session', JSON.stringify(tempSession));
                 localStorage.setItem('vg_purchased_tier', tier);
                 localStorage.setItem('vg_tier_expires', expiresAt);
                 
-                setSession(newSession);
+                setSession(tempSession);
                 setLoading(false);
                 return;
             }
             
-            // Case 1b: Have stored session but URL has session_id - update session with it
-            if (stored && urlSessionId) {
+            // Case 1b: Have stored session - use it
+            if (stored) {
                 const sessionData: UserSession = JSON.parse(stored);
-                if (!sessionData.sessionId) {
-                    sessionData.sessionId = urlSessionId;
-                    localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                
+                // Case 3: URL token provided - verify it matches stored session
+                if (urlToken && sessionData.dashboardToken !== urlToken) {
+                    setError('Invalid dashboard link. The token does not match.');
+                    setLoading(false);
+                    return;
                 }
+
                 setSession(sessionData);
                 setLoading(false);
                 return;
             }
             
             // Case 2: No stored session and no valid URL params
-            if (!stored) {
-                setError('No session found. Please purchase a plan first.');
-                setLoading(false);
-                return;
-            }
-
-            const sessionData: UserSession = JSON.parse(stored);
-
-            // Case 3: URL token provided - verify it matches stored session
-            if (urlToken && sessionData.dashboardToken !== urlToken) {
-                // Check if it might be using the new session_id format
-                if (urlSessionId) {
-                    const expectedToken = generateDashboardToken(urlSessionId);
-                    if (urlToken === expectedToken) {
-                        // Token is valid via session_id, update stored session
-                        sessionData.dashboardToken = urlToken;
-                        localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
-                    } else {
-                        setError('Invalid dashboard link. The token does not match.');
-                        setLoading(false);
-                        return;
-                    }
-                } else {
-                    setError('Invalid dashboard link. The token does not match.');
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            // Case 4: Expired sessions can still access dashboard (read-only)
-            // isPlanExpired will handle the UI restrictions
-
-            setSession(sessionData);
+            setError('No session found. Please purchase a plan first.');
             setLoading(false);
         } catch (err) {
             console.error('Session load error:', err);
@@ -367,30 +435,25 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const getDashboardUrl = () => {
-        // Include BOTH token and session_id so the link always works
-        const sessionId = session?.sessionId;
+        // Use short token format: /admin?t=TOKEN
         const token = session?.dashboardToken;
         
-        if (sessionId && token) {
-            return `${window.location.origin}/admin?token=${token}&session_id=${sessionId}`;
+        if (token) {
+            return `${window.location.origin}/admin?t=${token}`;
         }
+        
+        // Legacy fallback: session ID
+        const sessionId = session?.sessionId;
         if (sessionId) {
             return `${window.location.origin}/admin?s=${sessionId}`;
         }
-        if (token) {
-            return `${window.location.origin}/admin?token=${token}`;
-        }
+        
         // Fallback to current URL
         return window.location.href;
     };
     
-    // Short admin link (like tinyurl)
+    // Short admin link - same as getDashboardUrl now
     const getShortAdminLink = () => {
-        const sessionId = session?.sessionId;
-        if (sessionId) {
-            // Use short format: /admin?s=SESSION_ID
-            return `${window.location.origin}/admin?s=${sessionId}`;
-        }
         return getDashboardUrl();
     };
 
@@ -409,9 +472,53 @@ const AdminDashboard: React.FC = () => {
         setTimeout(() => setCopiedDashboard(false), 2000);
     };
 
-    const handleDeletePoll = (poll: UserPoll) => {
-        if (!confirm(`Remove "${poll.title}" from your dashboard?`)) return;
-        if (session) {
+    const handleDeletePoll = async (poll: UserPoll) => {
+        if (!session) return;
+        
+        // Get response count for warning message
+        const hasResponses = (poll.responseCount || 0) > 0;
+        const isRestrictedTier = session.tier === 'free' || session.tier === 'starter';
+        
+        // Different confirmation messages based on tier and responses
+        let confirmMessage = `Delete "${poll.title}"?`;
+        if (hasResponses) {
+            if (isRestrictedTier) {
+                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the ${session.tier === 'free' ? 'Free' : 'Starter'} plan, you can only delete polls with 0 responses. Upgrade to Pro Event or higher to delete polls with responses.`);
+                return;
+            } else {
+                confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
+            }
+        }
+        
+        if (!confirm(confirmMessage)) return;
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-delete-poll', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey,
+                    dashboardToken: session.dashboardToken
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Remove from local state
+                const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+            } else if (data.upgradeRequired) {
+                // Tier restriction error
+                alert(data.error);
+            } else {
+                alert(data.error || 'Failed to delete poll. Please try again.');
+            }
+        } catch (err) {
+            console.error('Delete poll error:', err);
+            // Fallback: just remove from local UI
             const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
             localStorage.setItem('vg_user_session', JSON.stringify(updated));
             setSession(updated);
@@ -552,11 +659,6 @@ const AdminDashboard: React.FC = () => {
                                 }
                             </span>
                         </div>
-                        {(tier !== 'unlimited' || isPlanExpired) && (
-                            <a href="/#pricing" className="hidden md:flex px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition items-center gap-2">
-                                <Sparkles size={16} /> {isPlanExpired ? 'Renew' : 'Upgrade'}
-                            </a>
-                        )}
                         {isUnlimited && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
@@ -579,22 +681,26 @@ const AdminDashboard: React.FC = () => {
                                             <AlertCircle size={20} className="text-amber-600" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-amber-800">Save Your Dashboard Link!</p>
-                                            <p className="text-sm text-amber-600 mb-2">Bookmark this — it's the only way to access your polls.</p>
+                                            <p className="font-bold text-amber-800">🔖 Bookmark This Page!</p>
+                                            <p className="text-sm text-amber-600 mb-2">
+                                                This is your only way back to your polls. Save the link below, bookmark this page, or check your email{tier !== 'free' && ' (paid plans)'}.
+                                            </p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-sm text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
+                                                <code className="text-xs text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => {
-                                        navigator.clipboard.writeText(getShortAdminLink());
-                                        setCopiedDashboard(true);
-                                        setTimeout(() => setCopiedDashboard(false), 2000);
-                                    }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
-                                        {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedDashboard ? 'Copied!' : 'Copy'}
-                                    </button>
+                                    <div className="flex flex-col gap-2 flex-shrink-0">
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(getShortAdminLink());
+                                            setCopiedDashboard(true);
+                                            setTimeout(() => setCopiedDashboard(false), 2000);
+                                        }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition">
+                                            {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
+                                            {copiedDashboard ? 'Copied!' : 'Copy Link'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -995,7 +1101,7 @@ const AdminDashboard: React.FC = () => {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         {(() => {
                                             const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                                            const canExtend = daysLeft <= 30; // Only allow extend when ≤30 days remaining
+                                            const canExtend = daysLeft <= 30 && tier === 'unlimited'; // Only Unlimited can extend
                                             
                                             return (
                                                 <>
@@ -1006,6 +1112,7 @@ const AdminDashboard: React.FC = () => {
                                                         </span>
                                                         {!isPlanExpired && (
                                                             <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                                daysLeft <= 7 ? 'bg-red-100 text-red-700' :
                                                                 daysLeft <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                                                             }`}>
                                                                 {daysLeft} days left
@@ -1016,7 +1123,7 @@ const AdminDashboard: React.FC = () => {
                                                     {/* Renew button - always show when expired */}
                                                     {isPlanExpired && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/pricing?renew=${tier}`}
+                                                            onClick={() => window.location.href = `/#pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg"
                                                         >
                                                             <RefreshCw size={16} />
@@ -1024,26 +1131,19 @@ const AdminDashboard: React.FC = () => {
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Extend button - only show when ≤30 days remaining */}
+                                                    {/* Extend button - only for Unlimited when ≤30 days remaining */}
                                                     {!isPlanExpired && canExtend && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/pricing?extend=${tier}`}
+                                                            onClick={() => window.location.href = `/#pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-700"
                                                         >
                                                             <RefreshCw size={16} />
-                                                            Extend {config.label}
+                                                            Extend Plan
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Message when extend not yet available - non-Unlimited tiers */}
-                                                    {!isPlanExpired && !canExtend && tier !== 'unlimited' && (
-                                                        <p className="text-xs text-slate-400 text-center py-2">
-                                                            Extend option available when ≤30 days remaining
-                                                        </p>
-                                                    )}
-                                                    
                                                     {/* Unlimited tier - show best plan message when not near expiry */}
-                                                    {!isPlanExpired && !canExtend && tier === 'unlimited' && (
+                                                    {!isPlanExpired && tier === 'unlimited' && daysLeft > 30 && (
                                                         <div className="text-center py-2 text-xs text-emerald-600 font-medium flex items-center justify-center gap-1">
                                                             <CheckCircle size={14} /> You have the best plan!
                                                         </div>

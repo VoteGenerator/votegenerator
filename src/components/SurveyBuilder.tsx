@@ -873,11 +873,11 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-6"
+                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-5"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-bold text-amber-800 flex items-center gap-2">
-                                <Sparkles size={18} /> Start from a Template
+                                <Sparkles size={18} /> Quick Start
                             </h3>
                             <button
                                 onClick={() => setShowTemplates(false)}
@@ -886,25 +886,47 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                 <ChevronUp size={18} />
                             </button>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        
+                        {/* Horizontal pills */}
+                        <div className="flex flex-wrap gap-2">
+                            {/* Start from Scratch */}
+                            <button
+                                onClick={() => {
+                                    updateSections([{
+                                        id: generateId(),
+                                        title: 'Section 1',
+                                        questions: []
+                                    }]);
+                                    setShowTemplates(false);
+                                }}
+                                className="px-4 py-2.5 bg-white rounded-full border-2 border-slate-200 hover:border-slate-400 hover:shadow-sm transition flex items-center gap-2 text-sm font-medium text-slate-700"
+                            >
+                                <Plus size={16} />
+                                Start from Scratch
+                            </button>
+                            
+                            {/* Template pills */}
                             {SURVEY_TEMPLATES.map((template) => {
                                 const Icon = template.icon;
                                 return (
                                     <button
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
-                                        className="p-4 bg-white rounded-xl border-2 border-amber-100 hover:border-amber-300 hover:shadow-md transition text-left"
+                                        className="px-4 py-2.5 bg-white rounded-full border-2 border-amber-200 hover:border-amber-400 hover:shadow-sm transition flex items-center gap-2 text-sm font-medium text-slate-700 group"
                                     >
-                                        <Icon size={24} className={template.color} />
-                                        <h4 className="font-semibold text-slate-800 mt-2">{template.name}</h4>
-                                        <p className="text-xs text-slate-500 mt-1">{template.description}</p>
-                                        <p className="text-xs text-amber-600 mt-2">
-                                            {template.sections.length} sections • {template.sections.reduce((sum, s) => sum + s.questions.length, 0)} questions
-                                        </p>
+                                        <Icon size={16} className={template.color} />
+                                        <span>{template.name}</span>
+                                        <span className="text-xs text-slate-400 group-hover:text-amber-600">
+                                            ({template.sections.reduce((sum, s) => sum + s.questions.length, 0)}q)
+                                        </span>
                                     </button>
                                 );
                             })}
                         </div>
+                        
+                        <p className="text-xs text-amber-600 mt-3 text-center">
+                            Choose a template to get started quickly, or build your own from scratch
+                        </p>
                     </motion.div>
                 )}
             </AnimatePresence>

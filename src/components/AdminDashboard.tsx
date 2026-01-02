@@ -394,12 +394,19 @@ const AdminDashboard: React.FC = () => {
                             localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
                             setSession(updatedSession);
                             setLoading(false);
+                            // Update URL to show short token
+                            window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
                             console.log('AdminDashboard: Updated to real token from backend');
                             return;
                         }
                     } catch (e) {
                         console.log('AdminDashboard: Could not fetch real token, using existing session');
                     }
+                }
+
+                // If we have a real token already, update URL to use short format
+                if (sessionData.dashboardToken && !sessionData.dashboardToken.startsWith('vg_')) {
+                    window.history.replaceState({}, '', `/admin?t=${sessionData.dashboardToken}`);
                 }
 
                 setSession(sessionData);

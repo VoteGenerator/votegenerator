@@ -104,22 +104,7 @@ const CheckoutSuccess: React.FC = () => {
                 break;
         }
         
-        // Try to fetch real dashboard token from backend (webhook should have created it)
-        let realToken: string | null = null;
-        try {
-            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.dashboardToken) {
-                    realToken = data.dashboardToken;
-                    console.log('CheckoutSuccess: Got real token from backend');
-                }
-            }
-        } catch (e) {
-            console.log('CheckoutSuccess: Could not fetch token yet, webhook may still be processing');
-        }
-        
-        // Create session object - only store real token if we have it
+        // Create session object (will update with real token when available)
         const session: any = {
             sessionId, // Always store sessionId for backend lookup
             tier,
@@ -128,30 +113,62 @@ const CheckoutSuccess: React.FC = () => {
             createdAt: new Date().toISOString()
         };
         
-        // Only add dashboardToken if we got the real one from backend
-        if (realToken) {
-            session.dashboardToken = realToken;
-        }
-        
-        // Save to localStorage
+        // Save initial session to localStorage
         localStorage.setItem('vg_user_session', JSON.stringify(session));
         localStorage.setItem('vg_purchased_tier', tier);
         localStorage.setItem('vg_expires_at', expiryDate.toISOString());
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        // Set dashboard URL
+        // Start with session ID URL (will update when we get real token)
+        setDashboardUrl(`${window.location.origin}/admin?s=${sessionId}`);
+        
+        // Poll for real token from backend (webhook may take a moment)
+        const fetchRealToken = async (): Promise<string | null> => {
+            try {
+                const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.dashboardToken) {
+                        return data.dashboardToken;
+                    }
+                }
+            } catch (e) {
+                // Ignore errors, will retry
+            }
+            return null;
+        };
+        
+        // Try to get real token with retries (webhook may still be processing)
+        let realToken: string | null = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            realToken = await fetchRealToken();
+            if (realToken) {
+                console.log(`CheckoutSuccess: Got real token on attempt ${attempt + 1}`);
+                break;
+            }
+            // Wait before retrying (1s, 2s, 3s, 4s)
+            await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
+        }
+        
+        // Update with real token if we got it
         if (realToken) {
+            session.dashboardToken = realToken;
+            localStorage.setItem('vg_user_session', JSON.stringify(session));
             setDashboardUrl(`${window.location.origin}/admin?t=${realToken}`);
         } else {
-            // Fallback: Use session ID (admin dashboard will fetch real token)
-            setDashboardUrl(`${window.location.origin}/admin?s=${sessionId}`);
+            console.log('CheckoutSuccess: Could not get short token, using session ID');
         }
         
         console.log('CheckoutSuccess: Session created:', session);
     };
 
     const goToDashboard = () => {
-        window.location.href = '/admin';
+        // Use the short URL if we have it
+        if (dashboardUrl.includes('?t=')) {
+            window.location.href = dashboardUrl.replace(window.location.origin, '');
+        } else {
+            window.location.href = '/admin';
+        }
     };
 
     const copyDashboardLink = () => {

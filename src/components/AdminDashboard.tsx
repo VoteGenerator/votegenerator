@@ -472,9 +472,53 @@ const AdminDashboard: React.FC = () => {
         setTimeout(() => setCopiedDashboard(false), 2000);
     };
 
-    const handleDeletePoll = (poll: UserPoll) => {
-        if (!confirm(`Remove "${poll.title}" from your dashboard?`)) return;
-        if (session) {
+    const handleDeletePoll = async (poll: UserPoll) => {
+        if (!session) return;
+        
+        // Get response count for warning message
+        const hasResponses = (poll.responseCount || 0) > 0;
+        const isRestrictedTier = session.tier === 'free' || session.tier === 'starter';
+        
+        // Different confirmation messages based on tier and responses
+        let confirmMessage = `Delete "${poll.title}"?`;
+        if (hasResponses) {
+            if (isRestrictedTier) {
+                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the ${session.tier === 'free' ? 'Free' : 'Starter'} plan, you can only delete polls with 0 responses. Upgrade to Pro Event or higher to delete polls with responses.`);
+                return;
+            } else {
+                confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
+            }
+        }
+        
+        if (!confirm(confirmMessage)) return;
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-delete-poll', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey,
+                    dashboardToken: session.dashboardToken
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Remove from local state
+                const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+            } else if (data.upgradeRequired) {
+                // Tier restriction error
+                alert(data.error);
+            } else {
+                alert(data.error || 'Failed to delete poll. Please try again.');
+            }
+        } catch (err) {
+            console.error('Delete poll error:', err);
+            // Fallback: just remove from local UI
             const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
             localStorage.setItem('vg_user_session', JSON.stringify(updated));
             setSession(updated);

@@ -312,7 +312,20 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 // Survey mode
                 isSurvey: pollType === 'survey' ? true : undefined,
                 sections: pollType === 'survey' ? surveySections : undefined,
-                surveySettings: pollType === 'survey' ? surveySettings : undefined
+                surveySettings: pollType === 'survey' ? surveySettings : undefined,
+                // For poll limit enforcement - get from localStorage
+                dashboardToken: (() => {
+                    try {
+                        const session = localStorage.getItem('vg_user_session');
+                        return session ? JSON.parse(session).dashboardToken : undefined;
+                    } catch { return undefined; }
+                })(),
+                sessionId: (() => {
+                    try {
+                        const session = localStorage.getItem('vg_user_session');
+                        return session ? JSON.parse(session).sessionId : undefined;
+                    } catch { return undefined; }
+                })()
             };
             
             // Add image URLs for visual polls
@@ -373,7 +386,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 }
                 return;
             } else { 
-                setError(responseData.error || 'Failed to create poll. Please try again.'); 
+                // Handle specific error types
+                if (responseData.upgradeRequired) {
+                    // Poll limit reached - show upgrade prompt
+                    setError(`${responseData.error} Click "Upgrade" in the sidebar to get more polls.`);
+                } else if (responseData.expired) {
+                    setError(responseData.error || 'Your plan has expired. Please renew to create polls.');
+                } else {
+                    setError(responseData.error || 'Failed to create poll. Please try again.');
+                }
                 setIsCreating(false);
             }
         } catch (e: any) { 

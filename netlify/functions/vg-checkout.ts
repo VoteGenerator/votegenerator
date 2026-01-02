@@ -26,7 +26,7 @@ export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Content-Type': 'application/json',
     };
 
@@ -34,7 +34,7 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
-    if (event.httpMethod !== 'POST') {
+    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
             headers,
@@ -43,14 +43,39 @@ export const handler: Handler = async (event) => {
     }
 
     try {
-        const { tier } = JSON.parse(event.body || '{}');
+        // Support both GET (query params) and POST (body)
+        let tier: string | undefined;
+        
+        if (event.httpMethod === 'GET') {
+            tier = event.queryStringParameters?.tier;
+        } else {
+            const body = JSON.parse(event.body || '{}');
+            tier = body.tier;
+        }
+        
+        // Clean tier value (remove any weird suffixes like ":1")
+        if (tier) {
+            tier = tier.split(':')[0].trim().toLowerCase();
+        }
 
         // Validate tier
         if (!tier || !PRICE_IDS[tier]) {
+            // For GET, show helpful error
+            if (event.httpMethod === 'GET') {
+                return {
+                    statusCode: 400,
+                    headers: { 'Content-Type': 'text/html' },
+                    body: `
+                        <h1>Invalid Tier</h1>
+                        <p>Valid tiers: starter, pro_event, unlimited_event, unlimited</p>
+                        <p>Example: <code>/.netlify/functions/vg-checkout?tier=unlimited</code></p>
+                    `,
+                };
+            }
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Invalid tier' }),
+                body: JSON.stringify({ error: 'Invalid tier. Valid: starter, pro_event, unlimited_event, unlimited' }),
             };
         }
 
@@ -95,6 +120,19 @@ export const handler: Handler = async (event) => {
             billing_address_collection: 'auto',
         });
 
+        // For GET requests, redirect directly to Stripe
+        if (event.httpMethod === 'GET' && session.url) {
+            return {
+                statusCode: 302,
+                headers: {
+                    ...headers,
+                    'Location': session.url,
+                },
+                body: '',
+            };
+        }
+
+        // For POST requests, return JSON with session info
         return {
             statusCode: 200,
             headers,
@@ -105,6 +143,19 @@ export const handler: Handler = async (event) => {
         };
     } catch (error) {
         console.error('Checkout error:', error);
+        
+        // For GET requests with errors, redirect to pricing with error
+        if (event.httpMethod === 'GET') {
+            const siteUrl = process.env.URL || 'https://votegenerator.com';
+            return {
+                statusCode: 302,
+                headers: {
+                    ...headers,
+                    'Location': `${siteUrl}/pricing?error=checkout_failed`,
+                },
+                body: '',
+            };
+        }
         
         return {
             statusCode: 500,

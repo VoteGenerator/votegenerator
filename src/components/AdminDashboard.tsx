@@ -36,11 +36,13 @@ interface UserPoll {
     id: string;
     adminKey: string;
     title: string;
+    description?: string;
     type: string;
     createdAt: string;
     responseCount?: number;
     status?: 'draft' | 'live';  // For Starter/Pro polls
     expiresAt?: string;
+    customSlug?: string;
 }
 
 interface UserSession {

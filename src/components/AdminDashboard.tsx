@@ -193,12 +193,7 @@ const AdminDashboard: React.FC = () => {
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
     const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited' | null;
 
-    // Generate deterministic token from session ID (SAME formula as webhook/CheckoutSuccess)
-    const generateDashboardToken = (sessionId: string): string => {
-        return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
-    };
-    
-    // Fetch customer data by dashboard token OR session ID from backend
+    // Fetch customer data by dashboard token from backend
     const fetchCustomerByToken = async (token: string): Promise<UserSession | null> => {
         try {
             const response = await fetch(`/.netlify/functions/vg-get-customer?token=${encodeURIComponent(token)}`);
@@ -360,7 +355,7 @@ const AdminDashboard: React.FC = () => {
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
                 const tempSession: UserSession = {
-                    dashboardToken: generateDashboardToken(urlSessionId),
+                    dashboardToken: '', // Will be fetched from backend later
                     sessionId: urlSessionId,
                     tier,
                     expiresAt,
@@ -386,6 +381,25 @@ const AdminDashboard: React.FC = () => {
                     setError('Invalid dashboard link. The token does not match.');
                     setLoading(false);
                     return;
+                }
+
+                // Check if we have a fake vg_ token or no token - try to get real one
+                const hasFakeOrNoToken = !sessionData.dashboardToken || sessionData.dashboardToken.startsWith('vg_');
+                if (hasFakeOrNoToken && sessionData.sessionId) {
+                    try {
+                        const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
+                        if (customerData && customerData.dashboardToken && !customerData.dashboardToken.startsWith('vg_')) {
+                            // Got real token - update session
+                            const updatedSession = { ...sessionData, dashboardToken: customerData.dashboardToken };
+                            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                            setSession(updatedSession);
+                            setLoading(false);
+                            console.log('AdminDashboard: Updated to real token from backend');
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('AdminDashboard: Could not fetch real token, using existing session');
+                    }
                 }
 
                 setSession(sessionData);
@@ -438,17 +452,18 @@ const AdminDashboard: React.FC = () => {
         // Use short token format: /admin?t=TOKEN
         const token = session?.dashboardToken;
         
-        if (token) {
+        // Only use token if it's a real short token (not fake vg_ prefix)
+        if (token && !token.startsWith('vg_')) {
             return `${window.location.origin}/admin?t=${token}`;
         }
         
-        // Legacy fallback: session ID
+        // Fallback: session ID (admin dashboard will fetch real token on load)
         const sessionId = session?.sessionId;
         if (sessionId) {
             return `${window.location.origin}/admin?s=${sessionId}`;
         }
         
-        // Fallback to current URL
+        // Last fallback to current URL
         return window.location.href;
     };
     

@@ -143,48 +143,31 @@ const TEMPLATE_STYLES: TemplateStyle[] = [
 ];
 
 // ============================================================================
-// QR CODE GENERATOR (Simple SVG-based)
+// QR CODE GENERATOR (Using QR Server API for real QR codes)
 // ============================================================================
 
-// Simple QR code generator using SVG
-const generateQRCodeSVG = (text: string, size: number = 150): string => {
-    // Use a simple grid pattern as placeholder - in production use qrcode library
-    const modules = 21; // QR version 1
-    const moduleSize = size / modules;
-    
-    // Create a deterministic pattern based on text
-    const hash = text.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0);
-    
-    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">`;
-    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
-    
-    // Position patterns (corners)
-    const drawPositionPattern = (x: number, y: number) => {
-        svg += `<rect x="${x}" y="${y}" width="${7 * moduleSize}" height="${7 * moduleSize}" fill="black"/>`;
-        svg += `<rect x="${x + moduleSize}" y="${y + moduleSize}" width="${5 * moduleSize}" height="${5 * moduleSize}" fill="white"/>`;
-        svg += `<rect x="${x + 2 * moduleSize}" y="${y + 2 * moduleSize}" width="${3 * moduleSize}" height="${3 * moduleSize}" fill="black"/>`;
-    };
-    
-    drawPositionPattern(0, 0);
-    drawPositionPattern((modules - 7) * moduleSize, 0);
-    drawPositionPattern(0, (modules - 7) * moduleSize);
-    
-    // Data modules (simplified pattern)
-    for (let row = 0; row < modules; row++) {
-        for (let col = 0; col < modules; col++) {
-            // Skip position patterns
-            if ((row < 8 && col < 8) || (row < 8 && col >= modules - 8) || (row >= modules - 8 && col < 8)) continue;
-            
-            // Deterministic "random" fill based on position and hash
-            const fill = ((hash + row * col + row + col) % 3 === 0);
-            if (fill) {
-                svg += `<rect x="${col * moduleSize}" y="${row * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="black"/>`;
-            }
-        }
+// Generate QR code image URL using qrserver.com API
+const generateQRCodeUrl = (text: string, size: number = 200): string => {
+    // Use QR Server API - free, no auth needed
+    const encodedText = encodeURIComponent(text);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}&format=png&margin=10`;
+};
+
+// Generate QR code as a data URL by fetching from API
+const generateQRCodeDataUrl = async (text: string, size: number = 200): Promise<string> => {
+    try {
+        const response = await fetch(generateQRCodeUrl(text, size));
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        // Fallback to URL-based approach
+        return generateQRCodeUrl(text, size);
     }
-    
-    svg += '</svg>';
-    return svg;
 };
 
 // ============================================================================
@@ -296,28 +279,37 @@ const ShareCards: React.FC<ShareCardsProps> = ({
         const messageY = titleY + lines.length * 90 + 60;
         ctx.fillText(message, width / 2, messageY);
         
-        // QR Code placeholder area
+        // QR Code area
         const qrSize = format === 'square' ? 200 : 250;
         const qrX = (width - qrSize) / 2;
         const qrY = format === 'square' ? height - 380 : height - 500;
         
-        // QR background
+        // QR background with rounded corners effect
         ctx.fillStyle = 'white';
+        ctx.shadowColor = 'rgba(0,0,0,0.1)';
+        ctx.shadowBlur = 20;
         ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = style.colors.primary;
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
         
-        // Draw QR code (simplified)
-        const qrSvg = generateQRCodeSVG(pollUrl, qrSize);
+        // Draw real QR code using API
         const qrImg = new window.Image();
+        qrImg.crossOrigin = 'anonymous';
         await new Promise<void>((resolve) => {
             qrImg.onload = () => {
                 ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
                 resolve();
             };
-            qrImg.onerror = () => resolve();
-            qrImg.src = 'data:image/svg+xml;base64,' + btoa(qrSvg);
+            qrImg.onerror = () => {
+                // Fallback: draw "QR Code" text if API fails
+                ctx.fillStyle = style.colors.text;
+                ctx.font = `bold 24px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
+                ctx.fillText('Scan QR Code', width / 2, qrY + qrSize / 2);
+                resolve();
+            };
+            qrImg.src = generateQRCodeUrl(pollUrl, qrSize);
         });
         
         // "Scan to Vote" text
@@ -544,14 +536,14 @@ const ShareCards: React.FC<ShareCardsProps> = ({
                 {/* Output Format Buttons */}
                 <div className="mb-6">
                     <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        Download Format
+                        📥 Choose Format & Download
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
-                            { id: 'square' as OutputFormat, icon: ImageIcon, name: 'Square Card', desc: '1080×1080 • Instagram/WhatsApp' },
-                            { id: 'story' as OutputFormat, icon: Instagram, name: 'Story Format', desc: '1080×1920 • Instagram/TikTok' },
-                            { id: 'email' as OutputFormat, icon: Mail, name: 'Email Template', desc: 'HTML • Copy & paste' },
-                            { id: 'pdf' as OutputFormat, icon: FileText, name: 'PDF Invite', desc: 'Coming soon', disabled: true },
+                            { id: 'square' as OutputFormat, icon: ImageIcon, name: 'Square Card', desc: 'Instagram, WhatsApp', size: '1080×1080', color: 'from-pink-500 to-rose-500' },
+                            { id: 'story' as OutputFormat, icon: Instagram, name: 'Story Format', desc: 'Instagram Stories, TikTok', size: '1080×1920', color: 'from-purple-500 to-indigo-500' },
+                            { id: 'email' as OutputFormat, icon: Mail, name: 'Email Template', desc: 'Copy & paste ready', size: 'HTML', color: 'from-blue-500 to-cyan-500' },
+                            { id: 'pdf' as OutputFormat, icon: FileText, name: 'PDF Invite', desc: 'Coming soon', size: 'PDF', disabled: true, color: 'from-slate-400 to-slate-500' },
                         ].map((format) => {
                             const Icon = format.icon;
                             return (
@@ -559,15 +551,36 @@ const ShareCards: React.FC<ShareCardsProps> = ({
                                     key={format.id}
                                     onClick={() => !format.disabled && handleDownload(format.id)}
                                     disabled={format.disabled || generating}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                                    className={`group relative p-5 rounded-2xl border-2 transition-all text-left overflow-hidden ${
                                         format.disabled
-                                            ? 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
-                                            : 'border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 cursor-pointer'
+                                            ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
+                                            : 'border-slate-200 hover:border-transparent hover:shadow-xl cursor-pointer'
                                     }`}
                                 >
-                                    <Icon size={24} className={format.disabled ? 'text-slate-300' : 'text-indigo-600'} />
-                                    <p className="font-semibold text-slate-800 text-sm mt-2">{format.name}</p>
-                                    <p className="text-xs text-slate-500 mt-1">{format.desc}</p>
+                                    {/* Hover gradient background */}
+                                    {!format.disabled && (
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${format.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
+                                    )}
+                                    
+                                    <div className="relative z-10">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
+                                            format.disabled 
+                                                ? 'bg-slate-100' 
+                                                : `bg-gradient-to-br ${format.color} shadow-lg`
+                                        }`}>
+                                            <Icon size={24} className="text-white" />
+                                        </div>
+                                        <p className="font-bold text-slate-800 text-base">{format.name}</p>
+                                        <p className="text-sm text-slate-500 mt-1">{format.desc}</p>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded">{format.size}</span>
+                                            {!format.disabled && (
+                                                <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
+                                                    <Download size={12} /> Click to Download
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </button>
                             );
                         })}
@@ -625,12 +638,21 @@ const ShareCards: React.FC<ShareCardsProps> = ({
                                         {customMessage || pollDescription || 'Your vote matters!'}
                                     </p>
                                     
-                                    {/* QR Placeholder */}
+                                    {/* Real QR Code in Preview */}
                                     <div 
-                                        className="w-24 h-24 bg-white rounded-lg border-2 flex items-center justify-center mb-3"
+                                        className="w-24 h-24 bg-white rounded-lg border-2 flex items-center justify-center mb-3 overflow-hidden shadow-sm"
                                         style={{ borderColor: style.colors.primary }}
                                     >
-                                        <QrCode size={60} style={{ color: style.colors.text }} />
+                                        <img 
+                                            src={generateQRCodeUrl(pollUrl, 96)}
+                                            alt="QR Code"
+                                            className="w-20 h-20"
+                                            onError={(e) => {
+                                                // Fallback to icon if API fails
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h3v2h-3v-2zm-3 0h2v2h-2v-2zm-2 3h2v2h-2v-2zm5 0h2v2h-2v-2zm-5 3h2v2h-2v-2zm5 0h3v2h-3v-2z"/></svg>';
+                                            }}
+                                        />
                                     </div>
                                     
                                     <p 
@@ -652,24 +674,29 @@ const ShareCards: React.FC<ShareCardsProps> = ({
                     </AnimatePresence>
                 </div>
                 
-                {/* Quick Actions */}
-                <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                        onClick={copyEmailHTML}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition"
-                    >
-                        {copied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
-                        {copied ? 'Copied!' : 'Copy Email HTML'}
-                    </button>
-                    
-                    <button
-                        onClick={() => handleDownload('square')}
-                        disabled={generating}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium text-white transition disabled:opacity-50"
-                    >
-                        <Download size={16} />
-                        {generating ? 'Generating...' : 'Download Card'}
-                    </button>
+                {/* Quick Actions - Prominent Download */}
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                            onClick={() => handleDownload('square')}
+                            disabled={generating}
+                            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl text-white font-bold text-lg transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-50"
+                        >
+                            <Download size={22} />
+                            {generating ? 'Generating...' : '📥 Download Invitation Card'}
+                        </button>
+                        
+                        <button
+                            onClick={copyEmailHTML}
+                            className="flex items-center justify-center gap-2 px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-semibold transition"
+                        >
+                            {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+                            {copied ? 'Copied!' : 'Copy Email'}
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-400 text-center mt-3">
+                        Download a beautiful share card or copy ready-to-send email HTML
+                    </p>
                 </div>
             </div>
         </div>

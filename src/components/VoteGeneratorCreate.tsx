@@ -280,7 +280,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
                 : pollType === 'survey'
                     ? [] // Survey doesn't use traditional options
-                    : options.filter(o => o.trim());
+                    : pollType === 'rating'
+                        ? ['1', '2', '3', '4', '5'] // Rating uses 1-5 scale, options are implicit
+                        : options.filter(o => o.trim());
             
             const pollData: any = { 
                 title: title.trim(), 

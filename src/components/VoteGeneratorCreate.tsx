@@ -1187,7 +1187,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <ThemeSelector 
                                                 selectedTheme={selectedTheme} 
                                                 onThemeChange={setSelectedTheme}
-                                                tier={purchasedTier}
+                                                tier={purchasedTier || undefined}
                                             />
                                         </div>
                                     </div>

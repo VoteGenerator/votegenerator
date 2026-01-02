@@ -46,26 +46,37 @@ function isValidSlug(slug: string): boolean {
 const TIER_CONFIG: Record<string, {
   maxResponses: number;
   expiresInDays: number;
+  maxPolls: number;
   features: string[];
 }> = {
   free: {
-    maxResponses: 100,
-    expiresInDays: 30,
+    maxResponses: 50,
+    expiresInDays: 7,
+    maxPolls: 1,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that'],
   },
   starter: {
     maxResponses: 500,
-    expiresInDays: 7,
+    expiresInDays: 30,
+    maxPolls: 1,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix'],
   },
   pro_event: {
     maxResponses: 2000,
     expiresInDays: 30,
+    maxPolls: 3,
     features: ['multiple_choice', 'ranked_choice', 'this_or_that', 'meeting_poll', 'dot_voting', 'rating_scale', 'approval_voting', 'priority_matrix', 'quiz_poll', 'sentiment_check', 'visual_poll'],
+  },
+  unlimited_event: {
+    maxResponses: 5000,
+    expiresInDays: 30,
+    maxPolls: -1,
+    features: ['all'],
   },
   unlimited: {
     maxResponses: 10000,
     expiresInDays: 365,
+    maxPolls: -1,
     features: ['all'],
   },
 };

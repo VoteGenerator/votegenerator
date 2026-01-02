@@ -107,7 +107,7 @@ export const handler: Handler = async (event) => {
     
     // Accept both 'title' (frontend) and 'question' (original)
     const question = body.title || body.question;
-    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls, pin, allowedCodes, dashboardToken, sessionId } = body;
+    const { options, pollType, settings, tier = 'free', planExpiresAt, customSlug, unlisted, status: requestedStatus, imageUrls, pin, allowedCodes, dashboardToken, sessionId, theme, ratingStyle, meetingDuration, logoUrl, buttonText, sections, surveySettings, isSurvey } = body;
 
     // Validation
     if (!question || typeof question !== 'string') {
@@ -118,7 +118,10 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (!options || !Array.isArray(options) || options.length < 2) {
+    // Skip option validation for rating polls (use 1-5 scale) and surveys
+    const skipOptionValidation = pollType === 'rating' || pollType === 'survey' || isSurvey;
+    
+    if (!skipOptionValidation && (!options || !Array.isArray(options) || options.length < 2)) {
       return {
         statusCode: 400,
         headers,
@@ -286,6 +289,7 @@ export const handler: Handler = async (event) => {
         hideResults: settings?.hideResults || false,
         requireNames: settings?.requireNames || false,
         endDate: settings?.endDate || null,
+        deadline: settings?.deadline || null,
         unlisted: unlisted || false, // Hide from search engines
         security: settings?.security || 'none', // none, browser, pin, code
       },
@@ -304,7 +308,19 @@ export const handler: Handler = async (event) => {
       // Default to live for free tier, use requested status for paid tiers
       status: tier === 'free' ? 'live' : (requestedStatus || 'live'),
       // Logo URL (paid feature)
-      logoUrl: body.logoUrl || null,
+      logoUrl: logoUrl || null,
+      // Theme (visual styling)
+      theme: theme || 'default',
+      // Rating style (for rating polls)
+      ratingStyle: ratingStyle || 'stars',
+      // Meeting duration (for meeting polls - calendar integration)
+      meetingDuration: meetingDuration || 60,
+      // Custom button text
+      buttonText: buttonText || 'Submit Vote',
+      // Survey mode fields
+      isSurvey: isSurvey || false,
+      sections: sections || null,
+      surveySettings: surveySettings || null,
       // Notification settings
       notificationSettings: body.notificationSettings || null,
     };

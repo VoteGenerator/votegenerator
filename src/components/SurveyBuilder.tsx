@@ -885,23 +885,23 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-5"
+                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-6"
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-amber-800 flex items-center gap-2">
-                                <Sparkles size={18} /> Quick Start
+                        <div className="flex items-center justify-between mb-5">
+                            <h3 className="font-bold text-lg text-amber-800 flex items-center gap-2">
+                                <Sparkles size={20} /> Choose a Template
                             </h3>
                             <button
                                 onClick={() => setShowTemplates(false)}
-                                className="text-amber-600 hover:text-amber-800"
+                                className="text-amber-600 hover:text-amber-800 p-1"
                             >
-                                <ChevronUp size={18} />
+                                <ChevronUp size={20} />
                             </button>
                         </div>
                         
-                        {/* Horizontal pills */}
-                        <div className="flex flex-wrap gap-2">
-                            {/* Start from Scratch */}
+                        {/* Template Grid - Larger Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Start from Scratch - Featured */}
                             <button
                                 onClick={() => {
                                     updateSections([{
@@ -911,33 +911,44 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                     }]);
                                     setShowTemplates(false);
                                 }}
-                                className="px-4 py-2.5 bg-white rounded-full border-2 border-slate-200 hover:border-slate-400 hover:shadow-sm transition flex items-center gap-2 text-sm font-medium text-slate-700"
+                                className="p-5 bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group"
                             >
-                                <Plus size={16} />
-                                Start from Scratch
+                                <div className="w-14 h-14 bg-slate-100 group-hover:bg-indigo-100 rounded-xl flex items-center justify-center transition">
+                                    <Plus size={28} className="text-slate-500 group-hover:text-indigo-600" />
+                                </div>
+                                <div>
+                                    <span className="font-bold text-slate-800 text-base block">Blank Survey</span>
+                                    <span className="text-sm text-slate-500">Build your own from scratch</span>
+                                </div>
                             </button>
                             
-                            {/* Template pills */}
+                            {/* Template cards */}
                             {SURVEY_TEMPLATES.map((template) => {
                                 const Icon = template.icon;
+                                const questionCount = template.sections.reduce((sum, s) => sum + s.questions.length, 0);
+                                const bgColor = template.color.replace('text-', 'bg-').replace('-600', '-100').replace('-500', '-100');
                                 return (
                                     <button
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
-                                        className="px-4 py-2.5 bg-white rounded-full border-2 border-amber-200 hover:border-amber-400 hover:shadow-sm transition flex items-center gap-2 text-sm font-medium text-slate-700 group"
+                                        className="p-5 bg-white rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group"
                                     >
-                                        <Icon size={16} className={template.color} />
-                                        <span>{template.name}</span>
-                                        <span className="text-xs text-slate-400 group-hover:text-amber-600">
-                                            ({template.sections.reduce((sum, s) => sum + s.questions.length, 0)}q)
-                                        </span>
+                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${bgColor}`}>
+                                            <Icon size={28} className={template.color} />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold text-slate-800 text-base block">{template.name}</span>
+                                            <span className="text-sm text-slate-500">
+                                                {template.sections.length} section{template.sections.length > 1 ? 's' : ''} • {questionCount} question{questionCount > 1 ? 's' : ''}
+                                            </span>
+                                        </div>
                                     </button>
                                 );
                             })}
                         </div>
                         
-                        <p className="text-xs text-amber-600 mt-3 text-center">
-                            Choose a template to get started quickly, or build your own from scratch
+                        <p className="text-xs text-amber-600 mt-5 text-center">
+                            💡 Templates give you a head start - you can always customize them later
                         </p>
                     </motion.div>
                 )}

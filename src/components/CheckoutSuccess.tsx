@@ -84,9 +84,6 @@ const CheckoutSuccess: React.FC = () => {
     }, []);
 
     const setupSession = async (sessionId: string, tier: string) => {
-        // Generate dashboard token (same formula as webhook and AdminDashboard)
-        const dashboardToken = `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
-        
         // Calculate expiry date based on tier
         const now = new Date();
         let expiryDate: Date;
@@ -107,15 +104,34 @@ const CheckoutSuccess: React.FC = () => {
                 break;
         }
         
-        // Create session object
-        const session = {
-            dashboardToken,
-            sessionId, // Store sessionId so admin link can be reconstructed
+        // Try to fetch real dashboard token from backend (webhook should have created it)
+        let realToken: string | null = null;
+        try {
+            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.dashboardToken) {
+                    realToken = data.dashboardToken;
+                    console.log('CheckoutSuccess: Got real token from backend');
+                }
+            }
+        } catch (e) {
+            console.log('CheckoutSuccess: Could not fetch token yet, webhook may still be processing');
+        }
+        
+        // Create session object - only store real token if we have it
+        const session: any = {
+            sessionId, // Always store sessionId for backend lookup
             tier,
             expiresAt: expiryDate.toISOString(),
             polls: [],
             createdAt: new Date().toISOString()
         };
+        
+        // Only add dashboardToken if we got the real one from backend
+        if (realToken) {
+            session.dashboardToken = realToken;
+        }
         
         // Save to localStorage
         localStorage.setItem('vg_user_session', JSON.stringify(session));
@@ -123,30 +139,13 @@ const CheckoutSuccess: React.FC = () => {
         localStorage.setItem('vg_expires_at', expiryDate.toISOString());
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        // Try to fetch short dashboard token from backend (webhook should have created it)
-        try {
-            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.dashboardToken) {
-                    // Use short token URL
-                    const url = `${window.location.origin}/admin?t=${data.dashboardToken}`;
-                    setDashboardUrl(url);
-                    
-                    // Update session with real token
-                    session.dashboardToken = data.dashboardToken;
-                    localStorage.setItem('vg_user_session', JSON.stringify(session));
-                    console.log('CheckoutSuccess: Got short token from backend');
-                    return;
-                }
-            }
-        } catch (e) {
-            console.log('CheckoutSuccess: Could not fetch token, using session ID fallback');
+        // Set dashboard URL
+        if (realToken) {
+            setDashboardUrl(`${window.location.origin}/admin?t=${realToken}`);
+        } else {
+            // Fallback: Use session ID (admin dashboard will fetch real token)
+            setDashboardUrl(`${window.location.origin}/admin?s=${sessionId}`);
         }
-        
-        // Fallback: Use session ID (webhook may not have completed yet)
-        const url = `${window.location.origin}/admin?s=${sessionId}`;
-        setDashboardUrl(url);
         
         console.log('CheckoutSuccess: Session created:', session);
     };

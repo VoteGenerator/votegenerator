@@ -43,8 +43,8 @@ const PLAN_DETAILS: Record<string, {
         icon: Star,
         color: 'text-amber-600',
         gradient: 'from-amber-400 to-orange-500',
-        features: ['10,000 responses', '30 days access', 'ALL features', 'PIN protection', 'Custom branding'],
-        maxPolls: 1,
+        features: ['10,000 responses', '30 days access', 'Unlimited polls', 'ALL features', 'PIN protection', 'Custom branding'],
+        maxPolls: Infinity,
         activeDays: 30
     },
     'unlimited': {

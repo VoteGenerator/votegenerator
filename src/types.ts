@@ -1,6 +1,158 @@
 // Poll and voting types for VoteGenerator
 // This file must match all properties used across components and services
 
+// ============================================================================
+// MULTI-SECTION SURVEY TYPES
+// ============================================================================
+
+// Question types available in surveys
+export type QuestionType = 
+    | 'multiple_choice'   // Single or multiple selection
+    | 'text'              // Short text input
+    | 'textarea'          // Long text input
+    | 'rating'            // 1-5 star rating
+    | 'scale'             // Numeric scale (e.g., 1-10)
+    | 'number'            // Numeric input
+    | 'date'              // Date picker
+    | 'time'              // Time picker
+    | 'datetime'          // Date + time picker
+    | 'email'             // Email input with validation
+    | 'phone'             // Phone number input
+    | 'dropdown'          // Dropdown select
+    | 'ranking'           // Drag to rank options
+    | 'yes_no'            // Simple yes/no
+    | 'file'              // File upload (Pro+)
+    | 'matrix';           // Grid/matrix question
+
+// Individual question within a section
+export interface SurveyQuestion {
+    id: string;
+    type: QuestionType;
+    question: string;
+    description?: string;        // Helper text below question
+    required?: boolean;
+    
+    // For multiple_choice, dropdown, ranking
+    options?: Array<{
+        id: string;
+        text: string;
+        imageUrl?: string;       // For visual options
+    }>;
+    allowMultiple?: boolean;     // For multiple_choice
+    allowOther?: boolean;        // Add "Other" option with text input
+    
+    // For rating/scale
+    minValue?: number;
+    maxValue?: number;
+    minLabel?: string;           // e.g., "Not satisfied"
+    maxLabel?: string;           // e.g., "Very satisfied"
+    
+    // For text/textarea
+    placeholder?: string;
+    minLength?: number;
+    maxLength?: number;
+    
+    // For number
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;               // e.g., "$", "guests", etc.
+    
+    // For matrix questions
+    rows?: Array<{ id: string; text: string }>;
+    columns?: Array<{ id: string; text: string }>;
+    
+    // Conditional logic
+    showIf?: {
+        questionId: string;
+        operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+        value: string | number | string[];
+    };
+    
+    // Validation
+    validation?: {
+        pattern?: string;        // Regex pattern
+        customError?: string;    // Custom error message
+    };
+}
+
+// Section containing multiple questions
+export interface SurveySection {
+    id: string;
+    title: string;
+    description?: string;
+    questions: SurveyQuestion[];
+    
+    // Section-level settings
+    randomizeQuestions?: boolean;
+    
+    // Conditional section display
+    showIf?: {
+        questionId: string;
+        operator: 'equals' | 'not_equals' | 'contains';
+        value: string | number | string[];
+    };
+}
+
+// Survey-specific settings
+export interface SurveySettings {
+    // Navigation
+    allowBack?: boolean;          // Allow going back to previous sections
+    showProgress?: boolean;       // Show progress bar
+    progressStyle?: 'bar' | 'steps' | 'percentage';
+    
+    // Submission
+    showSummary?: boolean;        // Show summary before submit
+    confirmSubmit?: boolean;      // Require confirmation
+    
+    // Display
+    oneQuestionPerPage?: boolean; // Show one question at a time
+    randomizeSections?: boolean;  // Randomize section order
+    
+    // Completion
+    redirectUrl?: string;         // Redirect after completion
+    completionMessage?: string;   // Custom thank you message
+}
+
+// Individual response to a survey
+export interface SurveyResponse {
+    id: string;
+    pollId: string;
+    respondentId?: string;        // Anonymous ID for tracking
+    voterName?: string;
+    submittedAt: string;
+    startedAt?: string;
+    completionTime?: number;      // Seconds to complete
+    
+    // Answers keyed by question ID
+    answers: Record<string, SurveyAnswer>;
+    
+    // Partial submission tracking
+    lastSectionId?: string;
+    isComplete: boolean;
+}
+
+// Individual answer to a question
+export interface SurveyAnswer {
+    questionId: string;
+    questionType: QuestionType;
+    
+    // Different answer formats based on question type
+    selectedIds?: string[];       // For multiple_choice, dropdown
+    text?: string;                // For text, textarea, email, phone
+    number?: number;              // For number, rating, scale
+    date?: string;                // For date, datetime
+    time?: string;                // For time, datetime
+    ranking?: string[];           // For ranking (ordered option IDs)
+    matrix?: Record<string, string>; // For matrix (row ID -> column ID)
+    fileUrl?: string;             // For file upload
+    otherText?: string;           // For "Other" option
+}
+
+// ============================================================================
+// EXISTING TYPES (UPDATED)
+// ============================================================================
+
 export interface PollOption {
     id: string;
     text: string;
@@ -62,6 +214,13 @@ export interface Poll {
     voteCount: number;
     isAdmin?: boolean;
     adminKey?: string;
+    
+    // =========================================
+    // SURVEY MODE (Multi-section polls)
+    // =========================================
+    isSurvey?: boolean;                    // Enable survey/multi-section mode
+    sections?: SurveySection[];            // Survey sections with questions
+    surveySettings?: SurveySettings;       // Survey-specific settings
     
     // Meeting poll specific
     meetingDuration?: 15 | 30 | 45 | 60 | 90 | 120; // Duration in minutes

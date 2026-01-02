@@ -1181,7 +1181,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 </div>
                                             )}
                                         </div>
-                                        </div>
                                         
                                         <div className="pt-4 border-t">
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">Poll Theme</label>

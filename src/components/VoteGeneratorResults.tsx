@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink } from 'lucide-react';
-import { RunoffResult, Poll } from '../types';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText } from 'lucide-react';
+import { RunoffResult, Poll, SurveyResponse } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import SurveyResults from './SurveyResults';
 
 // Helper: Get country name from code
 const COUNTRY_NAMES: Record<string, string> = {
@@ -226,8 +227,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     const isPairwise = poll.pollType === 'pairwise';
     const isRating = poll.pollType === 'rating';
     const isBudget = poll.pollType === 'budget';
+    const isSurvey = poll.pollType === 'survey' || (poll as any).isSurvey;
     // For this-or-that and multiple choice, check if it's a simple poll (not one of the special types)
-    const isSimplePoll = !isRanked && !isMeeting && !isDot && !isMatrix && !isPairwise && !isRating && !isBudget;
+    const isSimplePoll = !isRanked && !isMeeting && !isDot && !isMatrix && !isPairwise && !isRating && !isBudget && !isSurvey;
     const isThisOrThat = isSimplePoll && poll.options.length === 2;
     const isMultipleChoice = isSimplePoll && poll.options.length > 2;
     
@@ -515,6 +517,76 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     >
                         <Settings size={16} /> Edit Poll Settings
                     </button>
+                )}
+            </div>
+        );
+    }
+
+    // =========================================================================
+    // SURVEY MODE - Multi-section form results
+    // =========================================================================
+    if (isSurvey && (poll as any).sections?.length > 0) {
+        // Extract survey responses from votes
+        const surveyResponses: SurveyResponse[] = votes
+            .filter((v: any) => v.surveyAnswers || v.answers)
+            .map((v: any) => ({
+                id: v.id || Math.random().toString(36).substring(2, 9),
+                pollId: poll.id,
+                voterName: v.voterName,
+                submittedAt: v.votedAt || v.timestamp || new Date().toISOString(),
+                startedAt: v.startedAt,
+                completionTime: v.completionTime,
+                answers: v.surveyAnswers || v.answers || {},
+                isComplete: true,
+            }));
+        
+        return (
+            <div className="space-y-6">
+                {/* Survey Header */}
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <FileText size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold">Survey Results</h2>
+                            <p className="text-emerald-100">{poll.title}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6 mt-4 text-sm">
+                        <div>
+                            <span className="text-emerald-200">Responses:</span>{' '}
+                            <span className="font-bold">{surveyResponses.length}</span>
+                        </div>
+                        <div>
+                            <span className="text-emerald-200">Sections:</span>{' '}
+                            <span className="font-bold">{(poll as any).sections?.length || 0}</span>
+                        </div>
+                        <div>
+                            <span className="text-emerald-200">Questions:</span>{' '}
+                            <span className="font-bold">
+                                {(poll as any).sections?.reduce((sum: number, s: any) => sum + (s.questions?.length || 0), 0) || 0}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Survey Results Component */}
+                <SurveyResults 
+                    poll={poll} 
+                    responses={surveyResponses}
+                />
+                
+                {/* Edit Button */}
+                {onEdit && isAdmin && (
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={onEdit}
+                            className="px-6 py-3 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-2"
+                        >
+                            <Settings size={18} /> Edit Survey Settings
+                        </button>
+                    </div>
                 )}
             </div>
         );

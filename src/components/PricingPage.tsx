@@ -23,7 +23,7 @@ const FEATURE_COMPARISON = [
     { category: 'Limits', icon: BarChart3, features: [
         { name: 'Responses per poll', free: '50', starter: '500', proEvent: '2,000', unlimitedEvent: '10,000', unlimited: '10,000' },
         { name: 'Poll duration', free: '7 days', starter: '30 days', proEvent: '30 days', unlimitedEvent: '30 days', unlimited: '1 year' },
-        { name: 'Polls included', free: '1', starter: '1 poll', proEvent: '3 polls', unlimitedEvent: '1 poll', unlimited: 'Unlimited' },
+        { name: 'Polls included', free: '1', starter: '1 poll', proEvent: '3 polls', unlimitedEvent: 'Unlimited', unlimited: 'Unlimited' },
     ]},
     { category: 'Poll Types', icon: CheckSquare, features: [
         { name: 'Multiple Choice', free: true, starter: true, proEvent: true, unlimitedEvent: true, unlimited: true },

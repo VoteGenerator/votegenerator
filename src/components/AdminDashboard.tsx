@@ -129,14 +129,14 @@ const TIER_CONFIG: Record<string, {
         bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
-        maxPolls: 1,
+        maxPolls: Infinity,
         activeDays: 30,
-        requiresActivation: true,
+        requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
             { name: '10,000 responses', included: true },
             { name: '30 days access', included: true },
-            { name: 'All features included', included: true },
+            { name: 'Unlimited polls', included: true },
             { name: 'PIN protection', included: true },
             { name: 'Custom branding', included: true },
         ]

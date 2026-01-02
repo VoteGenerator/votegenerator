@@ -21,6 +21,8 @@ interface Vote {
     matrixVotes?: Record<string, { x: number; y: number }>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
+    // Survey mode
+    surveyAnswers?: Record<string, any>;
     timestamp: string;
     analytics?: VoteAnalytics;
 }
@@ -40,6 +42,10 @@ interface Poll {
     votes: Vote[];
     createdAt: string;
     voteCount: number;
+    // Survey mode
+    isSurvey?: boolean;
+    sections?: any[];
+    surveySettings?: any;
 }
 
 interface RoundStanding {
@@ -393,6 +399,130 @@ function calculateBudgetStats(poll: Poll): Record<string, { totalValue: number; 
     return stats;
 }
 
+/**
+ * Calculate survey-specific statistics
+ */
+function calculateSurveyStats(poll: Poll): {
+    totalResponses: number;
+    completeResponses: number;
+    questionStats: Record<string, any>;
+} {
+    const votes = poll.votes || [];
+    const sections = poll.sections || [];
+    
+    // Get all question IDs from sections
+    const allQuestions: { id: string; type: string; options?: any[] }[] = [];
+    for (const section of sections) {
+        if (section.questions) {
+            for (const q of section.questions) {
+                allQuestions.push({
+                    id: q.id,
+                    type: q.type,
+                    options: q.options
+                });
+            }
+        }
+    }
+    
+    // Calculate stats per question
+    const questionStats: Record<string, any> = {};
+    
+    for (const question of allQuestions) {
+        const qId = question.id;
+        const stats: any = {
+            questionId: qId,
+            type: question.type,
+            responseCount: 0,
+            responses: []
+        };
+        
+        // Collect all answers for this question
+        for (const vote of votes) {
+            if (vote.surveyAnswers && vote.surveyAnswers[qId]) {
+                const answer = vote.surveyAnswers[qId];
+                stats.responseCount++;
+                
+                // Type-specific aggregation
+                switch (question.type) {
+                    case 'multiple_choice':
+                    case 'dropdown':
+                    case 'yes_no':
+                        // Count selections
+                        if (!stats.optionCounts) stats.optionCounts = {};
+                        const selectedIds = answer.selectedIds || [];
+                        for (const optId of selectedIds) {
+                            stats.optionCounts[optId] = (stats.optionCounts[optId] || 0) + 1;
+                        }
+                        break;
+                        
+                    case 'rating':
+                    case 'scale':
+                    case 'number':
+                        // Calculate average
+                        if (!stats.values) stats.values = [];
+                        if (answer.number !== undefined) {
+                            stats.values.push(answer.number);
+                        }
+                        break;
+                        
+                    case 'text':
+                    case 'textarea':
+                    case 'email':
+                    case 'phone':
+                        // Collect text responses
+                        if (answer.text) {
+                            stats.responses.push(answer.text);
+                        }
+                        break;
+                        
+                    case 'ranking':
+                        // Aggregate ranking scores
+                        if (!stats.rankingSums) stats.rankingSums = {};
+                        if (!stats.rankingCounts) stats.rankingCounts = {};
+                        if (answer.ranking && Array.isArray(answer.ranking)) {
+                            answer.ranking.forEach((optId: string, index: number) => {
+                                stats.rankingSums[optId] = (stats.rankingSums[optId] || 0) + (index + 1);
+                                stats.rankingCounts[optId] = (stats.rankingCounts[optId] || 0) + 1;
+                            });
+                        }
+                        break;
+                        
+                    case 'date':
+                    case 'time':
+                    case 'datetime':
+                        // Collect date/time responses
+                        if (answer.date) stats.responses.push(answer.date);
+                        if (answer.time) stats.responses.push(answer.time);
+                        break;
+                }
+            }
+        }
+        
+        // Calculate derived stats
+        if (stats.values && stats.values.length > 0) {
+            stats.average = stats.values.reduce((a: number, b: number) => a + b, 0) / stats.values.length;
+            stats.min = Math.min(...stats.values);
+            stats.max = Math.max(...stats.values);
+        }
+        
+        if (stats.rankingSums && stats.rankingCounts) {
+            stats.rankingAverages = {};
+            for (const [optId, sum] of Object.entries(stats.rankingSums)) {
+                const count = stats.rankingCounts[optId] || 1;
+                stats.rankingAverages[optId] = (sum as number) / count;
+            }
+        }
+        
+        questionStats[qId] = stats;
+    }
+    
+    return {
+        totalResponses: votes.length,
+        completeResponses: votes.filter(v => v.surveyAnswers && Object.keys(v.surveyAnswers).length > 0).length,
+        questionStats
+    };
+}
+
 export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -509,8 +639,34 @@ export const handler: Handler = async (event) => {
                 matrixVotes: v.matrixVotes,
                 pairwiseVotes: v.pairwiseVotes,
                 ratingVotes: v.ratingVotes,
+                surveyAnswers: v.surveyAnswers, // Include survey answers
                 analytics: v.analytics // Include analytics for geography/device views
             }));
+        }
+
+        // ============================================
+        // SURVEY MODE - Return survey-specific data
+        // ============================================
+        const isSurvey = poll.isSurvey || poll.pollType === 'survey';
+        
+        if (isSurvey) {
+            // For surveys, include sections info and all survey answers
+            baseResponse.isSurvey = true;
+            baseResponse.sections = poll.sections || [];
+            baseResponse.surveySettings = poll.surveySettings || {};
+            
+            // Calculate survey-specific stats
+            const surveyStats = calculateSurveyStats(poll);
+            baseResponse.surveyStats = surveyStats;
+            
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    ...baseResponse,
+                    winnerId: null // Surveys don't have winners
+                })
+            };
         }
 
         // Add poll-type specific data

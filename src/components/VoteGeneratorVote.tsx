@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { Check, GripVertical, ArrowRight, Loader2, User, Clock, Lock, Key, MessageSquare, Plus, Minus, Coins, Calendar, HelpCircle, AlertTriangle, DollarSign, ZoomIn, X } from 'lucide-react';
-import { Poll, PollOption } from '../types';
+import { Poll, PollOption, SurveyResponse } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
+import SurveyVote from './SurveyVote';
 
 interface Props {
     poll: Poll;
@@ -280,6 +281,106 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 <p className="text-sm text-slate-400">
                     Check back later or contact the poll creator for more information.
                 </p>
+            </div>
+        );
+    }
+
+    // =========================================================================
+    // SURVEY MODE - Multi-section forms
+    // =========================================================================
+    if ((poll as any).isSurvey && (poll as any).sections?.length > 0) {
+        const handleSurveySubmit = async (response: SurveyResponse) => {
+            setIsSubmitting(true);
+            setErrorMessage(null);
+            
+            try {
+                // Submit survey response using the vote service
+                await submitVote(
+                    poll.id,
+                    [], // Empty choices for surveys
+                    response.voterName || voterName || undefined,
+                    accessCode || undefined,
+                    undefined, // comment
+                    undefined, // choicesMaybe
+                    undefined, // matrixVotes
+                    undefined, // pairwiseVotes
+                    undefined, // ratingVotes
+                    response.answers // surveyAnswers
+                );
+                
+                // Mark as voted in localStorage
+                const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');
+                votedPolls[poll.id] = {
+                    votedAt: new Date().toISOString(),
+                    isSurvey: true,
+                };
+                localStorage.setItem('votedPolls', JSON.stringify(votedPolls));
+                
+                onVoteSuccess();
+            } catch (err: any) {
+                setErrorMessage(err.message || 'Failed to submit survey');
+                setIsSubmitting(false);
+            }
+        };
+        
+        return (
+            <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
+                {/* Logo if present */}
+                {(poll as any).logoUrl && (
+                    <div className="mb-6 flex justify-center">
+                        <img 
+                            src={(poll as any).logoUrl} 
+                            alt="Poll logo" 
+                            className="max-h-16 max-w-48 object-contain"
+                        />
+                    </div>
+                )}
+                
+                {/* Error message */}
+                {errorMessage && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-center gap-2">
+                        <AlertTriangle size={18} />
+                        {errorMessage}
+                    </div>
+                )}
+                
+                {/* Voter name if required */}
+                {poll.settings.requireNames && (
+                    <div className="mb-6 bg-white rounded-xl shadow-lg border border-slate-200 p-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <User size={16} /> Your Name *
+                        </label>
+                        <input
+                            type="text"
+                            value={voterName}
+                            onChange={(e) => setVoterName(e.target.value)}
+                            placeholder="Enter your name"
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
+                        />
+                    </div>
+                )}
+                
+                {/* Access code if required */}
+                {(poll.settings.security === 'code' || poll.settings.security === 'pin') && (
+                    <div className="mb-6 bg-white rounded-xl shadow-lg border border-slate-200 p-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <Key size={16} /> {poll.settings.security === 'pin' ? 'Enter PIN' : 'Access Code'} *
+                        </label>
+                        <input
+                            type={poll.settings.security === 'pin' ? 'password' : 'text'}
+                            value={accessCode}
+                            onChange={(e) => setAccessCode(e.target.value)}
+                            placeholder={poll.settings.security === 'pin' ? '••••' : 'Enter code'}
+                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
+                        />
+                    </div>
+                )}
+                
+                <SurveyVote
+                    poll={poll}
+                    onSubmit={handleSurveySubmit}
+                    voterName={voterName}
+                />
             </div>
         );
     }

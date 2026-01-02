@@ -93,12 +93,29 @@ export const handler: Handler = async (event) => {
                 options: poll.options,
                 settings: {
                     hideResults: poll.settings.hideResults,
-                    allowMultiple: poll.settings.allowMultiple
+                    allowMultiple: poll.settings.allowMultiple,
+                    requireNames: poll.settings.requireNames,
+                    security: poll.settings.security,
+                    deadline: poll.settings.deadline || poll.settings.endDate,
+                    allowComments: poll.settings.allowComments,
+                    timezone: poll.settings.timezone
                 },
                 createdAt: poll.createdAt,
                 voteCount: poll.voteCount,
                 isAdmin: false,
+                // Visual theming (premium feature)
+                theme: poll.theme || 'default',
                 logoUrl: poll.logoUrl || null,
+                buttonText: poll.buttonText,
+                // Rating style
+                ratingStyle: poll.ratingStyle,
+                // Meeting duration
+                meetingDuration: poll.meetingDuration,
+                // Survey mode
+                isSurvey: poll.isSurvey,
+                sections: poll.sections,
+                surveySettings: poll.surveySettings,
+                // Status
                 status: poll.status || 'live'
             };
 

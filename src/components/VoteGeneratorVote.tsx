@@ -37,8 +37,17 @@ const getSpecialEffectClasses = (effect?: string): string => {
 
 const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     // Get theme configuration
-    const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
+    const theme = useMemo(() => {
+        const themeId = poll.theme || 'default';
+        console.log('VoteGeneratorVote: Poll theme ID:', themeId, 'Poll data:', { theme: poll.theme, id: poll.id });
+        return getThemeConfig(themeId);
+    }, [poll.theme, poll.id]);
     const isPremiumTheme = theme.isPremium || false;
+    
+    // Debug: log theme config
+    useEffect(() => {
+        console.log('VoteGeneratorVote: Active theme:', theme.id, theme.name, 'isPremium:', isPremiumTheme);
+    }, [theme]);
     
     const shuffle = <T,>(array: T[]): T[] => {
         const newArr = [...array];

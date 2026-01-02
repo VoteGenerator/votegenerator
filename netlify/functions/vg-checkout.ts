@@ -106,7 +106,7 @@ export const handler: Handler = async (event) => {
                     quantity: 1,
                 },
             ],
-            success_url: `${siteUrl}/checkout-success?session_id={CHECKOUT_SESSION_ID}&tier=${tier}`,
+            success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&tier=${tier}`,
             cancel_url: `${siteUrl}/pricing`,
             metadata: {
                 tier,

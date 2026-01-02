@@ -12,6 +12,8 @@ interface VoteRequest {
     matrixVotes?: Record<string, { x: number; y: number }>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
+    // Survey mode
+    surveyAnswers?: Record<string, any>;
 }
 
 interface VoteAnalytics {
@@ -34,6 +36,8 @@ interface Vote {
     matrixVotes?: Record<string, { x: number; y: number }>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
+    // Survey mode
+    surveyAnswers?: Record<string, any>;
     timestamp: string;
     analytics?: VoteAnalytics;
 }
@@ -58,6 +62,10 @@ interface Poll {
     tier?: string;
     maxResponses?: number;
     status?: 'draft' | 'live' | 'paused' | 'closed';
+    // Survey mode
+    isSurvey?: boolean;
+    sections?: any[];
+    surveySettings?: any;
     // Security
     pin?: string;
     allowedCodes?: string[];
@@ -369,8 +377,28 @@ export const handler: Handler = async (event) => {
 
         const validOptionIds = new Set(poll.options.map(o => o.id));
 
+        // ============================================
+        // SURVEY MODE - Different validation
+        // ============================================
+        const isSurvey = poll.isSurvey || poll.pollType === 'survey';
+        
+        if (isSurvey) {
+            console.log('vg-vote: Survey mode - validating survey answers');
+            
+            if (!body.surveyAnswers || typeof body.surveyAnswers !== 'object') {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({ error: 'Survey answers are required' })
+                };
+            }
+            
+            // For surveys, we don't validate against poll.options
+            // The surveyAnswers contain question IDs from sections
+            console.log('vg-vote: Survey answers count:', Object.keys(body.surveyAnswers).length);
+        }
         // Check for ranked polls (ranked, ranked_choice)
-        if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
+        else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             if (!Array.isArray(rankedIds) || rankedIds.length === 0) {
                 return {
                     statusCode: 400,
@@ -455,7 +483,11 @@ export const handler: Handler = async (event) => {
         };
 
         // Add vote data based on poll type
-        if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
+        if (isSurvey) {
+            // Survey mode - store survey answers
+            vote.surveyAnswers = body.surveyAnswers;
+            console.log('vg-vote: Storing survey answers');
+        } else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             vote.rankedOptionIds = body.rankedOptionIds;
         } else {
             vote.selectedOptionIds = body.selectedOptionIds;

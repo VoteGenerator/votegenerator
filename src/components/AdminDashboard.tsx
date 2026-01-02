@@ -552,11 +552,6 @@ const AdminDashboard: React.FC = () => {
                                 }
                             </span>
                         </div>
-                        {(tier !== 'unlimited' || isPlanExpired) && (
-                            <a href="/#pricing" className="hidden md:flex px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition items-center gap-2">
-                                <Sparkles size={16} /> {isPlanExpired ? 'Renew' : 'Upgrade'}
-                            </a>
-                        )}
                         {isUnlimited && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
@@ -579,22 +574,26 @@ const AdminDashboard: React.FC = () => {
                                             <AlertCircle size={20} className="text-amber-600" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-amber-800">Save Your Dashboard Link!</p>
-                                            <p className="text-sm text-amber-600 mb-2">Bookmark this — it's the only way to access your polls.</p>
+                                            <p className="font-bold text-amber-800">🔖 Bookmark This Page!</p>
+                                            <p className="text-sm text-amber-600 mb-2">
+                                                This is your only way back to your polls. Save the link below, bookmark this page, or check your email{tier !== 'free' && ' (paid plans)'}.
+                                            </p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-sm text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
+                                                <code className="text-xs text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => {
-                                        navigator.clipboard.writeText(getShortAdminLink());
-                                        setCopiedDashboard(true);
-                                        setTimeout(() => setCopiedDashboard(false), 2000);
-                                    }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition flex-shrink-0">
-                                        {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                        {copiedDashboard ? 'Copied!' : 'Copy'}
-                                    </button>
+                                    <div className="flex flex-col gap-2 flex-shrink-0">
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(getShortAdminLink());
+                                            setCopiedDashboard(true);
+                                            setTimeout(() => setCopiedDashboard(false), 2000);
+                                        }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition">
+                                            {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
+                                            {copiedDashboard ? 'Copied!' : 'Copy Link'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -995,7 +994,7 @@ const AdminDashboard: React.FC = () => {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         {(() => {
                                             const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                                            const canExtend = daysLeft <= 30; // Only allow extend when ≤30 days remaining
+                                            const canExtend = daysLeft <= 30 && tier === 'unlimited'; // Only Unlimited can extend
                                             
                                             return (
                                                 <>
@@ -1006,6 +1005,7 @@ const AdminDashboard: React.FC = () => {
                                                         </span>
                                                         {!isPlanExpired && (
                                                             <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                                daysLeft <= 7 ? 'bg-red-100 text-red-700' :
                                                                 daysLeft <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                                                             }`}>
                                                                 {daysLeft} days left
@@ -1016,7 +1016,7 @@ const AdminDashboard: React.FC = () => {
                                                     {/* Renew button - always show when expired */}
                                                     {isPlanExpired && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/pricing?renew=${tier}`}
+                                                            onClick={() => window.location.href = `/#pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg"
                                                         >
                                                             <RefreshCw size={16} />
@@ -1024,26 +1024,19 @@ const AdminDashboard: React.FC = () => {
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Extend button - only show when ≤30 days remaining */}
+                                                    {/* Extend button - only for Unlimited when ≤30 days remaining */}
                                                     {!isPlanExpired && canExtend && (
                                                         <button 
-                                                            onClick={() => window.location.href = `/pricing?extend=${tier}`}
+                                                            onClick={() => window.location.href = `/#pricing`}
                                                             className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-700"
                                                         >
                                                             <RefreshCw size={16} />
-                                                            Extend {config.label}
+                                                            Extend Plan
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Message when extend not yet available - non-Unlimited tiers */}
-                                                    {!isPlanExpired && !canExtend && tier !== 'unlimited' && (
-                                                        <p className="text-xs text-slate-400 text-center py-2">
-                                                            Extend option available when ≤30 days remaining
-                                                        </p>
-                                                    )}
-                                                    
                                                     {/* Unlimited tier - show best plan message when not near expiry */}
-                                                    {!isPlanExpired && !canExtend && tier === 'unlimited' && (
+                                                    {!isPlanExpired && tier === 'unlimited' && daysLeft > 30 && (
                                                         <div className="text-center py-2 text-xs text-emerald-600 font-medium flex items-center justify-center gap-1">
                                                             <CheckCircle size={14} /> You have the best plan!
                                                         </div>

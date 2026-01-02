@@ -521,7 +521,7 @@ const AdminDashboard: React.FC = () => {
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
             {/* Header with Paid Nav */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
                         <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
@@ -566,10 +566,10 @@ const AdminDashboard: React.FC = () => {
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto px-4 py-8">
+            <main className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                         {/* Save Dashboard Link Banner */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                             <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
@@ -885,7 +885,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* Right Sidebar */}
-                    <div className="w-full lg:w-80 space-y-6">
+                    <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-6">
                         {/* Unlimited: Security & Access - Premium styling */}
                         {isUnlimited && (
                             <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl border-2 border-amber-200 overflow-hidden shadow-lg shadow-amber-100/50">

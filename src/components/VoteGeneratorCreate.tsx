@@ -11,12 +11,13 @@ import LogoUpload from './LogoUpload';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 
-type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited';
+type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
 
 const TIER_CONFIG: Record<PollTier, { label: string; colors: string; maxDays: number }> = {
     free: { label: '', colors: '', maxDays: 7 },
     starter: { label: 'STARTER', colors: 'bg-blue-500 text-white', maxDays: 30 },
-    pro_event: { label: 'PRO', colors: 'bg-purple-600 text-white', maxDays: 60 },
+    pro_event: { label: 'PRO', colors: 'bg-purple-600 text-white', maxDays: 30 },
+    unlimited_event: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-orange-400 to-amber-500 text-white', maxDays: 30 },
     unlimited: { label: 'UNLIMITED', colors: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white', maxDays: 365 }
 };
 
@@ -129,6 +130,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [hideResults, setHideResults] = useState(false);
     const [buttonText, setButtonText] = useState('Submit Vote');
     const [deadline, setDeadline] = useState('');
+    const [meetingDuration, setMeetingDuration] = useState<15 | 30 | 45 | 60 | 90 | 120>(60); // Default 1 hour
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showPaywall, setShowPaywall] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
@@ -206,7 +208,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         // Tier hierarchy: unlimited > pro_event > starter > free
         // Visual Poll (pro_event tier) requires pro_event OR unlimited
         // Starter only unlocks starter-tier features (none currently, but future-proof)
-        const tierRank: Record<PollTier, number> = { free: 0, starter: 1, pro_event: 2, unlimited: 3 };
+        const tierRank: Record<PollTier, number> = { free: 0, starter: 1, pro_event: 2, unlimited_event: 3, unlimited: 3 };
         const requiredRank = tierRank[typeTier] || 0;
         const userRank = tierRank[purchasedTier] || 0;
         return userRank >= requiredRank;
@@ -264,6 +266,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 buttonText: buttonText || 'Submit Vote', 
                 tier: effectiveTier,
                 theme: selectedTheme,
+                // Meeting duration (for calendar integration)
+                meetingDuration: pollType === 'meeting' ? meetingDuration : undefined,
                 // Custom branding (Pro Event & Unlimited)
                 logoUrl: pollLogo || undefined,
                 // For paid tiers: allow starting in draft mode
@@ -629,6 +633,41 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <label className="flex items-center justify-between mb-2"><span className="text-sm font-semibold text-slate-700">Close poll on</span><span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Max {maxDays} days</span></label>
                                             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
                                         </div>
+                                        
+                                        {/* Meeting Duration - only for meeting polls */}
+                                        {pollType === 'meeting' && (
+                                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                                <label className="flex items-center gap-2 mb-3">
+                                                    <Clock size={16} className="text-amber-600" />
+                                                    <span className="text-sm font-semibold text-amber-800">Meeting Duration</span>
+                                                </label>
+                                                <p className="text-xs text-amber-600 mb-3">Used when adding the winning time to calendars</p>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {[
+                                                        { value: 15, label: '15 min' },
+                                                        { value: 30, label: '30 min' },
+                                                        { value: 45, label: '45 min' },
+                                                        { value: 60, label: '1 hour' },
+                                                        { value: 90, label: '1.5 hours' },
+                                                        { value: 120, label: '2 hours' },
+                                                    ].map(({ value, label }) => (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            onClick={() => setMeetingDuration(value as typeof meetingDuration)}
+                                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                                                meetingDuration === value
+                                                                    ? 'bg-amber-500 text-white shadow-md'
+                                                                    : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                                            }`}
+                                                        >
+                                                            {label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
                                         {pollType === 'multiple' && (
                                             <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
                                                 <span className="font-medium text-slate-700">Allow multiple selections</span>

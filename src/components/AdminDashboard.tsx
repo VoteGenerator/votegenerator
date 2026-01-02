@@ -12,9 +12,10 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw,
+    Home, AlertTriangle, RefreshCw, Gift,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
+import ShareCards from './ShareCards';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -35,11 +36,13 @@ interface UserPoll {
     id: string;
     adminKey: string;
     title: string;
+    description?: string;
     type: string;
     createdAt: string;
     responseCount?: number;
     status?: 'draft' | 'live';  // For Starter/Pro polls
     expiresAt?: string;
+    customSlug?: string;
 }
 
 interface UserSession {
@@ -176,6 +179,7 @@ const AdminDashboard: React.FC = () => {
     const [showStatsPanel, setShowStatsPanel] = useState(true);
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
+    const [showShareCards, setShowShareCards] = useState<string | null>(null); // Poll ID for share cards modal
     
     // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
@@ -805,6 +809,13 @@ const AdminDashboard: React.FC = () => {
                                                                 {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
                                                             </button>
                                                         )}
+                                                        <button
+                                                            onClick={() => setShowShareCards(poll.id)}
+                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition"
+                                                            title="Create share card"
+                                                        >
+                                                            <Gift size={18} />
+                                                        </button>
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}
                                                             className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
@@ -1200,6 +1211,42 @@ const AdminDashboard: React.FC = () => {
                         onConfirm={() => handleGoLive(showGoLiveModal)}
                     />
                 )}
+            </AnimatePresence>
+
+            {/* Share Cards Modal */}
+            <AnimatePresence>
+                {showShareCards && (() => {
+                    const poll = polls.find(p => p.id === showShareCards);
+                    if (!poll) return null;
+                    const pollUrl = poll.customSlug 
+                        ? `${window.location.origin}/p/${poll.customSlug}`
+                        : `${window.location.origin}/#id=${poll.id}`;
+                    return (
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" 
+                            onClick={() => setShowShareCards(null)}
+                        >
+                            <motion.div 
+                                initial={{ scale: 0.95, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }} 
+                                exit={{ scale: 0.95, opacity: 0 }} 
+                                className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <ShareCards
+                                    pollId={poll.id}
+                                    pollTitle={poll.title}
+                                    pollDescription={poll.description}
+                                    pollUrl={pollUrl}
+                                    onClose={() => setShowShareCards(null)}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    );
+                })()}
             </AnimatePresence>
         </div>
     );

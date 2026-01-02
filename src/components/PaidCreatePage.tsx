@@ -1,62 +1,53 @@
 // ============================================================================
 // PaidCreatePage - Dedicated create poll page for paid users
-// Shows: Paid nav, ONE tier banner, create form ONLY
-// No hero, no landing page sections, no duplicate banners
+// Shows: Paid nav, create form ONLY (tier info on admin dashboard)
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { 
-    Star, Crown, Zap, Calendar, 
+    Star, Crown, Zap, 
     LayoutDashboard, HelpCircle, PlusCircle,
-    Menu, X, Copy, Check
+    Menu, X
 } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
-type PaidTier = 'starter' | 'pro_event' | 'unlimited';
+type PaidTier = 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
 
-// Tier configuration
+// Tier configuration (minimal - full config on admin dashboard)
 const TIER_CONFIG: Record<PaidTier, {
     label: string;
     icon: typeof Star;
     gradient: string;
-    bgGradient: string;
-    maxPolls: number;
-    maxResponses: number;
     days: number;
 }> = {
     starter: {
         label: 'Starter',
         icon: Zap,
         gradient: 'from-blue-500 to-indigo-600',
-        bgGradient: 'from-blue-600 to-indigo-700',
-        maxPolls: 1,
-        maxResponses: 500,
         days: 30,
     },
     pro_event: {
         label: 'Pro Event',
         icon: Crown,
         gradient: 'from-purple-500 to-pink-600',
-        bgGradient: 'from-purple-600 via-pink-600 to-purple-600',
-        maxPolls: 3,
-        maxResponses: 2000,
-        days: 60,
+        days: 30,
+    },
+    unlimited_event: {
+        label: 'Unlimited Event',
+        icon: Star,
+        gradient: 'from-orange-400 to-amber-500',
+        days: 30,
     },
     unlimited: {
         label: 'Unlimited',
         icon: Star,
         gradient: 'from-amber-500 to-orange-500',
-        bgGradient: 'from-slate-900 via-amber-950 to-slate-900',
-        maxPolls: -1,
-        maxResponses: 10000,
         days: 365,
     },
 };
 
 const PaidCreatePage: React.FC = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [copiedLink, setCopiedLink] = useState(false);
     
     // Get tier from localStorage
     const tier = (localStorage.getItem('vg_purchased_tier') || 'starter') as PaidTier;
@@ -65,22 +56,10 @@ const PaidCreatePage: React.FC = () => {
     const config = TIER_CONFIG[tier] || TIER_CONFIG.starter;
     const TierIcon = config.icon;
     
-    // Calculate expiration date
-    const expirationDate = expiresAt 
-        ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : null;
-    
     // Calculate days remaining
     const daysRemaining = expiresAt 
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : config.days;
-    
-    // Copy admin page link
-    const copyLink = () => {
-        navigator.clipboard.writeText(`${window.location.origin}/admin`);
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2000);
-    };
 
     // Nav items for paid users
     const navItems = [
@@ -186,66 +165,7 @@ const PaidCreatePage: React.FC = () => {
                 )}
             </header>
 
-            {/* SINGLE Tier Status Banner */}
-            <div className={`bg-gradient-to-r ${config.bgGradient} text-white`}>
-                <div className="max-w-6xl mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 ${tier === 'unlimited' ? 'bg-gradient-to-br from-amber-400 to-amber-600' : 'bg-white/20 backdrop-blur'} rounded-xl flex items-center justify-center shadow-lg`}>
-                                <TierIcon size={24} className={tier === 'unlimited' ? 'text-amber-950' : 'text-white'} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h2 className={`text-lg font-bold ${tier === 'unlimited' ? 'bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent' : ''}`}>
-                                        {tier === 'unlimited' ? '⭐' : tier === 'pro_event' ? '👑' : '⚡'} {config.label} Plan
-                                    </h2>
-                                    <span className="px-2 py-0.5 bg-emerald-500 text-white rounded-full text-xs font-bold">
-                                        ACTIVE
-                                    </span>
-                                </div>
-                                <p className={`text-sm ${tier === 'unlimited' ? 'text-amber-200/80' : 'text-white/80'}`}>
-                                    Create your poll below • All premium features unlocked • No ads
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-4">
-                            {expirationDate && (
-                                <div className="text-right hidden sm:block">
-                                    <p className={`text-xs ${tier === 'unlimited' ? 'text-amber-300/60' : 'text-white/60'}`}>Expires on</p>
-                                    <p className={`text-sm font-semibold flex items-center gap-1 justify-end ${tier === 'unlimited' ? 'text-amber-200' : ''}`}>
-                                        <Calendar size={14} />
-                                        {expirationDate}
-                                    </p>
-                                </div>
-                            )}
-                            
-                            <div className="text-right hidden sm:block">
-                                <p className={`text-xs ${tier === 'unlimited' ? 'text-amber-300/60' : 'text-white/60'}`}>Plan includes</p>
-                                <p className={`text-sm font-semibold ${tier === 'unlimited' ? 'text-amber-200' : ''}`}>
-                                    {config.maxResponses.toLocaleString()} responses
-                                </p>
-                            </div>
-                            
-                            <button 
-                                onClick={copyLink}
-                                className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
-                                    copiedLink 
-                                        ? 'bg-emerald-500 text-white' 
-                                        : tier === 'unlimited'
-                                            ? 'bg-amber-400 hover:bg-amber-300 text-amber-900'
-                                            : 'bg-white/20 hover:bg-white/30 text-white'
-                                }`}
-                            >
-                                {copiedLink ? <Check size={16} /> : <Copy size={16} />}
-                                {copiedLink ? 'Copied!' : 'Save Link'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Create Poll Form - MAIN CONTENT (no extra banner) */}
+            {/* Create Poll Form - Clean, no banner */}
             <main className="max-w-6xl mx-auto px-4 py-8">
                 <VoteGeneratorCreate hideTierBanner={true} />
             </main>

@@ -123,8 +123,8 @@ const CheckoutSuccess: React.FC = () => {
         localStorage.setItem('vg_expires_at', expiryDate.toISOString());
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        // Generate dashboard URL with BOTH token and session_id (survives cache clears)
-        const url = `${window.location.origin}/admin?token=${dashboardToken}&session_id=${sessionId}`;
+        // Generate short dashboard URL (AdminDashboard can regenerate token from session_id)
+        const url = `${window.location.origin}/admin?s=${sessionId}`;
         setDashboardUrl(url);
         
         console.log('CheckoutSuccess: Session created:', session);

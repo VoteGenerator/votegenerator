@@ -1,29 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Simple in-memory rate limiting (resets on function cold start)
-// In production, use Redis or similar for persistent rate limiting
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 10; // 10 requests per minute per IP
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
-  
-  if (!record || record.resetAt < now) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-  
-  if (record.count >= RATE_LIMIT_MAX) {
-    return true;
-  }
-  
-  record.count++;
-  return false;
-}
-
 // Validate slug format
 function isValidSlug(slug: string): { valid: boolean; error?: string } {
   if (!slug || typeof slug !== 'string') {
@@ -65,50 +42,35 @@ function isValidSlug(slug: string): { valid: boolean; error?: string } {
 }
 
 export const handler: Handler = async (event) => {
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Content-Type': 'application/json',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json'
   };
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Rate limiting
-  const clientIP = event.headers['x-forwarded-for']?.split(',')[0] || 
-                   event.headers['client-ip'] || 
-                   'unknown';
-  
-  if (isRateLimited(clientIP)) {
+  if (event.httpMethod !== 'POST') {
     return {
-      statusCode: 429,
+      statusCode: 405,
       headers,
-      body: JSON.stringify({ 
-        error: 'Too many requests. Please wait a moment before trying again.',
-        available: false 
-      }),
+      body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
   try {
-    let slug: string;
-    let pollId: string | undefined;
+    const { slug, pollId, adminKey } = JSON.parse(event.body || '{}');
 
-    // Support both GET (query params) and POST (body)
-    if (event.httpMethod === 'GET') {
-      slug = event.queryStringParameters?.slug || '';
-      pollId = event.queryStringParameters?.pollId;
-    } else if (event.httpMethod === 'POST') {
-      const body = JSON.parse(event.body || '{}');
-      slug = body.slug || '';
-      pollId = body.pollId;
-    } else {
+    // Validate inputs
+    if (!pollId || !adminKey) {
       return {
-        statusCode: 405,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Method not allowed' }),
+        body: JSON.stringify({ error: 'Poll ID and admin key are required' })
       };
     }
 
@@ -116,69 +78,82 @@ export const handler: Handler = async (event) => {
     const validation = isValidSlug(slug);
     if (!validation.valid) {
       return {
-        statusCode: 200, // Return 200 with available: false for UI
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ 
-          error: validation.error,
-          available: false 
-        }),
+        body: JSON.stringify({ error: validation.error })
       };
     }
 
     const normalizedSlug = slug.trim().toLowerCase();
 
-    // Check if slug exists in our index
-    const slugStore = getStore({
-      name: 'poll-slugs',
-      siteID: process.env.VG_SITE_ID || '',
-      token: process.env.NETLIFY_AUTH_TOKEN || ''
-    });
+    // Get stores
+    const pollStore = getStore('polls');
+    const slugStore = getStore('slugs');
 
-    const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
-
-    // If slug exists but belongs to the same poll, it's still "available" (they own it)
-    if (existingPollId && existingPollId === pollId) {
+    // Verify poll exists and admin key matches
+    const pollData = await pollStore.get(pollId, { type: 'json' }) as any;
+    
+    if (!pollData) {
       return {
-        statusCode: 200,
+        statusCode: 404,
         headers,
-        body: JSON.stringify({ 
-          available: true,
-          slug: normalizedSlug,
-          ownedByCurrentPoll: true
-        }),
+        body: JSON.stringify({ error: 'Poll not found' })
       };
     }
 
-    if (existingPollId) {
+    if (pollData.adminKey !== adminKey) {
       return {
-        statusCode: 200,
+        statusCode: 403,
         headers,
-        body: JSON.stringify({ 
-          available: false,
-          reason: 'This custom link is already taken',
-          suggestion: `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`
-        }),
+        body: JSON.stringify({ error: 'Invalid admin key' })
       };
     }
+
+    // Check if slug is already taken (by another poll)
+    const existingSlug = await slugStore.get(normalizedSlug, { type: 'json' }) as any;
+    if (existingSlug && existingSlug.pollId !== pollId) {
+      return {
+        statusCode: 409,
+        headers,
+        body: JSON.stringify({ error: 'This slug is already taken' })
+      };
+    }
+
+    // If poll had a previous slug, remove it
+    if (pollData.customSlug && pollData.customSlug !== normalizedSlug) {
+      try {
+        await slugStore.delete(pollData.customSlug);
+      } catch (e) {
+        // Ignore errors deleting old slug
+      }
+    }
+
+    // Save the slug mapping
+    await slugStore.set(normalizedSlug, JSON.stringify({
+      pollId,
+      createdAt: new Date().toISOString()
+    }));
+
+    // Update the poll with the custom slug
+    pollData.customSlug = normalizedSlug;
+    await pollStore.set(pollId, JSON.stringify(pollData));
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        available: true,
-        slug: normalizedSlug
-      }),
+      body: JSON.stringify({
+        success: true,
+        slug: normalizedSlug,
+        url: `/p/${normalizedSlug}`
+      })
     };
 
   } catch (error) {
-    console.error('Check slug error:', error);
+    console.error('Error creating slug:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Failed to check slug availability',
-        available: false
-      }),
+      body: JSON.stringify({ error: 'Failed to save custom link' })
     };
   }
 };

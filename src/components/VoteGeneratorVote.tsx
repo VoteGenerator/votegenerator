@@ -295,20 +295,18 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             
             try {
                 // Submit survey response using the vote service
-                // The backend will need to handle the survey format
-                const voteData = {
-                    pollId: poll.id,
-                    surveyResponse: response,
-                    voterName: response.voterName || voterName || undefined,
-                    accessCode: accessCode || undefined,
-                };
-                
-                await submitVote(poll.id, {
-                    selectedOptionIds: [], // Empty for surveys
-                    voterName: response.voterName || voterName || undefined,
-                    usedCode: accessCode || undefined,
-                    surveyAnswers: response.answers, // Pass survey answers
-                });
+                await submitVote(
+                    poll.id,
+                    [], // Empty choices for surveys
+                    response.voterName || voterName || undefined,
+                    accessCode || undefined,
+                    undefined, // comment
+                    undefined, // choicesMaybe
+                    undefined, // matrixVotes
+                    undefined, // pairwiseVotes
+                    undefined, // ratingVotes
+                    response.answers // surveyAnswers
+                );
                 
                 // Mark as voted in localStorage
                 const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');

@@ -137,7 +137,8 @@ export const submitVote = async (
     choicesMaybe?: string[],
     matrixVotes?: Record<string, { x: number, y: number }>,
     pairwiseVotes?: { winnerId: string; loserId: string }[],
-    ratingVotes?: Record<string, number>
+    ratingVotes?: Record<string, number>,
+    surveyAnswers?: Record<string, any>
 ): Promise<void> => {
     const votePayload = {
         pollId,
@@ -148,7 +149,8 @@ export const submitVote = async (
         choicesMaybe,
         matrixVotes,
         pairwiseVotes,
-        ratingVotes
+        ratingVotes,
+        surveyAnswers
     };
 
     try {

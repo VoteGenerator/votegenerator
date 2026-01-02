@@ -5,11 +5,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key, Play } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, Lock, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, MessageCircle, Clock, Share2, QrCode, Zap, Crown, CreditCard, X, Star, AlertTriangle, Upload, Copy, Check, Key, Play, FileText } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import LogoUpload from './LogoUpload';
+import SurveyBuilder from './SurveyBuilder';
 import { useGeoPricing } from '../geoPricing';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
+import { SurveySection, SurveySettings } from '../types';
 
 type PollTier = 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
 
@@ -28,6 +30,7 @@ const POLL_TYPES = [
     { id: 'meeting', name: 'Meeting Poll', icon: Calendar, shortDesc: 'Find best time', gradient: 'from-amber-500 to-orange-500', tier: 'free' as PollTier },
     { id: 'rating', name: 'Rating Scale', icon: SlidersHorizontal, shortDesc: 'Rate 1-5 stars', gradient: 'from-cyan-500 to-blue-500', tier: 'free' as PollTier },
     { id: 'rsvp', name: 'RSVP', icon: Users, shortDesc: 'Event attendance', gradient: 'from-sky-500 to-blue-500', tier: 'free' as PollTier },
+    { id: 'survey', name: 'Survey', icon: FileText, shortDesc: 'Multi-section forms', gradient: 'from-emerald-500 to-teal-500', tier: 'free' as PollTier, isNew: true },
     { id: 'image', name: 'Visual Poll', icon: ImageIcon, shortDesc: 'Vote on images', gradient: 'from-pink-500 to-rose-500', tier: 'pro_event' as PollTier }
 ];
 
@@ -41,6 +44,7 @@ const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string
     meeting: { question: "When can you meet?", options: ["Monday 2pm", "Tuesday 10am", "Wednesday 3pm"] },
     rating: { question: "How was your experience?", options: ["Rate 1-5 stars"] },
     rsvp: { question: "Can you attend the party?", options: ["Going", "Not Going", "Maybe"] },
+    survey: { question: "Wedding RSVP & Preferences", options: ["Multi-section survey"] },
     image: { question: "Which design do you prefer?", options: ["Image 1", "Image 2"] }
 };
 
@@ -151,6 +155,10 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     
+    // Survey mode - multi-section forms
+    const [surveySections, setSurveySections] = useState<SurveySection[]>([]);
+    const [surveySettings, setSurveySettings] = useState<SurveySettings>({ allowBack: true, showProgress: true });
+    
     // Copy link function
     const copyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -224,6 +232,23 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 setError('Upload at least 2 images for visual poll'); 
                 return; 
             }
+        } else if (pollType === 'survey') {
+            // Survey - need at least one section with one question
+            if (surveySections.length === 0) {
+                setError('Add at least one section to your survey');
+                return;
+            }
+            const hasQuestions = surveySections.some(s => s.questions.length > 0);
+            if (!hasQuestions) {
+                setError('Add at least one question to your survey');
+                return;
+            }
+            // Check all questions have text
+            const emptyQuestions = surveySections.flatMap(s => s.questions).filter(q => !q.question.trim());
+            if (emptyQuestions.length > 0) {
+                setError('All questions must have text');
+                return;
+            }
         } else {
             // Regular poll - need at least 2 text options
             const valid = options.filter(o => o.trim());
@@ -249,7 +274,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         try {
             const validOptions = pollType === 'image' 
                 ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
-                : options.filter(o => o.trim());
+                : pollType === 'survey'
+                    ? [] // Survey doesn't use traditional options
+                    : options.filter(o => o.trim());
             
             const pollData: any = { 
                 title: title.trim(), 
@@ -275,7 +302,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 // Security: PIN (Pro Event & Unlimited)
                 pin: securityType === 'pin' ? pollPin : undefined,
                 // Security: Unique codes (Unlimited only)
-                allowedCodes: securityType === 'code' ? accessCodes : undefined
+                allowedCodes: securityType === 'code' ? accessCodes : undefined,
+                // Survey mode
+                isSurvey: pollType === 'survey' ? true : undefined,
+                sections: pollType === 'survey' ? surveySections : undefined,
+                surveySettings: pollType === 'survey' ? surveySettings : undefined
             };
             
             // Add image URLs for visual polls
@@ -410,9 +441,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 const isSelected = pollType === type.id;
                                 const tierConfig = TIER_CONFIG[type.tier];
                                 const isLocked = !isPollTypeUnlocked(type.tier);
+                                const isNew = (type as any).isNew;
                                 return (
                                     <motion.div key={type.id} className="relative" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
-                                        {tierConfig.label && !purchasedTier && <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 ${tierConfig.colors}`}>{tierConfig.label}</span>}
+                                        {isNew && <span className="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 bg-gradient-to-r from-emerald-500 to-teal-500 text-white">NEW</span>}
+                                        {tierConfig.label && !purchasedTier && !isNew && <span className={`absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-md z-20 ${tierConfig.colors}`}>{tierConfig.label}</span>}
                                         <button onClick={() => handlePollTypeSelect(type.id)}
                                             className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : isLocked ? 'border-purple-200 hover:border-purple-400 bg-purple-50/30' : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'}`}>
                                             {isLocked && <div className="absolute top-2 left-2"><Lock size={12} className="text-purple-500" /></div>}
@@ -451,26 +484,51 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add context..." rows={2} className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 resize-none bg-slate-50 focus:bg-white" />
                         </div>
                         <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-semibold text-slate-700">Options *</label>
-                                {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
-                            </div>
-                            
-                            {/* Regular text options for non-image polls */}
-                            {pollType !== 'image' ? (
-                                <div className="space-y-3">
-                                    {options.map((opt, i) => (
-                                        <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                                            <div className="flex-1 relative">
-                                                <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
-                                                    className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
-                                                <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
-                                            </div>
-                                            {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
-                                        </motion.div>
-                                    ))}
+                            {pollType === 'survey' ? (
+                                /* Survey Builder - Multi-section forms */
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                                        <div className="flex items-center gap-2 text-emerald-700 mb-2">
+                                            <FileText size={18} />
+                                            <span className="font-semibold">Survey Mode - Multi-Section Forms</span>
+                                            <span className="ml-auto px-2 py-0.5 bg-emerald-200 text-emerald-800 text-xs font-bold rounded-full">NEW</span>
+                                        </div>
+                                        <p className="text-emerald-600 text-sm">
+                                            Create surveys with multiple sections and question types. Perfect for RSVPs, feedback forms, event planning, and more!
+                                        </p>
+                                    </div>
+                                    <SurveyBuilder
+                                        initialSections={surveySections.length > 0 ? surveySections : undefined}
+                                        initialSettings={surveySettings}
+                                        onChange={(sections, settings) => {
+                                            setSurveySections(sections);
+                                            setSurveySettings(settings);
+                                        }}
+                                        tier={currentTier}
+                                    />
                                 </div>
                             ) : (
+                                <>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="block text-sm font-semibold text-slate-700">Options *</label>
+                                        {hasDuplicates && <span className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-full flex items-center gap-1"><AlertCircle size={14} /> Duplicates</span>}
+                                    </div>
+                                    
+                                    {/* Regular text options for non-image polls */}
+                                    {pollType !== 'image' ? (
+                                        <div className="space-y-3">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                                                    <div className="flex-1 relative">
+                                                        <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
+                                                            className={`w-full px-4 py-3 pr-12 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500'}`} />
+                                                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${duplicateIndices.has(i) ? 'bg-red-200 text-red-700' : 'bg-slate-200 text-slate-500'}`}>{i + 1}</span>
+                                                    </div>
+                                                    {options.length > 2 && <button onClick={() => removeOption(i)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></button>}
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    ) : (
                                 /* Visual Poll Image Upload Section */
                                 <div className="space-y-4">
                                     {/* Info Banner */}
@@ -602,7 +660,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             )}
                             
-                            {pollType !== 'image' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                            {pollType !== 'image' && pollType !== 'survey' && options.length < 20 && <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center"><Plus size={18} />Add Option</button>}
+                                </>
+                            )}
                         </div>
                     </motion.div>
 
@@ -1008,7 +1068,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     {error && <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3"><AlertCircle className="text-red-600" size={20} /><p className="text-red-700 font-medium">{error}</p></div>}
 
                     <motion.button type="button" onClick={handleCreate} 
-                        disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
+                        disabled={isCreating || !title.trim() || (
+                            pollType === 'image' ? imageOptions.length < 2 : 
+                            pollType === 'survey' ? (surveySections.length === 0 || !surveySections.some(s => s.questions.length > 0 && s.questions.some(q => q.question.trim()))) :
+                            (options.filter(o => o.trim()).length < 2 || hasDuplicates)
+                        )} 
                         whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                         className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
                             purchasedTier === 'unlimited' ? 'bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500' :
@@ -1093,6 +1157,38 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 </div>
                                             ))}
                                         </div>
+                                    ) : pollType === 'survey' ? (
+                                        // Survey preview
+                                        <div className="space-y-3">
+                                            {surveySections.length > 0 ? (
+                                                <>
+                                                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                                                            Section 1 of {surveySections.length}
+                                                        </span>
+                                                        <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-emerald-500 w-1/3"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                                                        <p className="font-semibold text-emerald-800 text-sm">{surveySections[0]?.title || 'Section 1'}</p>
+                                                        <p className="text-xs text-emerald-600 mt-1">
+                                                            {surveySections[0]?.questions.length || 0} question{(surveySections[0]?.questions.length || 0) !== 1 ? 's' : ''}
+                                                        </p>
+                                                    </div>
+                                                    {surveySections[0]?.questions.slice(0, 2).map((q, i) => (
+                                                        <div key={i} className="p-2 border-2 border-slate-200 rounded-lg">
+                                                            <span className="text-slate-700 text-xs">{q.question || `Question ${i + 1}`}</span>
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            ) : (
+                                                <div className="p-4 border-2 border-dashed border-slate-200 rounded-xl text-center">
+                                                    <FileText size={20} className="mx-auto text-slate-300 mb-2" />
+                                                    <p className="text-slate-500 text-xs">Add sections using the Survey Builder</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
                                         // Default text options preview
                                         options.slice(0, 5).map((opt, i) => (
@@ -1106,6 +1202,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     {pollType === 'rsvp' ? 'Submit RSVP' : 
                                      pollType === 'rating' ? 'Submit Rating' :
                                      pollType === 'meeting' ? 'Submit Availability' :
+                                     pollType === 'survey' ? 'Start Survey →' :
                                      buttonText || 'Submit Vote'}
                                 </button>
                             </div>

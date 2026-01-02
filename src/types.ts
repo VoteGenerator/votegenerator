@@ -21,7 +21,6 @@ export type QuestionType =
     | 'dropdown'          // Dropdown select
     | 'ranking'           // Drag to rank options
     | 'yes_no'            // Simple yes/no
-    | 'file'              // File upload (Pro+)
     | 'matrix';           // Grid/matrix question
 
 // Individual question within a section
@@ -145,7 +144,6 @@ export interface SurveyAnswer {
     time?: string;                // For time, datetime
     ranking?: string[];           // For ranking (ordered option IDs)
     matrix?: Record<string, string>; // For matrix (row ID -> column ID)
-    fileUrl?: string;             // For file upload
     otherText?: string;           // For "Other" option
 }
 
@@ -279,6 +277,8 @@ export interface Vote {
     matrixVotes?: Record<string, { x: number; y: number }>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
+    // Survey mode answers
+    surveyAnswers?: Record<string, SurveyAnswer>;
     analytics?: {
         device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
         country?: string;
@@ -435,4 +435,6 @@ export interface StoredVote {
     matrixVotes?: Record<string, number>;
     pairwiseVotes?: { winnerId: string; loserId: string }[];
     ratingVotes?: Record<string, number>;
+    surveyAnswers?: Record<string, SurveyAnswer>;
+    isSurvey?: boolean;
 }

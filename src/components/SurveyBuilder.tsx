@@ -9,7 +9,7 @@ import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
     Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy,
     Type, AlignLeft, Star, Hash, Calendar, Clock, Mail, Phone,
-    List, ListOrdered, CheckSquare, ToggleLeft, Grid3X3, Upload,
+    List, ListOrdered, CheckSquare, ToggleLeft, Grid3X3,
     Settings2, Eye, EyeOff, HelpCircle, Sparkles, ChevronRight,
     FileText, Users, Heart, Briefcase, PartyPopper, Baby
 } from 'lucide-react';
@@ -26,7 +26,6 @@ interface QuestionTypeConfig {
     description: string;
     category: 'basic' | 'choice' | 'input' | 'advanced';
     defaultOptions?: boolean;
-    disabled?: boolean;
 }
 
 const QUESTION_TYPES: QuestionTypeConfig[] = [
@@ -50,7 +49,6 @@ const QUESTION_TYPES: QuestionTypeConfig[] = [
     { type: 'time', name: 'Time', icon: Clock, description: 'Time picker', category: 'advanced' },
     { type: 'datetime', name: 'Date & Time', icon: Calendar, description: 'Date and time picker', category: 'advanced' },
     { type: 'matrix', name: 'Matrix / Grid', icon: Grid3X3, description: 'Grid with rows and columns', category: 'advanced' },
-    { type: 'file', name: 'File Upload', icon: Upload, description: 'Coming Soon', category: 'advanced', disabled: true },
 ];
 
 // ============================================================================
@@ -719,22 +717,12 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
                                                 return (
                                                     <button
                                                         key={qt.type}
-                                                        onClick={() => !qt.disabled && addQuestion(qt.type)}
-                                                        disabled={qt.disabled}
-                                                        className={`flex items-center gap-2 p-3 rounded-lg text-left transition relative ${
-                                                            qt.disabled 
-                                                                ? 'opacity-50 cursor-not-allowed bg-slate-50' 
-                                                                : 'hover:bg-indigo-50'
-                                                        }`}
+                                                        onClick={() => addQuestion(qt.type)}
+                                                        className="flex items-center gap-2 p-3 rounded-lg hover:bg-indigo-50 text-left transition"
                                                     >
-                                                        {qt.disabled && (
-                                                            <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[9px] font-bold rounded">
-                                                                SOON
-                                                            </span>
-                                                        )}
-                                                        <Icon size={18} className={qt.disabled ? 'text-slate-400 shrink-0' : 'text-indigo-600 shrink-0'} />
+                                                        <Icon size={18} className="text-indigo-600 shrink-0" />
                                                         <div>
-                                                            <p className={`text-sm font-medium ${qt.disabled ? 'text-slate-500' : 'text-slate-800'}`}>{qt.name}</p>
+                                                            <p className="text-sm font-medium text-slate-800">{qt.name}</p>
                                                             <p className="text-xs text-slate-500">{qt.description}</p>
                                                         </div>
                                                     </button>

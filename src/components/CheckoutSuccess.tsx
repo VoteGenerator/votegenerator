@@ -83,7 +83,7 @@ const CheckoutSuccess: React.FC = () => {
         setLoading(false);
     }, []);
 
-    const setupSession = (sessionId: string, tier: string) => {
+    const setupSession = async (sessionId: string, tier: string) => {
         // Generate dashboard token (same formula as webhook and AdminDashboard)
         const dashboardToken = `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
         

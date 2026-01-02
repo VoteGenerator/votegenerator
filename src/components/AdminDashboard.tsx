@@ -54,6 +54,7 @@ interface UserSession {
     hasPin?: boolean;
     pinHash?: string;
     sessionId?: string;  // Stripe session ID for URL reconstruction
+    email?: string;      // Partial email for display
 }
 
 // ============================================================================
@@ -296,7 +297,9 @@ const AdminDashboard: React.FC = () => {
                     // Save to localStorage
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
-                    localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
                     
                     setSession(customerData);
                     setLoading(false);
@@ -327,7 +330,9 @@ const AdminDashboard: React.FC = () => {
                     // Save to localStorage with real data
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
-                    localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
                     
                     setSession(customerData);
                     setLoading(false);

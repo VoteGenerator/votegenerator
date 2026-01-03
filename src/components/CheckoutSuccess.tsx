@@ -1,14 +1,31 @@
 // ============================================================================
 // CheckoutSuccess - Success page after Stripe subscription checkout
 // Route: /checkout/success
+// Uses /logo.svg from public folder
 // ============================================================================
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Crown, Check, AlertCircle, Calendar
+    CheckCircle, ArrowRight, Loader2, Zap, Crown, Check, Calendar,
+    LayoutDashboard
 } from 'lucide-react';
-import NavHeader from './NavHeader';
+
+// Simple header for success page (no nav distractions)
+const SuccessHeader: React.FC = () => (
+    <header className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" className="flex items-center gap-2">
+                <img 
+                    src="/logo.svg" 
+                    alt="VoteGenerator" 
+                    className="h-8 w-8"
+                />
+                <span className="text-xl font-bold text-slate-900">VoteGenerator</span>
+            </a>
+        </div>
+    </header>
+);
 
 // Plan details for display
 const PLAN_DETAILS: Record<string, {
@@ -53,9 +70,6 @@ const CheckoutSuccess: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [tier, setTier] = useState<string | null>(null);
     const [billing, setBilling] = useState<string | null>(null);
-    const [pollData, setPollData] = useState<any>(null);
-    const [creatingPoll, setCreatingPoll] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -64,16 +78,6 @@ const CheckoutSuccess: React.FC = () => {
         
         setTier(tierParam);
         setBilling(billingParam);
-        
-        // Check for saved poll draft
-        const draft = localStorage.getItem('vg_poll_draft');
-        if (draft) {
-            try {
-                setPollData(JSON.parse(draft));
-            } catch (e) {
-                console.error('Error parsing poll draft:', e);
-            }
-        }
         
         // Store subscription info
         if (tierParam) {
@@ -85,51 +89,8 @@ const CheckoutSuccess: React.FC = () => {
         setLoading(false);
     }, []);
 
-    const createPollFromDraft = async () => {
-        if (!pollData) {
-            window.location.href = '/create';
-            return;
-        }
-        
-        setCreatingPoll(true);
-        
-        try {
-            const createData = {
-                title: pollData.title,
-                description: pollData.description || undefined,
-                options: pollData.options,
-                pollType: pollData.pollType,
-                settings: pollData.settings || {
-                    hideResults: false,
-                    allowMultiple: false
-                },
-                tier: tier || 'pro'
-            };
-            
-            const response = await fetch('/.netlify/functions/vg-create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(createData)
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.removeItem('vg_poll_draft');
-                window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to create poll');
-                setCreatingPoll(false);
-            }
-        } catch (err) {
-            console.error('Error creating poll:', err);
-            setError('Failed to create poll. Please try again.');
-            setCreatingPoll(false);
-        }
-    };
-
-    const goToCreate = () => {
-        window.location.href = '/create';
+    const goToDashboard = () => {
+        window.location.href = '/dashboard';
     };
 
     const planDetails = tier ? PLAN_DETAILS[tier] : null;
@@ -148,7 +109,7 @@ const CheckoutSuccess: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-            <NavHeader />
+            <SuccessHeader />
 
             <div className="max-w-2xl mx-auto px-4 py-16">
                 {/* Success Animation */}
@@ -213,51 +174,15 @@ const CheckoutSuccess: React.FC = () => {
                                 ))}
                             </ul>
 
-                            {/* Show saved poll info if exists */}
-                            {pollData && (
-                                <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-100">
-                                    <h4 className="font-semibold text-indigo-800 mb-2">Your Poll Draft:</h4>
-                                    <p className="text-indigo-700 font-medium">{pollData.title}</p>
-                                    <p className="text-indigo-600 text-sm">{pollData.options?.length || 0} options • {pollData.pollType}</p>
-                                </div>
-                            )}
-
-                            {/* Error message */}
-                            {error && (
-                                <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-100 flex items-start gap-2">
-                                    <AlertCircle size={20} className="text-red-500 mt-0.5" />
-                                    <div>
-                                        <p className="text-red-700 font-medium">Error creating poll</p>
-                                        <p className="text-red-600 text-sm">{error}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* CTA Button */}
+                            {/* CTA Button - Go to Dashboard */}
                             <button
                                 type="button"
-                                onClick={pollData ? createPollFromDraft : goToCreate}
-                                disabled={creatingPoll}
-                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                onClick={goToDashboard}
+                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
                             >
-                                {creatingPoll ? (
-                                    <>
-                                        <Loader2 size={20} className="animate-spin" />
-                                        Creating Your Poll...
-                                    </>
-                                ) : pollData ? (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Create Your Poll Now
-                                        <ArrowRight size={20} />
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles size={20} />
-                                        Start Creating Polls
-                                        <ArrowRight size={20} />
-                                    </>
-                                )}
+                                <LayoutDashboard size={20} />
+                                Go to Dashboard
+                                <ArrowRight size={20} />
                             </button>
                         </div>
                     </motion.div>
@@ -276,11 +201,11 @@ const CheckoutSuccess: React.FC = () => {
                         </p>
                         <button
                             type="button"
-                            onClick={goToCreate}
+                            onClick={goToDashboard}
                             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all"
                         >
-                            <Sparkles size={20} />
-                            Create Your Poll Now
+                            <LayoutDashboard size={20} />
+                            Go to Dashboard
                             <ArrowRight size={20} />
                         </button>
                     </motion.div>
@@ -295,8 +220,8 @@ const CheckoutSuccess: React.FC = () => {
                 >
                     <p className="text-slate-600 text-sm">
                         Manage your subscription anytime from the{' '}
-                        <a href="/account" className="text-indigo-600 hover:underline font-medium">
-                            account dashboard
+                        <a href="/dashboard" className="text-indigo-600 hover:underline font-medium">
+                            dashboard
                         </a>
                         {' '}or contact us at{' '}
                         <a href="mailto:support@votegenerator.com" className="text-indigo-600 hover:underline">

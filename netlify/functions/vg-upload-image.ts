@@ -39,11 +39,11 @@ export const handler: Handler = async (event) => {
         }
 
         // Cloudinary credentials from environment
-        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'votegenerator';
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
         const apiKey = process.env.CLOUDINARY_API_KEY;
         const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-        if (!apiKey || !apiSecret) {
+        if (!cloudName || !apiKey || !apiSecret) {
             console.error('Cloudinary credentials not configured');
             return {
                 statusCode: 500,
@@ -56,7 +56,7 @@ export const handler: Handler = async (event) => {
         const timestamp = Math.floor(Date.now() / 1000);
         const folder = 'visual-polls';
         
-        // Create signature string (sorted alphabetically)
+        // Create signature string (sorted alphabetically - ALL params must be included!)
         const signatureString = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
         
         // Generate SHA1 signature
@@ -70,8 +70,6 @@ export const handler: Handler = async (event) => {
         formData.append('timestamp', timestamp.toString());
         formData.append('signature', signature);
         formData.append('folder', folder);
-        // Optimize images to save space
-        formData.append('transformation', 'c_limit,w_800,h_600,q_auto,f_auto');
 
         // Upload to Cloudinary
         const cloudinaryResponse = await fetch(

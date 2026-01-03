@@ -56,7 +56,7 @@ export const handler: Handler = async (event) => {
         const timestamp = Math.floor(Date.now() / 1000);
         const folder = 'visual-polls';
         
-        // Create signature string (sorted alphabetically)
+        // Create signature string (sorted alphabetically - ALL params must be included!)
         const signatureString = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
         
         // Generate SHA1 signature
@@ -70,8 +70,6 @@ export const handler: Handler = async (event) => {
         formData.append('timestamp', timestamp.toString());
         formData.append('signature', signature);
         formData.append('folder', folder);
-        // Optimize images to save space
-        formData.append('transformation', 'c_limit,w_800,h_600,q_auto,f_auto');
 
         // Upload to Cloudinary
         const cloudinaryResponse = await fetch(

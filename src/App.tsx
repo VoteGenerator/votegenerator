@@ -2,17 +2,17 @@
 // App.tsx - Main Application Router
 // VoteGeneratorApp handles landing page, poll viewing, and admin views
 // ============================================================================
-
 import { useState } from 'react';
 import VoteGeneratorApp from './components/VoteGeneratorApp';
 import VoteGeneratorCreate from './components/VoteGeneratorCreate';
 import AdWall from './components/AdWall';
 import PricingPage from './components/PricingPage';
 import ComparePage from './components/ComparePage';
+import PollCreatedSuccess from './components/PollCreatedSuccess';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
-import { Home, Copy, Check, Crown, Star, Zap, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
+import { Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
 
 // Format date nicely
 const formatDate = (dateStr: string) => {
@@ -37,22 +37,18 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
         setTimeout(() => setCopiedAdmin(false), 2000);
     };
     
-    // Tier-specific styling
-    const isUnlimited = tier === 'unlimited';
-    const isPro = tier === 'pro_event';
+    // Tier-specific styling (tiers: free, pro, business)
+    const isBusiness = tier === 'business';
+    const isPro = tier === 'pro';
     
-    // Colors based on tier - Unlimited gets dark premium look
-    const navBg = isUnlimited 
+    // Colors based on tier - Business gets dark premium look
+    const navBg = isBusiness 
         ? 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900' 
-        : isPro 
-            ? 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700'
-            : 'bg-gradient-to-r from-blue-700 to-indigo-800';
+        : 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700';
     
-    const tierConfig = isUnlimited 
-        ? { name: 'Unlimited', icon: Star, badge: 'bg-amber-400 text-amber-900' }
-        : isPro 
-            ? { name: 'Pro Event', icon: Crown, badge: 'bg-pink-400 text-pink-900' }
-            : { name: 'Starter', icon: Zap, badge: 'bg-sky-400 text-sky-900' };
+    const tierConfig = isBusiness 
+        ? { name: 'Business', icon: Star, badge: 'bg-amber-400 text-amber-900' }
+        : { name: 'Pro', icon: Crown, badge: 'bg-pink-400 text-pink-900' };
     
     const TierIcon = tierConfig.icon;
     
@@ -98,10 +94,10 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                         </a>
                     </nav>
                     
-                    {/* Upgrade Button (not for unlimited) */}
-                    {!isUnlimited && (
+                    {/* Upgrade Button (not for business) */}
+                    {!isBusiness && (
                         <a 
-                            href="/.netlify/functions/vg-checkout?tier=unlimited"
+                            href="/.netlify/functions/vg-checkout?tier=business"
                             className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition shadow-lg"
                         >
                             <Star size={14} />
@@ -153,16 +149,14 @@ function CreatePage() {
     
     const isPaidUser = !!purchasedTier;
     
-    // Premium background based on tier
+    // Premium background based on tier (free, pro, business)
     const getBackground = () => {
         if (!purchasedTier) return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
         switch (purchasedTier) {
-            case 'unlimited':
+            case 'business':
                 return 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50';
-            case 'pro_event':
+            case 'pro':
                 return 'bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50';
-            case 'starter':
-                return 'bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50';
             default:
                 return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
         }
@@ -185,11 +179,9 @@ function CreatePage() {
                     {isPaidUser ? (
                         <>
                             <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${
-                                purchasedTier === 'unlimited' 
+                                purchasedTier === 'business' 
                                     ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent'
-                                    : purchasedTier === 'pro_event'
-                                        ? 'bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent'
-                                        : 'bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 bg-clip-text text-transparent'
+                                    : 'bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent'
                             }`}>
                                 Create Premium Poll
                             </h1>
@@ -221,6 +213,7 @@ function App() {
     const path = window.location.pathname;
     
     if (path === '/create' || path === '/create/') return <CreatePage />;
+    if (path === '/poll-created' || path.startsWith('/poll-created?')) return <PollCreatedSuccess />;
     if (path.startsWith('/ad-wall')) return <AdWall />;
     if (path === '/pricing' || path === '/pricing/') return <PricingPage />;
     if (path === '/compare' || path === '/compare/') return <ComparePage />;

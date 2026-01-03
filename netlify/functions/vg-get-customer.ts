@@ -38,10 +38,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
-    const token = event.queryStringParameters?.token;
+    // Get params - support both formats
+    const token = event.queryStringParameters?.token || event.queryStringParameters?.t;
     const sessionId = event.queryStringParameters?.session_id || event.queryStringParameters?.s;
 
+    console.log('=== vg-get-customer called ===');
+    console.log('Token param:', token ? token.substring(0, 8) + '...' : 'none');
+    console.log('Session ID param:', sessionId ? sessionId.substring(0, 20) + '...' : 'none');
+
     if (!token && !sessionId) {
+        console.log('ERROR: No token or session_id provided');
         return {
             statusCode: 400,
             headers,
@@ -52,7 +58,7 @@ export const handler: Handler = async (event) => {
     try {
         const siteId = process.env.VG_SITE_ID;
         if (!siteId) {
-            console.error('VG_SITE_ID not configured');
+            console.error('ERROR: VG_SITE_ID not configured');
             return {
                 statusCode: 500,
                 headers,
@@ -68,48 +74,54 @@ export const handler: Handler = async (event) => {
 
         let customerData: CustomerData | null = null;
 
-        // Try token lookup first (fastest - direct key lookup)
+        // METHOD 1: Direct token lookup (fastest)
         if (token) {
             const tokenKey = `token_${token}`;
+            console.log('Trying token lookup:', tokenKey);
             customerData = await customerStore.get(tokenKey, { type: 'json' }) as CustomerData | null;
-            console.log(`Token lookup for ${token.substring(0, 8)}...: ${customerData ? 'found' : 'not found'}`);
+            console.log('Token lookup result:', customerData ? 'FOUND' : 'NOT FOUND');
         }
 
-        // Try session_id indexed lookup (second fastest)
+        // METHOD 2: Session ID index lookup
         if (!customerData && sessionId) {
             const sessionKey = `session_${sessionId}`;
-            console.log(`Session ID lookup: key=${sessionKey.substring(0, 30)}...`);
-            
-            // First try direct session lookup (new index)
+            console.log('Trying session index lookup:', sessionKey.substring(0, 30) + '...');
             customerData = await customerStore.get(sessionKey, { type: 'json' }) as CustomerData | null;
+            console.log('Session index lookup result:', customerData ? 'FOUND' : 'NOT FOUND');
+        }
+
+        // METHOD 3: Scan all customers by stripeSessionId (slowest, but comprehensive)
+        if (!customerData && sessionId) {
+            console.log('Trying full scan for stripeSessionId...');
+            const list = await customerStore.list();
+            console.log('Total entries to scan:', list.blobs.length);
             
-            if (customerData) {
-                console.log(`Found customer by session index! Token: ${customerData.dashboardToken?.substring(0, 8)}...`);
-            } else {
-                // Fallback: scan all customers (slower but comprehensive)
-                console.log('Session index not found, scanning all customers...');
-                const list = await customerStore.list();
-                console.log(`Scanning ${list.blobs.length} entries...`);
-                for (const key of list.blobs) {
-                    // Skip token_ and session_ keys
-                    if (key.key.startsWith('token_') || key.key.startsWith('session_')) continue;
-                    
-                    try {
-                        const customer = await customerStore.get(key.key, { type: 'json' }) as CustomerData | null;
-                        if (customer && customer.stripeSessionId === sessionId) {
-                            customerData = customer;
-                            console.log(`Found customer by session ID scan: ${customer.dashboardToken?.substring(0, 8)}...`);
-                            break;
-                        }
-                    } catch (e) {
-                        // Skip invalid entries
-                    }
+            for (const item of list.blobs) {
+                // Skip index keys
+                if (item.key.startsWith('token_') || item.key.startsWith('session_')) {
+                    continue;
                 }
+                
+                try {
+                    const customer = await customerStore.get(item.key, { type: 'json' }) as CustomerData | null;
+                    if (customer && customer.stripeSessionId === sessionId) {
+                        console.log('FOUND by scan! Key:', item.key);
+                        customerData = customer;
+                        break;
+                    }
+                } catch (e) {
+                    // Skip invalid entries
+                }
+            }
+            
+            if (!customerData) {
+                console.log('Scan complete - NOT FOUND');
             }
         }
 
+        // Not found
         if (!customerData) {
-            console.log(`Customer not found`);
+            console.log('=== Customer NOT FOUND ===');
             return {
                 statusCode: 404,
                 headers,
@@ -117,10 +129,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Check if expired
-        const isExpired = new Date(customerData.expiresAt) < new Date();
+        // Success!
+        console.log('=== Customer FOUND ===');
+        console.log('Email:', customerData.email?.substring(0, 5) + '...');
+        console.log('Tier:', customerData.tier);
+        console.log('Dashboard Token:', customerData.dashboardToken);
+        console.log('Expires:', customerData.expiresAt);
 
-        console.log(`Customer found: ${customerData.email?.substring(0, 5)}... tier: ${customerData.tier}, token: ${customerData.dashboardToken?.substring(0, 8)}...`);
+        const isExpired = new Date(customerData.expiresAt) < new Date();
 
         return {
             statusCode: 200,
@@ -131,12 +147,12 @@ export const handler: Handler = async (event) => {
                 polls: customerData.polls || [],
                 createdAt: customerData.createdAt,
                 email: customerData.email ? `${customerData.email.substring(0, 3)}...` : undefined,
-                dashboardToken: customerData.dashboardToken, // Return token so client can use short URLs
+                dashboardToken: customerData.dashboardToken,
                 isExpired,
             }),
         };
     } catch (error) {
-        console.error('Error fetching customer:', error);
+        console.error('=== ERROR ===', error);
         return {
             statusCode: 500,
             headers,

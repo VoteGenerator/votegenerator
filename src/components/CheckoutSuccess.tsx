@@ -1,12 +1,12 @@
 // ============================================================================
-// CheckoutSuccess - Success page after Stripe payment
+// CheckoutSuccess - Success page after Stripe subscription checkout
 // Route: /checkout/success
 // ============================================================================
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Calendar, Crown, Star, Gift, Check, AlertCircle, LayoutDashboard, Mail
+    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Crown, Check, AlertCircle, Calendar
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 
@@ -15,108 +15,132 @@ const PLAN_DETAILS: Record<string, {
     name: string;
     icon: React.ElementType;
     color: string;
-    gradient: string;
     features: string[];
-    maxPolls: number;
-    activeDays: number;
 }> = {
-    'starter': {
-        name: 'Starter',
+    'pro': {
+        name: 'Pro',
         icon: Zap,
-        color: 'text-blue-600',
-        gradient: 'from-blue-500 to-indigo-600',
-        features: ['500 responses', '30 days access', '1 premium poll', 'CSV export', 'Device & geo stats'],
-        maxPolls: 1,
-        activeDays: 30
+        color: 'from-indigo-500 to-blue-600',
+        features: [
+            'Unlimited polls',
+            '5,000 responses/month',
+            'All 8 poll types',
+            'Remove VoteGenerator badge',
+            'PIN code protection',
+            'Export CSV & Excel',
+            'All premium themes',
+            'Email support'
+        ]
     },
-    'pro_event': {
-        name: 'Pro Event',
+    'business': {
+        name: 'Business',
         icon: Crown,
-        color: 'text-purple-600',
-        gradient: 'from-purple-500 to-pink-600',
-        features: ['2,000 responses', '30 days access', '3 premium polls', 'All poll types', 'Export CSV/PDF/PNG'],
-        maxPolls: 3,
-        activeDays: 30
-    },
-    'unlimited_event': {
-        name: 'Unlimited Event',
-        icon: Star,
-        color: 'text-amber-600',
-        gradient: 'from-amber-400 to-orange-500',
-        features: ['10,000 responses', '30 days access', 'Unlimited polls', 'ALL features', 'PIN protection', 'Custom branding'],
-        maxPolls: Infinity,
-        activeDays: 30
-    },
-    'unlimited': {
-        name: 'Unlimited',
-        icon: Star,
-        color: 'text-amber-600',
-        gradient: 'from-amber-500 to-orange-600',
-        features: ['10,000 responses per poll', 'Unlimited premium polls', '1 year access', 'Priority support', 'All features'],
-        maxPolls: Infinity,
-        activeDays: 365
+        color: 'from-violet-500 to-purple-600',
+        features: [
+            'Unlimited polls',
+            '50,000 responses/month',
+            'All 8 poll types',
+            'Upload custom logo',
+            'PDF reports',
+            'Advanced analytics',
+            'IP filtering',
+            'Priority support'
+        ]
     }
 };
 
 const CheckoutSuccess: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [tier, setTier] = useState<string | null>(null);
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [billing, setBilling] = useState<string | null>(null);
+    const [pollData, setPollData] = useState<any>(null);
+    const [creatingPoll, setCreatingPoll] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const sid = params.get('session_id');
         const tierParam = params.get('tier');
+        const billingParam = params.get('billing');
         
-        console.log('CheckoutSuccess: Loaded with session_id:', sid, 'tier:', tierParam);
-        
-        setSessionId(sid);
         setTier(tierParam);
+        setBilling(billingParam);
         
-        // Set up the session in localStorage
-        if (sid && tierParam) {
-            setupSession(sid, tierParam);
+        // Check for saved poll draft
+        const draft = localStorage.getItem('vg_poll_draft');
+        if (draft) {
+            try {
+                setPollData(JSON.parse(draft));
+            } catch (e) {
+                console.error('Error parsing poll draft:', e);
+            }
+        }
+        
+        // Store subscription info
+        if (tierParam) {
+            localStorage.setItem('vg_subscription_tier', tierParam);
+            localStorage.setItem('vg_subscription_billing', billingParam || 'annual');
+            localStorage.setItem('vg_subscribed_at', new Date().toISOString());
         }
         
         setLoading(false);
     }, []);
 
-    const setupSession = async (sessionId: string, tier: string) => {
-        // Just save sessionId and tier to localStorage
-        // The real dashboard token is sent via email by the webhook
-        const days = tier === 'unlimited' ? 365 : 30;
-        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const createPollFromDraft = async () => {
+        if (!pollData) {
+            window.location.href = '/create';
+            return;
+        }
         
-        const session = {
-            sessionId,
-            tier,
-            expiresAt,
-            polls: [],
-            createdAt: new Date().toISOString()
-        };
+        setCreatingPoll(true);
         
-        localStorage.setItem('vg_user_session', JSON.stringify(session));
-        localStorage.setItem('vg_purchased_tier', tier);
-        localStorage.setItem('vg_expires_at', expiresAt);
-        localStorage.setItem('vg_purchased_at', new Date().toISOString());
-        
-        console.log('CheckoutSuccess: Session saved');
+        try {
+            const createData = {
+                title: pollData.title,
+                description: pollData.description || undefined,
+                options: pollData.options,
+                pollType: pollData.pollType,
+                settings: pollData.settings || {
+                    hideResults: false,
+                    allowMultiple: false
+                },
+                tier: tier || 'pro'
+            };
+            
+            const response = await fetch('/.netlify/functions/vg-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(createData)
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.removeItem('vg_poll_draft');
+                window.location.href = `/#id=${data.id}&admin=${data.adminKey}`;
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || 'Failed to create poll');
+                setCreatingPoll(false);
+            }
+        } catch (err) {
+            console.error('Error creating poll:', err);
+            setError('Failed to create poll. Please try again.');
+            setCreatingPoll(false);
+        }
     };
 
-    const goToDashboard = () => {
-        // Navigate to admin - dashboard will fetch real token from backend
-        window.location.href = '/admin';
+    const goToCreate = () => {
+        window.location.href = '/create';
     };
 
     const planDetails = tier ? PLAN_DETAILS[tier] : null;
-    const Icon = planDetails?.icon || Gift;
+    const Icon = planDetails?.icon || Zap;
 
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 size={48} className="animate-spin text-indigo-500 mx-auto mb-4" />
-                    <p className="text-slate-600">Confirming your purchase...</p>
+                    <p className="text-slate-600">Confirming your subscription...</p>
                 </div>
             </div>
         );
@@ -143,7 +167,7 @@ const CheckoutSuccess: React.FC = () => {
                         transition={{ delay: 0.2 }}
                         className="text-3xl font-bold text-slate-900 mb-2"
                     >
-                        Payment Successful! 🎉
+                        Welcome to VoteGenerator {planDetails?.name}! 🎉
                     </motion.h1>
                     <motion.p 
                         initial={{ opacity: 0, y: 20 }}
@@ -151,7 +175,7 @@ const CheckoutSuccess: React.FC = () => {
                         transition={{ delay: 0.3 }}
                         className="text-slate-600"
                     >
-                        Thank you for your purchase. You're all set to create amazing polls!
+                        Your subscription is now active. Let's create some amazing polls!
                     </motion.p>
                 </motion.div>
 
@@ -163,51 +187,77 @@ const CheckoutSuccess: React.FC = () => {
                         transition={{ delay: 0.4 }}
                         className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden mb-6"
                     >
-                        <div className={`bg-gradient-to-r ${planDetails.gradient} p-6 text-white`}>
+                        <div className={`bg-gradient-to-r ${planDetails.color} p-6 text-white`}>
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
                                     <Icon size={28} />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold">{planDetails.name}</h2>
-                                    <p className="text-white/80">Your plan is now active</p>
+                                    <h2 className="text-2xl font-bold">{planDetails.name} Plan</h2>
+                                    <div className="flex items-center gap-2 text-white/80">
+                                        <Calendar size={16} />
+                                        <span>Billed {billing === 'annual' ? 'annually' : 'monthly'}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div className="p-6">
                             <h3 className="font-semibold text-slate-800 mb-3">What's included:</h3>
-                            <ul className="space-y-2 mb-6">
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
                                 {planDetails.features.map((feature, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-slate-600">
+                                    <li key={i} className="flex items-center gap-2 text-slate-600 text-sm">
                                         <Check size={16} className="text-emerald-500 flex-shrink-0" />
                                         {feature}
                                     </li>
                                 ))}
                             </ul>
 
-                            {/* Email Confirmation Notice */}
-                            <div className="bg-emerald-50 rounded-xl p-4 mb-6 border border-emerald-200">
-                                <div className="flex items-start gap-3">
-                                    <Mail size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-emerald-800 mb-1">📧 Check Your Email!</h4>
-                                        <p className="text-emerald-700 text-sm">
-                                            We've sent a confirmation email with your <strong>personal dashboard link</strong>. 
-                                            Save it to access your polls anytime from any device.
-                                        </p>
+                            {/* Show saved poll info if exists */}
+                            {pollData && (
+                                <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-100">
+                                    <h4 className="font-semibold text-indigo-800 mb-2">Your Poll Draft:</h4>
+                                    <p className="text-indigo-700 font-medium">{pollData.title}</p>
+                                    <p className="text-indigo-600 text-sm">{pollData.options?.length || 0} options • {pollData.pollType}</p>
+                                </div>
+                            )}
+
+                            {/* Error message */}
+                            {error && (
+                                <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-100 flex items-start gap-2">
+                                    <AlertCircle size={20} className="text-red-500 mt-0.5" />
+                                    <div>
+                                        <p className="text-red-700 font-medium">Error creating poll</p>
+                                        <p className="text-red-600 text-sm">{error}</p>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* CTA Button */}
                             <button
-                                onClick={goToDashboard}
-                                className={`w-full py-4 bg-gradient-to-r ${planDetails.gradient} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
+                                type="button"
+                                onClick={pollData ? createPollFromDraft : goToCreate}
+                                disabled={creatingPoll}
+                                className={`w-full py-4 bg-gradient-to-r ${planDetails.color} text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:shadow-lg transition-all ${creatingPoll ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                <LayoutDashboard size={20} />
-                                Go to Dashboard
-                                <ArrowRight size={20} />
+                                {creatingPoll ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        Creating Your Poll...
+                                    </>
+                                ) : pollData ? (
+                                    <>
+                                        <Sparkles size={20} />
+                                        Create Your Poll Now
+                                        <ArrowRight size={20} />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles size={20} />
+                                        Start Creating Polls
+                                        <ArrowRight size={20} />
+                                    </>
+                                )}
                             </button>
                         </div>
                     </motion.div>
@@ -222,67 +272,33 @@ const CheckoutSuccess: React.FC = () => {
                         className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 text-center"
                     >
                         <p className="text-slate-600 mb-6">
-                            Your payment was successful. A confirmation email has been sent.
+                            Your subscription is active. A confirmation email has been sent.
                         </p>
                         <button
-                            onClick={goToDashboard}
+                            type="button"
+                            onClick={goToCreate}
                             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition-all"
                         >
-                            <LayoutDashboard size={20} />
-                            Go to Dashboard
+                            <Sparkles size={20} />
+                            Create Your Poll Now
                             <ArrowRight size={20} />
                         </button>
                     </motion.div>
                 )}
 
-                {/* What's Next */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="bg-white rounded-xl border border-slate-200 p-6 mt-6"
-                >
-                    <h3 className="font-semibold text-slate-800 mb-4">What's Next?</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-indigo-600 text-sm font-bold">1</span>
-                            </div>
-                            <div>
-                                <p className="font-medium text-slate-700">Go to your Dashboard</p>
-                                <p className="text-sm text-slate-500">Your home base for managing all polls</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-indigo-600 text-sm font-bold">2</span>
-                            </div>
-                            <div>
-                                <p className="font-medium text-slate-700">Create your first poll</p>
-                                <p className="text-sm text-slate-500">Choose from multiple poll types</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-indigo-600 text-sm font-bold">3</span>
-                            </div>
-                            <div>
-                                <p className="font-medium text-slate-700">Share & collect votes</p>
-                                <p className="text-sm text-slate-500">Get real-time results with analytics</p>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Additional Info */}
+                {/* Manage Subscription Info */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="mt-8 text-center text-sm text-slate-500"
+                    className="mt-8 bg-slate-50 rounded-xl p-4 text-center"
                 >
-                    <p>
-                        Questions? Contact us at{' '}
+                    <p className="text-slate-600 text-sm">
+                        Manage your subscription anytime from the{' '}
+                        <a href="/account" className="text-indigo-600 hover:underline font-medium">
+                            account dashboard
+                        </a>
+                        {' '}or contact us at{' '}
                         <a href="mailto:support@votegenerator.com" className="text-indigo-600 hover:underline">
                             support@votegenerator.com
                         </a>

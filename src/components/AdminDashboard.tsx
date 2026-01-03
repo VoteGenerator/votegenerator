@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, Gift, Unlock,
+    Home, AlertTriangle, RefreshCw, Gift,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -677,54 +677,43 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         {/* Save Dashboard Link Banner */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className={`p-4 rounded-xl border ${hasShortLink ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'}`}>
+                            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl">
                                 <div className="flex items-start justify-between gap-4 flex-wrap">
                                     <div className="flex items-start gap-3 flex-1 min-w-0">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${hasShortLink ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                                            {hasShortLink ? <Check size={20} className="text-emerald-600" /> : <AlertCircle size={20} className="text-amber-600" />}
+                                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <Link2 size={20} className="text-emerald-600" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            {hasShortLink ? (
-                                                <>
-                                                    <p className="font-bold text-emerald-800">✓ Dashboard Link Ready</p>
-                                                    <p className="text-sm text-emerald-600 mb-2">
-                                                        Bookmark this page or copy the link below to access your polls anytime.
-                                                    </p>
-                                                    <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-emerald-200">
-                                                        <Link2 size={14} className="text-emerald-500 flex-shrink-0" />
-                                                        <code className="text-xs text-emerald-700 font-mono truncate">
-                                                            {window.location.origin}/admin?t={session?.dashboardToken}
-                                                        </code>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <p className="font-bold text-amber-800">📧 Check Your Email for Short Link</p>
-                                                    <p className="text-sm text-amber-600 mb-2">
-                                                        We sent you a short dashboard link via email. Use that link to access your polls from any device.
-                                                    </p>
-                                                    <p className="text-xs text-amber-500">
-                                                        For now, you can bookmark this page to continue on this device.
-                                                    </p>
-                                                </>
-                                            )}
+                                            <p className="font-bold text-emerald-800">🔖 Your Dashboard Link</p>
+                                            <p className="text-sm text-emerald-600 mb-2">
+                                                Bookmark or save this link to access your polls anytime.
+                                            </p>
+                                            <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-emerald-200">
+                                                <code className="text-xs text-emerald-700 font-mono truncate">
+                                                    {session?.dashboardToken 
+                                                        ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                                        : `${window.location.origin}/admin?s=${session?.sessionId || ''}`
+                                                    }
+                                                </code>
+                                            </div>
                                         </div>
                                     </div>
-                                    {hasShortLink && (
-                                        <div className="flex flex-col gap-2 flex-shrink-0">
-                                            <button 
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(`${window.location.origin}/admin?t=${session?.dashboardToken}`);
-                                                    setCopiedDashboard(true);
-                                                    setTimeout(() => setCopiedDashboard(false), 2000);
-                                                }} 
-                                                className="px-4 py-2 bg-white border border-emerald-300 text-emerald-700 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-50 transition"
-                                            >
-                                                {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                                {copiedDashboard ? 'Copied!' : 'Copy Link'}
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-col gap-2 flex-shrink-0">
+                                        <button 
+                                            onClick={() => {
+                                                const url = session?.dashboardToken 
+                                                    ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                                    : `${window.location.origin}/admin?s=${session?.sessionId || ''}`;
+                                                navigator.clipboard.writeText(url);
+                                                setCopiedDashboard(true);
+                                                setTimeout(() => setCopiedDashboard(false), 2000);
+                                            }} 
+                                            className="px-4 py-2 bg-white border border-emerald-300 text-emerald-700 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-50 transition"
+                                        >
+                                            {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
+                                            {copiedDashboard ? 'Copied!' : 'Copy Link'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -1025,9 +1014,8 @@ const AdminDashboard: React.FC = () => {
                                             <Shield size={22} className="text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <h3 className="font-bold text-amber-900 flex items-center gap-2">
+                                            <h3 className="font-bold text-amber-900">
                                                 Security & Access
-                                                <Unlock size={14} className="text-amber-500" />
                                             </h3>
                                             <p className="text-xs text-amber-700">PIN protection & team tokens</p>
                                         </div>
@@ -1164,13 +1152,6 @@ const AdminDashboard: React.FC = () => {
                                                             <RefreshCw size={16} />
                                                             Extend Plan
                                                         </button>
-                                                    )}
-                                                    
-                                                    {/* Unlimited tier - show best plan message when not near expiry */}
-                                                    {!isPlanExpired && tier === 'unlimited' && daysLeft > 30 && (
-                                                        <div className="text-center py-2 text-xs text-emerald-600 font-medium flex items-center justify-center gap-1">
-                                                            <CheckCircle size={14} /> You have the best plan!
-                                                        </div>
                                                     )}
                                                 </>
                                             );

@@ -172,6 +172,7 @@ const AdminDashboard: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedDashboard, setCopiedDashboard] = useState(false);
+    const [fetchingShortLink, setFetchingShortLink] = useState(false);
     
     // UI State
     const [showSettings, setShowSettings] = useState(false);
@@ -216,10 +217,18 @@ const AdminDashboard: React.FC = () => {
     
     // Fetch customer data by session ID (legacy support)
     const fetchCustomerBySessionId = async (sessionId: string): Promise<UserSession | null> => {
+        console.log(`AdminDashboard: Fetching customer by session ID: ${sessionId.substring(0, 20)}...`);
         try {
             const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            console.log(`AdminDashboard: vg-get-customer response status: ${response.status}`);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log(`AdminDashboard: Got customer data:`, { 
+                    tier: data.tier, 
+                    hasToken: !!data.dashboardToken,
+                    tokenPreview: data.dashboardToken?.substring(0, 8) 
+                });
                 return {
                     dashboardToken: data.dashboardToken,
                     sessionId: sessionId, // Keep for backwards compatibility
@@ -229,9 +238,12 @@ const AdminDashboard: React.FC = () => {
                     createdAt: data.createdAt,
                     email: data.email,
                 };
+            } else {
+                const errorText = await response.text();
+                console.log(`AdminDashboard: vg-get-customer error: ${errorText}`);
             }
         } catch (e) {
-            console.error('Failed to fetch customer by session ID:', e);
+            console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
         }
         return null;
     };
@@ -319,9 +331,21 @@ const AdminDashboard: React.FC = () => {
             // Case 1: Coming from email link with session_id (legacy format: ?s=xxx)
             // Fetch real customer data from backend
             if (urlSessionId) {
-                const customerData = await fetchCustomerBySessionId(urlSessionId);
+                // Try fetching with retries (webhook may still be processing)
+                let customerData: UserSession | null = null;
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    customerData = await fetchCustomerBySessionId(urlSessionId);
+                    if (customerData && customerData.dashboardToken) {
+                        console.log(`AdminDashboard: Got customer data on attempt ${attempt + 1}`);
+                        break;
+                    }
+                    // Wait before retry (1s, 2s, 3s, 4s)
+                    if (attempt < 4) {
+                        await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
+                    }
+                }
                 
-                if (customerData) {
+                if (customerData && customerData.dashboardToken) {
                     // Save to localStorage with real data
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
@@ -332,16 +356,12 @@ const AdminDashboard: React.FC = () => {
                     setSession(customerData);
                     setLoading(false);
                     
-                    // Clean URL - redirect to short token URL
-                    if (customerData.dashboardToken) {
-                        window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
-                    } else {
-                        window.history.replaceState({}, '', '/admin');
-                    }
+                    // Update URL to short token format
+                    window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
                     return;
                 }
                 
-                // Backend lookup failed - try localStorage fallback
+                // Backend lookup failed after retries - try localStorage fallback
                 if (stored) {
                     const sessionData: UserSession = JSON.parse(stored);
                     setSession(sessionData);
@@ -349,7 +369,7 @@ const AdminDashboard: React.FC = () => {
                     return;
                 }
                 
-                // No data found - create temporary session (will be replaced when webhook completes)
+                // No data found - create temporary session
                 const tier = urlTier || 'unlimited';
                 const days = tier === 'unlimited' ? 365 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -369,6 +389,26 @@ const AdminDashboard: React.FC = () => {
                 
                 setSession(tempSession);
                 setLoading(false);
+                setFetchingShortLink(true);
+                
+                // Continue trying to get token in background
+                const pollForToken = async () => {
+                    for (let i = 0; i < 10; i++) {
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        const data = await fetchCustomerBySessionId(urlSessionId);
+                        if (data && data.dashboardToken) {
+                            // Got it! Update everything
+                            localStorage.setItem('vg_user_session', JSON.stringify(data));
+                            setSession(data);
+                            window.history.replaceState({}, '', `/admin?t=${data.dashboardToken}`);
+                            setFetchingShortLink(false);
+                            console.log('AdminDashboard: Background poll got token');
+                            return;
+                        }
+                    }
+                    setFetchingShortLink(false);
+                };
+                pollForToken();
                 return;
             }
             
@@ -386,21 +426,58 @@ const AdminDashboard: React.FC = () => {
                 // Check if we have a fake vg_ token or no token - try to get real one
                 const hasFakeOrNoToken = !sessionData.dashboardToken || sessionData.dashboardToken.startsWith('vg_');
                 if (hasFakeOrNoToken && sessionData.sessionId) {
-                    try {
-                        const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
-                        if (customerData && customerData.dashboardToken && !customerData.dashboardToken.startsWith('vg_')) {
-                            // Got real token - update session
-                            const updatedSession = { ...sessionData, dashboardToken: customerData.dashboardToken };
-                            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
-                            setSession(updatedSession);
-                            setLoading(false);
-                            // Update URL to show short token
-                            window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
-                            console.log('AdminDashboard: Updated to real token from backend');
-                            return;
+                    // Try with retries
+                    let gotToken = false;
+                    for (let attempt = 0; attempt < 3; attempt++) {
+                        try {
+                            const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
+                            if (customerData && customerData.dashboardToken && !customerData.dashboardToken.startsWith('vg_')) {
+                                // Got real token - update session
+                                const updatedSession = { ...sessionData, dashboardToken: customerData.dashboardToken };
+                                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                                setSession(updatedSession);
+                                setLoading(false);
+                                // Update URL to show short token
+                                window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
+                                console.log('AdminDashboard: Updated to real token from backend');
+                                gotToken = true;
+                                return;
+                            }
+                        } catch (e) {
+                            console.log(`AdminDashboard: Attempt ${attempt + 1} failed to fetch real token`);
                         }
-                    } catch (e) {
-                        console.log('AdminDashboard: Could not fetch real token, using existing session');
+                        if (attempt < 2) {
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    }
+                    
+                    // If still no token, start background polling
+                    if (!gotToken) {
+                        setSession(sessionData);
+                        setLoading(false);
+                        setFetchingShortLink(true);
+                        
+                        // Background poll for token
+                        const pollForToken = async () => {
+                            for (let i = 0; i < 10; i++) {
+                                await new Promise(resolve => setTimeout(resolve, 3000));
+                                try {
+                                    const data = await fetchCustomerBySessionId(sessionData.sessionId!);
+                                    if (data && data.dashboardToken && !data.dashboardToken.startsWith('vg_')) {
+                                        const updated = { ...sessionData, dashboardToken: data.dashboardToken };
+                                        localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                                        setSession(updated);
+                                        window.history.replaceState({}, '', `/admin?t=${data.dashboardToken}`);
+                                        setFetchingShortLink(false);
+                                        console.log('AdminDashboard: Background poll got token');
+                                        return;
+                                    }
+                                } catch (e) {}
+                            }
+                            setFetchingShortLink(false);
+                        };
+                        pollForToken();
+                        return;
                     }
                 }
 
@@ -709,16 +786,33 @@ const AdminDashboard: React.FC = () => {
                                             </p>
                                             <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
                                                 <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                <code className="text-xs text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
+                                                {fetchingShortLink ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <Loader2 size={14} className="animate-spin text-amber-500" />
+                                                        <span className="text-xs text-amber-600">Getting your short link...</span>
+                                                    </div>
+                                                ) : (
+                                                    <code className="text-xs text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
+                                                )}
                                             </div>
+                                            {session?.dashboardToken && !session.dashboardToken.startsWith('vg_') && (
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    <Check size={12} className="text-emerald-500" />
+                                                    <span className="text-xs text-emerald-600">Short link ready!</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2 flex-shrink-0">
-                                        <button onClick={() => {
-                                            navigator.clipboard.writeText(getShortAdminLink());
-                                            setCopiedDashboard(true);
-                                            setTimeout(() => setCopiedDashboard(false), 2000);
-                                        }} className="px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 hover:bg-amber-50 transition">
+                                        <button 
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(getShortAdminLink());
+                                                setCopiedDashboard(true);
+                                                setTimeout(() => setCopiedDashboard(false), 2000);
+                                            }} 
+                                            disabled={fetchingShortLink}
+                                            className={`px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 transition ${fetchingShortLink ? 'opacity-50 cursor-not-allowed' : 'hover:bg-amber-50'}`}
+                                        >
                                             {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
                                             {copiedDashboard ? 'Copied!' : 'Copy Link'}
                                         </button>

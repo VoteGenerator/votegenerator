@@ -389,6 +389,24 @@ const AdminDashboard: React.FC = () => {
             // Case 3: No URL params - use localStorage
             if (stored) {
                 const sessionData: UserSession = JSON.parse(stored);
+                
+                // If we have sessionId but no dashboardToken, fetch it now!
+                if (sessionData.sessionId && !sessionData.dashboardToken) {
+                    console.log('AdminDashboard: Have sessionId but no token, fetching...');
+                    const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
+                    
+                    if (customerData && customerData.dashboardToken) {
+                        // Got it! Update localStorage and state
+                        const updatedSession = { ...sessionData, ...customerData };
+                        localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                        setSession(updatedSession);
+                        setHasShortLink(true);
+                        setLoading(false);
+                        console.log('AdminDashboard: Got dashboardToken:', customerData.dashboardToken);
+                        return;
+                    }
+                }
+                
                 setSession(sessionData);
                 setHasShortLink(!!sessionData.dashboardToken);
                 setLoading(false);

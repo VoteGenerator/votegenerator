@@ -276,12 +276,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // PAID USERS: Go directly to poll with admin controls
-                // FREE USERS: Go to success page (shows links to bookmark)
+                // PAID USERS: Go directly to admin dashboard
+                // FREE USERS: Go through ad-wall first
                 if (isPaidUser) {
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
-                    window.location.href = `/poll-created?id=${pollId}&admin=${adminKey}`;
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
                 }
                 return;
             } else { 

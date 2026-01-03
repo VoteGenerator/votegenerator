@@ -19,6 +19,8 @@ interface CustomerData {
 }
 
 export const handler: Handler = async (event) => {
+    console.log('>>> vg-get-customer INVOKED <<<', event.httpMethod, event.path);
+    
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -27,6 +29,7 @@ export const handler: Handler = async (event) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
+        console.log('>>> OPTIONS request - returning 204');
         return { statusCode: 204, headers, body: '' };
     }
 

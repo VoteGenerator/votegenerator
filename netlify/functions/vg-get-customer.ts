@@ -77,18 +77,19 @@ export const handler: Handler = async (event) => {
 
         // Try session_id indexed lookup (second fastest)
         if (!customerData && sessionId) {
-            console.log(`Session ID lookup for ${sessionId.substring(0, 20)}...`);
+            const sessionKey = `session_${sessionId}`;
+            console.log(`Session ID lookup: key=${sessionKey.substring(0, 30)}...`);
             
             // First try direct session lookup (new index)
-            const sessionKey = `session_${sessionId}`;
             customerData = await customerStore.get(sessionKey, { type: 'json' }) as CustomerData | null;
             
             if (customerData) {
-                console.log(`Found customer by session index: ${customerData.email?.substring(0, 5)}...`);
+                console.log(`Found customer by session index! Token: ${customerData.dashboardToken?.substring(0, 8)}...`);
             } else {
                 // Fallback: scan all customers (slower but comprehensive)
                 console.log('Session index not found, scanning all customers...');
                 const list = await customerStore.list();
+                console.log(`Scanning ${list.blobs.length} entries...`);
                 for (const key of list.blobs) {
                     // Skip token_ and session_ keys
                     if (key.key.startsWith('token_') || key.key.startsWith('session_')) continue;
@@ -97,7 +98,7 @@ export const handler: Handler = async (event) => {
                         const customer = await customerStore.get(key.key, { type: 'json' }) as CustomerData | null;
                         if (customer && customer.stripeSessionId === sessionId) {
                             customerData = customer;
-                            console.log(`Found customer by session ID scan: ${customer.email?.substring(0, 5)}...`);
+                            console.log(`Found customer by session ID scan: ${customer.dashboardToken?.substring(0, 8)}...`);
                             break;
                         }
                     } catch (e) {
@@ -119,7 +120,7 @@ export const handler: Handler = async (event) => {
         // Check if expired
         const isExpired = new Date(customerData.expiresAt) < new Date();
 
-        console.log(`Customer found: ${customerData.email?.substring(0, 5)}... tier: ${customerData.tier}, expired: ${isExpired}`);
+        console.log(`Customer found: ${customerData.email?.substring(0, 5)}... tier: ${customerData.tier}, token: ${customerData.dashboardToken?.substring(0, 8)}...`);
 
         return {
             statusCode: 200,

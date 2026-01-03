@@ -330,9 +330,30 @@ const AdminDashboard: React.FC = () => {
             }
             
             // Case 2: Coming from Stripe redirect with session_id (?s=xxx)
-            // Don't try to fetch short token - it's in the email!
+            // The short token IS in the backend - fetch it!
             if (urlSessionId) {
-                // Use localStorage if available
+                console.log('AdminDashboard: Fetching customer by session_id...');
+                const customerData = await fetchCustomerBySessionId(urlSessionId);
+                
+                if (customerData && customerData.dashboardToken) {
+                    // Got it! Save and use
+                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
+                    localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
+                    
+                    setSession(customerData);
+                    setHasShortLink(true);
+                    setLoading(false);
+                    // Update URL to short format
+                    window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
+                    console.log('AdminDashboard: Got short token:', customerData.dashboardToken);
+                    return;
+                }
+                
+                // Backend lookup failed - use localStorage or create temp session
+                console.log('AdminDashboard: Backend lookup failed, using fallback');
                 if (stored) {
                     const sessionData: UserSession = JSON.parse(stored);
                     sessionData.sessionId = urlSessionId;
@@ -343,7 +364,7 @@ const AdminDashboard: React.FC = () => {
                     return;
                 }
                 
-                // Create session from URL params
+                // Create temp session (webhook may still be processing)
                 const tier = urlTier || 'unlimited';
                 const days = tier === 'unlimited' ? 365 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -358,11 +379,8 @@ const AdminDashboard: React.FC = () => {
                 };
                 
                 localStorage.setItem('vg_user_session', JSON.stringify(newSession));
-                localStorage.setItem('vg_purchased_tier', tier);
-                localStorage.setItem('vg_tier_expires', expiresAt);
-                
                 setSession(newSession);
-                setHasShortLink(false); // Short link is in email
+                setHasShortLink(false);
                 setLoading(false);
                 window.history.replaceState({}, '', '/admin');
                 return;

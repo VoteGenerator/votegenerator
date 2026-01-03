@@ -74,7 +74,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [ratingAllocations, setRatingAllocations] = useState<Record<string, number>>(() => {
         if (poll.pollType === 'rating') {
             const defaults: Record<string, number> = {};
-            poll.options.forEach(opt => defaults[opt.id] = 50);
+            poll.options.forEach(opt => defaults[opt.id] = 0); // Start with no rating selected
             return defaults;
         }
         return {};
@@ -279,7 +279,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     };
 
     let canSubmit = false;
-    if (poll.pollType === 'ranked' || poll.pollType === 'rating') canSubmit = true;
+    if (poll.pollType === 'ranked') canSubmit = true;
+    else if (poll.pollType === 'rating') canSubmit = Object.values(ratingAllocations).some(v => v > 0);
     else if (poll.pollType === 'dot') canSubmit = getDotTotal() > 0;
     else if (poll.pollType === 'budget') canSubmit = getBudgetSpent() > 0;
     else if (poll.pollType === 'matrix') canSubmit = Object.keys(matrixPositions).length === poll.options.length;
@@ -743,8 +744,27 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     {poll.pollType === 'rating' && (
                         <div className="space-y-6">
                             {poll.options.map((opt) => {
-                                const val = ratingAllocations[opt.id] ?? 50;
+                                const val = ratingAllocations[opt.id] ?? 0;
                                 const isDarkTheme = theme.cardBg?.includes('slate-9');
+                                const ratingStyle = (poll as any).ratingStyle || 'stars';
+                                
+                                // Get the symbols for each rating style
+                                const getRatingSymbol = (index: number, filled: boolean) => {
+                                    switch (ratingStyle) {
+                                        case 'stars':
+                                            return filled ? '⭐' : '☆';
+                                        case 'hearts':
+                                            return filled ? '❤️' : '🤍';
+                                        case 'thumbs':
+                                            return filled ? '👍' : '👎';
+                                        case 'emojis':
+                                            return ['😢', '😕', '😐', '🙂', '😍'][index];
+                                        case 'numbers':
+                                        default:
+                                            return String(index + 1);
+                                    }
+                                };
+                                
                                 return (
                                     <div key={opt.id} className={`p-4 rounded-xl border shadow-sm ${
                                         isDarkTheme 
@@ -755,29 +775,57 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                     }`}>
                                         <div className="flex justify-between items-center mb-3">
                                             <span className={`text-lg font-bold ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>{opt.text}</span>
-                                            <span 
-                                                className="text-lg font-bold px-2 py-1 rounded-lg min-w-[3rem] text-center"
-                                                style={{ 
-                                                    backgroundColor: `${theme.primary}15`,
-                                                    color: isDarkTheme ? theme.accent : theme.primary 
-                                                }}
-                                            >{val}</span>
+                                            {val > 0 && (
+                                                <span 
+                                                    className="text-sm font-bold px-3 py-1 rounded-full"
+                                                    style={{ 
+                                                        backgroundColor: `${theme.primary}15`,
+                                                        color: isDarkTheme ? theme.accent : theme.primary 
+                                                    }}
+                                                >
+                                                    {val}/5
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className={`relative h-2 rounded-full ${isDarkTheme ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                                            <input type="range" min="0" max="100" value={val} onChange={(e) => handleRatingChange(opt.id, parseInt(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                            <div 
-                                                className="h-full rounded-full transition-all" 
-                                                style={{ width: `${val}%`, backgroundColor: theme.primary }} 
-                                            />
-                                            <div 
-                                                className="absolute top-1/2 -mt-2 w-4 h-4 bg-white rounded-full shadow-md transition-all pointer-events-none" 
-                                                style={{ 
-                                                    left: `calc(${val}% - 8px)`,
-                                                    borderWidth: '2px',
-                                                    borderColor: theme.primary
-                                                }} 
-                                            />
+                                        
+                                        {/* 1-5 Rating Scale */}
+                                        <div className="flex justify-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((num) => (
+                                                <button
+                                                    key={num}
+                                                    onClick={() => handleRatingChange(opt.id, num)}
+                                                    className={`
+                                                        w-12 h-12 rounded-xl text-2xl transition-all duration-200
+                                                        ${val >= num 
+                                                            ? `scale-110 ${ratingStyle === 'numbers' ? 'bg-gradient-to-br text-white' : ''}`
+                                                            : `${isDarkTheme ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'}`
+                                                        }
+                                                    `}
+                                                    style={val >= num && ratingStyle === 'numbers' ? {
+                                                        background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary || theme.primary})`
+                                                    } : undefined}
+                                                >
+                                                    {ratingStyle === 'emojis' 
+                                                        ? getRatingSymbol(num - 1, val >= num)
+                                                        : (val >= num 
+                                                            ? getRatingSymbol(num - 1, true) 
+                                                            : getRatingSymbol(num - 1, false)
+                                                          )
+                                                    }
+                                                </button>
+                                            ))}
                                         </div>
+                                        
+                                        {/* Rating label */}
+                                        {val > 0 && (
+                                            <div className={`text-center mt-2 text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                {val === 1 && 'Poor'}
+                                                {val === 2 && 'Fair'}
+                                                {val === 3 && 'Good'}
+                                                {val === 4 && 'Very Good'}
+                                                {val === 5 && 'Excellent'}
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}

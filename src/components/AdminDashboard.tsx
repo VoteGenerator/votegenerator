@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, Gift,
+    Home, AlertTriangle, RefreshCw, Gift, Unlock,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -1027,7 +1027,7 @@ const AdminDashboard: React.FC = () => {
                                         <div className="text-left">
                                             <h3 className="font-bold text-amber-900 flex items-center gap-2">
                                                 Security & Access
-                                                <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">UNLIMITED</span>
+                                                <Unlock size={14} className="text-amber-500" />
                                             </h3>
                                             <p className="text-xs text-amber-700">PIN protection & team tokens</p>
                                         </div>

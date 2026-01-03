@@ -82,45 +82,8 @@ const CheckoutSuccess: React.FC = () => {
     }, []);
 
     const setupSession = async (sessionId: string, tier: string) => {
-        console.log('CheckoutSuccess: Registering customer...');
-        
-        // Call backend to register customer and get short dashboard token
-        try {
-            const response = await fetch('/.netlify/functions/vg-register-customer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, tier }),
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('CheckoutSuccess: Got dashboard token:', data.dashboardToken);
-                
-                // Create session with the real short token
-                const session = {
-                    sessionId,
-                    dashboardToken: data.dashboardToken,
-                    tier: data.tier,
-                    expiresAt: data.expiresAt,
-                    polls: [],
-                    createdAt: new Date().toISOString()
-                };
-                
-                localStorage.setItem('vg_user_session', JSON.stringify(session));
-                localStorage.setItem('vg_purchased_tier', tier);
-                localStorage.setItem('vg_expires_at', data.expiresAt);
-                localStorage.setItem('vg_purchased_at', new Date().toISOString());
-                
-                console.log('CheckoutSuccess: Session saved with short token');
-                return;
-            } else {
-                console.error('CheckoutSuccess: Failed to register customer:', await response.text());
-            }
-        } catch (e) {
-            console.error('CheckoutSuccess: Error registering customer:', e);
-        }
-        
-        // Fallback: save without token (dashboard will try to fetch it)
+        // Just save sessionId and tier to localStorage
+        // The real dashboard token is sent via email by the webhook
         const days = tier === 'unlimited' ? 365 : 30;
         const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
         
@@ -137,7 +100,7 @@ const CheckoutSuccess: React.FC = () => {
         localStorage.setItem('vg_expires_at', expiresAt);
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        console.log('CheckoutSuccess: Session saved (fallback, no token)');
+        console.log('CheckoutSuccess: Session saved');
     };
 
     const goToDashboard = () => {

@@ -171,8 +171,6 @@ const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [copiedDashboard, setCopiedDashboard] = useState(false);
-    const [hasShortLink, setHasShortLink] = useState(false); // True if we have the short ?t= link
     
     // UI State
     const [showSettings, setShowSettings] = useState(false);
@@ -308,7 +306,7 @@ const AdminDashboard: React.FC = () => {
                     }
                     
                     setSession(customerData);
-                    setHasShortLink(true);
+                    
                     setLoading(false);
                     window.history.replaceState({}, '', '/admin');
                     return;
@@ -319,7 +317,7 @@ const AdminDashboard: React.FC = () => {
                     const sessionData: UserSession = JSON.parse(stored);
                     sessionData.dashboardToken = urlDashboardToken;
                     setSession(sessionData);
-                    setHasShortLink(true);
+                    
                     setLoading(false);
                     return;
                 }
@@ -344,7 +342,7 @@ const AdminDashboard: React.FC = () => {
                     }
                     
                     setSession(customerData);
-                    setHasShortLink(true);
+                    
                     setLoading(false);
                     // Update URL to short format
                     window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
@@ -358,7 +356,7 @@ const AdminDashboard: React.FC = () => {
                     const sessionData: UserSession = JSON.parse(stored);
                     sessionData.sessionId = urlSessionId;
                     setSession(sessionData);
-                    setHasShortLink(!!sessionData.dashboardToken);
+                    
                     setLoading(false);
                     window.history.replaceState({}, '', '/admin');
                     return;
@@ -380,7 +378,7 @@ const AdminDashboard: React.FC = () => {
                 
                 localStorage.setItem('vg_user_session', JSON.stringify(newSession));
                 setSession(newSession);
-                setHasShortLink(false);
+                
                 setLoading(false);
                 window.history.replaceState({}, '', '/admin');
                 return;
@@ -400,7 +398,7 @@ const AdminDashboard: React.FC = () => {
                         const updatedSession = { ...sessionData, ...customerData };
                         localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
                         setSession(updatedSession);
-                        setHasShortLink(true);
+                        
                         setLoading(false);
                         console.log('AdminDashboard: Got dashboardToken:', customerData.dashboardToken);
                         return;
@@ -408,7 +406,7 @@ const AdminDashboard: React.FC = () => {
                 }
                 
                 setSession(sessionData);
-                setHasShortLink(!!sessionData.dashboardToken);
+                
                 setLoading(false);
                 return;
             }
@@ -454,30 +452,6 @@ const AdminDashboard: React.FC = () => {
         return (session.polls || []).filter(p => p.status === 'live' || !session.tier.match(/starter|pro_event/));
     }, [session]);
 
-    const getDashboardUrl = () => {
-        // Use short token format: /admin?t=TOKEN
-        const token = session?.dashboardToken;
-        
-        // Only use token if it's a real short token (not fake vg_ prefix)
-        if (token && !token.startsWith('vg_')) {
-            return `${window.location.origin}/admin?t=${token}`;
-        }
-        
-        // Fallback: session ID (admin dashboard will fetch real token on load)
-        const sessionId = session?.sessionId;
-        if (sessionId) {
-            return `${window.location.origin}/admin?s=${sessionId}`;
-        }
-        
-        // Last fallback to current URL
-        return window.location.href;
-    };
-    
-    // Short admin link - same as getDashboardUrl now
-    const getShortAdminLink = () => {
-        return getDashboardUrl();
-    };
-
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
         const url = type === 'admin'
             ? `${window.location.origin}/#id=${poll.id}&admin=${poll.adminKey}`
@@ -485,12 +459,6 @@ const AdminDashboard: React.FC = () => {
         navigator.clipboard.writeText(url);
         setCopiedId(`${poll.id}-${type}`);
         setTimeout(() => setCopiedId(null), 2000);
-    };
-
-    const handleCopyDashboardLink = () => {
-        navigator.clipboard.writeText(getDashboardUrl());
-        setCopiedDashboard(true);
-        setTimeout(() => setCopiedDashboard(false), 2000);
     };
 
     const handleDeletePoll = async (poll: UserPoll) => {
@@ -693,44 +661,16 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
-                        {/* Save Dashboard Link Banner */}
+                        {/* Dashboard Access Info */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl">
-                                <div className="flex items-start justify-between gap-4 flex-wrap">
-                                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <Link2 size={20} className="text-emerald-600" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-emerald-800">🔖 Your Dashboard Link</p>
-                                            <p className="text-sm text-emerald-600 mb-2">
-                                                Bookmark or save this link to access your polls anytime.
-                                            </p>
-                                            <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-emerald-200">
-                                                <code className="text-xs text-emerald-700 font-mono truncate">
-                                                    {session?.dashboardToken 
-                                                        ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                                        : `${window.location.origin}/admin?s=${session?.sessionId || ''}`
-                                                    }
-                                                </code>
-                                            </div>
-                                        </div>
+                            <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Link2 size={20} className="text-slate-600" />
                                     </div>
-                                    <div className="flex flex-col gap-2 flex-shrink-0">
-                                        <button 
-                                            onClick={() => {
-                                                const url = session?.dashboardToken 
-                                                    ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                                    : `${window.location.origin}/admin?s=${session?.sessionId || ''}`;
-                                                navigator.clipboard.writeText(url);
-                                                setCopiedDashboard(true);
-                                                setTimeout(() => setCopiedDashboard(false), 2000);
-                                            }} 
-                                            className="px-4 py-2 bg-white border border-emerald-300 text-emerald-700 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-50 transition"
-                                        >
-                                            {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                            {copiedDashboard ? 'Copied!' : 'Copy Link'}
-                                        </button>
+                                    <div>
+                                        <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
+                                        <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
                                     </div>
                                 </div>
                             </div>

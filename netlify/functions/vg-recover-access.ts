@@ -53,7 +53,7 @@ const generateRecoveryEmail = (
     customer: CustomerRecord,
     baseUrl: string
 ): string => {
-    const dashboardUrl = `${baseUrl}/admin?token=${customer.dashboardToken}`;
+    const dashboardUrl = `${baseUrl}/admin?t=${customer.dashboardToken}`;
     const tierLabel = customer.tier.charAt(0).toUpperCase() + customer.tier.slice(1).replace('_', ' ');
     
     const pollRows = customer.polls.map(poll => `

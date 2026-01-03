@@ -213,8 +213,8 @@ function App() {
     const path = window.location.pathname;
     
     if (path === '/create' || path === '/create/') return <CreatePage />;
-    if (path === '/poll-created' || path.startsWith('/poll-created?')) return <PollCreatedSuccess />;
-    if (path.startsWith('/ad-wall')) return <AdWall />;
+    if (path === '/poll-created' || path === '/poll-created/') return <PollCreatedSuccess />;
+    if (path === '/ad-wall' || path.startsWith('/ad-wall')) return <AdWall />;
     if (path === '/pricing' || path === '/pricing/') return <PricingPage />;
     if (path === '/compare' || path === '/compare/') return <ComparePage />;
     

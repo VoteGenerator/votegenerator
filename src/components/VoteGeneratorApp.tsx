@@ -169,7 +169,7 @@ const VoteGeneratorApp: React.FC = () => {
                 const timeStr = date.toLocaleTimeString();
                 
                 // Map choice IDs to text
-                const choiceTexts = vote.choices.map(id => {
+                const choiceTexts = vote.choices.map((id: string) => {
                     const option = viewState.poll.options.find(o => o.id === id);
                     return option ? option.text.replace(/,/g, ' ') : 'Unknown'; // simple escape for commas
                 });

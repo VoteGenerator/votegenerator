@@ -83,8 +83,13 @@ const HowItWorks: React.FC = () => (
     </div>
 );
 
+// Props interface
+interface VoteGeneratorCreateProps {
+    hideTierBanner?: boolean;
+}
+
 // Main Component
-const VoteGeneratorCreate: React.FC = () => {
+const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanner = false }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
@@ -215,7 +220,7 @@ const VoteGeneratorCreate: React.FC = () => {
     return (
         <>
             {/* Subscription Status Header for Paid Users */}
-            {isPaidUser && (
+            {isPaidUser && !hideTierBanner && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }} 
                     animate={{ opacity: 1, y: 0 }}
@@ -267,7 +272,7 @@ const VoteGeneratorCreate: React.FC = () => {
             )}
             
             {/* Free User - Templates CTA */}
-            {!isPaidUser && (
+            {!isPaidUser && !hideTierBanner && (
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }} 
                     animate={{ opacity: 1, y: 0 }}

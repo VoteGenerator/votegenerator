@@ -2,7 +2,6 @@
 // PaidCreatePage - Dedicated create poll page for paid users
 // Shows: Paid nav, create form ONLY (tier info on admin dashboard)
 // ============================================================================
-
 import React, { useState } from 'react';
 import { 
     Star, Crown, Zap, 

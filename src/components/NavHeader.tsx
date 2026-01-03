@@ -7,7 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, X, LayoutDashboard, PlusCircle, 
-    BarChart3, Settings, Zap, Crown, LayoutTemplate
+    BarChart3, Settings, Zap, Crown, LayoutTemplate,
+    LucideIcon
 } from 'lucide-react';
 
 // Check if user has a paid subscription
@@ -20,8 +21,20 @@ const getSubscriptionStatus = () => {
     return { isPaid, tier };
 };
 
+// Type definitions for nav items
+interface FreeNavItem {
+    label: string;
+    href: string;
+}
+
+interface PaidNavItem {
+    label: string;
+    href: string;
+    icon: LucideIcon;
+}
+
 // Free user nav items
-const FREE_NAV_ITEMS = [
+const FREE_NAV_ITEMS: FreeNavItem[] = [
     { label: 'Create Poll', href: '/create' },
     { label: 'Templates', href: '/templates' },
     { label: 'Demo', href: '/demo' },
@@ -29,7 +42,7 @@ const FREE_NAV_ITEMS = [
 ];
 
 // Paid user nav items
-const PAID_NAV_ITEMS = [
+const PAID_NAV_ITEMS: PaidNavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
@@ -49,7 +62,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
     }, []);
 
     const { isPaid, tier } = subscriptionStatus;
-    const navItems = isPaid ? PAID_NAV_ITEMS : FREE_NAV_ITEMS;
 
     const TierBadge = () => {
         if (!isPaid) return null;
@@ -89,16 +101,33 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
-                        {navItems.map((item) => (
-                            <a
-                                key={item.href}
-                                href={item.href}
-                                className="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition flex items-center gap-2"
-                            >
-                                {'icon' in item && item.icon && <item.icon size={16} />}
-                                {item.label}
-                            </a>
-                        ))}
+                        {isPaid ? (
+                            // Paid user navigation with icons
+                            PAID_NAV_ITEMS.map((item) => {
+                                const IconComponent = item.icon;
+                                return (
+                                    <a
+                                        key={item.href}
+                                        href={item.href}
+                                        className="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition flex items-center gap-2"
+                                    >
+                                        <IconComponent size={16} />
+                                        {item.label}
+                                    </a>
+                                );
+                            })
+                        ) : (
+                            // Free user navigation without icons
+                            FREE_NAV_ITEMS.map((item) => (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    className="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition"
+                                >
+                                    {item.label}
+                                </a>
+                            ))
+                        )}
                         
                         {/* CTA Button */}
                         {!isPaid ? (
@@ -139,16 +168,33 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                             className="md:hidden mt-4 pb-4 border-t border-slate-200 pt-4"
                         >
                             <nav className="flex flex-col gap-1">
-                                {navItems.map((item) => (
-                                    <a
-                                        key={item.href}
-                                        href={item.href}
-                                        className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium flex items-center gap-3"
-                                    >
-                                        {'icon' in item && item.icon && <item.icon size={20} />}
-                                        {item.label}
-                                    </a>
-                                ))}
+                                {isPaid ? (
+                                    // Paid user mobile navigation with icons
+                                    PAID_NAV_ITEMS.map((item) => {
+                                        const IconComponent = item.icon;
+                                        return (
+                                            <a
+                                                key={item.href}
+                                                href={item.href}
+                                                className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium flex items-center gap-3"
+                                            >
+                                                <IconComponent size={20} />
+                                                {item.label}
+                                            </a>
+                                        );
+                                    })
+                                ) : (
+                                    // Free user mobile navigation without icons
+                                    FREE_NAV_ITEMS.map((item) => (
+                                        <a
+                                            key={item.href}
+                                            href={item.href}
+                                            className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium"
+                                        >
+                                            {item.label}
+                                        </a>
+                                    ))
+                                )}
                                 
                                 {!isPaid ? (
                                     <a

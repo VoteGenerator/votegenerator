@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Calendar, Crown, Star, Gift, Check, AlertCircle, LayoutDashboard, Copy
+    CheckCircle, Sparkles, ArrowRight, Loader2, Zap, Calendar, Crown, Star, Gift, Check, AlertCircle, LayoutDashboard, Mail
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 
@@ -62,10 +62,6 @@ const CheckoutSuccess: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [tier, setTier] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const [dashboardUrl, setDashboardUrl] = useState<string>('');
-    const [copied, setCopied] = useState(false);
-    const [hasShortToken, setHasShortToken] = useState(false);
-    const [fetchingToken, setFetchingToken] = useState(true);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -106,88 +102,28 @@ const CheckoutSuccess: React.FC = () => {
                 break;
         }
         
-        // Create session object (will update with real token when available)
-        const session: any = {
-            sessionId, // Always store sessionId for backend lookup
+        // Create session object for local use
+        // The real short token is in the email - we just store sessionId for backup
+        const session = {
+            sessionId,
             tier,
             expiresAt: expiryDate.toISOString(),
             polls: [],
             createdAt: new Date().toISOString()
         };
         
-        // Save initial session to localStorage
+        // Save to localStorage for dashboard navigation
         localStorage.setItem('vg_user_session', JSON.stringify(session));
         localStorage.setItem('vg_purchased_tier', tier);
         localStorage.setItem('vg_expires_at', expiryDate.toISOString());
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        // Start with session ID URL (will update when we get real token)
-        setDashboardUrl(`${window.location.origin}/admin?s=${sessionId}`);
-        
-        // Poll for real token from backend (webhook takes time to complete)
-        const fetchRealToken = async (): Promise<string | null> => {
-            try {
-                const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('CheckoutSuccess: vg-get-customer response:', data);
-                    if (data.dashboardToken) {
-                        return data.dashboardToken;
-                    }
-                }
-            } catch (e) {
-                console.log('CheckoutSuccess: fetch error:', e);
-            }
-            return null;
-        };
-        
-        // More aggressive polling - 10 attempts over ~30 seconds
-        // Webhook can take 5-15 seconds to process
-        const pollForToken = async () => {
-            setFetchingToken(true);
-            const delays = [1000, 2000, 2000, 3000, 3000, 4000, 4000, 5000, 5000, 5000]; // Total ~34s
-            
-            for (let attempt = 0; attempt < delays.length; attempt++) {
-                console.log(`CheckoutSuccess: Polling for token, attempt ${attempt + 1}/${delays.length}`);
-                const realToken = await fetchRealToken();
-                
-                if (realToken) {
-                    console.log(`CheckoutSuccess: Got real token on attempt ${attempt + 1}: ${realToken.substring(0, 8)}...`);
-                    
-                    // Update session with real token
-                    session.dashboardToken = realToken;
-                    localStorage.setItem('vg_user_session', JSON.stringify(session));
-                    
-                    // Update displayed URL
-                    setDashboardUrl(`${window.location.origin}/admin?t=${realToken}`);
-                    setHasShortToken(true);
-                    setFetchingToken(false);
-                    return;
-                }
-                
-                // Wait before next attempt
-                await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-            }
-            
-            console.log('CheckoutSuccess: Could not get short token after all attempts');
-            setFetchingToken(false);
-        };
-        
-        // Start polling in background (don't block the UI)
-        pollForToken();
-        
-        console.log('CheckoutSuccess: Initial session created, polling for short token...');
+        console.log('CheckoutSuccess: Session saved, email has short dashboard link');
     };
 
     const goToDashboard = () => {
-        // Navigate to admin - the dashboard will fetch the real token if needed
+        // Navigate to admin - dashboard will fetch real token from backend
         window.location.href = '/admin';
-    };
-
-    const copyDashboardLink = () => {
-        navigator.clipboard.writeText(dashboardUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const planDetails = tier ? PLAN_DETAILS[tier] : null;
@@ -268,49 +204,16 @@ const CheckoutSuccess: React.FC = () => {
                                 ))}
                             </ul>
 
-                            {/* Dashboard Link - Important! */}
-                            <div className="bg-amber-50 rounded-xl p-4 mb-6 border border-amber-200">
+                            {/* Email Confirmation Notice */}
+                            <div className="bg-emerald-50 rounded-xl p-4 mb-6 border border-emerald-200">
                                 <div className="flex items-start gap-3">
-                                    <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <Mail size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
                                     <div className="flex-1">
-                                        <h4 className="font-semibold text-amber-800 mb-1">Save Your Dashboard Link</h4>
-                                        <p className="text-amber-700 text-sm mb-3">
-                                            Bookmark this page or copy your dashboard link to access your polls anytime.
+                                        <h4 className="font-semibold text-emerald-800 mb-1">📧 Check Your Email!</h4>
+                                        <p className="text-emerald-700 text-sm">
+                                            We've sent a confirmation email with your <strong>personal dashboard link</strong>. 
+                                            Save it to access your polls anytime from any device.
                                         </p>
-                                        
-                                        {/* Dashboard URL display */}
-                                        {dashboardUrl && (
-                                            <div className="bg-white border border-amber-200 rounded-lg p-3 mb-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    {fetchingToken ? (
-                                                        <>
-                                                            <Loader2 size={14} className="animate-spin text-amber-600" />
-                                                            <span className="text-xs text-amber-600">Generating short link...</span>
-                                                        </>
-                                                    ) : hasShortToken ? (
-                                                        <>
-                                                            <Check size={14} className="text-green-600" />
-                                                            <span className="text-xs text-green-600">Short link ready!</span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-xs text-amber-600">Using backup link</span>
-                                                    )}
-                                                </div>
-                                                <code className="text-xs text-slate-600 break-all block">
-                                                    {dashboardUrl}
-                                                </code>
-                                            </div>
-                                        )}
-                                        
-                                        {dashboardUrl && (
-                                            <button
-                                                onClick={copyDashboardLink}
-                                                className="flex items-center gap-2 px-3 py-2 bg-white border border-amber-300 rounded-lg text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors"
-                                            >
-                                                {copied ? <Check size={16} /> : <Copy size={16} />}
-                                                {copied ? 'Copied!' : 'Copy Dashboard Link'}
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
                             </div>

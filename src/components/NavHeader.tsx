@@ -1,13 +1,14 @@
 // ============================================================================
 // NavHeader - Adaptive navigation based on subscription status
 // Uses /logo.svg from public folder
+// Templates are FREE - no upgrade needed
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, X, LayoutDashboard, PlusCircle, 
-    BarChart3, Settings, Zap, Crown, LayoutTemplate,
+    BarChart3, Settings, Zap, Crown, LayoutTemplate, ClipboardList,
     LucideIcon
 } from 'lucide-react';
 
@@ -33,9 +34,10 @@ interface PaidNavItem {
     icon: LucideIcon;
 }
 
-// Free user nav items
+// Free user nav items - NO upgrade button, templates are free!
 const FREE_NAV_ITEMS: FreeNavItem[] = [
     { label: 'Create Poll', href: '/create' },
+    { label: 'Survey', href: '/survey' },
     { label: 'Templates', href: '/templates' },
     { label: 'Demo', href: '/demo' },
     { label: 'Pricing', href: '/pricing' },
@@ -45,6 +47,7 @@ const FREE_NAV_ITEMS: FreeNavItem[] = [
 const PAID_NAV_ITEMS: PaidNavItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
+    { label: 'Survey', href: '/survey', icon: ClipboardList },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
@@ -129,16 +132,19 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                             ))
                         )}
                         
-                        {/* CTA Button */}
-                        {!isPaid ? (
+                        {/* CTA Button - Only show for free users */}
+                        {!isPaid && (
                             <a
                                 href="/pricing"
                                 className="ml-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:shadow-lg transition flex items-center gap-2"
                             >
                                 <Zap size={16} />
-                                Upgrade
+                                Go Pro
                             </a>
-                        ) : (
+                        )}
+                        
+                        {/* Settings for paid users */}
+                        {isPaid && (
                             <a
                                 href="/settings"
                                 className="ml-2 p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
@@ -202,7 +208,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                         className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl text-center flex items-center justify-center gap-2"
                                     >
                                         <Zap size={18} />
-                                        Upgrade to Pro
+                                        Go Pro
                                     </a>
                                 ) : (
                                     <a

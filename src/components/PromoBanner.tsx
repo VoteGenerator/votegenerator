@@ -1,67 +1,58 @@
 // ============================================================================
-// Promo Banner Component
-// Scrolls away normally (not fixed/sticky) to avoid spacing issues
-// SET SHOW_BANNER to false TO DISABLE
+// PromoBanner - Generic promotional banner (can be hidden or customized)
+// Set SHOW_BANNER to false to hide, or customize the message
 // ============================================================================
 
 import React, { useState } from 'react';
 import { X, Sparkles, ArrowRight } from 'lucide-react';
 
-// ========================================
-// TOGGLE THIS TO SHOW/HIDE BANNER
-// ========================================
-const SHOW_BANNER = true; // Set to false to hide completely
+// Toggle this to show/hide the banner
+const SHOW_BANNER = true;
 
-const PROMO = {
-    code: 'SAVE10',
-    discount: '10%',
-    link: '/pricing',
+// Customize the banner content
+const BANNER_CONFIG = {
+    message: '✨ New: Survey polls & 42 ready-to-use templates now available!',
+    ctaText: 'Try Templates',
+    ctaUrl: '/templates',
+    bgColor: 'bg-gradient-to-r from-indigo-600 to-purple-600',
 };
 
-// Explicit props interface
-export interface PromoBannerProps {
-    position?: 'top' | 'bottom' | 'floating' | string;
+interface PromoBannerProps {
+    position?: 'top' | 'bottom';
 }
 
-// Component with explicit typing
-function PromoBanner({ position = 'top' }: PromoBannerProps): React.ReactElement | null {
+const PromoBanner: React.FC<PromoBannerProps> = ({ position = 'top' }) => {
     const [isVisible, setIsVisible] = useState(true);
 
+    // Don't render if banner is disabled or dismissed
     if (!SHOW_BANNER || !isVisible) return null;
 
     return (
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white relative">
-            <div className="max-w-7xl mx-auto px-4 py-3">
-                <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap pr-8">
-                    <div className="flex items-center gap-2 text-sm sm:text-base">
-                        <Sparkles size={18} className="text-yellow-300 flex-shrink-0" />
-                        <span className="font-bold">Limited Time:</span>
-                        <span className="font-bold text-yellow-200">{PROMO.discount} OFF</span>
-                        <span className="hidden sm:inline">all paid plans!</span>
-                    </div>
-                    
-                    <div className="hidden md:flex items-center gap-2 text-sm">
-                        <span className="text-emerald-100">Use code</span>
-                        <span className="font-mono font-bold bg-white/20 px-2 py-0.5 rounded text-white">{PROMO.code}</span>
-                        <span className="text-emerald-100">at checkout</span>
-                    </div>
-                    
-                    <a href={PROMO.link} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-emerald-700 hover:bg-emerald-50 rounded-full text-sm font-bold transition shadow-sm">
-                        View Plans <ArrowRight size={14} />
-                    </a>
+        <div className={`${BANNER_CONFIG.bgColor} text-white py-2.5 px-4 relative`}>
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-amber-300" />
+                    <span className="font-medium">{BANNER_CONFIG.message}</span>
                 </div>
                 
-                {/* Close button - absolute positioned */}
-                <button 
-                    onClick={() => setIsVisible(false)} 
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/20 rounded-full transition" 
-                    aria-label="Dismiss"
+                <a 
+                    href={BANNER_CONFIG.ctaUrl}
+                    className="hidden sm:inline-flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full font-semibold transition"
                 >
-                    <X size={18} />
+                    {BANNER_CONFIG.ctaText}
+                    <ArrowRight size={14} />
+                </a>
+                
+                <button 
+                    onClick={() => setIsVisible(false)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/20 rounded-full transition"
+                    aria-label="Dismiss banner"
+                >
+                    <X size={16} />
                 </button>
             </div>
         </div>
     );
-}
+};
 
 export default PromoBanner;

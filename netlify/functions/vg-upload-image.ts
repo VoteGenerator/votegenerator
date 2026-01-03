@@ -38,17 +38,40 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Cloudinary config - your actual cloud name
-        const cloudName = 'dqp5iwehp';
-        const uploadPreset = 'votegenerator'; // Your existing unsigned preset
+        // Cloudinary credentials from environment
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'votegenerator';
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-        console.log('Uploading to Cloudinary with unsigned preset:', uploadPreset);
-        console.log('Cloud name:', cloudName);
+        if (!apiKey || !apiSecret) {
+            console.error('Cloudinary credentials not configured');
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ error: 'Image upload service not configured' })
+            };
+        }
 
-        // For unsigned uploads, use form-urlencoded (works better than JSON)
-        const params = new URLSearchParams();
-        params.append('file', image);
-        params.append('upload_preset', uploadPreset);
+        // Generate signature for signed upload
+        const timestamp = Math.floor(Date.now() / 1000);
+        const folder = 'visual-polls';
+        
+        // Create signature string (sorted alphabetically)
+        const signatureString = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+        
+        // Generate SHA1 signature
+        const crypto = await import('crypto');
+        const signature = crypto.createHash('sha1').update(signatureString).digest('hex');
+
+        // Prepare form data for Cloudinary
+        const formData = new URLSearchParams();
+        formData.append('file', image);
+        formData.append('api_key', apiKey);
+        formData.append('timestamp', timestamp.toString());
+        formData.append('signature', signature);
+        formData.append('folder', folder);
+        // Optimize images to save space
+        formData.append('transformation', 'c_limit,w_800,h_600,q_auto,f_auto');
 
         // Upload to Cloudinary
         const cloudinaryResponse = await fetch(
@@ -58,62 +81,24 @@ export const handler: Handler = async (event) => {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: params.toString()
+                body: formData.toString()
             }
         );
 
-        const responseText = await cloudinaryResponse.text();
-        let result;
-        
-        try {
-            result = JSON.parse(responseText);
-        } catch (e) {
-            console.error('Failed to parse Cloudinary response:', responseText);
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Invalid response from image service' })
-            };
-        }
-
         if (!cloudinaryResponse.ok) {
-            console.error('Cloudinary error:', result);
-            
-            // Check for specific errors
-            const errorMsg = result.error?.message || '';
-            
-            if (errorMsg.includes('Upload preset') || errorMsg.includes('preset')) {
-                return {
-                    statusCode: 500,
-                    headers,
-                    body: JSON.stringify({ 
-                        error: 'Upload preset "votegenerator" not found or not set to UNSIGNED mode in Cloudinary.',
-                        setup: 'Go to Cloudinary Dashboard → Settings → Upload → Upload Presets → Create/Edit "votegenerator" → Set Signing Mode to UNSIGNED'
-                    })
-                };
-            }
-            
-            if (errorMsg.includes('API key') || errorMsg.includes('Unauthorized')) {
-                return {
-                    statusCode: 500,
-                    headers,
-                    body: JSON.stringify({ 
-                        error: 'Upload preset must be UNSIGNED. Signed uploads require API key.',
-                        setup: 'Go to Cloudinary Dashboard → Settings → Upload → Upload Presets → Edit "votegenerator" → Change Signing Mode from SIGNED to UNSIGNED'
-                    })
-                };
-            }
-            
+            const errorData = await cloudinaryResponse.json().catch(() => ({}));
+            console.error('Cloudinary error:', errorData);
             return {
                 statusCode: 500,
                 headers,
                 body: JSON.stringify({ 
-                    error: errorMsg || 'Failed to upload image'
+                    error: 'Failed to upload image',
+                    details: errorData.error?.message || 'Unknown error'
                 })
             };
         }
 
-        console.log('Upload successful:', result.secure_url);
+        const result = await cloudinaryResponse.json();
 
         return {
             statusCode: 200,
@@ -127,12 +112,12 @@ export const handler: Handler = async (event) => {
             })
         };
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Upload error:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message || 'Failed to process image upload' })
+            body: JSON.stringify({ error: 'Failed to process image upload' })
         };
     }
 };

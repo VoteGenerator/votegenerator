@@ -1,13 +1,21 @@
 // ============================================================================
 // VoteGeneratorCreate - FORM ONLY (parent handles headers)
-// UPDATED: All poll types are FREE - subscription limits responses only
+// UPDATED: All poll types FREE, Template loading, Comments, Security sections
 // ============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, Loader2, BarChart2, Sparkles, Eye, AlertCircle, ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, ArrowLeftRight, Share2, QrCode, Zap, Crown, X, Upload, LayoutTemplate } from 'lucide-react';
+import { 
+    Plus, Trash2, ArrowRight, Loader2, Sparkles, Eye, AlertCircle, 
+    ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, 
+    SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, 
+    ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
+    MessageSquare, Lock, Shield, Key, ClipboardList
+} from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
+import { useTemplateLoader, TemplateBadge, StartFromTemplateButton } from './useTemplateLoader';
+import { PollTemplate } from './pollTemplates';
 
 // Subscription tiers (all poll types included in all tiers)
 type SubscriptionTier = 'free' | 'pro' | 'business';
@@ -42,6 +50,7 @@ const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, {
 const POLL_TYPES = [
     { id: 'multiple', name: 'Multiple Choice', icon: CheckSquare, shortDesc: 'Pick one or more', gradient: 'from-blue-500 to-indigo-500' },
     { id: 'ranked', name: 'Ranked Choice', icon: ListOrdered, shortDesc: 'Drag to rank', gradient: 'from-indigo-500 to-purple-500' },
+    { id: 'survey', name: 'Survey', icon: ClipboardList, shortDesc: 'Multi-question form', gradient: 'from-teal-500 to-emerald-500' },
     { id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, shortDesc: 'A vs B comparisons', gradient: 'from-orange-500 to-red-500' },
     { id: 'meeting', name: 'Meeting Poll', icon: Calendar, shortDesc: 'Find best time', gradient: 'from-amber-500 to-orange-500' },
     { id: 'rating', name: 'Rating Scale', icon: SlidersHorizontal, shortDesc: 'Rate 1-5 stars', gradient: 'from-cyan-500 to-blue-500' },
@@ -55,12 +64,23 @@ const PLACEHOLDER_QUESTIONS = ["Where should we eat lunch?", "What movie should 
 const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string[] }> = {
     multiple: { question: "What movie should we watch?", options: ["Option 1", "Option 2", "Option 3"] },
     ranked: { question: "Rank your favorite restaurants", options: ["Pizza Place", "Burger Joint", "Sushi Bar"] },
+    survey: { question: "Team Satisfaction Survey", options: ["How satisfied are you?", "What could improve?", "Any feedback?"] },
     pairwise: { question: "Which logo do you prefer?", options: ["Design A", "Design B"] },
     meeting: { question: "When can you meet?", options: ["Monday 2pm", "Tuesday 10am", "Wednesday 3pm"] },
     rating: { question: "How was your experience?", options: ["Rate 1-5 stars"] },
     rsvp: { question: "Can you attend the party?", options: ["Going", "Not Going", "Maybe"] },
     image: { question: "Which design do you prefer?", options: ["Image 1", "Image 2"] }
 };
+
+// Security options
+type SecurityType = 'none' | 'cookie' | 'fingerprint' | 'code';
+
+const SECURITY_OPTIONS = [
+    { id: 'none', name: 'No Limit', desc: 'Anyone can vote multiple times', icon: Users },
+    { id: 'cookie', name: 'One Per Browser', desc: 'Cookie-based (easy bypass)', icon: Shield },
+    { id: 'fingerprint', name: 'One Per Device', desc: 'Browser fingerprinting', icon: Lock },
+    { id: 'code', name: 'Access Codes', desc: 'Unique codes for each voter', icon: Key },
+];
 
 // How It Works
 const HowItWorks: React.FC = () => (
@@ -90,6 +110,10 @@ interface VoteGeneratorCreateProps {
 
 // Main Component
 const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanner = false }) => {
+    // Template loading
+    const { template: loadedTemplate, isFromTemplate } = useTemplateLoader();
+    const [activeTemplate, setActiveTemplate] = useState<PollTemplate | null>(null);
+    
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [options, setOptions] = useState<string[]>(['', '', '']);
@@ -102,9 +126,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [multipleSelection, setMultipleSelection] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
     const [hideResults, setHideResults] = useState(false);
+    const [allowComments, setAllowComments] = useState(false);
     const [buttonText, setButtonText] = useState('Submit Vote');
     const [deadline, setDeadline] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('default');
+    const [security, setSecurity] = useState<SecurityType>('cookie');
+    const [accessCodes, setAccessCodes] = useState<string[]>([]);
+    const [codeCount, setCodeCount] = useState(10);
     
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
@@ -120,6 +148,48 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
 
     // Max deadline days based on tier
     const maxDays = isPaidUser ? 365 : 30;
+
+    // Load template on mount
+    useEffect(() => {
+        if (loadedTemplate && !activeTemplate) {
+            applyTemplate(loadedTemplate);
+            setActiveTemplate(loadedTemplate);
+        }
+    }, [loadedTemplate]);
+
+    // Apply template data to form
+    const applyTemplate = (template: PollTemplate) => {
+        setTitle(template.question);
+        setDescription(''); // Template description is for the template card, not the poll
+        setOptions(template.options);
+        setPollType(template.pollType);
+        if (template.settings) {
+            setMultipleSelection(template.settings.allowMultiple || false);
+            setHideResults(template.settings.hideResults || false);
+        }
+        setActiveTemplate(template);
+    };
+
+    // Clear template
+    const clearTemplate = () => {
+        setActiveTemplate(null);
+        setTitle('');
+        setDescription('');
+        setOptions(['', '', '']);
+        setPollType('multiple');
+        // Clear URL param
+        window.history.replaceState({}, '', '/create');
+    };
+
+    // Generate access codes
+    const generateCodes = () => {
+        const codes: string[] = [];
+        for (let i = 0; i < codeCount; i++) {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            codes.push(code);
+        }
+        setAccessCodes(codes);
+    };
 
     const duplicateIndices = useMemo(() => {
         const indices = new Set<number>();
@@ -139,11 +209,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const removeOption = (i: number) => { if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i)); };
     const updateOption = (i: number, v: string) => { const n = [...options]; n[i] = v; setOptions(n); if (error?.includes('Duplicate')) setError(null); };
 
-    // All poll types are now unlocked for everyone!
-    const handlePollTypeSelect = (id: string) => {
-        setPollType(id);
-    };
-
     const handleCreate = async () => {
         if (!title.trim()) { setError('Please enter a question'); return; }
         
@@ -158,6 +223,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             if (valid.length < 2) { setError('Add at least 2 options'); return; }
             if (hasDuplicates) { setError('Remove duplicate options'); return; }
         }
+
+        // Validate access codes if security is 'code'
+        if (security === 'code' && accessCodes.length === 0) {
+            setError('Generate access codes first');
+            return;
+        }
         
         setIsCreating(true); setError(null);
         
@@ -166,7 +237,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 ? imageOptions.map((img, i) => img.label || `Option ${i + 1}`)
                 : options.filter(o => o.trim());
             
-            const pollData: any = { 
+            const pollData: Record<string, unknown> = { 
                 title: title.trim(), 
                 description: description.trim() || undefined, 
                 options: validOptions, 
@@ -174,7 +245,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 settings: { 
                     allowMultiple: multipleSelection, 
                     requireNames, 
-                    hideResults, 
+                    hideResults,
+                    allowComments,
+                    security,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined 
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
@@ -184,6 +257,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             // Add image URLs for visual polls
             if (pollType === 'image') {
                 pollData.imageUrls = imageOptions.map(img => img.url);
+            }
+
+            // Add access codes if using code security
+            if (security === 'code') {
+                pollData.allowedCodes = accessCodes;
             }
             
             const res = await fetch('/.netlify/functions/vg-create', { 
@@ -210,192 +288,176 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 setError(responseData.error || 'Failed to create poll. Please try again.'); 
                 setIsCreating(false);
             }
-        } catch (e: any) { 
+        } catch (e: unknown) { 
             console.error('Poll creation error:', e);
-            setError(e.message || 'Network error. Please check your connection.'); 
+            setError(e instanceof Error ? e.message : 'Network error. Please check your connection.'); 
             setIsCreating(false);
         }
     };
 
     return (
-        <>
-            {/* Subscription Status Header for Paid Users */}
-            {isPaidUser && !hideTierBanner && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }} 
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6"
-                >
-                    <div className={`p-5 rounded-2xl shadow-lg text-white ${
-                        subscriptionTier === 'business' 
-                            ? 'bg-gradient-to-r from-violet-600 via-purple-600 to-violet-600' 
-                            : 'bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600'
-                    }`}>
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center shadow-lg">
-                                    {subscriptionTier === 'business' ? <Crown size={28} /> : <Zap size={28} />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-bold">
-                                            {subscriptionTier === 'business' ? '👑 Business Plan' : '⚡ Pro Plan'}
-                                        </h2>
-                                        <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 rounded-full text-xs font-bold">
-                                            ACTIVE
-                                        </span>
-                                    </div>
-                                    <p className="text-white/80 text-sm mt-0.5">
-                                        All poll types included • {tierConfig.responses} responses • No ads
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-                                <a 
-                                    href="/dashboard"
-                                    className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition flex items-center gap-2"
-                                >
-                                    Dashboard
-                                </a>
-                                <a 
-                                    href="/templates"
-                                    className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition flex items-center gap-2"
-                                >
-                                    <LayoutTemplate size={16} />
-                                    Templates
-                                </a>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-8">
+            <div className="max-w-6xl mx-auto px-4">
+                {/* Subscription Status Header for Paid Users */}
+                {isPaidUser && !hideTierBanner && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`mb-6 p-4 rounded-2xl ${SUBSCRIPTION_CONFIG[subscriptionTier!].colors} flex items-center justify-between`}
+                    >
+                        <div className="flex items-center gap-3">
+                            {subscriptionTier === 'business' ? <Crown size={24} /> : <Zap size={24} />}
+                            <div>
+                                <p className="font-bold text-lg">{SUBSCRIPTION_CONFIG[subscriptionTier!].label} Plan Active</p>
+                                <p className="text-sm opacity-90">
+                                    All poll types included • {tierConfig.responses} responses • No ads
+                                </p>
                             </div>
                         </div>
-                    </div>
-                </motion.div>
-            )}
-            
-            {/* Free User - Templates CTA */}
-            {!isPaidUser && !hideTierBanner && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -10 }} 
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <LayoutTemplate size={20} className="text-indigo-600" />
-                        <p className="text-slate-700">
-                            <span className="font-semibold">New!</span> Start faster with ready-made templates
-                        </p>
-                    </div>
-                    <a 
-                        href="/templates"
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg transition flex items-center gap-2"
-                    >
-                        Browse Templates
-                        <ArrowRight size={16} />
-                    </a>
-                </motion.div>
-            )}
-            
-            <HowItWorks />
-            <div className="grid lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-3 space-y-6">
-                    {/* Poll Type */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`bg-white rounded-2xl shadow-lg p-6 ${
-                        subscriptionTier === 'business' ? 'border-2 border-purple-200' :
-                        subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                        'border border-slate-200/50'
-                    }`}>
-                        <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                subscriptionTier === 'business' ? 'bg-gradient-to-br from-violet-500 to-purple-500' :
-                                subscriptionTier === 'pro' ? 'bg-gradient-to-br from-indigo-500 to-blue-500' :
-                                'bg-gradient-to-br from-indigo-500 to-purple-500'
-                            }`}><BarChart2 className="text-white" size={18} /></div>
-                            Choose Poll Type
-                            <span className="ml-auto text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                                ✓ All types included free
-                            </span>
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-3">
-                            {POLL_TYPES.map((type, i) => {
-                                const Icon = type.icon;
-                                const isSelected = pollType === type.id;
-                                return (
-                                    <motion.div key={type.id} className="relative" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
-                                        <button onClick={() => handlePollTypeSelect(type.id)}
-                                            className={`relative w-full p-4 rounded-xl border-2 transition-all text-left ${
-                                                isSelected 
-                                                    ? 'border-indigo-500 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' 
-                                                    : 'border-slate-200 hover:border-indigo-300 bg-white hover:shadow-md'
-                                            }`}>
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-gradient-to-br ${type.gradient} shadow-md`}>
-                                                <Icon className="text-white" size={20} />
-                                            </div>
-                                            <div className="font-semibold text-sm">{type.name}</div>
-                                            <div className="text-[11px] text-slate-500 mt-1">{type.shortDesc}</div>
-                                        </button>
-                                    </motion.div>
-                                );
-                            })}
+                        <div className="flex gap-2">
+                            <a href="/dashboard" className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">
+                                Dashboard
+                            </a>
+                            <a href="/templates" className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">
+                                Templates
+                            </a>
                         </div>
                     </motion.div>
+                )}
+                
+                {/* Free User - Templates CTA */}
+                {!isPaidUser && !hideTierBanner && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-3">
+                            <LayoutTemplate size={24} className="text-indigo-600" />
+                            <div>
+                                <p className="font-bold text-slate-900">Start faster with templates</p>
+                                <p className="text-sm text-slate-600">Pre-built polls for common use cases</p>
+                            </div>
+                        </div>
+                        <a href="/templates" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
+                            Browse Templates
+                        </a>
+                    </motion.div>
+                )}
 
-                    {/* Question & Options */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={`bg-white rounded-2xl shadow-lg p-6 ${
-                        subscriptionTier === 'business' ? 'border-2 border-purple-200' :
-                        subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                        'border border-slate-200/50'
-                    }`}>
-                        <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                subscriptionTier === 'business' ? 'bg-gradient-to-br from-violet-500 to-purple-500' :
-                                subscriptionTier === 'pro' ? 'bg-gradient-to-br from-indigo-500 to-blue-500' :
-                                'bg-gradient-to-br from-purple-500 to-pink-500'
-                            }`}><Sparkles className="text-white" size={18} /></div>
-                            Your Question
-                        </h2>
-                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion} className="w-full px-4 py-3 text-lg border-2 border-slate-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" />
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add optional description..." className="w-full mt-3 px-4 py-3 border-2 border-slate-200 rounded-xl text-sm resize-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition" rows={2} />
-                        
-                        <div className="mt-6">
-                            <h3 className="font-semibold text-slate-700 mb-3">{pollType === 'image' ? 'Upload Images' : 'Answer Options'}</h3>
-                            
-                            {/* Visual Poll - Image Upload */}
-                            {pollType === 'image' ? (
-                                <div className="space-y-4">
-                                    {/* Visual Poll Info */}
-                                    <div className="p-4 bg-pink-50 border border-pink-200 rounded-xl">
-                                        <p className="text-pink-600 text-sm mb-3">
-                                            Upload images as poll options. Perfect for design feedback, photo contests, product comparisons, and more!
-                                        </p>
-                                        <div className="flex flex-wrap gap-3 text-xs">
-                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📐 Recommended: Square (1:1)</span>
-                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">📁 Max: 5MB per image</span>
-                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">🖼️ Formats: JPG, PNG, WebP</span>
-                                            <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full">✨ Auto-compressed for fast loading</span>
+                {/* Template Badge (if using a template) */}
+                {activeTemplate && (
+                    <TemplateBadge template={activeTemplate} onClear={clearTemplate} />
+                )}
+
+                <HowItWorks />
+
+                <div className="grid lg:grid-cols-2 gap-8">
+                    {/* Left: Form */}
+                    <div className="space-y-6">
+                        {/* Poll Type Selection */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm">1</span>
+                                    Poll Type
+                                </h2>
+                                <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                    <CheckSquare size={12} />
+                                    ✓ All types included free
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                {POLL_TYPES.map((type) => (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => setPollType(type.id)}
+                                        className={`p-3 rounded-xl border-2 transition-all text-left ${
+                                            pollType === type.id 
+                                                ? 'border-indigo-500 bg-indigo-50 shadow-md' 
+                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${type.gradient} flex items-center justify-center mb-2`}>
+                                            <type.icon size={16} className="text-white" />
                                         </div>
-                                    </div>
+                                        <div className="font-semibold text-slate-900 text-sm">{type.name}</div>
+                                        <div className="text-xs text-slate-500">{type.shortDesc}</div>
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* Template button */}
+                            {!activeTemplate && (
+                                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-center">
+                                    <StartFromTemplateButton onSelectTemplate={applyTemplate} />
+                                </div>
+                            )}
+                        </motion.div>
+
+                        {/* Question & Options */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
+                            <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
+                                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm">2</span>
+                                {pollType === 'survey' ? 'Survey Title & Questions' : 'Question & Options'}
+                            </h2>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        {pollType === 'survey' ? 'Survey Title' : 'Your Question'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder={POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion}
+                                        className="w-full px-4 py-3 text-lg border-2 border-slate-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Description <span className="text-slate-400 font-normal">(optional)</span>
+                                    </label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Add context or instructions..."
+                                        rows={2}
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition text-sm resize-none"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Visual Poll Images */}
+                            {pollType === 'image' ? (
+                                <div className="mt-6">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                        Upload Images ({imageOptions.length}/10)
+                                    </label>
                                     
-                                    {/* Uploaded Images Grid */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {/* Existing Images */}
                                         {imageOptions.map((img, i) => (
-                                            <motion.div 
-                                                key={i} 
-                                                initial={{ opacity: 0, scale: 0.9 }} 
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, scale: 0.9 }}
                                                 animate={{ opacity: 1, scale: 1 }}
-                                                className="relative group"
+                                                className="relative aspect-square rounded-xl overflow-hidden border-2 border-pink-200 group"
                                             >
-                                                <div className="aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-100">
-                                                    <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                </div>
-                                                <input 
-                                                    type="text" 
-                                                    value={img.label} 
+                                                <img src={img.url} alt={`Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                <input
+                                                    type="text"
+                                                    value={img.label}
                                                     onChange={(e) => {
-                                                        const newImages = [...imageOptions];
-                                                        newImages[i] = { ...newImages[i], label: e.target.value };
-                                                        setImageOptions(newImages);
+                                                        const updated = [...imageOptions];
+                                                        updated[i].label = e.target.value;
+                                                        setImageOptions(updated);
                                                     }}
-                                                    placeholder="Add label..."
-                                                    className="mt-2 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-pink-400 focus:ring-1 focus:ring-pink-400"
+                                                    placeholder={`Label ${i + 1}`}
+                                                    className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm px-2 py-1 backdrop-blur-sm border-0 focus:outline-none focus:bg-black/70"
                                                 />
                                                 <button 
                                                     onClick={() => setImageOptions(imageOptions.filter((_, idx) => idx !== i))}
@@ -484,7 +546,10 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             ) : (
                                 /* Text Options */
-                                <div className="space-y-3">
+                                <div className="mt-6 space-y-3">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        {pollType === 'survey' ? 'Questions' : 'Options'}
+                                    </label>
                                     {options.map((opt, i) => (
                                         <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
                                             <span className="text-slate-400 text-sm w-6">{i + 1}.</span>
@@ -492,7 +557,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 type="text" 
                                                 value={opt} 
                                                 onChange={(e) => updateOption(i, e.target.value)} 
-                                                placeholder={`Option ${i + 1}`} 
+                                                placeholder={pollType === 'survey' ? `Question ${i + 1}` : `Option ${i + 1}`} 
                                                 className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50 focus:border-red-400' : 'border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`} 
                                             />
                                             {options.length > 2 && (
@@ -512,195 +577,234 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             
                             {pollType !== 'image' && options.length < 20 && (
                                 <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center">
-                                    <Plus size={18} />Add Option
+                                    <Plus size={18} />Add {pollType === 'survey' ? 'Question' : 'Option'}
                                 </button>
                             )}
-                        </div>
-                    </motion.div>
+                        </motion.div>
 
-                    {/* Settings */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
-                        subscriptionTier === 'business' ? 'border-2 border-purple-200' :
-                        subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                        'border border-slate-200/50'
-                    }`}>
-                        <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50">
-                            <span className="font-bold text-slate-900 flex items-center gap-2">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                    subscriptionTier === 'business' ? 'bg-gradient-to-br from-violet-500 to-purple-500' :
-                                    subscriptionTier === 'pro' ? 'bg-gradient-to-br from-indigo-500 to-blue-500' :
-                                    'bg-gradient-to-br from-amber-500 to-orange-500'
-                                }`}><SlidersHorizontal className="text-white" size={18} /></div>
-                                Settings
-                            </span>
-                            {showAdvanced ? <ChevronUp size={20} className="text-indigo-600" /> : <ChevronDown size={20} className="text-slate-400" />}
-                        </button>
-                        <AnimatePresence>
-                            {showAdvanced && (
-                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
-                                    <div className="p-6 space-y-4">
-                                        <div className="p-4 bg-slate-50 rounded-xl">
-                                            <label className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-semibold text-slate-700">Close poll on</span>
-                                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Max {maxDays} days</span>
-                                            </label>
-                                            <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
-                                        </div>
-                                        {pollType === 'multiple' && (
-                                            <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
-                                                <span className="font-medium text-slate-700">Allow multiple selections</span>
-                                                <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded" />
-                                            </label>
-                                        )}
-                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
-                                            <span className="font-medium text-slate-700">Require voter names</span>
-                                            <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded" />
-                                        </label>
-                                        <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
-                                            <span className="font-medium text-slate-700">Hide results until closed</span>
-                                            <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
-                                        </label>
-                                        <div className="p-4 bg-slate-50 rounded-xl">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
-                                            <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
-                                        </div>
-                                        <div className="pt-4 border-t">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label>
-                                            <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
+                        {/* Settings */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
+                            subscriptionTier === 'business' ? 'border-2 border-purple-200' :
+                            subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
+                            'border border-slate-200/50'
+                        }`}>
+                            <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50">
+                                <span className="font-bold text-slate-900 flex items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                        subscriptionTier === 'business' ? 'bg-gradient-to-br from-violet-500 to-purple-500' :
+                                        subscriptionTier === 'pro' ? 'bg-gradient-to-br from-indigo-500 to-blue-500' :
+                                        'bg-gradient-to-br from-amber-500 to-orange-500'
+                                    }`}><SlidersHorizontal className="text-white" size={18} /></div>
+                                    Poll Settings
+                                </span>
+                                {showAdvanced ? <ChevronUp size={20} className="text-indigo-600" /> : <ChevronDown size={20} className="text-slate-400" />}
+                            </button>
+                            <AnimatePresence>
+                                {showAdvanced && (
+                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
+                                        <div className="p-6 space-y-6">
+                                            {/* Deadline */}
+                                            <div className="p-4 bg-slate-50 rounded-xl">
+                                                <label className="flex items-center justify-between mb-2">
+                                                    <span className="text-sm font-semibold text-slate-700">Close poll on</span>
+                                                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">Max {maxDays} days</span>
+                                                </label>
+                                                <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 16)} max={getMaxDeadline()} className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
+                                            </div>
+                                            
+                                            {/* Voting Options */}
+                                            <div className="space-y-2">
+                                                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                                    <CheckSquare size={16} className="text-indigo-500" />
+                                                    Voting Options
+                                                </h3>
+                                                {pollType === 'multiple' && (
+                                                    <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                                        <span className="font-medium text-slate-700">Allow multiple selections</span>
+                                                        <input type="checkbox" checked={multipleSelection} onChange={(e) => setMultipleSelection(e.target.checked)} className="w-5 h-5 rounded" />
+                                                    </label>
+                                                )}
+                                                <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                                    <span className="font-medium text-slate-700">Require voter names</span>
+                                                    <input type="checkbox" checked={requireNames} onChange={(e) => setRequireNames(e.target.checked)} className="w-5 h-5 rounded" />
+                                                </label>
+                                                <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                                    <span className="font-medium text-slate-700">Hide results until closed</span>
+                                                    <input type="checkbox" checked={hideResults} onChange={(e) => setHideResults(e.target.checked)} className="w-5 h-5 rounded" />
+                                                </label>
+                                            </div>
 
-                    {error && (
-                        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3">
-                            <AlertCircle className="text-red-600" size={20} />
-                            <p className="text-red-700 font-medium">{error}</p>
-                        </div>
-                    )}
+                                            {/* Comments */}
+                                            <div className="space-y-2">
+                                                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                                    <MessageSquare size={16} className="text-indigo-500" />
+                                                    Comments
+                                                </h3>
+                                                <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                                    <div>
+                                                        <span className="font-medium text-slate-700">Allow voter comments</span>
+                                                        <p className="text-xs text-slate-500">Voters can leave feedback with their vote</p>
+                                                    </div>
+                                                    <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="w-5 h-5 rounded" />
+                                                </label>
+                                            </div>
 
-                    <motion.button 
-                        type="button" 
-                        onClick={handleCreate} 
-                        disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
-                        whileHover={{ scale: 1.01 }} 
-                        whileTap={{ scale: 0.99 }}
-                        className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
-                            subscriptionTier === 'business' ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500' :
-                            subscriptionTier === 'pro' ? 'bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500' :
-                            'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600'
-                        }`}
-                    >
-                        {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={20} /></>}
-                    </motion.button>
-                </div>
-
-                {/* Preview Panel */}
-                <div className="lg:col-span-2 space-y-4">
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden sticky top-24 ${
-                        subscriptionTier === 'business' ? 'border-2 border-purple-200' :
-                        subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                        'border border-slate-200/50'
-                    }`}>
-                        <div className="bg-gradient-to-r from-slate-100 to-slate-200 px-6 py-3 flex items-center justify-between">
-                            <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                <Eye size={18} className={
-                                    subscriptionTier === 'business' ? 'text-purple-500' :
-                                    subscriptionTier === 'pro' ? 'text-indigo-500' :
-                                    'text-indigo-500'
-                                } />
-                                Live Preview
-                            </h3>
-                            <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm">
-                                <button onClick={() => setPreviewDevice('desktop')} className={`p-1.5 rounded ${previewDevice === 'desktop' ? 'bg-indigo-100' : ''}`}>
-                                    <Monitor size={16} className={previewDevice === 'desktop' ? 'text-indigo-600' : 'text-slate-400'} />
-                                </button>
-                                <button onClick={() => setPreviewDevice('mobile')} className={`p-1.5 rounded ${previewDevice === 'mobile' ? 'bg-indigo-100' : ''}`}>
-                                    <Smartphone size={16} className={previewDevice === 'mobile' ? 'text-indigo-600' : 'text-slate-400'} />
-                                </button>
-                            </div>
-                        </div>
-                        <div className={`p-6 ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
-                            <h4 className="text-lg font-bold text-slate-900 mb-4">
-                                {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || placeholderQuestion}
-                            </h4>
-                            {description && <p className="text-slate-600 text-sm mb-4">{description}</p>}
-                            
-                            <div className="space-y-2 mb-4">
-                                {pollType === 'rsvp' ? (
-                                    ['✅ Going', '❌ Not Going', '🤔 Maybe'].map((opt, i) => (
-                                        <div key={i} className="p-3 border-2 border-slate-200 rounded-xl">
-                                            <span className="text-slate-700">{opt}</span>
-                                        </div>
-                                    ))
-                                ) : pollType === 'rating' ? (
-                                    <div className="p-4 border-2 border-slate-200 rounded-xl text-center">
-                                        <div className="flex justify-center gap-1 text-2xl">
-                                            {['⭐', '⭐', '⭐', '⭐', '⭐'].map((star, i) => (
-                                                <span key={i} className={i < 3 ? 'opacity-100' : 'opacity-30'}>{star}</span>
-                                            ))}
-                                        </div>
-                                        <p className="text-sm text-slate-500 mt-2">Click to rate</p>
-                                    </div>
-                                ) : pollType === 'meeting' ? (
-                                    ['Monday 2pm', 'Tuesday 10am', 'Wednesday 3pm'].map((opt, i) => (
-                                        <div key={i} className="p-3 border-2 border-slate-200 rounded-xl flex items-center gap-3">
-                                            <Calendar size={16} className="text-amber-500" />
-                                            <span className="text-slate-700">{options[i]?.trim() || opt}</span>
-                                        </div>
-                                    ))
-                                ) : pollType === 'image' ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {(imageOptions.length > 0 ? imageOptions.slice(0, 4) : [{url: '', label: 'Image 1'}, {url: '', label: 'Image 2'}]).map((img, i) => (
-                                            <div key={i} className="aspect-square border-2 border-slate-200 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
-                                                {img.url ? (
-                                                    <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="text-slate-400 text-sm">{img.label || `Image ${i + 1}`}</div>
+                                            {/* Security */}
+                                            <div className="space-y-3">
+                                                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                                    <Shield size={16} className="text-indigo-500" />
+                                                    Vote Security
+                                                </h3>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {SECURITY_OPTIONS.map((option) => (
+                                                        <button
+                                                            key={option.id}
+                                                            type="button"
+                                                            onClick={() => setSecurity(option.id as SecurityType)}
+                                                            className={`p-3 rounded-xl border-2 text-left transition ${
+                                                                security === option.id 
+                                                                    ? 'border-indigo-500 bg-indigo-50' 
+                                                                    : 'border-slate-200 hover:border-indigo-300'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
+                                                                <span className="font-medium text-sm text-slate-900">{option.name}</span>
+                                                            </div>
+                                                            <span className="text-xs text-slate-500">{option.desc}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                
+                                                {/* Access Codes Generator */}
+                                                {security === 'code' && (
+                                                    <div className="mt-4 p-4 bg-indigo-50 rounded-xl">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <label className="text-sm font-semibold text-slate-700">Generate Access Codes</label>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    max="100"
+                                                                    value={codeCount}
+                                                                    onChange={(e) => setCodeCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 10)))}
+                                                                    className="w-16 px-2 py-1 border border-slate-200 rounded text-sm text-center"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={generateCodes}
+                                                                    className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
+                                                                >
+                                                                    Generate
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        {accessCodes.length > 0 && (
+                                                            <div className="mt-3 p-3 bg-white rounded-lg max-h-32 overflow-y-auto">
+                                                                <div className="grid grid-cols-5 gap-1 text-xs font-mono">
+                                                                    {accessCodes.map((code, i) => (
+                                                                        <span key={i} className="px-2 py-1 bg-slate-100 rounded text-center">{code}</span>
+                                                                    ))}
+                                                                </div>
+                                                                <p className="text-xs text-slate-500 mt-2">
+                                                                    {accessCodes.length} codes generated. Each can be used once.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    options.slice(0, 5).map((opt, i) => (
-                                        <div key={i} className={`p-3 border-2 rounded-xl ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50' : 'border-slate-200'}`}>
-                                            <span className="text-slate-700">{opt || `Option ${i + 1}`}</span>
+                                            
+                                            {/* Button Text */}
+                                            <div className="p-4 bg-slate-50 rounded-xl">
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Button text</label>
+                                                <input type="text" value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Submit Vote" className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg text-sm" />
+                                            </div>
+                                            
+                                            {/* Theme */}
+                                            <div className="pt-4 border-t">
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">Theme</label>
+                                                <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
+                                            </div>
                                         </div>
-                                    ))
+                                    </motion.div>
                                 )}
+                            </AnimatePresence>
+                        </motion.div>
+
+                        {error && (
+                            <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-center gap-3">
+                                <AlertCircle className="text-red-600" size={20} />
+                                <p className="text-red-700 font-medium">{error}</p>
                             </div>
-                            <button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl">
-                                {pollType === 'rsvp' ? 'Submit RSVP' : 
-                                 pollType === 'rating' ? 'Submit Rating' :
-                                 pollType === 'meeting' ? 'Submit Availability' :
-                                 buttonText || 'Submit Vote'}
-                            </button>
-                        </div>
-                    </motion.div>
-                    
-                    <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
-                        <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2"><Zap size={16} />Tips</h4>
-                        <ul className="text-sm text-amber-700 space-y-1">
-                            <li>• Keep questions clear</li>
-                            <li>• 4-6 options works best</li>
-                            <li>• Save your admin link</li>
-                        </ul>
+                        )}
+
+                        <motion.button 
+                            type="button" 
+                            onClick={handleCreate} 
+                            disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
+                            whileHover={{ scale: 1.01 }} 
+                            whileTap={{ scale: 0.99 }}
+                            className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
+                                subscriptionTier === 'business' ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-violet-500' :
+                                subscriptionTier === 'pro' ? 'bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500' :
+                                'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600'
+                            }`}
+                        >
+                            {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={20} /></>}
+                        </motion.button>
                     </div>
-                    
-                    <div className="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
-                        <h4 className="font-bold text-emerald-800 mb-2">You'll Get</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm text-emerald-700">
-                            <div className="flex items-center gap-2"><QrCode size={14} />QR Code</div>
-                            <div className="flex items-center gap-2"><Share2 size={14} />Share Link</div>
-                            <div className="flex items-center gap-2"><BarChart2 size={14} />Live Results</div>
-                            <div className="flex items-center gap-2"><Zap size={14} />Instant</div>
+
+                    {/* Right: Preview */}
+                    <div className="hidden lg:block">
+                        <div className="sticky top-24">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                    <Eye size={18} /> Live Preview
+                                </h3>
+                                <div className="flex bg-slate-100 rounded-lg p-1">
+                                    <button onClick={() => setPreviewDevice('desktop')} className={`p-2 rounded-md transition ${previewDevice === 'desktop' ? 'bg-white shadow' : ''}`}><Monitor size={16} /></button>
+                                    <button onClick={() => setPreviewDevice('mobile')} className={`p-2 rounded-md transition ${previewDevice === 'mobile' ? 'bg-white shadow' : ''}`}><Smartphone size={16} /></button>
+                                </div>
+                            </div>
+                            <div className={`bg-slate-100 rounded-2xl p-4 ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
+                                <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                                    <div className="p-6">
+                                        <h4 className="text-xl font-bold text-slate-900 mb-2">
+                                            {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
+                                        </h4>
+                                        {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
+                                        
+                                        {pollType === 'image' && imageOptions.length > 0 ? (
+                                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                                {imageOptions.map((img, i) => (
+                                                    <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
+                                                        <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
+                                                    <div key={i} className="p-3 border-2 border-slate-200 rounded-lg text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
+                                                        {opt}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="px-6 pb-6">
+                                        <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
+                                            {buttonText || 'Submit Vote'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

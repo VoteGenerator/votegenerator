@@ -2,8 +2,15 @@
 // useTemplateLoader - Hook to load template data on create page
 // ============================================================================
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutTemplate, Sparkles, X } from 'lucide-react';
+import TemplateSelector from './TemplateSelector';
 import { PollTemplate, getTemplateById } from './pollTemplates';
+
+// ============================================================================
+// Hook: useTemplateLoader
+// ============================================================================
 
 interface TemplateData {
     template: PollTemplate | null;
@@ -48,59 +55,8 @@ export const useTemplateLoader = (): TemplateData => {
 };
 
 // ============================================================================
-// Integration Example for VoteGeneratorCreate.tsx
+// Component: StartFromTemplateButton
 // ============================================================================
-/*
-INTEGRATION STEPS:
-
-1. Import the hook and template types:
-   import { useTemplateLoader } from './useTemplateLoader';
-   import { PollTemplate } from './pollTemplates';
-
-2. Use the hook in your component:
-   const { template, isFromTemplate } = useTemplateLoader();
-
-3. Apply template data to state in useEffect:
-   useEffect(() => {
-       if (template) {
-           setTitle(template.question);
-           setPollType(template.pollType);
-           setOptions(template.options);
-           // Apply settings
-           if (template.settings?.allowMultiple !== undefined) {
-               setAllowMultiple(template.settings.allowMultiple);
-           }
-           if (template.settings?.hideResults !== undefined) {
-               setHideResults(template.settings.hideResults);
-           }
-       }
-   }, [template]);
-
-4. Show template indicator in UI:
-   {isFromTemplate && template && (
-       <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 flex items-center gap-3">
-           <span className="text-2xl">{template.icon}</span>
-           <div>
-               <p className="text-sm font-semibold text-indigo-900">
-                   Using template: {template.name}
-               </p>
-               <p className="text-xs text-indigo-600">
-                   Customize the content below
-               </p>
-           </div>
-       </div>
-   )}
-*/
-
-// ============================================================================
-// StartFromTemplateButton - Add to create page header
-// ============================================================================
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutTemplate, Sparkles, X } from 'lucide-react';
-import TemplateSelector from './TemplateSelector';
-import { PollTemplate } from './pollTemplates';
 
 interface StartFromTemplateButtonProps {
     onSelectTemplate: (template: PollTemplate) => void;
@@ -147,7 +103,7 @@ export const StartFromTemplateButton: React.FC<StartFromTemplateButtonProps> = (
 };
 
 // ============================================================================
-// TemplateBadge - Show which template is being used
+// Component: TemplateBadge
 // ============================================================================
 
 interface TemplateBadgeProps {
@@ -188,4 +144,4 @@ export const TemplateBadge: React.FC<TemplateBadgeProps> = ({ template, onClear 
     );
 };
 
-export default StartFromTemplateButton;
+export default useTemplateLoader;

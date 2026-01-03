@@ -304,6 +304,9 @@ export const handler: Handler = async (event) => {
             // Also store by token for short URL lookup
             await customerStore.setJSON(`token_${customer.dashboardToken}`, customer);
             
+            // Also store by session ID for success page lookup
+            await customerStore.setJSON(`session_${session.id}`, customer);
+            
             console.log(`Customer registered/updated: ${normalizedEmail} (${tier}) expires: ${customer.expiresAt}`);
             console.log(`Dashboard token: ${customer.dashboardToken}`);
 

@@ -64,6 +64,8 @@ const CheckoutSuccess: React.FC = () => {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [dashboardUrl, setDashboardUrl] = useState<string>('');
     const [copied, setCopied] = useState(false);
+    const [hasShortToken, setHasShortToken] = useState(false);
+    const [fetchingToken, setFetchingToken] = useState(true);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -122,53 +124,64 @@ const CheckoutSuccess: React.FC = () => {
         // Start with session ID URL (will update when we get real token)
         setDashboardUrl(`${window.location.origin}/admin?s=${sessionId}`);
         
-        // Poll for real token from backend (webhook may take a moment)
+        // Poll for real token from backend (webhook takes time to complete)
         const fetchRealToken = async (): Promise<string | null> => {
             try {
                 const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('CheckoutSuccess: vg-get-customer response:', data);
                     if (data.dashboardToken) {
                         return data.dashboardToken;
                     }
                 }
             } catch (e) {
-                // Ignore errors, will retry
+                console.log('CheckoutSuccess: fetch error:', e);
             }
             return null;
         };
         
-        // Try to get real token with retries (webhook may still be processing)
-        let realToken: string | null = null;
-        for (let attempt = 0; attempt < 5; attempt++) {
-            realToken = await fetchRealToken();
-            if (realToken) {
-                console.log(`CheckoutSuccess: Got real token on attempt ${attempt + 1}`);
-                break;
+        // More aggressive polling - 10 attempts over ~30 seconds
+        // Webhook can take 5-15 seconds to process
+        const pollForToken = async () => {
+            setFetchingToken(true);
+            const delays = [1000, 2000, 2000, 3000, 3000, 4000, 4000, 5000, 5000, 5000]; // Total ~34s
+            
+            for (let attempt = 0; attempt < delays.length; attempt++) {
+                console.log(`CheckoutSuccess: Polling for token, attempt ${attempt + 1}/${delays.length}`);
+                const realToken = await fetchRealToken();
+                
+                if (realToken) {
+                    console.log(`CheckoutSuccess: Got real token on attempt ${attempt + 1}: ${realToken.substring(0, 8)}...`);
+                    
+                    // Update session with real token
+                    session.dashboardToken = realToken;
+                    localStorage.setItem('vg_user_session', JSON.stringify(session));
+                    
+                    // Update displayed URL
+                    setDashboardUrl(`${window.location.origin}/admin?t=${realToken}`);
+                    setHasShortToken(true);
+                    setFetchingToken(false);
+                    return;
+                }
+                
+                // Wait before next attempt
+                await new Promise(resolve => setTimeout(resolve, delays[attempt]));
             }
-            // Wait before retrying (1s, 2s, 3s, 4s)
-            await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
-        }
+            
+            console.log('CheckoutSuccess: Could not get short token after all attempts');
+            setFetchingToken(false);
+        };
         
-        // Update with real token if we got it
-        if (realToken) {
-            session.dashboardToken = realToken;
-            localStorage.setItem('vg_user_session', JSON.stringify(session));
-            setDashboardUrl(`${window.location.origin}/admin?t=${realToken}`);
-        } else {
-            console.log('CheckoutSuccess: Could not get short token, using session ID');
-        }
+        // Start polling in background (don't block the UI)
+        pollForToken();
         
-        console.log('CheckoutSuccess: Session created:', session);
+        console.log('CheckoutSuccess: Initial session created, polling for short token...');
     };
 
     const goToDashboard = () => {
-        // Use the short URL if we have it
-        if (dashboardUrl.includes('?t=')) {
-            window.location.href = dashboardUrl.replace(window.location.origin, '');
-        } else {
-            window.location.href = '/admin';
-        }
+        // Navigate to admin - the dashboard will fetch the real token if needed
+        window.location.href = '/admin';
     };
 
     const copyDashboardLink = () => {
@@ -264,6 +277,31 @@ const CheckoutSuccess: React.FC = () => {
                                         <p className="text-amber-700 text-sm mb-3">
                                             Bookmark this page or copy your dashboard link to access your polls anytime.
                                         </p>
+                                        
+                                        {/* Dashboard URL display */}
+                                        {dashboardUrl && (
+                                            <div className="bg-white border border-amber-200 rounded-lg p-3 mb-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {fetchingToken ? (
+                                                        <>
+                                                            <Loader2 size={14} className="animate-spin text-amber-600" />
+                                                            <span className="text-xs text-amber-600">Generating short link...</span>
+                                                        </>
+                                                    ) : hasShortToken ? (
+                                                        <>
+                                                            <Check size={14} className="text-green-600" />
+                                                            <span className="text-xs text-green-600">Short link ready!</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-amber-600">Using backup link</span>
+                                                    )}
+                                                </div>
+                                                <code className="text-xs text-slate-600 break-all block">
+                                                    {dashboardUrl}
+                                                </code>
+                                            </div>
+                                        )}
+                                        
                                         {dashboardUrl && (
                                             <button
                                                 onClick={copyDashboardLink}

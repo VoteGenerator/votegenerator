@@ -188,7 +188,25 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     isModal = false 
 }) => {
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const filteredTemplates = getTemplatesByCategory(selectedCategory);
+    const [searchQuery, setSearchQuery] = useState('');
+    
+    // Filter templates by category and search
+    const filteredTemplates = POLL_TEMPLATES.filter(template => {
+        // Category filter
+        const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+        
+        // Search filter
+        if (!searchQuery.trim()) return matchesCategory;
+        
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+            template.name.toLowerCase().includes(query) ||
+            template.description.toLowerCase().includes(query) ||
+            template.question.toLowerCase().includes(query) ||
+            template.bestFor.some(tag => tag.toLowerCase().includes(query));
+        
+        return matchesCategory && matchesSearch;
+    });
 
     const content = (
         <div className={isModal ? '' : 'min-h-screen bg-gradient-to-b from-slate-50 to-white'}>
@@ -211,14 +229,36 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium mb-4">
                             <Zap size={16} />
-                            Quick Start Templates
+                            {POLL_TEMPLATES.length} Ready-to-Use Templates
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
-                            Start with a Template
+                            Find Your Perfect Template
                         </h1>
-                        <p className="text-slate-600 text-lg max-w-xl mx-auto">
-                            Pre-built polls for common use cases. Pick one and customize it in seconds.
+                        <p className="text-slate-600 text-lg max-w-xl mx-auto mb-6">
+                            Search by topic or browse categories. Pick one and customize in seconds.
                         </p>
+                        
+                        {/* Search Bar */}
+                        <div className="max-w-md mx-auto relative">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search templates... (e.g., team lunch, feedback, event)"
+                                className="w-full px-5 py-3.5 pl-12 border-2 border-slate-200 rounded-xl text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition bg-white shadow-sm"
+                            />
+                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full"
+                                >
+                                    <X size={16} className="text-slate-400" />
+                                </button>
+                            )}
+                        </div>
                     </motion.div>
                 </div>
             </div>
@@ -232,24 +272,40 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         transition={{ delay: 0.1 }}
                         className="flex flex-wrap justify-center gap-2"
                     >
-                        {TEMPLATE_CATEGORIES.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCategory(cat.id)}
-                                className={`
-                                    px-4 py-2.5 rounded-xl font-medium text-sm
-                                    flex items-center gap-2 transition-all duration-200
-                                    ${selectedCategory === cat.id
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                                    }
-                                `}
-                            >
-                                <span>{cat.icon}</span>
-                                {cat.label}
-                            </button>
-                        ))}
+                        {TEMPLATE_CATEGORIES.map((cat) => {
+                            const count = cat.id === 'all' 
+                                ? POLL_TEMPLATES.length 
+                                : POLL_TEMPLATES.filter(t => t.category === cat.id).length;
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={`
+                                        px-4 py-2.5 rounded-xl font-medium text-sm
+                                        flex items-center gap-2 transition-all duration-200
+                                        ${selectedCategory === cat.id
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                                        }
+                                    `}
+                                >
+                                    <span>{cat.icon}</span>
+                                    {cat.label}
+                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                        selectedCategory === cat.id ? 'bg-white/20' : 'bg-slate-100'
+                                    }`}>{count}</span>
+                                </button>
+                            );
+                        })}
                     </motion.div>
+                    
+                    {/* Results count */}
+                    {searchQuery && (
+                        <p className="text-center text-sm text-slate-500 mt-4">
+                            Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} 
+                            {searchQuery && ` for "${searchQuery}"`}
+                        </p>
+                    )}
                 </div>
             </div>
 

@@ -324,7 +324,7 @@ function PricingPage(): React.ReactElement {
                                         {tier.price === 0 ? (
                                             <div>
                                                 <span className="text-4xl font-bold text-slate-900">$0</span>
-                                                <span className="text-slate-500 ml-2">forever</span>
+                                                <span className="text-slate-500 ml-2">USD forever</span>
                                             </div>
                                         ) : (
                                             <div>
@@ -334,10 +334,10 @@ function PricingPage(): React.ReactElement {
                                                             <span className="text-4xl font-bold text-slate-900">
                                                                 ${tier.monthlyEquiv}
                                                             </span>
-                                                            <span className="text-slate-500">/mo</span>
+                                                            <span className="text-slate-500">USD/mo</span>
                                                         </div>
                                                         <p className="text-sm text-slate-500 mt-1">
-                                                            ${tier.price}/year • billed annually
+                                                            ${tier.price} USD/year • billed annually
                                                         </p>
                                                     </>
                                                 ) : (
@@ -346,7 +346,7 @@ function PricingPage(): React.ReactElement {
                                                             <span className="text-4xl font-bold text-slate-900">
                                                                 ${tier.price}
                                                             </span>
-                                                            <span className="text-slate-500">/mo</span>
+                                                            <span className="text-slate-500">USD/mo</span>
                                                         </div>
                                                         <p className="text-sm text-slate-500 mt-1">
                                                             billed monthly

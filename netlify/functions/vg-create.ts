@@ -42,7 +42,8 @@ function isValidSlug(slug: string): boolean {
   return !reserved.includes(trimmed);
 }
 
-// Tier limits and features
+// Tier limits and features - ALL POLL TYPES ARE FREE
+// Only response limits, poll counts, and premium features differ by tier
 const TIER_CONFIG: Record<string, {
   maxResponses: number;
   expiresInDays: number;
@@ -50,21 +51,33 @@ const TIER_CONFIG: Record<string, {
   features: string[];
 }> = {
   free: {
-    maxResponses: 50,
-    expiresInDays: 7,
-    maxPolls: 1,
-    features: ['multiple_choice', 'ranked_choice', 'rating'],
+    maxResponses: 100,
+    expiresInDays: 30,
+    maxPolls: 3,
+    features: ['all'], // ALL poll types free - monetize on responses & features
   },
   starter: {
     maxResponses: 500,
     expiresInDays: 30,
-    maxPolls: 1,
-    features: ['all'], // All poll types available for paid tiers
+    maxPolls: 5,
+    features: ['all'],
+  },
+  pro: {
+    maxResponses: 5000,
+    expiresInDays: 30,
+    maxPolls: -1, // unlimited
+    features: ['all'],
   },
   pro_event: {
     maxResponses: 2000,
     expiresInDays: 30,
     maxPolls: 3,
+    features: ['all'],
+  },
+  business: {
+    maxResponses: 50000,
+    expiresInDays: 30,
+    maxPolls: -1,
     features: ['all'],
   },
   unlimited_event: {

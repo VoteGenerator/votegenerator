@@ -82,43 +82,62 @@ const CheckoutSuccess: React.FC = () => {
     }, []);
 
     const setupSession = async (sessionId: string, tier: string) => {
-        // Calculate expiry date based on tier
-        const now = new Date();
-        let expiryDate: Date;
+        console.log('CheckoutSuccess: Registering customer...');
         
-        switch (tier) {
-            case 'unlimited':
-                expiryDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
-                break;
-            case 'unlimited_event':
-                expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-                break;
-            case 'pro_event':
-                expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-                break;
-            case 'starter':
-            default:
-                expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-                break;
+        // Call backend to register customer and get short dashboard token
+        try {
+            const response = await fetch('/.netlify/functions/vg-register-customer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, tier }),
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('CheckoutSuccess: Got dashboard token:', data.dashboardToken);
+                
+                // Create session with the real short token
+                const session = {
+                    sessionId,
+                    dashboardToken: data.dashboardToken,
+                    tier: data.tier,
+                    expiresAt: data.expiresAt,
+                    polls: [],
+                    createdAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('vg_user_session', JSON.stringify(session));
+                localStorage.setItem('vg_purchased_tier', tier);
+                localStorage.setItem('vg_expires_at', data.expiresAt);
+                localStorage.setItem('vg_purchased_at', new Date().toISOString());
+                
+                console.log('CheckoutSuccess: Session saved with short token');
+                return;
+            } else {
+                console.error('CheckoutSuccess: Failed to register customer:', await response.text());
+            }
+        } catch (e) {
+            console.error('CheckoutSuccess: Error registering customer:', e);
         }
         
-        // Create session object for local use
-        // The real short token is in the email - we just store sessionId for backup
+        // Fallback: save without token (dashboard will try to fetch it)
+        const days = tier === 'unlimited' ? 365 : 30;
+        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+        
         const session = {
             sessionId,
             tier,
-            expiresAt: expiryDate.toISOString(),
+            expiresAt,
             polls: [],
             createdAt: new Date().toISOString()
         };
         
-        // Save to localStorage for dashboard navigation
         localStorage.setItem('vg_user_session', JSON.stringify(session));
         localStorage.setItem('vg_purchased_tier', tier);
-        localStorage.setItem('vg_expires_at', expiryDate.toISOString());
+        localStorage.setItem('vg_expires_at', expiresAt);
         localStorage.setItem('vg_purchased_at', new Date().toISOString());
         
-        console.log('CheckoutSuccess: Session saved, email has short dashboard link');
+        console.log('CheckoutSuccess: Session saved (fallback, no token)');
     };
 
     const goToDashboard = () => {

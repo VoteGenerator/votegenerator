@@ -634,18 +634,29 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 </label>
                                             </div>
 
-                                            {/* Comments */}
+                                            {/* Comments - PRO Feature */}
                                             <div className="space-y-2">
                                                 <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                                                     <MessageSquare size={16} className="text-indigo-500" />
                                                     Comments
+                                                    {!isPaidUser && (
+                                                        <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full">PRO</span>
+                                                    )}
                                                 </h3>
-                                                <label className="flex items-center justify-between p-4 rounded-xl hover:bg-indigo-50 cursor-pointer">
+                                                <label className={`flex items-center justify-between p-4 rounded-xl cursor-pointer ${
+                                                    isPaidUser ? 'hover:bg-indigo-50' : 'opacity-60 cursor-not-allowed'
+                                                }`}>
                                                     <div>
                                                         <span className="font-medium text-slate-700">Allow voter comments</span>
                                                         <p className="text-xs text-slate-500">Voters can leave feedback with their vote</p>
                                                     </div>
-                                                    <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="w-5 h-5 rounded" />
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={allowComments} 
+                                                        onChange={(e) => isPaidUser && setAllowComments(e.target.checked)} 
+                                                        disabled={!isPaidUser}
+                                                        className="w-5 h-5 rounded" 
+                                                    />
                                                 </label>
                                             </div>
 
@@ -654,26 +665,37 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                                                     <Shield size={16} className="text-indigo-500" />
                                                     Vote Security
+                                                    <span className="text-xs text-slate-400 font-normal">(Access codes require Pro)</span>
                                                 </h3>
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    {SECURITY_OPTIONS.map((option) => (
-                                                        <button
-                                                            key={option.id}
-                                                            type="button"
-                                                            onClick={() => setSecurity(option.id as SecurityType)}
-                                                            className={`p-3 rounded-xl border-2 text-left transition ${
-                                                                security === option.id 
-                                                                    ? 'border-indigo-500 bg-indigo-50' 
-                                                                    : 'border-slate-200 hover:border-indigo-300'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
-                                                                <span className="font-medium text-sm text-slate-900">{option.name}</span>
-                                                            </div>
-                                                            <span className="text-xs text-slate-500">{option.desc}</span>
-                                                        </button>
-                                                    ))}
+                                                    {SECURITY_OPTIONS.map((option) => {
+                                                        const isProFeature = option.id === 'code';
+                                                        const isDisabled = isProFeature && !isPaidUser;
+                                                        return (
+                                                            <button
+                                                                key={option.id}
+                                                                type="button"
+                                                                onClick={() => !isDisabled && setSecurity(option.id as SecurityType)}
+                                                                disabled={isDisabled}
+                                                                className={`p-3 rounded-xl border-2 text-left transition relative ${
+                                                                    security === option.id 
+                                                                        ? 'border-indigo-500 bg-indigo-50' 
+                                                                        : isDisabled
+                                                                            ? 'border-slate-200 opacity-60 cursor-not-allowed'
+                                                                            : 'border-slate-200 hover:border-indigo-300'
+                                                                }`}
+                                                            >
+                                                                {isProFeature && !isPaidUser && (
+                                                                    <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full">PRO</span>
+                                                                )}
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
+                                                                    <span className="font-medium text-sm text-slate-900">{option.name}</span>
+                                                                </div>
+                                                                <span className="text-xs text-slate-500">{option.desc}</span>
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
                                                 
                                                 {/* Access Codes Generator */}
@@ -769,6 +791,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             </div>
                             <div className={`bg-slate-100 rounded-2xl p-4 ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
                                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                                    {/* Template Badge in Preview */}
+                                    {activeTemplate && (
+                                        <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
+                                            <span className="text-lg">{activeTemplate.icon}</span>
+                                            <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                                        </div>
+                                    )}
                                     <div className="p-6">
                                         <h4 className="text-xl font-bold text-slate-900 mb-2">
                                             {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}

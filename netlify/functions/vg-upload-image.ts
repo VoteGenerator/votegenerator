@@ -39,11 +39,11 @@ export const handler: Handler = async (event) => {
         }
 
         // Cloudinary credentials from environment
-        const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'votegenerator';
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
         const apiKey = process.env.CLOUDINARY_API_KEY;
         const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-        if (!apiKey || !apiSecret) {
+        if (!cloudName || !apiKey || !apiSecret) {
             console.error('Cloudinary credentials not configured');
             return {
                 statusCode: 500,

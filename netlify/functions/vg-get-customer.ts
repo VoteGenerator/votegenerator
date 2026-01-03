@@ -68,32 +68,41 @@ export const handler: Handler = async (event) => {
 
         let customerData: CustomerData | null = null;
 
-        // Try token lookup first
+        // Try token lookup first (fastest - direct key lookup)
         if (token) {
             const tokenKey = `token_${token}`;
             customerData = await customerStore.get(tokenKey, { type: 'json' }) as CustomerData | null;
             console.log(`Token lookup for ${token.substring(0, 8)}...: ${customerData ? 'found' : 'not found'}`);
         }
 
-        // Fallback to session_id lookup (scan all customers)
+        // Try session_id indexed lookup (second fastest)
         if (!customerData && sessionId) {
             console.log(`Session ID lookup for ${sessionId.substring(0, 20)}...`);
             
-            // List all customers and find matching session ID
-            const list = await customerStore.list();
-            for (const key of list.blobs) {
-                // Skip token_ keys
-                if (key.key.startsWith('token_')) continue;
-                
-                try {
-                    const customer = await customerStore.get(key.key, { type: 'json' }) as CustomerData | null;
-                    if (customer && customer.stripeSessionId === sessionId) {
-                        customerData = customer;
-                        console.log(`Found customer by session ID: ${customer.email?.substring(0, 5)}...`);
-                        break;
+            // First try direct session lookup (new index)
+            const sessionKey = `session_${sessionId}`;
+            customerData = await customerStore.get(sessionKey, { type: 'json' }) as CustomerData | null;
+            
+            if (customerData) {
+                console.log(`Found customer by session index: ${customerData.email?.substring(0, 5)}...`);
+            } else {
+                // Fallback: scan all customers (slower but comprehensive)
+                console.log('Session index not found, scanning all customers...');
+                const list = await customerStore.list();
+                for (const key of list.blobs) {
+                    // Skip token_ and session_ keys
+                    if (key.key.startsWith('token_') || key.key.startsWith('session_')) continue;
+                    
+                    try {
+                        const customer = await customerStore.get(key.key, { type: 'json' }) as CustomerData | null;
+                        if (customer && customer.stripeSessionId === sessionId) {
+                            customerData = customer;
+                            console.log(`Found customer by session ID scan: ${customer.email?.substring(0, 5)}...`);
+                            break;
+                        }
+                    } catch (e) {
+                        // Skip invalid entries
                     }
-                } catch (e) {
-                    // Skip invalid entries
                 }
             }
         }

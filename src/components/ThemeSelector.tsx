@@ -23,6 +23,7 @@ export interface ThemeConfig {
     headerStyle?: string;
     specialEffect?: 'glow' | 'shimmer' | 'gradient-border' | 'shadow-lg' | 'glass';
     optionStyle?: string;
+    pageBg?: string; // Page background for dark themes
 }
 
 // Available themes - mix of free and premium
@@ -117,87 +118,89 @@ export const THEMES: ThemeConfig[] = [
     {
         id: 'midnight',
         name: 'Midnight',
-        primary: '#1e293b',
-        secondary: '#0f172a',
+        primary: '#3b82f6', // Blue accent
+        secondary: '#1e40af',
         accent: '#60a5fa',
-        gradient: 'from-slate-900 via-slate-800 to-slate-900',
-        buttonBg: 'bg-blue-500 hover:bg-blue-600',
+        gradient: 'from-slate-900 to-slate-800',
+        buttonBg: 'bg-blue-500 hover:bg-blue-400',
         buttonText: 'text-white',
-        preview: 'bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900',
+        preview: 'bg-slate-900', // Solid dark - matches actual
         isPremium: true,
+        pageBg: 'bg-slate-950', // Dark page background
         cardBg: 'bg-slate-900',
-        cardBorder: 'border-slate-700',
-        headerStyle: 'bg-gradient-to-r from-slate-800 to-slate-900 text-white',
+        cardBorder: 'border-blue-500/30',
+        headerStyle: 'bg-slate-800/80 border-blue-500/20 text-white',
         specialEffect: 'glow',
-        optionStyle: 'border-slate-600 bg-slate-800/50 text-white hover:border-blue-500 hover:bg-slate-800',
+        optionStyle: 'border-slate-700 bg-slate-800 text-white hover:border-blue-500 hover:bg-slate-700',
     },
     {
         id: 'aurora',
         name: 'Aurora',
-        primary: '#8b5cf6',
-        secondary: '#06b6d4',
-        accent: '#f472b6',
-        gradient: 'from-violet-500 via-purple-500 to-cyan-500',
-        buttonBg: 'bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600',
+        primary: '#8b5cf6', // Violet
+        secondary: '#06b6d4', // Cyan
+        accent: '#f472b6', // Pink
+        gradient: 'from-violet-600 via-purple-600 to-cyan-600',
+        buttonBg: 'bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400',
         buttonText: 'text-white',
-        preview: 'bg-gradient-to-r from-violet-500 via-purple-500 to-cyan-500',
+        preview: 'bg-gradient-to-br from-violet-600 via-purple-600 to-cyan-600', // Matches header
         isPremium: true,
-        cardBg: 'bg-gradient-to-br from-violet-50 via-white to-cyan-50',
-        cardBorder: 'border-violet-200',
-        headerStyle: 'bg-gradient-to-r from-violet-500 via-purple-500 to-cyan-500 text-white',
+        cardBg: 'bg-white',
+        cardBorder: 'border-violet-300',
+        headerStyle: 'bg-gradient-to-r from-violet-600 via-purple-600 to-cyan-600 text-white',
         specialEffect: 'shimmer',
-        optionStyle: 'border-violet-200 hover:border-violet-400 bg-white/80 backdrop-blur-sm',
+        optionStyle: 'border-violet-200 hover:border-violet-500 bg-violet-50/50',
     },
     {
         id: 'gold',
         name: 'Luxury Gold',
-        primary: '#d97706',
+        primary: '#d97706', // Amber
         secondary: '#b45309',
-        accent: '#fbbf24',
-        gradient: 'from-amber-500 via-yellow-400 to-amber-500',
-        buttonBg: 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600',
-        buttonText: 'text-amber-950',
-        preview: 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400',
+        accent: '#fbbf24', // Yellow
+        gradient: 'from-amber-600 via-yellow-500 to-amber-600',
+        buttonBg: 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400',
+        buttonText: 'text-amber-950 font-bold',
+        preview: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500', // Matches header
         isPremium: true,
-        cardBg: 'bg-gradient-to-br from-amber-50 via-white to-yellow-50',
-        cardBorder: 'border-amber-300',
+        cardBg: 'bg-amber-50',
+        cardBorder: 'border-amber-400',
         headerStyle: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-amber-950',
         specialEffect: 'shimmer',
         optionStyle: 'border-amber-300 hover:border-amber-500 bg-white shadow-sm',
     },
     {
         id: 'neon',
-        name: 'Neon Glow',
-        primary: '#10b981',
+        name: 'Neon',
+        primary: '#10b981', // Emerald
         secondary: '#14b8a6',
         accent: '#34d399',
-        gradient: 'from-emerald-400 to-cyan-400',
-        buttonBg: 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30',
+        gradient: 'from-emerald-500 to-teal-500',
+        buttonBg: 'bg-emerald-500 hover:bg-emerald-400 shadow-lg shadow-emerald-500/50',
         buttonText: 'text-white',
-        preview: 'bg-gradient-to-r from-emerald-400 to-cyan-400',
+        preview: 'bg-slate-950', // Dark - matches actual
         isPremium: true,
+        pageBg: 'bg-black', // Black page background for neon effect
         cardBg: 'bg-slate-950',
-        cardBorder: 'border-emerald-500/30',
-        headerStyle: 'bg-slate-900 text-emerald-400 border-b border-emerald-500/30',
+        cardBorder: 'border-emerald-500/50',
+        headerStyle: 'bg-slate-900 border-emerald-500/30 text-emerald-400',
         specialEffect: 'glow',
-        optionStyle: 'border-emerald-500/30 bg-slate-900 text-emerald-100 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20',
+        optionStyle: 'border-emerald-500/40 bg-slate-900 text-emerald-100 hover:border-emerald-400 hover:bg-slate-800',
     },
     {
         id: 'rose',
-        name: 'Rose Garden',
-        primary: '#e11d48',
+        name: 'Rose',
+        primary: '#e11d48', // Rose
         secondary: '#be123c',
         accent: '#fb7185',
-        gradient: 'from-rose-400 via-pink-500 to-rose-500',
-        buttonBg: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600',
+        gradient: 'from-rose-500 to-pink-500',
+        buttonBg: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400',
         buttonText: 'text-white',
-        preview: 'bg-gradient-to-r from-rose-400 via-pink-400 to-rose-500',
+        preview: 'bg-gradient-to-r from-rose-500 to-pink-500', // Matches header
         isPremium: true,
-        cardBg: 'bg-gradient-to-br from-rose-50 via-white to-pink-50',
-        cardBorder: 'border-rose-200',
+        cardBg: 'bg-white',
+        cardBorder: 'border-rose-300',
         headerStyle: 'bg-gradient-to-r from-rose-500 to-pink-500 text-white',
         specialEffect: 'shadow-lg',
-        optionStyle: 'border-rose-200 hover:border-rose-400 bg-white',
+        optionStyle: 'border-rose-200 hover:border-rose-500 bg-rose-50/50',
     },
     {
         id: 'glass',

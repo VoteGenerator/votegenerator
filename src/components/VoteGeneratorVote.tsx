@@ -424,7 +424,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     }
 
     return (
-        <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
+        <div className={`min-h-screen ${theme.pageBg || ''}`}>
+            <div className="max-w-2xl mx-auto px-4 pb-20 pt-10">
             {/* Shimmer effect overlay for premium themes */}
             {theme.specialEffect === 'shimmer' && (
                 <style>{`
@@ -911,6 +912,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
+        </div>
         </div>
     );
 };

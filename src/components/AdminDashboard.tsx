@@ -172,7 +172,7 @@ const AdminDashboard: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedDashboard, setCopiedDashboard] = useState(false);
-    const [fetchingShortLink, setFetchingShortLink] = useState(false);
+    const [hasShortLink, setHasShortLink] = useState(false); // True if we have the short ?t= link
     
     // UI State
     const [showSettings, setShowSettings] = useState(false);
@@ -295,13 +295,12 @@ const AdminDashboard: React.FC = () => {
         try {
             const stored = localStorage.getItem('vg_user_session');
             
-            // Case 0: NEW - Coming from email link with dashboard token (?t=xxx)
+            // Case 1: Coming from email with SHORT token (?t=xxx) - BEST PATH
             if (urlDashboardToken) {
-                // Try to fetch customer data from backend using token
                 const customerData = await fetchCustomerByToken(urlDashboardToken);
                 
                 if (customerData) {
-                    // Save to localStorage
+                    customerData.dashboardToken = urlDashboardToken; // Ensure we keep the token
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
                     if (customerData.expiresAt) {
@@ -309,73 +308,48 @@ const AdminDashboard: React.FC = () => {
                     }
                     
                     setSession(customerData);
+                    setHasShortLink(true);
                     setLoading(false);
-                    
-                    // Clean URL - remove token parameter
                     window.history.replaceState({}, '', '/admin');
                     return;
-                } else {
-                    // Token lookup failed - maybe check localStorage as fallback
-                    if (stored) {
-                        const sessionData: UserSession = JSON.parse(stored);
-                        setSession(sessionData);
-                        setLoading(false);
-                        return;
-                    }
-                    setError('Invalid or expired dashboard link.');
-                    setLoading(false);
-                    return;
-                }
-            }
-            
-            // Case 1: Coming from email link with session_id (legacy format: ?s=xxx)
-            // Fetch real customer data from backend
-            if (urlSessionId) {
-                // Try fetching with retries (webhook may still be processing)
-                let customerData: UserSession | null = null;
-                for (let attempt = 0; attempt < 5; attempt++) {
-                    customerData = await fetchCustomerBySessionId(urlSessionId);
-                    if (customerData && customerData.dashboardToken) {
-                        console.log(`AdminDashboard: Got customer data on attempt ${attempt + 1}`);
-                        break;
-                    }
-                    // Wait before retry (1s, 2s, 3s, 4s)
-                    if (attempt < 4) {
-                        await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 1000));
-                    }
                 }
                 
-                if (customerData && customerData.dashboardToken) {
-                    // Save to localStorage with real data
-                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
-                    localStorage.setItem('vg_purchased_tier', customerData.tier);
-                    if (customerData.expiresAt) {
-                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
-                    }
-                    
-                    setSession(customerData);
-                    setLoading(false);
-                    
-                    // Update URL to short token format
-                    window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
-                    return;
-                }
-                
-                // Backend lookup failed after retries - try localStorage fallback
+                // Token lookup failed - fallback to localStorage
                 if (stored) {
                     const sessionData: UserSession = JSON.parse(stored);
+                    sessionData.dashboardToken = urlDashboardToken;
                     setSession(sessionData);
+                    setHasShortLink(true);
                     setLoading(false);
                     return;
                 }
                 
-                // No data found - create temporary session
+                setError('Invalid or expired dashboard link.');
+                setLoading(false);
+                return;
+            }
+            
+            // Case 2: Coming from Stripe redirect with session_id (?s=xxx)
+            // Don't try to fetch short token - it's in the email!
+            if (urlSessionId) {
+                // Use localStorage if available
+                if (stored) {
+                    const sessionData: UserSession = JSON.parse(stored);
+                    sessionData.sessionId = urlSessionId;
+                    setSession(sessionData);
+                    setHasShortLink(!!sessionData.dashboardToken);
+                    setLoading(false);
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                }
+                
+                // Create session from URL params
                 const tier = urlTier || 'unlimited';
                 const days = tier === 'unlimited' ? 365 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
-                const tempSession: UserSession = {
-                    dashboardToken: '', // Will be fetched from backend later
+                const newSession: UserSession = {
+                    dashboardToken: '',
                     sessionId: urlSessionId,
                     tier,
                     expiresAt,
@@ -383,115 +357,27 @@ const AdminDashboard: React.FC = () => {
                     createdAt: new Date().toISOString(),
                 };
                 
-                localStorage.setItem('vg_user_session', JSON.stringify(tempSession));
+                localStorage.setItem('vg_user_session', JSON.stringify(newSession));
                 localStorage.setItem('vg_purchased_tier', tier);
                 localStorage.setItem('vg_tier_expires', expiresAt);
                 
-                setSession(tempSession);
+                setSession(newSession);
+                setHasShortLink(false); // Short link is in email
                 setLoading(false);
-                setFetchingShortLink(true);
-                
-                // Continue trying to get token in background
-                const pollForToken = async () => {
-                    for (let i = 0; i < 10; i++) {
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        const data = await fetchCustomerBySessionId(urlSessionId);
-                        if (data && data.dashboardToken) {
-                            // Got it! Update everything
-                            localStorage.setItem('vg_user_session', JSON.stringify(data));
-                            setSession(data);
-                            window.history.replaceState({}, '', `/admin?t=${data.dashboardToken}`);
-                            setFetchingShortLink(false);
-                            console.log('AdminDashboard: Background poll got token');
-                            return;
-                        }
-                    }
-                    setFetchingShortLink(false);
-                };
-                pollForToken();
+                window.history.replaceState({}, '', '/admin');
                 return;
             }
             
-            // Case 1b: Have stored session - use it
+            // Case 3: No URL params - use localStorage
             if (stored) {
                 const sessionData: UserSession = JSON.parse(stored);
-                
-                // Case 3: URL token provided - verify it matches stored session
-                if (urlToken && sessionData.dashboardToken !== urlToken) {
-                    setError('Invalid dashboard link. The token does not match.');
-                    setLoading(false);
-                    return;
-                }
-
-                // Check if we have a fake vg_ token or no token - try to get real one
-                const hasFakeOrNoToken = !sessionData.dashboardToken || sessionData.dashboardToken.startsWith('vg_');
-                if (hasFakeOrNoToken && sessionData.sessionId) {
-                    // Try with retries
-                    let gotToken = false;
-                    for (let attempt = 0; attempt < 3; attempt++) {
-                        try {
-                            const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
-                            if (customerData && customerData.dashboardToken && !customerData.dashboardToken.startsWith('vg_')) {
-                                // Got real token - update session
-                                const updatedSession = { ...sessionData, dashboardToken: customerData.dashboardToken };
-                                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
-                                setSession(updatedSession);
-                                setLoading(false);
-                                // Update URL to show short token
-                                window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
-                                console.log('AdminDashboard: Updated to real token from backend');
-                                gotToken = true;
-                                return;
-                            }
-                        } catch (e) {
-                            console.log(`AdminDashboard: Attempt ${attempt + 1} failed to fetch real token`);
-                        }
-                        if (attempt < 2) {
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                        }
-                    }
-                    
-                    // If still no token, start background polling
-                    if (!gotToken) {
-                        setSession(sessionData);
-                        setLoading(false);
-                        setFetchingShortLink(true);
-                        
-                        // Background poll for token
-                        const pollForToken = async () => {
-                            for (let i = 0; i < 10; i++) {
-                                await new Promise(resolve => setTimeout(resolve, 3000));
-                                try {
-                                    const data = await fetchCustomerBySessionId(sessionData.sessionId!);
-                                    if (data && data.dashboardToken && !data.dashboardToken.startsWith('vg_')) {
-                                        const updated = { ...sessionData, dashboardToken: data.dashboardToken };
-                                        localStorage.setItem('vg_user_session', JSON.stringify(updated));
-                                        setSession(updated);
-                                        window.history.replaceState({}, '', `/admin?t=${data.dashboardToken}`);
-                                        setFetchingShortLink(false);
-                                        console.log('AdminDashboard: Background poll got token');
-                                        return;
-                                    }
-                                } catch (e) {}
-                            }
-                            setFetchingShortLink(false);
-                        };
-                        pollForToken();
-                        return;
-                    }
-                }
-
-                // If we have a real token already, update URL to use short format
-                if (sessionData.dashboardToken && !sessionData.dashboardToken.startsWith('vg_')) {
-                    window.history.replaceState({}, '', `/admin?t=${sessionData.dashboardToken}`);
-                }
-
                 setSession(sessionData);
+                setHasShortLink(!!sessionData.dashboardToken);
                 setLoading(false);
                 return;
             }
             
-            // Case 2: No stored session and no valid URL params
+            // Case 4: Nothing found
             setError('No session found. Please purchase a plan first.');
             setLoading(false);
         } catch (err) {
@@ -773,50 +659,54 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         {/* Save Dashboard Link Banner */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                            <div className={`p-4 rounded-xl border ${hasShortLink ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'}`}>
                                 <div className="flex items-start justify-between gap-4 flex-wrap">
                                     <div className="flex items-start gap-3 flex-1 min-w-0">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <AlertCircle size={20} className="text-amber-600" />
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${hasShortLink ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                                            {hasShortLink ? <Check size={20} className="text-emerald-600" /> : <AlertCircle size={20} className="text-amber-600" />}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-bold text-amber-800">🔖 Bookmark This Page!</p>
-                                            <p className="text-sm text-amber-600 mb-2">
-                                                This is your only way back to your polls. Save the link below, bookmark this page, or check your email{tier !== 'free' && ' (paid plans)'}.
-                                            </p>
-                                            <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-amber-200">
-                                                <Link2 size={14} className="text-amber-500 flex-shrink-0" />
-                                                {fetchingShortLink ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <Loader2 size={14} className="animate-spin text-amber-500" />
-                                                        <span className="text-xs text-amber-600">Getting your short link...</span>
+                                            {hasShortLink ? (
+                                                <>
+                                                    <p className="font-bold text-emerald-800">✓ Dashboard Link Ready</p>
+                                                    <p className="text-sm text-emerald-600 mb-2">
+                                                        Bookmark this page or copy the link below to access your polls anytime.
+                                                    </p>
+                                                    <div className="flex items-center gap-2 bg-white/80 rounded-lg px-3 py-2 border border-emerald-200">
+                                                        <Link2 size={14} className="text-emerald-500 flex-shrink-0" />
+                                                        <code className="text-xs text-emerald-700 font-mono truncate">
+                                                            {window.location.origin}/admin?t={session?.dashboardToken}
+                                                        </code>
                                                     </div>
-                                                ) : (
-                                                    <code className="text-xs text-amber-700 font-mono truncate">{getShortAdminLink()}</code>
-                                                )}
-                                            </div>
-                                            {session?.dashboardToken && !session.dashboardToken.startsWith('vg_') && (
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    <Check size={12} className="text-emerald-500" />
-                                                    <span className="text-xs text-emerald-600">Short link ready!</span>
-                                                </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="font-bold text-amber-800">📧 Check Your Email for Short Link</p>
+                                                    <p className="text-sm text-amber-600 mb-2">
+                                                        We sent you a short dashboard link via email. Use that link to access your polls from any device.
+                                                    </p>
+                                                    <p className="text-xs text-amber-500">
+                                                        For now, you can bookmark this page to continue on this device.
+                                                    </p>
+                                                </>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col gap-2 flex-shrink-0">
-                                        <button 
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(getShortAdminLink());
-                                                setCopiedDashboard(true);
-                                                setTimeout(() => setCopiedDashboard(false), 2000);
-                                            }} 
-                                            disabled={fetchingShortLink}
-                                            className={`px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg font-medium flex items-center gap-2 transition ${fetchingShortLink ? 'opacity-50 cursor-not-allowed' : 'hover:bg-amber-50'}`}
-                                        >
-                                            {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
-                                            {copiedDashboard ? 'Copied!' : 'Copy Link'}
-                                        </button>
-                                    </div>
+                                    {hasShortLink && (
+                                        <div className="flex flex-col gap-2 flex-shrink-0">
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(`${window.location.origin}/admin?t=${session?.dashboardToken}`);
+                                                    setCopiedDashboard(true);
+                                                    setTimeout(() => setCopiedDashboard(false), 2000);
+                                                }} 
+                                                className="px-4 py-2 bg-white border border-emerald-300 text-emerald-700 rounded-lg font-medium flex items-center gap-2 hover:bg-emerald-50 transition"
+                                            >
+                                                {copiedDashboard ? <Check size={16} /> : <Copy size={16} />}
+                                                {copiedDashboard ? 'Copied!' : 'Copy Link'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>

@@ -159,14 +159,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
 
     // Apply template data to form
     const applyTemplate = (template: PollTemplate) => {
-        setTitle(template.defaultTitle);
-        setDescription(template.defaultDescription || '');
-        setOptions(template.defaultOptions);
+        setTitle(template.question);
+        setDescription(''); // Template description is for the template card, not the poll
+        setOptions(template.options);
         setPollType(template.pollType);
-        if (template.defaultSettings) {
-            setMultipleSelection(template.defaultSettings.allowMultiple || false);
-            setRequireNames(template.defaultSettings.requireNames || false);
-            setHideResults(template.defaultSettings.hideResults || false);
+        if (template.settings) {
+            setMultipleSelection(template.settings.allowMultiple || false);
+            setHideResults(template.settings.hideResults || false);
         }
         setActiveTemplate(template);
     };

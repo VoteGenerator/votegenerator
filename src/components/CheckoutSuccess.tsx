@@ -39,7 +39,7 @@ const PLAN_DETAILS: Record<string, {
         icon: Zap,
         color: 'from-indigo-500 to-blue-600',
         features: [
-            'Unlimited polls',
+            'Business polls',
             '5,000 responses/month',
             'All 8 poll types',
             'Remove VoteGenerator badge',
@@ -54,7 +54,7 @@ const PLAN_DETAILS: Record<string, {
         icon: Crown,
         color: 'from-violet-500 to-purple-600',
         features: [
-            'Unlimited polls',
+            'Business polls',
             '50,000 responses/month',
             'All 8 poll types',
             'Upload custom logo',
@@ -70,14 +70,17 @@ const CheckoutSuccess: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [tier, setTier] = useState<string | null>(null);
     const [billing, setBilling] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(null);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const tierParam = params.get('tier');
         const billingParam = params.get('billing');
+        const sessionIdParam = params.get('session_id');
         
         setTier(tierParam);
         setBilling(billingParam);
+        setSessionId(sessionIdParam);
         
         // Store subscription info
         if (tierParam) {
@@ -90,7 +93,9 @@ const CheckoutSuccess: React.FC = () => {
     }, []);
 
     const goToDashboard = () => {
-        window.location.href = '/dashboard';
+        // Pass session_id to admin dashboard so it can fetch user data
+        const adminUrl = sessionId ? `/admin?session_id=${sessionId}` : '/admin';
+        window.location.href = adminUrl;
     };
 
     const planDetails = tier ? PLAN_DETAILS[tier] : null;
@@ -220,7 +225,7 @@ const CheckoutSuccess: React.FC = () => {
                 >
                     <p className="text-slate-600 text-sm">
                         Manage your subscription anytime from the{' '}
-                        <a href="/dashboard" className="text-indigo-600 hover:underline font-medium">
+                        <a href="/admin" className="text-indigo-600 hover:underline font-medium">
                             dashboard
                         </a>
                         {' '}or contact us at{' '}

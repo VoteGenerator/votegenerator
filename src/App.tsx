@@ -9,6 +9,8 @@ import AdWall from './components/AdWall';
 import PricingPage from './components/PricingPage';
 import ComparePage from './components/ComparePage';
 import PollCreatedSuccess from './components/PollCreatedSuccess';
+import AdminDashboard from './components/AdminDashboard';
+import CheckoutSuccess from './components/CheckoutSuccess';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
@@ -217,6 +219,8 @@ function App() {
     if (path === '/ad-wall' || path.startsWith('/ad-wall')) return <AdWall />;
     if (path === '/pricing' || path === '/pricing/') return <PricingPage />;
     if (path === '/compare' || path === '/compare/') return <ComparePage />;
+    if (path === '/admin' || path === '/admin/') return <AdminDashboard />;
+    if (path === '/checkout/success' || path === '/checkout/success/') return <CheckoutSuccess />;
     
     return <VoteGeneratorApp />;
 }

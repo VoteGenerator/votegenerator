@@ -30,9 +30,10 @@ const DraftLiveToggle: React.FC<Props> = ({
 }) => {
     const [currentStatus, setCurrentStatus] = useState(status);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [showConfirm, setShowConfirm] = useState<'live' | 'clear' | null>(null);
+    const [showConfirm, setShowConfirm] = useState<'live' | 'clear' | 'close' | null>(null);
     const [clearVotes, setClearVotes] = useState(true);
     const [justChanged, setJustChanged] = useState(false);
+    const [closeConfirmed, setCloseConfirmed] = useState(false);
 
     const updateStatus = async (newStatus: string, clearExistingVotes: boolean = false) => {
         setIsUpdating(true);
@@ -205,7 +206,10 @@ const DraftLiveToggle: React.FC<Props> = ({
                             Pause
                         </button>
                         <button
-                            onClick={() => updateStatus('closed')}
+                            onClick={() => {
+                                setCloseConfirmed(false);
+                                setShowConfirm('close');
+                            }}
                             disabled={isUpdating}
                             className="py-2.5 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 flex items-center justify-center gap-2"
                         >
@@ -226,7 +230,10 @@ const DraftLiveToggle: React.FC<Props> = ({
                             Resume
                         </button>
                         <button
-                            onClick={() => updateStatus('closed')}
+                            onClick={() => {
+                                setCloseConfirmed(false);
+                                setShowConfirm('close');
+                            }}
                             disabled={isUpdating}
                             className="py-2.5 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 flex items-center justify-center gap-2"
                         >
@@ -318,6 +325,93 @@ const DraftLiveToggle: React.FC<Props> = ({
                                         <>
                                             <Check size={20} />
                                             Go Live
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* Close Poll Confirmation Modal */}
+                {showConfirm === 'close' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle className="text-red-600" size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900">Close This Poll?</h3>
+                                <p className="text-slate-600 mt-2">
+                                    This will permanently stop the poll from accepting new votes.
+                                </p>
+                            </div>
+
+                            {voteCount > 0 && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>{voteCount} vote{voteCount !== 1 ? 's' : ''}</strong> have been collected. 
+                                        These will be preserved and you can still view results.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Confirmation Checkbox */}
+                            <label className="flex items-start gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl mb-6 cursor-pointer hover:bg-red-100 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={closeConfirmed}
+                                    onChange={(e) => setCloseConfirmed(e.target.checked)}
+                                    className="w-5 h-5 mt-0.5 rounded border-red-300 text-red-600 focus:ring-red-500"
+                                />
+                                <span className="text-sm text-red-800">
+                                    <strong>I understand</strong> this will stop voting and cannot be easily undone. 
+                                    I can reopen the poll later if needed.
+                                </span>
+                            </label>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowConfirm(null);
+                                        setCloseConfirmed(false);
+                                    }}
+                                    className="flex-1 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (closeConfirmed) {
+                                            updateStatus('closed');
+                                            setCloseConfirmed(false);
+                                        }
+                                    }}
+                                    disabled={!closeConfirmed || isUpdating}
+                                    className={`flex-1 py-3 font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+                                        closeConfirmed 
+                                            ? 'bg-red-600 text-white hover:bg-red-700' 
+                                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {isUpdating ? (
+                                        <Loader2 className="animate-spin" size={20} />
+                                    ) : (
+                                        <>
+                                            <AlertTriangle size={18} />
+                                            Close Poll
                                         </>
                                     )}
                                 </button>

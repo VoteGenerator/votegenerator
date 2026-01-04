@@ -20,6 +20,7 @@ import FeatureTeaserCard, { FeatureTeaserGrid } from './FeatureTeaserCard';
 import HourlyHeatmap from './HourlyHeatmap';
 import GeoChart from './GeoChart';
 import CommentWordCloud from './CommentWordCloud';
+import DateRangeFilter, { useDateRangeFilter } from './DateRangeFilter';
 import { AnimatedCounter, PulseIndicator, Skeleton } from './AnimatedComponents';
 import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
@@ -46,6 +47,8 @@ const VoteGeneratorApp: React.FC = () => {
     const [showQrModal, setShowQrModal] = useState(false);
     const [showShareCards, setShowShareCards] = useState(false);
     const [showEmbedModal, setShowEmbedModal] = useState(false);
+    const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
+    const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -234,6 +237,11 @@ const VoteGeneratorApp: React.FC = () => {
         navigator.clipboard.writeText(text);
         if (type === 'admin') {
             setCopiedAdmin(true);
+            // Mark admin link as saved in localStorage
+            const { pollId } = parseHash();
+            if (pollId) {
+                localStorage.setItem(`vg_admin_saved_${pollId}`, 'true');
+            }
             setTimeout(() => setCopiedAdmin(false), 2000);
         } else if (type === 'share') {
             setCopiedShare(true);
@@ -243,6 +251,21 @@ const VoteGeneratorApp: React.FC = () => {
             setTimeout(() => setCopiedCodes(false), 2000);
         }
     };
+
+    // Check if admin link has been saved
+    const isAdminLinkSaved = useCallback(() => {
+        const { pollId } = parseHash();
+        if (!pollId) return true;
+        return localStorage.getItem(`vg_admin_saved_${pollId}`) === 'true';
+    }, [parseHash]);
+
+    // Mark admin link as saved (called when email is sent too)
+    const markAdminLinkSaved = useCallback(() => {
+        const { pollId } = parseHash();
+        if (pollId) {
+            localStorage.setItem(`vg_admin_saved_${pollId}`, 'true');
+        }
+    }, [parseHash]);
 
     const goHome = () => {
         window.location.hash = '';
@@ -519,6 +542,57 @@ const VoteGeneratorApp: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
+                                )}
+
+                                {/* ⚠️ ADMIN LINK WARNING BANNER */}
+                                {viewState.isAdmin && !isAdminLinkSaved() && !adminLinkWarningDismissed && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-amber-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-amber-800 mb-1">Save Your Admin Link!</h4>
+                                                <p className="text-sm text-amber-700 mb-3">
+                                                    This is the only way to access your poll dashboard. If you lose this link, you won't be able to manage your poll.
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const adminUrl = window.location.href;
+                                                            navigator.clipboard.writeText(adminUrl);
+                                                            markAdminLinkSaved();
+                                                            setCopiedAdmin(true);
+                                                            setTimeout(() => setCopiedAdmin(false), 2000);
+                                                        }}
+                                                        className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
+                                                    >
+                                                        {copiedAdmin ? <Check size={16} /> : <Copy size={16} />}
+                                                        {copiedAdmin ? 'Copied!' : 'Copy Admin Link'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            markAdminLinkSaved();
+                                                            setAdminLinkWarningDismissed(true);
+                                                        }}
+                                                        className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
+                                                    >
+                                                        I've saved it
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setAdminLinkWarningDismissed(true)}
+                                                        className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
+                                                    >
+                                                        Dismiss
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
                                 )}
 
                                 {/* --- POLL CONTAINER (Unified for Admin) --- */}
@@ -869,32 +943,69 @@ const VoteGeneratorApp: React.FC = () => {
                                                 {/* Advanced Analytics Section (Pro+) */}
                                                 {(() => {
                                                     const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
-                                                    const votes = viewState.results.votes || [];
+                                                    const allVotes = viewState.results.votes || [];
                                                     const comments = viewState.results.comments || [];
                                                     
                                                     // Only show for Pro+ users with sufficient data
-                                                    if (tier === 'free' || votes.length < 5) return null;
+                                                    if (tier === 'free' || allVotes.length < 5) return null;
+                                                    
+                                                    // Filter votes by date range
+                                                    const filteredVotes = allVotes.filter((vote: any) => {
+                                                        if (!analyticsDateRange.start && !analyticsDateRange.end) return true;
+                                                        const voteDate = new Date(vote.timestamp);
+                                                        if (analyticsDateRange.start && voteDate < analyticsDateRange.start) return false;
+                                                        if (analyticsDateRange.end && voteDate > analyticsDateRange.end) return false;
+                                                        return true;
+                                                    });
+                                                    
+                                                    // Filter comments by date range
+                                                    const filteredComments = comments.filter((comment: any) => {
+                                                        if (!analyticsDateRange.start && !analyticsDateRange.end) return true;
+                                                        const commentDate = new Date(comment.timestamp || comment.createdAt);
+                                                        if (analyticsDateRange.start && commentDate < analyticsDateRange.start) return false;
+                                                        if (analyticsDateRange.end && commentDate > analyticsDateRange.end) return false;
+                                                        return true;
+                                                    });
                                                     
                                                     return (
                                                         <div className="mt-6">
-                                                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                                                                <LayoutDashboard size={14} className="text-purple-500" />
-                                                                Analytics Dashboard
-                                                            </h3>
-                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                                {/* Hourly Heatmap */}
-                                                                <HourlyHeatmap votes={votes} />
-                                                                
-                                                                {/* Geographic Distribution */}
-                                                                <GeoChart votes={votes} maxCountries={5} />
-                                                                
-                                                                {/* Comment Word Cloud */}
-                                                                {comments.length >= 3 && (
-                                                                    <div className="lg:col-span-2">
-                                                                        <CommentWordCloud comments={comments} maxWords={15} />
-                                                                    </div>
-                                                                )}
+                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                                                                    <LayoutDashboard size={14} className="text-purple-500" />
+                                                                    Analytics Dashboard
+                                                                    {(analyticsDateRange.start || analyticsDateRange.end) && (
+                                                                        <span className="text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                                                                            {filteredVotes.length} of {allVotes.length} votes
+                                                                        </span>
+                                                                    )}
+                                                                </h3>
+                                                                <DateRangeFilter 
+                                                                    onRangeChange={(start, end) => setAnalyticsDateRange({ start, end })}
+                                                                    minDate={allVotes.length > 0 ? new Date(allVotes[0]?.timestamp) : undefined}
+                                                                />
                                                             </div>
+                                                            
+                                                            {filteredVotes.length === 0 ? (
+                                                                <div className="bg-slate-50 rounded-xl p-8 text-center">
+                                                                    <Calendar size={32} className="text-slate-300 mx-auto mb-2" />
+                                                                    <p className="text-slate-500 text-sm">No votes in selected date range</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                    {/* Hourly Heatmap */}
+                                                                    <HourlyHeatmap votes={filteredVotes} />
+                                                                    
+                                                                    {/* Geographic Distribution */}
+                                                                    <GeoChart votes={filteredVotes} maxCountries={5} />
+                                                                    
+                                                                    {/* Comment Word Cloud */}
+                                                                    {filteredComments.length >= 3 && (
+                                                                        <div className="lg:col-span-2">
+                                                                            <CommentWordCloud comments={filteredComments} maxWords={15} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                             
                                                             {/* Blocked Votes Alert (if any) */}
                                                             {(viewState.poll as any).blockedVotes?.total > 0 && (

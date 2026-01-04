@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, Gift,
+    Home, AlertTriangle, RefreshCw,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -671,7 +671,12 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
-                                        <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
+                                        {tier !== 'free' && (
+                                            <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
+                                        )}
+                                        {tier === 'free' && (
+                                            <p className="text-sm text-slate-500">Save this link - it's the only way to access your polls</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -890,9 +895,9 @@ const AdminDashboard: React.FC = () => {
                                                         <button
                                                             onClick={() => setShowShareCards(poll.id)}
                                                             className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition"
-                                                            title="Create share card"
+                                                            title="Share Cards & Invitations"
                                                         >
-                                                            <Gift size={18} />
+                                                            <ImageIcon size={18} />
                                                         </button>
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}

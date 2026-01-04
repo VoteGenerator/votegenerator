@@ -122,7 +122,6 @@ const DraftLiveToggle: React.FC<Props> = ({
         const seconds = Math.floor((ms % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
-    };
 
     const statusConfig = {
         draft: {

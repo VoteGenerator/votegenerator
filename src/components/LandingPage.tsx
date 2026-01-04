@@ -1604,7 +1604,7 @@ const ValueSection: React.FC = () => (
                         <p className="text-slate-500 text-sm mb-2">Enterprise polling tools</p>
                         <div className="flex items-baseline justify-center gap-1">
                             <span className="text-4xl font-black text-slate-300 line-through">$150</span>
-                            <span className="text-slate-400">/month</span>
+                            <span className="text-slate-400">/month USD</span>
                         </div>
                         <p className="text-sm text-slate-400 mt-1">typical pricing</p>
                     </div>
@@ -1627,9 +1627,9 @@ const ValueSection: React.FC = () => (
                         <p className="text-indigo-200 text-sm mb-2">VoteGenerator Pro</p>
                         <div className="flex items-baseline justify-center gap-1">
                             <span className="text-4xl font-black text-white">$16</span>
-                            <span className="text-indigo-200">/month</span>
+                            <span className="text-indigo-200">/month USD</span>
                         </div>
-                        <p className="text-sm text-indigo-300 mt-1">or $190/year (2 months free)</p>
+                        <p className="text-sm text-indigo-300 mt-1">or $190/year USD (2 months free)</p>
                     </div>
                     <ul className="space-y-2 text-sm text-indigo-100">
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Real-time analytics dashboard</li>
@@ -1652,7 +1652,7 @@ const ValueSection: React.FC = () => (
                             <p className="text-slate-400 text-sm">Everything you need for professional polling</p>
                         </div>
                         <div className="text-center sm:text-right">
-                            <div className="text-3xl font-black">$16<span className="text-lg font-normal text-slate-400">/mo</span></div>
+                            <div className="text-3xl font-black">$16<span className="text-lg font-normal text-slate-400">/mo USD</span></div>
                             <div className="text-sm text-emerald-400">Limited time pricing</div>
                         </div>
                     </div>
@@ -1885,7 +1885,7 @@ const PricingPreviewSection: React.FC = () => (
                         <Users className="text-slate-500" size={20} />
                         <span className="font-bold text-slate-900">Free</span>
                     </div>
-                    <div className="text-3xl font-black text-slate-900 mb-1">$0</div>
+                    <div className="text-3xl font-black text-slate-900 mb-1">$0 <span className="text-lg font-normal text-slate-400">USD</span></div>
                     <p className="text-sm text-slate-500 mb-6">Forever free</p>
                     
                     <ul className="space-y-2 mb-6">
@@ -1910,8 +1910,8 @@ const PricingPreviewSection: React.FC = () => (
                         <Zap className="text-amber-300" size={20} />
                         <span className="font-bold">Pro</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">$16<span className="text-lg font-medium text-indigo-200">/mo</span></div>
-                    <p className="text-sm text-indigo-200 mb-6">or $190/year <span className="text-amber-300 font-semibold">(2 months free)</span></p>
+                    <div className="text-3xl font-black mb-1">$16<span className="text-lg font-medium text-indigo-200">/mo USD</span></div>
+                    <p className="text-sm text-indigo-200 mb-6">or $190/year USD <span className="text-amber-300 font-semibold">(2 months free)</span></p>
                     
                     <ul className="space-y-2 mb-6">
                         {['Unlimited polls', '5,000 responses/month', 'Remove branding', 'CSV & Excel export'].map((f, i) => (
@@ -1932,8 +1932,8 @@ const PricingPreviewSection: React.FC = () => (
                         <Crown className="text-amber-400" size={20} />
                         <span className="font-bold">Business</span>
                     </div>
-                    <div className="text-3xl font-black mb-1">$41<span className="text-lg font-medium text-slate-400">/mo</span></div>
-                    <p className="text-sm text-slate-400 mb-6">or $490/year <span className="text-amber-400 font-semibold">(2 months free)</span></p>
+                    <div className="text-3xl font-black mb-1">$41<span className="text-lg font-medium text-slate-400">/mo USD</span></div>
+                    <p className="text-sm text-slate-400 mb-6">or $490/year USD <span className="text-amber-400 font-semibold">(2 months free)</span></p>
                     
                     <ul className="space-y-2 mb-6">
                         {['Everything in Pro', '50,000 responses/month', 'Custom logo', 'PDF reports'].map((f, i) => (

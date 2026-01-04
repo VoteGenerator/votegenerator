@@ -291,12 +291,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     console.error('Failed to save poll to localStorage:', e);
                 }
                 
-                // PAID USERS: Go directly to admin dashboard
-                // FREE USERS: Go through ad-wall first
+                // BOTH FREE AND PAID: Go to Admin Dashboard
+                // Free users go through ad-wall first
                 if (isPaidUser) {
-                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+                    window.location.href = '/admin';
                 } else {
-                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent('/admin')}`;
                 }
                 return;
             } else { 

@@ -288,15 +288,15 @@ const VoteGeneratorApp: React.FC = () => {
     return (
         <div className="min-h-screen pb-10">
             {/* ROUTE: /ad-wall */}
-            {window.location.pathname.startsWith('/ad-wall') ? (
+            {window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
-            ) : window.location.pathname.startsWith('/checkout/success') ? (
+            ) : window.location.pathname === '/checkout/success' || window.location.pathname.startsWith('/checkout/success') ? (
                 <CheckoutSuccess />
-            ) : window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin?') ? (
+            ) : window.location.pathname === '/admin' ? (
                 <AdminDashboard />
-            ) : window.location.pathname.startsWith('/templates') ? (
+            ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (
                 <TemplatesPage />
-            ) : window.location.pathname.startsWith('/pricing') ? (
+            ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
                 <PricingPage />
             ) : (
             <>

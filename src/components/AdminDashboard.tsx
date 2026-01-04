@@ -13,9 +13,10 @@ import {
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
-    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight
 } from 'lucide-react';
 import ShareCards from './ShareCards';
+import UpgradeModal from './UpgradeModal';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -157,6 +158,7 @@ const AdminDashboard: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1054,9 +1056,12 @@ const AdminDashboard: React.FC = () => {
                                         <p className="text-slate-600 mb-2">
                                             You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
                                         </p>
-                                        <a href="/pricing" className="text-purple-600 font-medium hover:text-purple-700">
-                                            Upgrade for more →
-                                        </a>
+                                        <button 
+                                            onClick={() => setShowUpgradeModal(true)}
+                                            className="text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1 mx-auto"
+                                        >
+                                            Upgrade for more <ArrowRight size={14} />
+                                        </button>
                                     </div>
                                 )}
                             </>
@@ -1161,9 +1166,12 @@ const AdminDashboard: React.FC = () => {
                                     </div>
 
                                     {tier !== 'business' && !isPlanExpired && (
-                                    <a href="/pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
+                                    <button 
+                                        onClick={() => setShowUpgradeModal(true)}
+                                        className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3"
+                                    >
                                         Upgrade Plan
-                                    </a>
+                                    </button>
                                 )}
 
                                 {/* Extend/Renew Button - Smart logic */}
@@ -1411,6 +1419,14 @@ const AdminDashboard: React.FC = () => {
                     );
                 })()}
             </AnimatePresence>
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                currentTier={tier}
+                source="admin_dashboard"
+            />
         </div>
     );
 };

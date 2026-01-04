@@ -22,6 +22,7 @@ import GeoChart from './GeoChart';
 import CommentWordCloud from './CommentWordCloud';
 import DateRangeFilter, { useDateRangeFilter } from './DateRangeFilter';
 import CrossTabFilter from './CrossTabFilter';
+import UpgradeModal from './UpgradeModal';
 import { AnimatedCounter, PulseIndicator, Skeleton } from './AnimatedComponents';
 import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
@@ -51,6 +52,8 @@ const VoteGeneratorApp: React.FC = () => {
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
     const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
     const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeHighlight, setUpgradeHighlight] = useState<string | undefined>(undefined);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -1022,8 +1025,24 @@ const VoteGeneratorApp: React.FC = () => {
                                                                 Unlock More Features
                                                             </h3>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                <FeatureTeaserCard feature="analytics" currentTier="free" compact />
-                                                                <FeatureTeaserCard feature="unlimited" currentTier="free" compact />
+                                                                <FeatureTeaserCard 
+                                                                    feature="analytics" 
+                                                                    currentTier="free" 
+                                                                    compact 
+                                                                    onUpgradeClick={() => {
+                                                                        setUpgradeHighlight('analytics');
+                                                                        setShowUpgradeModal(true);
+                                                                    }}
+                                                                />
+                                                                <FeatureTeaserCard 
+                                                                    feature="unlimited" 
+                                                                    currentTier="free" 
+                                                                    compact
+                                                                    onUpgradeClick={() => {
+                                                                        setUpgradeHighlight('unlimited');
+                                                                        setShowUpgradeModal(true);
+                                                                    }}
+                                                                />
                                                             </div>
                                                         </div>
                                                     );
@@ -1212,6 +1231,21 @@ const VoteGeneratorApp: React.FC = () => {
                         })()}
                     />
                 )}
+
+                {/* Upgrade Modal */}
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => {
+                        setShowUpgradeModal(false);
+                        setUpgradeHighlight(undefined);
+                    }}
+                    currentTier={(() => {
+                        const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+                        return tier as 'free' | 'pro' | 'business';
+                    })()}
+                    highlightFeature={upgradeHighlight}
+                    source="poll_dashboard"
+                />
             </main>
             </>
             )}

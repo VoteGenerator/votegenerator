@@ -15,7 +15,7 @@ import GoLiveModal from './GoLiveModal';
 interface DraftBannerProps {
     pollId: string;
     pollTitle: string;
-    tier: 'starter' | 'pro_event' | 'unlimited';
+    tier: 'free' | 'pro' | 'business';
     pollsUsed: number;
     pollsMax: number;
     activeDays: number;
@@ -34,8 +34,8 @@ const DraftBanner: React.FC<DraftBannerProps> = ({
     const [showGoLiveModal, setShowGoLiveModal] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
 
-    // For unlimited, don't show this banner (or make it minimal)
-    if (tier === 'unlimited' || isDismissed) {
+    // For business tier, don't show this banner (or make it minimal)
+    if (tier === 'business' || isDismissed) {
         return null;
     }
 

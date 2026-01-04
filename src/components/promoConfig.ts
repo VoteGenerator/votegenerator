@@ -28,6 +28,24 @@ export const CURRENCY = {
     symbol: '$',
 };
 
+// Promo settings (for CountdownTimer compatibility)
+export const PROMO_SETTINGS = {
+    durationHours: 36,
+    resetChance: 0.3,
+    storageKey: 'vg_promo_timer',
+};
+
+// Check if promo is active - disabled by default
+// Set to true to enable countdown timer
+export function isPromoActive(): boolean {
+    return false; // Disabled - no countdown timer
+}
+
+// Get promo settings for countdown timer
+export function getPromoSettings() {
+    return PROMO_SETTINGS;
+}
+
 // Format price with USD symbol
 export function formatPrice(amount: number, showDecimals: boolean = false): string {
     if (showDecimals && amount % 1 !== 0) {

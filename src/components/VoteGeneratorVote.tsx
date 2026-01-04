@@ -6,6 +6,12 @@ import { submitVote, hasVoted } from '../services/voteGeneratorService';
 import SurveyVote from './SurveyVote';
 import { THEMES, ThemeConfig } from './ThemeSelector';
 
+// Anti-bot fields interface
+interface AntiBotFields {
+    _hp: string;
+    _t: number;
+}
+
 interface Props {
     poll: Poll;
     onVoteSuccess: () => void;
@@ -94,6 +100,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Anti-bot protection
+    const pageLoadTime = useRef(Date.now());
+    const [honeypotValue, setHoneypotValue] = useState('');
 
     useEffect(() => {
         const hash = window.location.hash.slice(1);
@@ -259,6 +269,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 }
             }
             
+            // Anti-bot fields
+            const antiBotFields: AntiBotFields = {
+                _hp: honeypotValue,
+                _t: pageLoadTime.current
+            };
+            
             await submitVote(
                 poll.id, 
                 choices, 
@@ -268,7 +284,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 choicesMaybe.length > 0 ? choicesMaybe : undefined,
                 poll.pollType === 'matrix' ? matrixPositions : undefined,
                 poll.pollType === 'pairwise' ? pairwiseVotes : undefined,
-                poll.pollType === 'rating' ? ratingAllocations : undefined
+                poll.pollType === 'rating' ? ratingAllocations : undefined,
+                undefined, // surveyAnswers
+                antiBotFields // anti-bot protection
             );
             onVoteSuccess();
         } catch (error) {
@@ -333,6 +351,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
             setErrorMessage(null);
             
             try {
+                // Anti-bot fields
+                const antiBotFields: AntiBotFields = {
+                    _hp: honeypotValue,
+                    _t: pageLoadTime.current
+                };
+                
                 // Submit survey response using the vote service
                 await submitVote(
                     poll.id,
@@ -344,7 +368,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     undefined, // matrixVotes
                     undefined, // pairwiseVotes
                     undefined, // ratingVotes
-                    response.answers // surveyAnswers
+                    response.answers, // surveyAnswers
+                    antiBotFields // anti-bot protection
                 );
                 
                 // Mark as voted in localStorage
@@ -919,6 +944,31 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Honeypot field - hidden from users, visible to bots */}
+                    <div 
+                        style={{ 
+                            position: 'absolute', 
+                            left: '-9999px', 
+                            opacity: 0,
+                            height: 0,
+                            overflow: 'hidden',
+                            pointerEvents: 'none'
+                        }}
+                        aria-hidden="true"
+                        tabIndex={-1}
+                    >
+                        <label htmlFor="website_url">Leave this empty</label>
+                        <input
+                            type="text"
+                            id="website_url"
+                            name="website_url"
+                            autoComplete="off"
+                            tabIndex={-1}
+                            value={honeypotValue}
+                            onChange={(e) => setHoneypotValue(e.target.value)}
+                        />
                     </div>
 
                     {errorMessage && <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium border border-red-200 text-center">{errorMessage}</div>}

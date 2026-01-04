@@ -14,6 +14,9 @@ interface VoteRequest {
     ratingVotes?: Record<string, number>;
     // Survey mode
     surveyAnswers?: Record<string, any>;
+    // Anti-bot fields
+    _hp?: string; // Honeypot - should be empty
+    _t?: number;  // Page load timestamp - for timing validation
 }
 
 interface VoteAnalytics {
@@ -290,6 +293,42 @@ export const handler: Handler = async (event) => {
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
+
+        // ============================================
+        // ANTI-BOT VALIDATION
+        // ============================================
+        
+        // 1. Honeypot check - if _hp field has value, it's a bot
+        if (body._hp && body._hp.length > 0) {
+            console.log('vg-vote: Honeypot triggered, blocking bot');
+            // Return success to not alert the bot, but don't save vote
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ success: true, voteId: 'blocked' })
+            };
+        }
+        
+        // 2. Timing check - votes submitted too fast are likely bots
+        // Minimum 2 seconds between page load and vote submission
+        const MIN_VOTE_TIME_MS = 2000;
+        if (body._t) {
+            const pageLoadTime = body._t;
+            const now = Date.now();
+            const timeTaken = now - pageLoadTime;
+            
+            if (timeTaken < MIN_VOTE_TIME_MS) {
+                console.log(`vg-vote: Vote too fast (${timeTaken}ms), likely bot`);
+                // Return success to not alert the bot, but don't save vote
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ success: true, voteId: 'blocked' })
+                };
+            }
+        }
+        
+        // ============================================
 
         // Check poll status - block voting on draft, paused or closed polls
         if (poll.status === 'draft') {

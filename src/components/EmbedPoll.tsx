@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart2, ExternalLink, Copy, Check, Code, Monitor, Smartphone, X, Settings, Palette } from 'lucide-react';
+import { BarChart2, ExternalLink, Copy, Check, Code, Monitor, Smartphone, X, Settings, Palette, Shield, Lock } from 'lucide-react';
 import type { Poll } from '../types';
 
 interface EmbedModalProps {
@@ -8,6 +8,7 @@ interface EmbedModalProps {
     isOpen: boolean;
     onClose: () => void;
     isPremium: boolean; // Premium users get no branding
+    onUpgradeClick?: () => void;
 }
 
 // Embed configuration options
@@ -17,9 +18,10 @@ interface EmbedConfig {
     showBranding: boolean; // Free users always have branding
     theme: 'light' | 'dark' | 'auto';
     borderRadius: number;
+    allowedDomains: string; // Comma-separated domains (Pro/Business feature)
 }
 
-const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium }) => {
+const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium, onUpgradeClick }) => {
     const [copied, setCopied] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [config, setConfig] = useState<EmbedConfig>({
@@ -27,7 +29,8 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
         height: '500',
         showBranding: !isPremium, // Free = branding, Premium = optional
         theme: 'light',
-        borderRadius: 12
+        borderRadius: 12,
+        allowedDomains: '' // Empty = allow all domains
     });
 
     // Generate embed code
@@ -35,7 +38,8 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
     const embedParams = new URLSearchParams({
         theme: config.theme,
         branding: config.showBranding ? '1' : '0',
-        radius: config.borderRadius.toString()
+        radius: config.borderRadius.toString(),
+        ...(config.allowedDomains && isPremium ? { domains: config.allowedDomains } : {})
     });
     
     const iframeCode = `<iframe 
@@ -188,6 +192,60 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
                                     </label>
                                 </div>
                                 
+                                {/* Domain Restriction - Pro/Business Security Feature */}
+                                <div className={`p-3 rounded-xl ${isPremium ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'}`}>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isPremium ? 'bg-emerald-100' : 'bg-slate-200'}`}>
+                                            <Shield size={16} className={isPremium ? 'text-emerald-600' : 'text-slate-400'} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`font-medium text-sm ${isPremium ? 'text-emerald-800' : 'text-slate-500'}`}>
+                                                    Domain Restriction
+                                                </span>
+                                                {!isPremium && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full flex items-center gap-0.5">
+                                                        <Lock size={8} /> PRO
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className={`text-xs mt-0.5 ${isPremium ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                Only allow embedding on specific domains
+                                            </p>
+                                            {isPremium ? (
+                                                <div className="mt-2">
+                                                    <input
+                                                        type="text"
+                                                        value={config.allowedDomains}
+                                                        onChange={(e) => setConfig({...config, allowedDomains: e.target.value})}
+                                                        placeholder="example.com, mysite.org"
+                                                        className="w-full px-3 py-2 border border-emerald-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400"
+                                                    />
+                                                    <p className="text-[10px] text-emerald-500 mt-1">
+                                                        Leave empty to allow all domains. Separate multiple with commas.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                onUpgradeClick ? (
+                                                    <button 
+                                                        onClick={onUpgradeClick}
+                                                        className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-1"
+                                                    >
+                                                        Upgrade to unlock →
+                                                    </button>
+                                                ) : (
+                                                    <a 
+                                                        href="/#pricing" 
+                                                        className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-1"
+                                                    >
+                                                        Upgrade to unlock →
+                                                    </a>
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 {/* Embed Code */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1">Embed Code</label>
@@ -287,7 +345,11 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
                                     <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                                         <div className="text-xs text-emerald-800">
                                             <strong>💡 Did you know?</strong> Each embedded poll with branding helps spread the word about VoteGenerator. 
-                                            <a href="/pricing" className="underline ml-1">Upgrade to Pro</a> to remove branding.
+                                            {onUpgradeClick ? (
+                                                <button onClick={onUpgradeClick} className="underline ml-1">Upgrade to Pro</button>
+                                            ) : (
+                                                <a href="/pricing" className="underline ml-1">Upgrade to Pro</a>
+                                            )} to remove branding.
                                         </div>
                                     </div>
                                 )}

@@ -1,5 +1,11 @@
 import { Poll, PollSettings, RunoffResult, RoundLog, Vote, StoredVote, Comment } from '../types';
 
+// Anti-bot protection fields
+interface AntiBotFields {
+    _hp: string;  // Honeypot - should always be empty
+    _t: number;   // Page load timestamp
+}
+
 const LS_PREFIX = 'votegenerator_';
 
 const generateId = (len: number = 8) => {
@@ -138,7 +144,8 @@ export const submitVote = async (
     matrixVotes?: Record<string, { x: number, y: number }>,
     pairwiseVotes?: { winnerId: string; loserId: string }[],
     ratingVotes?: Record<string, number>,
-    surveyAnswers?: Record<string, any>
+    surveyAnswers?: Record<string, any>,
+    antiBotFields?: AntiBotFields
 ): Promise<void> => {
     const votePayload = {
         pollId,
@@ -150,7 +157,12 @@ export const submitVote = async (
         matrixVotes,
         pairwiseVotes,
         ratingVotes,
-        surveyAnswers
+        surveyAnswers,
+        // Anti-bot protection fields
+        ...(antiBotFields && {
+            _hp: antiBotFields._hp,
+            _t: antiBotFields._t
+        })
     };
 
     try {

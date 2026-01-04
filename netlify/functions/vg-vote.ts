@@ -14,6 +14,9 @@ interface VoteRequest {
     ratingVotes?: Record<string, number>;
     // Survey mode
     surveyAnswers?: Record<string, any>;
+    // Anti-bot fields
+    _hp?: string; // Honeypot - should be empty
+    _t?: number;  // Page load timestamp - for timing validation
 }
 
 interface VoteAnalytics {
@@ -87,6 +90,14 @@ interface Poll {
             newComment: boolean;
         };
     };
+    // Analytics tracking
+    blockedVotes?: {
+        honeypot: number;
+        timing: number;
+        rateLimit: number;
+        total: number;
+        lastBlocked?: string;
+    };
 }
 
 // Milestone points for notifications
@@ -107,10 +118,91 @@ function checkLimitApproaching(voteCount: number, maxResponses: number): number 
     return null;
 }
 
+// Detect suspicious activity patterns
+interface SuspiciousActivityResult {
+    isSuspicious: boolean;
+    reason?: string;
+    severity?: 'low' | 'medium' | 'high';
+    details?: Record<string, any>;
+}
+
+async function detectSuspiciousActivity(
+    poll: Poll,
+    ipHash: string,
+    device: string
+): Promise<SuspiciousActivityResult> {
+    const votes = poll.votes || [];
+    const now = Date.now();
+    const last5Minutes = now - 5 * 60 * 1000;
+    const lastHour = now - 60 * 60 * 1000;
+    
+    // Count recent votes
+    const votesLast5Min = votes.filter((v: Vote) => 
+        new Date(v.timestamp).getTime() > last5Minutes
+    ).length;
+    
+    const votesLastHour = votes.filter((v: Vote) => 
+        new Date(v.timestamp).getTime() > lastHour
+    ).length;
+    
+    // Check for vote spike (more than 20 votes in 5 minutes for a poll with < 50 total)
+    if (votesLast5Min > 20 && votes.length < 50) {
+        return {
+            isSuspicious: true,
+            reason: 'Unusual vote spike detected',
+            severity: 'high',
+            details: {
+                votesLast5Min,
+                totalVotes: votes.length,
+                pattern: 'spike'
+            }
+        };
+    }
+    
+    // Check for sustained high activity (more than 100 votes in last hour for small poll)
+    if (votesLastHour > 100 && votes.length < 200) {
+        return {
+            isSuspicious: true,
+            reason: 'Unusually high voting activity',
+            severity: 'medium',
+            details: {
+                votesLastHour,
+                totalVotes: votes.length,
+                pattern: 'sustained_activity'
+            }
+        };
+    }
+    
+    // Check for device uniformity (>80% same device type in last 20 votes)
+    if (votes.length >= 20) {
+        const last20Votes = votes.slice(-20);
+        const deviceCounts: Record<string, number> = {};
+        last20Votes.forEach((v: Vote) => {
+            const dev = v.analytics?.device || 'unknown';
+            deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
+        });
+        
+        const maxDeviceCount = Math.max(...Object.values(deviceCounts));
+        if (maxDeviceCount > 16) { // 80% of 20
+            return {
+                isSuspicious: true,
+                reason: 'Unusual device pattern detected',
+                severity: 'low',
+                details: {
+                    deviceDistribution: deviceCounts,
+                    pattern: 'device_uniformity'
+                }
+            };
+        }
+    }
+    
+    return { isSuspicious: false };
+}
+
 // Fire notification (non-blocking)
 async function triggerNotification(
     poll: Poll,
-    type: 'milestone' | 'limit' | 'comment',
+    type: 'milestone' | 'limit' | 'comment' | 'suspicious',
     data: Record<string, any>
 ): Promise<void> {
     if (!poll.notificationSettings?.enabled || !poll.notificationSettings?.emails?.length) {
@@ -126,8 +218,8 @@ async function triggerNotification(
         return;
     }
     
-    // Check if we should skip (test votes)
-    if (poll.voteCount <= settings.skipFirstVotes) {
+    // Check if we should skip (test votes) - except for suspicious activity
+    if (type !== 'suspicious' && poll.voteCount <= settings.skipFirstVotes) {
         console.log(`Skipping notification - vote ${poll.voteCount} <= skipFirstVotes ${settings.skipFirstVotes}`);
         return;
     }
@@ -136,6 +228,7 @@ async function triggerNotification(
     if (type === 'milestone' && !settings.notifyOn.milestones) return;
     if (type === 'limit' && !settings.notifyOn.limitReached) return;
     if (type === 'comment' && !settings.notifyOn.newComment) return;
+    // Suspicious activity alerts are always sent if notifications are enabled
     
     try {
         // Fire and forget - don't wait for response
@@ -164,6 +257,15 @@ const generateVoteId = (): string => {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
+};
+
+// Create hash of IP for GDPR-compliant rate limiting (no raw IP stored)
+const createIpHash = async (input: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input + (process.env.VOTE_TOKEN_SECRET || 'salt'));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 };
 
 // Detect device type from User-Agent (GDPR safe - no storage of full UA)
@@ -290,6 +392,91 @@ export const handler: Handler = async (event) => {
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
+
+        // ============================================
+        // ANTI-BOT VALIDATION
+        // ============================================
+        
+        // Initialize blocked votes tracking if not exists
+        if (!poll.blockedVotes) {
+            poll.blockedVotes = { honeypot: 0, timing: 0, rateLimit: 0, total: 0 };
+        }
+        
+        // Helper to save blocked vote and return
+        const blockVote = async (reason: 'honeypot' | 'timing' | 'rateLimit') => {
+            poll.blockedVotes![reason]++;
+            poll.blockedVotes!.total++;
+            poll.blockedVotes!.lastBlocked = new Date().toISOString();
+            await store.setJSON(body.pollId, poll);
+            console.log(`vg-vote: Blocked (${reason}). Total blocked: ${poll.blockedVotes!.total}`);
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ success: true, voteId: 'blocked' })
+            };
+        };
+        
+        // 1. Honeypot check - if _hp field has value, it's a bot
+        if (body._hp && body._hp.length > 0) {
+            console.log('vg-vote: Honeypot triggered, blocking bot');
+            return await blockVote('honeypot');
+        }
+        
+        // 2. Timing check - votes submitted too fast are likely bots
+        // Minimum 2 seconds between page load and vote submission
+        const MIN_VOTE_TIME_MS = 2000;
+        if (body._t) {
+            const pageLoadTime = body._t;
+            const now = Date.now();
+            const timeTaken = now - pageLoadTime;
+            
+            if (timeTaken < MIN_VOTE_TIME_MS) {
+                console.log(`vg-vote: Vote too fast (${timeTaken}ms), likely bot`);
+                return await blockVote('timing');
+            }
+        }
+        
+        // 3. Rate limiting - max 5 votes per minute from same IP
+        const clientIp = event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                         event.headers['client-ip'] || 
+                         'unknown';
+        
+        // Create IP hash for GDPR compliance (don't store raw IP)
+        const ipHash = await createIpHash(clientIp + body.pollId);
+        
+        const rateStore = getStore({
+            name: 'rate-limits',
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
+        
+        const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+        const MAX_VOTES_PER_WINDOW = 5;
+        
+        try {
+            const rateLimitKey = `vote_${ipHash}`;
+            const existing = await rateStore.get(rateLimitKey, { type: 'json' }) as { timestamps: number[] } | null;
+            const now = Date.now();
+            
+            // Filter to only timestamps within the window
+            const recentTimestamps = (existing?.timestamps || []).filter(
+                (ts: number) => now - ts < RATE_LIMIT_WINDOW_MS
+            );
+            
+            if (recentTimestamps.length >= MAX_VOTES_PER_WINDOW) {
+                console.log(`vg-vote: Rate limit exceeded for ${ipHash.slice(0, 8)}... (${recentTimestamps.length} votes in last minute)`);
+                return await blockVote('rateLimit');
+            }
+            
+            // Add current timestamp and save
+            recentTimestamps.push(now);
+            await rateStore.setJSON(rateLimitKey, { timestamps: recentTimestamps });
+        } catch (rateLimitError) {
+            // Don't block votes if rate limiting fails, just log
+            console.error('Rate limiting check failed:', rateLimitError);
+        }
+        
+        // ============================================
 
         // Check poll status - block voting on draft, paused or closed polls
         if (poll.status === 'draft') {
@@ -526,6 +713,23 @@ export const handler: Handler = async (event) => {
         // TRIGGER NOTIFICATIONS (non-blocking)
         // ============================================
         if (poll.tier === 'unlimited' && poll.notificationSettings?.enabled) {
+            // Check for suspicious activity (always check, even without explicit setting)
+            const suspiciousResult = await detectSuspiciousActivity(
+                poll,
+                ipHash,
+                analytics.device
+            );
+            
+            if (suspiciousResult.isSuspicious) {
+                console.log(`vg-vote: Suspicious activity detected - ${suspiciousResult.reason}`);
+                triggerNotification(poll, 'suspicious', {
+                    reason: suspiciousResult.reason,
+                    severity: suspiciousResult.severity,
+                    details: suspiciousResult.details,
+                    voteCount: poll.voteCount
+                });
+            }
+            
             // Check for milestone
             const milestone = checkMilestone(poll.voteCount);
             if (milestone) {

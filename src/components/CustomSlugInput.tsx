@@ -6,13 +6,15 @@ interface Props {
     adminKey: string;
     currentSlug?: string | null;
     tier?: string;
+    onUpgradeClick?: () => void;
 }
 
 const CustomSlugInput: React.FC<Props> = ({ 
     pollId, 
     adminKey, 
     currentSlug,
-    tier = 'free'
+    tier = 'free',
+    onUpgradeClick
 }) => {
     const [slug, setSlug] = useState(currentSlug || '');
     const [isChecking, setIsChecking] = useState(false);
@@ -121,12 +123,21 @@ const CustomSlugInput: React.FC<Props> = ({
                             </p>
                         </div>
                     </div>
-                    <a 
-                        href="/pricing" 
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                    >
-                        Upgrade →
-                    </a>
+                    {onUpgradeClick ? (
+                        <button 
+                            onClick={onUpgradeClick}
+                            className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                        >
+                            Upgrade →
+                        </button>
+                    ) : (
+                        <a 
+                            href="/pricing" 
+                            className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                        >
+                            Upgrade →
+                        </a>
+                    )}
                 </div>
             </div>
         );

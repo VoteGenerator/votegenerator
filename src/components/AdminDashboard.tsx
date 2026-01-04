@@ -13,9 +13,10 @@ import {
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
-    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight
 } from 'lucide-react';
 import ShareCards from './ShareCards';
+import UpgradeModal from './UpgradeModal';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -155,6 +156,9 @@ const AdminDashboard: React.FC = () => {
     // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
+    const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -739,6 +743,65 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         )}
 
+                        {/* ⚠️ Save Your Dashboard Link Warning */}
+                        {(() => {
+                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
+                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
+                            
+                            const dashboardUrl = session?.dashboardToken 
+                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                : window.location.href;
+                            
+                            return (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -10 }} 
+                                    animate={{ opacity: 1, y: 0 }} 
+                                    className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <AlertTriangle size={20} className="text-amber-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-amber-800 mb-1">Save Your Dashboard Link!</h4>
+                                            <p className="text-sm text-amber-700 mb-3">
+                                                Bookmark this page or save the link below. This is how you'll access your dashboard and manage all your polls.
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(dashboardUrl);
+                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                        setCopiedDashboardLink(true);
+                                                        setTimeout(() => setCopiedDashboardLink(false), 2000);
+                                                    }}
+                                                    className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                    {copiedDashboardLink ? 'Copied!' : 'Copy Dashboard Link'}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                        setAdminLinkWarningDismissed(true);
+                                                    }}
+                                                    className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
+                                                >
+                                                    I've bookmarked it
+                                                </button>
+                                                <button
+                                                    onClick={() => setAdminLinkWarningDismissed(true)}
+                                                    className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
+                                                >
+                                                    Remind me later
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })()}
+
                         {/* Dashboard Header with Search */}
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                             <div>
@@ -993,9 +1056,12 @@ const AdminDashboard: React.FC = () => {
                                         <p className="text-slate-600 mb-2">
                                             You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
                                         </p>
-                                        <a href="/pricing" className="text-purple-600 font-medium hover:text-purple-700">
-                                            Upgrade for more →
-                                        </a>
+                                        <button 
+                                            onClick={() => setShowUpgradeModal(true)}
+                                            className="text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1 mx-auto"
+                                        >
+                                            Upgrade for more <ArrowRight size={14} />
+                                        </button>
                                     </div>
                                 )}
                             </>
@@ -1100,9 +1166,12 @@ const AdminDashboard: React.FC = () => {
                                     </div>
 
                                     {tier !== 'business' && !isPlanExpired && (
-                                    <a href="/pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
+                                    <button 
+                                        onClick={() => setShowUpgradeModal(true)}
+                                        className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3"
+                                    >
                                         Upgrade Plan
-                                    </a>
+                                    </button>
                                 )}
 
                                 {/* Extend/Renew Button - Smart logic */}
@@ -1350,6 +1419,14 @@ const AdminDashboard: React.FC = () => {
                     );
                 })()}
             </AnimatePresence>
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                currentTier={tier}
+                source="admin_dashboard"
+            />
         </div>
     );
 };

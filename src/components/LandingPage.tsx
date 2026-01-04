@@ -14,7 +14,7 @@ import {
     GraduationCap, Heart, Briefcase, PartyPopper, Play, Shield, Rocket,
     Award, TrendingUp, MessageCircle, Timer, ChevronRight, Smartphone, Laptop,
     AlertTriangle, ThumbsUp, ThumbsDown, HelpCircle, FileText, Download, Palette,
-    MousePointer, Share2, Link, ExternalLink, Vote, CircleCheck, Layers
+    MousePointer, Share2, Link, ExternalLink, Vote, CircleCheck, Layers, Bell
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -530,6 +530,346 @@ const PrivacySection: React.FC = () => (
 );
 
 // ============================================================================
+// Templates Section - Ready-to-use poll templates
+// ============================================================================
+
+const TemplatesSection: React.FC = () => {
+    const templateCategories = [
+        {
+            name: 'Team & Workplace',
+            icon: Briefcase,
+            color: 'bg-blue-500',
+            templates: ['Team lunch vote', 'Meeting time poll', 'Project priority ranking', 'Employee satisfaction']
+        },
+        {
+            name: 'Events & Planning',
+            icon: PartyPopper,
+            color: 'bg-purple-500',
+            templates: ['Event date picker', 'Venue selection', 'Activity preferences', 'RSVP with options']
+        },
+        {
+            name: 'Education',
+            icon: GraduationCap,
+            color: 'bg-emerald-500',
+            templates: ['Class feedback', 'Topic interest survey', 'Study group scheduling', 'Course evaluation']
+        },
+        {
+            name: 'Social & Fun',
+            icon: Heart,
+            color: 'bg-pink-500',
+            templates: ['Movie night picker', 'Restaurant vote', 'Gift ideas ranking', 'Trip destination']
+        },
+    ];
+
+    return (
+        <section className="py-20 bg-slate-50">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="text-center mb-12">
+                    <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-sm font-bold rounded-full mb-4">
+                        Get started faster
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                        40+ ready-to-use templates
+                    </h2>
+                    <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+                        Don't start from scratch. Pick a template, customize it, and launch in seconds.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    {templateCategories.map((cat, i) => (
+                        <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition group">
+                            <div className={`${cat.color} p-4`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <cat.icon className="text-white" size={20} />
+                                    </div>
+                                    <h3 className="font-bold text-white">{cat.name}</h3>
+                                </div>
+                            </div>
+                            <div className="p-4">
+                                <ul className="space-y-2">
+                                    {cat.templates.map((t, j) => (
+                                        <li key={j} className="flex items-center gap-2 text-sm text-slate-600">
+                                            <Check size={14} className="text-emerald-500 flex-shrink-0" />
+                                            {t}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="text-center">
+                    <a 
+                        href="/templates" 
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition"
+                    >
+                        Browse All Templates <ArrowRight size={18} />
+                    </a>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// ============================================================================
+// Analytics Section - Showcase dashboard and reporting features
+// ============================================================================
+
+const AnalyticsSection: React.FC = () => (
+    <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+                {/* Left: Copy */}
+                <div>
+                    <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
+                        Real-time analytics
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
+                        Watch results come in.<br />
+                        <span className="text-indigo-600">Understand your audience.</span>
+                    </h2>
+                    <p className="text-lg text-slate-500 mb-8">
+                        Every poll includes a live dashboard with visual charts, response breakdowns, 
+                        and export options. No waiting, no refresh needed.
+                    </p>
+
+                    <div className="space-y-4">
+                        {[
+                            { icon: BarChart3, title: 'Live updating charts', desc: 'Bar charts, pie charts, and progress bars update as votes arrive' },
+                            { icon: TrendingUp, title: 'Response timeline', desc: 'See when votes came in and spot trends over time', pro: true },
+                            { icon: Globe, title: 'Geographic breakdown', desc: 'Understand where your respondents are located', pro: true },
+                            { icon: Download, title: 'Export anywhere', desc: 'Download as CSV, Excel, or generate PDF reports', pro: true },
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-start gap-4">
+                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <item.icon className="text-indigo-600" size={20} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-bold text-slate-900">{item.title}</h4>
+                                        {item.pro && (
+                                            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-bold">
+                                                PRO
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-slate-500 text-sm">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right: Dashboard preview */}
+                <div className="relative">
+                    <div className="bg-slate-100 rounded-2xl p-4">
+                        {/* Mock dashboard */}
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-white font-bold text-sm">Poll Results Dashboard</span>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                        <span className="text-indigo-200 text-xs">Live</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Stats row */}
+                            <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 border-b border-slate-100">
+                                <div className="text-center">
+                                    <div className="text-xl font-bold text-slate-900">247</div>
+                                    <div className="text-[10px] text-slate-500">Total Votes</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-xl font-bold text-emerald-600">+12</div>
+                                    <div className="text-[10px] text-slate-500">Last Hour</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-xl font-bold text-slate-900">4</div>
+                                    <div className="text-[10px] text-slate-500">Options</div>
+                                </div>
+                            </div>
+
+                            {/* Chart bars */}
+                            <div className="p-4 space-y-3">
+                                {[
+                                    { label: 'Option A', pct: 42, color: 'bg-indigo-500' },
+                                    { label: 'Option B', pct: 31, color: 'bg-purple-500' },
+                                    { label: 'Option C', pct: 18, color: 'bg-pink-500' },
+                                    { label: 'Option D', pct: 9, color: 'bg-slate-400' },
+                                ].map((item, i) => (
+                                    <div key={i}>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-slate-600">{item.label}</span>
+                                            <span className="font-bold text-slate-900">{item.pct}%</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Export buttons */}
+                            <div className="px-4 pb-4 flex gap-2">
+                                <button className="flex-1 py-1.5 text-xs bg-slate-100 text-slate-600 rounded-lg font-medium">
+                                    📊 Export CSV
+                                </button>
+                                <button className="flex-1 py-1.5 text-xs bg-slate-100 text-slate-600 rounded-lg font-medium">
+                                    📄 PDF Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Floating badges */}
+                    <div className="absolute -top-3 -right-3 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
+                        ✓ Real-time updates
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+);
+
+// ============================================================================
+// Value Comparison Section - What you get vs typical market pricing
+// ============================================================================
+
+const ValueSection: React.FC = () => (
+    <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-12">
+                <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-bold rounded-full mb-4">
+                    Incredible value
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                    Professional features.<br />
+                    <span className="text-indigo-600">Fraction of the price.</span>
+                </h2>
+                <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+                    Enterprise-grade polling tools often cost $100-200/month. We built something better—and more affordable.
+                </p>
+            </div>
+
+            {/* Price comparison visual */}
+            <div className="grid md:grid-cols-2 gap-6 mb-10">
+                {/* Others */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                    <div className="text-center mb-6">
+                        <p className="text-slate-500 text-sm mb-2">Enterprise polling tools</p>
+                        <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-black text-slate-300 line-through">$150</span>
+                            <span className="text-slate-400">/month</span>
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">typical pricing</p>
+                    </div>
+                    <ul className="space-y-2 text-sm text-slate-500">
+                        <li className="flex items-center gap-2"><Check size={14} className="text-slate-400" /> Analytics dashboard</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-slate-400" /> Multiple poll types</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-slate-400" /> Data export</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-slate-400" /> Custom branding</li>
+                        <li className="flex items-center gap-2"><X size={14} className="text-red-400" /> Requires signup to vote</li>
+                        <li className="flex items-center gap-2"><X size={14} className="text-red-400" /> Annual contracts</li>
+                    </ul>
+                </div>
+
+                {/* VoteGenerator */}
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white relative overflow-hidden">
+                    <div className="absolute top-3 right-3 bg-amber-400 text-amber-900 text-xs font-bold px-2 py-1 rounded-full">
+                        90% LESS
+                    </div>
+                    <div className="text-center mb-6">
+                        <p className="text-indigo-200 text-sm mb-2">VoteGenerator Pro</p>
+                        <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-black text-white">$16</span>
+                            <span className="text-indigo-200">/month</span>
+                        </div>
+                        <p className="text-sm text-indigo-300 mt-1">or $190/year (2 months free)</p>
+                    </div>
+                    <ul className="space-y-2 text-sm text-indigo-100">
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Real-time analytics dashboard</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 8 poll types included</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> CSV, Excel, PDF export</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 12+ premium themes</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> No signup to vote</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Month-to-month, cancel anytime</li>
+                    </ul>
+                </div>
+            </div>
+
+            {/* Full feature showcase */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                {/* Header */}
+                <div className="bg-slate-900 text-white p-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-xl font-bold mb-1">All Pro features</h3>
+                            <p className="text-slate-400 text-sm">Everything you need for professional polling</p>
+                        </div>
+                        <div className="text-center sm:text-right">
+                            <div className="text-3xl font-black">$16<span className="text-lg font-normal text-slate-400">/mo</span></div>
+                            <div className="text-sm text-emerald-400">Limited time pricing</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Feature grid */}
+                <div className="p-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {[
+                            { icon: Layers, title: '8 Poll Types', desc: 'Multiple choice, ranked, rating, visual & more' },
+                            { icon: BarChart3, title: 'Live Analytics', desc: 'Real-time charts and response tracking' },
+                            { icon: Download, title: 'CSV & Excel Export', desc: 'Download your data anytime' },
+                            { icon: Palette, title: 'Premium Themes', desc: '12+ professional color schemes' },
+                            { icon: QrCode, title: 'QR Code Sharing', desc: 'Perfect for in-person events' },
+                            { icon: Code, title: 'Website Embed', desc: 'Add polls to any website' },
+                            { icon: Shield, title: 'Anti-Fraud Protection', desc: 'IP detection & browser fingerprinting' },
+                            { icon: Bell, title: 'Email Notifications', desc: 'Get notified when votes come in' },
+                            { icon: Timer, title: 'Scheduled Close', desc: 'Auto-close polls at a set time' },
+                            { icon: FileText, title: '40+ Templates', desc: 'Ready-to-use poll templates' },
+                            { icon: TrendingUp, title: 'Response Timeline', desc: 'See when votes come in over time' },
+                            { icon: Link, title: 'Custom Short Links', desc: 'Branded, memorable poll URLs' },
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <item.icon className="text-indigo-600" size={16} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-900 text-sm">{item.title}</h4>
+                                    <p className="text-slate-500 text-xs">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Bottom CTA */}
+                    <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-center sm:text-left">
+                            <p className="text-slate-600">
+                                <strong>Start free</strong> with 3 polls and 100 responses/month.
+                            </p>
+                            <p className="text-slate-400 text-sm">Upgrade anytime. Cancel anytime. No contracts.</p>
+                        </div>
+                        <a 
+                            href="/pricing" 
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition"
+                        >
+                            See All Plans <ArrowRight size={18} />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+);
+
+// ============================================================================
 // Features Section - Key capabilities
 // ============================================================================
 
@@ -850,8 +1190,11 @@ function LandingPage(): React.ReactElement {
             <ProblemSection />
             <HowItWorksSection />
             <PollTypesSection />
+            <TemplatesSection />
+            <AnalyticsSection />
             <PrivacySection />
             <FeaturesSection />
+            <ValueSection />
             <UseCasesSection />
             <PricingPreviewSection />
             <FAQSection />

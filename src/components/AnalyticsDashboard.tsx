@@ -63,16 +63,16 @@ interface AnalyticsData {
 interface AnalyticsDashboardProps {
     pollId: string;
     adminKey: string;
-    currentTier?: 'free' | 'starter' | 'pro_event' | 'unlimited';
+    currentTier?: 'free' | 'pro' | 'pro' | 'business';
 }
 
 // Tier display config
 const TIER_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
     'free': { label: 'Free', color: 'text-slate-600', bgColor: 'bg-slate-100' },
-    'starter': { label: 'Starter', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-    'pro_event': { label: 'Pro Event', color: 'text-purple-700', bgColor: 'bg-purple-100' },
-    'unlimited_event': { label: 'Unlimited Event', color: 'text-orange-700', bgColor: 'bg-orange-100' },
-    'unlimited': { label: 'Unlimited', color: 'text-amber-700', bgColor: 'bg-amber-100' }
+    'pro': { label: 'Starter', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+    'pro': { label: 'Pro Event', color: 'text-purple-700', bgColor: 'bg-purple-100' },
+    'business': { label: 'Unlimited Event', color: 'text-orange-700', bgColor: 'bg-orange-100' },
+    'business': { label: 'Unlimited', color: 'text-amber-700', bgColor: 'bg-amber-100' }
 };
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ 
@@ -87,7 +87,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
     // All paid tiers get analytics
     const isPaid = currentTier !== 'free';
-    const isUnlimited = currentTier === 'unlimited';
+    const isUnlimited = currentTier === 'business';
     const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG['free'];
 
     useEffect(() => {

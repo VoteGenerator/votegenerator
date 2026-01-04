@@ -22,7 +22,7 @@ const CustomSlugInput: React.FC<Props> = ({
     const [savedSlug, setSavedSlug] = useState(currentSlug || '');
     const [copied, setCopied] = useState(false);
 
-    const isUnlimited = tier === 'unlimited';
+    const isUnlimited = tier === 'business' || tier === 'business';
 
     // Debounced availability check
     useEffect(() => {

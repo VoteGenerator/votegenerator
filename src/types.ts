@@ -224,7 +224,7 @@ export interface Poll {
     meetingDuration?: 15 | 30 | 45 | 60 | 90 | 120; // Duration in minutes
     
     // Tier and premium features
-    tier?: 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
+    tier?: 'free' | 'pro' | 'pro' | 'business' | 'business';
     maxResponses?: number;
     expiresAt?: string;
     

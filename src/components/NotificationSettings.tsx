@@ -85,7 +85,7 @@ const NotificationSettings: React.FC<Props> = ({
     const [verificationSent, setVerificationSent] = useState<string | null>(null);
     
     // Only Unlimited tier gets notifications
-    const isUnlimited = tier === 'unlimited';
+    const isUnlimited = tier === 'business' || tier === 'business';
     const maxEmails = 10;
     
     const verifiedCount = settings.emails.filter(e => e.verified).length;

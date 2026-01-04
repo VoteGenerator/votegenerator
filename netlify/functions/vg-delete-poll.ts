@@ -11,7 +11,7 @@ import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
 // Tiers that can only delete polls with 0 responses
-const RESTRICTED_TIERS = ['free', 'starter'];
+const RESTRICTED_TIERS = ['free', 'pro'];
 
 export const handler: Handler = async (event) => {
     const headers = {

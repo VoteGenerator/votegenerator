@@ -156,7 +156,7 @@ export const handler: Handler = async (event) => {
         }
 
         // Calculate expiration date based on tier
-        const tier = pollData.tier || 'starter';
+        const tier = pollData.tier || 'pro';
         const days = TIER_DAYS[tier] || 30;
         const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 

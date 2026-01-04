@@ -43,10 +43,10 @@ const generateDashboardToken = (): string => {
 // Get tier duration in days
 const getTierDuration = (tier: string): number => {
     switch (tier) {
-        case 'starter': return 30;
-        case 'pro_event': return 60;
-        case 'unlimited_event': return 30;
-        case 'unlimited': return 365;
+        case 'pro': return 30;
+        case 'pro': return 60;
+        case 'business': return 30;
+        case 'business': return 365;
         default: return 7;
     }
 };
@@ -124,8 +124,8 @@ const sendWelcomeEmail = async (
                             <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                                 <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
                                 <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                                    <li style="margin-bottom: 8px;">${tier === 'unlimited' || tier === 'unlimited_event' ? 'Unlimited polls' : tier === 'pro_event' ? '3 polls' : '1 poll'}</li>
-                                    <li style="margin-bottom: 8px;">${tier === 'unlimited' || tier === 'unlimited_event' ? '10,000' : tier === 'pro_event' ? '2,000' : '500'} responses per poll</li>
+                                    <li style="margin-bottom: 8px;">${tier === 'business' || tier === 'business' ? 'Unlimited polls' : tier === 'pro' ? '3 polls' : '1 poll'}</li>
+                                    <li style="margin-bottom: 8px;">${tier === 'business' || tier === 'business' ? '10,000' : tier === 'pro' ? '2,000' : '500'} responses per poll</li>
                                     <li style="margin-bottom: 8px;">Valid until ${expirationDate}</li>
                                 </ul>
                             </div>
@@ -163,13 +163,13 @@ const getPriceToTier = (): Record<string, string> => {
     const mapping: Record<string, string> = {};
     
     if (process.env.STRIPE_PRICE_STARTER) {
-        mapping[process.env.STRIPE_PRICE_STARTER] = 'starter';
+        mapping[process.env.STRIPE_PRICE_STARTER] = 'pro';
     }
     if (process.env.STRIPE_PRICE_PRO_EVENT) {
-        mapping[process.env.STRIPE_PRICE_PRO_EVENT] = 'pro_event';
+        mapping[process.env.STRIPE_PRICE_PRO_EVENT] = 'pro';
     }
     if (process.env.STRIPE_PRICE_UNLIMITED) {
-        mapping[process.env.STRIPE_PRICE_UNLIMITED] = 'unlimited';
+        mapping[process.env.STRIPE_PRICE_UNLIMITED] = 'business';
     }
     
     return mapping;
@@ -231,12 +231,12 @@ export const handler: Handler = async (event) => {
             }
 
             // Determine tier from line items
-            let tier = 'starter'; // Default
+            let tier = 'pro'; // Default
             const priceToTier = getPriceToTier();
             
             if (session.line_items?.data?.[0]?.price?.id) {
                 const priceId = session.line_items.data[0].price.id;
-                tier = priceToTier[priceId] || 'starter';
+                tier = priceToTier[priceId] || 'pro';
             } else if (session.metadata?.tier) {
                 tier = session.metadata.tier;
             }

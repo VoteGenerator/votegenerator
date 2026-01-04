@@ -49,8 +49,8 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     };
     
     const isPaidTier = poll.tier && poll.tier !== 'free';
-    const isUnlimited = poll.tier === 'unlimited' || poll.tier === 'unlimited_event';
-    const isProOrHigher = poll.tier === 'pro_event' || poll.tier === 'unlimited_event' || poll.tier === 'unlimited';
+    const isUnlimited = poll.tier === 'business' || poll.tier === 'business';
+    const isProOrHigher = poll.tier === 'pro' || poll.tier === 'business' || poll.tier === 'business';
     
     const handleSave = async () => {
         if (!title.trim()) {

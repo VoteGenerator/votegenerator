@@ -25,7 +25,7 @@ interface CustomerRecord {
 }
 
 // Tiers that require activation (draft mode)
-const ACTIVATION_TIERS = ['starter', 'pro_event'];
+const ACTIVATION_TIERS = ['pro', 'pro'];
 
 export const handler: Handler = async (event) => {
     const headers = {

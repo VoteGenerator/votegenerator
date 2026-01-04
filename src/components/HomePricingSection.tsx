@@ -25,7 +25,7 @@ const getExpirationDate = (days: number): string => {
 };
 
 interface PricingCardProps {
-    tier: 'pro' | 'pro' | 'business';
+    tier: 'pro' | 'business';
     name: string;
     price: string | number;
     currency: string;

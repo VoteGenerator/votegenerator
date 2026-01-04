@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
-type PaidTier = 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
+type PaidTier = 'pro' | 'business';
 
 // Tier configuration (minimal - full config on admin dashboard)
 const TIER_CONFIG: Record<PaidTier, {
@@ -49,7 +49,7 @@ const PaidCreatePage: React.FC = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
     // Get tier from localStorage
-    const tier = (localStorage.getItem('vg_purchased_tier') || 'starter') as PaidTier;
+    const tier = (localStorage.getItem('vg_purchased_tier') || 'pro') as PaidTier;
     const expiresAt = localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at');
     
     const config = TIER_CONFIG[tier] || TIER_CONFIG.starter;

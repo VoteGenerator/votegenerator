@@ -2266,11 +2266,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             pollId={poll.id}
                             adminKey={adminKey}
                             currentTier={(() => {
-                                const tier = localStorage.getItem('vg_purchased_tier');
-                                // Return actual tier names
-                                if (tier === 'unlimited') return 'unlimited';
-                                if (tier === 'pro_event') return 'pro_event';
-                                if (tier === 'starter') return 'starter';
+                                const tier = localStorage.getItem('vg_subscription_tier');
+                                if (tier === 'business') return 'business';
+                                if (tier === 'pro') return 'pro';
                                 return 'free';
                             })()}
                         />

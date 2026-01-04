@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, QrCode, Palette,
+    Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -676,13 +676,13 @@ const AdminDashboard: React.FC = () => {
                                         )}
                                         {tier === 'free' && (
                                             <div className="mt-2">
-                                                <p className="text-sm text-slate-500 mb-2">Copy this link to save access to your polls:</p>
-                                                <div className="flex items-center gap-2">
+                                                <p className="text-sm text-slate-500 mb-2">Save access to your polls:</p>
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <input 
                                                         type="text" 
                                                         readOnly 
                                                         value={window.location.href}
-                                                        className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
+                                                        className="flex-1 min-w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
                                                     />
                                                     <button
                                                         onClick={() => {
@@ -695,6 +695,13 @@ const AdminDashboard: React.FC = () => {
                                                         {copiedId === 'dashboard-link' ? <Check size={16} /> : <Copy size={16} />}
                                                         {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
                                                     </button>
+                                                    <a
+                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime!`)}`}
+                                                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                    >
+                                                        <Mail size={16} />
+                                                        Email to Self
+                                                    </a>
                                                 </div>
                                             </div>
                                         )}

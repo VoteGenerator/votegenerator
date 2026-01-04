@@ -336,11 +336,25 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
         if (!votes.length) return [];
         const countries: Record<string, number> = {};
         votes.forEach(v => {
-            const country = v.country || v.geo?.country || 'Unknown';
+            const country = v.country || v.geo?.country || v.analytics?.country || 'Unknown';
             countries[country] = (countries[country] || 0) + 1;
         });
         return Object.entries(countries)
             .map(([country, count]) => ({ country: getCountryName(country), count, percentage: Math.round((count / votes.length) * 100) }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+    }, [votes]);
+
+    // Traffic source breakdown (referrer domains)
+    const referrerStats = useMemo(() => {
+        if (!votes.length) return [];
+        const sources: Record<string, number> = {};
+        votes.forEach(v => {
+            const source = v.analytics?.referrerDomain || v.analytics?.utmSource || v.referrer || 'Direct';
+            sources[source] = (sources[source] || 0) + 1;
+        });
+        return Object.entries(sources)
+            .map(([source, count]) => ({ source, count, percentage: Math.round((count / votes.length) * 100) }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 5);
     }, [votes]);
@@ -778,6 +792,28 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                             </div>
                                         ) : (
                                             <p className="text-xs text-slate-400">Tracking activity...</p>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Traffic Sources */}
+                                    <div className="bg-slate-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <ExternalLink size={14} className="text-purple-500" />
+                                            <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
+                                        </div>
+                                        {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
+                                            <div className="space-y-1">
+                                                {referrerStats.slice(0, 3).map(r => (
+                                                    <div key={r.source} className="flex items-center justify-between text-xs">
+                                                        <span className="truncate max-w-[100px]" title={r.source}>
+                                                            {r.source === 'Direct' ? '🔗 Direct' : r.source}
+                                                        </span>
+                                                        <span className="font-semibold">{r.percentage}%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-400">Mostly direct traffic</p>
                                         )}
                                     </div>
                                 </div>

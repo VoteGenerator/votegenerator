@@ -308,14 +308,32 @@ const VoteGeneratorApp: React.FC = () => {
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
                 <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
-                    <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                        <button 
-                            onClick={goHome}
+                    <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                        <a 
+                            href="/"
                             className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 font-bold transition-colors"
                         >
-                            <Home size={20} />
-                            <span className="hidden sm:inline">VoteGenerator</span>
-                        </button>
+                            <img src="/logo.svg" alt="" className="w-8 h-8" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            <span className="hidden sm:inline text-xl">Vote<span className="text-indigo-600">Generator</span></span>
+                        </a>
+                        
+                        {/* Nav Links for Admin */}
+                        {viewState.type === 'results' && viewState.isAdmin && (
+                            <nav className="hidden md:flex items-center gap-1">
+                                <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                    <PlusCircle size={16} /> Create Poll
+                                </a>
+                                <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                    <LayoutDashboard size={16} /> My Dashboard
+                                </a>
+                                <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                    <Zap size={16} /> Templates
+                                </a>
+                                <a href="/pricing" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                    <Crown size={16} /> Pricing
+                                </a>
+                            </nav>
+                        )}
                         
                         <div className="flex items-center gap-2">
                              {/* Only show share button if viewing results (not while voting) */}

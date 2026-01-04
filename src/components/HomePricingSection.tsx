@@ -185,7 +185,7 @@ const PricingSection: React.FC = () => {
     const tiers = [
         {
             tier: 'pro' as const,
-            name: 'Starter',
+            name: 'Pro',
             description: 'Perfect for a quick poll',
             pollCount: '1',
             responses: '500',
@@ -224,7 +224,7 @@ const PricingSection: React.FC = () => {
         },
         {
             tier: 'business' as const,
-            name: 'Unlimited',
+            name: 'Business',
             description: 'For power users',
             pollCount: '∞',
             responses: '10,000',
@@ -236,7 +236,7 @@ const PricingSection: React.FC = () => {
                 { text: '7 poll types (incl. Visual)', included: true },
                 { text: '10,000 responses per poll', included: true },
                 { text: '1 year access', included: true },
-                { text: 'Unlimited polls', included: true },
+                { text: 'Business polls', included: true },
                 { text: 'Export CSV, PDF, PNG', included: true },
                 { text: 'PIN protection', included: true },
                 { text: 'Team access tokens (10)', included: true },
@@ -247,9 +247,8 @@ const PricingSection: React.FC = () => {
     ];
     
     const priceMap: Record<string, string | number> = {
-        starter: prices.starter,
-        pro_event: prices.proEvent,
-        unlimited: prices.unlimited
+        pro: prices.pro,
+        business: prices.business
     };
 
     return (

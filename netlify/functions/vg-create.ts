@@ -178,7 +178,7 @@ export const handler: Handler = async (event) => {
           const existingPollCount = customerData.polls.length;
           
           if (existingPollCount >= tierConfig.maxPolls) {
-            const tierLabel = tier === 'free' ? 'Free' : tier === 'starter' ? 'Starter' : 'Pro Event';
+            const tierLabel = tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : 'Pro Event';
             return {
               statusCode: 403,
               headers,
@@ -209,11 +209,11 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Handle custom slug (Unlimited tier only)
+    // Handle custom slug (Business tier only)
     let pollId: string;
     let hasCustomSlug = false;
     
-    if (customSlug && tier === 'unlimited') {
+    if (customSlug && tier === 'business') {
       const normalizedSlug = customSlug.trim().toLowerCase();
       
       if (!isValidSlug(normalizedSlug)) {
@@ -283,9 +283,9 @@ export const handler: Handler = async (event) => {
         unlisted: unlisted || false, // Hide from search engines
         security: settings?.security || 'none', // none, browser, pin, code
       },
-      // Single PIN for simple access control (Pro Event & Unlimited)
+      // Single PIN for simple access control (Pro Event & Business)
       pin: pin || null,
-      // Unique access codes (Unlimited only)
+      // Unique access codes (Business only)
       allowedCodes: allowedCodes || null,
       customSlug: hasCustomSlug ? pollId : null,
       tier,

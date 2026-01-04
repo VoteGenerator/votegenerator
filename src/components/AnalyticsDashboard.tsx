@@ -85,7 +85,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
     // All paid tiers get analytics
     const isPaid = currentTier !== 'free';
-    const isUnlimited = currentTier === 'business';
+    const isBusiness = currentTier === 'business';
     const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG['free'];
 
     useEffect(() => {

@@ -40,7 +40,7 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
-    status?: 'draft' | 'live';  // For Starter/Pro polls
+    status?: 'draft' | 'live';  // For Pro/Pro polls
     expiresAt?: string;
     customSlug?: string;
 }
@@ -106,7 +106,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '5,000 responses/month', included: true },
-            { name: 'Unlimited polls', included: true },
+            { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'Custom branding', included: true },
         ]
@@ -124,7 +124,7 @@ const TIER_CONFIG: Record<string, {
         features: [
             { name: 'All poll types', included: true },
             { name: '50,000 responses/month', included: true },
-            { name: 'Unlimited polls', included: true },
+            { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
             { name: 'Custom branding', included: true },
@@ -417,7 +417,7 @@ const AdminDashboard: React.FC = () => {
         return filteredPolls.slice(start, start + POLLS_PER_PAGE);
     }, [filteredPolls, currentPage]);
 
-    // Count live polls (for Starter/Pro limit)
+    // Count live polls (for Pro/Pro limit)
     const livePolls = useMemo(() => {
         if (!session) return [];
         return (session.polls || []).filter(p => p.status === 'live' || session.tier !== 'free');
@@ -538,7 +538,7 @@ const AdminDashboard: React.FC = () => {
         // Block creation if plan is expired
         if (isPlanExpired) return false;
         const config = TIER_CONFIG[session.tier];
-        // For Starter/Pro, only count LIVE polls toward the limit
+        // For Pro/Pro, only count LIVE polls toward the limit
         if (config.requiresActivation) {
             return livePolls.length < config.maxPolls;
         }
@@ -581,8 +581,8 @@ const AdminDashboard: React.FC = () => {
     const config = TIER_CONFIG[tier];
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isUnlimited = tier === 'business' || tier === 'business';
-    const showSearch = isUnlimited && polls.length > 5;
+    const isBusiness = tier === 'business' || tier === 'business';
+    const showSearch = isBusiness && polls.length > 5;
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
@@ -619,7 +619,7 @@ const AdminDashboard: React.FC = () => {
                                 }
                             </span>
                         </div>
-                        {isUnlimited && !isPlanExpired && (
+                        {isBusiness && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
@@ -691,7 +691,7 @@ const AdminDashboard: React.FC = () => {
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
-                                {/* Search bar for Unlimited with many polls */}
+                                {/* Search bar for Business with many polls */}
                                 {showSearch && (
                                     <div className="relative">
                                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -934,8 +934,8 @@ const AdminDashboard: React.FC = () => {
 
                     {/* Right Sidebar */}
                     <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-6">
-                        {/* Unlimited: Security & Access - Premium styling */}
-                        {isUnlimited && (
+                        {/* Business: Security & Access - Premium styling */}
+                        {isBusiness && (
                             <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl border-2 border-amber-200 overflow-hidden shadow-lg shadow-amber-100/50">
                                 <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-amber-50/50 transition">
                                     <div className="flex items-center gap-3">
@@ -1042,7 +1042,7 @@ const AdminDashboard: React.FC = () => {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         {(() => {
                                             const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                                            const canExtend = daysLeft <= 30 && tier === 'business'; // Only Unlimited can extend
+                                            const canExtend = daysLeft <= 30 && tier === 'business'; // Only Business can extend
                                             
                                             return (
                                                 <>
@@ -1072,7 +1072,7 @@ const AdminDashboard: React.FC = () => {
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Extend button - only for Unlimited when ≤30 days remaining */}
+                                                    {/* Extend button - only for Business when ≤30 days remaining */}
                                                     {!isPlanExpired && canExtend && (
                                                         <button 
                                                             onClick={() => window.location.href = `/pricing`}

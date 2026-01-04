@@ -34,22 +34,22 @@ function generateDashboardToken(sessionId: string): string {
 // Map price IDs to tiers (update with your actual price IDs)
 function getTierFromPriceId(priceId: string): string {
   const priceMap: Record<string, string> = {
-    'price_starter_monthly': 'starter',
-    'price_pro_monthly': 'pro_event',
-    'price_unlimited_monthly': 'unlimited',
-    'price_starter_yearly': 'starter',
-    'price_pro_yearly': 'pro_event', 
-    'price_unlimited_yearly': 'unlimited',
+    'price_starter_monthly': 'pro',
+    'price_pro_monthly': 'pro',
+    'price_unlimited_monthly': 'business',
+    'price_starter_yearly': 'pro',
+    'price_pro_yearly': 'pro', 
+    'price_unlimited_yearly': 'business',
   };
-  return priceMap[priceId] || 'starter';
+  return priceMap[priceId] || 'pro';
 }
 
 // Get days for tier
 function getTierDays(tier: string): number {
   switch (tier) {
-    case 'starter': return 30;
-    case 'pro_event': return 60;
-    case 'unlimited': return 365;
+    case 'pro': return 30;
+    case 'pro': return 60;
+    case 'business': return 365;
     default: return 30;
   }
 }
@@ -67,12 +67,12 @@ async function sendDashboardEmail(
   }
   
   const tierLabels: Record<string, string> = {
-    starter: 'Starter',
-    pro_event: 'Pro Event',
-    unlimited: 'Unlimited',
+    free: 'Free',
+    pro: 'Pro',
+    business: 'Business',
   };
   
-  const tierLabel = tierLabels[tier] || 'Starter';
+  const tierLabel = tierLabels[tier] || 'Free';
   const baseUrl = process.env.URL || 'https://votegenerator.com';
   
   // Use full URL format with both token and session_id (proven to work)
@@ -126,8 +126,8 @@ async function sendDashboardEmail(
               <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                 <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
                 <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                  <li style="margin-bottom: 8px;">${tier === 'unlimited' ? 'Unlimited polls' : tier === 'pro_event' ? '3 polls' : '1 poll'}</li>
-                  <li style="margin-bottom: 8px;">${tier === 'unlimited' ? '10,000' : tier === 'pro_event' ? '2,000' : '500'} responses per poll</li>
+                  <li style="margin-bottom: 8px;">${tier === 'business' ? 'Business polls' : tier === 'pro' ? '3 polls' : '1 poll'}</li>
+                  <li style="margin-bottom: 8px;">${tier === 'business' ? '10,000' : tier === 'pro' ? '2,000' : '500'} responses per poll</li>
                   <li style="margin-bottom: 8px;">Valid until <strong>${expirationDate}</strong></li>
                 </ul>
               </div>
@@ -260,7 +260,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         const customerEmail = session.customer_email || session.customer_details?.email;
         
         // Determine tier from metadata or line items
-        let tier = metadata.tier || 'starter';
+        let tier = metadata.tier || 'pro';
         
         // If no tier in metadata, try to determine from line items
         if (!metadata.tier && session.line_items?.data?.[0]?.price?.id) {
@@ -329,20 +329,20 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         }
 
         // ================================================================
-        // STEP 4: Handle Unlimited license (if applicable)
+        // STEP 4: Handle Business license (if applicable)
         // ================================================================
-        if (metadata.licenseType === 'unlimited' && customerEmail) {
+        if (metadata.licenseType === 'business' && customerEmail) {
           try {
             const licenseStore = getStore('vg-licenses');
             await licenseStore.setJSON(`license_${customerEmail}`, {
               email: customerEmail,
-              type: 'unlimited',
+              type: 'business',
               purchasedAt: new Date().toISOString(),
               expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
               stripeCustomerId: session.customer,
               stripeSessionId: session.id,
             });
-            console.log(`Unlimited license created for ${customerEmail.substring(0, 5)}...`);
+            console.log(`Business license created for ${customerEmail.substring(0, 5)}...`);
           } catch (error: any) {
             console.error('License creation failed (non-fatal):', error.message);
           }

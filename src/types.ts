@@ -237,7 +237,7 @@ export interface Poll {
     logoUrl?: string | null;
     customSlug?: string | null;
     
-    // Notifications (Unlimited tier)
+    // Notifications (Business tier)
     notificationSettings?: NotificationSettings;
     
     // Visual polls

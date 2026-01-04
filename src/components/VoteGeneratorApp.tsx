@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key, Code, Image as ImageIcon, Bell } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -9,6 +9,9 @@ import TemplatesPage from './TemplatesPage';
 import PricingPage from './PricingPage';
 import AdminDashboard from './AdminDashboard';
 import ShareCards from './ShareCards';
+import NotificationSettings from './NotificationSettings';
+import EmbedModal from './EmbedPoll';
+import LogoUpload from './LogoUpload';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -32,6 +35,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showShareCards, setShowShareCards] = useState(false);
+    const [showEmbedModal, setShowEmbedModal] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -496,6 +500,50 @@ const VoteGeneratorApp: React.FC = () => {
                                                 </div>
 
                                             </div>
+                                            
+                                            {/* Premium Features Row */}
+                                            <div className="px-6 pb-6">
+                                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                    <Crown size={14} className="text-amber-500" />
+                                                    Premium Features
+                                                </h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    {/* Embed Poll */}
+                                                    <button 
+                                                        onClick={() => setShowEmbedModal(true)}
+                                                        className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-indigo-300 transition flex flex-col items-center gap-2 text-center"
+                                                    >
+                                                        <Code size={22} className="text-indigo-500" />
+                                                        <span className="text-sm font-medium text-slate-700">Embed Poll</span>
+                                                    </button>
+                                                    
+                                                    {/* Logo Upload - placeholder, opens in edit */}
+                                                    <button 
+                                                        onClick={handleEditPoll}
+                                                        className="p-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-purple-300 transition flex flex-col items-center gap-2 text-center"
+                                                    >
+                                                        <ImageIcon size={22} className="text-purple-500" />
+                                                        <span className="text-sm font-medium text-slate-700">Upload Logo</span>
+                                                    </button>
+                                                    
+                                                    {/* Notifications - inline component */}
+                                                    <div className="col-span-2 md:col-span-2">
+                                                        <NotificationSettings 
+                                                            pollId={viewState.poll.id}
+                                                            adminKey={(() => {
+                                                                const hash = window.location.hash.slice(1);
+                                                                const params = new URLSearchParams(hash);
+                                                                return params.get('admin') || '';
+                                                            })()}
+                                                            pollTitle={viewState.poll.title}
+                                                            tier={(() => {
+                                                                const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+                                                                return tier || 'free';
+                                                            })()}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
@@ -664,6 +712,19 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+                
+                {/* Embed Poll Modal */}
+                {viewState.type === 'results' && (
+                    <EmbedModal
+                        poll={viewState.poll}
+                        isOpen={showEmbedModal}
+                        onClose={() => setShowEmbedModal(false)}
+                        isPremium={(() => {
+                            const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+                            return tier === 'pro' || tier === 'business';
+                        })()}
+                    />
+                )}
             </main>
             </>
             )}

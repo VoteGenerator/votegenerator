@@ -1,110 +1,641 @@
 // ============================================================================
-// PricingPage - Subscription-based pricing with Monthly/Annual toggle
+// PricingPage - Comprehensive Feature Comparison
+// Organized by category with tooltips, visual hierarchy, and clear CTAs
+// Updated: Pro $19/mo ($190/yr), Business $49/mo ($490/yr)
 // ============================================================================
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Check, X, Zap, Crown, Users, BarChart3, Clock, ArrowRight, Star, 
-    ChevronDown, Sparkles, Shield, BadgeCheck, Lock, Download, Timer
+    ChevronDown, Sparkles, Shield, BadgeCheck, Lock, Download, HelpCircle,
+    Palette, Code, Globe, QrCode, Mail, Eye, FileText, Image, Bell,
+    CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal,
+    CircleCheck, MousePointer, Key, AlertTriangle, Smartphone, Share2,
+    Timer, TrendingUp, Layers, Building2, Headphones, MessageCircle
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 
 // =============================================================================
-// PRICING CONFIGURATION - Easy to update
+// PRICING CONFIGURATION - Limited Time USD Pricing
 // =============================================================================
 const PRICING = {
     pro: {
-        monthly: 19,
-        annual: 190, // 10 months (2 months free)
+        monthly: 16,
+        annual: 190,
     },
     business: {
-        monthly: 49,
-        annual: 490, // 10 months (2 months free)
+        monthly: 41,
+        annual: 490,
     }
 };
 
-const FEATURE_COMPARISON = [
-    { 
-        category: 'Polls & Responses', 
-        icon: BarChart3, 
+// =============================================================================
+// COMPREHENSIVE FEATURE LIST WITH TOOLTIPS
+// =============================================================================
+const FEATURE_SECTIONS = [
+    {
+        id: 'polls-responses',
+        name: 'Polls & Responses',
+        icon: BarChart3,
+        color: 'indigo',
         features: [
-            { name: 'Active polls', free: '3', pro: 'Unlimited', business: 'Unlimited' },
-            { name: 'Responses per month', free: '100', pro: '5,000', business: '50,000' },
-            { name: 'Poll duration', free: '30 days', pro: '1 year', business: '1 year' },
+            { 
+                name: 'Active polls', 
+                tooltip: 'Number of polls that can accept votes at the same time',
+                free: '3', 
+                pro: 'Unlimited', 
+                business: 'Unlimited' 
+            },
+            { 
+                name: 'Responses per month', 
+                tooltip: 'Total votes across all your polls each month. Resets on the 1st.',
+                free: '100', 
+                pro: '5,000', 
+                business: '50,000' 
+            },
+            { 
+                name: 'Poll duration', 
+                tooltip: 'How long polls stay active before auto-closing',
+                free: '30 days', 
+                pro: '1 year', 
+                business: 'Unlimited' 
+            },
+            { 
+                name: 'Response history', 
+                tooltip: 'How long we store your poll data',
+                free: '90 days', 
+                pro: '2 years', 
+                business: 'Forever' 
+            },
         ]
     },
-    { 
-        category: 'Poll Types', 
-        icon: BarChart3, 
+    {
+        id: 'poll-types',
+        name: 'Poll Types',
+        icon: Layers,
+        color: 'purple',
+        description: 'All 8 poll types included on every plan',
         features: [
-            { name: 'Multiple Choice', free: true, pro: true, business: true },
-            { name: 'Ranked Choice', free: true, pro: true, business: true },
-            { name: 'Rating Scale', free: true, pro: true, business: true },
-            { name: 'Yes/No/Maybe', free: true, pro: true, business: true },
-            { name: 'Matrix Poll', free: true, pro: true, business: true },
-            { name: 'Dot Voting', free: true, pro: true, business: true },
-            { name: 'Pairwise Comparison', free: true, pro: true, business: true },
-            { name: 'Visual Poll (images)', free: true, pro: true, business: true },
+            { 
+                name: 'Multiple Choice', 
+                tooltip: 'Pick one or more options from a list',
+                icon: CheckSquare,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Ranked Choice (IRV)', 
+                tooltip: 'Drag to rank options. Uses Instant Runoff Voting algorithm.',
+                icon: ListOrdered,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Meeting Poll', 
+                tooltip: 'Like Doodle. Find when everyone is available.',
+                icon: Calendar,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'This or That', 
+                tooltip: 'A vs B comparisons. Great for quick decisions.',
+                icon: ArrowLeftRight,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Rating Scale', 
+                tooltip: 'Rate each option 1-5 stars. See average ratings.',
+                icon: SlidersHorizontal,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'RSVP', 
+                tooltip: 'Simple Yes / No / Maybe for events',
+                icon: Users,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Visual Poll', 
+                tooltip: 'Upload images as options. Great for design feedback.',
+                icon: Image,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Dot Voting', 
+                tooltip: 'Distribute points across options. Also called multi-voting.',
+                icon: CircleCheck,
+                free: true, 
+                pro: true, 
+                business: true 
+            },
         ]
     },
-    { 
-        category: 'Customization', 
-        icon: BarChart3, 
+    {
+        id: 'customization',
+        name: 'Customization & Branding',
+        icon: Palette,
+        color: 'pink',
         features: [
-            { name: 'Basic themes', free: '3', pro: 'All premium', business: 'All premium' },
-            { name: 'Remove VoteGenerator badge', free: false, pro: true, business: true },
-            { name: 'Upload custom logo', free: false, pro: false, business: true },
-            { name: 'Custom colors', free: false, pro: true, business: true },
+            { 
+                name: 'Basic themes', 
+                tooltip: 'Pre-built color schemes for your polls',
+                free: '3 themes', 
+                pro: 'All 12+ themes', 
+                business: 'All 12+ themes' 
+            },
+            { 
+                name: 'Remove VoteGenerator badge', 
+                tooltip: 'Hide the "Powered by VoteGenerator" branding',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Custom colors', 
+                tooltip: 'Set your own brand colors for polls',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Upload custom logo', 
+                tooltip: 'Add your company logo to polls',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Custom thank-you message', 
+                tooltip: 'Show a personalized message after voting',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Custom short links', 
+                tooltip: 'Create memorable URLs like votegenerator.com/p/your-poll',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
         ]
     },
-    { 
-        category: 'Security', 
-        icon: Lock, 
+    {
+        id: 'sharing',
+        name: 'Sharing & Distribution',
+        icon: Share2,
+        color: 'blue',
         features: [
-            { name: 'IP duplicate prevention', free: true, pro: true, business: true },
-            { name: 'Cookie-based protection', free: true, pro: true, business: true },
-            { name: 'PIN code access', free: false, pro: true, business: true },
-            { name: 'One-time vote links', free: false, pro: true, business: true },
-            { name: 'IP filtering', free: false, pro: false, business: true },
+            { 
+                name: 'Shareable link', 
+                tooltip: 'Simple URL anyone can click to vote',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'QR code', 
+                tooltip: 'Scannable code for in-person events',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Embed on website', 
+                tooltip: 'Add polls to any website with an iframe',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Social sharing', 
+                tooltip: 'One-click share to WhatsApp, Twitter, etc.',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Email admin link', 
+                tooltip: 'Send yourself the poll management link',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Embed domain restriction', 
+                tooltip: 'Only allow embedding on specific domains',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
         ]
     },
-    { 
-        category: 'Export & Analytics', 
-        icon: Download, 
+    {
+        id: 'security',
+        name: 'Security & Anti-Fraud',
+        icon: Shield,
+        color: 'emerald',
         features: [
-            { name: 'View results', free: true, pro: true, business: true },
-            { name: 'Real-time updates', free: true, pro: true, business: true },
-            { name: 'Export CSV', free: false, pro: true, business: true },
-            { name: 'Export Excel', free: false, pro: true, business: true },
-            { name: 'Export PDF reports', free: false, pro: false, business: true },
-            { name: 'Advanced analytics', free: false, pro: false, business: true },
+            { 
+                name: 'Browser fingerprinting', 
+                tooltip: 'Detect duplicate votes from the same browser',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'IP duplicate prevention', 
+                tooltip: 'Block multiple votes from the same IP address',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Honeypot spam protection', 
+                tooltip: 'Invisible fields that catch bot submissions',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Minimum vote time check', 
+                tooltip: 'Reject suspiciously fast votes (likely bots)',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'PIN code access', 
+                tooltip: 'Require a PIN to view or vote on polls',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'One-time vote codes', 
+                tooltip: 'Generate unique codes for controlled voting',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'IP allowlist/blocklist', 
+                tooltip: 'Only allow votes from specific IP ranges',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'Suspicious activity alerts', 
+                tooltip: 'Get notified of potential vote manipulation',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
         ]
     },
-    { 
-        category: 'Support', 
-        icon: Users, 
+    {
+        id: 'results',
+        name: 'Results & Analytics',
+        icon: TrendingUp,
+        color: 'amber',
         features: [
-            { name: 'Documentation', free: true, pro: true, business: true },
-            { name: 'Email support', free: false, pro: true, business: true },
-            { name: 'Priority support', free: false, pro: false, business: true },
+            { 
+                name: 'Real-time results', 
+                tooltip: 'Watch votes appear instantly as they come in',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Visual charts', 
+                tooltip: 'Bar charts, pie charts, and result visualizations',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Hide results until closed', 
+                tooltip: 'Keep results private until voting ends',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Response timeline', 
+                tooltip: 'See when votes came in over time',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Device breakdown', 
+                tooltip: 'See what devices voters used (mobile/desktop)',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Geographic distribution', 
+                tooltip: 'See where voters are located by country',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Hourly heatmap', 
+                tooltip: 'See what times of day get the most votes',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'Cross-tabulation filters', 
+                tooltip: 'Filter results by device, location, etc.',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Comment word cloud', 
+                tooltip: 'Visualize common themes in text responses',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+        ]
+    },
+    {
+        id: 'export',
+        name: 'Export & Reports',
+        icon: Download,
+        color: 'violet',
+        features: [
+            { 
+                name: 'View results online', 
+                tooltip: 'See results in your browser anytime',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Print results', 
+                tooltip: 'Print-friendly view for physical copies',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Export CSV', 
+                tooltip: 'Download raw data as comma-separated values',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Export Excel', 
+                tooltip: 'Download as .xlsx with formatting',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'PDF reports', 
+                tooltip: 'Generate professional PDF summaries',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Shareable results link', 
+                tooltip: 'Public link to view results (even without admin access)',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+        ]
+    },
+    {
+        id: 'management',
+        name: 'Poll Management',
+        icon: MousePointer,
+        color: 'sky',
+        features: [
+            { 
+                name: 'Admin dashboard', 
+                tooltip: 'Central place to manage all your polls',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Edit polls after creation', 
+                tooltip: 'Change questions, options, and settings',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Pause/Resume voting', 
+                tooltip: 'Temporarily stop accepting votes',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Close polls manually', 
+                tooltip: 'End voting and lock in final results',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Undo close (5 min)', 
+                tooltip: 'Reopen a poll within 5 minutes of closing',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Email notifications', 
+                tooltip: 'Get notified when votes come in',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Scheduled close', 
+                tooltip: 'Auto-close polls at a specific date/time',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Version history', 
+                tooltip: 'See previous versions of edited polls',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'Duplicate polls', 
+                tooltip: 'Clone a poll as a starting point',
+                free: false, 
+                pro: true, 
+                business: true 
+            },
+        ]
+    },
+    {
+        id: 'support',
+        name: 'Support',
+        icon: Headphones,
+        color: 'rose',
+        features: [
+            { 
+                name: 'Help documentation', 
+                tooltip: 'Guides and tutorials in our help center',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Community support', 
+                tooltip: 'Get help from the VoteGenerator community',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Email support', 
+                tooltip: 'Get help from our team via email',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Priority support', 
+                tooltip: 'Faster response times from our team',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Response time SLA', 
+                tooltip: 'Guaranteed response within 24 hours',
+                free: '-', 
+                pro: '48 hours', 
+                business: '24 hours' 
+            },
         ]
     },
 ];
 
-const FeatureCell: React.FC<{ value: boolean | string }> = ({ value }) => {
-    if (typeof value === 'boolean') {
-        return value 
-            ? <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center mx-auto"><Check className="text-emerald-600" size={14} /></div> 
-            : <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center mx-auto"><X className="text-slate-400" size={14} /></div>;
-    }
-    return <span className="text-slate-700 text-sm font-semibold">{value}</span>;
+// =============================================================================
+// TOOLTIP COMPONENT
+// =============================================================================
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
+    const [show, setShow] = useState(false);
+    
+    return (
+        <span className="relative inline-flex items-center">
+            <span 
+                onMouseEnter={() => setShow(true)}
+                onMouseLeave={() => setShow(false)}
+                className="cursor-help"
+            >
+                {children}
+            </span>
+            <AnimatePresence>
+                {show && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-900 text-white text-xs rounded-lg shadow-xl z-50"
+                    >
+                        {text}
+                        <div className="absolute left-4 top-full border-4 border-transparent border-t-slate-900" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </span>
+    );
 };
 
+// =============================================================================
+// FEATURE CELL COMPONENT
+// =============================================================================
+const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier: string }> = ({ value, highlight, tier }) => {
+    const isHighlighted = highlight === tier;
+    
+    if (typeof value === 'boolean') {
+        return value ? (
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
+                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-100'
+            }`}>
+                <Check className={isHighlighted ? 'text-white' : 'text-emerald-600'} size={16} />
+            </div>
+        ) : (
+            <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+                <X className="text-slate-300" size={16} />
+            </div>
+        );
+    }
+    
+    if (value === '-') {
+        return <span className="text-slate-300">—</span>;
+    }
+    
+    return (
+        <span className={`text-sm font-semibold ${
+            isHighlighted ? 'text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full' : 'text-slate-700'
+        }`}>
+            {value}
+        </span>
+    );
+};
+
+// =============================================================================
+// MAIN PRICING PAGE
+// =============================================================================
 function PricingPage(): React.ReactElement {
     const [isAnnual, setIsAnnual] = useState(true);
-    const [showComparison, setShowComparison] = useState(false);
+    const [expandedSections, setExpandedSections] = useState<string[]>(['polls-responses', 'poll-types']);
+
+    const toggleSection = (id: string) => {
+        setExpandedSections(prev => 
+            prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+        );
+    };
+
+    const expandAll = () => setExpandedSections(FEATURE_SECTIONS.map(s => s.id));
+    const collapseAll = () => setExpandedSections([]);
 
     const getPrice = (tier: 'pro' | 'business') => {
         return isAnnual ? PRICING[tier].annual : PRICING[tier].monthly;
@@ -112,294 +643,224 @@ function PricingPage(): React.ReactElement {
 
     const getMonthlyEquivalent = (tier: 'pro' | 'business') => {
         if (isAnnual) {
-            return Math.round(PRICING[tier].annual / 12);
+            return Math.round(PRICING[tier].annual / 12 * 100) / 100;
         }
         return PRICING[tier].monthly;
     };
 
-    const TIERS = [
-        { 
-            id: 'free', 
-            name: 'Free', 
-            tagline: 'Perfect for trying out', 
-            price: 0, 
-            icon: Users, 
-            color: 'slate', 
-            cta: 'Start Free', 
-            ctaLink: '/create',
-            features: { 
-                polls: '3 active polls', 
-                responses: '100 responses/mo', 
-                types: 'All 8 poll types',
-                highlights: [
-                    'All poll types included',
-                    'Real-time results',
-                    'QR code sharing',
-                    'Embed on your site',
-                    'Basic themes',
-                ] 
-            }
-        },
-        { 
-            id: 'pro', 
-            name: 'Pro', 
-            tagline: 'For growing teams', 
-            price: getPrice('pro'),
-            monthlyEquiv: getMonthlyEquivalent('pro'),
-            icon: Zap, 
-            color: 'indigo',
-            popular: true,
-            cta: 'Get Pro', 
-            ctaLink: `/.netlify/functions/vg-checkout?tier=pro&billing=${isAnnual ? 'annual' : 'monthly'}`,
-            features: { 
-                polls: 'Business polls', 
-                responses: '5,000 responses/mo', 
-                types: 'All 8 poll types',
-                highlights: [
-                    'Everything in Free',
-                    'Remove VoteGenerator badge',
-                    'PIN code protection',
-                    'Export CSV & Excel',
-                    'All premium themes',
-                    'Email support',
-                ] 
-            }
-        },
-        { 
-            id: 'business', 
-            name: 'Business', 
-            tagline: 'For power users', 
-            price: getPrice('business'),
-            monthlyEquiv: getMonthlyEquivalent('business'),
-            icon: Crown, 
-            color: 'violet',
-            cta: 'Get Business', 
-            ctaLink: `/.netlify/functions/vg-checkout?tier=business&billing=${isAnnual ? 'annual' : 'monthly'}`,
-            features: { 
-                polls: 'Business polls', 
-                responses: '50,000 responses/mo', 
-                types: 'All 8 poll types',
-                highlights: [
-                    'Everything in Pro',
-                    'Upload custom logo',
-                    'PDF reports',
-                    'Advanced analytics',
-                    'IP filtering',
-                    'Priority support',
-                ] 
-            }
-        },
-    ];
-
-    const colorClasses: Record<string, { bg: string; text: string; border: string; button: string }> = {
-        slate: { 
-            bg: 'bg-slate-100', 
-            text: 'text-slate-600', 
-            border: 'border-slate-200',
-            button: 'bg-slate-800 hover:bg-slate-900 text-white',
-        },
-        indigo: { 
-            bg: 'bg-indigo-100', 
-            text: 'text-indigo-600', 
-            border: 'border-indigo-500',
-            button: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-        },
-        violet: { 
-            bg: 'bg-violet-100', 
-            text: 'text-violet-600', 
-            border: 'border-violet-300',
-            button: 'bg-violet-600 hover:bg-violet-700 text-white',
-        },
-    };
-
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+        <div className="min-h-screen bg-slate-50">
             <NavHeader />
-
-            {/* Limited Time Pricing Banner */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 py-3">
-                <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3 text-white">
-                    <Timer size={20} className="animate-pulse" />
-                    <span className="font-bold">🎉 Limited Time Launch Pricing</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="hidden sm:inline text-amber-100">Lock in these rates before they increase</span>
+            
+            {/* Hero */}
+            <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 pt-16 pb-32">
+                <div className="max-w-4xl mx-auto px-4 text-center">
+                    <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+                        Simple, transparent pricing
+                    </h1>
+                    <p className="text-xl text-indigo-100 mb-8">
+                        Start free. Upgrade when you need more.
+                    </p>
+                    
+                    {/* Billing toggle */}
+                    <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full p-1.5">
+                        <button
+                            onClick={() => setIsAnnual(false)}
+                            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition ${
+                                !isAnnual
+                                    ? 'bg-white text-indigo-700 shadow'
+                                    : 'text-white hover:bg-white/10'
+                            }`}
+                        >
+                            Monthly
+                        </button>
+                        <button
+                            onClick={() => setIsAnnual(true)}
+                            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition flex items-center gap-2 ${
+                                isAnnual
+                                    ? 'bg-white text-indigo-700 shadow'
+                                    : 'text-white hover:bg-white/10'
+                            }`}
+                        >
+                            Annual
+                            <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">
+                                2 MONTHS FREE
+                            </span>
+                        </button>
+                    </div>
+                    <p className="text-indigo-200 text-sm mt-4">
+                        💰 Limited time USD pricing • Lock in these rates today
+                    </p>
                 </div>
-            </div>
-
-            {/* Header */}
-            <div className="max-w-7xl mx-auto px-4 pt-16 pb-8 text-center">
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium mb-6"
-                >
-                    <Shield size={16} /> No signup required • Privacy-first
-                </motion.div>
-                
-                <motion.h1 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: 0.1 }} 
-                    className="text-4xl md:text-5xl font-bold text-slate-900 mb-4"
-                >
-                    Simple, Transparent Pricing
-                </motion.h1>
-                
-                <motion.p 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: 0.2 }} 
-                    className="text-xl text-slate-600 max-w-2xl mx-auto mb-8"
-                >
-                    Start free. Upgrade when you need more.
-                </motion.p>
-
-                {/* Billing Toggle */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: 0.3 }}
-                    className="inline-flex items-center gap-4 p-1.5 bg-slate-100 rounded-xl"
-                >
-                    <button
-                        onClick={() => setIsAnnual(false)}
-                        className={`px-5 py-2.5 rounded-lg font-medium transition-all ${
-                            !isAnnual 
-                                ? 'bg-white text-slate-900 shadow-sm' 
-                                : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        onClick={() => setIsAnnual(true)}
-                        className={`px-5 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                            isAnnual 
-                                ? 'bg-white text-slate-900 shadow-sm' 
-                                : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                        Annual
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                            2 months free
-                        </span>
-                    </button>
-                </motion.div>
             </div>
 
             {/* Pricing Cards */}
-            <div className="max-w-5xl mx-auto px-4 pb-16">
-                <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-                    {TIERS.map((tier, index) => {
-                        const colors = colorClasses[tier.color];
-                        const Icon = tier.icon;
+            <div className="max-w-5xl mx-auto px-4 -mt-20">
+                <div className="grid md:grid-cols-3 gap-6">
+                    {/* Free */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-lg"
+                    >
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                                <Users className="text-slate-600" size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900">Free</h3>
+                                <p className="text-xs text-slate-500">For trying out</p>
+                            </div>
+                        </div>
                         
-                        return (
-                            <motion.div 
-                                key={tier.id} 
-                                initial={{ opacity: 0, y: 20 }} 
-                                animate={{ opacity: 1, y: 0 }} 
-                                transition={{ delay: 0.1 + index * 0.1 }}
-                                className={`relative rounded-2xl border-2 ${
-                                    tier.popular ? 'border-indigo-500 shadow-xl shadow-indigo-100' : colors.border
-                                } bg-white overflow-hidden flex flex-col`}
-                            >
-                                {/* Popular Badge */}
-                                {tier.popular && (
-                                    <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-2 text-sm font-bold flex items-center justify-center gap-2">
-                                        <Star size={14} fill="currentColor" /> Most Popular
-                                    </div>
-                                )}
-                                
-                                <div className={`p-6 lg:p-8 flex-1 flex flex-col ${tier.popular ? 'pt-14' : ''}`}>
-                                    {/* Icon & Name */}
-                                    <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center mb-4`}>
-                                        <Icon className={colors.text} size={24} />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-slate-900">{tier.name}</h3>
-                                    <p className="text-slate-500 text-sm mt-1 mb-4">{tier.tagline}</p>
-                                    
-                                    {/* Price */}
-                                    <div className="mb-6">
-                                        {tier.price === 0 ? (
-                                            <div>
-                                                <span className="text-4xl font-bold text-slate-900">$0</span>
-                                                <span className="text-slate-500 ml-2">USD forever</span>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                {isAnnual ? (
-                                                    <>
-                                                        <div className="flex items-baseline gap-2">
-                                                            <span className="text-4xl font-bold text-slate-900">
-                                                                ${tier.monthlyEquiv}
-                                                            </span>
-                                                            <span className="text-slate-500">USD/mo</span>
-                                                        </div>
-                                                        <p className="text-sm text-slate-500 mt-1">
-                                                            ${tier.price} USD/year • billed annually
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-baseline gap-2">
-                                                            <span className="text-4xl font-bold text-slate-900">
-                                                                ${tier.price}
-                                                            </span>
-                                                            <span className="text-slate-500">USD/mo</span>
-                                                        </div>
-                                                        <p className="text-sm text-slate-500 mt-1">
-                                                            billed monthly
-                                                        </p>
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Key Stats */}
-                                    <div className="space-y-2 py-4 border-y border-slate-100 mb-4">
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <BarChart3 size={16} className="text-slate-400" />
-                                            <span className="text-slate-700 font-medium">{tier.features.polls}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <Users size={16} className="text-slate-400" />
-                                            <span className="text-slate-700 font-medium">{tier.features.responses}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-sm">
-                                            <Check size={16} className="text-slate-400" />
-                                            <span className="text-slate-700 font-medium">{tier.features.types}</span>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Features List */}
-                                    <ul className="space-y-3 mb-6 flex-1">
-                                        {tier.features.highlights.map((feature, i) => (
-                                            <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                                <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                                                {feature}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    
-                                    {/* CTA Button */}
-                                    <a 
-                                        href={tier.ctaLink} 
-                                        className={`w-full py-3.5 ${colors.button} font-semibold rounded-xl transition flex items-center justify-center gap-2 text-center`}
-                                    >
-                                        {tier.cta}
-                                        <ArrowRight size={18} />
-                                    </a>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
+                        <div className="mb-6">
+                            <span className="text-4xl font-black text-slate-900">$0</span>
+                            <span className="text-slate-500 ml-1">forever</span>
+                        </div>
+                        
+                        <ul className="space-y-3 mb-8">
+                            {[
+                                '3 active polls',
+                                '100 responses/month',
+                                'All 8 poll types',
+                                'Real-time results',
+                                'QR codes & embedding',
+                                '3 basic themes',
+                            ].map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                                    <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
+                                </li>
+                            ))}
+                        </ul>
+                        
+                        <a 
+                            href="/create" 
+                            className="block w-full py-3.5 text-center bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition"
+                        >
+                            Start Free
+                        </a>
+                    </motion.div>
+
+                    {/* Pro */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden md:scale-105 md:-my-4"
+                    >
+                        <div className="absolute top-0 right-0 bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-bl-xl">
+                            MOST POPULAR
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <Zap className="text-amber-300" size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold">Pro</h3>
+                                <p className="text-xs text-indigo-200">For growing teams</p>
+                            </div>
+                        </div>
+                        
+                        <div className="mb-1">
+                            <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}</span>
+                            <span className="text-indigo-200 ml-1">/month</span>
+                        </div>
+                        {isAnnual ? (
+                            <p className="text-sm text-indigo-200 mb-6">
+                                ${getPrice('pro')} billed annually
+                            </p>
+                        ) : (
+                            <p className="text-sm text-indigo-200 mb-6">
+                                Limited time pricing
+                            </p>
+                        )}
+                        
+                        <ul className="space-y-3 mb-8">
+                            {[
+                                'Unlimited polls',
+                                '5,000 responses/month',
+                                'Remove VoteGenerator badge',
+                                'All premium themes',
+                                'CSV & Excel export',
+                                'Email notifications',
+                                'PIN code access',
+                                'Email support',
+                            ].map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-indigo-100">
+                                    <Check size={18} className="text-amber-300 flex-shrink-0 mt-0.5" /> {f}
+                                </li>
+                            ))}
+                        </ul>
+                        
+                        <a 
+                            href={`/.netlify/functions/vg-checkout?tier=pro&billing=${isAnnual ? 'annual' : 'monthly'}`}
+                            className="block w-full py-3.5 text-center bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition"
+                        >
+                            Get Pro
+                        </a>
+                    </motion.div>
+
+                    {/* Business */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg"
+                    >
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                                <Crown className="text-amber-400" size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold">Business</h3>
+                                <p className="text-xs text-slate-400">For organizations</p>
+                            </div>
+                        </div>
+                        
+                        <div className="mb-1">
+                            <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}</span>
+                            <span className="text-slate-400 ml-1">/month</span>
+                        </div>
+                        {isAnnual ? (
+                            <p className="text-sm text-slate-400 mb-6">
+                                ${getPrice('business')} billed annually
+                            </p>
+                        ) : (
+                            <p className="text-sm text-slate-400 mb-6">
+                                Limited time pricing
+                            </p>
+                        )}
+                        
+                        <ul className="space-y-3 mb-8">
+                            {[
+                                'Everything in Pro',
+                                '50,000 responses/month',
+                                'Upload custom logo',
+                                'Custom short links',
+                                'PDF reports',
+                                'Advanced analytics',
+                                'Version history',
+                                'Priority support (24h)',
+                            ].map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                                    <Check size={18} className="text-amber-400 flex-shrink-0 mt-0.5" /> {f}
+                                </li>
+                            ))}
+                        </ul>
+                        
+                        <a 
+                            href={`/.netlify/functions/vg-checkout?tier=business&billing=${isAnnual ? 'annual' : 'monthly'}`}
+                            className="block w-full py-3.5 text-center bg-amber-500 text-slate-900 font-semibold rounded-xl hover:bg-amber-400 transition"
+                        >
+                            Get Business
+                        </a>
+                    </motion.div>
                 </div>
             </div>
 
-            {/* Trust Badges */}
-            <div className="max-w-4xl mx-auto px-4 pb-12">
+            {/* Trust badges */}
+            <div className="max-w-4xl mx-auto px-4 py-8">
                 <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
                     <div className="flex items-center gap-2">
                         <Shield size={18} className="text-slate-400" />
@@ -416,70 +877,133 @@ function PricingPage(): React.ReactElement {
                 </div>
             </div>
 
-            {/* Feature Comparison Toggle */}
-            <div className="max-w-5xl mx-auto px-4 pb-8">
-                <button 
-                    onClick={() => setShowComparison(!showComparison)} 
-                    className="w-full py-4 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold text-slate-700 transition flex items-center justify-center gap-2"
-                >
-                    {showComparison ? 'Hide' : 'Show'} Full Feature Comparison 
-                    <ChevronDown className={`transition-transform ${showComparison ? 'rotate-180' : ''}`} size={20} />
-                </button>
-            </div>
+            {/* Full Feature Comparison */}
+            <div className="max-w-6xl mx-auto px-4 py-16">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2">Full Feature Comparison</h2>
+                    <p className="text-slate-500">Everything included in each plan, explained.</p>
+                </div>
 
-            {/* Feature Comparison Table */}
-            <AnimatePresence>
-                {showComparison && (
-                    <motion.div 
-                        initial={{ opacity: 0, height: 0 }} 
-                        animate={{ opacity: 1, height: 'auto' }} 
-                        exit={{ opacity: 0, height: 0 }}
-                        className="max-w-5xl mx-auto px-4 pb-16 overflow-hidden"
+                {/* Expand/Collapse controls */}
+                <div className="flex justify-end gap-3 mb-4">
+                    <button 
+                        onClick={expandAll}
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
                     >
-                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b-2 border-slate-200 bg-slate-50">
-                                            <th className="py-4 px-6 text-left text-sm font-bold text-slate-900 min-w-[200px]">Feature</th>
-                                            <th className="py-4 px-4 text-center text-sm font-bold text-slate-600 w-28">Free</th>
-                                            <th className="py-4 px-4 text-center text-sm font-bold text-indigo-700 w-28 bg-indigo-50">Pro</th>
-                                            <th className="py-4 px-4 text-center text-sm font-bold text-violet-700 w-28 bg-violet-50">Business</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {FEATURE_COMPARISON.map((section, si) => (
-                                            <React.Fragment key={si}>
-                                                <tr className="bg-slate-50">
-                                                    <td colSpan={4} className="py-3 px-6">
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
-                                                            <section.icon size={14} />
-                                                            {section.category}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                {section.features.map((f, fi) => (
-                                                    <tr key={fi} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                                        <td className="py-3 px-6 text-sm text-slate-700">{f.name}</td>
-                                                        <td className="py-3 px-4 text-center"><FeatureCell value={f.free} /></td>
-                                                        <td className="py-3 px-4 text-center bg-indigo-50/30"><FeatureCell value={f.pro} /></td>
-                                                        <td className="py-3 px-4 text-center bg-violet-50/30"><FeatureCell value={f.business} /></td>
-                                                    </tr>
-                                                ))}
-                                            </React.Fragment>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                        Expand all
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button 
+                        onClick={collapseAll}
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                        Collapse all
+                    </button>
+                </div>
+
+                {/* Feature sections */}
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
+                    {/* Header row - sticky */}
+                    <div className="grid grid-cols-4 bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                        <div className="py-4 px-6 text-left text-sm font-bold text-slate-700">
+                            Feature
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        <div className="py-4 px-4 text-center">
+                            <span className="text-sm font-bold text-slate-600">Free</span>
+                            <div className="text-xs text-slate-400">$0</div>
+                        </div>
+                        <div className="py-4 px-4 text-center bg-indigo-50">
+                            <span className="text-sm font-bold text-indigo-700">Pro</span>
+                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}/mo</div>
+                        </div>
+                        <div className="py-4 px-4 text-center bg-slate-100">
+                            <span className="text-sm font-bold text-slate-700">Business</span>
+                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}/mo</div>
+                        </div>
+                    </div>
+
+                    {/* Sections */}
+                    {FEATURE_SECTIONS.map((section) => {
+                        const isExpanded = expandedSections.includes(section.id);
+                        const IconComponent = section.icon;
+                        
+                        return (
+                            <div key={section.id} className="border-b border-slate-100 last:border-b-0">
+                                {/* Section header */}
+                                <button
+                                    onClick={() => toggleSection(section.id)}
+                                    className="w-full grid grid-cols-4 items-center bg-slate-50/50 hover:bg-slate-50 transition"
+                                >
+                                    <div className="py-4 px-6 text-left flex items-center gap-3">
+                                        <div className={`w-8 h-8 bg-${section.color}-100 rounded-lg flex items-center justify-center`}>
+                                            <IconComponent className={`text-${section.color}-600`} size={16} />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold text-slate-900">{section.name}</span>
+                                            {section.description && (
+                                                <p className="text-xs text-slate-500">{section.description}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2" />
+                                    <div className="py-4 px-6 text-right">
+                                        <ChevronDown 
+                                            className={`inline text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                                            size={20} 
+                                        />
+                                    </div>
+                                </button>
+
+                                {/* Features */}
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                        >
+                                            {section.features.map((feature, fi) => (
+                                                <div 
+                                                    key={fi} 
+                                                    className="grid grid-cols-4 items-center border-t border-slate-100 hover:bg-slate-50/30"
+                                                >
+                                                    <div className="py-3 px-6 pl-16 text-left">
+                                                        <Tooltip text={feature.tooltip}>
+                                                            <span className="text-sm text-slate-700 inline-flex items-center gap-1.5">
+                                                                {'icon' in feature && feature.icon && (
+                                                                    <feature.icon size={14} className="text-slate-400" />
+                                                                )}
+                                                                {feature.name}
+                                                                <HelpCircle size={12} className="text-slate-300" />
+                                                            </span>
+                                                        </Tooltip>
+                                                    </div>
+                                                    <div className="py-3 px-4 text-center">
+                                                        <FeatureCell value={feature.free} highlight={feature.highlight} tier="free" />
+                                                    </div>
+                                                    <div className="py-3 px-4 text-center bg-indigo-50/30">
+                                                        <FeatureCell value={feature.pro} highlight={feature.highlight} tier="pro" />
+                                                    </div>
+                                                    <div className="py-3 px-4 text-center bg-slate-50/50">
+                                                        <FeatureCell value={feature.business} highlight={feature.highlight} tier="business" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
             {/* FAQ Section */}
             <div className="max-w-3xl mx-auto px-4 pb-16">
                 <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">Frequently Asked Questions</h2>
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {[
                         { 
                             q: 'Can I cancel anytime?', 
@@ -487,25 +1011,37 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'What happens if I hit my response limit?', 
-                            a: 'Your existing polls will stop accepting new responses until the next billing cycle. You can upgrade anytime to increase your limit.' 
+                            a: 'Your polls will stop accepting new responses until the next billing cycle. You can upgrade anytime to get more responses immediately. Existing responses are never deleted.' 
                         },
                         { 
                             q: 'Do I need to create an account?', 
-                            a: 'Nope! VoteGenerator is privacy-first. No signup required. We\'ll email you a secure link to manage your polls.' 
+                            a: 'Nope! VoteGenerator is privacy-first. No signup required for any plan. We\'ll email you a secure link to manage your polls and subscription.' 
                         },
                         { 
-                            q: 'What\'s included in the free plan?', 
-                            a: 'All 8 poll types, 3 active polls, 100 responses/month, real-time results, QR codes, and embedding. Everything you need to get started!' 
+                            q: 'How does "2 months free" work?', 
+                            a: 'Annual plans are priced at 10 months instead of 12. Pro is $190/year (instead of $192 monthly) and Business is $490/year (instead of $492 monthly). You\'re essentially getting 2 months completely free! Plus, these are limited-time USD rates locked in for as long as you stay subscribed.' 
                         },
                         { 
-                            q: 'How does the "2 months free" work?', 
-                            a: 'Annual plans are priced at 10 months instead of 12. So you get 2 months completely free compared to paying monthly!' 
+                            q: 'Can I switch plans later?', 
+                            a: 'Absolutely! You can upgrade or downgrade at any time. When upgrading, you\'ll be charged the prorated difference. When downgrading, credit is applied to future billing.' 
+                        },
+                        { 
+                            q: 'Do you offer refunds?', 
+                            a: 'We offer a 14-day money-back guarantee on all paid plans. If you\'re not satisfied, contact support for a full refund.' 
+                        },
+                        { 
+                            q: 'What payment methods do you accept?', 
+                            a: 'We accept all major credit cards (Visa, Mastercard, American Express) and some debit cards. Payments are securely processed by Stripe.' 
+                        },
+                        { 
+                            q: 'Is there a discount for nonprofits or education?', 
+                            a: 'Yes! We offer 50% off for verified nonprofits and educational institutions. Contact support@votegenerator.com with your organization details.' 
                         },
                     ].map((faq, i) => (
                         <details key={i} className="group bg-white rounded-xl border border-slate-200 overflow-hidden">
-                            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between font-medium text-slate-900 hover:bg-slate-50">
+                            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between font-medium text-slate-900 hover:bg-slate-50 list-none">
                                 {faq.q}
-                                <ChevronDown className="text-slate-400 group-open:rotate-180 transition-transform" size={20} />
+                                <ChevronDown className="text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0" size={20} />
                             </summary>
                             <div className="px-6 pb-4 text-slate-600">{faq.a}</div>
                         </details>
@@ -514,9 +1050,9 @@ function PricingPage(): React.ReactElement {
             </div>
 
             {/* CTA Section */}
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 py-16">
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 py-16">
                 <div className="max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Ready to create your poll?</h2>
+                    <h2 className="text-3xl font-bold text-white mb-4">Ready to create your first poll?</h2>
                     <p className="text-indigo-100 mb-8">Start free. No credit card required.</p>
                     <a 
                         href="/create" 

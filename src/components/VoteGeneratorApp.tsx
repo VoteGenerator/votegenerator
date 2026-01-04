@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key, Code, Image as ImageIcon, Bell, ShieldAlert } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key, Code, Image as ImageIcon, Bell, ShieldAlert, Filter } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -21,6 +21,7 @@ import HourlyHeatmap from './HourlyHeatmap';
 import GeoChart from './GeoChart';
 import CommentWordCloud from './CommentWordCloud';
 import DateRangeFilter, { useDateRangeFilter } from './DateRangeFilter';
+import CrossTabFilter from './CrossTabFilter';
 import { AnimatedCounter, PulseIndicator, Skeleton } from './AnimatedComponents';
 import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
@@ -49,6 +50,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [showEmbedModal, setShowEmbedModal] = useState(false);
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
     const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+    const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -544,57 +546,6 @@ const VoteGeneratorApp: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* ⚠️ ADMIN LINK WARNING BANNER */}
-                                {viewState.isAdmin && !isAdminLinkSaved() && !adminLinkWarningDismissed && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="mb-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <AlertTriangle size={20} className="text-amber-600" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-amber-800 mb-1">Save Your Admin Link!</h4>
-                                                <p className="text-sm text-amber-700 mb-3">
-                                                    This is the only way to access your poll dashboard. If you lose this link, you won't be able to manage your poll.
-                                                </p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            const adminUrl = window.location.href;
-                                                            navigator.clipboard.writeText(adminUrl);
-                                                            markAdminLinkSaved();
-                                                            setCopiedAdmin(true);
-                                                            setTimeout(() => setCopiedAdmin(false), 2000);
-                                                        }}
-                                                        className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
-                                                    >
-                                                        {copiedAdmin ? <Check size={16} /> : <Copy size={16} />}
-                                                        {copiedAdmin ? 'Copied!' : 'Copy Admin Link'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            markAdminLinkSaved();
-                                                            setAdminLinkWarningDismissed(true);
-                                                        }}
-                                                        className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
-                                                    >
-                                                        I've saved it
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setAdminLinkWarningDismissed(true)}
-                                                        className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
-                                                    >
-                                                        Dismiss
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-
                                 {/* --- POLL CONTAINER (Unified for Admin) --- */}
                                 <div className={viewState.isAdmin ? "bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm transition-all" : ""}>
                                     
@@ -985,27 +936,56 @@ const VoteGeneratorApp: React.FC = () => {
                                                                 />
                                                             </div>
                                                             
-                                                            {filteredVotes.length === 0 ? (
-                                                                <div className="bg-slate-50 rounded-xl p-8 text-center">
-                                                                    <Calendar size={32} className="text-slate-300 mx-auto mb-2" />
-                                                                    <p className="text-slate-500 text-sm">No votes in selected date range</p>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                                    {/* Hourly Heatmap */}
-                                                                    <HourlyHeatmap votes={filteredVotes} />
-                                                                    
-                                                                    {/* Geographic Distribution */}
-                                                                    <GeoChart votes={filteredVotes} maxCountries={5} />
-                                                                    
-                                                                    {/* Comment Word Cloud */}
-                                                                    {filteredComments.length >= 3 && (
-                                                                        <div className="lg:col-span-2">
-                                                                            <CommentWordCloud comments={filteredComments} maxWords={15} />
+                                                            {/* Cross-Tabulation Filters */}
+                                                            <div className="mb-4">
+                                                                <CrossTabFilter 
+                                                                    votes={filteredVotes}
+                                                                    onFilteredVotesChange={setCrossTabFilteredVotes}
+                                                                />
+                                                            </div>
+                                                            
+                                                            {(() => {
+                                                                // Use cross-tab filtered votes if filters are active, otherwise use date-filtered votes
+                                                                const displayVotes = crossTabFilteredVotes.length > 0 || 
+                                                                    (crossTabFilteredVotes.length === 0 && filteredVotes.length > 0) 
+                                                                    ? crossTabFilteredVotes 
+                                                                    : filteredVotes;
+                                                                
+                                                                if (displayVotes.length === 0 && filteredVotes.length > 0) {
+                                                                    return (
+                                                                        <div className="bg-slate-50 rounded-xl p-8 text-center">
+                                                                            <Filter size={32} className="text-slate-300 mx-auto mb-2" />
+                                                                            <p className="text-slate-500 text-sm">No votes match the selected filters</p>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                    );
+                                                                }
+                                                                
+                                                                if (filteredVotes.length === 0) {
+                                                                    return (
+                                                                        <div className="bg-slate-50 rounded-xl p-8 text-center">
+                                                                            <Calendar size={32} className="text-slate-300 mx-auto mb-2" />
+                                                                            <p className="text-slate-500 text-sm">No votes in selected date range</p>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                
+                                                                return (
+                                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                        {/* Hourly Heatmap */}
+                                                                        <HourlyHeatmap votes={displayVotes} />
+                                                                        
+                                                                        {/* Geographic Distribution */}
+                                                                        <GeoChart votes={displayVotes} maxCountries={5} />
+                                                                        
+                                                                        {/* Comment Word Cloud */}
+                                                                        {filteredComments.length >= 3 && (
+                                                                            <div className="lg:col-span-2">
+                                                                                <CommentWordCloud comments={filteredComments} maxWords={15} />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                             
                                                             {/* Blocked Votes Alert (if any) */}
                                                             {(viewState.poll as any).blockedVotes?.total > 0 && (

@@ -10,7 +10,8 @@ import {
     Play,
     Pause,
     RefreshCw,
-    Radio
+    Radio,
+    Undo2
 } from 'lucide-react';
 
 interface Props {
@@ -34,6 +35,43 @@ const DraftLiveToggle: React.FC<Props> = ({
     const [clearVotes, setClearVotes] = useState(true);
     const [justChanged, setJustChanged] = useState(false);
     const [closeConfirmed, setCloseConfirmed] = useState(false);
+    const [closedAt, setClosedAt] = useState<number | null>(null);
+    const [undoTimeLeft, setUndoTimeLeft] = useState<number>(0);
+    
+    const UNDO_GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    // Timer for undo grace period
+    React.useEffect(() => {
+        if (!closedAt) return;
+        
+        const updateTimer = () => {
+            const elapsed = Date.now() - closedAt;
+            const remaining = Math.max(0, UNDO_GRACE_PERIOD - elapsed);
+            setUndoTimeLeft(remaining);
+            
+            if (remaining <= 0) {
+                setClosedAt(null);
+            }
+        };
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [closedAt]);
+    
+    // Check localStorage for recent close on mount
+    React.useEffect(() => {
+        const savedClosedAt = localStorage.getItem(`poll_closed_at_${pollId}`);
+        if (savedClosedAt && currentStatus === 'closed') {
+            const closedTime = parseInt(savedClosedAt, 10);
+            const elapsed = Date.now() - closedTime;
+            if (elapsed < UNDO_GRACE_PERIOD) {
+                setClosedAt(closedTime);
+            } else {
+                localStorage.removeItem(`poll_closed_at_${pollId}`);
+            }
+        }
+    }, [pollId, currentStatus]);
 
     const updateStatus = async (newStatus: string, clearExistingVotes: boolean = false) => {
         setIsUpdating(true);
@@ -55,12 +93,35 @@ const DraftLiveToggle: React.FC<Props> = ({
                 setTimeout(() => setJustChanged(false), 2000);
                 onStatusChange?.(newStatus);
                 setShowConfirm(null);
+                
+                // Track when poll was closed for undo feature
+                if (newStatus === 'closed') {
+                    const now = Date.now();
+                    setClosedAt(now);
+                    localStorage.setItem(`poll_closed_at_${pollId}`, now.toString());
+                } else {
+                    // Clear undo timer if reopening
+                    setClosedAt(null);
+                    localStorage.removeItem(`poll_closed_at_${pollId}`);
+                }
             }
         } catch (error) {
             console.error('Failed to update status:', error);
         } finally {
             setIsUpdating(false);
         }
+    };
+    
+    const handleUndo = async () => {
+        // Reopen the poll
+        await updateStatus('live');
+    };
+    
+    const formatTimeLeft = (ms: number) => {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
     };
 
     const statusConfig = {
@@ -244,14 +305,67 @@ const DraftLiveToggle: React.FC<Props> = ({
                 )}
 
                 {currentStatus === 'closed' && (
-                    <button
-                        onClick={() => updateStatus('live')}
-                        disabled={isUpdating}
-                        className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2"
-                    >
-                        <RefreshCw size={18} />
-                        Reopen Poll
-                    </button>
+                    <div className="space-y-3">
+                        {/* Undo Button with Countdown (within grace period) */}
+                        {undoTimeLeft > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <Undo2 size={20} className="text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-blue-800">Changed your mind?</p>
+                                            <p className="text-sm text-blue-600">
+                                                Undo available for {formatTimeLeft(undoTimeLeft)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleUndo}
+                                        disabled={isUpdating}
+                                        className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                    >
+                                        {isUpdating ? (
+                                            <Loader2 className="animate-spin" size={16} />
+                                        ) : (
+                                            <Undo2 size={16} />
+                                        )}
+                                        Undo Close
+                                    </button>
+                                </div>
+                                {/* Progress bar for time remaining */}
+                                <div className="mt-3 h-1.5 bg-blue-200 rounded-full overflow-hidden">
+                                    <motion.div
+                                        className="h-full bg-blue-500"
+                                        initial={{ width: '100%' }}
+                                        animate={{ width: `${(undoTimeLeft / (5 * 60 * 1000)) * 100}%` }}
+                                        transition={{ duration: 1, ease: 'linear' }}
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                        
+                        {/* Regular Reopen Button */}
+                        <button
+                            onClick={() => updateStatus('live')}
+                            disabled={isUpdating}
+                            className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2"
+                        >
+                            <RefreshCw size={18} />
+                            Reopen Poll
+                        </button>
+                        
+                        {!undoTimeLeft && (
+                            <p className="text-xs text-slate-500 text-center">
+                                Reopening will allow new votes to be submitted
+                            </p>
+                        )}
+                    </div>
                 )}
 
                 {isUpdating && (

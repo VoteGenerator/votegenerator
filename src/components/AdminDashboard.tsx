@@ -155,6 +155,8 @@ const AdminDashboard: React.FC = () => {
     // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
+    const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -738,6 +740,65 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                             </motion.div>
                         )}
+
+                        {/* ⚠️ Save Your Dashboard Link Warning */}
+                        {(() => {
+                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
+                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
+                            
+                            const dashboardUrl = session?.dashboardToken 
+                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                : window.location.href;
+                            
+                            return (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: -10 }} 
+                                    animate={{ opacity: 1, y: 0 }} 
+                                    className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <AlertTriangle size={20} className="text-amber-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-amber-800 mb-1">Save Your Dashboard Link!</h4>
+                                            <p className="text-sm text-amber-700 mb-3">
+                                                Bookmark this page or save the link below. This is how you'll access your dashboard and manage all your polls.
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(dashboardUrl);
+                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                        setCopiedDashboardLink(true);
+                                                        setTimeout(() => setCopiedDashboardLink(false), 2000);
+                                                    }}
+                                                    className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                    {copiedDashboardLink ? 'Copied!' : 'Copy Dashboard Link'}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                        setAdminLinkWarningDismissed(true);
+                                                    }}
+                                                    className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
+                                                >
+                                                    I've bookmarked it
+                                                </button>
+                                                <button
+                                                    onClick={() => setAdminLinkWarningDismissed(true)}
+                                                    className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
+                                                >
+                                                    Remind me later
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })()}
 
                         {/* Dashboard Header with Search */}
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">

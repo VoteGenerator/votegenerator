@@ -379,19 +379,241 @@ const HowItWorksSection: React.FC = () => {
 };
 
 // ============================================================================
-// Poll Types Section - Visual showcase
+// Poll Types Section - Visual showcase with ACTUAL poll mockups
 // ============================================================================
 
 const PollTypesSection: React.FC = () => {
+    const [activeType, setActiveType] = useState(0);
+    
     const pollTypes = [
-        { name: 'Multiple Choice', icon: CheckSquare, desc: 'Pick one or more options', gradient: 'from-blue-500 to-indigo-600', popular: true },
-        { name: 'Ranked Choice', icon: ListOrdered, desc: 'Drag to rank by preference', gradient: 'from-indigo-500 to-purple-600' },
-        { name: 'Meeting Poll', icon: Calendar, desc: 'Find the best time', gradient: 'from-amber-500 to-orange-600' },
-        { name: 'This or That', icon: ArrowLeftRight, desc: 'Quick A vs B decisions', gradient: 'from-orange-500 to-red-600' },
-        { name: 'Rating Scale', icon: SlidersHorizontal, desc: 'Rate each option 1-5', gradient: 'from-cyan-500 to-blue-600' },
-        { name: 'RSVP', icon: Users, desc: 'Yes, No, or Maybe', gradient: 'from-sky-500 to-blue-600' },
-        { name: 'Visual Poll', icon: Image, desc: 'Vote with images', gradient: 'from-pink-500 to-rose-600' },
-        { name: 'Dot Voting', icon: CheckCircle2, desc: 'Distribute points', gradient: 'from-emerald-500 to-teal-600' },
+        { 
+            name: 'Multiple Choice', 
+            icon: CheckSquare, 
+            desc: 'Pick one or more options from a list',
+            gradient: 'from-blue-500 to-indigo-600',
+            popular: true,
+            mockup: (
+                <div className="space-y-2">
+                    {['Hawaiian Paradise', 'Mountain Lodge', 'Beach Resort', 'City Adventure'].map((opt, i) => (
+                        <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border-2 ${i === 0 ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200'}`}>
+                            <div className={`w-4 h-4 rounded-full border-2 ${i === 0 ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'}`}>
+                                {i === 0 && <Check className="text-white" size={10} />}
+                            </div>
+                            <span className={`text-sm ${i === 0 ? 'text-indigo-700 font-medium' : 'text-slate-600'}`}>{opt}</span>
+                            {i === 0 && <span className="ml-auto text-xs font-bold text-indigo-600">42%</span>}
+                        </div>
+                    ))}
+                </div>
+            )
+        },
+        { 
+            name: 'Ranked Choice', 
+            icon: ListOrdered, 
+            desc: 'Drag to rank options by preference',
+            gradient: 'from-indigo-500 to-purple-600',
+            mockup: (
+                <div className="space-y-2">
+                    {[
+                        { rank: 1, text: 'React', color: 'bg-amber-400' },
+                        { rank: 2, text: 'Vue', color: 'bg-slate-300' },
+                        { rank: 3, text: 'Angular', color: 'bg-orange-300' },
+                        { rank: 4, text: 'Svelte', color: 'bg-slate-200' },
+                    ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200 cursor-grab">
+                            <div className={`w-6 h-6 ${item.color} rounded-full flex items-center justify-center text-xs font-bold text-white`}>
+                                {item.rank}
+                            </div>
+                            <span className="text-sm text-slate-700">{item.text}</span>
+                            <div className="ml-auto flex flex-col gap-0.5">
+                                <div className="w-4 h-0.5 bg-slate-300 rounded" />
+                                <div className="w-4 h-0.5 bg-slate-300 rounded" />
+                                <div className="w-4 h-0.5 bg-slate-300 rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+        },
+        { 
+            name: 'Meeting Poll', 
+            icon: Calendar, 
+            desc: 'Find when everyone is available',
+            gradient: 'from-amber-500 to-orange-600',
+            mockup: (
+                <div>
+                    <div className="grid grid-cols-4 gap-1 mb-2">
+                        <div className="text-[10px] text-slate-400 text-center">Mon 15</div>
+                        <div className="text-[10px] text-slate-400 text-center">Tue 16</div>
+                        <div className="text-[10px] text-slate-400 text-center">Wed 17</div>
+                        <div className="text-[10px] text-slate-400 text-center">Thu 18</div>
+                    </div>
+                    {['9:00 AM', '10:00 AM', '2:00 PM'].map((time, ti) => (
+                        <div key={ti} className="grid grid-cols-4 gap-1 mb-1">
+                            {[0,1,2,3].map((di) => {
+                                const votes = [3,5,2,4,1,6,3,2,4,5,1,3][ti * 4 + di];
+                                const intensity = votes > 4 ? 'bg-emerald-500' : votes > 2 ? 'bg-emerald-300' : 'bg-emerald-100';
+                                return (
+                                    <div key={di} className={`h-8 ${intensity} rounded flex items-center justify-center`}>
+                                        <span className="text-[10px] font-bold text-emerald-900">{votes}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                    <div className="text-[10px] text-slate-400 mt-2">✓ Tue 10 AM works for 6 people</div>
+                </div>
+            )
+        },
+        { 
+            name: 'Rating Scale', 
+            icon: SlidersHorizontal, 
+            desc: 'Rate each option 1-5 stars',
+            gradient: 'from-cyan-500 to-blue-600',
+            mockup: (
+                <div className="space-y-3">
+                    {[
+                        { name: 'Customer Service', rating: 4.5 },
+                        { name: 'Product Quality', rating: 4.8 },
+                        { name: 'Value for Money', rating: 3.9 },
+                    ].map((item, i) => (
+                        <div key={i}>
+                            <div className="flex justify-between mb-1">
+                                <span className="text-xs text-slate-600">{item.name}</span>
+                                <span className="text-xs font-bold text-slate-900">{item.rating}</span>
+                            </div>
+                            <div className="flex gap-0.5">
+                                {[1,2,3,4,5].map((star) => (
+                                    <Star 
+                                        key={star} 
+                                        size={16} 
+                                        className={star <= Math.floor(item.rating) ? 'text-amber-400 fill-amber-400' : star - 0.5 <= item.rating ? 'text-amber-400 fill-amber-200' : 'text-slate-200'}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+        },
+        { 
+            name: 'This or That', 
+            icon: ArrowLeftRight, 
+            desc: 'Quick A vs B comparisons',
+            gradient: 'from-orange-500 to-red-600',
+            mockup: (
+                <div className="flex gap-3">
+                    <div className="flex-1 bg-indigo-50 border-2 border-indigo-500 rounded-xl p-3 text-center">
+                        <div className="text-2xl mb-1">🍕</div>
+                        <div className="text-sm font-bold text-indigo-700">Pizza</div>
+                        <div className="text-lg font-black text-indigo-600 mt-1">62%</div>
+                        <div className="text-[10px] text-indigo-400">156 votes</div>
+                    </div>
+                    <div className="flex items-center">
+                        <span className="text-slate-300 font-bold">VS</span>
+                    </div>
+                    <div className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-center">
+                        <div className="text-2xl mb-1">🍔</div>
+                        <div className="text-sm font-bold text-slate-700">Burger</div>
+                        <div className="text-lg font-black text-slate-600 mt-1">38%</div>
+                        <div className="text-[10px] text-slate-400">95 votes</div>
+                    </div>
+                </div>
+            )
+        },
+        { 
+            name: 'RSVP', 
+            icon: Users, 
+            desc: 'Yes, No, or Maybe responses',
+            gradient: 'from-sky-500 to-blue-600',
+            mockup: (
+                <div>
+                    <div className="text-center mb-3">
+                        <div className="text-sm font-bold text-slate-900">🎉 Sarah's Birthday Party</div>
+                        <div className="text-xs text-slate-500">Sat, Jan 20 at 7 PM</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="bg-emerald-100 border-2 border-emerald-500 rounded-lg p-2 text-center">
+                            <div className="text-lg">👍</div>
+                            <div className="text-xs font-bold text-emerald-700">Yes</div>
+                            <div className="text-sm font-black text-emerald-600">12</div>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center">
+                            <div className="text-lg">🤔</div>
+                            <div className="text-xs font-bold text-amber-700">Maybe</div>
+                            <div className="text-sm font-black text-amber-600">5</div>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+                            <div className="text-lg">👎</div>
+                            <div className="text-xs font-bold text-slate-600">No</div>
+                            <div className="text-sm font-black text-slate-500">3</div>
+                        </div>
+                    </div>
+                    <div className="text-[10px] text-slate-400 text-center">20 responses</div>
+                </div>
+            )
+        },
+        { 
+            name: 'Visual Poll', 
+            icon: Image, 
+            desc: 'Vote using images',
+            gradient: 'from-pink-500 to-rose-600',
+            mockup: (
+                <div className="grid grid-cols-2 gap-2">
+                    {[
+                        { bg: 'bg-gradient-to-br from-blue-400 to-blue-600', label: 'Design A', votes: 34, selected: true },
+                        { bg: 'bg-gradient-to-br from-purple-400 to-purple-600', label: 'Design B', votes: 28, selected: false },
+                        { bg: 'bg-gradient-to-br from-pink-400 to-pink-600', label: 'Design C', votes: 19, selected: false },
+                        { bg: 'bg-gradient-to-br from-amber-400 to-amber-600', label: 'Design D', votes: 12, selected: false },
+                    ].map((item, i) => (
+                        <div key={i} className={`rounded-lg overflow-hidden border-2 ${item.selected ? 'border-indigo-500' : 'border-slate-200'}`}>
+                            <div className={`${item.bg} h-12 flex items-center justify-center`}>
+                                <Image className="text-white/50" size={20} />
+                            </div>
+                            <div className="p-1.5 bg-white">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] text-slate-600">{item.label}</span>
+                                    <span className="text-[10px] font-bold text-slate-900">{item.votes}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+        },
+        { 
+            name: 'Dot Voting', 
+            icon: CheckCircle2, 
+            desc: 'Distribute points across options',
+            gradient: 'from-emerald-500 to-teal-600',
+            mockup: (
+                <div>
+                    <div className="text-xs text-slate-500 mb-2 text-center">You have <span className="font-bold text-indigo-600">3 dots</span> remaining</div>
+                    <div className="space-y-2">
+                        {[
+                            { name: 'Better onboarding', dots: 8 },
+                            { name: 'Mobile app', dots: 12 },
+                            { name: 'Dark mode', dots: 5 },
+                            { name: 'API access', dots: 3 },
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                                <div className="flex-1">
+                                    <div className="text-xs text-slate-700 mb-0.5">{item.name}</div>
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(item.dots / 12) * 100}%` }} />
+                                    </div>
+                                </div>
+                                <div className="flex gap-0.5">
+                                    {[...Array(Math.min(item.dots, 5))].map((_, di) => (
+                                        <div key={di} className="w-2 h-2 bg-emerald-500 rounded-full" />
+                                    ))}
+                                    {item.dots > 5 && <span className="text-[10px] text-emerald-600">+{item.dots - 5}</span>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+        },
     ];
 
     return (
@@ -409,35 +631,86 @@ const PollTypesSection: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {pollTypes.map((type, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.05 }}
-                            className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer"
-                        >
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.gradient} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                                <type.icon className="text-white" size={22} />
+                {/* Interactive poll type showcase */}
+                <div className="grid lg:grid-cols-2 gap-8 items-start">
+                    {/* Poll type selector */}
+                    <div className="grid grid-cols-2 gap-3">
+                        {pollTypes.map((type, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setActiveType(i)}
+                                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                                    activeType === i 
+                                        ? 'border-indigo-500 bg-indigo-50 shadow-lg' 
+                                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${type.gradient} flex items-center justify-center`}>
+                                        <type.icon className="text-white" size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-bold text-slate-900 text-sm">{type.name}</h3>
+                                            {type.popular && (
+                                                <span className="text-[8px] bg-amber-100 text-amber-700 px-1 py-0.5 rounded font-bold">
+                                                    POPULAR
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500">{type.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Live preview */}
+                    <div className="sticky top-24">
+                        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                            {/* Browser chrome */}
+                            <div className="bg-slate-100 px-4 py-2 flex items-center gap-2 border-b border-slate-200">
+                                <div className="flex gap-1.5">
+                                    <div className="w-2.5 h-2.5 bg-red-400 rounded-full" />
+                                    <div className="w-2.5 h-2.5 bg-amber-400 rounded-full" />
+                                    <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full" />
+                                </div>
+                                <div className="flex-1 text-center">
+                                    <span className="text-xs text-slate-400 bg-white px-2 py-0.5 rounded">votegenerator.com/poll/...</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-bold text-slate-900">{type.name}</h3>
-                                {type.popular && (
-                                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">
-                                        POPULAR
-                                    </span>
-                                )}
+                            
+                            {/* Poll content */}
+                            <div className="p-5">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${pollTypes[activeType].gradient} flex items-center justify-center`}>
+                                        {React.createElement(pollTypes[activeType].icon, { className: "text-white", size: 16 })}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-900 text-sm">{pollTypes[activeType].name} Poll</h4>
+                                        <p className="text-xs text-slate-400">Live preview</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="min-h-[200px]">
+                                    {pollTypes[activeType].mockup}
+                                </div>
+                                
+                                <button className="w-full mt-4 py-2.5 bg-indigo-600 text-white font-bold rounded-lg text-sm hover:bg-indigo-700 transition">
+                                    Submit Vote
+                                </button>
                             </div>
-                            <p className="text-sm text-slate-500">{type.desc}</p>
-                        </motion.div>
-                    ))}
+                        </div>
+                        
+                        <p className="text-center text-sm text-slate-500 mt-4">
+                            Click each poll type to see how it looks →
+                        </p>
+                    </div>
                 </div>
 
-                <div className="text-center mt-8">
-                    <a href="/demo" className="inline-flex items-center gap-2 text-indigo-600 font-medium hover:text-indigo-700">
-                        See all poll types in action <ArrowRight size={16} />
+                <div className="text-center mt-12">
+                    <a href="#create" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                        Create Your First Poll <ArrowRight size={18} />
                     </a>
                 </div>
             </div>
@@ -530,39 +803,148 @@ const PrivacySection: React.FC = () => (
 );
 
 // ============================================================================
-// Templates Section - Ready-to-use poll templates
+// Templates Section - Visual template previews
 // ============================================================================
 
 const TemplatesSection: React.FC = () => {
-    const templateCategories = [
+    const templates = [
         {
-            name: 'Team & Workplace',
-            icon: Briefcase,
-            color: 'bg-blue-500',
-            templates: ['Team lunch vote', 'Meeting time poll', 'Project priority ranking', 'Employee satisfaction']
+            name: 'Team Lunch Vote',
+            category: 'Workplace',
+            categoryColor: 'bg-blue-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">🍽️ Where to lunch?</div>
+                    <div className="space-y-1.5">
+                        {['Italian', 'Thai', 'Mexican'].map((opt, i) => (
+                            <div key={i} className={`text-[10px] p-1.5 rounded ${i === 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-50 text-slate-600'}`}>
+                                {opt}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
         },
         {
-            name: 'Events & Planning',
-            icon: PartyPopper,
-            color: 'bg-purple-500',
-            templates: ['Event date picker', 'Venue selection', 'Activity preferences', 'RSVP with options']
+            name: 'Sprint Retro',
+            category: 'Workplace',
+            categoryColor: 'bg-blue-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">🔄 What went well?</div>
+                    <div className="flex gap-1">
+                        {[4.2, 3.8, 4.5].map((rating, i) => (
+                            <div key={i} className="flex-1 text-center p-1 bg-emerald-50 rounded">
+                                <div className="text-[10px] text-emerald-600">{'⭐'.repeat(Math.floor(rating))}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
         },
         {
-            name: 'Education',
-            icon: GraduationCap,
-            color: 'bg-emerald-500',
-            templates: ['Class feedback', 'Topic interest survey', 'Study group scheduling', 'Course evaluation']
+            name: 'Event Date Picker',
+            category: 'Events',
+            categoryColor: 'bg-purple-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">📅 When works?</div>
+                    <div className="grid grid-cols-3 gap-1">
+                        {['Mon', 'Tue', 'Wed'].map((day, i) => (
+                            <div key={i} className={`text-[10px] p-1 rounded text-center ${i === 1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-50 text-slate-500'}`}>
+                                {day}
+                                <div className="font-bold">{i === 1 ? '8' : i + 2}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
         },
         {
-            name: 'Social & Fun',
-            icon: Heart,
-            color: 'bg-pink-500',
-            templates: ['Movie night picker', 'Restaurant vote', 'Gift ideas ranking', 'Trip destination']
+            name: 'Wedding RSVP',
+            category: 'Events',
+            categoryColor: 'bg-purple-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">💒 Will you attend?</div>
+                    <div className="flex gap-1">
+                        <div className="flex-1 p-1.5 bg-emerald-100 rounded text-center text-[10px] text-emerald-700 font-bold">Yes ✓</div>
+                        <div className="flex-1 p-1.5 bg-slate-50 rounded text-center text-[10px] text-slate-500">No</div>
+                    </div>
+                    <div className="mt-1 text-[9px] text-slate-400">+ dietary preferences</div>
+                </div>
+            )
+        },
+        {
+            name: 'Class Feedback',
+            category: 'Education',
+            categoryColor: 'bg-emerald-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">📚 Rate this lecture</div>
+                    <div className="flex justify-center gap-0.5 mb-1">
+                        {[1,2,3,4,5].map((s) => (
+                            <Star key={s} size={12} className={s <= 4 ? 'text-amber-400 fill-amber-400' : 'text-slate-200'} />
+                        ))}
+                    </div>
+                    <div className="text-[9px] text-slate-400 text-center">4.2 avg • 32 responses</div>
+                </div>
+            )
+        },
+        {
+            name: 'Exit Ticket',
+            category: 'Education',
+            categoryColor: 'bg-emerald-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">🎯 Today I learned...</div>
+                    <div className="space-y-1">
+                        <div className="h-1.5 bg-indigo-200 rounded-full w-full" />
+                        <div className="h-1.5 bg-indigo-200 rounded-full w-3/4" />
+                        <div className="h-1.5 bg-slate-100 rounded-full w-1/2" />
+                    </div>
+                </div>
+            )
+        },
+        {
+            name: 'Movie Night',
+            category: 'Social',
+            categoryColor: 'bg-pink-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">🎬 What to watch?</div>
+                    <div className="grid grid-cols-2 gap-1">
+                        {['🦁', '🚀', '👻', '💕'].map((emoji, i) => (
+                            <div key={i} className={`p-2 rounded text-center ${i === 1 ? 'bg-indigo-100 ring-2 ring-indigo-500' : 'bg-slate-50'}`}>
+                                <span className="text-lg">{emoji}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+        },
+        {
+            name: 'Gift Ideas',
+            category: 'Social',
+            categoryColor: 'bg-pink-500',
+            preview: (
+                <div className="p-3 bg-white rounded-lg">
+                    <div className="text-xs font-bold text-slate-800 mb-2">🎁 Rank your wishlist</div>
+                    <div className="space-y-1">
+                        {['🎧 Headphones', '📱 Phone case', '👟 Sneakers'].map((item, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                                <span className="w-4 h-4 bg-amber-100 rounded-full text-[8px] flex items-center justify-center font-bold text-amber-700">{i + 1}</span>
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
         },
     ];
 
     return (
-        <section className="py-20 bg-slate-50">
+        <section className="py-20 bg-white">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-sm font-bold rounded-full mb-4">
@@ -576,28 +958,34 @@ const TemplatesSection: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                    {templateCategories.map((cat, i) => (
-                        <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition group">
-                            <div className={`${cat.color} p-4`}>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                                        <cat.icon className="text-white" size={20} />
-                                    </div>
-                                    <h3 className="font-bold text-white">{cat.name}</h3>
+                {/* Template grid with visual previews */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                    {templates.map((template, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.05 }}
+                            className="group bg-slate-100 rounded-xl overflow-hidden hover:shadow-xl transition-all cursor-pointer"
+                        >
+                            {/* Visual preview */}
+                            <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 min-h-[120px] flex items-center justify-center">
+                                {template.preview}
+                            </div>
+                            
+                            {/* Info */}
+                            <div className="p-3 bg-white">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-[9px] ${template.categoryColor} text-white px-1.5 py-0.5 rounded font-bold`}>
+                                        {template.category}
+                                    </span>
                                 </div>
+                                <h3 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition">
+                                    {template.name}
+                                </h3>
                             </div>
-                            <div className="p-4">
-                                <ul className="space-y-2">
-                                    {cat.templates.map((t, j) => (
-                                        <li key={j} className="flex items-center gap-2 text-sm text-slate-600">
-                                            <Check size={14} className="text-emerald-500 flex-shrink-0" />
-                                            {t}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
 
@@ -606,7 +994,7 @@ const TemplatesSection: React.FC = () => {
                         href="/templates" 
                         className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition"
                     >
-                        Browse All Templates <ArrowRight size={18} />
+                        Browse All 40+ Templates <ArrowRight size={18} />
                     </a>
                 </div>
             </div>
@@ -800,6 +1188,389 @@ const AnalyticsSection: React.FC = () => (
                         <p className="text-sm text-slate-500">{item.desc}</p>
                     </div>
                 ))}
+            </div>
+        </div>
+    </section>
+);
+
+// ============================================================================
+// Device Showcase Section - Show product on phone, tablet, desktop
+// ============================================================================
+
+const DeviceShowcaseSection: React.FC = () => (
+    <section className="py-20 bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-12">
+                <span className="inline-block px-3 py-1 bg-white/10 text-indigo-300 text-sm font-bold rounded-full mb-4">
+                    Works everywhere
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Beautiful on every device
+                </h2>
+                <p className="text-lg text-indigo-200 max-w-2xl mx-auto">
+                    Your voters can respond from anywhere — phone, tablet, or desktop. 
+                    No app to download, no account to create.
+                </p>
+            </div>
+
+            {/* Device mockups */}
+            <div className="relative flex items-end justify-center gap-4 md:gap-8">
+                {/* Desktop */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 }}
+                    className="hidden md:block"
+                >
+                    <div className="w-[400px] bg-slate-800 rounded-t-xl p-1">
+                        {/* Browser chrome */}
+                        <div className="bg-slate-700 rounded-t-lg px-3 py-2 flex items-center gap-2">
+                            <div className="flex gap-1">
+                                <div className="w-2 h-2 bg-red-400 rounded-full" />
+                                <div className="w-2 h-2 bg-amber-400 rounded-full" />
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                            </div>
+                            <div className="flex-1 bg-slate-600 rounded px-2 py-0.5 text-[10px] text-slate-300 text-center">
+                                votegenerator.com/poll/team-lunch
+                            </div>
+                        </div>
+                        {/* Screen content */}
+                        <div className="bg-white p-4">
+                            <div className="text-sm font-bold text-slate-800 mb-3">🍽️ Where should we get lunch?</div>
+                            <div className="space-y-2">
+                                {[
+                                    { name: 'Italian Place', pct: 45, votes: 12 },
+                                    { name: 'Thai Kitchen', pct: 30, votes: 8 },
+                                    { name: 'Taco Shop', pct: 25, votes: 7 },
+                                ].map((opt, i) => (
+                                    <div key={i} className="relative">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-slate-600">{opt.name}</span>
+                                            <span className="font-bold text-slate-900">{opt.pct}%</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className={`h-full ${i === 0 ? 'bg-indigo-500' : 'bg-slate-300'} rounded-full`} style={{ width: `${opt.pct}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] text-slate-500">27 votes • Live updating</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="w-[400px] h-4 bg-slate-700 rounded-b-lg" />
+                    <div className="w-[200px] h-2 bg-slate-600 mx-auto rounded-b-lg" />
+                    <p className="text-center text-indigo-300 text-sm mt-3 font-medium">Desktop</p>
+                </motion.div>
+
+                {/* Phone - Center, prominent */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="relative z-10"
+                >
+                    <div className="w-[200px] md:w-[220px] bg-slate-800 rounded-[2rem] p-2 shadow-2xl ring-1 ring-white/10">
+                        {/* Phone notch */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-900 rounded-full" />
+                        {/* Screen */}
+                        <div className="bg-white rounded-[1.5rem] overflow-hidden">
+                            {/* Status bar */}
+                            <div className="bg-slate-100 px-4 py-1 flex justify-between text-[8px] text-slate-500">
+                                <span>9:41</span>
+                                <span>📶 🔋</span>
+                            </div>
+                            {/* Content */}
+                            <div className="p-4">
+                                <div className="text-xs font-bold text-slate-800 mb-3">🗳️ Team Retreat Vote</div>
+                                <div className="space-y-2">
+                                    {[
+                                        { name: 'Beach Resort', selected: true },
+                                        { name: 'Mountain Lodge', selected: false },
+                                        { name: 'City Hotel', selected: false },
+                                    ].map((opt, i) => (
+                                        <div key={i} className={`p-2 rounded-lg border-2 text-xs ${opt.selected ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-3 h-3 rounded-full border-2 ${opt.selected ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'}`}>
+                                                    {opt.selected && <Check className="text-white" size={8} />}
+                                                </div>
+                                                {opt.name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button className="w-full mt-3 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">
+                                    Submit Vote
+                                </button>
+                                <p className="text-[9px] text-slate-400 text-center mt-2">No account needed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-center text-white text-sm mt-3 font-medium">Mobile</p>
+                    
+                    {/* Floating badge */}
+                    <div className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                        ✓ No app needed
+                    </div>
+                </motion.div>
+
+                {/* Tablet */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="hidden lg:block"
+                >
+                    <div className="w-[280px] bg-slate-800 rounded-2xl p-2">
+                        {/* Camera */}
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-600 rounded-full" />
+                        {/* Screen */}
+                        <div className="bg-white rounded-xl overflow-hidden">
+                            <div className="p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="text-sm font-bold text-slate-800">📊 Results Dashboard</div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                        <span className="text-[10px] text-emerald-600">Live</span>
+                                    </div>
+                                </div>
+                                {/* Mini chart */}
+                                <div className="grid grid-cols-4 gap-1 mb-3">
+                                    {[65, 45, 30, 20].map((h, i) => (
+                                        <div key={i} className="flex flex-col items-center">
+                                            <div className="w-full bg-slate-100 rounded-t h-16 flex items-end">
+                                                <div className={`w-full ${i === 0 ? 'bg-indigo-500' : 'bg-slate-300'} rounded-t`} style={{ height: `${h}%` }} />
+                                            </div>
+                                            <span className="text-[8px] text-slate-500 mt-1">Opt {i + 1}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Stats row */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="bg-slate-50 rounded p-1.5 text-center">
+                                        <div className="text-sm font-bold text-slate-900">156</div>
+                                        <div className="text-[8px] text-slate-500">Votes</div>
+                                    </div>
+                                    <div className="bg-slate-50 rounded p-1.5 text-center">
+                                        <div className="text-sm font-bold text-emerald-600">+12</div>
+                                        <div className="text-[8px] text-slate-500">Today</div>
+                                    </div>
+                                    <div className="bg-slate-50 rounded p-1.5 text-center">
+                                        <div className="text-sm font-bold text-slate-900">4</div>
+                                        <div className="text-[8px] text-slate-500">Options</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-center text-indigo-300 text-sm mt-3 font-medium">Tablet</p>
+                </motion.div>
+            </div>
+
+            {/* Bottom stats */}
+            <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg mx-auto">
+                {[
+                    { value: '100%', label: 'Responsive' },
+                    { value: '0', label: 'Apps to download' },
+                    { value: '<1s', label: 'Load time' },
+                ].map((stat, i) => (
+                    <div key={i} className="text-center">
+                        <div className="text-2xl font-black text-white">{stat.value}</div>
+                        <div className="text-sm text-indigo-300">{stat.label}</div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+// ============================================================================
+// Exports & Sharing Section - Show CSV, PDF, QR code visuals
+// ============================================================================
+
+const ExportsSection: React.FC = () => (
+    <section className="py-20 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-12">
+                <span className="inline-block px-3 py-1 bg-violet-100 text-violet-700 text-sm font-bold rounded-full mb-4">
+                    Share & Export
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                    Get your results anywhere
+                </h2>
+                <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+                    Share polls instantly, export data in any format, generate QR codes for in-person events.
+                </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+                {/* QR Code */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                            <QrCode className="text-indigo-600" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-900">QR Codes</h3>
+                            <p className="text-sm text-slate-500">For in-person events</p>
+                        </div>
+                    </div>
+                    
+                    {/* QR Code mockup */}
+                    <div className="bg-slate-50 rounded-xl p-4 flex flex-col items-center">
+                        <div className="w-32 h-32 bg-white rounded-lg p-2 shadow-sm mb-3">
+                            {/* QR pattern */}
+                            <div className="w-full h-full grid grid-cols-8 gap-0.5">
+                                {[...Array(64)].map((_, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`${Math.random() > 0.5 ? 'bg-slate-900' : 'bg-white'} ${
+                                            // Corner squares
+                                            (i < 3 || (i >= 5 && i < 8) || i === 8 || i === 15 || i === 16 || i === 23 || 
+                                             i === 40 || i === 47 || i === 48 || i === 55 || (i >= 56 && i < 59) || (i >= 61 && i < 64))
+                                                ? 'bg-slate-900' : ''
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        <span className="text-xs text-slate-500">vote.link/lunch-poll</span>
+                        <button className="mt-3 px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg">
+                            Download QR
+                        </button>
+                    </div>
+                    
+                    <p className="text-sm text-slate-500 mt-4">
+                        Print it, project it, or add to slides. Voters scan and vote instantly.
+                    </p>
+                </motion.div>
+
+                {/* Export Formats */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                            <Download className="text-emerald-600" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-900">Export Data</h3>
+                            <p className="text-sm text-slate-500">Any format you need</p>
+                        </div>
+                    </div>
+                    
+                    {/* Export mockups */}
+                    <div className="space-y-3">
+                        {/* CSV */}
+                        <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
+                            <div className="w-10 h-12 bg-emerald-500 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                CSV
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-xs font-medium text-slate-700">poll_results.csv</div>
+                                <div className="text-[10px] text-slate-400">Raw data, timestamps, IDs</div>
+                            </div>
+                            <Download size={14} className="text-slate-400" />
+                        </div>
+                        
+                        {/* Excel */}
+                        <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
+                            <div className="w-10 h-12 bg-green-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                XLSX
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-xs font-medium text-slate-700">poll_results.xlsx</div>
+                                <div className="text-[10px] text-slate-400">Formatted with charts</div>
+                            </div>
+                            <Download size={14} className="text-slate-400" />
+                        </div>
+                        
+                        {/* PDF */}
+                        <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
+                            <div className="w-10 h-12 bg-red-500 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                PDF
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-xs font-medium text-slate-700">poll_report.pdf</div>
+                                <div className="text-[10px] text-slate-400">Shareable summary</div>
+                            </div>
+                            <Download size={14} className="text-slate-400" />
+                        </div>
+                    </div>
+                    
+                    <p className="text-sm text-slate-500 mt-4">
+                        One click to download. Works with Excel, Google Sheets, or any tool.
+                    </p>
+                </motion.div>
+
+                {/* Share Options */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200"
+                >
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <Share2 className="text-blue-600" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-900">Easy Sharing</h3>
+                            <p className="text-sm text-slate-500">Send anywhere</p>
+                        </div>
+                    </div>
+                    
+                    {/* Share mockup */}
+                    <div className="bg-slate-50 rounded-xl p-4">
+                        {/* Link copy */}
+                        <div className="bg-white rounded-lg border border-slate-200 p-2 flex items-center gap-2 mb-3">
+                            <Link size={14} className="text-slate-400" />
+                            <span className="flex-1 text-xs text-slate-600 truncate">vote.link/team-lunch</span>
+                            <button className="px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded">
+                                Copy
+                            </button>
+                        </div>
+                        
+                        {/* Share buttons */}
+                        <div className="grid grid-cols-4 gap-2">
+                            {[
+                                { icon: '✉️', label: 'Email' },
+                                { icon: '💬', label: 'Slack' },
+                                { icon: '📱', label: 'Text' },
+                                { icon: '🔗', label: 'Embed' },
+                            ].map((opt, i) => (
+                                <button key={i} className="bg-white rounded-lg p-2 text-center hover:bg-slate-100 transition">
+                                    <div className="text-lg mb-0.5">{opt.icon}</div>
+                                    <div className="text-[9px] text-slate-500">{opt.label}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Embed preview */}
+                    <div className="mt-4 bg-slate-800 rounded-lg p-2 text-[10px] font-mono text-slate-300 overflow-hidden">
+                        <span className="text-pink-400">&lt;iframe</span> src="..."<span className="text-pink-400">/&gt;</span>
+                    </div>
+                    
+                    <p className="text-sm text-slate-500 mt-4">
+                        Custom short links, embed codes, and direct sharing to any platform.
+                    </p>
+                </motion.div>
             </div>
         </div>
     </section>
@@ -1309,6 +2080,8 @@ function LandingPage(): React.ReactElement {
             <PollTypesSection />
             <TemplatesSection />
             <AnalyticsSection />
+            <DeviceShowcaseSection />
+            <ExportsSection />
             <PrivacySection />
             <FeaturesSection />
             <ValueSection />

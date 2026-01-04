@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -8,6 +8,7 @@ import CheckoutSuccess from './CheckoutSuccess';
 import TemplatesPage from './TemplatesPage';
 import PricingPage from './PricingPage';
 import AdminDashboard from './AdminDashboard';
+import ShareCards from './ShareCards';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -30,6 +31,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+    const [showShareCards, setShowShareCards] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -490,14 +492,17 @@ const VoteGeneratorApp: React.FC = () => {
                                                              <Settings size={18} className="text-slate-600"/> Controls
                                                          </h4>
                                                      </div>
-                                                     <div className="grid grid-cols-2 gap-3">
+                                                     <div className="grid grid-cols-3 gap-3">
                                                          <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
                                                              <Settings size={16}/> Edit
                                                          </button>
                                                          <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
                                                              {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
                                                          </button>
-                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
+                                                         <button onClick={() => setShowShareCards(true)} className="flex items-center justify-center gap-2 p-3 border border-pink-100 bg-pink-50 hover:bg-white hover:border-pink-300 hover:text-pink-600 rounded-lg text-sm font-medium transition-all text-pink-600">
+                                                             <Palette size={16}/> Invite Cards
+                                                         </button>
+                                                         <button onClick={handlePrintPDF} className="col-span-3 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
                                                              <Download size={14}/> Download PDF
                                                          </button>
                                                      </div>
@@ -626,6 +631,49 @@ const VoteGeneratorApp: React.FC = () => {
                                      </button>
                                 </div>
                              </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                
+                {/* Share Cards / Invite Cards Modal */}
+                <AnimatePresence>
+                    {showShareCards && viewState.type === 'results' && (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+                            onClick={() => setShowShareCards(false)}
+                        >
+                            <motion.div 
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.95, opacity: 0 }}
+                                className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl my-8 max-h-[90vh] overflow-y-auto"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                        <Palette className="text-pink-500" size={22} />
+                                        Invite Cards
+                                    </h3>
+                                    <button 
+                                        onClick={() => setShowShareCards(false)} 
+                                        className="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full transition"
+                                    >
+                                        <X size={20}/>
+                                    </button>
+                                </div>
+                                <div className="p-6">
+                                    <ShareCards
+                                        pollId={viewState.poll.id}
+                                        pollTitle={viewState.poll.title}
+                                        pollDescription={viewState.poll.description}
+                                        pollUrl={getShareUrl()}
+                                        onClose={() => setShowShareCards(false)}
+                                    />
+                                </div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

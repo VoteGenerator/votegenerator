@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw,
+    Home, AlertTriangle, RefreshCw, QrCode, Palette,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -665,17 +665,38 @@ const AdminDashboard: React.FC = () => {
                         {/* Dashboard Access Info */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                             <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-start gap-3">
                                     <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Link2 size={20} className="text-slate-600" />
                                     </div>
-                                    <div>
+                                    <div className="flex-1 min-w-0">
                                         <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
                                         {tier !== 'free' && (
                                             <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
                                         )}
                                         {tier === 'free' && (
-                                            <p className="text-sm text-slate-500">Save this link - it's the only way to access your polls</p>
+                                            <div className="mt-2">
+                                                <p className="text-sm text-slate-500 mb-2">Copy this link to save access to your polls:</p>
+                                                <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="text" 
+                                                        readOnly 
+                                                        value={window.location.href}
+                                                        className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(window.location.href);
+                                                            setCopiedId('dashboard-link');
+                                                            setTimeout(() => setCopiedId(null), 2000);
+                                                        }}
+                                                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                    >
+                                                        {copiedId === 'dashboard-link' ? <Check size={16} /> : <Copy size={16} />}
+                                                        {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -872,6 +893,12 @@ const AdminDashboard: React.FC = () => {
                                                                 <Users size={14} />
                                                                 {poll.responseCount || 0} votes
                                                             </span>
+                                                            {(poll.responseCount || 0) === 0 && !isDraft && (
+                                                                <span className="text-amber-600 flex items-center gap-1">
+                                                                    <Share2 size={12} />
+                                                                    Share to get responses
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -894,10 +921,11 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         <button
                                                             onClick={() => setShowShareCards(poll.id)}
-                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition"
-                                                            title="Share Cards & Invitations"
+                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
+                                                            title="Create beautiful invite cards with QR codes"
                                                         >
-                                                            <ImageIcon size={18} />
+                                                            <Palette size={18} />
+                                                            <span className="hidden sm:inline text-sm font-medium">Invite</span>
                                                         </button>
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}

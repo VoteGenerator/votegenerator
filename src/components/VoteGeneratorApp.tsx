@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle } from 'lucide-react';
 import LandingPage from './LandingPage';
 import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
 import TemplatesPage from './TemplatesPage';
 import PricingPage from './PricingPage';
+import AdminDashboard from './AdminDashboard';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -291,6 +292,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <AdWall />
             ) : window.location.pathname.startsWith('/checkout/success') ? (
                 <CheckoutSuccess />
+            ) : window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin?') ? (
+                <AdminDashboard />
             ) : window.location.pathname.startsWith('/templates') ? (
                 <TemplatesPage />
             ) : window.location.pathname.startsWith('/pricing') ? (

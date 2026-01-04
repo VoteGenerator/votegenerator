@@ -276,6 +276,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
+                // Save poll to localStorage for dashboard listing
+                try {
+                    const savedPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                    savedPolls.unshift({
+                        id: pollId,
+                        adminKey: adminKey,
+                        title: title.trim(),
+                        createdAt: new Date().toISOString()
+                    });
+                    // Keep only last 50 polls
+                    localStorage.setItem('vg_polls', JSON.stringify(savedPolls.slice(0, 50)));
+                } catch (e) {
+                    console.error('Failed to save poll to localStorage:', e);
+                }
+                
                 // PAID USERS: Go directly to admin dashboard
                 // FREE USERS: Go through ad-wall first
                 if (isPaidUser) {

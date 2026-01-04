@@ -43,13 +43,13 @@ const FREE_NAV_ITEMS: FreeNavItem[] = [
     { label: 'Pricing', href: '/pricing' },
 ];
 
-// Paid user nav items
+// Paid user nav items (includes Pricing for plan comparison/referrals)
 const PAID_NAV_ITEMS: PaidNavItem[] = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
     { label: 'Survey', href: '/survey', icon: ClipboardList },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
-    { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { label: 'Pricing', href: '/pricing', icon: Zap },
 ];
 
 interface NavHeaderProps {

@@ -45,7 +45,7 @@ const FREE_NAV_ITEMS: FreeNavItem[] = [
 
 // Paid user nav items
 const PAID_NAV_ITEMS: PaidNavItem[] = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
     { label: 'Survey', href: '/survey', icon: ClipboardList },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
@@ -92,7 +92,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
             <div className="max-w-7xl mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <a href={isPaid ? '/dashboard' : '/'} className="flex items-center gap-2">
+                    <a href={isPaid ? '/admin' : '/'} className="flex items-center gap-2">
                         <img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 

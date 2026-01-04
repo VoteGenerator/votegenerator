@@ -36,13 +36,13 @@ const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, {
         label: 'PRO', 
         colors: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white', 
         responses: '5,000/month',
-        features: ['Unlimited polls', 'Remove branding', 'PIN codes', 'CSV export']
+        features: ['Business polls', 'Remove branding', 'PIN codes', 'CSV export']
     },
     business: { 
         label: 'BUSINESS', 
         colors: 'bg-gradient-to-r from-violet-500 to-purple-600 text-white', 
         responses: '50,000/month',
-        features: ['Unlimited polls', 'Custom logo', 'PDF reports', 'Advanced analytics']
+        features: ['Business polls', 'Custom logo', 'PDF reports', 'Advanced analytics']
     }
 };
 
@@ -315,7 +315,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <a href="/dashboard" className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">
+                            <a href="/admin" className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">
                                 Dashboard
                             </a>
                             <a href="/templates" className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">

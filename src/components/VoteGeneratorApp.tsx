@@ -20,7 +20,7 @@ import FeatureTeaserCard, { FeatureTeaserGrid } from './FeatureTeaserCard';
 import HourlyHeatmap from './HourlyHeatmap';
 import GeoChart from './GeoChart';
 import CommentWordCloud from './CommentWordCloud';
-import { AnimatedCounter, PulseIndicator } from './AnimatedComponents';
+import { AnimatedCounter, PulseIndicator, Skeleton } from './AnimatedComponents';
 import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -383,10 +383,61 @@ const VoteGeneratorApp: React.FC = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center pt-40"
+                            className="max-w-4xl mx-auto px-4 py-8"
                         >
-                            <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-                            <p className="text-slate-500 font-medium">Loading...</p>
+                            {/* Skeleton Loading State */}
+                            <div className="animate-pulse">
+                                {/* Header skeleton */}
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton variant="circular" width={40} height={40} />
+                                        <div>
+                                            <Skeleton width={150} height={24} className="mb-2" />
+                                            <Skeleton width={100} height={16} />
+                                        </div>
+                                    </div>
+                                    <Skeleton width={80} height={36} className="rounded-lg" />
+                                </div>
+                                
+                                {/* Status bar skeleton */}
+                                <Skeleton variant="rectangular" height={80} className="rounded-2xl mb-6" />
+                                
+                                {/* Stats row skeleton */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <Skeleton key={i} variant="rectangular" height={80} className="rounded-xl" />
+                                    ))}
+                                </div>
+                                
+                                {/* Results skeleton */}
+                                <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+                                    <Skeleton width="60%" height={32} className="mx-auto mb-4" />
+                                    <Skeleton width="40%" height={20} className="mx-auto mb-8" />
+                                    <div className="space-y-4">
+                                        {[1, 2, 3, 4].map(i => (
+                                            <div key={i} className="flex items-center gap-4">
+                                                <Skeleton width={40} height={40} className="rounded-lg" />
+                                                <div className="flex-1">
+                                                    <Skeleton width="70%" height={20} className="mb-2" />
+                                                    <Skeleton height={8} className="rounded-full" />
+                                                </div>
+                                                <Skeleton width={60} height={24} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Share section skeleton */}
+                                <div className="grid lg:grid-cols-2 gap-4">
+                                    <Skeleton variant="rectangular" height={200} className="rounded-xl" />
+                                    <Skeleton variant="rectangular" height={200} className="rounded-xl" />
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-center mt-8 text-slate-500">
+                                <Loader2 className="animate-spin mr-2" size={20} />
+                                <span className="font-medium">Loading poll...</span>
+                            </div>
                         </motion.div>
                     )}
 
@@ -626,6 +677,35 @@ const VoteGeneratorApp: React.FC = () => {
                                                 );
                                             })()}
 
+                                            {/* ============================================ */}
+                                            {/* POLL RESULTS - Shown BEFORE controls */}
+                                            {/* ============================================ */}
+                                            <div id="poll-results" className="mb-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                                <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 text-center font-serif tracking-tight">
+                                                    {viewState.poll.title}
+                                                </h1>
+                                                {viewState.poll.description && (
+                                                    <p className="text-slate-500 text-center mb-6 max-w-2xl mx-auto">
+                                                        {viewState.poll.description}
+                                                    </p>
+                                                )}
+                                                
+                                                <VoteGeneratorResults 
+                                                    poll={viewState.poll} 
+                                                    results={viewState.results}
+                                                    onEdit={handleEditPoll}
+                                                    adminKey={(() => {
+                                                        const hash = window.location.hash.slice(1);
+                                                        const params = new URLSearchParams(hash);
+                                                        return params.get('admin') || null;
+                                                    })()}
+                                                    isAdmin={true}
+                                                />
+                                            </div>
+
+                                            {/* ============================================ */}
+                                            {/* SHARE & CONTROLS - After Results */}
+                                            {/* ============================================ */}
                                             <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
                                                 
                                                 {/* Share Section */}
@@ -641,9 +721,22 @@ const VoteGeneratorApp: React.FC = () => {
                                                              <Globe className="absolute left-3 top-3 text-slate-400" size={16} />
                                                              <input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-600 focus:outline-none truncate" />
                                                          </div>
-                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors whitespace-nowrap min-h-[44px]">
-                                                             {copiedShare ? '✓' : 'Copy'}
-                                                         </button>
+                                                         <motion.button 
+                                                             onClick={() => copyToClipboard(getShareUrl(), 'share')} 
+                                                             className={`px-4 rounded-lg text-sm font-bold transition-all whitespace-nowrap min-h-[44px] ${
+                                                                 copiedShare 
+                                                                     ? 'bg-emerald-500 text-white' 
+                                                                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                             }`}
+                                                             whileTap={{ scale: 0.95 }}
+                                                             animate={copiedShare ? { scale: [1, 1.1, 1] } : {}}
+                                                         >
+                                                             {copiedShare ? (
+                                                                 <span className="flex items-center gap-1">
+                                                                     <Check size={16} /> Copied!
+                                                                 </span>
+                                                             ) : 'Copy'}
+                                                         </motion.button>
                                                      </div>
                                                      {/* Share buttons - Larger touch targets */}
                                                      <div className="grid grid-cols-3 gap-2 mb-3">
@@ -848,9 +941,10 @@ const VoteGeneratorApp: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Main Content Area (Title + Results) */}
-                                    <div className={viewState.isAdmin ? "p-6 md:p-10" : ""}>
-                                        {!viewState.isAdmin && (
+                                    {/* Main Content Area - For NON-ADMIN users only */}
+                                    {/* (Admin users see Results in the dashboard panel above) */}
+                                    {!viewState.isAdmin && (
+                                        <div className="p-6 md:p-10">
                                             <div className="flex justify-end mb-4 print:hidden">
                                                 <button 
                                                     onClick={handleManualRefresh}
@@ -861,50 +955,45 @@ const VoteGeneratorApp: React.FC = () => {
                                                     {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
                                                 </button>
                                             </div>
-                                        )}
 
-                                        <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
-                                        {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
-                                        
-                                        <VoteGeneratorResults 
-                                            poll={viewState.poll} 
-                                            results={viewState.results}
-                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined}
-                                            adminKey={(() => {
-                                                const hash = window.location.hash.slice(1);
-                                                const params = new URLSearchParams(hash);
-                                                return params.get('admin') || null;
-                                            })()}
-                                            isAdmin={viewState.isAdmin}
-                                        />
-                                        
-                                         {/* Vote Again Button for Non-Admin with Security 'none' */}
-                                        {!viewState.isAdmin && viewState.poll.settings.security === 'none' && (
-                                            <div className="mt-8 flex flex-col items-center justify-center print:hidden">
-                                                <button
-                                                    onClick={handleVoteAgain}
-                                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                                >
-                                                    <RotateCcw size={18} />
-                                                    Vote Again
-                                                </button>
-                                                <p className="text-slate-400 text-xs mt-2">
-                                                    Multiple votes are allowed for this poll.
-                                                </p>
-                                            </div>
-                                        )}
-                                        
-                                        {!viewState.isAdmin && viewState.poll.settings.security !== 'none' && (
-                                            <div className="mt-12 text-center print:hidden">
-                                                <button 
-                                                    onClick={goHome} 
-                                                    className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
-                                                >
-                                                    Create your own poll <ArrowRight size={14}/>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                            <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 text-center font-serif tracking-tight">{viewState.poll.title}</h1>
+                                            {viewState.poll.description && <p className="text-slate-500 text-center mb-10 max-w-2xl mx-auto text-lg">{viewState.poll.description}</p>}
+                                            
+                                            <VoteGeneratorResults 
+                                                poll={viewState.poll} 
+                                                results={viewState.results}
+                                                adminKey={null}
+                                                isAdmin={false}
+                                            />
+                                            
+                                            {/* Vote Again Button for Non-Admin with Security 'none' */}
+                                            {viewState.poll.settings.security === 'none' && (
+                                                <div className="mt-8 flex flex-col items-center justify-center print:hidden">
+                                                    <button
+                                                        onClick={handleVoteAgain}
+                                                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                                    >
+                                                        <RotateCcw size={18} />
+                                                        Vote Again
+                                                    </button>
+                                                    <p className="text-slate-400 text-xs mt-2">
+                                                        Multiple votes are allowed for this poll.
+                                                    </p>
+                                                </div>
+                                            )}
+                                            
+                                            {viewState.poll.settings.security !== 'none' && (
+                                                <div className="mt-12 text-center print:hidden">
+                                                    <button 
+                                                        onClick={goHome} 
+                                                        className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                                    >
+                                                        Create your own poll <ArrowRight size={14}/>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>

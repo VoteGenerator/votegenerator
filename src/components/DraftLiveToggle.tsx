@@ -9,7 +9,8 @@ import {
     Trash2,
     Play,
     Pause,
-    RefreshCw
+    RefreshCw,
+    Radio
 } from 'lucide-react';
 
 interface Props {
@@ -31,6 +32,7 @@ const DraftLiveToggle: React.FC<Props> = ({
     const [isUpdating, setIsUpdating] = useState(false);
     const [showConfirm, setShowConfirm] = useState<'live' | 'clear' | null>(null);
     const [clearVotes, setClearVotes] = useState(true);
+    const [justChanged, setJustChanged] = useState(false);
 
     const updateStatus = async (newStatus: string, clearExistingVotes: boolean = false) => {
         setIsUpdating(true);
@@ -48,6 +50,8 @@ const DraftLiveToggle: React.FC<Props> = ({
 
             if (response.ok) {
                 setCurrentStatus(newStatus as any);
+                setJustChanged(true);
+                setTimeout(() => setJustChanged(false), 2000);
                 onStatusChange?.(newStatus);
                 setShowConfirm(null);
             }
@@ -60,28 +64,44 @@ const DraftLiveToggle: React.FC<Props> = ({
 
     const statusConfig = {
         draft: {
-            color: 'bg-amber-100 text-amber-700 border-amber-200',
+            bgColor: 'bg-gradient-to-r from-amber-50 to-orange-50',
+            borderColor: 'border-amber-300',
+            textColor: 'text-amber-800',
+            badgeBg: 'bg-amber-500',
             icon: Eye,
-            label: 'Draft',
-            description: 'Only you can see this poll'
+            label: 'DRAFT',
+            description: 'Only you can see this poll',
+            pulse: false
         },
         live: {
-            color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-            icon: Globe,
-            label: 'Live',
-            description: 'Poll is accepting votes'
+            bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
+            borderColor: 'border-emerald-400',
+            textColor: 'text-emerald-800',
+            badgeBg: 'bg-emerald-500',
+            icon: Radio,
+            label: 'LIVE',
+            description: 'Poll is accepting votes',
+            pulse: true
         },
         paused: {
-            color: 'bg-slate-100 text-slate-700 border-slate-200',
+            bgColor: 'bg-gradient-to-r from-slate-50 to-gray-50',
+            borderColor: 'border-slate-300',
+            textColor: 'text-slate-700',
+            badgeBg: 'bg-slate-500',
             icon: Pause,
-            label: 'Paused',
-            description: 'Temporarily not accepting votes'
+            label: 'PAUSED',
+            description: 'Temporarily not accepting votes',
+            pulse: false
         },
         closed: {
-            color: 'bg-red-100 text-red-700 border-red-200',
+            bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+            borderColor: 'border-red-300',
+            textColor: 'text-red-800',
+            badgeBg: 'bg-red-500',
             icon: AlertTriangle,
-            label: 'Closed',
-            description: 'Poll has ended'
+            label: 'CLOSED',
+            description: 'Poll has ended',
+            pulse: false
         }
     };
 
@@ -89,26 +109,73 @@ const DraftLiveToggle: React.FC<Props> = ({
     const Icon = config.icon;
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Current Status */}
-            <div className={`p-4 ${config.color} border-b-2`}>
+        <motion.div 
+            className={`rounded-2xl border-2 ${config.borderColor} shadow-sm overflow-hidden transition-colors duration-500`}
+            layout
+            initial={false}
+            animate={justChanged ? { scale: [1, 1.02, 1] } : {}}
+            transition={{ duration: 0.3 }}
+        >
+            {/* Current Status Header */}
+            <motion.div 
+                className={`p-4 ${config.bgColor} border-b ${config.borderColor}`}
+                layout
+            >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/50 rounded-lg">
-                            <Icon size={20} />
+                        {/* Status Badge with Pulse */}
+                        <div className="relative">
+                            <motion.div 
+                                className={`p-2.5 ${config.badgeBg} rounded-xl shadow-lg`}
+                                animate={config.pulse ? { scale: [1, 1.05, 1] } : {}}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                <Icon size={22} className="text-white" />
+                            </motion.div>
+                            {config.pulse && (
+                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                </span>
+                            )}
                         </div>
                         <div>
-                            <span className="font-bold text-lg">{config.label}</span>
-                            <p className="text-sm opacity-80">{config.description}</p>
+                            <div className="flex items-center gap-2">
+                                <span className={`font-black text-xl tracking-wide ${config.textColor}`}>
+                                    {config.label}
+                                </span>
+                                {justChanged && (
+                                    <motion.span
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-medium"
+                                    >
+                                        Updated!
+                                    </motion.span>
+                                )}
+                            </div>
+                            <p className={`text-sm ${config.textColor} opacity-70`}>{config.description}</p>
                         </div>
                     </div>
                     {voteCount > 0 && currentStatus === 'draft' && (
-                        <span className="text-sm bg-white/50 px-3 py-1 rounded-full">
+                        <span className="text-sm bg-white/70 px-3 py-1.5 rounded-full font-medium text-amber-700 border border-amber-200">
                             {voteCount} test vote{voteCount !== 1 ? 's' : ''}
                         </span>
                     )}
+                    {currentStatus === 'live' && voteCount > 0 && (
+                        <motion.div 
+                            className="text-right"
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 0.5 }}
+                            key={voteCount}
+                        >
+                            <span className="text-2xl font-black text-emerald-700">{voteCount}</span>
+                            <p className="text-xs text-emerald-600">votes</p>
+                        </motion.div>
+                    )}
                 </div>
-            </div>
+            </motion.div>
 
             {/* Actions */}
             <div className="p-4 space-y-3">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -328,12 +328,6 @@ const VoteGeneratorApp: React.FC = () => {
                                     {copiedShare ? 'Copied!' : 'Share Poll'}
                                 </button>
                              )}
-                             {/* Admin Indicator in Header */}
-                             {viewState.type === 'results' && viewState.isAdmin && (
-                                 <div className="flex items-center gap-2 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
-                                     <ShieldCheck size={14} /> Admin Portal
-                                 </div>
-                             )}
                         </div>
                     </div>
                 </header>
@@ -383,42 +377,17 @@ const VoteGeneratorApp: React.FC = () => {
                         <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="max-w-4xl mx-auto px-4 py-8">
                                 
-                                {/* --- ADMIN DASHBOARD HEADER & KEY --- */}
+                                {/* --- POLL DASHBOARD HEADER --- */}
                                 {viewState.isAdmin && (
-                                    <div className="mb-8 print:hidden">
-                                        <div className="flex items-end justify-between mb-6">
+                                    <div className="mb-6 print:hidden">
+                                        <div className="flex items-end justify-between">
                                             <div>
                                                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                                                     <LayoutDashboard className="text-indigo-600" size={28}/> 
-                                                    Admin Dashboard
+                                                    Poll Dashboard
                                                 </h2>
-                                                <p className="text-slate-500 text-sm mt-1 ml-10">Overview of your active polls</p>
+                                                <p className="text-slate-500 text-sm mt-1 ml-10">Manage, share, and track this poll</p>
                                             </div>
-                                            <div className="hidden md:block text-xs text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full font-bold">
-                                                Premium Enabled
-                                            </div>
-                                        </div>
-
-                                        {/* ADMIN KEY (Top Priority) */}
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-white text-amber-600 rounded-lg shadow-sm border border-amber-100">
-                                                    <Key size={20} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-amber-900">Private Admin Key</div>
-                                                    <div className="text-xs text-amber-700/80">
-                                                        Save this URL! It is the only way to manage this poll.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                onClick={() => copyToClipboard(window.location.href, 'admin')}
-                                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 hover:bg-amber-100/50 rounded-lg text-sm font-bold transition-all shadow-sm"
-                                            >
-                                                {copiedAdmin ? <Check size={16}/> : <Copy size={16}/>} 
-                                                {copiedAdmin ? 'Copied' : 'Copy Admin Link'}
-                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -477,11 +446,14 @@ const VoteGeneratorApp: React.FC = () => {
                                                              {copiedShare ? 'Copied' : 'Copy'}
                                                          </button>
                                                      </div>
-                                                     <div className="grid grid-cols-2 gap-2">
+                                                     <div className="grid grid-cols-3 gap-2 mb-3">
                                                          <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
                                                          <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
                                                          <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
+                                                     </div>
+                                                     <div className="grid grid-cols-2 gap-2">
                                                          <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
+                                                         <button onClick={() => setShowShareCards(true)} className="py-2 bg-pink-50 text-pink-600 border border-pink-100 rounded-lg text-xs font-bold hover:bg-pink-100 transition-colors flex justify-center items-center gap-1"><Palette size={14}/> Invite Cards</button>
                                                      </div>
                                                 </div>
 
@@ -492,17 +464,14 @@ const VoteGeneratorApp: React.FC = () => {
                                                              <Settings size={18} className="text-slate-600"/> Controls
                                                          </h4>
                                                      </div>
-                                                     <div className="grid grid-cols-3 gap-3">
+                                                     <div className="grid grid-cols-2 gap-3">
                                                          <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
                                                              <Settings size={16}/> Edit
                                                          </button>
                                                          <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
                                                              {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
                                                          </button>
-                                                         <button onClick={() => setShowShareCards(true)} className="flex items-center justify-center gap-2 p-3 border border-pink-100 bg-pink-50 hover:bg-white hover:border-pink-300 hover:text-pink-600 rounded-lg text-sm font-medium transition-all text-pink-600">
-                                                             <Palette size={16}/> Invite Cards
-                                                         </button>
-                                                         <button onClick={handlePrintPDF} className="col-span-3 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
+                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
                                                              <Download size={14}/> Download PDF
                                                          </button>
                                                      </div>

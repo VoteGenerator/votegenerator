@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key, Code, Image as ImageIcon, Bell } from 'lucide-react';
+import { Loader2, AlertTriangle, Home, Share2, Copy, Check, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle, Palette, Key, Code, Image as ImageIcon, Bell, ShieldAlert } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -17,6 +17,11 @@ import DraftLiveToggle from './DraftLiveToggle';
 import EmailAdminLink from './EmailAdminLink';
 import ResponseTimelineChart from './ResponseTimelineChart';
 import FeatureTeaserCard, { FeatureTeaserGrid } from './FeatureTeaserCard';
+import HourlyHeatmap from './HourlyHeatmap';
+import GeoChart from './GeoChart';
+import CommentWordCloud from './CommentWordCloud';
+import { AnimatedCounter, PulseIndicator } from './AnimatedComponents';
+import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -412,7 +417,15 @@ const VoteGeneratorApp: React.FC = () => {
 
                     {viewState.type === 'results' && (
                         <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <div className="max-w-4xl mx-auto px-4 py-8">
+                            {/* Accessibility: Skip Link */}
+                            <SkipLink targetId="poll-results" />
+                            
+                            {/* Accessibility: Live Region for vote count announcements */}
+                            <LiveRegion>
+                                {viewState.results.totalVotes} votes collected for {viewState.poll.title}
+                            </LiveRegion>
+                            
+                            <div className="max-w-4xl mx-auto px-4 py-8" role="main" aria-label="Poll Dashboard">
                                 
                                 {/* --- POLL DASHBOARD HEADER --- */}
                                 {viewState.isAdmin && (
@@ -421,7 +434,7 @@ const VoteGeneratorApp: React.FC = () => {
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                                                        <LayoutDashboard className="text-indigo-600" size={28}/> 
+                                                        <LayoutDashboard className="text-indigo-600" size={28} aria-hidden="true" /> 
                                                         Poll Dashboard
                                                     </h2>
                                                     {(() => {
@@ -448,8 +461,9 @@ const VoteGeneratorApp: React.FC = () => {
                                             <button
                                                 onClick={handleEditPoll}
                                                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                aria-label="Edit poll settings"
                                             >
-                                                <Settings size={16} />
+                                                <Settings size={16} aria-hidden="true" />
                                                 Edit
                                             </button>
                                         </div>
@@ -513,23 +527,26 @@ const VoteGeneratorApp: React.FC = () => {
                                                 {/* Total Votes */}
                                                 <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
                                                     <div className="text-2xl font-black text-slate-800">
-                                                        {viewState.results.totalVotes || 0}
+                                                        <AnimatedCounter value={viewState.results.totalVotes || 0} />
                                                     </div>
-                                                    <div className="text-xs text-slate-500 font-medium">Total Votes</div>
+                                                    <div className="text-xs text-slate-500 font-medium flex items-center justify-center gap-1">
+                                                        Total Votes
+                                                        {(viewState.poll as any).status === 'live' && <PulseIndicator color="green" size="sm" />}
+                                                    </div>
                                                 </div>
                                                 
                                                 {/* Velocity */}
                                                 <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
                                                     <div className="text-2xl font-black text-slate-800">
-                                                        {(() => {
+                                                        <AnimatedCounter value={(() => {
                                                             const votes = viewState.results.votes || [];
-                                                            if (votes.length === 0) return '0';
+                                                            if (votes.length === 0) return 0;
                                                             const now = Date.now();
                                                             const last24h = votes.filter((v: any) => 
                                                                 new Date(v.timestamp).getTime() > now - 24 * 60 * 60 * 1000
                                                             ).length;
                                                             return last24h;
-                                                        })()}
+                                                        })()} />
                                                         <span className="text-sm font-medium text-slate-400">/day</span>
                                                     </div>
                                                     <div className="text-xs text-slate-500 font-medium">Velocity</div>
@@ -755,6 +772,59 @@ const VoteGeneratorApp: React.FC = () => {
                                                         />
                                                     </div>
                                                 )}
+                                                
+                                                {/* Advanced Analytics Section (Pro+) */}
+                                                {(() => {
+                                                    const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+                                                    const votes = viewState.results.votes || [];
+                                                    const comments = viewState.results.comments || [];
+                                                    
+                                                    // Only show for Pro+ users with sufficient data
+                                                    if (tier === 'free' || votes.length < 5) return null;
+                                                    
+                                                    return (
+                                                        <div className="mt-6">
+                                                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                <LayoutDashboard size={14} className="text-purple-500" />
+                                                                Analytics Dashboard
+                                                            </h3>
+                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                {/* Hourly Heatmap */}
+                                                                <HourlyHeatmap votes={votes} />
+                                                                
+                                                                {/* Geographic Distribution */}
+                                                                <GeoChart votes={votes} maxCountries={5} />
+                                                                
+                                                                {/* Comment Word Cloud */}
+                                                                {comments.length >= 3 && (
+                                                                    <div className="lg:col-span-2">
+                                                                        <CommentWordCloud comments={comments} maxWords={15} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            
+                                                            {/* Blocked Votes Alert (if any) */}
+                                                            {(viewState.poll as any).blockedVotes?.total > 0 && (
+                                                                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                                                                            <ShieldAlert size={20} className="text-amber-600" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="font-semibold text-amber-800">Bot Protection Active</h4>
+                                                                            <p className="text-sm text-amber-700">
+                                                                                Blocked <span className="font-bold">{(viewState.poll as any).blockedVotes.total}</span> suspicious attempts
+                                                                                {(viewState.poll as any).blockedVotes.honeypot > 0 && ` • ${(viewState.poll as any).blockedVotes.honeypot} honeypot`}
+                                                                                {(viewState.poll as any).blockedVotes.timing > 0 && ` • ${(viewState.poll as any).blockedVotes.timing} timing`}
+                                                                                {(viewState.poll as any).blockedVotes.rateLimit > 0 && ` • ${(viewState.poll as any).blockedVotes.rateLimit} rate limit`}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
                                                 
                                                 {/* Feature Teasers for Free Users */}
                                                 {(() => {

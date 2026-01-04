@@ -90,6 +90,14 @@ interface Poll {
             newComment: boolean;
         };
     };
+    // Analytics tracking
+    blockedVotes?: {
+        honeypot: number;
+        timing: number;
+        rateLimit: number;
+        total: number;
+        lastBlocked?: string;
+    };
 }
 
 // Milestone points for notifications
@@ -389,15 +397,29 @@ export const handler: Handler = async (event) => {
         // ANTI-BOT VALIDATION
         // ============================================
         
-        // 1. Honeypot check - if _hp field has value, it's a bot
-        if (body._hp && body._hp.length > 0) {
-            console.log('vg-vote: Honeypot triggered, blocking bot');
-            // Return success to not alert the bot, but don't save vote
+        // Initialize blocked votes tracking if not exists
+        if (!poll.blockedVotes) {
+            poll.blockedVotes = { honeypot: 0, timing: 0, rateLimit: 0, total: 0 };
+        }
+        
+        // Helper to save blocked vote and return
+        const blockVote = async (reason: 'honeypot' | 'timing' | 'rateLimit') => {
+            poll.blockedVotes![reason]++;
+            poll.blockedVotes!.total++;
+            poll.blockedVotes!.lastBlocked = new Date().toISOString();
+            await store.setJSON(body.pollId, poll);
+            console.log(`vg-vote: Blocked (${reason}). Total blocked: ${poll.blockedVotes!.total}`);
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({ success: true, voteId: 'blocked' })
             };
+        };
+        
+        // 1. Honeypot check - if _hp field has value, it's a bot
+        if (body._hp && body._hp.length > 0) {
+            console.log('vg-vote: Honeypot triggered, blocking bot');
+            return await blockVote('honeypot');
         }
         
         // 2. Timing check - votes submitted too fast are likely bots
@@ -410,12 +432,7 @@ export const handler: Handler = async (event) => {
             
             if (timeTaken < MIN_VOTE_TIME_MS) {
                 console.log(`vg-vote: Vote too fast (${timeTaken}ms), likely bot`);
-                // Return success to not alert the bot, but don't save vote
-                return {
-                    statusCode: 200,
-                    headers,
-                    body: JSON.stringify({ success: true, voteId: 'blocked' })
-                };
+                return await blockVote('timing');
             }
         }
         
@@ -448,12 +465,7 @@ export const handler: Handler = async (event) => {
             
             if (recentTimestamps.length >= MAX_VOTES_PER_WINDOW) {
                 console.log(`vg-vote: Rate limit exceeded for ${ipHash.slice(0, 8)}... (${recentTimestamps.length} votes in last minute)`);
-                // Return success to not alert the attacker
-                return {
-                    statusCode: 200,
-                    headers,
-                    body: JSON.stringify({ success: true, voteId: 'rate_limited' })
-                };
+                return await blockVote('rateLimit');
             }
             
             // Add current timestamp and save

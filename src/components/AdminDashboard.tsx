@@ -12,7 +12,7 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, Gift,
+    Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
 } from 'lucide-react';
 import ShareCards from './ShareCards';
@@ -382,7 +382,37 @@ const AdminDashboard: React.FC = () => {
                 return;
             }
             
-            // Case 4: Nothing found
+            // Case 4: No paid session - check for FREE user with polls in localStorage
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                try {
+                    const polls = JSON.parse(savedPolls);
+                    if (polls && polls.length > 0) {
+                        // Create a FREE session with their polls
+                        const freeSession: UserSession = {
+                            dashboardToken: 'free_user',
+                            tier: 'free',
+                            polls: polls.map((p: any) => ({
+                                id: p.id,
+                                adminKey: p.adminKey,
+                                title: p.title,
+                                type: p.type || 'multiple',
+                                createdAt: p.createdAt,
+                                responseCount: 0,
+                                status: 'live',
+                            })),
+                            createdAt: polls[0]?.createdAt || new Date().toISOString(),
+                        };
+                        setSession(freeSession);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse vg_polls:', e);
+                }
+            }
+            
+            // Case 5: Nothing found - no session, no polls
             setError('No session found. Please purchase a plan first.');
             setLoading(false);
         } catch (err) {
@@ -635,13 +665,46 @@ const AdminDashboard: React.FC = () => {
                         {/* Dashboard Access Info */}
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                             <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-start gap-3">
                                     <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <Link2 size={20} className="text-slate-600" />
                                     </div>
-                                    <div>
+                                    <div className="flex-1 min-w-0">
                                         <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
-                                        <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
+                                        {tier !== 'free' && (
+                                            <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
+                                        )}
+                                        {tier === 'free' && (
+                                            <div className="mt-2">
+                                                <p className="text-sm text-slate-500 mb-2">Save access to your polls:</p>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <input 
+                                                        type="text" 
+                                                        readOnly 
+                                                        value={window.location.href}
+                                                        className="flex-1 min-w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(window.location.href);
+                                                            setCopiedId('dashboard-link');
+                                                            setTimeout(() => setCopiedId(null), 2000);
+                                                        }}
+                                                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                    >
+                                                        {copiedId === 'dashboard-link' ? <Check size={16} /> : <Copy size={16} />}
+                                                        {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
+                                                    </button>
+                                                    <a
+                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime!`)}`}
+                                                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                    >
+                                                        <Mail size={16} />
+                                                        Email to Self
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -837,6 +900,12 @@ const AdminDashboard: React.FC = () => {
                                                                 <Users size={14} />
                                                                 {poll.responseCount || 0} votes
                                                             </span>
+                                                            {(poll.responseCount || 0) === 0 && !isDraft && (
+                                                                <span className="text-amber-600 flex items-center gap-1">
+                                                                    <Share2 size={12} />
+                                                                    Share to get responses
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -859,10 +928,11 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         <button
                                                             onClick={() => setShowShareCards(poll.id)}
-                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition"
-                                                            title="Create share card"
+                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
+                                                            title="Create beautiful invite cards with QR codes"
                                                         >
-                                                            <Gift size={18} />
+                                                            <Palette size={18} />
+                                                            <span className="hidden sm:inline text-sm font-medium">Invite</span>
                                                         </button>
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}

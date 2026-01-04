@@ -316,12 +316,19 @@ export const handler: Handler = async (event) => {
             };
         }
         
-        // Check response limit
+        // Check response limit (enforced for free tier polls)
         if (poll.maxResponses && poll.voteCount >= poll.maxResponses) {
+            const isFreeLimit = poll.tier === 'free';
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'This poll has reached its response limit' })
+                body: JSON.stringify({ 
+                    error: isFreeLimit 
+                        ? 'This poll has reached its free plan limit of 100 responses. Ask the poll creator to upgrade for unlimited responses!'
+                        : 'This poll has reached its response limit',
+                    code: 'RESPONSE_LIMIT_REACHED',
+                    isFreeLimit
+                })
             };
         }
 

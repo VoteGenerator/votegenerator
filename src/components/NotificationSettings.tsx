@@ -84,38 +84,28 @@ const NotificationSettings: React.FC<Props> = ({
     const [sendingVerification, setSendingVerification] = useState<string | null>(null);
     const [verificationSent, setVerificationSent] = useState<string | null>(null);
     
-    // Only Business tier gets notifications
-    const isBusiness = tier === 'business';
-    const maxEmails = 10;
+    // Tier-based limits
+    const TIER_LIMITS: Record<string, { maxEmails: number; features: string[] }> = {
+        'free': { 
+            maxEmails: 1, 
+            features: ['milestones', 'limitReached'] // Basic notifications only
+        },
+        'pro': { 
+            maxEmails: 5, 
+            features: ['milestones', 'pollClosed', 'limitReached', 'newComment'] 
+        },
+        'business': { 
+            maxEmails: 10, 
+            features: ['milestones', 'dailyDigest', 'pollClosed', 'limitReached', 'newComment'] 
+        }
+    };
+    
+    const tierLimits = TIER_LIMITS[tier] || TIER_LIMITS['free'];
+    const maxEmails = tierLimits.maxEmails;
+    const availableFeatures = tierLimits.features;
     
     const verifiedCount = settings.emails.filter(e => e.verified).length;
     const pendingCount = settings.emails.filter(e => !e.verified).length;
-
-    // If not unlimited, show upgrade prompt
-    if (!isBusiness) {
-        return (
-            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-slate-200 rounded-xl">
-                        <Bell size={24} className="text-slate-400" />
-                    </div>
-                    <div className="flex-1">
-                        <h3 className="font-bold text-slate-700">Email Notifications</h3>
-                        <p className="text-sm text-slate-500 mt-1">
-                            Get notified about votes, milestones, and poll activity
-                        </p>
-                    </div>
-                    <a 
-                        href="/#pricing" 
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all text-sm"
-                    >
-                        <Crown size={16} />
-                        Business Only
-                    </a>
-                </div>
-            </div>
-        );
-    }
 
     const validateEmail = (email: string): boolean => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -268,7 +258,9 @@ const NotificationSettings: React.FC<Props> = ({
         title, 
         description, 
         checked, 
-        onChange
+        onChange,
+        locked = false,
+        lockedMessage = 'Upgrade to unlock'
     }: {
         id: keyof NotificationSettingsData['notifyOn'];
         icon: React.ElementType;
@@ -276,22 +268,36 @@ const NotificationSettings: React.FC<Props> = ({
         description: string;
         checked: boolean;
         onChange: () => void;
+        locked?: boolean;
+        lockedMessage?: string;
     }) => (
-        <label className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-            checked ? 'bg-indigo-50 border-2 border-indigo-200' : 'bg-slate-50 border-2 border-transparent hover:border-slate-200'
+        <label className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
+            locked 
+                ? 'bg-slate-50 border-2 border-slate-100 cursor-not-allowed opacity-60' 
+                : checked 
+                    ? 'bg-indigo-50 border-2 border-indigo-200 cursor-pointer' 
+                    : 'bg-slate-50 border-2 border-transparent hover:border-slate-200 cursor-pointer'
         }`}>
-            <div className={`p-2 rounded-lg ${checked ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+            <div className={`p-2 rounded-lg ${
+                locked ? 'bg-slate-200 text-slate-400' : checked ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'
+            }`}>
                 <Icon size={18} />
             </div>
             <div className="flex-1">
-                <span className={`font-medium ${checked ? 'text-indigo-800' : 'text-slate-700'}`}>{title}</span>
-                <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                <span className={`font-medium ${locked ? 'text-slate-400' : checked ? 'text-indigo-800' : 'text-slate-700'}`}>
+                    {title}
+                    {locked && <Crown size={12} className="inline ml-1 text-amber-500" />}
+                </span>
+                <p className="text-xs text-slate-500 mt-0.5">
+                    {locked ? lockedMessage : description}
+                </p>
             </div>
             <input 
                 type="checkbox" 
-                checked={checked} 
-                onChange={onChange}
-                className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                checked={checked && !locked} 
+                onChange={locked ? () => {} : onChange}
+                disabled={locked}
+                className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
             />
         </label>
     );
@@ -306,7 +312,9 @@ const NotificationSettings: React.FC<Props> = ({
                     </div>
                     <div className="flex-1">
                         <h3 className="font-bold text-white">Email Notifications</h3>
-                        <p className="text-indigo-100 text-sm">Get notified about poll activity</p>
+                        <p className="text-indigo-100 text-sm">
+                            {tier === 'free' ? `${maxEmails} email included` : tier === 'pro' ? `Up to ${maxEmails} emails` : `Up to ${maxEmails} team emails`}
+                        </p>
                     </div>
                     {verifiedCount > 0 && (
                         <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
@@ -473,6 +481,8 @@ const NotificationSettings: React.FC<Props> = ({
                                     description={`At ${MILESTONE_POINTS.slice(0, 4).join(', ')}+ votes`}
                                     checked={settings.notifyOn.milestones}
                                     onChange={() => toggleNotification('milestones')}
+                                    locked={!availableFeatures.includes('milestones')}
+                                    lockedMessage="Upgrade to Pro to unlock"
                                 />
                                 <NotificationOption
                                     id="pollClosed"
@@ -481,6 +491,8 @@ const NotificationSettings: React.FC<Props> = ({
                                     description="When your poll deadline is reached"
                                     checked={settings.notifyOn.pollClosed}
                                     onChange={() => toggleNotification('pollClosed')}
+                                    locked={!availableFeatures.includes('pollClosed')}
+                                    lockedMessage="Upgrade to Pro to unlock"
                                 />
                                 <NotificationOption
                                     id="limitReached"
@@ -489,6 +501,8 @@ const NotificationSettings: React.FC<Props> = ({
                                     description="At 80% and 100% of your response limit"
                                     checked={settings.notifyOn.limitReached}
                                     onChange={() => toggleNotification('limitReached')}
+                                    locked={!availableFeatures.includes('limitReached')}
+                                    lockedMessage="Upgrade to Pro to unlock"
                                 />
                                 <NotificationOption
                                     id="dailyDigest"
@@ -497,6 +511,8 @@ const NotificationSettings: React.FC<Props> = ({
                                     description="Summary email once per day (if votes came in)"
                                     checked={settings.notifyOn.dailyDigest}
                                     onChange={() => toggleNotification('dailyDigest')}
+                                    locked={!availableFeatures.includes('dailyDigest')}
+                                    lockedMessage="Upgrade to Business to unlock"
                                 />
                                 <NotificationOption
                                     id="newComment"
@@ -505,6 +521,8 @@ const NotificationSettings: React.FC<Props> = ({
                                     description="When someone leaves a comment on your poll"
                                     checked={settings.notifyOn.newComment}
                                     onChange={() => toggleNotification('newComment')}
+                                    locked={!availableFeatures.includes('newComment')}
+                                    lockedMessage="Upgrade to Pro to unlock"
                                 />
                             </div>
                         </div>

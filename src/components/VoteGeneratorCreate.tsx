@@ -291,8 +291,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     console.error('Failed to save poll to localStorage:', e);
                 }
                 
-                // BOTH FREE AND PAID: Go to Admin Dashboard
-                // Free users go through ad-wall first
+                // PAID USERS: Go to Admin Dashboard (shows all polls)
+                // FREE USERS: Go through ad-wall then to Admin Dashboard (upsell opportunity)
                 if (isPaidUser) {
                     window.location.href = '/admin';
                 } else {

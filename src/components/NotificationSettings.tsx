@@ -84,15 +84,15 @@ const NotificationSettings: React.FC<Props> = ({
     const [sendingVerification, setSendingVerification] = useState<string | null>(null);
     const [verificationSent, setVerificationSent] = useState<string | null>(null);
     
-    // Only Unlimited tier gets notifications
-    const isUnlimited = tier === 'business' || tier === 'business';
+    // Only Business tier gets notifications
+    const isBusiness = tier === 'business';
     const maxEmails = 10;
     
     const verifiedCount = settings.emails.filter(e => e.verified).length;
     const pendingCount = settings.emails.filter(e => !e.verified).length;
 
     // If not unlimited, show upgrade prompt
-    if (!isUnlimited) {
+    if (!isBusiness) {
         return (
             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6">
                 <div className="flex items-center gap-4">
@@ -110,7 +110,7 @@ const NotificationSettings: React.FC<Props> = ({
                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all text-sm"
                     >
                         <Crown size={16} />
-                        Unlimited Only
+                        Business Only
                     </a>
                 </div>
             </div>

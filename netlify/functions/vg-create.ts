@@ -178,7 +178,7 @@ export const handler: Handler = async (event) => {
           const existingPollCount = customerData.polls.length;
           
           if (existingPollCount >= tierConfig.maxPolls) {
-            const tierLabel = tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : 'Pro Event';
+            const tierLabel = tier === 'free' ? 'Free' : tier === 'pro' ? 'Pro' : 'Business';
             return {
               statusCode: 403,
               headers,

@@ -29,7 +29,7 @@ const LogoUpload: React.FC<Props> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isPremium = tier !== 'free';
-    const maxSizeKB = (tier === 'business' || tier === 'business') ? 2000 : tier === 'pro' ? 1000 : 500;
+    const maxSizeKB = (tier === 'business') ? 2000 : tier === 'pro' ? 1000 : 500;
     const maxSizeBytes = maxSizeKB * 1024;
 
     const uploadToCloudinary = async (file: File): Promise<string | null> => {

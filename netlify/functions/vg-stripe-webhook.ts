@@ -123,8 +123,8 @@ const sendWelcomeEmail = async (
                             <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                                 <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
                                 <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                                    <li style="margin-bottom: 8px;">${tier === 'business' || tier === 'business' ? 'Business polls' : tier === 'pro' ? '3 polls' : '1 poll'}</li>
-                                    <li style="margin-bottom: 8px;">${tier === 'business' || tier === 'business' ? '10,000' : tier === 'pro' ? '2,000' : '500'} responses per poll</li>
+                                    <li style="margin-bottom: 8px;">${tier === 'business' ? '50,000' : '5,000'} responses per month</li>
+                                    <li style="margin-bottom: 8px;">Unlimited polls</li>
                                     <li style="margin-bottom: 8px;">Valid until ${expirationDate}</li>
                                 </ul>
                             </div>

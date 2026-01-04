@@ -487,7 +487,7 @@ const PricingSection: React.FC = () => {
                                     {/* Polls included badge */}
                                     {tier.price !== 0 && (
                                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-2 ${colors.light} ${colors.text}`}>
-                                            {tier.pollCount} poll{tier.pollCount > 1 ? 's' : ''} • {tier.activeDays} days each
+                                            {tier.pollCount} poll{typeof tier.pollCount === 'number' && tier.pollCount > 1 ? 's' : 's'} • {tier.activeDays} days each
                                         </div>
                                     )}
                                     

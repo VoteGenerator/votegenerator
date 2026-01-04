@@ -481,6 +481,26 @@ const VoteGeneratorApp: React.FC = () => {
                                 poll={viewState.poll} 
                                 onVoteSuccess={handleVoteSuccess} 
                             />
+                            
+                            {/* Powered by VoteGenerator Badge - FREE tier only */}
+                            {(() => {
+                                const pollTier = (viewState.poll as any).tier || 'free';
+                                if (pollTier !== 'free') return null;
+                                
+                                return (
+                                    <div className="mt-8 text-center print:hidden">
+                                        <a 
+                                            href="https://votegenerator.com?ref=poll" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 hover:text-slate-800 transition-colors"
+                                        >
+                                            <img src="/logo.svg" alt="" className="w-4 h-4" />
+                                            Powered by <span className="font-semibold">VoteGenerator</span>
+                                        </a>
+                                    </div>
+                                );
+                            })()}
                         </motion.div>
                     )}
 
@@ -1102,6 +1122,26 @@ const VoteGeneratorApp: React.FC = () => {
                                                     </button>
                                                 </div>
                                             )}
+                                            
+                                            {/* Powered by VoteGenerator Badge - FREE tier only */}
+                                            {(() => {
+                                                const pollTier = (viewState.poll as any).tier || 'free';
+                                                if (pollTier !== 'free') return null;
+                                                
+                                                return (
+                                                    <div className="mt-8 text-center print:hidden">
+                                                        <a 
+                                                            href="https://votegenerator.com?ref=results" 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 hover:text-slate-800 transition-colors"
+                                                        >
+                                                            <img src="/logo.svg" alt="" className="w-4 h-4" />
+                                                            Powered by <span className="font-semibold">VoteGenerator</span>
+                                                        </a>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </div>

@@ -13,6 +13,8 @@ import NotificationSettings from './NotificationSettings';
 import EmbedModal from './EmbedPoll';
 import LogoUpload from './LogoUpload';
 import CustomSlugInput from './CustomSlugInput';
+import DraftLiveToggle from './DraftLiveToggle';
+import EmailAdminLink from './EmailAdminLink';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -461,6 +463,21 @@ const VoteGeneratorApp: React.FC = () => {
                                                 </div>
                                             </div>
 
+                                            {/* Poll Status Toggle */}
+                                            <div className="mb-6">
+                                                <DraftLiveToggle
+                                                    pollId={viewState.poll.id}
+                                                    adminKey={(() => {
+                                                        const hash = window.location.hash.slice(1);
+                                                        const params = new URLSearchParams(hash);
+                                                        return params.get('admin') || '';
+                                                    })()}
+                                                    status={(viewState.poll as any).status || 'live'}
+                                                    voteCount={viewState.results.totalVotes || 0}
+                                                    onStatusChange={() => loadView()}
+                                                />
+                                            </div>
+
                                             <div className="grid lg:grid-cols-2 gap-6">
                                                 
                                                 {/* Share Section */}
@@ -507,6 +524,19 @@ const VoteGeneratorApp: React.FC = () => {
                                                          <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
                                                              <Download size={14}/> Download PDF
                                                          </button>
+                                                     </div>
+                                                     
+                                                     {/* Email Admin Link */}
+                                                     <div className="mt-4 pt-4 border-t border-slate-100">
+                                                         <EmailAdminLink
+                                                             pollId={viewState.poll.id}
+                                                             adminKey={(() => {
+                                                                 const hash = window.location.hash.slice(1);
+                                                                 const params = new URLSearchParams(hash);
+                                                                 return params.get('admin') || '';
+                                                             })()}
+                                                             pollTitle={viewState.poll.title}
+                                                         />
                                                      </div>
                                                 </div>
 

@@ -102,8 +102,34 @@ const CustomSlugInput: React.FC<Props> = ({
             .slice(0, 50);
     };
 
+    // Show locked state for non-Business tiers
     if (!isBusiness) {
-        return null; // Don't show for non-unlimited tiers
+        return (
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 opacity-75">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-200 rounded-lg">
+                            <Link2 size={18} className="text-slate-400" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium text-slate-600">Custom Short Link</span>
+                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">BUSINESS</span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                Create memorable URLs like /p/team-vote
+                            </p>
+                        </div>
+                    </div>
+                    <a 
+                        href="/pricing" 
+                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                        Upgrade →
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     return (

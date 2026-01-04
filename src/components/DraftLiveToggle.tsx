@@ -326,7 +326,7 @@ const DraftLiveToggle: React.FC<Props> = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </motion.div>
     );
 };
 

@@ -1,7 +1,7 @@
 // ============================================================================
 // vg-activate-poll.ts - Activate a draft poll (make it live)
 // Location: netlify/functions/vg-activate-poll.ts
-// Called when Starter/Pro user clicks "Go Live" on a draft poll
+// Called when Pro/Pro user clicks "Go Live" on a draft poll
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
@@ -39,15 +39,15 @@ interface CustomerRecord {
 
 // Tier configuration for expiration
 const TIER_DAYS: Record<string, number> = {
-    starter: 30,
-    pro_event: 60,
-    unlimited: 365,
+    free: 30,
+    pro: 365,
+    business: 365,
 };
 
 const TIER_MAX_LIVE: Record<string, number> = {
-    starter: 1,
-    pro_event: 3,
-    unlimited: Infinity,
+    free: 3,
+    pro: Infinity,
+    business: Infinity,
 };
 
 export const handler: Handler = async (event) => {
@@ -156,7 +156,7 @@ export const handler: Handler = async (event) => {
         }
 
         // Calculate expiration date based on tier
-        const tier = pollData.tier || 'starter';
+        const tier = pollData.tier || 'pro';
         const days = TIER_DAYS[tier] || 30;
         const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 

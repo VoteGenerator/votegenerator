@@ -38,6 +38,17 @@ export default function AdWall() {
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center"
       >
+        {/* Success Message */}
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Poll Created Successfully!</h1>
+          <p className="text-slate-600">Your admin dashboard is almost ready...</p>
+        </div>
+
         {/* Ad Space */}
         <div className="mb-6">
           <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center mb-4 border-2 border-dashed border-slate-300">
@@ -53,7 +64,7 @@ export default function AdWall() {
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-slate-600">
               <Clock size={20} />
-              <span>Your poll is ready in...</span>
+              <span>Preparing your admin dashboard...</span>
             </div>
             <div className="text-5xl font-bold text-indigo-600">
               {countdown}
@@ -66,14 +77,18 @@ export default function AdWall() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
           >
             <button
               onClick={handleProceed}
               className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
-              Go to My Poll
+              Go to Admin Dashboard
               <ArrowRight size={20} />
             </button>
+            <p className="text-sm text-amber-600 font-medium">
+              ⚠️ Bookmark the next page to access your poll anytime!
+            </p>
           </motion.div>
         )}
 

@@ -49,8 +49,8 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
     };
     
     const isPaidTier = poll.tier && poll.tier !== 'free';
-    const isUnlimited = poll.tier === 'unlimited' || poll.tier === 'unlimited_event';
-    const isProOrHigher = poll.tier === 'pro_event' || poll.tier === 'unlimited_event' || poll.tier === 'unlimited';
+    const isBusiness = poll.tier === 'business';
+    const isProOrHigher = poll.tier === 'pro' || poll.tier === 'business';
     
     const handleSave = async () => {
         if (!title.trim()) {
@@ -301,7 +301,7 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                         />
                     </div>
                     
-                    {/* Custom Branding - Pro Event & Unlimited */}
+                    {/* Custom Branding - Pro Event & Business */}
                     <div className={`p-4 rounded-xl border ${
                         isProOrHigher
                             ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
@@ -312,11 +312,11 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                             <span className="font-semibold text-slate-700">Custom Branding</span>
                             {isProOrHigher ? (
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                    isUnlimited 
+                                    isBusiness 
                                         ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
                                         : 'bg-purple-600 text-white'
                                 }`}>
-                                    {isUnlimited ? 'UNLIMITED' : 'PRO'}
+                                    {isBusiness ? 'UNLIMITED' : 'PRO'}
                                 </span>
                             ) : (
                                 <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-bold">PRO+</span>
@@ -332,7 +332,7 @@ const VoteGeneratorEdit: React.FC<Props> = ({ poll, onCancel, onUpdate }) => {
                             <div className="text-center py-4 opacity-60">
                                 <ImageIcon size={32} className="mx-auto mb-2 text-slate-300" />
                                 <p className="text-sm text-slate-500">Add your logo to polls</p>
-                                <p className="text-xs text-slate-400">Available on Pro Event & Unlimited</p>
+                                <p className="text-xs text-slate-400">Available on Pro Event & Business</p>
                             </div>
                         )}
                     </div>

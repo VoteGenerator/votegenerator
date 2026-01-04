@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
-type PaidTier = 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
+type PaidTier = 'pro' | 'business';
 
 // Tier configuration (minimal - full config on admin dashboard)
 const TIER_CONFIG: Record<PaidTier, {
@@ -19,26 +19,14 @@ const TIER_CONFIG: Record<PaidTier, {
     gradient: string;
     days: number;
 }> = {
-    starter: {
-        label: 'Starter',
-        icon: Zap,
-        gradient: 'from-blue-500 to-indigo-600',
-        days: 30,
-    },
-    pro_event: {
-        label: 'Pro Event',
+    pro: {
+        label: 'Pro',
         icon: Crown,
         gradient: 'from-purple-500 to-pink-600',
-        days: 30,
+        days: 365,
     },
-    unlimited_event: {
-        label: 'Unlimited Event',
-        icon: Star,
-        gradient: 'from-orange-400 to-amber-500',
-        days: 30,
-    },
-    unlimited: {
-        label: 'Unlimited',
+    business: {
+        label: 'Business',
         icon: Star,
         gradient: 'from-amber-500 to-orange-500',
         days: 365,
@@ -49,10 +37,10 @@ const PaidCreatePage: React.FC = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
     // Get tier from localStorage
-    const tier = (localStorage.getItem('vg_purchased_tier') || 'starter') as PaidTier;
+    const tier = (localStorage.getItem('vg_purchased_tier') || 'pro') as PaidTier;
     const expiresAt = localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at');
     
-    const config = TIER_CONFIG[tier] || TIER_CONFIG.starter;
+    const config = TIER_CONFIG[tier] || TIER_CONFIG.pro;
     const TierIcon = config.icon;
     
     // Calculate days remaining

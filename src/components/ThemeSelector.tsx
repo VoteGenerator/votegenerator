@@ -237,7 +237,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
     onThemeChange,
     tier = 'free'
 }) => {
-    const isPaidTier = tier === 'pro_event' || tier === 'unlimited' || tier === 'unlimited_event' || tier === 'starter';
+    const isPaidTier = tier === 'pro' || tier === 'business';
     
     const freeThemes = THEMES.filter(t => !t.isPremium);
     const premiumThemes = THEMES.filter(t => t.isPremium);

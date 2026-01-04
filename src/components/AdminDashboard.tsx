@@ -40,14 +40,14 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
-    status?: 'draft' | 'live';  // For Starter/Pro polls
+    status?: 'draft' | 'live';  // For Pro/Pro polls
     expiresAt?: string;
     customSlug?: string;
 }
 
 interface UserSession {
     dashboardToken: string;
-    tier: 'free' | 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited';
+    tier: 'free' | 'pro' | 'business';
     expiresAt?: string;
     polls: UserPoll[];
     createdAt: string;
@@ -70,8 +70,9 @@ const TIER_CONFIG: Record<string, {
     headerBg: string;
     icon: React.ReactNode;
     maxPolls: number;
+    maxResponses: number;
     activeDays: number;
-    requiresActivation: boolean; // Does this tier need draft→live flow?
+    requiresActivation: boolean;
     features: { name: string; included: boolean }[];
 }> = {
     free: {
@@ -80,84 +81,54 @@ const TIER_CONFIG: Record<string, {
         bgGradient: 'from-slate-50 via-white to-slate-50',
         headerBg: 'bg-slate-100',
         icon: <BarChart3 size={16} />,
-        maxPolls: 1,
-        activeDays: 7,
+        maxPolls: 3,
+        maxResponses: 100,
+        activeDays: 30,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '50 responses', included: true },
-            { name: '7 days active', included: true },
-            { name: 'Visual polls', included: false },
+            { name: '100 responses/month', included: true },
+            { name: '3 active polls', included: true },
+            { name: '30 days active', included: true },
             { name: 'Export to CSV', included: false },
         ]
     },
-    starter: {
-        label: 'Starter',
-        gradient: 'from-blue-500 to-indigo-600',
-        bgGradient: 'from-blue-50/40 via-white to-indigo-50/40',
-        headerBg: 'bg-blue-50',
-        icon: <Zap size={16} />,
-        maxPolls: 1,
-        activeDays: 30,
-        requiresActivation: true,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '500 responses', included: true },
-            { name: '30 days access', included: true },
-            { name: 'Export to CSV', included: true },
-            { name: 'Visual polls', included: false },
-        ]
-    },
-    pro_event: {
-        label: 'Pro Event',
+    pro: {
+        label: 'Pro',
         gradient: 'from-purple-500 to-pink-500',
         bgGradient: 'from-purple-50/40 via-white to-pink-50/40',
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
-        maxPolls: 3,
-        activeDays: 30,
-        requiresActivation: true,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '2,000 responses', included: true },
-            { name: '30 days access', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-        ]
-    },
-    unlimited_event: {
-        label: 'Unlimited Event',
-        gradient: 'from-amber-400 to-orange-400',
-        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
-        headerBg: 'bg-amber-50',
-        icon: <Sparkles size={16} />,
         maxPolls: Infinity,
-        activeDays: 30,
+        maxResponses: 5000,
+        activeDays: 365,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '10,000 responses', included: true },
-            { name: '30 days access', included: true },
-            { name: 'Unlimited polls', included: true },
-            { name: 'PIN protection', included: true },
+            { name: '5,000 responses/month', included: true },
+            { name: 'Business polls', included: true },
+            { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'Custom branding', included: true },
         ]
     },
-    unlimited: {
-        label: 'Unlimited',
+    business: {
+        label: 'Business',
         gradient: 'from-amber-500 to-orange-500',
         bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
+        maxResponses: 50000,
         activeDays: 365,
-        requiresActivation: false, // Unlimited doesn't need confirmation
+        requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '10,000 responses/poll', included: true },
-            { name: '1 year access', included: true },
+            { name: '50,000 responses/month', included: true },
+            { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
-            { name: 'Team tokens (10)', included: true },
+            { name: 'Custom branding', included: true },
+            { name: 'Priority support', included: true },
         ]
     },
 };
@@ -190,7 +161,7 @@ const AdminDashboard: React.FC = () => {
     const urlToken = urlParams.get('token');
     const urlDashboardToken = urlParams.get('t'); // NEW: Short token format from email
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
-    const urlTier = urlParams.get('tier') as 'starter' | 'pro_event' | 'unlimited_event' | 'unlimited' | null;
+    const urlTier = urlParams.get('tier') as 'pro' | 'business' | null;
 
     // Fetch customer data by dashboard token from backend
     const fetchCustomerByToken = async (token: string): Promise<UserSession | null> => {
@@ -363,8 +334,8 @@ const AdminDashboard: React.FC = () => {
                 }
                 
                 // Create temp session (webhook may still be processing)
-                const tier = urlTier || 'unlimited';
-                const days = tier === 'unlimited' ? 365 : 30;
+                const tier = urlTier || 'business';
+                const days = tier === 'business' ? 365 : 30;
                 const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
                 
                 const newSession: UserSession = {
@@ -446,10 +417,10 @@ const AdminDashboard: React.FC = () => {
         return filteredPolls.slice(start, start + POLLS_PER_PAGE);
     }, [filteredPolls, currentPage]);
 
-    // Count live polls (for Starter/Pro limit)
+    // Count live polls (for Pro/Pro limit)
     const livePolls = useMemo(() => {
         if (!session) return [];
-        return (session.polls || []).filter(p => p.status === 'live' || !session.tier.match(/starter|pro_event/));
+        return (session.polls || []).filter(p => p.status === 'live' || session.tier !== 'free');
     }, [session]);
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
@@ -466,13 +437,13 @@ const AdminDashboard: React.FC = () => {
         
         // Get response count for warning message
         const hasResponses = (poll.responseCount || 0) > 0;
-        const isRestrictedTier = session.tier === 'free' || session.tier === 'starter';
+        const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
         
         // Different confirmation messages based on tier and responses
         let confirmMessage = `Delete "${poll.title}"?`;
         if (hasResponses) {
             if (isRestrictedTier) {
-                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the ${session.tier === 'free' ? 'Free' : 'Starter'} plan, you can only delete polls with 0 responses. Upgrade to Pro Event or higher to delete polls with responses.`);
+                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the Free plan, you can only delete polls with 0 responses. Upgrade to Pro or higher to delete polls with responses.`);
                 return;
             } else {
                 confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
@@ -567,7 +538,7 @@ const AdminDashboard: React.FC = () => {
         // Block creation if plan is expired
         if (isPlanExpired) return false;
         const config = TIER_CONFIG[session.tier];
-        // For Starter/Pro, only count LIVE polls toward the limit
+        // For Pro/Pro, only count LIVE polls toward the limit
         if (config.requiresActivation) {
             return livePolls.length < config.maxPolls;
         }
@@ -610,8 +581,8 @@ const AdminDashboard: React.FC = () => {
     const config = TIER_CONFIG[tier];
     const polls = session.polls || [];
     const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isUnlimited = tier === 'unlimited' || tier === 'unlimited_event';
-    const showSearch = isUnlimited && polls.length > 5;
+    const isBusiness = tier === 'business';
+    const showSearch = isBusiness && polls.length > 5;
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
@@ -648,7 +619,7 @@ const AdminDashboard: React.FC = () => {
                                 }
                             </span>
                         </div>
-                        {isUnlimited && !isPlanExpired && (
+                        {isBusiness && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
@@ -720,7 +691,7 @@ const AdminDashboard: React.FC = () => {
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
-                                {/* Search bar for Unlimited with many polls */}
+                                {/* Search bar for Business with many polls */}
                                 {showSearch && (
                                     <div className="relative">
                                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -947,7 +918,7 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                 )}
 
-                                {!canCreateMorePolls() && tier !== 'unlimited' && (
+                                {!canCreateMorePolls() && tier !== 'business' && (
                                     <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
                                         <p className="text-slate-600 mb-2">
                                             You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
@@ -963,8 +934,8 @@ const AdminDashboard: React.FC = () => {
 
                     {/* Right Sidebar */}
                     <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-6">
-                        {/* Unlimited: Security & Access - Premium styling */}
-                        {isUnlimited && (
+                        {/* Business: Security & Access - Premium styling */}
+                        {isBusiness && (
                             <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl border-2 border-amber-200 overflow-hidden shadow-lg shadow-amber-100/50">
                                 <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-amber-50/50 transition">
                                     <div className="flex items-center gap-3">
@@ -1023,10 +994,8 @@ const AdminDashboard: React.FC = () => {
 
                         {/* Plan Card - Collapsible */}
                         <div className={`rounded-2xl border-2 overflow-hidden ${
-                            tier === 'unlimited' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
-                            tier === 'unlimited_event' ? 'bg-gradient-to-br from-orange-50 via-white to-amber-50 border-orange-200' :
-                            tier === 'pro_event' ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-emerald-200' :
-                            tier === 'starter' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-blue-200' :
+                            tier === 'business' ? 'bg-gradient-to-br from-amber-50 via-white to-orange-50 border-amber-200' :
+                            tier === 'pro' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
                             'bg-white border-slate-200'
                         }`}>
                             <button 
@@ -1060,7 +1029,7 @@ const AdminDashboard: React.FC = () => {
                                         ))}
                                     </div>
 
-                                    {tier !== 'unlimited' && !isPlanExpired && (
+                                    {tier !== 'business' && !isPlanExpired && (
                                     <a href="/pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
                                         Upgrade Plan
                                     </a>
@@ -1071,7 +1040,7 @@ const AdminDashboard: React.FC = () => {
                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                         {(() => {
                                             const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                                            const canExtend = daysLeft <= 30 && tier === 'unlimited'; // Only Unlimited can extend
+                                            const canExtend = daysLeft <= 30 && tier === 'business'; // Only Business can extend
                                             
                                             return (
                                                 <>
@@ -1101,7 +1070,7 @@ const AdminDashboard: React.FC = () => {
                                                         </button>
                                                     )}
                                                     
-                                                    {/* Extend button - only for Unlimited when ≤30 days remaining */}
+                                                    {/* Extend button - only for Business when ≤30 days remaining */}
                                                     {!isPlanExpired && canExtend && (
                                                         <button 
                                                             onClick={() => window.location.href = `/pricing`}
@@ -1266,7 +1235,7 @@ const AdminDashboard: React.FC = () => {
                     <GoLiveModalInline
                         isOpen={!!showGoLiveModal}
                         pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
-                        tier={tier as 'starter' | 'pro_event' | 'unlimited_event'}
+                        tier={tier as 'pro' | 'business'}
                         pollsUsed={livePolls.length}
                         pollsMax={config.maxPolls}
                         activeDays={config.activeDays}
@@ -1416,7 +1385,7 @@ const PinSetupModalInline: React.FC<{
 const GoLiveModalInline: React.FC<{
     isOpen: boolean;
     pollTitle: string;
-    tier: 'starter' | 'pro_event' | 'unlimited_event';
+    tier: 'pro' | 'business';
     pollsUsed: number;
     pollsMax: number;
     activeDays: number;
@@ -1425,7 +1394,7 @@ const GoLiveModalInline: React.FC<{
 }> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
     const [confirmed, setConfirmed] = useState(false);
     const isLastPoll = pollsMax - pollsUsed === 1;
-    const gradient = tier === 'pro_event' ? 'from-purple-500 to-pink-500' : tier === 'unlimited_event' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
+    const gradient = tier === 'pro' ? 'from-purple-500 to-pink-500' : tier === 'business' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
 
     if (!isOpen) return null;
 

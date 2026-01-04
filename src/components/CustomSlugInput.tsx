@@ -22,11 +22,11 @@ const CustomSlugInput: React.FC<Props> = ({
     const [savedSlug, setSavedSlug] = useState(currentSlug || '');
     const [copied, setCopied] = useState(false);
 
-    const isUnlimited = tier === 'unlimited';
+    const isBusiness = tier === 'business';
 
     // Debounced availability check
     useEffect(() => {
-        if (!slug || slug === savedSlug || !isUnlimited) {
+        if (!slug || slug === savedSlug || !isBusiness) {
             setIsAvailable(null);
             return;
         }
@@ -52,7 +52,7 @@ const CustomSlugInput: React.FC<Props> = ({
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [slug, savedSlug, pollId, isUnlimited]);
+    }, [slug, savedSlug, pollId, isBusiness]);
 
     const handleSave = async () => {
         if (!isAvailable || !slug) return;
@@ -102,7 +102,7 @@ const CustomSlugInput: React.FC<Props> = ({
             .slice(0, 50);
     };
 
-    if (!isUnlimited) {
+    if (!isBusiness) {
         return null; // Don't show for non-unlimited tiers
     }
 

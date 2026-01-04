@@ -152,7 +152,7 @@ function PricingPage(): React.ReactElement {
             cta: 'Get Pro', 
             ctaLink: `/.netlify/functions/vg-checkout?tier=pro&billing=${isAnnual ? 'annual' : 'monthly'}`,
             features: { 
-                polls: 'Unlimited polls', 
+                polls: 'Business polls', 
                 responses: '5,000 responses/mo', 
                 types: 'All 8 poll types',
                 highlights: [
@@ -176,7 +176,7 @@ function PricingPage(): React.ReactElement {
             cta: 'Get Business', 
             ctaLink: `/.netlify/functions/vg-checkout?tier=business&billing=${isAnnual ? 'annual' : 'monthly'}`,
             features: { 
-                polls: 'Unlimited polls', 
+                polls: 'Business polls', 
                 responses: '50,000 responses/mo', 
                 types: 'All 8 poll types',
                 highlights: [

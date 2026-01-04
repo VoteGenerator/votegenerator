@@ -378,45 +378,45 @@ const PricingSection: React.FC = () => {
             description: 'No credit card required', 
             color: 'slate', 
             icon: Users,
-            pollCount: 1,
-            activeDays: 7,
-            features: ['6 free poll types', '50 responses per poll', '7 days active', 'Unlimited free polls', 'QR code sharing', 'Real-time results'],
+            pollCount: 3,
+            activeDays: 30,
+            features: ['All poll types', '100 responses/month', '3 active polls', '30 days active', 'QR code sharing', 'Real-time results'],
             cta: 'Create Free Poll', 
             ctaLink: '/#create',
         },
         {
-            name: 'Starter', 
-            price: prices.starter, 
-            period: 'one-time', 
-            description: 'For a quick poll', 
-            color: 'blue', 
-            icon: Zap,
-            pollCount: 1,
-            activeDays: 30,
-            features: ['Everything in Free', '500 responses', '30 days access', '1 poll included', 'CSV export', 'No ads'],
-            cta: 'Get Starter', 
-            ctaLink: '/.netlify/functions/vg-checkout?tier=starter',
-        },
-        {
-            name: 'Pro Event', 
-            price: prices.proEvent, 
-            period: 'one-time', 
-            description: 'For events & teams', 
+            name: 'Pro', 
+            price: prices.pro, 
+            period: '/month', 
+            description: 'For growing teams', 
             color: 'purple', 
             icon: Crown, 
             popular: true,
-            pollCount: 3,
-            activeDays: 30,
-            features: ['Everything in Starter', '2,000 responses/poll', '30 days access', '3 polls included', 'Visual Poll + PDF', 'Remove branding'],
-            cta: 'Get Pro Event', 
-            ctaLink: '/.netlify/functions/vg-checkout?tier=pro_event',
+            pollCount: 'Unlimited',
+            activeDays: 365,
+            features: ['Everything in Free', '5,000 responses/month', 'Unlimited polls', 'CSV/PDF/PNG export', 'Custom branding', 'No ads'],
+            cta: 'Get Pro', 
+            ctaLink: '/.netlify/functions/vg-checkout?tier=pro',
+        },
+        {
+            name: 'Business', 
+            price: prices.business, 
+            period: '/month', 
+            description: 'For organizations', 
+            color: 'amber', 
+            icon: Star, 
+            pollCount: 'Unlimited',
+            activeDays: 365,
+            features: ['Everything in Pro', '50,000 responses/month', 'Unlimited polls', 'PIN protection', 'Priority support', 'Team features'],
+            cta: 'Get Business', 
+            ctaLink: '/.netlify/functions/vg-checkout?tier=business',
         },
     ];
 
     const colorClasses: Record<string, { bg: string; text: string; button: string; light: string; border: string }> = {
         slate: { bg: 'bg-slate-100', text: 'text-slate-600', button: 'bg-slate-100 hover:bg-slate-200 text-slate-800', light: 'bg-slate-50', border: 'border-slate-200' },
-        blue: { bg: 'bg-blue-100', text: 'text-blue-600', button: 'bg-blue-600 hover:bg-blue-700 text-white', light: 'bg-blue-50', border: 'border-blue-200' },
         purple: { bg: 'bg-purple-100', text: 'text-purple-600', button: 'bg-purple-600 hover:bg-purple-700 text-white', light: 'bg-purple-50', border: 'border-purple-200' },
+        amber: { bg: 'bg-amber-100', text: 'text-amber-600', button: 'bg-amber-600 hover:bg-amber-700 text-white', light: 'bg-amber-50', border: 'border-amber-200' },
     };
 
     return (
@@ -487,7 +487,7 @@ const PricingSection: React.FC = () => {
                                     {/* Polls included badge */}
                                     {tier.price !== 0 && (
                                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-2 ${colors.light} ${colors.text}`}>
-                                            {tier.pollCount} poll{tier.pollCount > 1 ? 's' : ''} • {tier.activeDays} days each
+                                            {tier.pollCount} poll{typeof tier.pollCount === 'number' && tier.pollCount > 1 ? 's' : 's'} • {tier.activeDays} days each
                                         </div>
                                     )}
                                     
@@ -534,7 +534,7 @@ const PricingSection: React.FC = () => {
 
                 <div className="text-center">
                     <a href="/pricing" className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
-                        View full pricing with Unlimited plan & feature comparison <ArrowRight size={18} />
+                        View full pricing with Business plan & feature comparison <ArrowRight size={18} />
                     </a>
                 </div>
             </div>
@@ -552,14 +552,14 @@ const ComparisonSection: React.FC = () => {
     // Format our price display with geo
     const ourPriceDisplay = loading 
         ? 'Free / ...' 
-        : `Free / ${prices.symbol}${prices.starter}+ ${currency}`;
+        : `Free / ${prices.symbol}${prices.pro}+ ${currency}`;
 
     const competitors = [
         { name: 'VoteGenerator', free: true, noSignup: true, pollTypes: 7, responses: '50 free', price: ourPriceDisplay },
-        { name: 'Strawpoll', free: true, noSignup: true, pollTypes: 2, responses: 'Unlimited', price: 'Free / $5+' },
+        { name: 'Strawpoll', free: true, noSignup: true, pollTypes: 2, responses: 'Business', price: 'Free / $5+' },
         { name: 'Doodle', free: true, noSignup: false, pollTypes: 2, responses: 'Limited', price: 'Free / $6.95+/mo' },
         { name: 'SurveyMonkey', free: true, noSignup: false, pollTypes: 10, responses: '10/survey', price: 'Free / $25+/mo' },
-        { name: 'Google Forms', free: true, noSignup: false, pollTypes: 5, responses: 'Unlimited', price: 'Free' },
+        { name: 'Google Forms', free: true, noSignup: false, pollTypes: 5, responses: 'Business', price: 'Free' },
     ];
 
     return (

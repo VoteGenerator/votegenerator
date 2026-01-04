@@ -7,10 +7,8 @@ import { useState, useEffect } from 'react';
 
 // Base prices in USD (whole numbers)
 const BASE_PRICES = {
-    starter: 9,
-    proEvent: 19,
-    unlimitedEvent: 49,
-    unlimited: 199,
+    pro: 9,
+    business: 29,
 };
 
 // Currency configurations with ACTUAL exchange rates + 5% buffer for fluctuations
@@ -50,10 +48,8 @@ const calculatePrices = (currencyCode: string) => {
     const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
     
     return {
-        starter: roundPrice(BASE_PRICES.starter * config.multiplier),
-        proEvent: roundPrice(BASE_PRICES.proEvent * config.multiplier),
-        unlimitedEvent: roundPrice(BASE_PRICES.unlimitedEvent * config.multiplier),
-        unlimited: roundPrice(BASE_PRICES.unlimited * config.multiplier),
+        pro: roundPrice(BASE_PRICES.pro * config.multiplier),
+        business: roundPrice(BASE_PRICES.business * config.multiplier),
         symbol: config.symbol,
     };
 };
@@ -136,34 +132,24 @@ export const useGeoPricing = () => {
 // Calculated: USD × exchange_rate × 1.05 (buffer), rounded to whole numbers
 export const STRIPE_PRICES = {
     USD: {
-        starter: 9,
-        proEvent: 19,
-        unlimitedEvent: 49,
-        unlimited: 199,
+        pro: 9,
+        business: 29,
     },
     CAD: {
-        starter: 13,    // $9 × 1.36 × 1.05 = $12.85 → $13
-        proEvent: 27,   // $19 × 1.36 × 1.05 = $27.13 → $27
-        unlimitedEvent: 70,  // $49 × 1.36 × 1.05 = $69.97 → $70
-        unlimited: 285, // $199 × 1.36 × 1.05 = $284.15 → $285
+        pro: 13,
+        business: 42,
     },
     AUD: {
-        starter: 15,    // $9 × 1.53 × 1.05 = $14.46 → $15
-        proEvent: 31,   // $19 × 1.53 × 1.05 = $30.52 → $31
-        unlimitedEvent: 79,  // $49 × 1.53 × 1.05 = $78.72 → $79
-        unlimited: 320, // $199 × 1.53 × 1.05 = $319.79 → $320
+        pro: 15,
+        business: 47,
     },
     EUR: {
-        starter: 9,     // $9 × 0.92 × 1.05 = €8.69 → €9
-        proEvent: 19,   // $19 × 0.92 × 1.05 = €18.35 → €19
-        unlimitedEvent: 49,  // $49 × 0.92 × 1.05 = €47.33 → €49
-        unlimited: 195, // $199 × 0.92 × 1.05 = €192.28 → €195
+        pro: 9,
+        business: 28,
     },
     GBP: {
-        starter: 8,     // $9 × 0.79 × 1.05 = £7.47 → £8
-        proEvent: 16,   // $19 × 0.79 × 1.05 = £15.76 → £16
-        unlimitedEvent: 41,  // $49 × 0.79 × 1.05 = £40.64 → £41
-        unlimited: 165, // $199 × 0.79 × 1.05 = £165.07 → £165
+        pro: 8,
+        business: 24,
     },
 };
 

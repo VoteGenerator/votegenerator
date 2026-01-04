@@ -8,6 +8,7 @@ interface EmbedModalProps {
     isOpen: boolean;
     onClose: () => void;
     isPremium: boolean; // Premium users get no branding
+    onUpgradeClick?: () => void;
 }
 
 // Embed configuration options
@@ -20,7 +21,7 @@ interface EmbedConfig {
     allowedDomains: string; // Comma-separated domains (Pro/Business feature)
 }
 
-const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium }) => {
+const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium, onUpgradeClick }) => {
     const [copied, setCopied] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
     const [config, setConfig] = useState<EmbedConfig>({
@@ -225,12 +226,21 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <a 
-                                                    href="/#pricing" 
-                                                    className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-1"
-                                                >
-                                                    Upgrade to unlock →
-                                                </a>
+                                                onUpgradeClick ? (
+                                                    <button 
+                                                        onClick={onUpgradeClick}
+                                                        className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-1"
+                                                    >
+                                                        Upgrade to unlock →
+                                                    </button>
+                                                ) : (
+                                                    <a 
+                                                        href="/#pricing" 
+                                                        className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-medium mt-1"
+                                                    >
+                                                        Upgrade to unlock →
+                                                    </a>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -335,7 +345,11 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
                                     <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                                         <div className="text-xs text-emerald-800">
                                             <strong>💡 Did you know?</strong> Each embedded poll with branding helps spread the word about VoteGenerator. 
-                                            <a href="/pricing" className="underline ml-1">Upgrade to Pro</a> to remove branding.
+                                            {onUpgradeClick ? (
+                                                <button onClick={onUpgradeClick} className="underline ml-1">Upgrade to Pro</button>
+                                            ) : (
+                                                <a href="/pricing" className="underline ml-1">Upgrade to Pro</a>
+                                            )} to remove branding.
                                         </div>
                                     </div>
                                 )}

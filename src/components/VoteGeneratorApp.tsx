@@ -703,12 +703,15 @@ const VoteGeneratorApp: React.FC = () => {
                                                                     {voteCount} / {maxVotes} responses
                                                                 </span>
                                                             </div>
-                                                            <a 
-                                                                href="/#pricing" 
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setUpgradeHighlight('unlimited');
+                                                                    setShowUpgradeModal(true);
+                                                                }}
                                                                 className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                                                             >
                                                                 Upgrade for unlimited <ArrowRight size={12} />
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                                                             <div 
@@ -718,7 +721,16 @@ const VoteGeneratorApp: React.FC = () => {
                                                         </div>
                                                         {percentage >= 75 && (
                                                             <p className="text-xs text-amber-700 mt-2">
-                                                                ⚠️ {percentage >= 90 ? 'Almost at limit!' : 'Approaching limit'} Upgrade to keep collecting votes.
+                                                                ⚠️ {percentage >= 90 ? 'Almost at limit!' : 'Approaching limit'}{' '}
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        setUpgradeHighlight('unlimited');
+                                                                        setShowUpgradeModal(true);
+                                                                    }}
+                                                                    className="underline hover:no-underline"
+                                                                >
+                                                                    Upgrade to keep collecting votes.
+                                                                </button>
                                                             </p>
                                                         )}
                                                     </div>
@@ -900,6 +912,10 @@ const VoteGeneratorApp: React.FC = () => {
                                                             const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
                                                             return tier || 'free';
                                                         })()}
+                                                        onUpgradeClick={() => {
+                                                            setUpgradeHighlight('unlimited');
+                                                            setShowUpgradeModal(true);
+                                                        }}
                                                     />
                                                 </div>
                                                 
@@ -1269,6 +1285,11 @@ const VoteGeneratorApp: React.FC = () => {
                             const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
                             return tier === 'pro' || tier === 'business';
                         })()}
+                        onUpgradeClick={() => {
+                            setShowEmbedModal(false);
+                            setUpgradeHighlight('branding');
+                            setShowUpgradeModal(true);
+                        }}
                     />
                 )}
 

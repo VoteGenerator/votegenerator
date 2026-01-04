@@ -36,7 +36,7 @@ const PLANS = {
     pro: {
         name: 'Pro',
         icon: Zap,
-        price: { monthly: 9, yearly: 90 },
+        price: { monthly: 19, yearly: 190 },
         color: 'indigo',
         gradient: 'from-indigo-500 to-blue-600',
         features: [
@@ -53,7 +53,7 @@ const PLANS = {
     business: {
         name: 'Business',
         icon: Crown,
-        price: { monthly: 29, yearly: 290 },
+        price: { monthly: 49, yearly: 490 },
         color: 'purple',
         gradient: 'from-violet-500 to-purple-600',
         features: [
@@ -189,7 +189,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                                 }`}
                             >
                                 Yearly
-                                <span className="ml-1.5 text-xs text-emerald-600 font-bold">Save 17%</span>
+                                <span className="ml-1.5 text-xs text-emerald-600 font-bold">2 months free</span>
                             </button>
                         </div>
                     </div>

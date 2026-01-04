@@ -15,6 +15,8 @@ import LogoUpload from './LogoUpload';
 import CustomSlugInput from './CustomSlugInput';
 import DraftLiveToggle from './DraftLiveToggle';
 import EmailAdminLink from './EmailAdminLink';
+import ResponseTimelineChart from './ResponseTimelineChart';
+import FeatureTeaserCard, { FeatureTeaserGrid } from './FeatureTeaserCard';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -607,51 +609,63 @@ const VoteGeneratorApp: React.FC = () => {
                                                 );
                                             })()}
 
-                                            <div className="grid lg:grid-cols-2 gap-6">
+                                            <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
                                                 
                                                 {/* Share Section */}
-                                                <div className="bg-white border border-indigo-100 rounded-xl p-5 shadow-sm">
+                                                <div className="bg-white border border-indigo-100 rounded-xl p-4 md:p-5 shadow-sm">
                                                      <div className="flex items-center justify-between mb-3">
                                                          <h4 className="font-bold text-indigo-900 flex items-center gap-2">
                                                              <Share2 size={18} className="text-indigo-600"/> Share Poll
                                                          </h4>
                                                      </div>
-                                                     <div className="flex gap-2 mb-3">
-                                                         <div className="relative flex-1">
-                                                             <Globe className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                                                             <input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-600 focus:outline-none" />
+                                                     {/* URL Copy - Mobile optimized */}
+                                                     <div className="flex gap-2 mb-4">
+                                                         <div className="relative flex-1 min-w-0">
+                                                             <Globe className="absolute left-3 top-3 text-slate-400" size={16} />
+                                                             <input type="text" readOnly value={getShareUrl()} className="w-full pl-9 pr-2 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-600 focus:outline-none truncate" />
                                                          </div>
-                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors">
-                                                             {copiedShare ? 'Copied' : 'Copy'}
+                                                         <button onClick={() => copyToClipboard(getShareUrl(), 'share')} className="px-4 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors whitespace-nowrap min-h-[44px]">
+                                                             {copiedShare ? '✓' : 'Copy'}
                                                          </button>
                                                      </div>
+                                                     {/* Share buttons - Larger touch targets */}
                                                      <div className="grid grid-cols-3 gap-2 mb-3">
-                                                         <button onClick={shareToWhatsapp} className="py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors flex justify-center items-center gap-1"><MessageCircle size={14}/> WhatsApp</button>
-                                                         <button onClick={shareToSms} className="py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex justify-center items-center gap-1"><Smartphone size={14}/> SMS</button>
-                                                         <button onClick={shareToEmail} className="py-2 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors flex justify-center items-center gap-1"><Mail size={14}/> Email</button>
+                                                         <button onClick={shareToWhatsapp} className="py-3 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 active:bg-green-200 transition-colors flex flex-col sm:flex-row justify-center items-center gap-1 min-h-[44px]">
+                                                             <MessageCircle size={18} className="sm:w-4 sm:h-4"/>
+                                                             <span className="hidden sm:inline">WhatsApp</span>
+                                                         </button>
+                                                         <button onClick={shareToSms} className="py-3 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 active:bg-blue-200 transition-colors flex flex-col sm:flex-row justify-center items-center gap-1 min-h-[44px]">
+                                                             <Smartphone size={18} className="sm:w-4 sm:h-4"/>
+                                                             <span className="hidden sm:inline">SMS</span>
+                                                         </button>
+                                                         <button onClick={shareToEmail} className="py-3 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 active:bg-slate-200 transition-colors flex flex-col sm:flex-row justify-center items-center gap-1 min-h-[44px]">
+                                                             <Mail size={18} className="sm:w-4 sm:h-4"/>
+                                                             <span className="hidden sm:inline">Email</span>
+                                                         </button>
                                                      </div>
                                                      <div className="grid grid-cols-2 gap-2">
-                                                         <button onClick={() => setShowQrModal(true)} className="py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors flex justify-center items-center gap-1"><QrCode size={14}/> QR Code</button>
-                                                         <button onClick={() => setShowShareCards(true)} className="py-2 bg-pink-50 text-pink-600 border border-pink-100 rounded-lg text-xs font-bold hover:bg-pink-100 transition-colors flex justify-center items-center gap-1"><Palette size={14}/> Invite Cards</button>
+                                                         <button onClick={() => setShowQrModal(true)} className="py-3 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 active:bg-slate-900 transition-colors flex justify-center items-center gap-2 min-h-[44px]"><QrCode size={16}/> QR Code</button>
+                                                         <button onClick={() => setShowShareCards(true)} className="py-3 bg-pink-50 text-pink-600 border border-pink-100 rounded-lg text-xs font-bold hover:bg-pink-100 active:bg-pink-200 transition-colors flex justify-center items-center gap-2 min-h-[44px]"><Palette size={16}/> Cards</button>
                                                      </div>
                                                 </div>
 
                                                 {/* Controls Section */}
-                                                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                                                <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5 shadow-sm">
                                                     <div className="flex items-center justify-between mb-3">
                                                          <h4 className="font-bold text-slate-800 flex items-center gap-2">
                                                              <Settings size={18} className="text-slate-600"/> Controls
                                                          </h4>
                                                      </div>
+                                                     {/* Control buttons - Larger touch targets */}
                                                      <div className="grid grid-cols-2 gap-3">
-                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                             <Settings size={16}/> Edit
+                                                         <button onClick={handleEditPoll} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-300 hover:text-indigo-600 active:bg-indigo-50 rounded-lg text-sm font-medium transition-all text-slate-600 min-h-[48px]">
+                                                             <Settings size={18}/> Edit
                                                          </button>
-                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 rounded-lg text-sm font-medium transition-all text-slate-600">
-                                                             {isExporting ? <Loader2 size={16} className="animate-spin"/> : <FileSpreadsheet size={16}/>} CSV
+                                                         <button onClick={handleExportCSV} disabled={isExporting} className="flex items-center justify-center gap-2 p-3 border border-slate-100 bg-slate-50 hover:bg-white hover:border-emerald-300 hover:text-emerald-600 active:bg-emerald-50 rounded-lg text-sm font-medium transition-all text-slate-600 min-h-[48px]">
+                                                             {isExporting ? <Loader2 size={18} className="animate-spin"/> : <FileSpreadsheet size={18}/>} CSV
                                                          </button>
-                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-2 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-lg text-xs font-medium transition-all">
-                                                             <Download size={14}/> Download PDF
+                                                         <button onClick={handlePrintPDF} className="col-span-2 flex items-center justify-center gap-2 p-3 border border-slate-100 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-500 rounded-lg text-sm font-medium transition-all min-h-[44px]">
+                                                             <Download size={16}/> Download PDF
                                                          </button>
                                                      </div>
                                                      
@@ -730,6 +744,36 @@ const VoteGeneratorApp: React.FC = () => {
                                                         })()}
                                                     />
                                                 </div>
+                                                
+                                                {/* Response Timeline Chart */}
+                                                {viewState.results.votes && viewState.results.votes.length > 0 && (
+                                                    <div className="mt-6">
+                                                        <ResponseTimelineChart
+                                                            votes={viewState.results.votes}
+                                                            days={7}
+                                                            showTrend={true}
+                                                        />
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Feature Teasers for Free Users */}
+                                                {(() => {
+                                                    const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+                                                    if (tier !== 'free') return null;
+                                                    
+                                                    return (
+                                                        <div className="mt-6">
+                                                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                <Zap size={14} className="text-indigo-500" />
+                                                                Unlock More Features
+                                                            </h3>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                <FeatureTeaserCard feature="analytics" currentTier="free" compact />
+                                                                <FeatureTeaserCard feature="unlimited" currentTier="free" compact />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     )}

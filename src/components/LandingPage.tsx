@@ -619,119 +619,187 @@ const TemplatesSection: React.FC = () => {
 // ============================================================================
 
 const AnalyticsSection: React.FC = () => (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-                {/* Left: Copy */}
-                <div>
-                    <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
-                        Real-time analytics
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
-                        Watch results come in.<br />
-                        <span className="text-indigo-600">Understand your audience.</span>
-                    </h2>
-                    <p className="text-lg text-slate-500 mb-8">
-                        Every poll includes a live dashboard with visual charts, response breakdowns, 
-                        and export options. No waiting, no refresh needed.
-                    </p>
+            <div className="text-center mb-12">
+                <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
+                    Real-time analytics
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                    Beautiful dashboards.<br />
+                    <span className="text-indigo-600">Instant insights.</span>
+                </h2>
+                <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+                    Every poll includes a powerful dashboard with live charts, response breakdowns, and export options.
+                </p>
+            </div>
 
-                    <div className="space-y-4">
-                        {[
-                            { icon: BarChart3, title: 'Live updating charts', desc: 'Bar charts, pie charts, and progress bars update as votes arrive' },
-                            { icon: TrendingUp, title: 'Response timeline', desc: 'See when votes came in and spot trends over time', pro: true },
-                            { icon: Globe, title: 'Geographic breakdown', desc: 'Understand where your respondents are located', pro: true },
-                            { icon: Download, title: 'Export anywhere', desc: 'Download as CSV, Excel, or generate PDF reports', pro: true },
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-start gap-4">
-                                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <item.icon className="text-indigo-600" size={20} />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-slate-900">{item.title}</h4>
-                                        {item.pro && (
-                                            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-bold">
-                                                PRO
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-slate-500 text-sm">{item.desc}</p>
-                                </div>
+            {/* Visual Dashboard Showcase - Multiple mockups */}
+            <div className="relative mb-16">
+                {/* Main dashboard mockup */}
+                <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl p-4 md:p-8 shadow-2xl">
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        {/* Browser chrome */}
+                        <div className="bg-slate-100 px-4 py-2 flex items-center gap-2 border-b border-slate-200">
+                            <div className="flex gap-1.5">
+                                <div className="w-3 h-3 bg-red-400 rounded-full" />
+                                <div className="w-3 h-3 bg-amber-400 rounded-full" />
+                                <div className="w-3 h-3 bg-emerald-400 rounded-full" />
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Right: Dashboard preview */}
-                <div className="relative">
-                    <div className="bg-slate-100 rounded-2xl p-4">
-                        {/* Mock dashboard */}
-                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div className="flex-1 text-center">
+                                <span className="text-xs text-slate-400 bg-white px-3 py-1 rounded-md">votegenerator.com/admin</span>
+                            </div>
+                        </div>
+                        
+                        {/* Dashboard content */}
+                        <div className="p-4 md:p-6">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-white font-bold text-sm">Poll Results Dashboard</span>
-                                    <div className="flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                                        <span className="text-indigo-200 text-xs">Live</span>
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="font-bold text-slate-900">Team Retreat Vote</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                        <span className="text-sm text-emerald-600">Live • 247 responses</span>
                                     </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium">Share</button>
+                                    <button className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium">Export</button>
                                 </div>
                             </div>
                             
-                            {/* Stats row */}
-                            <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 border-b border-slate-100">
-                                <div className="text-center">
-                                    <div className="text-xl font-bold text-slate-900">247</div>
-                                    <div className="text-[10px] text-slate-500">Total Votes</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-xl font-bold text-emerald-600">+12</div>
-                                    <div className="text-[10px] text-slate-500">Last Hour</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-xl font-bold text-slate-900">4</div>
-                                    <div className="text-[10px] text-slate-500">Options</div>
-                                </div>
-                            </div>
-
-                            {/* Chart bars */}
-                            <div className="p-4 space-y-3">
+                            {/* Stats cards */}
+                            <div className="grid grid-cols-4 gap-3 mb-6">
                                 {[
-                                    { label: 'Option A', pct: 42, color: 'bg-indigo-500' },
-                                    { label: 'Option B', pct: 31, color: 'bg-purple-500' },
-                                    { label: 'Option C', pct: 18, color: 'bg-pink-500' },
-                                    { label: 'Option D', pct: 9, color: 'bg-slate-400' },
-                                ].map((item, i) => (
-                                    <div key={i}>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-slate-600">{item.label}</span>
-                                            <span className="font-bold text-slate-900">{item.pct}%</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
-                                        </div>
+                                    { label: 'Total Votes', value: '247', change: '+23 today', positive: true },
+                                    { label: 'Completion', value: '94%', change: 'Above avg', positive: true },
+                                    { label: 'Avg. Time', value: '8s', change: 'Per vote', positive: null },
+                                    { label: 'Countries', value: '12', change: 'Locations', positive: null },
+                                ].map((stat, i) => (
+                                    <div key={i} className="bg-slate-50 rounded-xl p-3">
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">{stat.label}</p>
+                                        <p className="text-xl font-bold text-slate-900">{stat.value}</p>
+                                        <p className={`text-[10px] ${stat.positive === true ? 'text-emerald-600' : stat.positive === false ? 'text-red-500' : 'text-slate-400'}`}>
+                                            {stat.change}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Export buttons */}
-                            <div className="px-4 pb-4 flex gap-2">
-                                <button className="flex-1 py-1.5 text-xs bg-slate-100 text-slate-600 rounded-lg font-medium">
-                                    📊 Export CSV
-                                </button>
-                                <button className="flex-1 py-1.5 text-xs bg-slate-100 text-slate-600 rounded-lg font-medium">
-                                    📄 PDF Report
-                                </button>
+                            
+                            {/* Chart area */}
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {/* Bar chart */}
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-xs font-bold text-slate-700 mb-3">Results Breakdown</p>
+                                    {[
+                                        { label: 'Hawaiian Paradise', pct: 42, color: 'bg-indigo-500' },
+                                        { label: 'Mountain Lodge', pct: 31, color: 'bg-purple-500' },
+                                        { label: 'Beach Resort', pct: 18, color: 'bg-pink-500' },
+                                        { label: 'City Adventure', pct: 9, color: 'bg-slate-400' },
+                                    ].map((item, i) => (
+                                        <div key={i} className="mb-2">
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-slate-600 truncate">{item.label}</span>
+                                                <span className="font-bold text-slate-900">{item.pct}%</span>
+                                            </div>
+                                            <div className="h-2 bg-white rounded-full overflow-hidden">
+                                                <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Timeline chart mockup */}
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-xs font-bold text-slate-700 mb-3">Response Timeline</p>
+                                    <div className="h-24 flex items-end gap-1">
+                                        {[20, 35, 28, 45, 60, 52, 38, 42, 55, 48, 62, 70].map((h, i) => (
+                                            <div 
+                                                key={i} 
+                                                className="flex-1 bg-gradient-to-t from-indigo-500 to-purple-500 rounded-t"
+                                                style={{ height: `${h}%` }}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between mt-2">
+                                        <span className="text-[10px] text-slate-400">12 AM</span>
+                                        <span className="text-[10px] text-slate-400">Now</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Floating badges */}
-                    <div className="absolute -top-3 -right-3 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                        ✓ Real-time updates
-                    </div>
                 </div>
+
+                {/* Floating feature cards */}
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="absolute -left-4 top-1/4 bg-white rounded-xl shadow-xl p-3 border border-slate-200 hidden lg:block"
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="text-emerald-600" size={16} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-900">Live Updates</p>
+                            <p className="text-[10px] text-slate-500">No refresh needed</p>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="absolute -right-4 top-1/3 bg-white rounded-xl shadow-xl p-3 border border-slate-200 hidden lg:block"
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Download className="text-purple-600" size={16} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-900">Export Data</p>
+                            <p className="text-[10px] text-slate-500">CSV, Excel, PDF</p>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="absolute -right-4 bottom-1/4 bg-white rounded-xl shadow-xl p-3 border border-slate-200 hidden lg:block"
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <Globe className="text-indigo-600" size={16} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-900">Geographic View</p>
+                            <p className="text-[10px] text-slate-500">See voter locations</p>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Feature list below */}
+            <div className="grid md:grid-cols-4 gap-6">
+                {[
+                    { icon: BarChart3, title: 'Live charts', desc: 'Results update instantly as votes come in' },
+                    { icon: TrendingUp, title: 'Timeline view', desc: 'See response patterns over time' },
+                    { icon: Globe, title: 'Geographic data', desc: 'Know where voters are located' },
+                    { icon: Download, title: 'Export anywhere', desc: 'Download CSV, Excel, or PDF' },
+                ].map((item, i) => (
+                    <div key={i} className="text-center">
+                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                            <item.icon className="text-indigo-600" size={24} />
+                        </div>
+                        <h4 className="font-bold text-slate-900 mb-1">{item.title}</h4>
+                        <p className="text-sm text-slate-500">{item.desc}</p>
+                    </div>
+                ))}
             </div>
         </div>
     </section>
@@ -874,46 +942,95 @@ const ValueSection: React.FC = () => (
 // ============================================================================
 
 const FeaturesSection: React.FC = () => {
-    const features = [
-        { icon: Zap, title: 'Instant setup', desc: 'Create a poll in under 30 seconds. No account needed.', color: 'amber' },
-        { icon: Smartphone, title: 'Works on any device', desc: 'Responsive design. Voters can use phone, tablet, or computer.', color: 'blue' },
-        { icon: QrCode, title: 'QR code sharing', desc: 'Generate QR codes for easy in-person polling.', color: 'purple' },
-        { icon: BarChart3, title: 'Real-time results', desc: 'Watch votes come in live. Auto-updating charts.', color: 'emerald' },
-        { icon: Code, title: 'Embed anywhere', desc: 'Add polls to your website with a simple embed code.', color: 'pink' },
-        { icon: Download, title: 'Export data', desc: 'Download results as CSV, Excel, or PDF reports.', color: 'indigo' },
-        { icon: Palette, title: 'Custom themes', desc: 'Match your brand with premium color themes.', color: 'rose' },
-        { icon: Shield, title: 'Anti-fraud protection', desc: 'Block duplicate votes with IP and browser detection.', color: 'teal' },
+    const featureGroups = [
+        {
+            title: 'Create & Share',
+            features: [
+                { icon: Zap, title: 'Instant setup', desc: 'Create a poll in under 30 seconds. No account needed.' },
+                { icon: QrCode, title: 'QR code sharing', desc: 'Generate QR codes for easy in-person polling.' },
+                { icon: Link, title: 'Custom short links', desc: 'Memorable URLs you can share anywhere.' },
+                { icon: Code, title: 'Embed anywhere', desc: 'Add polls to your website with a simple embed code.' },
+            ]
+        },
+        {
+            title: 'Analyze & Export',
+            features: [
+                { icon: BarChart3, title: 'Real-time results', desc: 'Watch votes come in live with auto-updating charts.' },
+                { icon: TrendingUp, title: 'Response timeline', desc: 'See when votes arrived and spot trends over time.' },
+                { icon: Globe, title: 'Geographic insights', desc: 'See where your respondents are located.' },
+                { icon: Download, title: 'Export data', desc: 'Download as CSV, Excel, or generate PDF reports.' },
+            ]
+        },
+        {
+            title: 'Customize & Brand',
+            features: [
+                { icon: Palette, title: '12+ premium themes', desc: 'Match your brand with professional color schemes.' },
+                { icon: Image, title: 'Custom logo', desc: 'Add your company logo to polls.' },
+                { icon: Eye, title: 'Remove branding', desc: 'Hide "Powered by VoteGenerator" badge.' },
+                { icon: Smartphone, title: 'Mobile-optimized', desc: 'Perfect on phone, tablet, or desktop.' },
+            ]
+        },
+        {
+            title: 'Secure & Control',
+            features: [
+                { icon: Shield, title: 'Anti-fraud protection', desc: 'Block duplicates with IP & browser fingerprinting.' },
+                { icon: Lock, title: 'Password protection', desc: 'Require a PIN to access your poll.' },
+                { icon: Timer, title: 'Scheduled close', desc: 'Auto-close polls at a specific date/time.' },
+                { icon: Bell, title: 'Email notifications', desc: 'Get notified when new votes come in.' },
+            ]
+        },
     ];
 
     return (
         <section className="py-20 bg-white">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
+                    <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
+                        Packed with features
+                    </span>
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                        Everything you need. Nothing you don't.
+                        Everything you need to run great polls
                     </h2>
                     <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                        Powerful features that just work. No learning curve.
+                        Powerful features that just work. No learning curve required.
                     </p>
                 </div>
 
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {features.map((feature, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.05 }}
-                            className="p-5 rounded-xl bg-slate-50 hover:bg-white hover:shadow-lg border border-slate-100 hover:border-slate-200 transition-all"
-                        >
-                            <div className={`w-10 h-10 bg-${feature.color}-100 rounded-lg flex items-center justify-center mb-3`}>
-                                <feature.icon className={`text-${feature.color}-600`} size={20} />
+                <div className="space-y-12">
+                    {featureGroups.map((group, gi) => (
+                        <div key={gi}>
+                            <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                <span className="w-8 h-0.5 bg-indigo-500 rounded-full" />
+                                {group.title}
+                            </h3>
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {group.features.map((feature, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="p-4 rounded-xl bg-slate-50 hover:bg-white hover:shadow-lg border border-slate-100 hover:border-slate-200 transition-all"
+                                    >
+                                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
+                                            <feature.icon className="text-indigo-600" size={20} />
+                                        </div>
+                                        <h4 className="font-bold text-slate-900 mb-1">{feature.title}</h4>
+                                        <p className="text-sm text-slate-500">{feature.desc}</p>
+                                    </motion.div>
+                                ))}
                             </div>
-                            <h3 className="font-bold text-slate-900 mb-1">{feature.title}</h3>
-                            <p className="text-sm text-slate-500">{feature.desc}</p>
-                        </motion.div>
+                        </div>
                     ))}
+                </div>
+
+                {/* Feature count badge */}
+                <div className="text-center mt-10">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-full text-sm font-medium border border-indigo-100">
+                        <Sparkles size={16} />
+                        16+ features included on all plans
+                    </span>
                 </div>
             </div>
         </section>
@@ -1156,7 +1273,7 @@ const CTASection: React.FC = () => (
                 <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
             </a>
             <p className="text-indigo-200 text-sm mt-6">
-                Join teams at companies like yours who trust VoteGenerator
+                No signup required • Free forever • Upgrade anytime
             </p>
         </div>
     </section>

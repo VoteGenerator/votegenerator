@@ -576,6 +576,65 @@ const FEATURE_SECTIONS: FeatureSection[] = [
             },
         ]
     },
+    {
+        id: 'advanced',
+        name: 'Advanced & Enterprise',
+        icon: Building2,
+        color: 'slate',
+        features: [
+            { 
+                name: 'Templates library', 
+                tooltip: 'Access 40+ ready-to-use poll templates',
+                free: '10 templates', 
+                pro: 'All 40+', 
+                business: 'All 40+' 
+            },
+            { 
+                name: 'Custom short links', 
+                tooltip: 'Create memorable URLs like vote.link/your-poll',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Domain restriction', 
+                tooltip: 'Limit voting to specific email domains (e.g. @company.com)',
+                free: false, 
+                pro: false, 
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Webhooks', 
+                tooltip: 'Send vote data to your own systems in real-time',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'API access', 
+                tooltip: 'Programmatically create polls and fetch results',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'SSO integration', 
+                tooltip: 'Single Sign-On for enterprise team management',
+                free: false, 
+                pro: false, 
+                business: 'Coming soon' 
+            },
+            { 
+                name: 'Custom data retention', 
+                tooltip: 'Choose how long your data is stored',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+        ]
+    },
 ];
 
 // =============================================================================

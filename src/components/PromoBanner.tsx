@@ -4,7 +4,7 @@
 // ============================================================================
 
 import React, { useState } from 'react';
-import { X, Lock, ArrowRight, Sparkles, Zap } from 'lucide-react';
+import { X, Lock, ArrowRight, Sparkles, Zap, Layers } from 'lucide-react';
 
 // Toggle this to show/hide the banner
 const SHOW_BANNER = true;
@@ -15,29 +15,29 @@ const SHOW_BANNER = true;
 // OPTION 1: Privacy/No signup focus (RECOMMENDED FOR LAUNCH)
 const BANNER_CONFIG = {
     icon: Lock,
-    message: 'Privacy-first polling — No signup, no email, no account needed.',
+    message: 'No signup required — Create polls in 30 seconds, share a link, get instant results',
     ctaText: 'Create Free Poll',
     ctaUrl: '#create',
     bgColor: 'bg-gradient-to-r from-slate-800 to-slate-900',
     iconColor: 'text-emerald-400',
 };
 
-// OPTION 2: Limited time pricing
+// OPTION 2: Poll types
 // const BANNER_CONFIG = {
-//     icon: Zap,
-//     message: 'Launch pricing — Lock in $16/mo Pro before prices increase',
-//     ctaText: 'See Plans',
-//     ctaUrl: '/pricing',
+//     icon: Layers,
+//     message: '8 poll types: Multiple Choice, Ranked Choice, Meeting Polls, Visual & more',
+//     ctaText: 'See All Types',
+//     ctaUrl: '/demo',
 //     bgColor: 'bg-gradient-to-r from-indigo-600 to-purple-600',
 //     iconColor: 'text-amber-300',
 // };
 
-// OPTION 3: New features
+// OPTION 3: Limited time pricing
 // const BANNER_CONFIG = {
-//     icon: Sparkles,
-//     message: 'New: 8 poll types including Ranked Choice & Visual Polls',
-//     ctaText: 'See Demo',
-//     ctaUrl: '/demo',
+//     icon: Zap,
+//     message: 'Launch pricing — Pro at $16/mo (limited time)',
+//     ctaText: 'See Plans',
+//     ctaUrl: '/pricing',
 //     bgColor: 'bg-gradient-to-r from-indigo-600 to-purple-600',
 //     iconColor: 'text-amber-300',
 // };

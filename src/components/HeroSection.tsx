@@ -15,8 +15,8 @@ const HeroSection: React.FC = () => {
     const [phraseIndex, setPhraseIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Use cases that are factually accurate
-    const phrases = ['team decisions', 'event planning', 'group feedback', 'quick votes', 'scheduling'];
+    // Short phrases that won't wrap on mobile (max ~14 chars)
+    const phrases = ['team votes', 'quick polls', 'feedback', 'decisions', 'RSVPs'];
 
     useEffect(() => {
         const currentPhrase = phrases[phraseIndex];
@@ -47,9 +47,6 @@ const HeroSection: React.FC = () => {
     ];
     const totalVotes = demoOptions.reduce((sum, o) => sum + o.votes, 0);
 
-    // Find the longest phrase to reserve space
-    const longestPhrase = phrases.reduce((a, b) => a.length > b.length ? a : b);
-
     return (
         <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700">
             <div className="absolute inset-0 overflow-hidden">
@@ -67,12 +64,12 @@ const HeroSection: React.FC = () => {
 
                         {/* FIXED HEIGHT TITLE - prevents layout shift */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
-                            The fastest way to gather{' '}
-                            <span className="block relative" style={{ minHeight: '1.2em' }}>
-                                {/* Invisible text to reserve space for longest phrase */}
-                                <span className="invisible" aria-hidden="true">{longestPhrase}</span>
-                                {/* Actual animated text positioned absolutely */}
-                                <span className="absolute left-0 top-0 text-amber-300">
+                            The fastest way
+                            <br />
+                            to gather{' '}
+                            {/* Fixed width container prevents shifting */}
+                            <span className="inline-block min-w-[180px] md:min-w-[220px]">
+                                <span className="text-amber-300">
                                     {typedText}
                                     <span className="inline-block w-0.5 h-[0.9em] bg-amber-300 animate-pulse ml-0.5 align-middle" />
                                 </span>

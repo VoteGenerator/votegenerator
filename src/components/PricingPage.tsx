@@ -11,7 +11,7 @@ import {
     ChevronDown, Sparkles, Shield, BadgeCheck, Lock, Download, HelpCircle,
     Palette, Code, Globe, QrCode, Mail, Eye, FileText, Image, Bell,
     CheckSquare, ListOrdered, Calendar, ArrowLeftRight, SlidersHorizontal,
-    CircleCheck, MousePointer, Key, AlertTriangle, Smartphone, Share2,
+    CheckCircle2, MousePointer, Key, AlertTriangle, Smartphone, Share2,
     Timer, TrendingUp, Layers, Building2, Headphones, MessageCircle
 } from 'lucide-react';
 import NavHeader from './NavHeader';
@@ -32,9 +32,31 @@ const PRICING = {
 };
 
 // =============================================================================
+// TYPE DEFINITIONS
+// =============================================================================
+interface Feature {
+    name: string;
+    tooltip: string;
+    icon?: React.ComponentType<any>;
+    free: boolean | string;
+    pro: boolean | string;
+    business: boolean | string;
+    highlight?: 'free' | 'pro' | 'business';
+}
+
+interface FeatureSection {
+    id: string;
+    name: string;
+    icon: React.ComponentType<any>;
+    color: string;
+    description?: string;
+    features: Feature[];
+}
+
+// =============================================================================
 // COMPREHENSIVE FEATURE LIST WITH TOOLTIPS
 // =============================================================================
-const FEATURE_SECTIONS = [
+const FEATURE_SECTIONS: FeatureSection[] = [
     {
         id: 'polls-responses',
         name: 'Polls & Responses',
@@ -137,7 +159,7 @@ const FEATURE_SECTIONS = [
             { 
                 name: 'Dot Voting', 
                 tooltip: 'Distribute points across options. Also called multi-voting.',
-                icon: CircleCheck,
+                icon: CheckCircle2,
                 free: true, 
                 pro: true, 
                 business: true 

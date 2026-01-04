@@ -14,7 +14,7 @@ import {
     GraduationCap, Heart, Briefcase, PartyPopper, Play, Shield, Rocket,
     Award, TrendingUp, MessageCircle, Timer, ChevronRight, Smartphone, Laptop,
     AlertTriangle, ThumbsUp, ThumbsDown, HelpCircle, FileText, Download, Palette,
-    MousePointer, Share2, Link, ExternalLink, Vote, CircleCheck, Layers, Bell
+    MousePointer, Share2, Link, ExternalLink, Vote, Layers, Bell
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
@@ -391,7 +391,7 @@ const PollTypesSection: React.FC = () => {
         { name: 'Rating Scale', icon: SlidersHorizontal, desc: 'Rate each option 1-5', gradient: 'from-cyan-500 to-blue-600' },
         { name: 'RSVP', icon: Users, desc: 'Yes, No, or Maybe', gradient: 'from-sky-500 to-blue-600' },
         { name: 'Visual Poll', icon: Image, desc: 'Vote with images', gradient: 'from-pink-500 to-rose-600' },
-        { name: 'Dot Voting', icon: CircleCheck, desc: 'Distribute points', gradient: 'from-emerald-500 to-teal-600' },
+        { name: 'Dot Voting', icon: CheckCircle2, desc: 'Distribute points', gradient: 'from-emerald-500 to-teal-600' },
     ];
 
     return (

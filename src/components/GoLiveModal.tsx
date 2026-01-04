@@ -16,16 +16,16 @@ interface GoLiveModalProps {
     onClose: () => void;
     onConfirm: () => Promise<void>;
     pollTitle: string;
-    tier: 'starter' | 'pro_event' | 'unlimited';
+    tier: 'free' | 'pro' | 'business';
     pollsUsed: number;
     pollsMax: number;
     activeDays: number;
 }
 
 const TIER_INFO: Record<string, { label: string; gradient: string }> = {
-    starter: { label: 'Starter', gradient: 'from-blue-500 to-indigo-600' },
-    pro_event: { label: 'Pro Event', gradient: 'from-purple-500 to-pink-500' },
-    unlimited: { label: 'Unlimited', gradient: 'from-amber-500 to-orange-500' },
+    free: { label: 'Free', gradient: 'from-slate-500 to-slate-600' },
+    pro: { label: 'Pro', gradient: 'from-purple-500 to-indigo-600' },
+    business: { label: 'Business', gradient: 'from-amber-500 to-orange-500' },
 };
 
 const GoLiveModal: React.FC<GoLiveModalProps> = ({
@@ -41,7 +41,7 @@ const GoLiveModal: React.FC<GoLiveModalProps> = ({
     const [isActivating, setIsActivating] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
 
-    const tierInfo = TIER_INFO[tier] || TIER_INFO.starter;
+    const tierInfo = TIER_INFO[tier] || TIER_INFO.free;
     const pollsRemaining = pollsMax - pollsUsed;
     const isLastPoll = pollsRemaining === 1;
 

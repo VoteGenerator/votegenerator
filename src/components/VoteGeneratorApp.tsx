@@ -12,6 +12,7 @@ import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
 import EmbedModal from './EmbedPoll';
 import LogoUpload from './LogoUpload';
+import CustomSlugInput from './CustomSlugInput';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
@@ -124,6 +125,16 @@ const VoteGeneratorApp: React.FC = () => {
     const handleVoteSuccess = async () => {
         const { pollId } = parseHash();
         if(!pollId) return;
+        
+        // Check for Business tier redirect URL
+        if (viewState.type === 'vote' && viewState.poll) {
+            const redirectUrl = (viewState.poll as any).settings?.redirectUrl;
+            if (redirectUrl) {
+                // Redirect to custom thank you page (Business feature)
+                window.location.href = redirectUrl;
+                return;
+            }
+        }
         
         // Reload to switch to results view
         loadView(); 
@@ -543,6 +554,23 @@ const VoteGeneratorApp: React.FC = () => {
                                                         />
                                                     </div>
                                                 </div>
+                                                
+                                                {/* Custom Slug - Business Only */}
+                                                <div className="mt-4">
+                                                    <CustomSlugInput
+                                                        pollId={viewState.poll.id}
+                                                        adminKey={(() => {
+                                                            const hash = window.location.hash.slice(1);
+                                                            const params = new URLSearchParams(hash);
+                                                            return params.get('admin') || '';
+                                                        })()}
+                                                        currentSlug={(viewState.poll as any).customSlug}
+                                                        tier={(() => {
+                                                            const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+                                                            return tier || 'free';
+                                                        })()}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -568,7 +596,13 @@ const VoteGeneratorApp: React.FC = () => {
                                         <VoteGeneratorResults 
                                             poll={viewState.poll} 
                                             results={viewState.results}
-                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined} 
+                                            onEdit={viewState.isAdmin ? handleEditPoll : undefined}
+                                            adminKey={(() => {
+                                                const hash = window.location.hash.slice(1);
+                                                const params = new URLSearchParams(hash);
+                                                return params.get('admin') || null;
+                                            })()}
+                                            isAdmin={viewState.isAdmin}
                                         />
                                         
                                          {/* Vote Again Button for Non-Admin with Security 'none' */}

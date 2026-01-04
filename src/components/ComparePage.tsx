@@ -5,7 +5,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Crown, Star, Users, BarChart3, Zap } from 'lucide-react';
-import { useGeoPricing } from '../hooks/geoPricing';
+import { useGeoPricing } from '../geoPricing';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 

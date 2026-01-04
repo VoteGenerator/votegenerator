@@ -1,100 +1,1467 @@
-The Netlify deploy errored, with the following guidance provided:
+// ============================================================================
+// AdminDashboard.tsx - Complete with search, pagination, draft/live
+// Location: src/components/AdminDashboard.tsx
+// ============================================================================
 
-**Diagnosis**
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    BarChart3, Plus, Copy, Check, ExternalLink, Trash2,
+    Crown, Loader2, Clock, Users, LayoutDashboard,
+    Calendar, Sparkles, AlertCircle, PlusCircle,
+    Zap, Share2, Settings, X, CheckCircle, Link2,
+    Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
+    Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
+    Home, AlertTriangle, RefreshCw, Gift,
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon
+} from 'lucide-react';
+import ShareCards from './ShareCards';
 
-- [line 63](#L63-L65) surfaces TS2367 errors from `src/components/AdminDashboard.tsx`: string comparisons use `"Pro"`/`"Business"`/`"Free"` while the `PlanTier` type is defined with lowercase literals (e.g. `"pro"`, `"business"`). Because those unions have no overlap, TypeScript terminates the build.
-- [line 66](#L66-L67) shows TS2339 errors in `src/components/ComparePage.tsx`: the object that backs your comparison table is typed as `{ pro: number; business: number; unlimited: number; }`, but the code tries to read `proEvent` and `unlimited` from an object that only exposes `pro`/`business`.  
-- [line 68](#L68) flags TS2365 in `src/components/LandingPage.tsx`: a `string | number` value is compared directly against a `number`, so TypeScript prevents the comparison.
+// Poll type display helper
+const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+    multiple: { label: 'Multiple Choice', icon: CheckSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
+    ranked: { label: 'Ranked', icon: ListOrdered, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    pairwise: { label: 'This or That', icon: ArrowLeftRight, color: 'text-orange-600', bg: 'bg-orange-50' },
+    meeting: { label: 'Meeting', icon: Calendar, color: 'text-amber-600', bg: 'bg-amber-50' },
+    rating: { label: 'Rating', icon: SlidersHorizontal, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    rsvp: { label: 'RSVP', icon: Users, color: 'text-sky-600', bg: 'bg-sky-50' },
+    image: { label: 'Visual', icon: ImageIcon, color: 'text-pink-600', bg: 'bg-pink-50' },
+};
 
-**Solution**
+// ============================================================================
+// Types
+// ============================================================================
 
-1. In `src/components/AdminDashboard.tsx`, make the literals you compare against match the union’s casing. For example:
-   ```ts
-   // before
-   if (selectedPlan === "Pro") { ... }
+interface UserPoll {
+    id: string;
+    adminKey: string;
+    title: string;
+    description?: string;
+    type: string;
+    createdAt: string;
+    responseCount?: number;
+    status?: 'draft' | 'live';  // For Pro/Pro polls
+    expiresAt?: string;
+    customSlug?: string;
+}
 
-   // after
-   if (selectedPlan === "pro") { ... }
-   ```
-   Apply the same change for `"Business"` → `"business"`, `"Free"` → `"free"`, etc., anywhere those TS2367 errors point (e.g. lines 584, 998, 1000).
+interface UserSession {
+    dashboardToken: string;
+    tier: 'free' | 'pro' | 'business';
+    expiresAt?: string;
+    polls: UserPoll[];
+    createdAt: string;
+    hasPin?: boolean;
+    pinHash?: string;
+    sessionId?: string;  // Stripe session ID for URL reconstruction
+    email?: string;      // Partial email for display
+}
 
-2. In `src/components/ComparePage.tsx`, access the properties that actually exist on the typed object (or extend the type if `proEvent` is intentional). For instance, if you meant to use the existing fields:
-   ```ts
-   const eventsByPlan = { pro: 10, business: 20, unlimited: 999 };
+// ============================================================================
+// Configuration
+// ============================================================================
 
-   // before
-   const proEvents = eventsByPlan.proEvent;
+const POLLS_PER_PAGE = 10;
 
-   // after
-   const proEvents = eventsByPlan.pro;
-   ```
-   Likewise, ensure `eventsByPlan` (or the relevant object) really has an `unlimited` key; either rename the access to `enterprise`/`business` as appropriate or add the `unlimited` property to the object/type definition.
+const TIER_CONFIG: Record<string, {
+    label: string;
+    gradient: string;
+    bgGradient: string;
+    headerBg: string;
+    icon: React.ReactNode;
+    maxPolls: number;
+    maxResponses: number;
+    activeDays: number;
+    requiresActivation: boolean;
+    features: { name: string; included: boolean }[];
+}> = {
+    free: {
+        label: 'Free',
+        gradient: 'from-slate-500 to-slate-600',
+        bgGradient: 'from-slate-50 via-white to-slate-50',
+        headerBg: 'bg-slate-100',
+        icon: <BarChart3 size={16} />,
+        maxPolls: 3,
+        maxResponses: 100,
+        activeDays: 30,
+        requiresActivation: false,
+        features: [
+            { name: 'All poll types', included: true },
+            { name: '100 responses/month', included: true },
+            { name: '3 active polls', included: true },
+            { name: '30 days active', included: true },
+            { name: 'Export to CSV', included: false },
+        ]
+    },
+    pro: {
+        label: 'Pro',
+        gradient: 'from-purple-500 to-pink-500',
+        bgGradient: 'from-purple-50/40 via-white to-pink-50/40',
+        headerBg: 'bg-purple-50',
+        icon: <Crown size={16} />,
+        maxPolls: Infinity,
+        maxResponses: 5000,
+        activeDays: 365,
+        requiresActivation: false,
+        features: [
+            { name: 'All poll types', included: true },
+            { name: '5,000 responses/month', included: true },
+            { name: 'Business polls', included: true },
+            { name: 'Export CSV/PDF/PNG', included: true },
+            { name: 'Custom branding', included: true },
+        ]
+    },
+    business: {
+        label: 'Business',
+        gradient: 'from-amber-500 to-orange-500',
+        bgGradient: 'from-amber-50/30 via-white to-orange-50/30',
+        headerBg: 'bg-amber-50',
+        icon: <Sparkles size={16} />,
+        maxPolls: Infinity,
+        maxResponses: 50000,
+        activeDays: 365,
+        requiresActivation: false,
+        features: [
+            { name: 'All poll types', included: true },
+            { name: '50,000 responses/month', included: true },
+            { name: 'Business polls', included: true },
+            { name: 'Export CSV/PDF/PNG', included: true },
+            { name: 'PIN protection', included: true },
+            { name: 'Custom branding', included: true },
+            { name: 'Priority support', included: true },
+        ]
+    },
+};
 
-3. In `src/components/LandingPage.tsx`, normalise the value before numeric comparison:
-   ```ts
-   // before
-   if (stat.value > 50) { ... }
+// ============================================================================
+// Main Component
+// ============================================================================
 
-   // after
-   const numericValue = typeof stat.value === "string" ? Number(stat.value) : stat.value;
-   if (numericValue > 50) { ... }
-   ```
-   Handle potential `NaN` cases if the string is not guaranteed to be numeric.
+const AdminDashboard: React.FC = () => {
+    const [session, setSession] = useState<UserSession | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+    
+    // UI State
+    const [showSettings, setShowSettings] = useState(false);
+    const [showAccessPanel, setShowAccessPanel] = useState(false); // Start collapsed
+    const [showPlanPanel, setShowPlanPanel] = useState(true);
+    const [showStatsPanel, setShowStatsPanel] = useState(true);
+    const [showPinSetup, setShowPinSetup] = useState(false);
+    const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
+    const [showShareCards, setShowShareCards] = useState<string | null>(null); // Poll ID for share cards modal
+    
+    // Search & Pagination
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
-After these fixes, run `npm run build` locally to confirm the TypeScript compiler passes.
+    // Get token and session_id from URL (supports multiple formats)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    const urlDashboardToken = urlParams.get('t'); // NEW: Short token format from email
+    const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
+    const urlTier = urlParams.get('tier') as 'pro' | 'business' | null;
 
-The relevant error logs are:
+    // Fetch customer data by dashboard token from backend
+    const fetchCustomerByToken = async (token: string): Promise<UserSession | null> => {
+        try {
+            const response = await fetch(`/.netlify/functions/vg-get-customer?token=${encodeURIComponent(token)}`);
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    dashboardToken: data.dashboardToken || token,
+                    tier: data.tier,
+                    expiresAt: data.expiresAt,
+                    polls: data.polls || [],
+                    createdAt: data.createdAt,
+                    email: data.email,
+                };
+            }
+        } catch (e) {
+            console.error('Failed to fetch customer by token:', e);
+        }
+        return null;
+    };
+    
+    // Fetch customer data by session ID (legacy support)
+    const fetchCustomerBySessionId = async (sessionId: string): Promise<UserSession | null> => {
+        console.log(`AdminDashboard: Fetching customer by session ID: ${sessionId.substring(0, 20)}...`);
+        try {
+            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            console.log(`AdminDashboard: vg-get-customer response status: ${response.status}`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`AdminDashboard: Got customer data:`, { 
+                    tier: data.tier, 
+                    hasToken: !!data.dashboardToken,
+                    tokenPreview: data.dashboardToken?.substring(0, 8) 
+                });
+                return {
+                    dashboardToken: data.dashboardToken,
+                    sessionId: sessionId, // Keep for backwards compatibility
+                    tier: data.tier,
+                    expiresAt: data.expiresAt,
+                    polls: data.polls || [],
+                    createdAt: data.createdAt,
+                    email: data.email,
+                };
+            } else {
+                const errorText = await response.text();
+                console.log(`AdminDashboard: vg-get-customer error: ${errorText}`);
+            }
+        } catch (e) {
+            console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
+        }
+        return null;
+    };
 
-Line 53: [36m[1m​[22m[39m
-Line 54: [36m[1m❯ Context[22m[39m
-Line 55:   deploy-preview
-Line 56: [96m[1m​[22m[39m
-Line 57: [96m[1mbuild.command from netlify.toml                               [22m[39m
-Line 58: [96m[1m────────────────────────────────────────────────────────────────[22m[39m
-Line 59: ​
-Line 60: [36m$ npm run build[39m
-Line 61: > votegenerator@1.0.0 build
-Line 62: > tsc && vite build
-Line 63: src/components/AdminDashboard.tsx(584,47): error TS2367: This comparison appears to be unintentional because the types '"pro" | 
-Line 64: src/components/AdminDashboard.tsx(998,29): error TS2367: This comparison appears to be unintentional because the types '"pro" | 
-Line 65: src/components/AdminDashboard.tsx(1000,29): error TS2367: This comparison appears to be unintentional because the types '"free"'
-Line 66: src/components/ComparePage.tsx(184,27): error TS2339: Property 'proEvent' does not exist on type '{ pro: number; business: numbe
-Line 67: src/components/ComparePage.tsx(203,27): error TS2339: Property 'unlimited' does not exist on type '{ pro: number; business: numb
-Line 68: src/components/LandingPage.tsx(490,67): error TS2365: Operator '>' cannot be applied to types 'string | number' and 'number'.
-Line 69: [91m[1m​[22m[39m
-Line 70: [91m[1m"build.command" failed                                        [22m[39m
-Line 71: [91m[1m────────────────────────────────────────────────────────────────[22m[39m
-Line 72: ​
-Line 73:   [31m[1mError message[22m[39m
-Line 74:   Command failed with exit code 2: npm run build
-Line 75: ​
-Line 76:   [31m[1mError location[22m[39m
-Line 77:   In build.command from netlify.toml:
-Line 78:   npm run build
-Line 79: ​
-Line 80:   [31m[1mResolved config[22m[39m
-Line 81:   build:
-Line 82:     command: npm run build
-Line 83:     commandOrigin: config
-Line 84:     environment:
-Line 85:       - ADMIN_PASSWORD
-Line 86:       - CLOUDINARY_API_KEY
-Line 101:       - VG_SITE_ID
-Line 102:       - VOTE_TOKEN_SECRET
-Line 103:     publish: /opt/build/repo/dist
-Line 104:     publishOrigin: config
-Line 105:   functions:
-Line 106:     "*":
-Line 107:       node_bundler: esbuild
-Line 108:   functionsDirectory: /opt/build/repo/netlify/functions
-Line 109:   headers:
-Line 110:     - for: /*.html
-      values:
-        Cache-Control: no-cache, no-store, must-revalidate
-    - for: /assets/*
-      values:
- 
-Line 111: Build failed due to a user error: Build script returned non-zero exit code: 2
-Line 112: Failing build: Failed to build site
-Line 113: Finished processing build request in 25.122s
-Line 114: Failed during stage 'building site': Build script returned non-zero exit code: 2
+    useEffect(() => {
+        validateAndLoadSession();
+    }, []);
+
+    // Refresh poll data from backend to get updated vote counts
+    const refreshPollData = async (sessionData: UserSession) => {
+        if (!sessionData.polls || sessionData.polls.length === 0) return;
+        
+        try {
+            const updatedPolls = await Promise.all(
+                sessionData.polls.map(async (poll) => {
+                    try {
+                        const response = await fetch(`/.netlify/functions/vg-get?id=${poll.id}&admin=${poll.adminKey}`);
+                        if (response.ok) {
+                            const freshData = await response.json();
+                            return {
+                                ...poll,
+                                responseCount: freshData.voteCount || freshData.responseCount || 0,
+                                status: freshData.status || poll.status,
+                            };
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to refresh poll ${poll.id}:`, e);
+                    }
+                    return poll;
+                })
+            );
+            
+            const updatedSession = { ...sessionData, polls: updatedPolls };
+            setSession(updatedSession);
+            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+        } catch (e) {
+            console.error('Failed to refresh poll data:', e);
+        }
+    };
+
+    // Refresh poll data when session is loaded
+    useEffect(() => {
+        if (session && !loading) {
+            refreshPollData(session);
+        }
+    }, [loading]);
+
+    const validateAndLoadSession = async () => {
+        try {
+            const stored = localStorage.getItem('vg_user_session');
+            
+            // Case 1: Coming from email with SHORT token (?t=xxx) - BEST PATH
+            if (urlDashboardToken) {
+                const customerData = await fetchCustomerByToken(urlDashboardToken);
+                
+                if (customerData) {
+                    customerData.dashboardToken = urlDashboardToken; // Ensure we keep the token
+                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
+                    localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
+                    
+                    setSession(customerData);
+                    
+                    setLoading(false);
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                }
+                
+                // Token lookup failed - fallback to localStorage
+                if (stored) {
+                    const sessionData: UserSession = JSON.parse(stored);
+                    sessionData.dashboardToken = urlDashboardToken;
+                    setSession(sessionData);
+                    
+                    setLoading(false);
+                    return;
+                }
+                
+                setError('Invalid or expired dashboard link.');
+                setLoading(false);
+                return;
+            }
+            
+            // Case 2: Coming from Stripe redirect with session_id (?s=xxx)
+            // The short token IS in the backend - fetch it!
+            if (urlSessionId) {
+                console.log('AdminDashboard: Fetching customer by session_id...');
+                const customerData = await fetchCustomerBySessionId(urlSessionId);
+                
+                if (customerData && customerData.dashboardToken) {
+                    // Got it! Save and use
+                    localStorage.setItem('vg_user_session', JSON.stringify(customerData));
+                    localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    if (customerData.expiresAt) {
+                        localStorage.setItem('vg_tier_expires', customerData.expiresAt);
+                    }
+                    
+                    setSession(customerData);
+                    
+                    setLoading(false);
+                    // Update URL to short format
+                    window.history.replaceState({}, '', `/admin?t=${customerData.dashboardToken}`);
+                    console.log('AdminDashboard: Got short token:', customerData.dashboardToken);
+                    return;
+                }
+                
+                // Backend lookup failed - use localStorage or create temp session
+                console.log('AdminDashboard: Backend lookup failed, using fallback');
+                if (stored) {
+                    const sessionData: UserSession = JSON.parse(stored);
+                    sessionData.sessionId = urlSessionId;
+                    setSession(sessionData);
+                    
+                    setLoading(false);
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                }
+                
+                // Create temp session (webhook may still be processing)
+                const tier = urlTier || 'business';
+                const days = tier === 'business' ? 365 : 30;
+                const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+                
+                const newSession: UserSession = {
+                    dashboardToken: '',
+                    sessionId: urlSessionId,
+                    tier,
+                    expiresAt,
+                    polls: [],
+                    createdAt: new Date().toISOString(),
+                };
+                
+                localStorage.setItem('vg_user_session', JSON.stringify(newSession));
+                setSession(newSession);
+                
+                setLoading(false);
+                window.history.replaceState({}, '', '/admin');
+                return;
+            }
+            
+            // Case 3: No URL params - use localStorage
+            if (stored) {
+                const sessionData: UserSession = JSON.parse(stored);
+                
+                // If we have sessionId but no dashboardToken, fetch it now!
+                if (sessionData.sessionId && !sessionData.dashboardToken) {
+                    console.log('AdminDashboard: Have sessionId but no token, fetching...');
+                    const customerData = await fetchCustomerBySessionId(sessionData.sessionId);
+                    
+                    if (customerData && customerData.dashboardToken) {
+                        // Got it! Update localStorage and state
+                        const updatedSession = { ...sessionData, ...customerData };
+                        localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                        setSession(updatedSession);
+                        
+                        setLoading(false);
+                        console.log('AdminDashboard: Got dashboardToken:', customerData.dashboardToken);
+                        return;
+                    }
+                }
+                
+                setSession(sessionData);
+                
+                setLoading(false);
+                return;
+            }
+            
+            // Case 4: Nothing found
+            setError('No session found. Please purchase a plan first.');
+            setLoading(false);
+        } catch (err) {
+            console.error('Session load error:', err);
+            setError('Failed to load session. Please try again.');
+            setLoading(false);
+        }
+    };
+
+    // Check if plan is expired
+    const isPlanExpired = useMemo(() => {
+        if (!session) return false;
+        if (session.expiresAt && new Date(session.expiresAt) < new Date()) return true;
+        return false;
+    }, [session]);
+
+    // Filtered and paginated polls
+    const filteredPolls = useMemo(() => {
+        if (!session) return [];
+        const polls = session.polls || [];
+        if (!searchQuery.trim()) return polls;
+        const query = searchQuery.toLowerCase();
+        return polls.filter(p => 
+            p.title.toLowerCase().includes(query) ||
+            p.type?.toLowerCase().includes(query)
+        );
+    }, [session, searchQuery]);
+
+    const totalPages = Math.ceil(filteredPolls.length / POLLS_PER_PAGE);
+    const paginatedPolls = useMemo(() => {
+        const start = (currentPage - 1) * POLLS_PER_PAGE;
+        return filteredPolls.slice(start, start + POLLS_PER_PAGE);
+    }, [filteredPolls, currentPage]);
+
+    // Count live polls (for Pro/Pro limit)
+    const livePolls = useMemo(() => {
+        if (!session) return [];
+        return (session.polls || []).filter(p => p.status === 'live' || session.tier !== 'free');
+    }, [session]);
+
+    const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
+        const url = type === 'admin'
+            ? `${window.location.origin}/#id=${poll.id}&admin=${poll.adminKey}`
+            : `${window.location.origin}/#id=${poll.id}`;
+        navigator.clipboard.writeText(url);
+        setCopiedId(`${poll.id}-${type}`);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleDeletePoll = async (poll: UserPoll) => {
+        if (!session) return;
+        
+        // Get response count for warning message
+        const hasResponses = (poll.responseCount || 0) > 0;
+        const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
+        
+        // Different confirmation messages based on tier and responses
+        let confirmMessage = `Delete "${poll.title}"?`;
+        if (hasResponses) {
+            if (isRestrictedTier) {
+                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the Free plan, you can only delete polls with 0 responses. Upgrade to Pro or higher to delete polls with responses.`);
+                return;
+            } else {
+                confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
+            }
+        }
+        
+        if (!confirm(confirmMessage)) return;
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-delete-poll', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey,
+                    dashboardToken: session.dashboardToken
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Remove from local state
+                const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+            } else if (data.upgradeRequired) {
+                // Tier restriction error
+                alert(data.error);
+            } else {
+                alert(data.error || 'Failed to delete poll. Please try again.');
+            }
+        } catch (err) {
+            console.error('Delete poll error:', err);
+            // Fallback: just remove from local UI
+            const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
+            localStorage.setItem('vg_user_session', JSON.stringify(updated));
+            setSession(updated);
+        }
+    };
+
+    const handleGoLive = async (pollId: string) => {
+        if (!session) return;
+        
+        // Update poll status to live
+        const updatedPolls = session.polls.map(p => 
+            p.id === pollId ? { ...p, status: 'live' as const } : p
+        );
+        const updated = { ...session, polls: updatedPolls };
+        localStorage.setItem('vg_user_session', JSON.stringify(updated));
+        setSession(updated);
+        setShowGoLiveModal(null);
+        
+        // TODO: Call backend to activate poll
+        // await fetch('/.netlify/functions/vg-activate-poll', { ... });
+    };
+
+    const handleRegenerateToken = () => {
+        if (!session) return;
+        if (!confirm('Generate new dashboard link? Your old link will stop working.')) return;
+        
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let newToken = '';
+        for (let i = 0; i < 16; i++) {
+            newToken += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        const updated = { ...session, dashboardToken: newToken };
+        localStorage.setItem('vg_user_session', JSON.stringify(updated));
+        window.location.href = `/admin?token=${newToken}`;
+    };
+
+    const goHome = () => {
+        window.location.href = '/';
+    };
+    
+    const goToCreate = () => {
+        // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
+        if (session?.tier) {
+            localStorage.setItem('vg_purchased_tier', session.tier);
+            // Also store expiration info
+            if (session.expiresAt) {
+                localStorage.setItem('vg_tier_expires', session.expiresAt);
+            }
+        }
+        // Navigate to home with #create anchor to scroll to create section
+        window.location.href = '/#create';
+    };
+
+    const canCreateMorePolls = () => {
+        if (!session) return false;
+        // Block creation if plan is expired
+        if (isPlanExpired) return false;
+        const config = TIER_CONFIG[session.tier];
+        // For Pro/Pro, only count LIVE polls toward the limit
+        if (config.requiresActivation) {
+            return livePolls.length < config.maxPolls;
+        }
+        return session.polls.length < config.maxPolls;
+    };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 size={32} className="text-indigo-600 animate-spin" />
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !session) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={32} className="text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
+                    <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
+                    <div className="flex gap-3">
+                        <a href="/recover" className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center">
+                            Recover Link
+                        </a>
+                        <button onClick={goHome} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">
+                            Go Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const tier = session.tier;
+    const config = TIER_CONFIG[tier];
+    const polls = session.polls || [];
+    const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
+    const isBusiness = tier === 'business';
+    const showSearch = isBusiness && polls.length > 5;
+
+    return (
+        <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
+            {/* Header with Paid Nav */}
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                    <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+                    </a>
+                    
+                    {/* Nav Links */}
+                    <nav className="hidden md:flex items-center gap-1">
+                        <a href="/" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
+                            <PlusCircle size={18} /> Create Poll
+                        </a>
+                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition">
+                            <LayoutDashboard size={18} /> My Dashboard
+                        </a>
+                        <a href="/help" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
+                            <AlertCircle size={18} /> Help
+                        </a>
+                    </nav>
+                    
+                    <div className="flex items-center gap-3">
+                        <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                            {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
+                            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                {isPlanExpired 
+                                    ? 'Expired' 
+                                    : session?.expiresAt 
+                                        ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
+                                        : ''
+                                }
+                            </span>
+                        </div>
+                        {isBusiness && !isPlanExpired && (
+                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
+                                <Settings size={20} className="text-slate-500" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            <main className="max-w-7xl mx-auto px-4 py-8">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Main Content */}
+                    <div className="flex-1 min-w-0">
+                        {/* Dashboard Access Info */}
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                            <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Link2 size={20} className="text-slate-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
+                                        <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Plan Expired Banner */}
+                        {isPlanExpired && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-red-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-red-800">Your Plan Has Expired</p>
+                                                <p className="text-sm text-red-600">
+                                                    You can still view your existing polls and results, but you can't create new polls.
+                                                    Renew your plan to continue creating polls.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <a 
+                                            href="/pricing" 
+                                            className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
+                                        >
+                                            <Sparkles size={16} />
+                                            Renew Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Dashboard Header with Search */}
+                        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                                    <LayoutDashboard size={28} className="text-indigo-600" /> Dashboard
+                                </h1>
+                                <p className="text-slate-500 mt-1">
+                                    {polls.length === 0 ? 'Create your first poll' : 
+                                     config.requiresActivation 
+                                        ? `${livePolls.length} of ${config.maxPolls} polls active`
+                                        : `${polls.length} poll${polls.length !== 1 ? 's' : ''}`
+                                    }
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {/* Search bar for Business with many polls */}
+                                {showSearch && (
+                                    <div className="relative">
+                                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                            placeholder="Search polls..."
+                                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 w-64"
+                                        />
+                                    </div>
+                                )}
+                                {polls.length > 0 && canCreateMorePolls() && (
+                                    <button onClick={goToCreate} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
+                                        <Plus size={18} /> New Poll
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Polls List or Empty State */}
+                        {polls.length === 0 ? (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 border-2 border-dashed border-slate-200 rounded-3xl p-8 md:p-12">
+                                <div className="text-center">
+                                    {/* Illustration */}
+                                    <div className="relative w-48 h-48 mx-auto mb-8">
+                                        {/* Ballot box */}
+                                        <svg viewBox="0 0 200 200" className="w-full h-full">
+                                            {/* Shadow */}
+                                            <ellipse cx="100" cy="175" rx="60" ry="12" fill="#e2e8f0" />
+                                            
+                                            {/* Box body */}
+                                            <rect x="40" y="80" width="120" height="90" rx="8" fill="url(#boxGradient)" />
+                                            <rect x="45" y="85" width="110" height="80" rx="6" fill="#f8fafc" opacity="0.3" />
+                                            
+                                            {/* Slot */}
+                                            <rect x="60" y="75" width="80" height="12" rx="6" fill="#334155" />
+                                            <rect x="65" y="78" width="70" height="6" rx="3" fill="#1e293b" />
+                                            
+                                            {/* Falling ballot papers */}
+                                            <g className="animate-bounce" style={{ animationDuration: '2s' }}>
+                                                <rect x="85" y="30" width="30" height="40" rx="3" fill="#818cf8" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="38" width="22" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="45" width="18" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                                <rect x="89" y="52" width="14" height="3" rx="1" fill="white" transform="rotate(-5 100 50)" />
+                                            </g>
+                                            
+                                            {/* Check marks floating */}
+                                            <circle cx="150" cy="50" r="12" fill="#10b981" opacity="0.8" />
+                                            <path d="M144 50l4 4 8-8" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                            
+                                            <circle cx="50" cy="65" r="10" fill="#f59e0b" opacity="0.8" />
+                                            <path d="M45 65l3 3 6-6" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                            
+                                            {/* Stars/sparkles */}
+                                            <path d="M165 90l2-6 2 6 6 2-6 2-2 6-2-6-6-2z" fill="#fbbf24" />
+                                            <path d="M30 100l1.5-4.5 1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5z" fill="#a78bfa" />
+                                            
+                                            {/* Gradient definition */}
+                                            <defs>
+                                                <linearGradient id="boxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor="#6366f1" />
+                                                    <stop offset="100%" stopColor="#8b5cf6" />
+                                                </linearGradient>
+                                            </defs>
+                                        </svg>
+                                    </div>
+                                    
+                                    <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-3">Create Your First Poll! 🎉</h2>
+                                    <p className="text-slate-500 mb-8 max-w-md mx-auto">
+                                        {config.requiresActivation 
+                                            ? "Create a poll and preview it. When you're happy, go live to start collecting votes."
+                                            : "Welcome to VoteGenerator! Get started by creating your first poll in seconds."
+                                        }
+                                    </p>
+                                    
+                                    <button onClick={goToCreate} className={`px-8 py-4 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-bold text-lg inline-flex items-center gap-3 hover:shadow-xl hover:scale-105 transition-all shadow-lg`}>
+                                        <Plus size={22} /> Create New Poll
+                                    </button>
+                                    
+                                    {/* What to do next */}
+                                    <div className="mt-10 pt-8 border-t border-slate-100">
+                                        <p className="text-xs text-slate-400 mb-4 font-medium">WHAT TO DO NEXT</p>
+                                        <div className="flex flex-wrap justify-center gap-3 text-sm">
+                                            <span className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full border border-indigo-200 font-medium">
+                                                <span className="w-5 h-5 bg-indigo-600 text-white rounded-full text-xs flex items-center justify-center">1</span> Create a poll
+                                            </span>
+                                            <span className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-4 py-2 rounded-full border border-purple-200 font-medium">
+                                                <span className="w-5 h-5 bg-purple-600 text-white rounded-full text-xs flex items-center justify-center">2</span> Share the link
+                                            </span>
+                                            <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full border border-emerald-200 font-medium">
+                                                <span className="w-5 h-5 bg-emerald-600 text-white rounded-full text-xs flex items-center justify-center">3</span> Collect responses
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <>
+                                <div className="space-y-4">
+                                    {paginatedPolls.map((poll, index) => {
+                                        const isDraft = config.requiresActivation && poll.status !== 'live';
+                                        return (
+                                            <motion.div
+                                                key={poll.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.03 }}
+                                                className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
+                                                    isDraft 
+                                                        ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                        : 'border-slate-200 hover:border-indigo-200'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <h3 className="font-bold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                            {/* Poll Type Badge */}
+                                                            {poll.type && POLL_TYPE_CONFIG[poll.type] && (
+                                                                <span className={`px-2 py-0.5 ${POLL_TYPE_CONFIG[poll.type].bg} ${POLL_TYPE_CONFIG[poll.type].color} text-xs font-bold rounded-full flex items-center gap-1`}>
+                                                                    {React.createElement(POLL_TYPE_CONFIG[poll.type].icon, { size: 12 })}
+                                                                    {POLL_TYPE_CONFIG[poll.type].label}
+                                                                </span>
+                                                            )}
+                                                            {isDraft && (
+                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                    <FileEdit size={12} /> Draft
+                                                                </span>
+                                                            )}
+                                                            {!isDraft && config.requiresActivation && (
+                                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1 animate-pulse">
+                                                                    <Rocket size={12} /> Live
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Clock size={14} />
+                                                                {new Date(poll.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Users size={14} />
+                                                                {poll.responseCount || 0} votes
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        {isDraft ? (
+                                                            <button
+                                                                onClick={() => setShowGoLiveModal(poll.id)}
+                                                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
+                                                            >
+                                                                <Rocket size={16} /> Go Live
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleCopyLink(poll, 'vote')}
+                                                                className="p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition"
+                                                                title="Copy vote link"
+                                                            >
+                                                                {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => setShowShareCards(poll.id)}
+                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition"
+                                                            title="Create share card"
+                                                        >
+                                                            <Gift size={18} />
+                                                        </button>
+                                                        <a
+                                                            href={`/#id=${poll.id}&admin=${poll.adminKey}`}
+                                                            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
+                                                            title={isDraft ? "Preview & Edit" : "Manage Poll"}
+                                                        >
+                                                            <ExternalLink size={16} />
+                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage'}</span>
+                                                        </a>
+                                                        <button
+                                                            onClick={() => handleDeletePoll(poll)}
+                                                            className="p-2.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition"
+                                                            title="Remove from dashboard"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="mt-6 flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <span className="px-4 py-2 text-sm text-slate-600">
+                                            Page {currentPage} of {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Create more button */}
+                                {canCreateMorePolls() && (
+                                    <div className="mt-6 text-center">
+                                        <button onClick={goToCreate} className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                                            <PlusCircle size={20} /> Create Another Poll
+                                        </button>
+                                    </div>
+                                )}
+
+                                {!canCreateMorePolls() && tier !== 'business' && (
+                                    <div className="mt-6 p-4 bg-slate-100 rounded-xl text-center">
+                                        <p className="text-slate-600 mb-2">
+                                            You've used all {config.maxPolls} poll credit{config.maxPolls > 1 ? 's' : ''}.
+                                        </p>
+                                        <a href="/pricing" className="text-purple-600 font-medium hover:text-purple-700">
+                                            Upgrade for more →
+                                        </a>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* Right Sidebar */}
+                    <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-6">
+                        {/* Business: Security & Access - Premium styling */}
+                        {isBusiness && (
+                            <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl border-2 border-amber-200 overflow-hidden shadow-lg shadow-amber-100/50">
+                                <button onClick={() => setShowAccessPanel(!showAccessPanel)} className="w-full p-4 flex items-center justify-between hover:bg-amber-50/50 transition">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
+                                            <Shield size={22} className="text-white" />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="font-bold text-amber-900">
+                                                Security & Access
+                                            </h3>
+                                            <p className="text-xs text-amber-700">PIN protection & team tokens</p>
+                                        </div>
+                                    </div>
+                                    {showAccessPanel ? <ChevronUp size={20} className="text-amber-500" /> : <ChevronDown size={20} className="text-amber-500" />}
+                                </button>
+
+                                {showAccessPanel && (
+                                    <div className="p-4 pt-0 border-t border-amber-200/50">
+                                        {/* PIN Status */}
+                                        <div className="mb-4 p-3 bg-white/80 rounded-xl border border-amber-100 shadow-sm">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${session.hasPin ? 'bg-emerald-100' : 'bg-slate-100'}`}>
+                                                        <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-sm font-bold text-slate-800">Admin PIN</span>
+                                                        <span className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                                                            {session.hasPin ? '✓ ACTIVE' : 'OFF'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => setShowPinSetup(true)} className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-bold transition">
+                                                    {session.hasPin ? 'Change' : 'Set up'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Token Buttons */}
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200">
+                                                <Plus size={14} /> Admin Token
+                                            </button>
+                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1">
+                                                <Plus size={14} /> Viewer Token
+                                            </button>
+                                        </div>
+                                        
+                                        <p className="text-[10px] text-amber-600 mt-3 text-center">
+                                            🔒 Tokens let team members access without your main dashboard link
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Plan Card - Collapsible */}
+                        <div className={`rounded-2xl border-2 overflow-hidden ${
+                            tier === 'business' ? 'bg-gradient-to-br from-amber-50 via-white to-orange-50 border-amber-200' :
+                            tier === 'pro' ? 'bg-gradient-to-br from-purple-50 via-white to-pink-50 border-purple-200' :
+                            'bg-white border-slate-200'
+                        }`}>
+                            <button 
+                                onClick={() => setShowPlanPanel(!showPlanPanel)}
+                                className={`w-full p-4 flex items-center justify-between hover:opacity-90 transition ${config.headerBg}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br ${config.gradient} text-white shadow-lg`}>
+                                        {config.icon}
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
+                                        {session?.expiresAt && !isPlanExpired && (
+                                            <p className="text-xs text-slate-500">
+                                                {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                {showPlanPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                            </button>
+                            
+                            {showPlanPanel && (
+                                <div className="p-4 border-t border-slate-100">
+                                    <div className="space-y-2 mb-4">
+                                        {config.features.map((feature, i) => (
+                                            <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
+                                                {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
+                                                <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {tier !== 'business' && !isPlanExpired && (
+                                    <a href="/pricing" className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3">
+                                        Upgrade Plan
+                                    </a>
+                                )}
+
+                                {/* Extend/Renew Button - Smart logic */}
+                                {session.expiresAt && (
+                                    <div className="mt-3 pt-3 border-t border-slate-100">
+                                        {(() => {
+                                            const daysLeft = Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                                            const canExtend = daysLeft <= 30 && tier === 'business'; // Only Business can extend
+                                            
+                                            return (
+                                                <>
+                                                    <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar size={14} />
+                                                            {isPlanExpired ? 'Expired' : 'Expires'}: {new Date(session.expiresAt).toLocaleDateString()}
+                                                        </span>
+                                                        {!isPlanExpired && (
+                                                            <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                                                daysLeft <= 7 ? 'bg-red-100 text-red-700' :
+                                                                daysLeft <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                                            }`}>
+                                                                {daysLeft} days left
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Renew button - always show when expired */}
+                                                    {isPlanExpired && (
+                                                        <button 
+                                                            onClick={() => window.location.href = `/pricing`}
+                                                            className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                            Renew Plan
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {/* Extend button - only for Business when ≤30 days remaining */}
+                                                    {!isPlanExpired && canExtend && (
+                                                        <button 
+                                                            onClick={() => window.location.href = `/pricing`}
+                                                            className="w-full py-2.5 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-700"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                            Extend Plan
+                                                        </button>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        </div>
+
+                        {/* Quick Stats - Collapsible */}
+                        <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl border-2 border-slate-200 overflow-hidden">
+                            <button 
+                                onClick={() => setShowStatsPanel(!showStatsPanel)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                        <BarChart3 size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-slate-800">Quick Stats</h3>
+                                        <p className="text-xs text-slate-500">{polls.length} polls • {totalVotes} votes</p>
+                                    </div>
+                                </div>
+                                {showStatsPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                            </button>
+                            
+                            {showStatsPanel && (
+                                <div className="p-4 pt-0 border-t border-slate-100">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                            <span className="text-slate-500 text-sm">Total Polls</span>
+                                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{polls.length}</span>
+                                        </div>
+                                        {config.requiresActivation && (
+                                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                                <span className="text-slate-500 text-sm">Live Polls</span>
+                                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{livePolls.length}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+                                            <span className="text-slate-500 text-sm">Total Votes</span>
+                                            <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{totalVotes}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {showSettings && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Settings size={24} className="text-slate-600" /> Settings
+                                </h2>
+                                <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-lg transition">
+                                    <X size={20} className="text-slate-500" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                {/* PIN Protection */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Lock size={20} className="text-amber-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Admin PIN Protection</p>
+                                                <p className="text-xs text-slate-500">Add a 6-digit PIN to admin links</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => { setShowSettings(false); setShowPinSetup(true); }} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition">
+                                            {session?.hasPin ? 'Change' : 'Set PIN'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Team Access Tokens */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Users size={20} className="text-blue-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Team Access Tokens</p>
+                                                <p className="text-xs text-slate-500">Share view/edit access with others</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => alert('Token management coming in next update!')} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
+                                            Manage
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Regenerate Dashboard Token */}
+                                <div className="p-4 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Key size={20} className="text-slate-600" />
+                                            <div>
+                                                <p className="font-medium text-slate-800">Dashboard Link</p>
+                                                <p className="text-xs text-slate-500">Generate a new unique URL</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={handleRegenerateToken} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* PIN Setup Modal */}
+            <AnimatePresence>
+                {showPinSetup && (
+                    <PinSetupModalInline
+                        isOpen={showPinSetup}
+                        hasExistingPin={!!session?.hasPin}
+                        onClose={() => setShowPinSetup(false)}
+                        onSuccess={(hasPin, pinValue) => {
+                            if (session) {
+                                let pinHash: string | undefined = undefined;
+                                if (hasPin && pinValue) {
+                                    // Simple hash for PIN
+                                    let hash = 0;
+                                    for (let i = 0; i < pinValue.length; i++) {
+                                        const char = pinValue.charCodeAt(i);
+                                        hash = ((hash << 5) - hash) + char;
+                                        hash = hash & hash;
+                                    }
+                                    pinHash = 'pin_' + Math.abs(hash).toString(16);
+                                }
+                                const updated = { ...session, hasPin, pinHash };
+                                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                                setSession(updated);
+                            }
+                            setShowPinSetup(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Go Live Modal */}
+            <AnimatePresence>
+                {showGoLiveModal && (
+                    <GoLiveModalInline
+                        isOpen={!!showGoLiveModal}
+                        pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
+                        tier={tier as 'pro' | 'business'}
+                        pollsUsed={livePolls.length}
+                        pollsMax={config.maxPolls}
+                        activeDays={config.activeDays}
+                        onClose={() => setShowGoLiveModal(null)}
+                        onConfirm={() => handleGoLive(showGoLiveModal)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Share Cards Modal */}
+            <AnimatePresence>
+                {showShareCards && (() => {
+                    const poll = polls.find(p => p.id === showShareCards);
+                    if (!poll) return null;
+                    const pollUrl = poll.customSlug 
+                        ? `${window.location.origin}/p/${poll.customSlug}`
+                        : `${window.location.origin}/#id=${poll.id}`;
+                    return (
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" 
+                            onClick={() => setShowShareCards(null)}
+                        >
+                            <motion.div 
+                                initial={{ scale: 0.95, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }} 
+                                exit={{ scale: 0.95, opacity: 0 }} 
+                                className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <ShareCards
+                                    pollId={poll.id}
+                                    pollTitle={poll.title}
+                                    pollDescription={poll.description}
+                                    pollUrl={pollUrl}
+                                    onClose={() => setShowShareCards(null)}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    );
+                })()}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// ============================================================================
+// Inline PIN Setup Modal (self-contained)
+// ============================================================================
+
+const PinSetupModalInline: React.FC<{
+    isOpen: boolean;
+    hasExistingPin: boolean;
+    onClose: () => void;
+    onSuccess: (hasPin: boolean, pinValue?: string) => void;
+}> = ({ isOpen, hasExistingPin, onClose, onSuccess }) => {
+    const [pin, setPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+    const [step, setStep] = useState<'enter' | 'confirm'>('enter');
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (step === 'enter') {
+            if (pin.length !== 6 || !/^\d+$/.test(pin)) {
+                setError('PIN must be exactly 6 digits');
+                return;
+            }
+            setStep('confirm');
+            setError('');
+        } else {
+            if (pin !== confirmPin) {
+                setError('PINs do not match');
+                setConfirmPin('');
+                return;
+            }
+            // Pass the PIN value to onSuccess for hashing
+            onSuccess(true, pin);
+        }
+    };
+
+    const handleRemove = () => {
+        if (confirm('Remove PIN protection?')) {
+            onSuccess(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Lock size={24} />
+                            <h2 className="font-bold text-lg">{hasExistingPin ? 'Change PIN' : 'Set Admin PIN'}</h2>
+                        </div>
+                        <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={20} /></button>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <p className="text-slate-600 text-sm mb-4">
+                        {step === 'enter' ? 'Enter a 6-digit PIN to protect your admin links:' : 'Confirm your PIN:'}
+                    </p>
+                    <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={step === 'enter' ? pin : confirmPin}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            step === 'enter' ? setPin(val) : setConfirmPin(val);
+                            setError('');
+                        }}
+                        placeholder="••••••"
+                        className="w-full text-center text-2xl tracking-[0.5em] font-bold py-4 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        autoFocus
+                    />
+                    {error && <p className="text-red-600 text-sm mt-2 text-center">{error}</p>}
+                    <div className="mt-6 flex gap-3">
+                        {hasExistingPin && step === 'enter' && (
+                            <button onClick={handleRemove} className="px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition">
+                                Remove
+                            </button>
+                        )}
+                        {step === 'confirm' && (
+                            <button onClick={() => { setStep('enter'); setConfirmPin(''); }} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">
+                                Back
+                            </button>
+                        )}
+                        <button onClick={handleSubmit} disabled={step === 'enter' ? pin.length !== 6 : confirmPin.length !== 6} className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50">
+                            {step === 'enter' ? 'Continue' : 'Set PIN'}
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Go Live Modal (self-contained)
+// ============================================================================
+
+const GoLiveModalInline: React.FC<{
+    isOpen: boolean;
+    pollTitle: string;
+    tier: 'pro' | 'business';
+    pollsUsed: number;
+    pollsMax: number;
+    activeDays: number;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
+    const [confirmed, setConfirmed] = useState(false);
+    const isLastPoll = pollsMax - pollsUsed === 1;
+    const gradient = tier === 'pro' ? 'from-purple-500 to-pink-500' : tier === 'business' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className={`bg-gradient-to-r ${gradient} p-6 text-white`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                            <Rocket size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Ready to Go Live?</h2>
+                            <p className="text-white/80 text-sm">Launch for real voting</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <div className="mb-4 p-4 bg-slate-50 rounded-xl">
+                        <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Poll</p>
+                        <p className="font-bold text-slate-800 truncate">{pollTitle}</p>
+                    </div>
+
+                    <div className="mb-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle size={18} className="text-emerald-500" />
+                            <span className="text-slate-700 text-sm">Real voting will be enabled</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Calendar size={18} className="text-blue-500" />
+                            <span className="text-slate-700 text-sm">{activeDays}-day countdown starts</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Lock size={18} className="text-amber-500" />
+                            <span className="text-slate-700 text-sm">Uses 1 of {pollsMax} poll credits</span>
+                        </div>
+                    </div>
+
+                    <div className={`mb-4 p-4 rounded-xl ${isLastPoll ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={20} className={isLastPoll ? 'text-red-500' : 'text-amber-500'} />
+                            <div>
+                                <p className={`font-semibold ${isLastPoll ? 'text-red-700' : 'text-amber-700'}`}>
+                                    {isLastPoll ? '⚠️ This is your last poll!' : 'This cannot be undone'}
+                                </p>
+                                <p className={`text-sm ${isLastPoll ? 'text-red-600' : 'text-amber-600'}`}>
+                                    {isLastPoll ? 'After this, upgrade for more.' : 'Cannot revert to draft after going live.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label className="flex items-start gap-3 mb-6 cursor-pointer">
+                        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600" />
+                        <span className="text-sm text-slate-600">I understand this will use 1 poll credit and cannot be undone.</span>
+                    </label>
+
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
+                        <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
+                            <Rocket size={18} /> Go Live
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+export default AdminDashboard;

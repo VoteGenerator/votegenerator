@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertTriangle, Home, Share2, Copy, Check, ShieldCheck, Key, RefreshCw, ArrowRight, FileSpreadsheet, Settings, Clock, RotateCcw, MessageCircle, Mail, Smartphone, LayoutDashboard, Globe, QrCode, X, Download, ListOrdered, CheckSquare, Calendar, Coins, LayoutGrid, GitCompare, SlidersHorizontal, Zap, Crown, PlusCircle } from 'lucide-react';
 import LandingPage from './LandingPage';
+import PaidCreatePage from './PaidCreatePage';
 import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
 import TemplatesPage from './TemplatesPage';
@@ -12,6 +13,13 @@ import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
+
+// Check if user has paid subscription
+const isPaidUser = () => {
+    if (typeof window === 'undefined') return false;
+    const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+    return tier === 'pro' || tier === 'business';
+};
 
 type ViewState = 
     | { type: 'create' }
@@ -294,6 +302,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <CheckoutSuccess />
             ) : window.location.pathname === '/admin' ? (
                 <AdminDashboard />
+            ) : window.location.pathname === '/create' ? (
+                isPaidUser() ? <PaidCreatePage /> : <LandingPage />
             ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (
                 <TemplatesPage />
             ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
@@ -351,7 +361,7 @@ const VoteGeneratorApp: React.FC = () => {
 
                     {viewState.type === 'create' && (
                         <motion.div key="create" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <LandingPage />
+                            {isPaidUser() ? <PaidCreatePage /> : <LandingPage />}
                         </motion.div>
                     )}
 

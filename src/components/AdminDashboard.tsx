@@ -382,7 +382,37 @@ const AdminDashboard: React.FC = () => {
                 return;
             }
             
-            // Case 4: Nothing found
+            // Case 4: No paid session - check for FREE user with polls in localStorage
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                try {
+                    const polls = JSON.parse(savedPolls);
+                    if (polls && polls.length > 0) {
+                        // Create a FREE session with their polls
+                        const freeSession: UserSession = {
+                            dashboardToken: 'free_user',
+                            tier: 'free',
+                            polls: polls.map((p: any) => ({
+                                id: p.id,
+                                adminKey: p.adminKey,
+                                title: p.title,
+                                type: p.type || 'multiple',
+                                createdAt: p.createdAt,
+                                responseCount: 0,
+                                status: 'live',
+                            })),
+                            createdAt: polls[0]?.createdAt || new Date().toISOString(),
+                        };
+                        setSession(freeSession);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse vg_polls:', e);
+                }
+            }
+            
+            // Case 5: Nothing found - no session, no polls
             setError('No session found. Please purchase a plan first.');
             setLoading(false);
         } catch (err) {

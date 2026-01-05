@@ -1,6 +1,6 @@
 // ============================================================================
 // DemoPage - VoteGenerator Interactive Demo
-// 8 Poll Types, Dashboard-Style Results, Poll Finder Quiz
+// 8 Poll Types + Surveys, Dashboard-Style Results, Poll Finder Quiz
 // Conversion-focused: Show value, reduce friction, drive action
 // ============================================================================
 
@@ -11,13 +11,13 @@ import {
     Users, Image, CheckCircle2, ChevronRight, Sparkles, Building2, Heart, 
     Briefcase, GraduationCap, PartyPopper, Play, ArrowRight, Check, X,
     BarChart3, TrendingUp, PieChart, Globe, Clock, RotateCcw, Download,
-    Trophy, Star, Zap, Target, HelpCircle, ChevronDown
+    Trophy, Star, Zap, Target, HelpCircle, ChevronDown, FileText
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 
 // ============================================================================
-// 8 Poll Types Data
+// 8 Poll Types + Survey Data
 // ============================================================================
 
 interface PollTypeInfo {
@@ -155,6 +155,21 @@ const pollTypes: PollTypeInfo[] = [
             { text: 'Mobile app', votes: 62 },
             { text: 'Dark mode', votes: 28 },
             { text: 'API access', votes: 15 }
+        ]
+    },
+    {
+        id: 'survey', 
+        name: 'Survey', 
+        icon: FileText, 
+        gradient: 'from-teal-500 to-emerald-600',
+        tagline: 'Multi-section, multi-question.',
+        description: 'Collect detailed responses with various question types across multiple sections.',
+        bestFor: ['Wedding RSVPs', 'Team feedback', 'Event planning', 'Customer surveys'],
+        demoQuestion: '📋 Team Offsite Survey',
+        demoOptions: [
+            { text: 'Section 1: Attendance', votes: 0 },
+            { text: 'Section 2: Preferences', votes: 0 },
+            { text: 'Section 3: Feedback', votes: 0 }
         ]
     },
 ];
@@ -522,6 +537,7 @@ const quizQuestions: QuizQuestion[] = [
             { text: 'Get feedback or ratings', pollTypes: ['rating-scale', 'dot-voting'] },
             { text: 'Collect RSVPs', pollTypes: ['rsvp'] },
             { text: 'Compare visual options', pollTypes: ['visual-poll', 'this-or-that'] },
+            { text: 'Collect detailed responses (multiple questions)', pollTypes: ['survey'] },
         ]
     },
     {
@@ -532,6 +548,7 @@ const quizQuestions: QuizQuestion[] = [
             { text: '3-5 options', pollTypes: ['multiple-choice', 'ranked-choice', 'rating-scale'] },
             { text: '6+ options', pollTypes: ['ranked-choice', 'dot-voting', 'multiple-choice'] },
             { text: 'Date/time slots', pollTypes: ['meeting-poll'] },
+            { text: 'Multiple questions, not just options', pollTypes: ['survey'] },
         ]
     },
     {
@@ -542,11 +559,12 @@ const quizQuestions: QuizQuestion[] = [
             { text: 'Thoughtful - rank or rate', pollTypes: ['ranked-choice', 'rating-scale'] },
             { text: 'Flexible - distribute points', pollTypes: ['dot-voting'] },
             { text: 'Visual - compare images', pollTypes: ['visual-poll'] },
+            { text: 'Comprehensive - multiple questions & sections', pollTypes: ['survey'] },
         ]
     }
 ];
 
-const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string) => void }> = ({ onResult }) => {
+const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string, isSurvey?: boolean) => void }> = ({ onResult }) => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string[]>>({});
     const [showResult, setShowResult] = useState(false);
@@ -609,7 +627,7 @@ const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string) => void }> = ({ 
                     </div>
                     <div className="flex gap-3">
                         <button
-                            onClick={() => onResult(recommendedPoll.id)}
+                            onClick={() => onResult(recommendedPoll.id, recommendedPoll.id === 'survey')}
                             className={`flex-1 py-3 bg-gradient-to-r ${recommendedPoll.gradient} text-white font-bold rounded-xl hover:shadow-lg transition`}
                         >
                             Try {recommendedPoll.name} Demo →
@@ -665,13 +683,384 @@ const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string) => void }> = ({ 
 };
 
 // ============================================================================
+// Survey Demo Component - Uses actual templates from SurveyBuilder
+// ============================================================================
+
+const surveyTemplates = [
+    {
+        id: 'wedding',
+        name: 'Wedding RSVP',
+        emoji: '💒',
+        gradient: 'from-pink-500 to-rose-600',
+        description: 'Attendance, meal preferences, song requests',
+        sections: [
+            {
+                title: 'Attendance',
+                description: 'Please let us know if you can make it',
+                questions: [
+                    { id: 'attending', type: 'yes_no', question: 'Will you be attending?', required: true },
+                    { id: 'guests', type: 'number', question: 'Number of guests (including yourself)', placeholder: '1' },
+                ]
+            },
+            {
+                title: 'Meal Preferences',
+                description: 'Help us plan the menu',
+                questions: [
+                    { id: 'entree', type: 'multiple_choice', question: 'Entrée preference', options: ['Beef', 'Chicken', 'Fish', 'Vegetarian'], required: true },
+                    { id: 'dietary', type: 'text', question: 'Any dietary restrictions or allergies?', placeholder: 'Please list any allergies or dietary needs...' },
+                ]
+            },
+            {
+                title: 'Celebration',
+                description: 'Help us make it special',
+                questions: [
+                    { id: 'song', type: 'text', question: 'Request a song for the dance floor', placeholder: 'Song title - Artist' },
+                    { id: 'message', type: 'textarea', question: 'Leave a message for the couple (optional)', placeholder: 'Your well wishes...' },
+                ]
+            }
+        ]
+    },
+    {
+        id: 'team-feedback',
+        name: 'Team Feedback',
+        emoji: '💼',
+        gradient: 'from-blue-500 to-indigo-600',
+        description: 'Meeting feedback, project surveys',
+        sections: [
+            {
+                title: 'Overall Experience',
+                description: 'Rate your overall experience',
+                questions: [
+                    { id: 'rating', type: 'rating', question: 'How would you rate the meeting overall?', required: true },
+                    { id: 'productive', type: 'rating', question: 'How productive was this meeting?', required: true },
+                ]
+            },
+            {
+                title: 'Specific Feedback',
+                description: 'Help us improve',
+                questions: [
+                    { id: 'worked', type: 'multiple_choice', question: 'What worked well?', options: ['Clear agenda', 'Good time management', 'Productive discussion', 'Clear decisions made'], multiple: true },
+                    { id: 'improve', type: 'textarea', question: 'What could be improved?', placeholder: 'Your suggestions...' },
+                ]
+            }
+        ]
+    },
+    {
+        id: 'party',
+        name: 'Party Planning',
+        emoji: '🎉',
+        gradient: 'from-amber-500 to-orange-600',
+        description: 'Event RSVP, preferences, activities',
+        sections: [
+            {
+                title: 'RSVP',
+                description: 'Let us know if you can make it',
+                questions: [
+                    { id: 'attending', type: 'yes_no', question: 'Can you attend?', required: true },
+                    { id: 'guests', type: 'number', question: 'How many people in your group?', placeholder: '1' },
+                ]
+            },
+            {
+                title: 'Preferences',
+                description: 'Help us plan',
+                questions: [
+                    { id: 'activities', type: 'multiple_choice', question: 'Which activities interest you?', options: ['Games', 'Dancing', 'Karaoke', 'Just chatting'], multiple: true },
+                    { id: 'food', type: 'multiple_choice', question: 'Food preference', options: ['Pizza', 'BBQ', 'Tacos', 'Vegetarian'], required: true },
+                ]
+            }
+        ]
+    }
+];
+
+const SurveyDemo: React.FC = () => {
+    const [selectedTemplate, setSelectedTemplate] = useState(surveyTemplates[0]);
+    const [currentSection, setCurrentSection] = useState(0);
+    const [answers, setAnswers] = useState<Record<string, string | number | string[]>>({});
+    const [submitted, setSubmitted] = useState(false);
+
+    const currentSectionData = selectedTemplate.sections[currentSection];
+    const progress = ((currentSection + 1) / selectedTemplate.sections.length) * 100;
+
+    const handleNext = () => {
+        if (currentSection < selectedTemplate.sections.length - 1) {
+            setCurrentSection(currentSection + 1);
+        } else {
+            setSubmitted(true);
+        }
+    };
+
+    const handleBack = () => {
+        if (currentSection > 0) {
+            setCurrentSection(currentSection - 1);
+        }
+    };
+
+    const updateAnswer = (questionId: string, value: string | number | string[]) => {
+        setAnswers({ ...answers, [questionId]: value });
+    };
+
+    const selectTemplate = (template: typeof surveyTemplates[0]) => {
+        setSelectedTemplate(template);
+        setCurrentSection(0);
+        setAnswers({});
+        setSubmitted(false);
+    };
+
+    if (submitted) {
+        return (
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                <div className={`bg-gradient-to-r ${selectedTemplate.gradient} p-8 text-white text-center`}>
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Check size={32} />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2">Survey Complete!</h3>
+                    <p className="text-white/80">Thank you for your responses</p>
+                </div>
+                <div className="p-6">
+                    <div className="bg-slate-50 rounded-xl p-4 mb-6">
+                        <h4 className="font-bold text-slate-900 mb-2">Your Responses Summary</h4>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <p>✓ {selectedTemplate.sections.length} sections completed</p>
+                            <p>✓ {Object.keys(answers).length} questions answered</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => { setSubmitted(false); setCurrentSection(0); setAnswers({}); }}
+                            className="flex-1 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition"
+                        >
+                            Try Again
+                        </button>
+                        <a
+                            href="/#create"
+                            className={`flex-1 py-3 bg-gradient-to-r ${selectedTemplate.gradient} text-white font-bold rounded-xl hover:shadow-lg transition text-center flex items-center justify-center gap-2`}
+                        >
+                            Create Your Own <ArrowRight size={16} />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Template Selector */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
+                <h4 className="text-sm font-bold text-slate-700 mb-3">Choose a Template:</h4>
+                <div className="grid grid-cols-3 gap-3">
+                    {surveyTemplates.map((template) => (
+                        <button
+                            key={template.id}
+                            onClick={() => selectTemplate(template)}
+                            className={`p-3 rounded-xl border-2 text-center transition ${
+                                selectedTemplate.id === template.id
+                                    ? 'border-indigo-500 bg-indigo-50'
+                                    : 'border-slate-200 hover:border-slate-300'
+                            }`}
+                        >
+                            <span className="text-2xl block mb-1">{template.emoji}</span>
+                            <span className="text-sm font-medium text-slate-700">{template.name}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Survey Form */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                {/* Survey Header */}
+                <div className={`bg-gradient-to-r ${selectedTemplate.gradient} p-6 text-white`}>
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="text-3xl">{selectedTemplate.emoji}</span>
+                        <div>
+                            <h3 className="text-xl font-bold">{selectedTemplate.name}</h3>
+                            <p className="text-white/80 text-sm">{selectedTemplate.description}</p>
+                        </div>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="mt-4">
+                        <div className="flex justify-between text-xs text-white/80 mb-1">
+                            <span>Section {currentSection + 1} of {selectedTemplate.sections.length}</span>
+                            <span>{Math.round(progress)}% complete</span>
+                        </div>
+                        <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-white"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section Content */}
+                <div className="p-6">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`${selectedTemplate.id}-${currentSection}`}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                        >
+                            <div className="mb-6">
+                                <h4 className="text-lg font-bold text-slate-900">{currentSectionData.title}</h4>
+                                <p className="text-slate-500 text-sm">{currentSectionData.description}</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                {currentSectionData.questions.map((q) => (
+                                    <div key={q.id}>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                                            {q.question}
+                                            {q.required && <span className="text-red-500 ml-1">*</span>}
+                                        </label>
+
+                                        {q.type === 'yes_no' && (
+                                            <div className="flex gap-3">
+                                                {['Yes', 'No'].map((opt) => (
+                                                    <button
+                                                        key={opt}
+                                                        onClick={() => updateAnswer(q.id, opt)}
+                                                        className={`flex-1 py-3 rounded-xl border-2 font-medium transition ${
+                                                            answers[q.id] === opt
+                                                                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                                                : 'border-slate-200 hover:border-slate-300'
+                                                        }`}
+                                                    >
+                                                        {opt === 'Yes' ? '✓ ' : '✗ '}{opt}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {q.type === 'number' && (
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="20"
+                                                placeholder={q.placeholder}
+                                                value={answers[q.id] as number || ''}
+                                                onChange={(e) => updateAnswer(q.id, parseInt(e.target.value) || 0)}
+                                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
+                                            />
+                                        )}
+
+                                        {q.type === 'text' && (
+                                            <input
+                                                type="text"
+                                                placeholder={q.placeholder}
+                                                value={answers[q.id] as string || ''}
+                                                onChange={(e) => updateAnswer(q.id, e.target.value)}
+                                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
+                                            />
+                                        )}
+
+                                        {q.type === 'textarea' && (
+                                            <textarea
+                                                placeholder={q.placeholder}
+                                                rows={3}
+                                                value={answers[q.id] as string || ''}
+                                                onChange={(e) => updateAnswer(q.id, e.target.value)}
+                                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none"
+                                            />
+                                        )}
+
+                                        {q.type === 'multiple_choice' && q.options && (
+                                            <div className="space-y-2">
+                                                {q.options.map((opt) => {
+                                                    const selected = Array.isArray(answers[q.id]) 
+                                                        ? (answers[q.id] as string[]).includes(opt)
+                                                        : answers[q.id] === opt;
+                                                    return (
+                                                        <button
+                                                            key={opt}
+                                                            onClick={() => {
+                                                                if (q.multiple) {
+                                                                    const current = (answers[q.id] as string[]) || [];
+                                                                    const updated = selected
+                                                                        ? current.filter(o => o !== opt)
+                                                                        : [...current, opt];
+                                                                    updateAnswer(q.id, updated);
+                                                                } else {
+                                                                    updateAnswer(q.id, opt);
+                                                                }
+                                                            }}
+                                                            className={`w-full p-3 rounded-xl border-2 text-left transition flex items-center gap-3 ${
+                                                                selected
+                                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                                                    : 'border-slate-200 hover:border-slate-300'
+                                                            }`}
+                                                        >
+                                                            <div className={`w-5 h-5 rounded-${q.multiple ? 'md' : 'full'} border-2 flex items-center justify-center ${
+                                                                selected ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'
+                                                            }`}>
+                                                                {selected && <Check size={12} className="text-white" />}
+                                                            </div>
+                                                            {opt}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {q.type === 'rating' && (
+                                            <div className="flex gap-2">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        onClick={() => updateAnswer(q.id, star)}
+                                                        className="p-2 transition hover:scale-110"
+                                                    >
+                                                        <Star
+                                                            size={32}
+                                                            className={`${
+                                                                (answers[q.id] as number) >= star
+                                                                    ? 'text-amber-400 fill-amber-400'
+                                                                    : 'text-slate-300'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Navigation */}
+                    <div className="flex gap-3 mt-8">
+                        {currentSection > 0 && (
+                            <button
+                                onClick={handleBack}
+                                className="px-6 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition"
+                            >
+                                ← Back
+                            </button>
+                        )}
+                        <button
+                            onClick={handleNext}
+                            className={`flex-1 py-3 bg-gradient-to-r ${selectedTemplate.gradient} text-white font-bold rounded-xl hover:shadow-lg transition`}
+                        >
+                            {currentSection === selectedTemplate.sections.length - 1 ? 'Submit Survey' : 'Next Section →'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
 // Main Demo Page
 // ============================================================================
 
 function DemoPage(): React.ReactElement {
     const [selectedPoll, setSelectedPoll] = useState<string>('multiple-choice');
     const [userVote, setUserVote] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'types' | 'finder'>('types');
+    const [activeTab, setActiveTab] = useState<'polls' | 'surveys' | 'finder'>('polls');
 
     const selectedPollData = pollTypes.find(p => p.id === selectedPoll) || pollTypes[0];
 
@@ -705,7 +1094,7 @@ function DemoPage(): React.ReactElement {
                             Interactive Demo
                         </span>
                         <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
-                            8 Poll Types, One Platform
+                            8 Poll Types + Surveys
                         </h1>
                         <p className="text-xl text-indigo-100 max-w-2xl mx-auto">
                             Try each poll type live. Vote, see results, and discover which one fits your needs.
@@ -719,12 +1108,13 @@ function DemoPage(): React.ReactElement {
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="flex gap-1 py-2">
                         {[
-                            { id: 'types', label: 'All 8 Poll Types', icon: CheckSquare },
-                            { id: 'finder', label: 'Find Your Poll Type', icon: Target },
+                            { id: 'polls', label: '8 Poll Types', icon: CheckSquare },
+                            { id: 'surveys', label: 'Surveys', icon: FileText },
+                            { id: 'finder', label: 'Find Your Type', icon: Target },
                         ].map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as 'types' | 'finder')}
+                                onClick={() => setActiveTab(tab.id as 'polls' | 'surveys' | 'finder')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                                     activeTab === tab.id
                                         ? 'bg-indigo-100 text-indigo-700'
@@ -742,9 +1132,9 @@ function DemoPage(): React.ReactElement {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-4 py-12">
                 <AnimatePresence mode="wait">
-                    {activeTab === 'types' && (
+                    {activeTab === 'polls' && (
                         <motion.div 
-                            key="types"
+                            key="polls"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
@@ -754,7 +1144,7 @@ function DemoPage(): React.ReactElement {
                                 <div className="lg:col-span-1">
                                     <div className="sticky top-24 space-y-2">
                                         <h3 className="text-lg font-bold text-slate-900 mb-4">Select a Poll Type</h3>
-                                        {pollTypes.map((poll) => {
+                                        {pollTypes.filter(p => p.id !== 'survey').map((poll) => {
                                             const isSelected = selectedPoll === poll.id;
                                             return (
                                                 <button
@@ -839,6 +1229,85 @@ function DemoPage(): React.ReactElement {
                         </motion.div>
                     )}
 
+                    {activeTab === 'surveys' && (
+                        <motion.div
+                            key="surveys"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                        >
+                            <div className="grid lg:grid-cols-3 gap-8">
+                                {/* Survey Info */}
+                                <div className="lg:col-span-1">
+                                    <div className="sticky top-24 space-y-4">
+                                        <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 text-white">
+                                            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                                                <FileText size={28} />
+                                            </div>
+                                            <h3 className="text-2xl font-bold mb-2">Surveys</h3>
+                                            <p className="text-teal-100">
+                                                Multi-section forms with various question types. More than just a poll.
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-white rounded-xl border border-slate-200 p-4">
+                                            <h4 className="font-bold text-slate-900 mb-3">Ready-to-Use Templates:</h4>
+                                            <div className="space-y-2">
+                                                {[
+                                                    { emoji: '💒', name: 'Wedding RSVP', desc: 'Attendance + meal + songs' },
+                                                    { emoji: '💼', name: 'Team Feedback', desc: 'Ratings + suggestions' },
+                                                    { emoji: '🎉', name: 'Party Planning', desc: 'RSVP + preferences' },
+                                                ].map((template, i) => (
+                                                    <div key={i} className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                                                        <span className="text-xl">{template.emoji}</span>
+                                                        <div>
+                                                            <div className="font-medium text-slate-800 text-sm">{template.name}</div>
+                                                            <div className="text-xs text-slate-500">{template.desc}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white rounded-xl border border-slate-200 p-4">
+                                            <h4 className="font-bold text-slate-900 mb-3">Question Types:</h4>
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                {[
+                                                    'Multiple choice',
+                                                    'Yes / No',
+                                                    'Star ratings',
+                                                    'Short text',
+                                                    'Long text',
+                                                    'Number',
+                                                    'Dropdown',
+                                                    'Ranking',
+                                                    'Date / Time',
+                                                    'Scale (1-10)',
+                                                ].map((type, i) => (
+                                                    <div key={i} className="flex items-center gap-1.5 text-slate-600">
+                                                        <Check size={12} className="text-emerald-500" />
+                                                        {type}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-4">
+                                            <p className="text-sm text-emerald-700">
+                                                <strong>Free:</strong> Templates + all question types. No signup needed to create or respond.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Survey Demo */}
+                                <div className="lg:col-span-2">
+                                    <SurveyDemo />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {activeTab === 'finder' && (
                         <motion.div
                             key="finder"
@@ -849,17 +1318,21 @@ function DemoPage(): React.ReactElement {
                         >
                             <div className="text-center mb-8">
                                 <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                                    Not sure which poll type to use?
+                                    Which type should you use?
                                 </h2>
                                 <p className="text-slate-600">
-                                    Answer 3 quick questions and we'll recommend the perfect poll type for you.
+                                    Answer a few questions and we'll recommend the best poll type or survey template for your needs.
                                 </p>
                             </div>
                             <PollFinderQuiz 
-                                onResult={(pollId) => {
-                                    setSelectedPoll(pollId);
-                                    setUserVote(null);
-                                    setActiveTab('types');
+                                onResult={(pollId, isSurvey) => {
+                                    if (isSurvey) {
+                                        setActiveTab('surveys');
+                                    } else {
+                                        setSelectedPoll(pollId);
+                                        setUserVote(null);
+                                        setActiveTab('polls');
+                                    }
                                 }} 
                             />
                         </motion.div>

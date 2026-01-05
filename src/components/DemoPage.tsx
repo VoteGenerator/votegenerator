@@ -686,7 +686,32 @@ const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string, isSurvey?: boole
 // Survey Demo Component - Uses actual templates from SurveyBuilder
 // ============================================================================
 
-const surveyTemplates = [
+interface SurveyQuestion {
+    id: string;
+    type: string;
+    question: string;
+    required?: boolean;
+    placeholder?: string;
+    options?: string[];
+    multiple?: boolean;
+}
+
+interface SurveySection {
+    title: string;
+    description: string;
+    questions: SurveyQuestion[];
+}
+
+interface SurveyTemplate {
+    id: string;
+    name: string;
+    emoji: string;
+    gradient: string;
+    description: string;
+    sections: SurveySection[];
+}
+
+const surveyTemplates: SurveyTemplate[] = [
     {
         id: 'wedding',
         name: 'Wedding RSVP',
@@ -773,7 +798,7 @@ const surveyTemplates = [
 ];
 
 const SurveyDemo: React.FC = () => {
-    const [selectedTemplate, setSelectedTemplate] = useState(surveyTemplates[0]);
+    const [selectedTemplate, setSelectedTemplate] = useState<SurveyTemplate>(surveyTemplates[0]);
     const [currentSection, setCurrentSection] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string | number | string[]>>({});
     const [submitted, setSubmitted] = useState(false);
@@ -799,7 +824,7 @@ const SurveyDemo: React.FC = () => {
         setAnswers({ ...answers, [questionId]: value });
     };
 
-    const selectTemplate = (template: typeof surveyTemplates[0]) => {
+    const selectTemplate = (template: SurveyTemplate) => {
         setSelectedTemplate(template);
         setCurrentSection(0);
         setAnswers({});
@@ -968,7 +993,7 @@ const SurveyDemo: React.FC = () => {
 
                                         {q.type === 'multiple_choice' && q.options && (
                                             <div className="space-y-2">
-                                                {q.options.map((opt) => {
+                                                {q.options.map((opt: string) => {
                                                     const selected = Array.isArray(answers[q.id]) 
                                                         ? (answers[q.id] as string[]).includes(opt)
                                                         : answers[q.id] === opt;
@@ -979,7 +1004,7 @@ const SurveyDemo: React.FC = () => {
                                                                 if (q.multiple) {
                                                                     const current = (answers[q.id] as string[]) || [];
                                                                     const updated = selected
-                                                                        ? current.filter(o => o !== opt)
+                                                                        ? current.filter((o: string) => o !== opt)
                                                                         : [...current, opt];
                                                                     updateAnswer(q.id, updated);
                                                                 } else {

@@ -570,8 +570,8 @@ const PollFinderQuiz: React.FC<{ onResult: (pollTypeId: string, isSurvey?: boole
     const [showResult, setShowResult] = useState(false);
     const [recommendedPoll, setRecommendedPoll] = useState<PollTypeInfo | null>(null);
 
-    const handleAnswer = (pollTypes: string[]) => {
-        const newAnswers = { ...answers, [quizQuestions[currentQuestion].id]: pollTypes };
+    const handleAnswer = (selectedPollTypes: string[]) => {
+        const newAnswers = { ...answers, [quizQuestions[currentQuestion].id]: selectedPollTypes };
         setAnswers(newAnswers);
 
         if (currentQuestion < quizQuestions.length - 1) {

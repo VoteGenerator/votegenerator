@@ -34,7 +34,7 @@ function AboutPage(): React.ReactElement {
         {
             icon: Heart,
             title: 'Privacy First',
-            desc: 'We believe your data belongs to you. No email required to vote, no tracking for marketing, no selling your information.',
+            desc: 'We believe your data belongs to you. No email required to vote, no account needed, no selling your information to third parties.',
             color: 'from-rose-500 to-pink-600'
         },
         {

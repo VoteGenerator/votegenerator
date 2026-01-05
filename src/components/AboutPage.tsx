@@ -321,7 +321,9 @@ function AboutPage(): React.ReactElement {
                                         { feature: 'Free tier', others: 'Limited trials', vg: 'Forever free', vgGood: true },
                                         { feature: 'Real-time results', others: 'Sometimes', vg: 'Always', vgGood: true },
                                         { feature: 'QR code sharing', others: 'Premium only', vg: 'All plans', vgGood: true },
+                                        { feature: 'Embed on website', others: 'Premium only', vg: 'All plans', vgGood: true },
                                         { feature: 'Poll types', others: '2-3 types', vg: '8 types', vgGood: true },
+                                        { feature: 'Geographic analytics', others: 'Enterprise', vg: 'Pro ($16/mo)', vgGood: true },
                                     ].map((row, i) => (
                                         <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
                                             <td className="py-3 px-6 text-slate-700">{row.feature}</td>
@@ -363,7 +365,7 @@ function AboutPage(): React.ReactElement {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white">Free</h3>
-                                    <p className="text-sm text-slate-400">$0 forever</p>
+                                    <p className="text-sm text-slate-400">$0 USD forever</p>
                                 </div>
                             </div>
                             <ul className="space-y-2">
@@ -372,7 +374,8 @@ function AboutPage(): React.ReactElement {
                                     '100 responses/month',
                                     'All 8 poll types',
                                     'Real-time results',
-                                    'QR code sharing',
+                                    'QR code & embed',
+                                    'Anti-fraud protection',
                                 ].map((f, i) => (
                                     <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                         <Check size={14} className="text-emerald-400" /> {f}
@@ -406,8 +409,10 @@ function AboutPage(): React.ReactElement {
                                     'Unlimited polls',
                                     '5,000 responses/month',
                                     'CSV & Excel export',
+                                    'Response timeline',
+                                    'Geographic & device data',
                                     'Remove branding',
-                                    'Custom branding',
+                                    'PIN code access',
                                     'Email notifications',
                                 ].map((f, i) => (
                                     <li key={i} className="flex items-center gap-2 text-sm text-indigo-100">
@@ -438,10 +443,12 @@ function AboutPage(): React.ReactElement {
                                 {[
                                     'Everything in Pro',
                                     '50,000 responses/month',
-                                    'PDF/PNG export',
-                                    'PIN protection',
+                                    'PDF reports',
+                                    'Custom logo',
+                                    'Custom short links',
+                                    'Hourly heatmap',
+                                    'IP allowlist/blocklist',
                                     'Priority support',
-                                    'Team features',
                                 ].map((f, i) => (
                                     <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                         <Check size={14} className="text-amber-400" /> {f}
@@ -452,7 +459,7 @@ function AboutPage(): React.ReactElement {
                     </div>
 
                     <p className="text-center text-slate-400 mt-8">
-                        All plans include: 8 poll types • Real-time results • QR codes • No signup to vote
+                        All plans include: 8 poll types • Real-time results • QR codes • Embed • No signup to vote
                     </p>
                 </div>
             </section>

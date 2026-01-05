@@ -40,24 +40,46 @@ const ComparePage: React.FC = () => {
     ];
 
     const features = [
+        // Limits
         { name: 'Responses per month', free: '100', pro: '5,000', business: '50,000' },
         { name: 'Active polls', free: '3', pro: 'Unlimited', business: 'Unlimited' },
         { name: 'Poll duration', free: '30 days', pro: '1 year', business: '1 year' },
+        // Poll Types
         { name: 'All 8 poll types', free: true, pro: true, business: true },
-        { name: 'Real-time results', free: true, pro: true, business: true },
+        // Sharing
+        { name: 'Shareable link', free: true, pro: true, business: true },
         { name: 'QR code sharing', free: true, pro: true, business: true },
-        { name: 'Shareable results link', free: true, pro: true, business: true },
+        { name: 'Embed on website', free: true, pro: true, business: true },
+        { name: 'Social sharing', free: true, pro: true, business: true },
+        // Results & Analytics
+        { name: 'Real-time results', free: true, pro: true, business: true },
+        { name: 'Visual charts', free: true, pro: true, business: true },
+        { name: 'Response timeline', free: false, pro: true, business: true },
+        { name: 'Geographic distribution', free: false, pro: true, business: true },
+        { name: 'Device breakdown', free: false, pro: true, business: true },
+        { name: 'Hourly heatmap', free: false, pro: false, business: true },
+        // Export
         { name: 'CSV export', free: false, pro: true, business: true },
         { name: 'Excel export', free: false, pro: true, business: true },
-        { name: 'PDF/PNG export', free: false, pro: true, business: true },
-        { name: 'Remove ads', free: false, pro: true, business: true },
-        { name: 'Custom branding', free: false, pro: true, business: true },
+        { name: 'PDF reports', free: false, pro: false, business: true },
+        // Customization
+        { name: 'Themes', free: '3 themes', pro: 'All 12+', business: 'All 12+' },
+        { name: 'Remove VoteGenerator badge', free: false, pro: true, business: true },
+        { name: 'Custom colors', free: false, pro: true, business: true },
+        { name: 'Upload custom logo', free: false, pro: false, business: true },
+        { name: 'Custom short links', free: false, pro: false, business: true },
+        // Security
+        { name: 'Anti-fraud protection', free: true, pro: true, business: true },
+        { name: 'PIN code access', free: false, pro: true, business: true },
+        { name: 'One-time vote codes', free: false, pro: true, business: true },
+        { name: 'IP allowlist/blocklist', free: false, pro: false, business: true },
+        // Management
         { name: 'Email notifications', free: false, pro: true, business: true },
         { name: 'Scheduled close', free: false, pro: true, business: true },
-        { name: 'PIN protection', free: false, pro: false, business: true },
-        { name: 'Custom logo', free: false, pro: false, business: true },
+        { name: 'Duplicate polls', free: false, pro: true, business: true },
+        // Support
+        { name: 'Email support', free: false, pro: true, business: true },
         { name: 'Priority support', free: false, pro: false, business: true },
-        { name: 'Team features', free: false, pro: false, business: true },
     ];
 
     const renderValue = (value: boolean | string) => {

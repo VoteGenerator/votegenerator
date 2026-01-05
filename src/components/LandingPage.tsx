@@ -1986,7 +1986,7 @@ const FAQSection: React.FC = () => {
         },
         { 
             q: 'Can I embed polls on my website?', 
-            a: 'Absolutely! Every poll gets an embed code you can add to any website. Works with WordPress, Squarespace, Wix, and any custom site.' 
+            a: 'Yes! Every poll gets an embed code you can add to any website. Works with WordPress, Squarespace, Wix, and any custom site. Available on all plans including Free.' 
         },
     ];
 

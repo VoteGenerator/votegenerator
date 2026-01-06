@@ -1,15 +1,21 @@
 // ============================================================================
 // Poll Templates - Pre-built templates for common use cases
 // ALL POLL TYPES ARE FREE - only response limits differ by plan
+// 
+// UPDATED: Added high-value survey templates at TOP based on search volume:
+// - Employee Engagement: 49,500 monthly searches
+// - Customer Satisfaction: 33,100 monthly searches  
+// - NPS Survey: 8,100 monthly searches
+// - Post-Purchase: 9,900 monthly searches
 // ============================================================================
 
 export type PollTemplate = {
     id: string;
     name: string;
     description: string;
-    category: 'team' | 'events' | 'feedback' | 'fun' | 'hr' | 'education';
+    category: 'team' | 'events' | 'feedback' | 'fun' | 'hr' | 'education' | 'survey';
     categoryLabel: string;
-    pollType: 'multiple' | 'ranked' | 'pairwise' | 'meeting' | 'rating' | 'rsvp' | 'image';
+    pollType: 'multiple' | 'ranked' | 'pairwise' | 'meeting' | 'rating' | 'rsvp' | 'image' | 'survey';
     icon: string;
     gradient: string;
     accentColor: string;
@@ -19,25 +25,207 @@ export type PollTemplate = {
     settings?: {
         allowMultiple?: boolean;
         hideResults?: boolean;
+        anonymousMode?: boolean;
     };
     previewStyle: {
         bgPattern?: 'dots' | 'grid' | 'waves' | 'none' | 'confetti' | 'lines';
     };
     bestFor: string[];
     estimatedTime: string;
+    // NEW: For multi-question surveys
+    questionCount?: number;
+    badge?: string;
+    badgeColor?: string;
+    featured?: boolean;
 };
 
 export const TEMPLATE_CATEGORIES = [
     { id: 'all', label: 'All Templates', icon: '✨' },
+    { id: 'survey', label: 'Surveys & Feedback', icon: '📊' },  // NEW - First after "All"
     { id: 'team', label: 'Team Decisions', icon: '👥' },
     { id: 'events', label: 'Events & Planning', icon: '🎉' },
-    { id: 'feedback', label: 'Feedback', icon: '💬' },
+    { id: 'feedback', label: 'Quick Feedback', icon: '💬' },
     { id: 'hr', label: 'HR & Culture', icon: '🏢' },
     { id: 'education', label: 'Education', icon: '📚' },
     { id: 'fun', label: 'Fun & Social', icon: '🎮' },
 ];
 
 export const POLL_TEMPLATES: PollTemplate[] = [
+    // =========================================================================
+    // HIGH-VALUE SURVEY TEMPLATES (NEW - FIRST based on search volume)
+    // =========================================================================
+    {
+        id: 'employee-engagement',
+        name: 'Employee Engagement Survey',
+        description: 'Measure team satisfaction, growth opportunities, and workplace culture with anonymous feedback',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '👥',
+        gradient: 'from-emerald-500 to-teal-600',
+        accentColor: '#059669',
+        question: 'How likely are you to recommend this company as a great place to work?',
+        options: [
+            'Overall satisfaction (NPS scale)',
+            'Growth & development opportunities',
+            'Work-life balance rating',
+            'Manager relationship',
+            'Team collaboration',
+            'Recognition & appreciation',
+            'Communication clarity',
+            'Resource availability',
+            'Company direction confidence',
+            'Open feedback'
+        ],
+        suggestedTheme: 'minimal',
+        settings: { 
+            hideResults: true,
+            anonymousMode: true  // Auto-enabled for honest feedback
+        },
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['HR teams', 'People operations', 'Quarterly check-ins', 'Culture assessment'],
+        estimatedTime: '2 min to create',
+        questionCount: 10,
+        badge: 'Anonymous',
+        badgeColor: 'bg-emerald-100 text-emerald-700',
+        featured: true,
+    },
+    {
+        id: 'customer-satisfaction',
+        name: 'Customer Satisfaction (CSAT)',
+        description: 'Measure customer happiness with your product or service using industry-standard metrics',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '⭐',
+        gradient: 'from-amber-500 to-orange-500',
+        accentColor: '#f59e0b',
+        question: 'How satisfied are you with our product/service?',
+        options: [
+            'Overall satisfaction (1-5)',
+            'Net Promoter Score (0-10)',
+            'Ease of use rating',
+            'Value for money',
+            'Support quality',
+            'Feature completeness',
+            'What could we improve?'
+        ],
+        suggestedTheme: 'sunset',
+        settings: { hideResults: false },
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Product teams', 'Customer success', 'Support teams', 'Post-purchase'],
+        estimatedTime: '2 min to create',
+        questionCount: 7,
+        badge: 'NPS Included',
+        badgeColor: 'bg-amber-100 text-amber-700',
+        featured: true,
+    },
+    {
+        id: 'nps-survey',
+        name: 'Quick NPS Survey',
+        description: 'The industry-standard Net Promoter Score survey - just 2 questions to measure loyalty',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '📈',
+        gradient: 'from-cyan-500 to-blue-600',
+        accentColor: '#0891b2',
+        question: 'How likely are you to recommend us to a friend or colleague?',
+        options: [
+            'NPS Score (0-10 scale)',
+            'What\'s the main reason for your score?'
+        ],
+        suggestedTheme: 'ocean',
+        settings: { hideResults: false },
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Quick pulse checks', 'Customer loyalty', 'Benchmarking', 'Trend tracking'],
+        estimatedTime: '30 sec to create',
+        questionCount: 2,
+        badge: 'Quick',
+        badgeColor: 'bg-cyan-100 text-cyan-700',
+        featured: true,
+    },
+    {
+        id: 'post-purchase-feedback',
+        name: 'Post-Purchase Feedback',
+        description: 'Understand the buying experience and gather insights for improvement',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '🛒',
+        gradient: 'from-violet-500 to-purple-600',
+        accentColor: '#7c3aed',
+        question: 'How was your purchase experience?',
+        options: [
+            'Overall purchase satisfaction',
+            'How did you hear about us?',
+            'Was checkout easy?',
+            'Any suggestions for improvement?'
+        ],
+        suggestedTheme: 'minimal',
+        settings: { hideResults: false },
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['E-commerce', 'Retail', 'Service businesses', 'Sales teams'],
+        estimatedTime: '1 min to create',
+        questionCount: 4,
+    },
+    {
+        id: 'event-feedback',
+        name: 'Event Feedback Survey',
+        description: 'Gather attendee feedback to improve future events',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '🎤',
+        gradient: 'from-rose-500 to-pink-600',
+        accentColor: '#e11d48',
+        question: 'How would you rate this event overall?',
+        options: [
+            'Overall event rating (1-5 stars)',
+            'Speaker/content quality',
+            'Venue & logistics',
+            'Networking opportunities',
+            'Would you attend again?',
+            'What could be improved?'
+        ],
+        suggestedTheme: 'sunset',
+        settings: { hideResults: false },
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Conferences', 'Workshops', 'Webinars', 'Training sessions'],
+        estimatedTime: '2 min to create',
+        questionCount: 6,
+    },
+    {
+        id: 'team-feedback',
+        name: 'Team Feedback Survey',
+        description: 'Collect anonymous feedback from your team on projects, processes, or ideas',
+        category: 'survey',
+        categoryLabel: 'Surveys & Feedback',
+        pollType: 'survey',
+        icon: '💬',
+        gradient: 'from-blue-500 to-indigo-600',
+        accentColor: '#3b82f6',
+        question: 'How do you feel about our current team processes?',
+        options: [
+            'Process efficiency rating',
+            'Communication clarity',
+            'Workload balance',
+            'What\'s working well?',
+            'What needs improvement?'
+        ],
+        suggestedTheme: 'minimal',
+        settings: { 
+            hideResults: true,
+            anonymousMode: true
+        },
+        previewStyle: { bgPattern: 'grid' },
+        bestFor: ['Team retrospectives', 'Process improvement', 'Manager feedback', 'Sprint reviews'],
+        estimatedTime: '1 min to create',
+        questionCount: 5,
+        badge: 'Anonymous',
+        badgeColor: 'bg-blue-100 text-blue-700',
+    },
+
     // =========================================================================
     // TEAM DECISIONS (10 templates)
     // =========================================================================
@@ -227,199 +415,103 @@ export const POLL_TEMPLATES: PollTemplate[] = [
         suggestedTheme: 'minimal',
         settings: { allowMultiple: false },
         previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Design feedback', 'Branding decisions', 'Creative reviews'],
+        bestFor: ['Branding decisions', 'Design reviews', 'Creative teams'],
         estimatedTime: '2 min to create'
     },
     {
         id: 'tool-selection',
         name: 'Tool Selection',
-        description: 'Compare and vote on software tools for the team',
+        description: 'Compare and vote on new tools for the team',
         category: 'team',
         categoryLabel: 'Team Decisions',
         pollType: 'pairwise',
-        icon: '🔧',
-        gradient: 'from-slate-600 to-slate-800',
+        icon: '🛠️',
+        gradient: 'from-slate-600 to-gray-700',
         accentColor: '#475569',
         question: 'Which project management tool should we use?',
         options: [
             'Notion',
+            'Linear',
             'Asana',
-            'Monday.com',
-            'ClickUp',
-            'Linear'
+            'Monday.com'
         ],
         suggestedTheme: 'dark',
         settings: {},
         previewStyle: { bgPattern: 'grid' },
-        bestFor: ['Tool evaluation', 'Software decisions', 'Vendor selection'],
+        bestFor: ['Software decisions', 'Vendor selection', 'Tool evaluation'],
         estimatedTime: '1 min to create'
     },
     {
-        id: 'retro-action',
-        name: 'Retro Action Items',
-        description: 'Prioritize action items from your retrospective',
+        id: 'office-policy',
+        name: 'Office Policy Vote',
+        description: 'Get team input on workplace policies',
         category: 'team',
         categoryLabel: 'Team Decisions',
-        pollType: 'ranked',
-        icon: '🔄',
-        gradient: 'from-teal-500 to-cyan-600',
-        accentColor: '#0d9488',
-        question: 'Rank these retro action items by impact',
+        pollType: 'multiple',
+        icon: '🏢',
+        gradient: 'from-teal-500 to-emerald-600',
+        accentColor: '#14b8a6',
+        question: 'What\'s your preferred work arrangement?',
         options: [
-            'Improve code review process',
-            'Add more automated tests',
-            'Better sprint planning',
-            'More pair programming',
-            'Reduce meeting time'
+            '🏠 Fully remote',
+            '🏢 Fully in-office',
+            '🔄 Hybrid (3 days office)',
+            '🔄 Hybrid (2 days office)',
+            '🤷 Flexible - no set days'
         ],
         suggestedTheme: 'minimal',
-        settings: { hideResults: false },
+        settings: { allowMultiple: false },
         previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Sprint retros', 'Process improvement', 'Agile teams'],
-        estimatedTime: '1 min to create'
+        bestFor: ['HR decisions', 'Policy changes', 'Employee input'],
+        estimatedTime: '30 sec to create'
     },
 
     // =========================================================================
     // EVENTS & PLANNING (8 templates)
     // =========================================================================
     {
-        id: 'event-date',
-        name: 'Event Date Picker',
-        description: 'Find the best date that works for everyone',
-        category: 'events',
-        categoryLabel: 'Events & Planning',
-        pollType: 'multiple',
-        icon: '📅',
-        gradient: 'from-blue-500 to-indigo-600',
-        accentColor: '#4f46e5',
-        question: 'Which date works best for the team event?',
-        options: [
-            'Friday, January 17th',
-            'Saturday, January 18th',
-            'Friday, January 24th',
-            'Saturday, January 25th'
-        ],
-        suggestedTheme: 'minimal',
-        settings: { allowMultiple: true },
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Team events', 'Meetings', 'Social gatherings'],
-        estimatedTime: '30 sec to create'
-    },
-    {
-        id: 'award-nomination',
-        name: 'Award Nomination',
-        description: 'Let the team vote on who deserves recognition',
-        category: 'events',
-        categoryLabel: 'Events & Planning',
-        pollType: 'multiple',
-        icon: '🏆',
-        gradient: 'from-yellow-500 to-amber-600',
-        accentColor: '#ca8a04',
-        question: 'Who should receive the Employee of the Month award?',
-        options: [
-            'Add team member names...',
-            'Nominee 2',
-            'Nominee 3',
-            'Nominee 4'
-        ],
-        suggestedTheme: 'gold',
-        settings: { allowMultiple: false, hideResults: true },
-        previewStyle: { bgPattern: 'confetti' },
-        bestFor: ['Employee recognition', 'Team awards', 'Peer voting'],
-        estimatedTime: '1 min to create'
-    },
-    {
-        id: 'party-theme',
-        name: 'Party Theme Vote',
-        description: 'Choose the perfect theme for your next celebration',
-        category: 'events',
-        categoryLabel: 'Events & Planning',
-        pollType: 'image',
-        icon: '🎊',
-        gradient: 'from-fuchsia-500 to-purple-600',
-        accentColor: '#a855f7',
-        question: 'What theme should we have for the holiday party?',
-        options: [
-            '❄️ Winter Wonderland',
-            '🌴 Tropical Paradise',
-            '🎭 Masquerade Ball',
-            '🕺 Disco Fever',
-            '🎬 Hollywood Glamour'
-        ],
-        suggestedTheme: 'neon',
-        settings: { allowMultiple: false },
-        previewStyle: { bgPattern: 'confetti' },
-        bestFor: ['Holiday parties', 'Team celebrations', 'Social events'],
-        estimatedTime: '1 min to create'
-    },
-    {
-        id: 'team-activity',
-        name: 'Team Activity Vote',
-        description: 'Pick the perfect team building activity',
-        category: 'events',
-        categoryLabel: 'Events & Planning',
-        pollType: 'ranked',
-        icon: '🎳',
-        gradient: 'from-green-500 to-emerald-600',
-        accentColor: '#16a34a',
-        question: 'Rank these team activities by preference',
-        options: [
-            '🎳 Bowling night',
-            '🧩 Escape room',
-            '🎨 Paint & sip',
-            '🎮 Game tournament',
-            '🍳 Cooking class'
-        ],
-        suggestedTheme: 'forest',
-        settings: {},
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Team building', 'Social events', 'Company outings'],
-        estimatedTime: '1 min to create'
-    },
-    {
-        id: 'event-rsvp',
-        name: 'Event RSVP',
-        description: 'Collect RSVPs for your upcoming event',
+        id: 'wedding-rsvp',
+        name: 'Wedding RSVP',
+        description: 'Beautiful wedding invitation response form',
         category: 'events',
         categoryLabel: 'Events & Planning',
         pollType: 'rsvp',
-        icon: '💌',
-        gradient: 'from-rose-500 to-pink-600',
-        accentColor: '#e11d48',
-        question: 'Can you attend the team dinner on Friday?',
+        icon: '💒',
+        gradient: 'from-rose-400 to-pink-500',
+        accentColor: '#f43f5e',
+        question: 'Will you be joining us for our special day?',
         options: [
-            "Yes, I'll be there!",
-            "Sorry, can't make it",
-            'Maybe, will confirm later'
+            'Joyfully Accept',
+            'Regretfully Decline'
         ],
-        suggestedTheme: 'minimal',
+        suggestedTheme: 'rose',
         settings: {},
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Team dinners', 'Company events', 'Social gatherings'],
-        estimatedTime: '30 sec to create'
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Weddings', 'Engagement parties', 'Rehearsal dinners'],
+        estimatedTime: '2 min to create'
     },
     {
-        id: 'venue-vote',
-        name: 'Venue Selection',
-        description: 'Compare venues with photos and vote',
+        id: 'party-planning',
+        name: 'Party Date Poll',
+        description: 'Find the best date for your celebration',
         category: 'events',
         categoryLabel: 'Events & Planning',
-        pollType: 'image',
-        icon: '🏛️',
-        gradient: 'from-amber-500 to-orange-600',
-        accentColor: '#d97706',
-        question: 'Which venue should we book for the conference?',
+        pollType: 'meeting',
+        icon: '🎉',
+        gradient: 'from-fuchsia-500 to-purple-600',
+        accentColor: '#c026d3',
+        question: 'Which date works best for the party?',
         options: [
-            'Grand Ballroom Hotel',
-            'Modern Convention Center',
-            'Rooftop Event Space',
-            'Historic Manor House'
+            'Saturday, March 15',
+            'Saturday, March 22',
+            'Saturday, March 29',
+            'Saturday, April 5'
         ],
-        suggestedTheme: 'sunset',
-        settings: { allowMultiple: false },
-        previewStyle: { bgPattern: 'waves' },
-        bestFor: ['Conferences', 'Corporate events', 'Large gatherings'],
-        estimatedTime: '2 min to create'
+        suggestedTheme: 'neon',
+        settings: { allowMultiple: true },
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Birthday parties', 'Celebrations', 'Social gatherings'],
+        estimatedTime: '1 min to create'
     },
     {
         id: 'potluck-signup',
@@ -428,180 +520,287 @@ export const POLL_TEMPLATES: PollTemplate[] = [
         category: 'events',
         categoryLabel: 'Events & Planning',
         pollType: 'multiple',
-        icon: '🍽️',
-        gradient: 'from-orange-500 to-red-500',
-        accentColor: '#ea580c',
+        icon: '🍲',
+        gradient: 'from-orange-400 to-amber-500',
+        accentColor: '#fb923c',
         question: 'What will you bring to the potluck?',
         options: [
-            '🥗 Salad / Appetizer',
-            '🍖 Main dish',
-            '🥧 Dessert',
+            '🥗 Salad / Side dish',
+            '🍖 Main course',
+            '🍰 Dessert',
             '🥤 Drinks',
-            '🍞 Bread / Sides'
+            '🍞 Bread / Appetizer'
         ],
         suggestedTheme: 'sunset',
         settings: { allowMultiple: false },
         previewStyle: { bgPattern: 'waves' },
-        bestFor: ['Office potlucks', 'Team lunches', 'Holiday gatherings'],
+        bestFor: ['Office potlucks', 'Family gatherings', 'Community events'],
         estimatedTime: '30 sec to create'
     },
     {
-        id: 'speaker-vote',
-        name: 'Speaker Selection',
-        description: 'Vote on keynote speakers for your event',
+        id: 'baby-shower',
+        name: 'Baby Shower RSVP',
+        description: 'Adorable baby shower response form',
+        category: 'events',
+        categoryLabel: 'Events & Planning',
+        pollType: 'rsvp',
+        icon: '👶',
+        gradient: 'from-sky-400 to-blue-500',
+        accentColor: '#38bdf8',
+        question: 'Can you join us to celebrate the baby?',
+        options: [
+            'Yes, I\'ll be there! 🎉',
+            'Sorry, I can\'t make it 😢'
+        ],
+        suggestedTheme: 'ocean',
+        settings: {},
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['Baby showers', 'Gender reveals', 'Sip and see'],
+        estimatedTime: '2 min to create'
+    },
+    {
+        id: 'reunion-planning',
+        name: 'Reunion Planning',
+        description: 'Coordinate family or class reunion details',
+        category: 'events',
+        categoryLabel: 'Events & Planning',
+        pollType: 'meeting',
+        icon: '👨‍👩‍👧‍👦',
+        gradient: 'from-emerald-500 to-green-600',
+        accentColor: '#10b981',
+        question: 'When can you attend the reunion?',
+        options: [
+            'July 4th Weekend',
+            'Labor Day Weekend',
+            'Thanksgiving Weekend',
+            'Christmas Week'
+        ],
+        suggestedTheme: 'forest',
+        settings: { allowMultiple: true },
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['Family reunions', 'Class reunions', 'Friend groups'],
+        estimatedTime: '1 min to create'
+    },
+    {
+        id: 'activity-vote',
+        name: 'Group Activity Vote',
+        description: 'Decide on a fun activity for the group',
         category: 'events',
         categoryLabel: 'Events & Planning',
         pollType: 'ranked',
-        icon: '🎤',
+        icon: '🎳',
+        gradient: 'from-lime-500 to-green-600',
+        accentColor: '#84cc16',
+        question: 'Rank your preferred group activities',
+        options: [
+            '🎳 Bowling',
+            '🧗 Rock climbing',
+            '🎮 Arcade / Gaming',
+            '🍳 Cooking class',
+            '🚣 Kayaking'
+        ],
+        suggestedTheme: 'forest',
+        settings: {},
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Team outings', 'Friend groups', 'Corporate events'],
+        estimatedTime: '1 min to create'
+    },
+    {
+        id: 'holiday-party',
+        name: 'Holiday Party Poll',
+        description: 'Plan the perfect holiday celebration',
+        category: 'events',
+        categoryLabel: 'Events & Planning',
+        pollType: 'multiple',
+        icon: '🎄',
+        gradient: 'from-red-500 to-green-600',
+        accentColor: '#dc2626',
+        question: 'What type of holiday party would you prefer?',
+        options: [
+            '🍽️ Formal dinner',
+            '🎉 Casual cocktail party',
+            '🏠 Potluck style',
+            '🎮 Game night theme',
+            '🎭 Costume / Ugly sweater'
+        ],
+        suggestedTheme: 'sunset',
+        settings: { allowMultiple: false },
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Office parties', 'Family holidays', 'Friend groups'],
+        estimatedTime: '30 sec to create'
+    },
+    {
+        id: 'graduation-party',
+        name: 'Graduation Party RSVP',
+        description: 'Celebrate academic achievements in style',
+        category: 'events',
+        categoryLabel: 'Events & Planning',
+        pollType: 'rsvp',
+        icon: '🎓',
         gradient: 'from-indigo-500 to-purple-600',
         accentColor: '#6366f1',
-        question: 'Rank your preferred keynote speakers',
+        question: 'Join us to celebrate this milestone!',
         options: [
-            'Industry Expert A',
-            'Thought Leader B',
-            'Author C',
-            'Innovator D'
+            'Count me in! 🎉',
+            'Can\'t make it 😔'
         ],
         suggestedTheme: 'minimal',
         settings: {},
-        previewStyle: { bgPattern: 'grid' },
-        bestFor: ['Conferences', 'Summits', 'Company events'],
-        estimatedTime: '1 min to create'
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['High school graduation', 'College graduation', 'Achievement celebrations'],
+        estimatedTime: '2 min to create'
     },
 
     // =========================================================================
     // FEEDBACK (6 templates)
     // =========================================================================
     {
-        id: 'meeting-pulse',
-        name: 'Meeting Pulse Check',
-        description: 'Quick temperature check on how the meeting went',
+        id: 'product-feedback',
+        name: 'Product Feedback',
+        description: 'Quick pulse check on product features',
         category: 'feedback',
         categoryLabel: 'Feedback',
         pollType: 'rating',
-        icon: '💭',
-        gradient: 'from-pink-500 to-rose-600',
-        accentColor: '#e11d48',
-        question: 'How useful was this meeting?',
+        icon: '💡',
+        gradient: 'from-amber-500 to-orange-600',
+        accentColor: '#f59e0b',
+        question: 'How would you rate our new feature?',
         options: ['1', '2', '3', '4', '5'],
-        suggestedTheme: 'minimal',
+        suggestedTheme: 'sunset',
         settings: {},
-        previewStyle: { bgPattern: 'none' },
-        bestFor: ['Meeting feedback', 'Retros', 'Quick pulse checks'],
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Product launches', 'Feature feedback', 'Beta testing'],
+        estimatedTime: '30 sec to create'
+    },
+    {
+        id: 'service-rating',
+        name: 'Service Rating',
+        description: 'Measure customer satisfaction with your service',
+        category: 'feedback',
+        categoryLabel: 'Feedback',
+        pollType: 'rating',
+        icon: '⭐',
+        gradient: 'from-yellow-400 to-amber-500',
+        accentColor: '#eab308',
+        question: 'How would you rate our service today?',
+        options: ['1', '2', '3', '4', '5'],
+        suggestedTheme: 'sunset',
+        settings: {},
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['Customer support', 'Service businesses', 'Retail'],
         estimatedTime: '20 sec to create'
     },
     {
-        id: 'quick-decision',
-        name: 'Quick Yes/No Decision',
-        description: 'Get a fast consensus on simple decisions',
+        id: 'content-feedback',
+        name: 'Content Feedback',
+        description: 'Get feedback on articles, videos, or content',
         category: 'feedback',
         categoryLabel: 'Feedback',
         pollType: 'multiple',
-        icon: '✅',
-        gradient: 'from-green-500 to-emerald-600',
-        accentColor: '#16a34a',
-        question: 'Should we move forward with this proposal?',
+        icon: '📝',
+        gradient: 'from-blue-500 to-indigo-600',
+        accentColor: '#3b82f6',
+        question: 'Was this content helpful?',
         options: [
-            '✅ Yes, let\'s do it',
-            '❌ No, not yet',
-            '🤔 Need more info'
+            '👍 Yes, very helpful',
+            '😐 Somewhat helpful',
+            '👎 Not helpful',
+            '🤔 I have suggestions'
         ],
         suggestedTheme: 'minimal',
         settings: { allowMultiple: false },
-        previewStyle: { bgPattern: 'none' },
-        bestFor: ['Quick decisions', 'Go/no-go votes', 'Consensus building'],
-        estimatedTime: '20 sec to create'
+        previewStyle: { bgPattern: 'grid' },
+        bestFor: ['Blog posts', 'Documentation', 'Training materials'],
+        estimatedTime: '30 sec to create'
     },
     {
-        id: 'nps-score',
-        name: 'NPS Score',
-        description: 'Measure how likely someone is to recommend',
+        id: 'meeting-feedback',
+        name: 'Meeting Feedback',
+        description: 'Quick check on meeting effectiveness',
         category: 'feedback',
         categoryLabel: 'Feedback',
         pollType: 'rating',
-        icon: '📈',
-        gradient: 'from-blue-500 to-cyan-600',
-        accentColor: '#0284c7',
-        question: 'How likely are you to recommend us to a friend? (0-10)',
-        options: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-        suggestedTheme: 'minimal',
+        icon: '📊',
+        gradient: 'from-teal-500 to-cyan-600',
+        accentColor: '#14b8a6',
+        question: 'How useful was this meeting?',
+        options: ['1', '2', '3', '4', '5'],
+        suggestedTheme: 'ocean',
         settings: {},
-        previewStyle: { bgPattern: 'none' },
-        bestFor: ['Customer feedback', 'Product satisfaction', 'Service quality'],
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Team meetings', 'Workshops', 'All-hands'],
         estimatedTime: '20 sec to create'
     },
     {
         id: 'presentation-feedback',
         name: 'Presentation Feedback',
-        description: 'Collect feedback after a presentation',
+        description: 'Gather feedback on presentations or talks',
         category: 'feedback',
         categoryLabel: 'Feedback',
         pollType: 'rating',
-        icon: '📊',
-        gradient: 'from-violet-500 to-purple-600',
-        accentColor: '#7c3aed',
+        icon: '🎤',
+        gradient: 'from-rose-500 to-pink-600',
+        accentColor: '#f43f5e',
         question: 'How would you rate this presentation?',
         options: ['1', '2', '3', '4', '5'],
-        suggestedTheme: 'minimal',
-        settings: {},
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Presentations', 'Workshops', 'Training sessions'],
-        estimatedTime: '20 sec to create'
-    },
-    {
-        id: 'workshop-satisfaction',
-        name: 'Workshop Satisfaction',
-        description: 'Rate different aspects of your workshop',
-        category: 'feedback',
-        categoryLabel: 'Feedback',
-        pollType: 'rating',
-        icon: '🎓',
-        gradient: 'from-teal-500 to-emerald-600',
-        accentColor: '#0d9488',
-        question: 'How satisfied were you with today\'s workshop?',
-        options: ['1', '2', '3', '4', '5'],
-        suggestedTheme: 'forest',
-        settings: {},
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Workshops', 'Training', 'Educational events'],
-        estimatedTime: '20 sec to create'
-    },
-    {
-        id: 'idea-vote',
-        name: 'Idea Prioritization',
-        description: 'Vote on the best ideas from brainstorming',
-        category: 'feedback',
-        categoryLabel: 'Feedback',
-        pollType: 'ranked',
-        icon: '💡',
-        gradient: 'from-yellow-500 to-orange-500',
-        accentColor: '#eab308',
-        question: 'Rank these ideas from our brainstorm session',
-        options: [
-            'Idea 1: Description',
-            'Idea 2: Description',
-            'Idea 3: Description',
-            'Idea 4: Description'
-        ],
         suggestedTheme: 'sunset',
         settings: {},
-        previewStyle: { bgPattern: 'waves' },
-        bestFor: ['Brainstorming', 'Innovation sessions', 'Ideation'],
-        estimatedTime: '1 min to create'
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Conferences', 'Internal presentations', 'Sales pitches'],
+        estimatedTime: '20 sec to create'
+    },
+    {
+        id: 'quick-pulse',
+        name: 'Quick Pulse Check',
+        description: 'Simple thumbs up/down feedback',
+        category: 'feedback',
+        categoryLabel: 'Feedback',
+        pollType: 'multiple',
+        icon: '👍',
+        gradient: 'from-green-500 to-emerald-600',
+        accentColor: '#22c55e',
+        question: 'How do you feel about this?',
+        options: [
+            '👍 Love it!',
+            '👎 Not a fan'
+        ],
+        suggestedTheme: 'forest',
+        settings: { allowMultiple: false },
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['Quick decisions', 'Approval voting', 'Simple feedback'],
+        estimatedTime: '15 sec to create'
     },
 
     // =========================================================================
     // HR & CULTURE (6 templates)
     // =========================================================================
     {
-        id: 'benefits-preference',
-        name: 'Benefits Preference',
+        id: 'onboarding-feedback',
+        name: 'Onboarding Feedback',
+        description: 'Improve new hire experience with feedback',
+        category: 'hr',
+        categoryLabel: 'HR & Culture',
+        pollType: 'rating',
+        icon: '🚀',
+        gradient: 'from-indigo-500 to-purple-600',
+        accentColor: '#6366f1',
+        question: 'How would you rate your onboarding experience?',
+        options: ['1', '2', '3', '4', '5'],
+        suggestedTheme: 'minimal',
+        settings: {},
+        previewStyle: { bgPattern: 'dots' },
+        bestFor: ['New hires', 'HR teams', '30/60/90 day reviews'],
+        estimatedTime: '30 sec to create'
+    },
+    {
+        id: 'benefits-survey',
+        name: 'Benefits Preferences',
         description: 'Understand what benefits matter most to your team',
         category: 'hr',
         categoryLabel: 'HR & Culture',
         pollType: 'ranked',
         icon: '🎁',
-        gradient: 'from-emerald-500 to-green-600',
+        gradient: 'from-emerald-500 to-teal-600',
         accentColor: '#059669',
         question: 'Rank these benefits by importance to you',
         options: [
@@ -612,205 +811,213 @@ export const POLL_TEMPLATES: PollTemplate[] = [
             '👶 Parental leave'
         ],
         suggestedTheme: 'forest',
-        settings: { hideResults: true },
+        settings: {},
         previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Benefits planning', 'HR surveys', 'Employee feedback'],
+        bestFor: ['Benefits planning', 'HR strategy', 'Employee input'],
         estimatedTime: '1 min to create'
     },
     {
-        id: 'office-vs-remote',
-        name: 'Office vs Remote',
-        description: 'Gauge team preference for work location',
-        category: 'hr',
-        categoryLabel: 'HR & Culture',
-        pollType: 'multiple',
-        icon: '🏢',
-        gradient: 'from-slate-500 to-slate-700',
-        accentColor: '#475569',
-        question: 'What\'s your preferred work arrangement?',
-        options: [
-            '🏢 Full-time office',
-            '🏠 Full-time remote',
-            '🔄 Hybrid (2-3 days office)',
-            '🤷 Flexible / No preference'
-        ],
-        suggestedTheme: 'minimal',
-        settings: { hideResults: false },
-        previewStyle: { bgPattern: 'grid' },
-        bestFor: ['Work policy', 'HR planning', 'Culture surveys'],
-        estimatedTime: '30 sec to create'
-    },
-    {
-        id: 'team-mood',
-        name: 'Team Mood Check',
-        description: 'Quick anonymous pulse on team morale',
-        category: 'hr',
-        categoryLabel: 'HR & Culture',
-        pollType: 'rating',
-        icon: '😊',
-        gradient: 'from-amber-400 to-yellow-500',
-        accentColor: '#f59e0b',
-        question: 'How are you feeling about work this week?',
-        options: ['1', '2', '3', '4', '5'],
-        suggestedTheme: 'sunset',
-        settings: { hideResults: false },
-        previewStyle: { bgPattern: 'waves' },
-        bestFor: ['Team morale', 'Weekly check-ins', 'Culture health'],
-        estimatedTime: '20 sec to create'
-    },
-    {
-        id: 'charity-vote',
-        name: 'Charity Selection',
-        description: 'Let employees choose which charity to support',
+        id: 'culture-values',
+        name: 'Culture Values Vote',
+        description: 'Align on company values that matter',
         category: 'hr',
         categoryLabel: 'HR & Culture',
         pollType: 'ranked',
-        icon: '❤️',
-        gradient: 'from-rose-500 to-red-600',
-        accentColor: '#e11d48',
-        question: 'Rank your preferred charities for our company donation',
+        icon: '💎',
+        gradient: 'from-violet-500 to-purple-600',
+        accentColor: '#8b5cf6',
+        question: 'Which values resonate most with you?',
         options: [
-            '🌍 Environmental charity',
-            '📚 Education nonprofit',
-            '🏥 Health organization',
-            '🍽️ Food bank',
-            '🐾 Animal welfare'
+            '🤝 Collaboration',
+            '💡 Innovation',
+            '🎯 Excellence',
+            '❤️ Empathy',
+            '🔓 Transparency'
         ],
         suggestedTheme: 'minimal',
         settings: {},
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Corporate giving', 'CSR programs', 'Team decisions'],
+        previewStyle: { bgPattern: 'grid' },
+        bestFor: ['Culture building', 'Values alignment', 'Leadership'],
         estimatedTime: '1 min to create'
     },
     {
-        id: 'swag-vote',
-        name: 'Company Swag Vote',
-        description: 'Let employees pick their favorite swag items',
-        category: 'hr',
-        categoryLabel: 'HR & Culture',
-        pollType: 'image',
-        icon: '👕',
-        gradient: 'from-indigo-500 to-violet-600',
-        accentColor: '#6366f1',
-        question: 'Which swag item would you want most?',
-        options: [
-            '👕 Company hoodie',
-            '🎒 Branded backpack',
-            '🍶 Premium water bottle',
-            '🎧 Wireless earbuds'
-        ],
-        suggestedTheme: 'minimal',
-        settings: { allowMultiple: false },
-        previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Swag orders', 'Employee appreciation', 'Company events'],
-        estimatedTime: '1 min to create'
-    },
-    {
-        id: 'meeting-free-day',
-        name: 'Meeting-Free Day',
-        description: 'Vote on the best day for focused work',
+        id: 'team-morale',
+        name: 'Team Morale Check',
+        description: 'Anonymous pulse on team sentiment',
         category: 'hr',
         categoryLabel: 'HR & Culture',
         pollType: 'multiple',
-        icon: '🔕',
-        gradient: 'from-cyan-500 to-blue-600',
-        accentColor: '#0891b2',
-        question: 'Which day should be our meeting-free day?',
+        icon: '🌡️',
+        gradient: 'from-amber-400 to-orange-500',
+        accentColor: '#f59e0b',
+        question: 'How are you feeling about work this week?',
         options: [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday'
+            '🌟 Great - energized!',
+            '😊 Good - steady',
+            '😐 Okay - manageable',
+            '😓 Stressed - need support',
+            '😔 Struggling - let\'s talk'
         ],
-        suggestedTheme: 'ocean',
-        settings: { allowMultiple: false },
+        suggestedTheme: 'sunset',
+        settings: { hideResults: true },
         previewStyle: { bgPattern: 'waves' },
-        bestFor: ['Work-life balance', 'Productivity', 'Team policies'],
-        estimatedTime: '30 sec to create'
+        bestFor: ['Weekly check-ins', 'Team health', 'Manager insights'],
+        estimatedTime: '20 sec to create'
+    },
+    {
+        id: 'recognition-poll',
+        name: 'Team Recognition',
+        description: 'Celebrate team members who went above and beyond',
+        category: 'hr',
+        categoryLabel: 'HR & Culture',
+        pollType: 'multiple',
+        icon: '🏆',
+        gradient: 'from-yellow-400 to-amber-500',
+        accentColor: '#eab308',
+        question: 'Who deserves a shoutout this week?',
+        options: [
+            'Team Member 1',
+            'Team Member 2',
+            'Team Member 3',
+            'Team Member 4',
+            'Someone else (comment)'
+        ],
+        suggestedTheme: 'sunset',
+        settings: { allowMultiple: true },
+        previewStyle: { bgPattern: 'confetti' },
+        bestFor: ['Peer recognition', 'Team meetings', 'Culture building'],
+        estimatedTime: '1 min to create'
+    },
+    {
+        id: 'training-interest',
+        name: 'Training Interest Survey',
+        description: 'Find out what skills your team wants to develop',
+        category: 'hr',
+        categoryLabel: 'HR & Culture',
+        pollType: 'ranked',
+        icon: '📚',
+        gradient: 'from-blue-500 to-indigo-600',
+        accentColor: '#3b82f6',
+        question: 'What training would be most valuable?',
+        options: [
+            '💻 Technical skills',
+            '🎤 Public speaking',
+            '👥 Leadership',
+            '📊 Data analysis',
+            '🎨 Design thinking'
+        ],
+        suggestedTheme: 'minimal',
+        settings: {},
+        previewStyle: { bgPattern: 'grid' },
+        bestFor: ['L&D planning', 'Skill development', 'Career growth'],
+        estimatedTime: '1 min to create'
     },
 
     // =========================================================================
-    // EDUCATION (5 templates)
+    // EDUCATION (6 templates)
     // =========================================================================
     {
-        id: 'class-topic',
-        name: 'Class Topic Vote',
-        description: 'Let students choose the next lesson topic',
+        id: 'class-poll',
+        name: 'Classroom Poll',
+        description: 'Engage students with interactive polling',
         category: 'education',
         categoryLabel: 'Education',
         pollType: 'multiple',
-        icon: '📖',
+        icon: '🎓',
         gradient: 'from-blue-500 to-indigo-600',
-        accentColor: '#4f46e5',
-        question: 'What topic should we cover next class?',
+        accentColor: '#3b82f6',
+        question: 'What topic should we cover next?',
         options: [
-            'Topic A: Introduction',
-            'Topic B: Deep dive',
-            'Topic C: Case study',
-            'Topic D: Hands-on workshop'
+            'Topic A',
+            'Topic B',
+            'Topic C',
+            'Review previous material'
         ],
         suggestedTheme: 'minimal',
         settings: { allowMultiple: false },
         previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Classrooms', 'Training sessions', 'Workshops'],
+        bestFor: ['Classrooms', 'Workshops', 'Training sessions'],
         estimatedTime: '30 sec to create'
     },
     {
-        id: 'study-group-time',
+        id: 'assignment-preference',
+        name: 'Assignment Preference',
+        description: 'Let students choose their preferred assignment format',
+        category: 'education',
+        categoryLabel: 'Education',
+        pollType: 'ranked',
+        icon: '📋',
+        gradient: 'from-teal-500 to-cyan-600',
+        accentColor: '#14b8a6',
+        question: 'Rank your preferred assignment formats',
+        options: [
+            '📝 Written essay',
+            '🎥 Video presentation',
+            '🖼️ Visual poster',
+            '👥 Group project',
+            '🎤 Oral presentation'
+        ],
+        suggestedTheme: 'ocean',
+        settings: {},
+        previewStyle: { bgPattern: 'waves' },
+        bestFor: ['Course design', 'Student engagement', 'Flexible learning'],
+        estimatedTime: '1 min to create'
+    },
+    {
+        id: 'study-group',
         name: 'Study Group Time',
         description: 'Find when everyone can meet to study',
         category: 'education',
         categoryLabel: 'Education',
         pollType: 'meeting',
-        icon: '📚',
-        gradient: 'from-purple-500 to-violet-600',
-        accentColor: '#7c3aed',
-        question: 'When can you meet for the study group?',
+        icon: '📖',
+        gradient: 'from-purple-500 to-indigo-600',
+        accentColor: '#a855f7',
+        question: 'When can you join the study group?',
         options: [
-            'Monday 4:00 PM',
-            'Tuesday 5:00 PM',
-            'Wednesday 3:00 PM',
-            'Thursday 6:00 PM',
-            'Saturday 10:00 AM'
+            'Monday evening',
+            'Wednesday afternoon',
+            'Thursday evening',
+            'Saturday morning',
+            'Sunday afternoon'
         ],
         suggestedTheme: 'minimal',
         settings: { allowMultiple: true },
         previewStyle: { bgPattern: 'grid' },
-        bestFor: ['Study groups', 'Student scheduling', 'Tutoring'],
+        bestFor: ['Study groups', 'Project teams', 'Tutoring sessions'],
         estimatedTime: '1 min to create'
     },
     {
         id: 'field-trip',
         name: 'Field Trip Vote',
-        description: 'Let students choose their field trip destination',
+        description: 'Let students vote on field trip destinations',
         category: 'education',
         categoryLabel: 'Education',
         pollType: 'image',
         icon: '🚌',
-        gradient: 'from-green-500 to-teal-600',
-        accentColor: '#14b8a6',
-        question: 'Where should we go for the class field trip?',
+        gradient: 'from-green-500 to-emerald-600',
+        accentColor: '#22c55e',
+        question: 'Where should we go for our field trip?',
         options: [
             '🏛️ History Museum',
             '🔬 Science Center',
-            '🦁 Zoo',
+            '🎭 Theater',
             '🌳 Nature Reserve'
         ],
         suggestedTheme: 'forest',
         settings: { allowMultiple: false },
         previewStyle: { bgPattern: 'dots' },
-        bestFor: ['Schools', 'Youth groups', 'Educational programs'],
+        bestFor: ['School trips', 'Educational outings', 'Class decisions'],
         estimatedTime: '1 min to create'
     },
     {
         id: 'course-feedback',
-        name: 'Course Feedback',
-        description: 'Gather end-of-course feedback from students',
+        name: 'Course Evaluation',
+        description: 'Gather student feedback on course content',
         category: 'education',
         categoryLabel: 'Education',
         pollType: 'rating',
-        icon: '⭐',
+        icon: '📊',
         gradient: 'from-amber-500 to-orange-500',
         accentColor: '#f59e0b',
         question: 'How would you rate this course overall?',
@@ -1028,6 +1235,16 @@ export const getTemplateById = (id: string): PollTemplate | undefined => {
 // Helper to get templates by poll type
 export const getTemplatesByPollType = (pollType: string): PollTemplate[] => {
     return POLL_TEMPLATES.filter(t => t.pollType === pollType);
+};
+
+// Helper to get featured templates (for homepage)
+export const getFeaturedTemplates = (): PollTemplate[] => {
+    return POLL_TEMPLATES.filter(t => t.featured);
+};
+
+// Helper to get survey templates
+export const getSurveyTemplates = (): PollTemplate[] => {
+    return POLL_TEMPLATES.filter(t => t.pollType === 'survey');
 };
 
 // Get template count by category

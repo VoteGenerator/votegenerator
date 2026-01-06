@@ -1,7 +1,12 @@
 // ============================================================================
 // NavHeader - Adaptive navigation based on subscription status
-// Uses /logo.svg from public folder
-// Templates are FREE - no upgrade needed
+// UPDATED: Nav items ordered by search volume (data-backed)
+// 
+// Search Volume Data (Monthly):
+// - Employee Survey: 49,500
+// - Customer Feedback: 33,100
+// - Templates: general browse
+// - Pricing: ready buyers
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Menu, X, LayoutDashboard, PlusCircle, 
     BarChart3, Settings, Zap, Crown, LayoutTemplate, ClipboardList,
-    LucideIcon
+    Users, Star, LucideIcon
 } from 'lucide-react';
 
 // Check if user has a paid subscription
@@ -23,28 +28,30 @@ const getSubscriptionStatus = () => {
 };
 
 // Type definitions for nav items
-interface FreeNavItem {
+interface NavItem {
     label: string;
     href: string;
+    icon?: LucideIcon;
+    badge?: string;
+    badgeColor?: string;
 }
 
-interface PaidNavItem {
-    label: string;
-    href: string;
-    icon: LucideIcon;
-}
-
-// Free user nav items - NO upgrade button, templates are free!
-const FREE_NAV_ITEMS: FreeNavItem[] = [
-    { label: 'Create Poll', href: '/create' },
-    { label: 'Survey', href: '/survey' },
-    { label: 'Templates', href: '/templates' },
-    { label: 'Demo', href: '/demo' },
+// ============================================================================
+// FREE USER NAV - Clean, action-focused navigation
+// Landing pages (/employee-survey, /customer-feedback) are accessible via 
+// Templates, Footer, and SEO - not cluttering main nav
+// ============================================================================
+const FREE_NAV_ITEMS: NavItem[] = [
+    { label: 'Create Poll', href: '/create', icon: PlusCircle },
+    { label: 'Create Survey', href: '/survey', icon: ClipboardList },
+    { label: 'Templates', href: '/templates', icon: LayoutTemplate },
     { label: 'Pricing', href: '/pricing' },
 ];
 
-// Paid user nav items (includes Pricing for plan comparison/referrals)
-const PAID_NAV_ITEMS: PaidNavItem[] = [
+// ============================================================================
+// PAID USER NAV - Dashboard-focused
+// ============================================================================
+const PAID_NAV_ITEMS: NavItem[] = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
     { label: 'Survey', href: '/survey', icon: ClipboardList },
@@ -84,6 +91,8 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
         );
     };
 
+    const navItems = isPaid ? PAID_NAV_ITEMS : FREE_NAV_ITEMS;
+
     return (
         <header className={`
             ${transparent ? 'bg-transparent' : 'bg-white border-b border-slate-200'}
@@ -104,47 +113,34 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-1">
-                        {isPaid ? (
-                            // Paid user navigation with icons
-                            PAID_NAV_ITEMS.map((item) => {
-                                const IconComponent = item.icon;
-                                return (
-                                    <a
-                                        key={item.href}
-                                        href={item.href}
-                                        className="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition flex items-center gap-2"
-                                    >
-                                        <IconComponent size={16} />
-                                        {item.label}
-                                    </a>
-                                );
-                            })
-                        ) : (
-                            // Free user navigation without icons
-                            FREE_NAV_ITEMS.map((item) => (
+                        {navItems.map((item) => {
+                            const IconComponent = item.icon;
+                            return (
                                 <a
                                     key={item.href}
                                     href={item.href}
-                                    className="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition"
+                                    className="relative px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition flex items-center gap-2"
                                 >
+                                    {IconComponent && <IconComponent size={16} />}
                                     {item.label}
+                                    {item.badge && (
+                                        <span className={`absolute -top-1 -right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
+                                            {item.badge}
+                                        </span>
+                                    )}
                                 </a>
-                            ))
-                        )}
+                            );
+                        })}
                         
-                        {/* CTA Button - Only show for free users */}
-                        {!isPaid && (
+                        {/* Primary CTA Button */}
+                        {!isPaid ? (
                             <a
-                                href="/pricing"
-                                className="ml-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:shadow-lg transition flex items-center gap-2"
+                                href="/create"
+                                className="ml-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm rounded-xl hover:shadow-lg transition flex items-center gap-2"
                             >
-                                <Zap size={16} />
-                                Go Pro
+                                Create Free →
                             </a>
-                        )}
-                        
-                        {/* Settings for paid users */}
-                        {isPaid && (
+                        ) : (
                             <a
                                 href="/settings"
                                 className="ml-2 p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
@@ -174,41 +170,31 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                             className="md:hidden mt-4 pb-4 border-t border-slate-200 pt-4"
                         >
                             <nav className="flex flex-col gap-1">
-                                {isPaid ? (
-                                    // Paid user mobile navigation with icons
-                                    PAID_NAV_ITEMS.map((item) => {
-                                        const IconComponent = item.icon;
-                                        return (
-                                            <a
-                                                key={item.href}
-                                                href={item.href}
-                                                className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium flex items-center gap-3"
-                                            >
-                                                <IconComponent size={20} />
-                                                {item.label}
-                                            </a>
-                                        );
-                                    })
-                                ) : (
-                                    // Free user mobile navigation without icons
-                                    FREE_NAV_ITEMS.map((item) => (
+                                {navItems.map((item) => {
+                                    const IconComponent = item.icon;
+                                    return (
                                         <a
                                             key={item.href}
                                             href={item.href}
-                                            className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium"
+                                            className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium flex items-center gap-3"
                                         >
+                                            {IconComponent && <IconComponent size={20} />}
                                             {item.label}
+                                            {item.badge && (
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.badgeColor}`}>
+                                                    {item.badge}
+                                                </span>
+                                            )}
                                         </a>
-                                    ))
-                                )}
+                                    );
+                                })}
                                 
                                 {!isPaid ? (
                                     <a
-                                        href="/pricing"
-                                        className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl text-center flex items-center justify-center gap-2"
+                                        href="/create"
+                                        className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl text-center flex items-center justify-center gap-2"
                                     >
-                                        <Zap size={18} />
-                                        Go Pro
+                                        Create Free Poll →
                                     </a>
                                 ) : (
                                     <a

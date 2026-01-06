@@ -37,22 +37,13 @@ interface NavItem {
 }
 
 // ============================================================================
-// FREE USER NAV - Ordered by search volume + conversion priority
+// FREE USER NAV - Clean, action-focused navigation
+// Landing pages (/employee-survey, /customer-feedback) are accessible via 
+// Templates, Footer, and SEO - not cluttering main nav
 // ============================================================================
 const FREE_NAV_ITEMS: NavItem[] = [
     { label: 'Create Poll', href: '/create', icon: PlusCircle },
-    { 
-        label: 'Employee Surveys', 
-        href: '/employee-survey', 
-        icon: Users,
-        badge: 'Popular',
-        badgeColor: 'bg-emerald-100 text-emerald-700'
-    },
-    { 
-        label: 'Customer Feedback', 
-        href: '/customer-feedback', 
-        icon: Star,
-    },
+    { label: 'Create Survey', href: '/survey', icon: ClipboardList },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
     { label: 'Pricing', href: '/pricing' },
 ];

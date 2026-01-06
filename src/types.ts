@@ -1,403 +1,204 @@
-// ============================================================================
-// Types - VoteGenerator Complete Type Definitions
-// Location: src/types.ts
-// ============================================================================
+// Poll and voting types for VoteGenerator
+// This file must match all properties used across components and services
 
 // ============================================================================
-// POLL TYPES
+// MULTI-SECTION SURVEY TYPES
 // ============================================================================
 
-export type PollType = 
-    | 'poll' 
-    | 'survey' 
-    | 'meeting'
-    | 'multiple_choice'
-    | 'ranked'
-    | 'ranked_choice'
-    | 'approval'
-    | 'dot_voting'
-    | 'quadratic'
-    | 'budget'
-    | 'matrix'
-    | 'pairwise'
-    | 'rating';
-
-export interface PollOption {
-    id: string;
-    text: string;
-    imageUrl?: string;
-    votes?: number;
-    cost?: number;
-}
-
-export interface Poll {
-    id: string;
-    title: string;
-    description?: string;
-    question?: string;
-    type?: PollType;
-    pollType?: string;
-    // Made required (with default []) to avoid hundreds of undefined checks
-    options: PollOption[];
-    settings: PollSettings;
-    createdAt: string;
-    expiresAt?: string;
-    
-    // Survey-specific
-    isSurvey?: boolean;
-    sections?: SurveySection[];
-    surveySettings?: SurveySettings;
-    
-    // Meeting-specific
-    meetingDates?: MeetingDate[];
-    meetingSettings?: MeetingSettings;
-    meetingDuration?: number;
-    
-    // Status
-    status?: 'draft' | 'live' | 'paused' | 'closed';
-    totalVotes?: number;
-    voteCount: number;
-    
-    // Admin
-    adminKey?: string;
-    adminToken?: string;
-    creatorEmail?: string;
-    isAdmin?: boolean;
-    
-    // Tier & limits
-    tier?: 'free' | 'pro' | 'business' | 'starter' | 'unlimited';
-    maxResponses?: number;
-    
-    // Security
-    pin?: string;
-    allowedCodes?: string[];
-    usedCodes?: string[];
-    
-    // Customization
-    theme?: string;
-    logoUrl?: string;
-    buttonText?: string;
-    
-    // Votes storage
-    votes?: StoredVote[];
-    
-    // Notifications
-    notificationSettings?: NotificationSettings;
-    
-    // Analytics
-    blockedVotes?: {
-        honeypot: number;
-        timing: number;
-        rateLimit: number;
-        total: number;
-        lastBlocked?: string;
-    };
-}
-
-// ============================================================================
-// POLL SETTINGS
-// ============================================================================
-
-export interface PollSettings {
-    allowMultiple?: boolean;
-    hideResults?: boolean;
-    requireEmail?: boolean;
-    allowComments?: boolean;
-    closedMessage?: string;
-    maxVotesPerOption?: number;
-    
-    // Voting restrictions
-    ipRestriction?: boolean;
-    cookieRestriction?: boolean;
-    
-    // Display
-    randomizeOptions?: boolean;
-    showVoteCount?: boolean;
-    
-    // Deadline
-    deadline?: string;
-    timezone?: string;
-    
-    // Security
-    security?: 'none' | 'browser' | 'pin' | 'code';
-    requireNames?: boolean;
-    blockVpn?: boolean;
-    
-    // Limits
-    maxVotes?: number;
-    
-    // Anonymous mode
-    anonymousMode?: boolean;
-    
-    // Comments
-    publicComments?: boolean;
-    
-    // Dot voting / Budget
-    dotBudget?: number;
-    budgetLimit?: number;
-}
-
-// ============================================================================
-// SURVEY TYPES
-// ============================================================================
-
+// Question types available in surveys
 export type QuestionType = 
-    | 'multiple_choice'
-    | 'dropdown'
-    | 'yes_no'
-    | 'rating'
-    | 'scale'
-    | 'text'
-    | 'textarea'
-    | 'number'
-    | 'email'
-    | 'phone'
-    | 'date'
-    | 'time'
-    | 'datetime'
-    | 'ranking'
-    | 'matrix';
+    | 'multiple_choice'   // Single or multiple selection
+    | 'text'              // Short text input
+    | 'textarea'          // Long text input
+    | 'rating'            // 1-5 star rating
+    | 'scale'             // Numeric scale (e.g., 1-10)
+    | 'number'            // Numeric input
+    | 'date'              // Date picker
+    | 'time'              // Time picker
+    | 'datetime'          // Date + time picker
+    | 'email'             // Email input with validation
+    | 'phone'             // Phone number input
+    | 'dropdown'          // Dropdown select
+    | 'ranking'           // Drag to rank options
+    | 'yes_no'            // Simple yes/no
+    | 'matrix';           // Grid/matrix question
 
-export interface QuestionOption {
-    id: string;
-    text: string;
-    imageUrl?: string;
-}
-
+// Individual question within a section
 export interface SurveyQuestion {
     id: string;
     type: QuestionType;
     question: string;
-    description?: string;
+    description?: string;        // Helper text below question
     required?: boolean;
     
-    // For choice questions
-    options?: QuestionOption[];
-    allowMultiple?: boolean;
-    allowOther?: boolean;
+    // For multiple_choice, dropdown, ranking
+    options?: Array<{
+        id: string;
+        text: string;
+        imageUrl?: string;       // For visual options
+    }>;
+    allowMultiple?: boolean;     // For multiple_choice
+    allowOther?: boolean;        // Add "Other" option with text input
     
-    // For scale/number questions
-    min?: number;
-    max?: number;
+    // For rating/scale
     minValue?: number;
     maxValue?: number;
-    minLabel?: string;
-    maxLabel?: string;
-    step?: number;
-    unit?: string;
+    minLabel?: string;           // e.g., "Not satisfied"
+    maxLabel?: string;           // e.g., "Very satisfied"
     
-    // For text questions
+    // For text/textarea
     placeholder?: string;
+    minLength?: number;
     maxLength?: number;
     
-    // For matrix questions - can be string[] or {id, text}[]
-    rows?: Array<string | { id: string; text: string }>;
-    columns?: Array<string | { id: string; text: string }>;
+    // For number
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;               // e.g., "$", "guests", etc.
+    
+    // For matrix questions
+    rows?: Array<{ id: string; text: string }>;
+    columns?: Array<{ id: string; text: string }>;
     
     // Conditional logic
     showIf?: {
         questionId: string;
-        condition: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
-        value: string | number;
+        operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+        value: string | number | string[];
+    };
+    
+    // Validation
+    validation?: {
+        pattern?: string;        // Regex pattern
+        customError?: string;    // Custom error message
     };
 }
 
+// Section containing multiple questions
 export interface SurveySection {
     id: string;
     title: string;
     description?: string;
     questions: SurveyQuestion[];
+    
+    // Section-level settings
+    randomizeQuestions?: boolean;
+    
+    // Conditional section display
+    showIf?: {
+        questionId: string;
+        operator: 'equals' | 'not_equals' | 'contains';
+        value: string | number | string[];
+    };
 }
 
+// Survey-specific settings
 export interface SurveySettings {
-    allowBack?: boolean;
-    showProgress?: boolean;
-    showSummary?: boolean;
-    completionMessage?: string;
-    redirectUrl?: string;
-    anonymousMode?: boolean;
+    // Navigation
+    allowBack?: boolean;          // Allow going back to previous sections
+    showProgress?: boolean;       // Show progress bar
+    progressStyle?: 'bar' | 'steps' | 'percentage';
+    
+    // Submission
+    showSummary?: boolean;        // Show summary before submit
+    confirmSubmit?: boolean;      // Require confirmation
+    
+    // Display
+    oneQuestionPerPage?: boolean; // Show one question at a time
+    randomizeSections?: boolean;  // Randomize section order
+    
+    // Completion
+    redirectUrl?: string;         // Redirect after completion
+    completionMessage?: string;   // Custom thank you message
+    
+    // =========================================
+    // ANONYMOUS MODE (Phase 2)
+    // =========================================
+    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
 }
 
-// ============================================================================
-// SURVEY RESPONSE TYPES
-// ============================================================================
-
-export interface SurveyAnswer {
-    questionId?: string;
-    questionType?: QuestionType;
-    // For choice questions
-    selectedIds?: string[];
-    // For text questions
-    text?: string;
-    // For numeric questions
-    number?: number;
-    // For date/time questions
-    date?: string;
-    time?: string;
-    // For ranking questions
-    ranking?: string[];
-    // For matrix questions
-    matrix?: Record<string, string>;
-}
-
+// Individual response to a survey
 export interface SurveyResponse {
     id: string;
     pollId: string;
-    respondentId?: string;
+    respondentId?: string;        // Anonymous ID for tracking
     voterName?: string;
-    answers: Record<string, SurveyAnswer>;
-    startedAt?: string;
-    completedAt?: string;
-    submittedAt?: string;
-    completionTime?: number; // in seconds
-    isComplete: boolean;
-    
-    // Metadata
-    ipAddress?: string;
-    userAgent?: string;
-    country?: string;
-}
-
-// ============================================================================
-// MEETING TYPES
-// ============================================================================
-
-export interface MeetingDate {
-    id: string;
-    date: string;
-    startTime?: string;
-    endTime?: string;
-}
-
-export interface MeetingSettings {
-    allowMaybe?: boolean;
-    limitPerSlot?: number;
-    requireName?: boolean;
-    requireEmail?: boolean;
-    showParticipants?: boolean;
-}
-
-export interface MeetingResponse {
-    id: string;
-    name: string;
-    email?: string;
-    availability: Record<string, 'yes' | 'no' | 'maybe'>;
     submittedAt: string;
+    startedAt?: string;
+    completionTime?: number;      // Seconds to complete
+    
+    // Answers keyed by question ID
+    answers: Record<string, SurveyAnswer>;
+    
+    // Partial submission tracking
+    lastSectionId?: string;
+    isComplete: boolean;
+}
+
+// Individual answer to a question
+export interface SurveyAnswer {
+    questionId: string;
+    questionType: QuestionType;
+    
+    // Different answer formats based on question type
+    selectedIds?: string[];       // For multiple_choice, dropdown
+    text?: string;                // For text, textarea, email, phone
+    number?: number;              // For number, rating, scale
+    date?: string;                // For date, datetime
+    time?: string;                // For time, datetime
+    ranking?: string[];           // For ranking (ordered option IDs)
+    matrix?: Record<string, string>; // For matrix (row ID -> column ID)
+    otherText?: string;           // For "Other" option
 }
 
 // ============================================================================
-// VOTE TYPES
+// EXISTING TYPES (UPDATED)
 // ============================================================================
 
-export interface Vote {
+export interface PollOption {
     id: string;
-    pollId: string;
-    optionId: string;
-    createdAt: string;
-    voterToken?: string;
-    ipAddress?: string;
-}
-
-export interface StoredVote {
-    id: string;
-    timestamp: string;
-    selectedOptionIds?: string[];
-    rankedOptionIds?: string[];
-    voterName?: string;
-    usedCode?: string;
-    comment?: string;
-    choicesMaybe?: string[];
-    matrixVotes?: Record<string, { x: number; y: number }>;
-    pairwiseVotes?: { winnerId: string; loserId: string }[];
-    ratingVotes?: Record<string, number>;
-    surveyAnswers?: Record<string, any>;
-    analytics?: VoteAnalytics;
-}
-
-export interface VoteAnalytics {
-    device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
-    country?: string;
-    region?: string;
-    referrerDomain?: string;
-    utmSource?: string;
-    timestamp: string;
-}
-
-export interface Comment {
-    id?: string;
     text: string;
-    name?: string;
-    voterName?: string;
-    date?: string;
-    timestamp?: string;
+    cost?: number;
+    imageUrl?: string;
 }
 
-// ============================================================================
-// RUNOFF / RANKED CHOICE TYPES
-// ============================================================================
-
-export interface RunoffResult {
-    // Winner info
-    winner: string | null;
-    winnerId?: string | null;
-    
-    // Vote totals
-    totalVotes?: number;
-    votes?: Record<string, number>;
-    finalVotes?: Record<string, number>;
-    
-    // Rounds info
-    rounds: RoundLog[];
-    eliminated: string[];
-    
-    // Additional result types
-    simpleCounts?: Record<string, number>;
-    maybeCounts?: Record<string, number>;
-    comments?: Comment[];
-    
-    // Matrix results
-    matrixAverages?: Record<string, { x: number; y: number }>;
-    
-    // Pairwise results
-    pairwiseScores?: Record<string, number>;
-    
-    // Rating results
-    ratingStats?: Record<string, {
-        average: number;
-        count: number;
-        distribution: Record<number, number>;
-    }>;
-    
-    // Budget results
-    budgetStats?: Record<string, {
-        totalSpent: number;
-        averageSpent: number;
-        count: number;
-    }>;
+export interface PollSettings {
+    hideResults: boolean;
+    allowMultiple: boolean;
+    requireNames?: boolean;
+    security?: 'none' | 'code' | 'ip' | 'fingerprint' | 'pin' | 'browser';
+    allowComments?: boolean;
+    publicComments?: boolean;
+    deadline?: string;
+    unlisted?: boolean;
+    // Voting limits
+    maxVotes?: number;
+    // Timezone
+    timezone?: string;
+    // Security
+    blockVpn?: boolean;
+    // Dot voting
+    dotBudget?: number;
+    // Budget voting
+    budgetLimit?: number;
+    // =========================================
+    // ANONYMOUS MODE (Phase 2)
+    // =========================================
+    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
 }
 
-export interface RoundLog {
-    round: number;
-    roundNumber?: number;
-    votes?: Record<string, number>;
-    counts?: Record<string, number>;
-    eliminated?: string;
-    eliminatedId?: string;
-    redistributed?: number;
+export interface EmailEntry {
+    email: string;
+    verified: boolean;
+    addedAt?: string;
+    verifiedAt?: string;
+    lastSentAt?: string;
 }
-
-// ============================================================================
-// NOTIFICATION TYPES
-// ============================================================================
 
 export interface NotificationSettings {
     enabled: boolean;
-    emails: Array<{
-        email: string;
-        verified: boolean;
-        addedAt?: string;
-        verifiedAt?: string;
-    }>;
+    emails: EmailEntry[];
     skipFirstVotes: number;
     notifyOn: {
         milestones: boolean;
@@ -408,34 +209,241 @@ export interface NotificationSettings {
     };
 }
 
-// ============================================================================
-// USER & AUTH TYPES
-// ============================================================================
-
-export interface User {
+export interface Poll {
     id: string;
-    email: string;
-    name?: string;
-    plan: 'free' | 'pro' | 'business';
+    title: string;
+    displayName?: string;  // Internal name for admin dashboard (shorter than title)
+    description?: string;
+    pollType: string;
+    options: PollOption[];
+    settings: PollSettings;
     createdAt: string;
-    pollsCreated?: number;
+    voteCount: number;
+    isAdmin?: boolean;
+    adminKey?: string;
+    
+    // =========================================
+    // SURVEY MODE (Multi-section polls)
+    // =========================================
+    isSurvey?: boolean;                    // Enable survey/multi-section mode
+    sections?: SurveySection[];            // Survey sections with questions
+    surveySettings?: SurveySettings;       // Survey-specific settings
+    
+    // Meeting poll specific
+    meetingDuration?: 15 | 30 | 45 | 60 | 90 | 120; // Duration in minutes
+    
+    // Tier and premium features
+    tier?: 'free' | 'pro' | 'business';
+    maxResponses?: number;
+    expiresAt?: string;
+    
+    // Status (draft/live mode)
+    status?: 'draft' | 'live' | 'paused' | 'closed';
+    wentLiveAt?: string;
+    closedAt?: string;
+    
+    // Branding
+    logoUrl?: string | null;
+    customSlug?: string | null;
+    
+    // Notifications (Business tier)
+    notificationSettings?: NotificationSettings;
+    
+    // Visual polls
+    imageUrls?: string[];
+    
+    // Meeting polls
+    dateOptions?: string[];
+    
+    // Access codes
+    accessCodes?: string[];
+    allowedCodes?: string[];
+    usedCodes?: string[];
+    
+    // Single PIN (simpler than unique codes)
+    pin?: string;
+    
+    // Theme
+    theme?: string;
+    buttonText?: string;
+    
+    // Response count
+    responseCount?: number;
+    
+    // Voter count (for results)
+    voters?: number;
 }
 
-// ============================================================================
-// API RESPONSE TYPES
-// ============================================================================
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    message?: string;
+export interface Vote {
+    id: string;
+    timestamp: string;
+    voterName?: string;
+    selectedOptionIds?: string[];
+    rankedOptionIds?: string[];
+    comment?: string;
+    usedCode?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
+    // Survey mode answers
+    surveyAnswers?: Record<string, SurveyAnswer>;
+    analytics?: {
+        device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+        country?: string;
+        region?: string;
+        referrerDomain?: string;
+        utmSource?: string;
+        timestamp: string;
+    };
 }
 
-export interface PaginatedResponse<T> {
-    items: T[];
-    total: number;
-    page: number;
-    pageSize: number;
-    hasMore: boolean;
+export interface RoundLog {
+    round?: number;
+    roundNumber?: number;
+    votes?: Record<string, number>;
+    counts: Record<string, number>;  // Required - always provide at least {}
+    eliminated?: string | null;
+    eliminatedId?: string | null;
+    winner?: string | null;
+    winnerId?: string | null;
+}
+
+export interface SimpleCounts {
+    [optionId: string]: number;
+}
+
+export interface MaybeCounts {
+    [optionId: string]: number;
+}
+
+export interface Comment {
+    id?: string;
+    text: string;  // Required - default ''
+    voterName: string;  // Required - default 'Anonymous'
+    timestamp: string;  // Required - default ''
+    // Alternative property names used by the service
+    name: string;  // Required - default 'Anonymous'
+    date: string;  // Required - default ''
+}
+
+export interface MatrixAverage {
+    optionId: string;
+    x: number;
+    y: number;
+    count: number;
+}
+
+export interface PairwiseScore {
+    optionId: string;
+    wins: number;
+    losses: number;
+    score: number;
+    matches: number;  // Required - always provide at least 0
+}
+
+export interface RatingStat {
+    optionId: string;
+    optionText?: string;
+    average: number;
+    min: number;
+    max: number;
+    count: number;
+    stdDev: number;  // Required - always provide at least 0
+    distribution?: Record<number, number>;
+}
+
+export interface BudgetStat {
+    optionId: string;
+    optionText?: string;
+    totalSpent: number;
+    totalValue: number;  // Required - always provide at least 0
+    totalQuantity: number;  // Required - always provide at least 0
+    purchaseCount: number;
+    averageSpent: number;
+}
+
+export interface RunoffResult {
+    rounds: RoundLog[];
+    winner?: string | null;
+    winnerId?: string | null;
+    totalVotes: number;
+    results?: Array<{
+        optionId: string;
+        optionText: string;
+        votes: number;
+        percentage: number;
+    }>;
+    // Extended result types - Record format keyed by optionId
+    simpleCounts?: Record<string, number>;
+    maybeCounts?: Record<string, number>;
+    comments?: Comment[];
+    matrixAverages?: Record<string, MatrixAverage>;
+    pairwiseScores?: Record<string, PairwiseScore>;
+    ratingStats?: Record<string, RatingStat>;
+    budgetStats?: Record<string, BudgetStat>;
+    // Meeting poll specific
+    dateVotes?: Record<string, { yes: number; maybe: number; no: number }>;
+    // Dot voting specific
+    dotTotals?: Record<string, number>;
+    // Additional properties from service
+    voters?: string[];
+    usedCodes?: string[];
+    votes?: any[];
+}
+
+export interface AnalyticsData {
+    tier: string;
+    totalVotes: number;
+    firstVote?: string;
+    lastVote?: string;
+    durationHours?: number;
+    durationDays?: number;
+    peakHour?: number;
+    peakHourFormatted?: string;
+    peakHourVotes?: number;
+    dailyTrend?: Record<string, number>;
+    dailyAverage?: number;
+    hourlyDistribution?: Record<number, number>;
+    hourlyDistributionFormatted?: Array<{ 
+        hour: number; 
+        hourFormatted: string; 
+        votes: number; 
+        percentage: number 
+    }>;
+    velocityTrend?: 'increasing' | 'decreasing' | 'stable';
+    dayOfWeekDistribution?: Record<string, number>;
+    mostActiveDay?: { day: string; votes: number };
+    utmSources?: Record<string, number>;
+    deviceBreakdown?: Record<string, number>;
+    countryStats?: {
+        topCountries: Array<{ country: string; votes: number; percentage: number }>;
+        countriesRepresented: number;
+        privacyNote: string;
+    };
+    privacyInfo?: {
+        dataCollected: string[];
+        dataNotCollected: string[];
+        retentionPeriod: string;
+    };
+    includedFeatures?: {
+        included: string[];
+        notIncluded: string[];
+    };
+}
+
+// Local storage vote record
+export interface StoredVote {
+    pollId: string;
+    choices: string[];
+    votedAt: string;
+    voterName: string | null;
+    usedCode: string | null;
+    comment: string | null;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, number>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
+    surveyAnswers?: Record<string, SurveyAnswer>;
+    isSurvey?: boolean;
 }

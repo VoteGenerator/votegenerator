@@ -798,65 +798,67 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             
                             {/* Device Frame */}
                             {previewDevice === 'mobile' ? (
-                                /* Mobile Phone Frame */
-                                <div className="mx-auto" style={{ width: '280px' }}>
-                                    <div className="bg-slate-800 rounded-[2.5rem] p-2 shadow-2xl">
-                                        {/* Phone notch */}
-                                        <div className="bg-slate-800 h-6 flex items-center justify-center">
-                                            <div className="w-20 h-5 bg-black rounded-full"></div>
-                                        </div>
-                                        {/* Phone screen */}
-                                        <div className="bg-white rounded-[2rem] overflow-hidden" style={{ height: '500px' }}>
-                                            <div className="h-full overflow-y-auto">
-                                                {/* Template Badge in Preview */}
-                                                {activeTemplate && (
-                                                    <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
-                                                        <span className="text-lg">{activeTemplate.icon}</span>
-                                                        <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                                /* Mobile Phone Frame - Clean Modern Design */
+                                <div className="flex justify-center">
+                                    <div className="relative">
+                                        {/* Phone outer shell */}
+                                        <div className="w-[280px] bg-slate-800 rounded-[3rem] p-3 shadow-2xl">
+                                            {/* Screen container */}
+                                            <div className="relative bg-white rounded-[2.25rem] overflow-hidden">
+                                                {/* Dynamic Island (pill shape) */}
+                                                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
+                                                
+                                                {/* Screen content */}
+                                                <div className="pt-12 pb-6" style={{ minHeight: '480px' }}>
+                                                    {/* Template Badge in Preview */}
+                                                    {activeTemplate && (
+                                                        <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
+                                                            <span className="text-lg">{activeTemplate.icon}</span>
+                                                            <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="px-5 pt-4">
+                                                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                                                            {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
+                                                        </h4>
+                                                        {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
+                                                        
+                                                        {pollType === 'image' && imageOptions.length > 0 ? (
+                                                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                                                {imageOptions.map((img, i) => (
+                                                                    <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
+                                                                        <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
+                                                                    <div key={i} className="p-3 border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
+                                                                        {opt}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                                <div className="p-4">
-                                                    <h4 className="text-lg font-bold text-slate-900 mb-2">
-                                                        {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
-                                                    </h4>
-                                                    {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
-                                                    
-                                                    {pollType === 'image' && imageOptions.length > 0 ? (
-                                                        <div className="grid grid-cols-2 gap-2 mb-4">
-                                                            {imageOptions.map((img, i) => (
-                                                                <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
-                                                                    <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-2">
-                                                            {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
-                                                                <div key={i} className="p-3 border-2 border-slate-200 rounded-lg text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
-                                                                    {opt}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                    <div className="px-5 pt-4">
+                                                        <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">
+                                                            {buttonText || 'Submit Vote'}
+                                                        </button>
+                                                        {/* Powered by badge for free users */}
+                                                        {!isPaidUser && (
+                                                            <div className="mt-3 text-center">
+                                                                <span className="text-xs text-slate-400">
+                                                                    Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="px-4 pb-4">
-                                                    <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
-                                                        {buttonText || 'Submit Vote'}
-                                                    </button>
-                                                    {/* Powered by badge for free users */}
-                                                    {!isPaidUser && (
-                                                        <div className="mt-3 text-center">
-                                                            <span className="text-xs text-slate-400">
-                                                                Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                
+                                                {/* Home indicator bar */}
+                                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full"></div>
                                             </div>
-                                        </div>
-                                        {/* Phone home bar */}
-                                        <div className="h-5 flex items-center justify-center">
-                                            <div className="w-28 h-1 bg-slate-600 rounded-full"></div>
                                         </div>
                                     </div>
                                 </div>

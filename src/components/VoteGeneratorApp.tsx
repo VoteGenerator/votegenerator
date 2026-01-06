@@ -32,6 +32,7 @@ import VoteGeneratorEdit from './VoteGeneratorEdit';
 import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
 import CustomerFeedbackPage from '../pages/CustomerFeedbackPage';
+import ContactPage from './ContactPage';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -365,6 +366,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <EmployeeSurveyPage />
             ) : window.location.pathname === '/customer-feedback' ? (
                 <CustomerFeedbackPage />
+            ) : window.location.pathname === '/contact' ? (
+                <ContactPage />
             ) : (
             <>
             {/* Header */}

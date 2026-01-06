@@ -841,20 +841,42 @@ const SurveyPage: React.FC = () => {
             
             {/* Template Grid */}
             <div className="max-w-6xl mx-auto px-4 py-12">
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-xl font-bold text-slate-900">
-                        Survey Templates
-                    </h2>
-                    <button
-                        onClick={handleStartFromScratch}
-                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Start from scratch
-                    </button>
-                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-8">
+                    Choose how to start
+                </h2>
                 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    {/* START FROM SCRATCH - Featured Card */}
+                    <motion.button
+                        onClick={handleStartFromScratch}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="relative w-full text-left p-6 rounded-2xl border-2 border-dashed border-indigo-300 bg-gradient-to-br from-indigo-50 to-purple-50 hover:border-indigo-500 hover:shadow-lg transition-all group"
+                    >
+                        {/* Icon */}
+                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Plus className="w-7 h-7 text-white" />
+                        </div>
+                        
+                        {/* Content */}
+                        <h3 className="text-lg font-bold text-slate-900 mb-1">Start from Scratch</h3>
+                        <p className="text-sm text-slate-600 mb-4">Build your own custom survey with any questions you want</p>
+                        
+                        {/* Meta */}
+                        <div className="flex items-center gap-4 text-xs text-indigo-600 font-medium">
+                            <span className="flex items-center gap-1">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Full flexibility
+                            </span>
+                        </div>
+                        
+                        {/* Arrow indicator */}
+                        <div className="absolute bottom-4 right-4 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ArrowRight className="w-4 h-4 text-white" />
+                        </div>
+                    </motion.button>
+                    
+                    {/* Template Cards */}
                     {SURVEY_TEMPLATES.map((template) => (
                         <TemplateCard
                             key={template.id}

@@ -1,5 +1,5 @@
 // ============================================================================
-// Types - VoteGenerator Type Definitions
+// Types - VoteGenerator Complete Type Definitions
 // Location: src/types.ts
 // ============================================================================
 
@@ -7,39 +7,90 @@
 // POLL TYPES
 // ============================================================================
 
-export type PollType = 'poll' | 'survey' | 'meeting';
+export type PollType = 
+    | 'poll' 
+    | 'survey' 
+    | 'meeting'
+    | 'multiple_choice'
+    | 'ranked'
+    | 'ranked_choice'
+    | 'approval'
+    | 'dot_voting'
+    | 'quadratic'
+    | 'budget'
+    | 'matrix'
+    | 'pairwise'
+    | 'rating';
 
 export interface PollOption {
     id: string;
     text: string;
     imageUrl?: string;
     votes?: number;
+    cost?: number;
 }
 
 export interface Poll {
     id: string;
-    question: string;
-    type: PollType;
+    title: string;
+    description?: string;
+    question?: string;
+    type?: PollType;
+    pollType?: string;
     options?: PollOption[];
     createdAt: string;
     expiresAt?: string;
     settings?: PollSettings;
     
     // Survey-specific
+    isSurvey?: boolean;
     sections?: SurveySection[];
     surveySettings?: SurveySettings;
     
     // Meeting-specific
     meetingDates?: MeetingDate[];
     meetingSettings?: MeetingSettings;
+    meetingDuration?: number;
     
     // Status
-    status?: 'draft' | 'live' | 'closed';
+    status?: 'draft' | 'live' | 'paused' | 'closed';
     totalVotes?: number;
+    voteCount?: number;
     
     // Admin
+    adminKey?: string;
     adminToken?: string;
     creatorEmail?: string;
+    isAdmin?: boolean;
+    
+    // Tier & limits
+    tier?: 'free' | 'pro' | 'business' | 'starter' | 'unlimited';
+    maxResponses?: number;
+    
+    // Security
+    pin?: string;
+    allowedCodes?: string[];
+    usedCodes?: string[];
+    
+    // Customization
+    theme?: string;
+    logoUrl?: string;
+    buttonText?: string;
+    
+    // Votes storage
+    votes?: StoredVote[];
+    
+    // Notifications
+    notificationSettings?: NotificationSettings;
+    
+    // Analytics
+    blockedVotes?: {
+        honeypot: number;
+        timing: number;
+        rateLimit: number;
+        total: number;
+        lastBlocked?: string;
+    };
 }
 
 // ============================================================================
@@ -61,6 +112,28 @@ export interface PollSettings {
     // Display
     randomizeOptions?: boolean;
     showVoteCount?: boolean;
+    
+    // Deadline
+    deadline?: string;
+    timezone?: string;
+    
+    // Security
+    security?: 'none' | 'browser' | 'pin' | 'code';
+    requireNames?: boolean;
+    blockVpn?: boolean;
+    
+    // Limits
+    maxVotes?: number;
+    
+    // Anonymous mode
+    anonymousMode?: boolean;
+    
+    // Comments
+    publicComments?: boolean;
+    
+    // Dot voting / Budget
+    dotBudget?: number;
+    budgetLimit?: number;
 }
 
 // ============================================================================
@@ -110,14 +183,15 @@ export interface SurveyQuestion {
     minLabel?: string;
     maxLabel?: string;
     step?: number;
+    unit?: string;
     
     // For text questions
     placeholder?: string;
     maxLength?: number;
     
-    // For matrix questions
-    rows?: string[];
-    columns?: string[];
+    // For matrix questions - can be string[] or {id, text}[]
+    rows?: Array<string | { id: string; text: string }>;
+    columns?: Array<string | { id: string; text: string }>;
     
     // Conditional logic
     showIf?: {
@@ -140,13 +214,6 @@ export interface SurveySettings {
     showSummary?: boolean;
     completionMessage?: string;
     redirectUrl?: string;
-    
-    // Anonymous Mode - NEW
-    // When enabled:
-    // - Admin cannot see individual responses
-    // - Admin only sees aggregated data
-    // - Text responses are shuffled in display
-    // - Respondents see "Your response is anonymous" badge
     anonymousMode?: boolean;
 }
 
@@ -156,6 +223,7 @@ export interface SurveySettings {
 
 export interface SurveyAnswer {
     questionId?: string;
+    questionType?: QuestionType;
     // For choice questions
     selectedIds?: string[];
     // For text questions
@@ -174,13 +242,15 @@ export interface SurveyAnswer {
 export interface SurveyResponse {
     id: string;
     pollId: string;
+    respondentId?: string;
+    voterName?: string;
     answers: Record<string, SurveyAnswer>;
     startedAt?: string;
     completedAt?: string;
     completionTime?: number; // in seconds
     isComplete: boolean;
     
-    // Metadata (hidden in anonymous mode)
+    // Metadata
     ipAddress?: string;
     userAgent?: string;
     country?: string;
@@ -224,6 +294,78 @@ export interface Vote {
     createdAt: string;
     voterToken?: string;
     ipAddress?: string;
+}
+
+export interface StoredVote {
+    id: string;
+    timestamp: string;
+    selectedOptionIds?: string[];
+    rankedOptionIds?: string[];
+    voterName?: string;
+    usedCode?: string;
+    comment?: string;
+    choicesMaybe?: string[];
+    matrixVotes?: Record<string, { x: number; y: number }>;
+    pairwiseVotes?: { winnerId: string; loserId: string }[];
+    ratingVotes?: Record<string, number>;
+    surveyAnswers?: Record<string, any>;
+    analytics?: VoteAnalytics;
+}
+
+export interface VoteAnalytics {
+    device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
+    country?: string;
+    region?: string;
+    referrerDomain?: string;
+    utmSource?: string;
+    timestamp: string;
+}
+
+export interface Comment {
+    id: string;
+    text: string;
+    voterName?: string;
+    timestamp: string;
+}
+
+// ============================================================================
+// RUNOFF / RANKED CHOICE TYPES
+// ============================================================================
+
+export interface RunoffResult {
+    winner: string | null;
+    rounds: RoundLog[];
+    eliminated: string[];
+    finalVotes: Record<string, number>;
+}
+
+export interface RoundLog {
+    round: number;
+    votes: Record<string, number>;
+    eliminated?: string;
+    redistributed?: number;
+}
+
+// ============================================================================
+// NOTIFICATION TYPES
+// ============================================================================
+
+export interface NotificationSettings {
+    enabled: boolean;
+    emails: Array<{
+        email: string;
+        verified: boolean;
+        addedAt?: string;
+        verifiedAt?: string;
+    }>;
+    skipFirstVotes: number;
+    notifyOn: {
+        milestones: boolean;
+        dailyDigest: boolean;
+        pollClosed: boolean;
+        limitReached: boolean;
+        newComment: boolean;
+    };
 }
 
 // ============================================================================

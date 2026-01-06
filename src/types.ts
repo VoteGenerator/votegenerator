@@ -37,10 +37,11 @@ export interface Poll {
     question?: string;
     type?: PollType;
     pollType?: string;
-    options?: PollOption[];
+    // Made required (with default []) to avoid hundreds of undefined checks
+    options: PollOption[];
+    settings: PollSettings;
     createdAt: string;
     expiresAt?: string;
-    settings?: PollSettings;
     
     // Survey-specific
     isSurvey?: boolean;
@@ -55,7 +56,7 @@ export interface Poll {
     // Status
     status?: 'draft' | 'live' | 'paused' | 'closed';
     totalVotes?: number;
-    voteCount?: number;
+    voteCount: number;
     
     // Admin
     adminKey?: string;
@@ -247,6 +248,7 @@ export interface SurveyResponse {
     answers: Record<string, SurveyAnswer>;
     startedAt?: string;
     completedAt?: string;
+    submittedAt?: string;
     completionTime?: number; // in seconds
     isComplete: boolean;
     
@@ -322,10 +324,12 @@ export interface VoteAnalytics {
 }
 
 export interface Comment {
-    id: string;
+    id?: string;
     text: string;
+    name?: string;
     voterName?: string;
-    timestamp: string;
+    date?: string;
+    timestamp?: string;
 }
 
 // ============================================================================
@@ -333,16 +337,52 @@ export interface Comment {
 // ============================================================================
 
 export interface RunoffResult {
+    // Winner info
     winner: string | null;
+    winnerId?: string | null;
+    
+    // Vote totals
+    totalVotes?: number;
+    votes?: Record<string, number>;
+    finalVotes?: Record<string, number>;
+    
+    // Rounds info
     rounds: RoundLog[];
     eliminated: string[];
-    finalVotes: Record<string, number>;
+    
+    // Additional result types
+    simpleCounts?: Record<string, number>;
+    maybeCounts?: Record<string, number>;
+    comments?: Comment[];
+    
+    // Matrix results
+    matrixAverages?: Record<string, { x: number; y: number }>;
+    
+    // Pairwise results
+    pairwiseScores?: Record<string, number>;
+    
+    // Rating results
+    ratingStats?: Record<string, {
+        average: number;
+        count: number;
+        distribution: Record<number, number>;
+    }>;
+    
+    // Budget results
+    budgetStats?: Record<string, {
+        totalSpent: number;
+        averageSpent: number;
+        count: number;
+    }>;
 }
 
 export interface RoundLog {
     round: number;
-    votes: Record<string, number>;
+    roundNumber?: number;
+    votes?: Record<string, number>;
+    counts?: Record<string, number>;
     eliminated?: string;
+    eliminatedId?: string;
     redistributed?: number;
 }
 

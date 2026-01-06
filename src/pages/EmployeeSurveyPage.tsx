@@ -15,8 +15,8 @@ import {
     Building2, UserCheck, Target, Award, AlertTriangle,
     PieChart, LineChart, Quote, ArrowUpRight, Briefcase
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../components/NavHeader';
+import Footer from '../components/Footer';
 
 // ============================================================================
 // HERO SECTION - Problem-focused headline, immediate value

@@ -1,486 +1,464 @@
 // ============================================================================
-// What is a Straw Poll? - Educational + Tool Landing Page
-// Target Keywords: strawpolls, straw poll, what is a straw poll
-// Approach: Educational content explaining the concept + CTA to create one
-// NO competitor mentions - focuses on the voting method itself
+// StrawPoll Alternative / Comparison Page
+// Target Keywords: strawpolls, strawpoll alternative, straw poll free
+// NOTE: This is an honest comparison - we highlight both our strengths AND
+// when StrawPoll might be the better choice. Builds trust with users.
+// FIXED: Replaced emojis with Lucide icons to avoid encoding issues
 // ============================================================================
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import {
-    ArrowRight, Check, Users, BarChart3, Clock, Zap,
-    CheckCircle, Vote, MessageSquare, Scale, ListOrdered,
-    Sparkles, BookOpen, HelpCircle
+    CheckCircle, X, ArrowRight, Zap, Star, Users, BarChart3,
+    ListOrdered, Image, Calendar, Scale, MessageSquare, Award,
+    FileText, Download, Clock, Smartphone, ExternalLink, Target
 } from 'lucide-react';
 
 // ============================================================================
-// QUICK POLL DEMO
+// Comparison Table Component
 // ============================================================================
 
-const StrawPollDemo: React.FC = () => {
-    const [voted, setVoted] = useState<string | null>(null);
-    const [showResults, setShowResults] = useState(false);
-    
-    const options = [
-        { id: 'pizza', label: '🍕 Pizza', votes: 42 },
-        { id: 'tacos', label: '🌮 Tacos', votes: 31 },
-        { id: 'sushi', label: '🍣 Sushi', votes: 27 },
-        { id: 'burgers', label: '🍔 Burgers', votes: 23 },
+interface ComparisonRow {
+    feature: string;
+    us: boolean | string;
+    them: boolean | string;
+    note?: string;
+}
+
+const ComparisonTable: React.FC = () => {
+    const rows: ComparisonRow[] = [
+        { feature: 'Simple multiple choice polls', us: true, them: true },
+        { feature: 'No signup to vote', us: true, them: true },
+        { feature: 'Free tier available', us: true, them: true },
+        { feature: 'Ranked choice voting', us: true, them: true },
+        { feature: 'Image polls', us: true, them: true },
+        { feature: 'Real-time results', us: true, them: true },
+        { feature: 'Star ratings (1-5)', us: true, them: false },
+        { feature: 'Scale questions (1-10)', us: true, them: false },
+        { feature: 'Multi-section surveys', us: true, them: false },
+        { feature: 'Meeting scheduler poll', us: true, them: false },
+        { feature: 'RSVP collection', us: true, them: false },
+        { feature: 'Open text questions', us: true, them: false },
+        { feature: 'Export to CSV', us: true, them: 'Paid only' },
+        { feature: '42+ templates', us: true, them: false },
+        { feature: 'Response analytics', us: 'Paid plans', them: 'Paid only' },
     ];
-    
-    const totalVotes = options.reduce((sum, o) => sum + o.votes, 0) + (voted ? 1 : 0);
-    
-    const handleVote = (id: string) => {
-        setVoted(id);
-        setTimeout(() => setShowResults(true), 500);
-    };
 
     return (
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-md mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
-                <div className="flex items-center gap-2 text-indigo-200 text-sm mb-2">
-                    <Vote size={16} />
-                    <span>Straw Poll Example</span>
+            <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-200">
+                <div className="p-4 font-semibold text-slate-700">Feature</div>
+                <div className="p-4 font-semibold text-indigo-600 text-center border-l border-slate-200 bg-indigo-50">
+                    VoteGenerator
                 </div>
-                <h3 className="text-xl font-bold">What should we have for the team lunch?</h3>
+                <div className="p-4 font-semibold text-slate-600 text-center border-l border-slate-200">
+                    StrawPoll
+                </div>
             </div>
-
-            {/* Options */}
-            <div className="p-6 space-y-3">
-                {options.map((option) => {
-                    const adjustedVotes = option.votes + (voted === option.id ? 1 : 0);
-                    const percentage = Math.round((adjustedVotes / totalVotes) * 100);
-                    
-                    return (
-                        <button
-                            key={option.id}
-                            onClick={() => !voted && handleVote(option.id)}
-                            disabled={!!voted}
-                            className={`w-full p-4 rounded-xl text-left transition-all relative overflow-hidden ${
-                                voted === option.id
-                                    ? 'bg-indigo-100 border-2 border-indigo-500'
-                                    : voted
-                                    ? 'bg-slate-50 border-2 border-transparent'
-                                    : 'bg-slate-50 border-2 border-transparent hover:border-indigo-300 hover:bg-indigo-50'
-                            }`}
-                        >
-                            {/* Progress bar background */}
-                            {showResults && (
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percentage}%` }}
-                                    transition={{ duration: 0.5 }}
-                                    className="absolute inset-y-0 left-0 bg-indigo-100 rounded-xl"
-                                />
+            
+            {/* Rows */}
+            <div className="divide-y divide-slate-100">
+                {rows.map((row, i) => (
+                    <div key={i} className="grid grid-cols-3">
+                        <div className="p-4 text-sm text-slate-700">{row.feature}</div>
+                        <div className="p-4 text-center border-l border-slate-100 bg-indigo-50/30">
+                            {row.us === true ? (
+                                <CheckCircle size={20} className="text-green-500 mx-auto" />
+                            ) : row.us === false ? (
+                                <X size={20} className="text-slate-300 mx-auto" />
+                            ) : (
+                                <span className="text-xs text-slate-500">{row.us}</span>
                             )}
-                            
-                            <div className="relative flex items-center justify-between">
-                                <span className="font-medium text-slate-800">{option.label}</span>
-                                {showResults && (
-                                    <span className="text-sm font-bold text-indigo-600">
-                                        {percentage}%
-                                    </span>
-                                )}
-                                {voted === option.id && (
-                                    <Check size={18} className="text-indigo-600" />
-                                )}
-                            </div>
-                        </button>
-                    );
-                })}
-                
-                {showResults && (
-                    <motion.p 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center text-sm text-slate-500 mt-4"
-                    >
-                        {totalVotes} votes • Results update live
-                    </motion.p>
-                )}
-                
-                {!voted && (
-                    <p className="text-center text-sm text-slate-400 mt-4">
-                        Click an option to vote
-                    </p>
-                )}
+                        </div>
+                        <div className="p-4 text-center border-l border-slate-100">
+                            {row.them === true ? (
+                                <CheckCircle size={20} className="text-green-500 mx-auto" />
+                            ) : row.them === false ? (
+                                <X size={20} className="text-slate-300 mx-auto" />
+                            ) : (
+                                <span className="text-xs text-slate-500">{row.them}</span>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
 };
 
 // ============================================================================
-// MAIN PAGE
+// Poll Type Cards
 // ============================================================================
 
-const StrawPollPage: React.FC = () => {
+const PollTypeShowcase: React.FC = () => {
+    const types = [
+        { 
+            icon: CheckCircle, 
+            name: 'Multiple Choice', 
+            description: 'Pick one or multiple options',
+            bothHave: true 
+        },
+        { 
+            icon: ListOrdered, 
+            name: 'Ranked Choice', 
+            description: 'Drag to rank options by preference',
+            bothHave: true 
+        },
+        { 
+            icon: Image, 
+            name: 'Image Poll', 
+            description: 'Vote on photos or designs',
+            bothHave: true 
+        },
+        { 
+            icon: Star, 
+            name: 'Star Rating', 
+            description: '1-5 star satisfaction ratings',
+            bothHave: false 
+        },
+        { 
+            icon: Scale, 
+            name: 'Scale (1-10)', 
+            description: 'NPS and detailed numeric scales',
+            bothHave: false 
+        },
+        { 
+            icon: Calendar, 
+            name: 'Meeting Scheduler', 
+            description: 'Find times that work for everyone',
+            bothHave: false 
+        },
+        { 
+            icon: Users, 
+            name: 'RSVP', 
+            description: 'Collect event attendance and details',
+            bothHave: false 
+        },
+        { 
+            icon: MessageSquare, 
+            name: 'Open Text', 
+            description: 'Collect written feedback',
+            bothHave: false 
+        },
+    ];
+
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* Hero */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 py-24">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {types.map((type, i) => (
+                <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`p-4 rounded-xl border ${
+                        type.bothHave 
+                            ? 'bg-slate-50 border-slate-200' 
+                            : 'bg-indigo-50 border-indigo-200'
+                    }`}
+                >
+                    <type.icon size={24} className={type.bothHave ? 'text-slate-500 mb-2' : 'text-indigo-600 mb-2'} />
+                    <h3 className="font-semibold text-slate-800 mb-1">{type.name}</h3>
+                    <p className="text-xs text-slate-600 mb-2">{type.description}</p>
+                    {!type.bothHave && (
+                        <span className="inline-block text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                            VoteGenerator only
+                        </span>
+                    )}
+                </motion.div>
+            ))}
+        </div>
+    );
+};
+
+// ============================================================================
+// Main Page Component
+// ============================================================================
+
+const StrawPollComparisonPage: React.FC = () => {
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* Hero Section */}
+            <section className="relative overflow-hidden">
+                {/* Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700" />
                 <div className="absolute inset-0 opacity-10">
-                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="1"/>
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                        backgroundSize: '32px 32px'
+                    }} />
                 </div>
 
-                <div className="relative max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-8">
-                                <BookOpen size={16} />
-                                Quick Guide
-                            </div>
-                            
-                            <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-6">
-                                What is a
-                                <br />
-                                <span className="text-indigo-300">Straw Poll?</span>
-                            </h1>
-                            
-                            <p className="text-xl text-indigo-100/80 mb-10 leading-relaxed max-w-lg">
-                                A quick, informal vote to gauge group opinion. Perfect for teams, friends, or any group that needs to make a decision together.
-                            </p>
-
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <a 
-                                    href="/create"
-                                    className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-indigo-700 font-bold text-lg rounded-2xl hover:shadow-2xl transition-all"
-                                >
-                                    Create a straw poll
-                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                </a>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, x: 40 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <StrawPollDemo />
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Definition Section */}
-            <section className="py-24 bg-white">
-                <div className="max-w-4xl mx-auto px-6">
+                <div className="relative max-w-4xl mx-auto px-4 py-20 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="prose prose-lg max-w-none"
+                        animate={{ opacity: 1, y: 0 }}
                     >
-                        <h2 className="text-3xl font-bold text-slate-900 mb-6">
-                            Straw Poll Definition
-                        </h2>
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full text-white text-sm font-medium mb-6">
+                            <Zap size={16} />
+                            Honest Comparison
+                        </span>
                         
-                        <p className="text-xl text-slate-600 leading-relaxed mb-6">
-                            A <strong>straw poll</strong> (also called a straw vote) is an informal, 
-                            non-binding vote used to quickly gauge the opinion of a group. Unlike 
-                            formal elections, straw polls are meant to be fast and easy—they show 
-                            you which way the group is leaning without requiring official procedures.
+                        <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6">
+                            VoteGenerator vs StrawPoll
+                        </h1>
+                        
+                        <p className="text-xl text-indigo-100 mb-8 leading-relaxed max-w-2xl mx-auto">
+                            Both are great poll tools. Here is an honest look at what each does best so you can pick the right one for your needs.
                         </p>
-                        
-                        <div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-xl my-8">
-                            <p className="text-indigo-900 font-medium mb-0">
-                                <strong>Origin:</strong> The term comes from the practice of throwing 
-                                a piece of straw into the air to see which way the wind is blowing—a 
-                                quick test of conditions before making a bigger decision.
-                            </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a 
+                                href="/create"
+                                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-xl"
+                            >
+                                Try VoteGenerator Free
+                                <ArrowRight size={20} />
+                            </a>
+                            <a 
+                                href="#comparison"
+                                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 backdrop-blur text-white font-medium rounded-xl hover:bg-white/20 transition border border-white/20"
+                            >
+                                See Full Comparison
+                            </a>
                         </div>
-                        
-                        <p className="text-slate-600 leading-relaxed">
-                            Today, straw polls are used everywhere: teams deciding where to eat, 
-                            groups choosing meeting times, friends picking movies, or organizations 
-                            getting a sense of member preferences before formal votes.
-                        </p>
                     </motion.div>
                 </div>
             </section>
 
-            {/* When to Use */}
-            <section className="py-24 bg-slate-50">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">When to use a straw poll</h2>
-                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                            Straw polls work best when you need a quick temperature check, not a formal decision.
-                        </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: Users,
-                                title: 'Team decisions',
-                                description: 'Where to go for lunch, what to name the project, which day works for the meeting.',
-                                examples: ['Team lunch vote', 'Project name', 'Meeting time']
-                            },
-                            {
-                                icon: MessageSquare,
-                                title: 'Group opinions',
-                                description: 'Get a quick sense of what your group thinks before diving into discussion.',
-                                examples: ['Feature priorities', 'Event preferences', 'Topic interest']
-                            },
-                            {
-                                icon: BarChart3,
-                                title: 'Icebreakers',
-                                description: 'Fun polls to kick off meetings, classes, or events and get people engaged.',
-                                examples: ['This or that', 'Would you rather', 'Favorite movies']
-                            },
-                            {
-                                icon: Clock,
-                                title: 'Quick feedback',
-                                description: 'Was the meeting useful? How was the workshop? Get instant feedback.',
-                                examples: ['Meeting pulse check', 'Event rating', 'Presentation feedback']
-                            },
-                            {
-                                icon: ListOrdered,
-                                title: 'Ranking preferences',
-                                description: 'Let people rank options to find the group's priorities.',
-                                examples: ['Feature ranking', 'Budget priorities', 'Activity preferences']
-                            },
-                            {
-                                icon: CheckCircle,
-                                title: 'Go/no-go checks',
-                                description: 'Quick yes/no/maybe votes to see if there's consensus.',
-                                examples: ['Should we proceed?', 'Ready to ship?', 'Move to next topic?']
-                            },
-                        ].map((item, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                className="bg-white p-8 rounded-2xl shadow-sm"
-                            >
-                                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
-                                    <item.icon size={24} className="text-indigo-600" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">{item.title}</h3>
-                                <p className="text-slate-600 mb-4">{item.description}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {item.examples.map((ex, j) => (
-                                        <span key={j} className="px-2 py-1 bg-slate-100 text-slate-600 text-sm rounded">
-                                            {ex}
-                                        </span>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Types of Straw Polls */}
-            <section className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">Types of straw polls</h2>
-                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                            Different situations call for different poll types. Here are the most common.
-                        </p>
-                    </div>
-
+            {/* Quick Summary */}
+            <section className="py-16 bg-white border-b border-slate-100">
+                <div className="max-w-6xl mx-auto px-4">
                     <div className="grid md:grid-cols-2 gap-8">
-                        {[
-                            {
-                                title: 'Multiple Choice',
-                                description: 'Voters pick one option from a list. The classic straw poll format.',
-                                example: 'Where should we have the team offsite?',
-                                options: ['Beach resort', 'Mountain cabin', 'City hotel', 'Stay local'],
-                                icon: CheckCircle
-                            },
-                            {
-                                title: 'Ranked Choice',
-                                description: 'Voters rank options by preference. Better for finding consensus.',
-                                example: 'Rank these features by priority:',
-                                options: ['1. Dark mode', '2. Export feature', '3. Mobile app', '4. API access'],
-                                icon: ListOrdered
-                            },
-                            {
-                                title: 'Yes / No / Maybe',
-                                description: 'Simple three-way vote for quick temperature checks.',
-                                example: 'Should we move forward with this proposal?',
-                                options: ['Yes', 'No', 'Need more info'],
-                                icon: Vote
-                            },
-                            {
-                                title: 'Rating Scale',
-                                description: 'Collect satisfaction scores or likelihood ratings.',
-                                example: 'How useful was this meeting? (1-5)',
-                                options: ['⭐⭐⭐⭐⭐'],
-                                icon: Scale
-                            },
-                        ].map((type, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                className="bg-slate-50 p-8 rounded-2xl"
-                            >
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                        <type.icon size={20} className="text-indigo-600" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-slate-800">{type.title}</h3>
-                                </div>
-                                <p className="text-slate-600 mb-4">{type.description}</p>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200">
-                                    <p className="text-sm font-medium text-slate-700 mb-2">{type.example}</p>
-                                    <div className="space-y-1">
-                                        {type.options.map((opt, j) => (
-                                            <p key={j} className="text-sm text-slate-500">• {opt}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                        {/* When to use StrawPoll */}
+                        <div className="p-6 bg-slate-50 rounded-2xl">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <Target size={20} className="text-slate-500" />
+                                StrawPoll might be better if...
+                            </h3>
+                            <ul className="space-y-3">
+                                {[
+                                    'You need a quick, simple multiple choice poll',
+                                    'You want the most minimal interface possible',
+                                    'You already have a StrawPoll account and workflow',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-slate-600">
+                                        <CheckCircle size={16} className="text-slate-400 mt-1 flex-shrink-0" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* When to use VoteGenerator */}
+                        <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+                            <h3 className="font-bold text-indigo-800 mb-4 flex items-center gap-2">
+                                <Zap size={20} className="text-indigo-600" />
+                                VoteGenerator is better if...
+                            </h3>
+                            <ul className="space-y-3">
+                                {[
+                                    'You need ratings, scales, or open-ended questions',
+                                    'You want multi-section surveys with different question types',
+                                    'You need meeting scheduling or RSVP collection',
+                                    'You want ready-to-use templates for common scenarios',
+                                    'You need to export results to CSV on free plan',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-slate-700">
+                                        <CheckCircle size={16} className="text-indigo-500 mt-1 flex-shrink-0" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* How to Create */}
-            <section className="py-24 bg-slate-50">
-                <div className="max-w-5xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">How to create a straw poll</h2>
-                        <p className="text-lg text-slate-600">Three steps, under a minute.</p>
+            {/* Detailed Comparison Table */}
+            <section id="comparison" className="py-20 bg-white">
+                <div className="max-w-4xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            Feature-by-Feature Comparison
+                        </h2>
+                        <p className="text-lg text-slate-600">
+                            A straightforward look at what each tool offers.
+                        </p>
+                    </div>
+
+                    <ComparisonTable />
+
+                    <p className="text-sm text-slate-500 text-center mt-4">
+                        Comparison based on publicly available information. Features may change.
+                    </p>
+                </div>
+            </section>
+
+            {/* Poll Types */}
+            <section className="py-20 bg-slate-50">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            Poll Types Available
+                        </h2>
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            Both tools handle basic polls. VoteGenerator adds ratings, surveys, and scheduling.
+                        </p>
+                    </div>
+
+                    <PollTypeShowcase />
+                </div>
+            </section>
+
+            {/* Key Differences */}
+            <section className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            Key Differences
+                        </h2>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
                             {
-                                step: '1',
-                                title: 'Write your question',
-                                description: 'What do you want to know? Keep it clear and simple.',
+                                title: 'Question Types',
+                                icon: FileText,
+                                description: 'StrawPoll focuses on polls (multiple choice, ranked). VoteGenerator adds ratings, scales, open text, and multi-section surveys.',
                             },
                             {
-                                step: '2',
-                                title: 'Add options',
-                                description: 'List the choices people can vote for. 3-6 options usually works best.',
+                                title: 'Templates',
+                                icon: Award,
+                                description: 'VoteGenerator includes 42+ ready-to-use templates for team decisions, events, feedback, HR, education, and fun polls.',
                             },
                             {
-                                step: '3',
-                                title: 'Share the link',
-                                description: 'Send the poll link to your group. They click, vote, and see results.',
+                                title: 'Use Cases',
+                                icon: Users,
+                                description: 'StrawPoll is great for quick votes. VoteGenerator handles those plus RSVPs, meeting scheduling, and detailed surveys.',
                             },
-                        ].map((item, i) => (
+                        ].map((diff, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
-                                className="text-center"
+                                className="p-6 bg-slate-50 rounded-2xl"
                             >
-                                <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                                    {item.step}
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">{item.title}</h3>
-                                <p className="text-slate-600">{item.description}</p>
+                                <diff.icon size={28} className="text-indigo-600 mb-4" />
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">{diff.title}</h3>
+                                <p className="text-slate-600">{diff.description}</p>
                             </motion.div>
                         ))}
-                    </div>
-
-                    <div className="text-center mt-12">
-                        <a 
-                            href="/create"
-                            className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-2xl hover:bg-indigo-700 transition-all"
-                        >
-                            Create your straw poll
-                            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                        </a>
                     </div>
                 </div>
             </section>
 
-            {/* FAQ */}
-            <section className="py-24 bg-white">
-                <div className="max-w-3xl mx-auto px-6">
+            {/* What Both Have */}
+            <section className="py-20 bg-slate-50">
+                <div className="max-w-4xl mx-auto px-4">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                            Frequently Asked Questions
+                            What Both Tools Do Well
                         </h2>
+                        <p className="text-lg text-slate-600">
+                            You cannot go wrong with either for basic polling.
+                        </p>
                     </div>
-                    
-                    <div className="space-y-8">
+
+                    <div className="grid md:grid-cols-2 gap-4">
                         {[
-                            {
-                                q: 'What\'s the difference between a straw poll and a regular poll?',
-                                a: 'A straw poll is informal and non-binding—it\'s meant to quickly gauge opinion, not make final decisions. Regular polls or elections often have formal procedures, verification, and binding results. Straw polls prioritize speed and simplicity.'
-                            },
-                            {
-                                q: 'Are straw poll results accurate?',
-                                a: 'Straw polls show you the general direction of opinion, but they\'re not scientifically rigorous. They\'re best for getting a quick sense of group preferences, not for making high-stakes decisions that need precise data.'
-                            },
-                            {
-                                q: 'Do people need to create an account to vote?',
-                                a: 'No. With VoteGenerator, voters just click the link and vote—no signup required. This makes it easy to get quick responses from anyone.'
-                            },
-                            {
-                                q: 'Can I see who voted for what?',
-                                a: 'That depends on your settings. You can create polls where you see individual votes or polls that only show aggregated results. For sensitive topics, aggregated results help people vote honestly.'
-                            },
-                            {
-                                q: 'How many options can I include?',
-                                a: 'As many as you need, but 3-6 options usually works best. Too many options can make it harder for voters to decide and dilute the results.'
-                            },
-                            {
-                                q: 'Can I use ranked choice voting?',
-                                a: 'Yes. Ranked choice lets voters order options by preference. This is great when you want to find the option with the broadest support, not just the plurality winner.'
-                            },
-                        ].map((faq, i) => (
-                            <div key={i}>
-                                <h3 className="text-lg font-semibold text-slate-800 mb-2 flex items-start gap-2">
-                                    <HelpCircle size={20} className="text-indigo-500 flex-shrink-0 mt-1" />
-                                    {faq.q}
-                                </h3>
-                                <p className="text-slate-600 ml-7">{faq.a}</p>
+                            'Simple multiple choice polls',
+                            'Ranked choice voting',
+                            'Image-based polls',
+                            'No signup required to vote',
+                            'Real-time results',
+                            'Free tier available',
+                            'Works on any device',
+                            'Shareable link',
+                        ].map((feature, i) => (
+                            <div key={i} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200">
+                                <CheckCircle size={20} className="text-green-500 flex-shrink-0" />
+                                <span className="text-slate-700">{feature}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* CTA */}
-            <section className="py-24 bg-gradient-to-r from-indigo-600 to-violet-600">
-                <div className="max-w-4xl mx-auto px-6 text-center">
-                    <h2 className="text-4xl font-bold text-white mb-6">
-                        Ready to create your straw poll?
+            {/* CTA Section */}
+            <section className="py-20 bg-gradient-to-r from-indigo-600 to-violet-600">
+                <div className="max-w-4xl mx-auto px-4 text-center">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+                        Ready to try VoteGenerator?
                     </h2>
-                    <p className="text-xl text-indigo-100 mb-10">
-                        Takes about 30 seconds. Free to use.
+                    <p className="text-xl text-indigo-100 mb-8">
+                        Create your first poll in under a minute. Free to start, no credit card required.
                     </p>
-                    <a 
-                        href="/create"
-                        className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-indigo-700 font-bold text-lg rounded-2xl hover:shadow-2xl transition-all"
-                    >
-                        Create a straw poll
-                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
-                    </a>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a 
+                            href="/create"
+                            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-xl"
+                        >
+                            Create Free Poll
+                            <ArrowRight size={20} />
+                        </a>
+                        <a 
+                            href="/templates"
+                            className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 backdrop-blur text-white font-medium rounded-xl hover:bg-white/20 transition border border-white/20"
+                        >
+                            Browse 42+ Templates
+                        </a>
+                    </div>
+                    
                     <p className="text-indigo-200 text-sm mt-6">
-                        No account required • Free forever for basic polls
+                        Free to create - No signup for voters - Export to CSV
                     </p>
+                </div>
+            </section>
+
+            {/* FAQ */}
+            <section className="py-20 bg-white">
+                <div className="max-w-3xl mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
+                        Common Questions
+                    </h2>
+                    
+                    <div className="space-y-6">
+                        {[
+                            {
+                                q: 'Can I migrate my StrawPoll polls to VoteGenerator?',
+                                a: 'There is no automatic import, but you can recreate polls quickly using our templates or poll builder. It takes about a minute per poll.'
+                            },
+                            {
+                                q: 'Is VoteGenerator free like StrawPoll?',
+                                a: 'Yes. Both have free tiers. VoteGenerator free plan includes all poll types, templates, and CSV export. Response limits apply on free. Paid plans offer more.'
+                            },
+                            {
+                                q: 'Do voters need to create an account?',
+                                a: 'No, same as StrawPoll. Voters just click and vote. No signup, no app download required.'
+                            },
+                            {
+                                q: 'What if I just need a simple poll?',
+                                a: 'VoteGenerator works great for simple polls too. Create a multiple choice poll in 30 seconds. The extra features are there if you need them.'
+                            },
+                            {
+                                q: 'Which should I choose?',
+                                a: 'If you need ratings, surveys, meeting scheduling, or RSVPs, choose VoteGenerator. If you only need basic multiple choice polls and prefer maximum simplicity, both work well.'
+                            },
+                        ].map((faq, i) => (
+                            <div key={i} className="border-b border-slate-200 pb-6">
+                                <h3 className="text-lg font-semibold text-slate-800 mb-2">{faq.q}</h3>
+                                <p className="text-slate-600">{faq.a}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
         </div>
     );
 };
 
-export default StrawPollPage;
+export default StrawPollComparisonPage;

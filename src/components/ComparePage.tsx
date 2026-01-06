@@ -1,17 +1,14 @@
 // ============================================================================
-// ComparePage - Plan Comparison Page
+// ComparePage - Plan Comparison Page (USD Only)
 // ============================================================================
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, Crown, Star, Users, BarChart3, Zap } from 'lucide-react';
-import { useGeoPricing } from '../geoPricing';
+import { Check, X, Crown, Star, Users, Zap, Building2 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 
 const ComparePage: React.FC = () => {
-    const { prices, currency } = useGeoPricing();
-
     const plans = [
         {
             name: 'Free',
@@ -23,8 +20,9 @@ const ComparePage: React.FC = () => {
         },
         {
             name: 'Pro',
-            price: prices.pro,
-            period: '/month',
+            price: 16,
+            yearlyPrice: 190,
+            period: '/month USD',
             icon: Crown,
             gradient: 'from-purple-500 to-pink-500',
             description: 'For growing teams',
@@ -32,34 +30,62 @@ const ComparePage: React.FC = () => {
         },
         {
             name: 'Business',
-            price: prices.business,
-            period: '/month',
-            icon: Star,
+            price: 41,
+            yearlyPrice: 490,
+            period: '/month USD',
+            icon: Building2,
             gradient: 'from-amber-500 to-orange-500',
             description: 'For organizations',
         },
     ];
 
     const features = [
+        // Limits
         { name: 'Responses per month', free: '100', pro: '5,000', business: '50,000' },
         { name: 'Active polls', free: '3', pro: 'Unlimited', business: 'Unlimited' },
         { name: 'Poll duration', free: '30 days', pro: '1 year', business: '1 year' },
-        { name: 'All poll types', free: true, pro: true, business: true },
-        { name: 'Real-time results', free: true, pro: true, business: true },
+        // Poll Types
+        { name: 'All 8 poll types', free: true, pro: true, business: true },
+        // Sharing
+        { name: 'Shareable link', free: true, pro: true, business: true },
         { name: 'QR code sharing', free: true, pro: true, business: true },
+        { name: 'Embed on website', free: true, pro: true, business: true },
+        { name: 'Social sharing', free: true, pro: true, business: true },
+        // Results & Analytics
+        { name: 'Real-time results', free: true, pro: true, business: true },
+        { name: 'Visual charts', free: true, pro: true, business: true },
+        { name: 'Response timeline', free: false, pro: true, business: true },
+        { name: 'Geographic distribution', free: false, pro: true, business: true },
+        { name: 'Device breakdown', free: false, pro: true, business: true },
+        { name: 'Hourly heatmap', free: false, pro: false, business: true },
+        // Export
         { name: 'CSV export', free: false, pro: true, business: true },
-        { name: 'PDF/PNG export', free: false, pro: true, business: true },
-        { name: 'Custom branding', free: false, pro: true, business: true },
-        { name: 'Remove ads', free: false, pro: true, business: true },
-        { name: 'PIN protection', free: false, pro: false, business: true },
+        { name: 'Excel export', free: false, pro: true, business: true },
+        { name: 'PDF reports', free: false, pro: false, business: true },
+        // Customization
+        { name: 'Themes', free: '3 themes', pro: 'All 12+', business: 'All 12+' },
+        { name: 'Remove VoteGenerator badge', free: false, pro: true, business: true },
+        { name: 'Custom colors', free: false, pro: true, business: true },
+        { name: 'Upload custom logo', free: false, pro: false, business: true },
+        { name: 'Custom short links', free: false, pro: false, business: true },
+        // Security
+        { name: 'Anti-fraud protection', free: true, pro: true, business: true },
+        { name: 'PIN code access', free: false, pro: true, business: true },
+        { name: 'One-time vote codes', free: false, pro: true, business: true },
+        { name: 'IP allowlist/blocklist', free: false, pro: false, business: true },
+        // Management
+        { name: 'Email notifications', free: false, pro: true, business: true },
+        { name: 'Scheduled close', free: false, pro: true, business: true },
+        { name: 'Duplicate polls', free: false, pro: true, business: true },
+        // Support
+        { name: 'Email support', free: false, pro: true, business: true },
         { name: 'Priority support', free: false, pro: false, business: true },
-        { name: 'Team features', free: false, pro: false, business: true },
     ];
 
     const renderValue = (value: boolean | string) => {
         if (typeof value === 'boolean') {
             return value ? (
-                <Check className="w-5 h-5 text-green-500 mx-auto" />
+                <Check className="w-5 h-5 text-emerald-500 mx-auto" />
             ) : (
                 <X className="w-5 h-5 text-slate-300 mx-auto" />
             );
@@ -81,7 +107,7 @@ const ComparePage: React.FC = () => {
                         Compare Plans
                     </h1>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Choose the plan that's right for you. All plans include core features.
+                        Choose the plan that's right for you. All plans include all 8 poll types.
                     </p>
                 </motion.div>
 
@@ -95,40 +121,45 @@ const ComparePage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                             className={`text-center p-6 rounded-2xl ${
-                                plan.popular ? 'bg-purple-600 text-white' : 'bg-white'
+                                plan.popular ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-white'
                             } shadow-lg`}
                         >
                             {plan.popular && (
-                                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-2">
+                                <span className="inline-block px-3 py-1 bg-amber-400 text-amber-900 rounded-full text-xs font-bold mb-2">
                                     Most Popular
                                 </span>
                             )}
-                            <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br ${plan.gradient} text-white`}>
+                            <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br ${plan.gradient} text-white shadow-lg`}>
                                 <plan.icon size={24} />
                             </div>
                             <h3 className={`text-xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
                                 {plan.name}
                             </h3>
-                            <div className={`text-2xl font-bold mt-2 ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
-                                {plan.price === 0 ? 'Free' : `${prices.symbol}${plan.price}`}
+                            <div className={`text-2xl font-black mt-2 ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
+                                {plan.price === 0 ? 'Free' : `$${plan.price}`}
                                 {plan.period !== 'forever' && (
                                     <span className={`text-sm font-normal ${plan.popular ? 'text-white/70' : 'text-slate-500'}`}>
                                         {plan.period}
                                     </span>
                                 )}
                             </div>
+                            {plan.yearlyPrice && (
+                                <p className={`text-sm mt-1 ${plan.popular ? 'text-indigo-200' : 'text-slate-500'}`}>
+                                    or ${plan.yearlyPrice}/year USD <span className="text-amber-400 font-semibold">(2 months free)</span>
+                                </p>
+                            )}
                             <p className={`text-sm mt-2 ${plan.popular ? 'text-white/80' : 'text-slate-500'}`}>
                                 {plan.description}
                             </p>
                             <a
-                                href={plan.price === 0 ? '/#create' : `/.netlify/functions/vg-checkout?tier=${plan.name.toLowerCase()}`}
+                                href={plan.price === 0 ? '/#create' : `/pricing`}
                                 className={`inline-block mt-4 px-6 py-2 rounded-lg font-semibold transition ${
                                     plan.popular
-                                        ? 'bg-white text-purple-600 hover:bg-purple-50'
+                                        ? 'bg-white text-indigo-600 hover:bg-indigo-50'
                                         : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg'
                                 }`}
                             >
-                                {plan.price === 0 ? 'Get Started' : 'Subscribe'}
+                                {plan.price === 0 ? 'Get Started' : 'Get ' + plan.name}
                             </a>
                         </motion.div>
                     ))}
@@ -146,7 +177,7 @@ const ComparePage: React.FC = () => {
                             <tr className="bg-slate-50 border-b border-slate-200">
                                 <th className="text-left py-4 px-6 font-semibold text-slate-700">Feature</th>
                                 <th className="text-center py-4 px-6 font-semibold text-slate-700">Free</th>
-                                <th className="text-center py-4 px-6 font-semibold text-purple-600">Pro</th>
+                                <th className="text-center py-4 px-6 font-semibold text-indigo-600">Pro</th>
                                 <th className="text-center py-4 px-6 font-semibold text-amber-600">Business</th>
                             </tr>
                         </thead>
@@ -165,6 +196,11 @@ const ComparePage: React.FC = () => {
                         </tbody>
                     </table>
                 </motion.div>
+
+                {/* Bottom note */}
+                <p className="text-center text-slate-500 text-sm mt-8">
+                    All prices in USD. Annual plans save you 2 months.
+                </p>
 
                 {/* CTA */}
                 <motion.div

@@ -111,6 +111,11 @@ export interface SurveySettings {
     // Completion
     redirectUrl?: string;         // Redirect after completion
     completionMessage?: string;   // Custom thank you message
+    
+    // =========================================
+    // ANONYMOUS MODE (Phase 2)
+    // =========================================
+    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
 }
 
 // Individual response to a survey
@@ -119,7 +124,8 @@ export interface SurveyResponse {
     pollId: string;
     respondentId?: string;        // Anonymous ID for tracking
     voterName?: string;
-    submittedAt: string;
+    submittedAt?: string;
+    completedAt?: string;         // When the survey was completed
     startedAt?: string;
     completionTime?: number;      // Seconds to complete
     
@@ -177,6 +183,10 @@ export interface PollSettings {
     dotBudget?: number;
     // Budget voting
     budgetLimit?: number;
+    // =========================================
+    // ANONYMOUS MODE (Phase 2)
+    // =========================================
+    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
 }
 
 export interface EmailEntry {

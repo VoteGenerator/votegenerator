@@ -1,17 +1,19 @@
 // ============================================================================
 // SurveyBuilder - Multi-Section Poll/Survey Creator
 // Location: src/components/SurveyBuilder.tsx
-// Features: Drag-drop sections, multiple question types, conditional logic
+// Features: Drag-drop sections, multiple question types, Anonymous Mode, NPS templates
+// Updated: Added Employee Engagement, CSAT, NPS templates + Anonymous Mode setting
 // ============================================================================
 
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy,
     Type, AlignLeft, Star, Hash, Calendar, Clock, Mail, Phone,
     List, ListOrdered, CheckSquare, ToggleLeft, Grid3X3,
-    Settings2, Eye, EyeOff, HelpCircle, Sparkles, ChevronRight,
-    FileText, Users, Heart, Briefcase, PartyPopper, Baby
+    Settings2, HelpCircle, Sparkles,
+    FileText, Users, Heart, Briefcase, PartyPopper, Baby,
+    Shield, TrendingUp, MessageSquare
 } from 'lucide-react';
 import { SurveySection, SurveyQuestion, QuestionType, SurveySettings } from '../types';
 
@@ -62,9 +64,309 @@ interface SurveyTemplate {
     color: string;
     description: string;
     sections: SurveySection[];
+    recommendedSettings?: Partial<SurveySettings>;
 }
 
 const SURVEY_TEMPLATES: SurveyTemplate[] = [
+    // ========== NEW: EMPLOYEE ENGAGEMENT ==========
+    {
+        id: 'employee-engagement',
+        name: 'Employee Engagement',
+        icon: Users,
+        color: 'text-emerald-600',
+        description: 'Measure team satisfaction, growth, and culture',
+        recommendedSettings: {
+            anonymousMode: true,
+            showProgress: true,
+            allowBack: true,
+        },
+        sections: [
+            {
+                id: 'ee-satisfaction',
+                title: 'Overall Satisfaction',
+                description: 'How do you feel about your role?',
+                questions: [
+                    {
+                        id: 'ee-q1',
+                        type: 'scale',
+                        question: 'How likely are you to recommend this company as a great place to work?',
+                        minValue: 0,
+                        maxValue: 10,
+                        minLabel: 'Not at all likely',
+                        maxLabel: 'Extremely likely',
+                        required: true,
+                    },
+                    {
+                        id: 'ee-q2',
+                        type: 'rating',
+                        question: 'How satisfied are you with your current role?',
+                        required: true,
+                    },
+                    {
+                        id: 'ee-q3',
+                        type: 'multiple_choice',
+                        question: 'How long do you see yourself working here?',
+                        options: [
+                            { id: 'less-1', text: 'Less than 1 year' },
+                            { id: '1-2', text: '1-2 years' },
+                            { id: '3-5', text: '3-5 years' },
+                            { id: '5-plus', text: '5+ years' },
+                            { id: 'unsure', text: 'Not sure' },
+                        ],
+                        required: true,
+                    },
+                ]
+            },
+            {
+                id: 'ee-growth',
+                title: 'Growth & Development',
+                description: 'Your opportunities for learning',
+                questions: [
+                    {
+                        id: 'ee-q4',
+                        type: 'scale',
+                        question: 'I have opportunities to grow and develop in my role',
+                        minValue: 1,
+                        maxValue: 5,
+                        minLabel: 'Strongly disagree',
+                        maxLabel: 'Strongly agree',
+                        required: true,
+                    },
+                    {
+                        id: 'ee-q5',
+                        type: 'scale',
+                        question: 'I receive regular feedback that helps me improve',
+                        minValue: 1,
+                        maxValue: 5,
+                        minLabel: 'Strongly disagree',
+                        maxLabel: 'Strongly agree',
+                        required: true,
+                    },
+                    {
+                        id: 'ee-q6',
+                        type: 'multiple_choice',
+                        question: 'What would help you grow most?',
+                        options: [
+                            { id: 'training', text: 'More training opportunities' },
+                            { id: 'mentorship', text: 'Mentorship program' },
+                            { id: 'feedback', text: 'More frequent feedback' },
+                            { id: 'projects', text: 'Challenging projects' },
+                            { id: 'promotion', text: 'Clear promotion path' },
+                        ],
+                        allowMultiple: true,
+                    },
+                ]
+            },
+            {
+                id: 'ee-culture',
+                title: 'Team & Culture',
+                description: 'Your workplace experience',
+                questions: [
+                    {
+                        id: 'ee-q7',
+                        type: 'rating',
+                        question: 'How would you rate team collaboration?',
+                        required: true,
+                    },
+                    {
+                        id: 'ee-q8',
+                        type: 'scale',
+                        question: 'I feel valued and recognized for my contributions',
+                        minValue: 1,
+                        maxValue: 5,
+                        minLabel: 'Strongly disagree',
+                        maxLabel: 'Strongly agree',
+                        required: true,
+                    },
+                ]
+            },
+            {
+                id: 'ee-feedback',
+                title: 'Open Feedback',
+                description: 'Share your thoughts (anonymous)',
+                questions: [
+                    {
+                        id: 'ee-q9',
+                        type: 'textarea',
+                        question: 'What do you love most about working here?',
+                        placeholder: 'Share what makes this a great place to work...',
+                    },
+                    {
+                        id: 'ee-q10',
+                        type: 'textarea',
+                        question: 'What is one thing we could do better?',
+                        placeholder: 'Your honest feedback helps us improve...',
+                    },
+                ]
+            },
+        ],
+    },
+    // ========== NEW: CUSTOMER SATISFACTION (CSAT) ==========
+    {
+        id: 'customer-satisfaction',
+        name: 'Customer Satisfaction',
+        icon: Star,
+        color: 'text-blue-600',
+        description: 'Measure NPS and collect customer feedback',
+        recommendedSettings: {
+            anonymousMode: false,
+            showProgress: true,
+            allowBack: true,
+        },
+        sections: [
+            {
+                id: 'csat-nps',
+                title: 'Overall Experience',
+                description: 'Tell us about your experience',
+                questions: [
+                    {
+                        id: 'csat-q1',
+                        type: 'scale',
+                        question: 'How likely are you to recommend us to a friend or colleague?',
+                        minValue: 0,
+                        maxValue: 10,
+                        minLabel: 'Not at all likely',
+                        maxLabel: 'Extremely likely',
+                        required: true,
+                    },
+                    {
+                        id: 'csat-q2',
+                        type: 'rating',
+                        question: 'How satisfied are you with our product/service overall?',
+                        required: true,
+                    },
+                ]
+            },
+            {
+                id: 'csat-details',
+                title: 'Specific Feedback',
+                description: 'Help us understand what matters',
+                questions: [
+                    {
+                        id: 'csat-q3',
+                        type: 'rating',
+                        question: 'How would you rate the quality of our product/service?',
+                        required: true,
+                    },
+                    {
+                        id: 'csat-q4',
+                        type: 'rating',
+                        question: 'How would you rate our customer support?',
+                    },
+                    {
+                        id: 'csat-q5',
+                        type: 'multiple_choice',
+                        question: 'What do you like most about us?',
+                        options: [
+                            { id: 'quality', text: 'Product quality' },
+                            { id: 'price', text: 'Competitive pricing' },
+                            { id: 'support', text: 'Customer support' },
+                            { id: 'ease', text: 'Ease of use' },
+                            { id: 'reliability', text: 'Reliability' },
+                        ],
+                        allowMultiple: true,
+                    },
+                ]
+            },
+            {
+                id: 'csat-improve',
+                title: 'How Can We Improve?',
+                description: 'Your feedback shapes our roadmap',
+                questions: [
+                    {
+                        id: 'csat-q6',
+                        type: 'textarea',
+                        question: 'What is the main reason for your score?',
+                        placeholder: 'Tell us more...',
+                    },
+                    {
+                        id: 'csat-q7',
+                        type: 'textarea',
+                        question: 'What is one thing you wish we did differently?',
+                        placeholder: 'Your suggestion...',
+                    },
+                ]
+            },
+        ],
+    },
+    // ========== NEW: QUICK NPS ==========
+    {
+        id: 'nps-quick',
+        name: 'Quick NPS Survey',
+        icon: TrendingUp,
+        color: 'text-indigo-600',
+        description: 'Simple NPS with one follow-up',
+        sections: [
+            {
+                id: 'nps',
+                title: 'Quick Feedback',
+                questions: [
+                    {
+                        id: 'nps-q1',
+                        type: 'scale',
+                        question: 'How likely are you to recommend us to a friend or colleague?',
+                        minValue: 0,
+                        maxValue: 10,
+                        minLabel: 'Not at all likely',
+                        maxLabel: 'Extremely likely',
+                        required: true,
+                    },
+                    {
+                        id: 'nps-q2',
+                        type: 'textarea',
+                        question: 'What is the main reason for your score?',
+                        placeholder: 'Tell us more...',
+                    },
+                ]
+            },
+        ],
+    },
+    // ========== NEW: POST-PURCHASE ==========
+    {
+        id: 'post-purchase',
+        name: 'Post-Purchase Feedback',
+        icon: MessageSquare,
+        color: 'text-amber-600',
+        description: 'Collect feedback after purchase',
+        sections: [
+            {
+                id: 'pp-experience',
+                title: 'Your Purchase Experience',
+                questions: [
+                    {
+                        id: 'pp-q1',
+                        type: 'rating',
+                        question: 'How was your overall shopping experience?',
+                        required: true,
+                    },
+                    {
+                        id: 'pp-q2',
+                        type: 'rating',
+                        question: 'How easy was it to find what you were looking for?',
+                        required: true,
+                    },
+                    {
+                        id: 'pp-q3',
+                        type: 'yes_no',
+                        question: 'Would you buy from us again?',
+                    },
+                ]
+            },
+            {
+                id: 'pp-comments',
+                title: 'Additional Comments',
+                questions: [
+                    {
+                        id: 'pp-q4',
+                        type: 'textarea',
+                        question: 'Any other feedback or suggestions?',
+                        placeholder: 'We appreciate your thoughts...',
+                    },
+                ]
+            },
+        ],
+    },
+    // ========== EXISTING: WEDDING RSVP ==========
     {
         id: 'wedding',
         name: 'Wedding RSVP',
@@ -86,7 +388,7 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
                 title: 'Meal Preferences',
                 description: 'Help us plan the menu',
                 questions: [
-                    { id: 'q3', type: 'multiple_choice', question: 'Entrée preference', options: [
+                    { id: 'q3', type: 'multiple_choice', question: 'Entree preference', options: [
                         { id: 'beef', text: 'Beef' },
                         { id: 'chicken', text: 'Chicken' },
                         { id: 'fish', text: 'Fish' },
@@ -106,6 +408,7 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
             }
         ]
     },
+    // ========== EXISTING: TEAM FEEDBACK ==========
     {
         id: 'corporate',
         name: 'Team Feedback',
@@ -136,6 +439,7 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
             }
         ]
     },
+    // ========== EXISTING: PARTY PLANNING ==========
     {
         id: 'party',
         name: 'Party Planning',
@@ -148,9 +452,9 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
                 title: 'RSVP',
                 questions: [
                     { id: 'q1', type: 'multiple_choice', question: 'Can you make it?', options: [
-                        { id: 'yes', text: '🎉 Yes, count me in!' },
-                        { id: 'maybe', text: '🤔 Maybe, I\'ll try' },
-                        { id: 'no', text: '😢 Sorry, can\'t make it' },
+                        { id: 'yes', text: 'Yes, count me in!' },
+                        { id: 'maybe', text: 'Maybe, I will try' },
+                        { id: 'no', text: 'Sorry, cannot make it' },
                     ], required: true },
                     { id: 'q2', type: 'number', question: 'How many people in your group?', min: 1, max: 5 },
                 ]
@@ -169,6 +473,7 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
             }
         ]
     },
+    // ========== EXISTING: BABY SHOWER ==========
     {
         id: 'babyshower',
         name: 'Baby Shower',
@@ -181,9 +486,9 @@ const SURVEY_TEMPLATES: SurveyTemplate[] = [
                 title: 'Your Guesses',
                 questions: [
                     { id: 'q1', type: 'multiple_choice', question: 'What do you think it will be?', options: [
-                        { id: 'boy', text: '💙 Boy' },
-                        { id: 'girl', text: '💗 Girl' },
-                        { id: 'surprise', text: '✨ Keeping it a surprise!' },
+                        { id: 'boy', text: 'Boy' },
+                        { id: 'girl', text: 'Girl' },
+                        { id: 'surprise', text: 'Keeping it a surprise!' },
                     ], required: true },
                     { id: 'q2', type: 'date', question: 'Guess the due date' },
                 ]
@@ -817,11 +1122,18 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     };
     
     const applyTemplate = (template: SurveyTemplate) => {
+        // Apply the template sections
         updateSections(template.sections.map(s => ({
             ...s,
             id: generateId(),
             questions: s.questions.map(q => ({ ...q, id: generateId() }))
         })));
+        
+        // Apply recommended settings if available
+        if (template.recommendedSettings) {
+            updateSettings({ ...settings, ...template.recommendedSettings });
+        }
+        
         setShowTemplates(false);
     };
     
@@ -850,6 +1162,13 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                 {totalQuestions} Question{totalQuestions !== 1 ? 's' : ''}
                             </span>
                         </div>
+                        {/* Anonymous Mode indicator */}
+                        {settings.anonymousMode && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-xl shadow-sm border border-emerald-200">
+                                <Shield size={18} className="text-emerald-600" />
+                                <span className="font-semibold text-emerald-600">Anonymous</span>
+                            </div>
+                        )}
                     </div>
                     
                     {/* Actions */}
@@ -931,15 +1250,21 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                     <button
                                         key={template.id}
                                         onClick={() => applyTemplate(template)}
-                                        className="p-5 bg-white rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group"
+                                        className="p-5 bg-white rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group relative"
                                     >
+                                        {/* Anonymous badge for templates that recommend it */}
+                                        {template.recommendedSettings?.anonymousMode && (
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium flex items-center gap-1">
+                                                <Shield size={10} /> Anonymous
+                                            </div>
+                                        )}
                                         <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${bgColor}`}>
                                             <Icon size={28} className={template.color} />
                                         </div>
                                         <div>
                                             <span className="font-bold text-slate-800 text-base block">{template.name}</span>
                                             <span className="text-sm text-slate-500">
-                                                {template.sections.length} section{template.sections.length > 1 ? 's' : ''} • {questionCount} question{questionCount > 1 ? 's' : ''}
+                                                {template.sections.length} section{template.sections.length > 1 ? 's' : ''} - {questionCount} question{questionCount > 1 ? 's' : ''}
                                             </span>
                                         </div>
                                     </button>
@@ -948,13 +1273,13 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                         </div>
                         
                         <p className="text-xs text-amber-600 mt-5 text-center">
-                            💡 Templates give you a head start - you can always customize them later
+                            Templates give you a head start - you can always customize them later
                         </p>
                     </motion.div>
                 )}
             </AnimatePresence>
             
-            {/* Settings Panel */}
+            {/* Settings Panel - UPDATED WITH ANONYMOUS MODE */}
             <AnimatePresence>
                 {showSettings && (
                     <motion.div
@@ -974,7 +1299,9 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                 <ChevronUp size={18} />
                             </button>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        
+                        {/* Basic Settings */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                             <label className="flex items-center gap-3 p-3 bg-white rounded-xl cursor-pointer hover:bg-slate-50">
                                 <input
                                     type="checkbox"
@@ -1013,7 +1340,54 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                             </label>
                         </div>
                         
-                        <div className="mt-4">
+                        {/* Anonymous Mode Toggle - NEW */}
+                        <div className={`p-4 rounded-xl border-2 transition-all mb-4 ${
+                            settings.anonymousMode 
+                                ? 'bg-emerald-50 border-emerald-200' 
+                                : 'bg-white border-slate-200'
+                        }`}>
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Shield size={18} className={settings.anonymousMode ? 'text-emerald-600' : 'text-slate-400'} />
+                                        <span className="font-semibold text-slate-800">Anonymous Mode</span>
+                                        {settings.anonymousMode && (
+                                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium">ON</span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-600 mb-2">
+                                        Hide individual responses from your view. You will only see aggregated results.
+                                    </p>
+                                    
+                                    {settings.anonymousMode && (
+                                        <div className="space-y-1 text-xs text-emerald-700 bg-emerald-100/50 p-2 rounded-lg">
+                                            <p>Individual responses hidden from admin view</p>
+                                            <p>Respondents see &quot;Your response is anonymous&quot; badge</p>
+                                            <p>Open-ended feedback shown in random order</p>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.anonymousMode ?? false}
+                                        onChange={(e) => updateSettings({ ...settings, anonymousMode: e.target.checked })}
+                                        className="sr-only peer"
+                                    />
+                                    <div className={`w-11 h-6 rounded-full transition-colors ${
+                                        settings.anonymousMode ? 'bg-emerald-500' : 'bg-slate-300'
+                                    }`}>
+                                        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                                            settings.anonymousMode ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                        }`} />
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        {/* Completion Message */}
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Completion message
                             </label>
@@ -1058,10 +1432,10 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
             {sections.length >= maxSections && maxSections !== Infinity && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
                     <p className="text-amber-800 font-medium">
-                        You've reached the section limit for your plan.
+                        You have reached the section limit for your plan.
                     </p>
                     <a href="/pricing" className="text-amber-600 hover:underline text-sm">
-                        Upgrade for unlimited sections →
+                        Upgrade for unlimited sections
                     </a>
                 </div>
             )}

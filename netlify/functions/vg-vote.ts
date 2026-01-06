@@ -58,6 +58,8 @@ interface Poll {
         requireNames?: boolean;
         security?: 'none' | 'browser' | 'pin' | 'code';
         allowComments?: boolean;
+        // Phase 2: Anonymous mode can also be in settings
+        anonymousMode?: boolean;
     };
     votes: Vote[];
     createdAt: string;
@@ -68,7 +70,14 @@ interface Poll {
     // Survey mode
     isSurvey?: boolean;
     sections?: any[];
-    surveySettings?: any;
+    surveySettings?: {
+        allowBack?: boolean;
+        showProgress?: boolean;
+        showSummary?: boolean;
+        completionMessage?: string;
+        // Phase 2: Anonymous mode setting
+        anonymousMode?: boolean;
+    };
     // Security
     pin?: string;
     allowedCodes?: string[];
@@ -334,6 +343,21 @@ const extractUtmSource = (referrer: string | undefined): string | undefined => {
     }
 };
 
+// ============================================
+// PHASE 2: Check if anonymous mode is enabled
+// ============================================
+const isAnonymousMode = (poll: Poll): boolean => {
+    // Check surveySettings first (for surveys)
+    if (poll.surveySettings?.anonymousMode === true) {
+        return true;
+    }
+    // Also check settings (fallback)
+    if (poll.settings?.anonymousMode === true) {
+        return true;
+    }
+    return false;
+};
+
 export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -391,6 +415,14 @@ export const handler: Handler = async (event) => {
                 headers,
                 body: JSON.stringify({ error: 'Poll not found' })
             };
+        }
+
+        // ============================================
+        // PHASE 2: Check anonymous mode early
+        // ============================================
+        const anonymousMode = isAnonymousMode(poll);
+        if (anonymousMode) {
+            console.log('vg-vote: Anonymous mode ENABLED - will not store identifying data');
         }
 
         // ============================================
@@ -646,35 +678,54 @@ export const handler: Handler = async (event) => {
 
         // ============================================
         // COLLECT ANALYTICS (GDPR-COMPLIANT)
+        // PHASE 2: Skip if anonymous mode
         // ============================================
-        const userAgent = event.headers['user-agent'];
-        const referrer = event.headers['referer'] || event.headers['referrer'];
-        // Netlify provides client IP in x-nf-client-connection-ip or x-forwarded-for
-        const clientIP = event.headers['x-nf-client-connection-ip'] || 
-                         (event.headers['x-forwarded-for']?.split(',')[0]?.trim());
+        let analytics: VoteAnalytics | undefined;
         
-        // Collect analytics data (IP is used for lookup only, NOT stored)
-        const geoData = await getGeoFromIP(clientIP);
-        
-        const analytics: VoteAnalytics = {
-            device: detectDevice(userAgent),
-            country: geoData.country,
-            region: geoData.region,
-            referrerDomain: extractReferrerDomain(referrer),
-            utmSource: extractUtmSource(referrer),
-            timestamp: new Date().toISOString()
-        };
-        
-        console.log('vg-vote: Analytics collected:', JSON.stringify(analytics));
+        if (!anonymousMode) {
+            // Normal mode: collect full analytics
+            const userAgent = event.headers['user-agent'];
+            const referrer = event.headers['referer'] || event.headers['referrer'];
+            // Netlify provides client IP in x-nf-client-connection-ip or x-forwarded-for
+            const clientIP = event.headers['x-nf-client-connection-ip'] || 
+                             (event.headers['x-forwarded-for']?.split(',')[0]?.trim());
+            
+            // Collect analytics data (IP is used for lookup only, NOT stored)
+            const geoData = await getGeoFromIP(clientIP);
+            
+            analytics = {
+                device: detectDevice(userAgent),
+                country: geoData.country,
+                region: geoData.region,
+                referrerDomain: extractReferrerDomain(referrer),
+                utmSource: extractUtmSource(referrer),
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('vg-vote: Analytics collected:', JSON.stringify(analytics));
+        } else {
+            // PHASE 2: Anonymous mode - do NOT collect analytics
+            console.log('vg-vote: Anonymous mode - skipping analytics collection');
+            analytics = undefined;
+        }
 
         // ============================================
         // CREATE VOTE RECORD
+        // PHASE 2: Minimal data for anonymous mode
         // ============================================
         const vote: Vote = {
             id: generateVoteId(),
-            timestamp: new Date().toISOString(),
-            analytics
+            // PHASE 2: For anonymous mode, use a generic timestamp (just the date, no time)
+            // This prevents ordering/correlation of responses
+            timestamp: anonymousMode 
+                ? new Date().toISOString().split('T')[0] + 'T00:00:00.000Z'  // Just the date
+                : new Date().toISOString(),  // Full timestamp
         };
+
+        // Only add analytics if not anonymous
+        if (analytics && !anonymousMode) {
+            vote.analytics = analytics;
+        }
 
         // Add vote data based on poll type
         if (isSurvey) {
@@ -688,8 +739,12 @@ export const handler: Handler = async (event) => {
         }
 
         // Add optional fields
-        if (body.voterName) vote.voterName = body.voterName;
+        // PHASE 2: In anonymous mode, don't store voterName even if provided
+        if (body.voterName && !anonymousMode) {
+            vote.voterName = body.voterName;
+        }
         if (body.code) vote.usedCode = body.code;
+        // PHASE 2: Comments are allowed in anonymous mode (they're already anonymous)
         if (body.comment && poll.settings.allowComments) vote.comment = body.comment;
         if (body.choicesMaybe) vote.choicesMaybe = body.choicesMaybe;
         if (body.matrixVotes) vote.matrixVotes = body.matrixVotes;
@@ -707,17 +762,21 @@ export const handler: Handler = async (event) => {
 
         await store.setJSON(body.pollId, poll);
 
-        console.log(`Vote recorded for poll ${body.pollId}. Total: ${poll.voteCount}`);
+        console.log(`Vote recorded for poll ${body.pollId}. Total: ${poll.voteCount}${anonymousMode ? ' (anonymous)' : ''}`);
 
         // ============================================
         // TRIGGER NOTIFICATIONS (non-blocking)
+        // PHASE 2: Still send notifications in anonymous mode
+        // (they don't expose individual response data)
         // ============================================
         if (poll.tier === 'unlimited' && poll.notificationSettings?.enabled) {
             // Check for suspicious activity (always check, even without explicit setting)
+            // PHASE 2: Still check for suspicious activity in anonymous mode
+            // (this is for poll security, not respondent tracking)
             const suspiciousResult = await detectSuspiciousActivity(
                 poll,
                 ipHash,
-                analytics.device
+                analytics?.device || 'unknown'
             );
             
             if (suspiciousResult.isSuspicious) {
@@ -755,7 +814,8 @@ export const handler: Handler = async (event) => {
             if (vote.comment && poll.notificationSettings.notifyOn.newComment) {
                 triggerNotification(poll, 'comment', {
                     commentText: vote.comment,
-                    commentAuthor: vote.voterName || 'Anonymous'
+                    // PHASE 2: Don't include author name in anonymous mode
+                    commentAuthor: anonymousMode ? 'Anonymous' : (vote.voterName || 'Anonymous')
                 });
             }
         }
@@ -765,7 +825,9 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({
                 success: true,
-                voteCount: poll.voteCount
+                voteCount: poll.voteCount,
+                // PHASE 2: Let client know response was recorded anonymously
+                anonymous: anonymousMode || undefined
             })
         };
 

@@ -124,7 +124,8 @@ export interface SurveyResponse {
     pollId: string;
     respondentId?: string;        // Anonymous ID for tracking
     voterName?: string;
-    submittedAt: string;
+    submittedAt?: string;
+    completedAt?: string;         // When the survey was completed
     startedAt?: string;
     completionTime?: number;      // Seconds to complete
     

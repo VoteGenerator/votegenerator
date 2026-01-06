@@ -28,6 +28,10 @@ import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+// NEW: Path-based survey pages
+import SurveyPage from '../pages/SurveyPage';
+import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
+import CustomerFeedbackPage from '../pages/CustomerFeedbackPage';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
@@ -355,6 +359,12 @@ const VoteGeneratorApp: React.FC = () => {
                 <TemplatesPage />
             ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
                 <PricingPage />
+            ) : window.location.pathname === '/survey' || window.location.pathname.startsWith('/survey') ? (
+                <SurveyPage />
+            ) : window.location.pathname === '/employee-survey' ? (
+                <EmployeeSurveyPage />
+            ) : window.location.pathname === '/customer-feedback' ? (
+                <CustomerFeedbackPage />
             ) : (
             <>
             {/* Header */}

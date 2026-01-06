@@ -74,7 +74,7 @@
   status = 200
 
 # ============================================================================
-# Page Routes
+# Page Routes - Static HTML pages
 # ============================================================================
 [[redirects]]
   from = "/success"
@@ -140,7 +140,36 @@
   to = "/about.html"
   status = 200
 
-# Poll Created Success - uses same entry as create
+[[redirects]]
+  from = "/templates"
+  to = "/templates.html"
+  status = 200
+
+# ============================================================================
+# NEW: Survey & SEO Landing Page Routes (SPA handles these)
+# These MUST come before the wildcard fallback
+# ============================================================================
+[[redirects]]
+  from = "/survey"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/survey/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/employee-survey"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/customer-feedback"
+  to = "/index.html"
+  status = 200
+
+# Poll Created Success
 [[redirects]]
   from = "/poll-created"
   to = "/create.html"
@@ -178,7 +207,7 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 # ============================================================================
-# Security: Block from search engines
+# Security: Block from search engines (admin pages)
 # ============================================================================
 [[headers]]
   for = "/admin-support.html"
@@ -230,17 +259,17 @@
   status = 200
 
 [[redirects]]
-  from = "/ad-wall"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
   from = "/admin"
   to = "/index.html"
   status = 200
 
 [[redirects]]
   from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/recover"
   to = "/index.html"
   status = 200
 

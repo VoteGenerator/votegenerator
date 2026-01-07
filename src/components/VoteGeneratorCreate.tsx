@@ -276,12 +276,32 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // PAID USERS: Go directly to admin dashboard
-                // FREE USERS: Go through ad-wall first
+                // Save poll to localStorage so AdminDashboard can find it
+                try {
+                    const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                    const newPoll = {
+                        id: pollId,
+                        adminKey: adminKey,
+                        question: title.trim(),
+                        type: pollType,
+                        createdAt: new Date().toISOString()
+                    };
+                    // Add to beginning of array (most recent first)
+                    existingPolls.unshift(newPoll);
+                    // Keep only last 50 polls to avoid localStorage bloat
+                    const trimmedPolls = existingPolls.slice(0, 50);
+                    localStorage.setItem('vg_polls', JSON.stringify(trimmedPolls));
+                } catch (e) {
+                    console.error('Failed to save poll to localStorage:', e);
+                }
+                
+                // PAID USERS: Go directly to poll results dashboard
+                // FREE USERS: Go through ad-wall, then to ADMIN DASHBOARD
                 if (isPaidUser) {
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
-                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
+                    // Redirect to admin dashboard - it will load polls from localStorage
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent('/admin')}`;
                 }
                 return;
             } else { 

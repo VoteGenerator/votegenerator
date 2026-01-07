@@ -9,8 +9,8 @@ import {
     Clock, Calendar, ArrowLeft, Share2, Twitter, Linkedin, 
     Link2, Check, ChevronRight, ArrowRight
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../NavHeader';
+import Footer from '../Footer';
 
 // ============================================================================
 // TYPES

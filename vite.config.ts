@@ -11,7 +11,6 @@ export default defineConfig({
                 demo: resolve(__dirname, 'demo.html'),
                 pricing: resolve(__dirname, 'pricing.html'),
                 compare: resolve(__dirname, 'compare.html'),
-                blog: resolve(__dirname, 'blog.html'),
                 help: resolve(__dirname, 'help.html'),
                 contact: resolve(__dirname, 'contact.html'),
                 create: resolve(__dirname, 'create.html'),

@@ -135,10 +135,10 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                         {/* Primary CTA Button */}
                         {!isPaid ? (
                             <a
-                                href="/create"
-                                className="ml-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm rounded-xl hover:shadow-lg transition flex items-center gap-2"
+                                href="/#create"
+                                className="ml-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
                             >
-                                Create Free →
+                                Get Started — It's Free
                             </a>
                         ) : (
                             <a
@@ -191,10 +191,10 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                 
                                 {!isPaid ? (
                                     <a
-                                        href="/create"
-                                        className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl text-center flex items-center justify-center gap-2"
+                                        href="/#create"
+                                        className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2"
                                     >
-                                        Create Free Poll →
+                                        Get Started — It's Free
                                     </a>
                                 ) : (
                                     <a

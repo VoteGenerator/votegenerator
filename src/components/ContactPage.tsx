@@ -1,4 +1,9 @@
-import React, { useState, useRef } from 'react';
+// ============================================================================
+// ContactPage - Contact Form with Netlify Forms
+// Bot protection: Netlify's built-in + honeypot field
+// ============================================================================
+
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Mail, 
@@ -10,67 +15,50 @@ import {
     HelpCircle,
     Zap,
     ArrowRight,
-    Sparkles
+    Sparkles,
+    AlertCircle
 } from 'lucide-react';
 import NavHeader from './NavHeader';
 import Footer from './Footer';
-import PromoBanner from './PromoBanner';
-
-declare global {
-    interface Window {
-        grecaptcha: {
-            ready: (callback: () => void) => void;
-            execute: (siteKey: string, options: { action: string }) => Promise<string>;
-            render: (container: string | HTMLElement, options: { sitekey: string; callback: (token: string) => void }) => number;
-            reset: (widgetId?: number) => void;
-        };
-    }
-}
 
 const ContactPage: React.FC = () => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        subject: 'general',
-        message: ''
-    });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const recaptchaRef = useRef<HTMLDivElement>(null);
 
     const subjects = [
-        { value: 'general', label: 'General Inquiry' },
-        { value: 'support', label: 'Technical Support' },
-        { value: 'billing', label: 'Billing Question' },
-        { value: 'enterprise', label: 'Enterprise / Custom Pricing' },
-        { value: 'partnership', label: 'Partnership Opportunity' },
-        { value: 'feedback', label: 'Product Feedback' },
+        { value: 'general', label: 'General Inquiry', emoji: '💬' },
+        { value: 'support', label: 'Technical Support', emoji: '🔧' },
+        { value: 'billing', label: 'Billing Question', emoji: '💳' },
+        { value: 'enterprise', label: 'Enterprise / Custom Pricing', emoji: '🏢' },
+        { value: 'partnership', label: 'Partnership Opportunity', emoji: '🤝' },
+        { value: 'feedback', label: 'Product Feedback', emoji: '💡' },
     ];
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const [selectedSubject, setSelectedSubject] = useState('general');
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
         setIsSubmitting(true);
 
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
         try {
-            // In production, this would submit to your backend
-            // For now, we'll simulate a submission
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Create mailto link as fallback
-            const mailtoLink = `mailto:hello@votegenerator.com?subject=${encodeURIComponent(
-                `[${subjects.find(s => s.value === formData.subject)?.label}] Contact from ${formData.name}`
-            )}&body=${encodeURIComponent(
-                `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-            )}`;
-            
-            // Open email client
-            window.location.href = mailtoLink;
-            
-            setSubmitted(true);
+            const response = await fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(formData as any).toString(),
+            });
+
+            if (response.ok) {
+                setSubmitted(true);
+            } else {
+                throw new Error('Form submission failed');
+            }
         } catch (err) {
-            setError('Something went wrong. Please try again or email us directly.');
+            setError('Something went wrong. Please try again or email us directly at hello@votegenerator.com');
         } finally {
             setIsSubmitting(false);
         }
@@ -87,15 +75,14 @@ const ContactPage: React.FC = () => {
         },
         {
             q: "Do you offer custom enterprise solutions?",
-            a: "Yes! Email us at hello@votegenerator.com with your requirements and we'll discuss custom options for your organization."
+            a: "Yes! Email us with your requirements and we'll discuss custom options for your organization."
         }
     ];
 
+    // Success State
     if (submitted) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-                <PromoBanner position="top" />
-                <div className="h-12" />
                 <NavHeader />
                 
                 <div className="max-w-2xl mx-auto px-4 py-20">
@@ -111,11 +98,7 @@ const ContactPage: React.FC = () => {
                             Message Sent!
                         </h1>
                         <p className="text-slate-600 mb-8">
-                            Thanks for reaching out! Your email client should have opened with your message. 
-                            If not, please email us directly at{' '}
-                            <a href="mailto:hello@votegenerator.com" className="text-indigo-600 font-semibold hover:underline">
-                                hello@votegenerator.com
-                            </a>
+                            Thanks for reaching out! We've received your message and will get back to you soon.
                         </p>
                         <div className="flex items-center justify-center gap-2 text-sm text-slate-500 mb-8">
                             <Clock size={16} />
@@ -123,17 +106,14 @@ const ContactPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
-                                href="/create.html"
-                                className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors inline-flex items-center justify-center gap-2"
+                                href="/"
+                                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg inline-flex items-center justify-center gap-2"
                             >
                                 <Sparkles size={18} />
                                 Create a Poll
                             </a>
                             <button
-                                onClick={() => {
-                                    setSubmitted(false);
-                                    setFormData({ name: '', email: '', subject: 'general', message: '' });
-                                }}
+                                onClick={() => setSubmitted(false)}
                                 className="px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
                             >
                                 Send Another Message
@@ -147,10 +127,9 @@ const ContactPage: React.FC = () => {
         );
     }
 
+    // Form State
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            <PromoBanner position="top" />
-            <div className="h-12" />
             <NavHeader />
 
             {/* Hero */}
@@ -169,7 +148,8 @@ const ContactPage: React.FC = () => {
                         </h1>
                         <p className="text-xl text-slate-600">
                             Have a question? Need help? Want to discuss enterprise options?
-                            <br />We'd love to hear from you.
+                            <br className="hidden md:block" />
+                            We'd love to hear from you.
                         </p>
                     </motion.div>
                 </div>
@@ -186,33 +166,56 @@ const ContactPage: React.FC = () => {
                         className="lg:col-span-3"
                     >
                         <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* 
+                                Netlify Forms: 
+                                - data-netlify="true" enables Netlify Forms
+                                - data-netlify-honeypot="bot-field" adds bot protection
+                                - name="contact" is required for Netlify to identify the form
+                            */}
+                            <form 
+                                name="contact"
+                                method="POST"
+                                data-netlify="true"
+                                data-netlify-honeypot="bot-field"
+                                onSubmit={handleSubmit}
+                                className="space-y-6"
+                            >
+                                {/* Hidden field for Netlify */}
+                                <input type="hidden" name="form-name" value="contact" />
+                                
+                                {/* Honeypot field - hidden from humans, bots fill it */}
+                                <p className="hidden">
+                                    <label>
+                                        Don't fill this out: <input name="bot-field" />
+                                    </label>
+                                </p>
+
                                 {/* Name & Email Row */}
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                            Your Name *
+                                        <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Your Name <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="text"
+                                            id="name"
+                                            name="name"
                                             required
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                            placeholder="John Smith"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                                            placeholder="Jane Smith"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                            Email Address *
+                                        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Email Address <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="email"
+                                            id="email"
+                                            name="email"
                                             required
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                            placeholder="john@company.com"
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                                            placeholder="jane@company.com"
                                         />
                                     </div>
                                 </div>
@@ -220,49 +223,61 @@ const ContactPage: React.FC = () => {
                                 {/* Subject */}
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        What can we help with? *
+                                        What can we help with? <span className="text-red-500">*</span>
                                     </label>
-                                    <select
-                                        value={formData.subject}
-                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none bg-white"
-                                    >
+                                    <input type="hidden" name="subject" value={subjects.find(s => s.value === selectedSubject)?.label} />
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                         {subjects.map((subject) => (
-                                            <option key={subject.value} value={subject.value}>
-                                                {subject.label}
-                                            </option>
+                                            <button
+                                                key={subject.value}
+                                                type="button"
+                                                onClick={() => setSelectedSubject(subject.value)}
+                                                className={`p-3 rounded-xl border-2 text-left transition-all ${
+                                                    selectedSubject === subject.value
+                                                        ? 'border-indigo-500 bg-indigo-50'
+                                                        : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <span className="text-lg mb-1 block">{subject.emoji}</span>
+                                                <span className={`text-xs font-medium ${
+                                                    selectedSubject === subject.value ? 'text-indigo-700' : 'text-slate-600'
+                                                }`}>
+                                                    {subject.label}
+                                                </span>
+                                            </button>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
 
                                 {/* Message */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Your Message *
+                                    <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Your Message <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
+                                        id="message"
+                                        name="message"
                                         required
                                         rows={5}
-                                        value={formData.message}
-                                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
                                         placeholder="Tell us more about how we can help..."
                                     />
                                 </div>
 
-                                {/* reCAPTCHA Notice */}
-                                <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                                    <Shield size={20} className="text-slate-400 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-slate-500">
-                                        This form is protected by reCAPTCHA. By submitting, you agree to our{' '}
-                                        <a href="#" className="text-indigo-600 hover:underline">Privacy Policy</a> and{' '}
-                                        <a href="#" className="text-indigo-600 hover:underline">Terms of Service</a>.
-                                    </p>
+                                {/* Security Notice */}
+                                <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <Shield size={18} className="text-green-500 shrink-0 mt-0.5" />
+                                    <div className="text-xs text-slate-500">
+                                        <span className="font-medium text-slate-700">Your privacy matters.</span>{' '}
+                                        We'll only use your email to respond to this message. No spam, ever.
+                                    </div>
                                 </div>
 
+                                {/* Error Message */}
                                 {error && (
-                                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                                        {error}
+                                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+                                        <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                        <span>{error}</span>
                                     </div>
                                 )}
 
@@ -272,8 +287,8 @@ const ContactPage: React.FC = () => {
                                     disabled={isSubmitting}
                                     className={`w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
                                         isSubmitting
-                                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl hover:scale-[1.02]'
                                     }`}
                                 >
                                     {isSubmitting ? (
@@ -300,7 +315,7 @@ const ContactPage: React.FC = () => {
                         className="lg:col-span-2 space-y-6"
                     >
                         {/* Direct Contact */}
-                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white">
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg">
                             <h3 className="font-bold text-lg mb-4">Prefer Email?</h3>
                             <a
                                 href="mailto:hello@votegenerator.com"
@@ -309,22 +324,22 @@ const ContactPage: React.FC = () => {
                                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                                     <Mail size={20} />
                                 </div>
-                                <div>
+                                <div className="flex-1">
                                     <p className="font-semibold">hello@votegenerator.com</p>
                                     <p className="text-sm text-indigo-200">We reply within 24 hours</p>
                                 </div>
-                                <ArrowRight size={18} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <ArrowRight size={18} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                             </a>
                         </div>
 
                         {/* Response Time */}
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+                        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                     <Zap size={20} className="text-green-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800">Fast Response</h3>
+                                    <h3 className="font-bold text-slate-900">Fast Response</h3>
                                     <p className="text-sm text-slate-500">Usually within 24 hours</p>
                                 </div>
                             </div>
@@ -345,24 +360,24 @@ const ContactPage: React.FC = () => {
                         </div>
 
                         {/* Quick FAQ */}
-                        <div className="bg-white rounded-2xl p-6 border border-slate-200">
+                        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                                     <HelpCircle size={20} className="text-amber-600" />
                                 </div>
-                                <h3 className="font-bold text-slate-800">Quick Answers</h3>
+                                <h3 className="font-bold text-slate-900">Quick Answers</h3>
                             </div>
                             <div className="space-y-4">
                                 {faqs.map((faq, i) => (
                                     <div key={i} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
                                         <h4 className="font-semibold text-slate-800 text-sm mb-1">{faq.q}</h4>
-                                        <p className="text-slate-500 text-xs">{faq.a}</p>
+                                        <p className="text-slate-500 text-xs leading-relaxed">{faq.a}</p>
                                     </div>
                                 ))}
                             </div>
                             <a
-                                href="/help.html"
-                                className="mt-4 w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+                                href="/help"
+                                className="mt-4 w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
                             >
                                 Visit Help Center
                                 <ArrowRight size={16} />
@@ -373,20 +388,20 @@ const ContactPage: React.FC = () => {
             </div>
 
             {/* CTA Section */}
-            <div className="bg-slate-50 py-12">
+            <div className="bg-gradient-to-br from-slate-100 to-indigo-50 py-16 border-t border-slate-200">
                 <div className="max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
                         Ready to create your first poll?
                     </h2>
-                    <p className="text-slate-600 mb-6">
+                    <p className="text-slate-600 mb-8">
                         No signup required. Start in seconds.
                     </p>
                     <a
-                        href="/create.html"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
+                        href="/#create"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                     >
                         <Sparkles size={20} />
-                        Create Free Poll
+                        Get Started Free
                         <ArrowRight size={20} />
                     </a>
                 </div>

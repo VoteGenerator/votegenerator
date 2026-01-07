@@ -276,27 +276,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // Save poll to localStorage for dashboard listing
-                try {
-                    const savedPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
-                    savedPolls.unshift({
-                        id: pollId,
-                        adminKey: adminKey,
-                        title: title.trim(),
-                        createdAt: new Date().toISOString()
-                    });
-                    // Keep only last 50 polls
-                    localStorage.setItem('vg_polls', JSON.stringify(savedPolls.slice(0, 50)));
-                } catch (e) {
-                    console.error('Failed to save poll to localStorage:', e);
-                }
-                
-                // PAID USERS: Go to Admin Dashboard (shows all polls)
-                // FREE USERS: Go through ad-wall then to Admin Dashboard (upsell opportunity)
+                // PAID USERS: Go directly to admin dashboard
+                // FREE USERS: Go through ad-wall first
                 if (isPaidUser) {
-                    window.location.href = '/admin';
+                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
-                    window.location.href = `/ad-wall?redirect=${encodeURIComponent('/admin')}`;
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
                 }
                 return;
             } else { 
@@ -340,21 +325,27 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     </motion.div>
                 )}
                 
-                {/* Free User - Templates CTA */}
+                {/* Free User - Templates CTA - MORE PROMINENT */}
                 {!isPaidUser && !hideTierBanner && (
                     <motion.div 
                         initial={{ opacity: 0, y: -10 }} 
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 flex items-center justify-between"
+                        className="mb-6 p-5 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-between shadow-sm"
                     >
-                        <div className="flex items-center gap-3">
-                            <LayoutTemplate size={24} className="text-indigo-600" />
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                                <LayoutTemplate size={24} className="text-white" />
+                            </div>
                             <div>
-                                <p className="font-bold text-slate-900">Start faster with templates</p>
-                                <p className="text-sm text-slate-600">Pre-built polls for common use cases</p>
+                                <p className="font-bold text-slate-900 text-lg">Start faster with templates</p>
+                                <p className="text-sm text-slate-600">50+ pre-built polls ready to use — just customize and share</p>
                             </div>
                         </div>
-                        <a href="/templates" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
+                        <a 
+                            href="/templates" 
+                            className="px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all flex items-center gap-2"
+                        >
+                            <Sparkles size={18} />
                             Browse Templates
                         </a>
                     </motion.div>
@@ -804,16 +795,98 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     <button onClick={() => setPreviewDevice('mobile')} className={`p-2 rounded-md transition ${previewDevice === 'mobile' ? 'bg-white shadow' : ''}`}><Smartphone size={16} /></button>
                                 </div>
                             </div>
-                            <div className={`bg-slate-100 rounded-2xl p-4 ${previewDevice === 'mobile' ? 'max-w-[320px] mx-auto' : ''}`}>
-                                <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                                    {/* Template Badge in Preview */}
-                                    {activeTemplate && (
-                                        <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
-                                            <span className="text-lg">{activeTemplate.icon}</span>
-                                            <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                            
+                            {/* Device Frame */}
+                            {previewDevice === 'mobile' ? (
+                                /* Mobile Phone Frame - Clean Modern Design */
+                                <div className="flex justify-center">
+                                    <div className="relative">
+                                        {/* Phone outer shell */}
+                                        <div className="w-[280px] bg-slate-800 rounded-[3rem] p-3 shadow-2xl">
+                                            {/* Screen container */}
+                                            <div className="relative bg-white rounded-[2.25rem] overflow-hidden">
+                                                {/* Dynamic Island (pill shape) */}
+                                                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
+                                                
+                                                {/* Screen content */}
+                                                <div className="pt-12 pb-6" style={{ minHeight: '480px' }}>
+                                                    {/* Template Badge in Preview */}
+                                                    {activeTemplate && (
+                                                        <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
+                                                            <span className="text-lg">{activeTemplate.icon}</span>
+                                                            <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="px-5 pt-4">
+                                                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                                                            {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
+                                                        </h4>
+                                                        {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
+                                                        
+                                                        {pollType === 'image' && imageOptions.length > 0 ? (
+                                                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                                                {imageOptions.map((img, i) => (
+                                                                    <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
+                                                                        <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
+                                                                    <div key={i} className="p-3 border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
+                                                                        {opt}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="px-5 pt-4">
+                                                        <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">
+                                                            {buttonText || 'Submit Vote'}
+                                                        </button>
+                                                        {/* Powered by badge for free users */}
+                                                        {!isPaidUser && (
+                                                            <div className="mt-3 text-center">
+                                                                <span className="text-xs text-slate-400">
+                                                                    Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Home indicator bar */}
+                                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full"></div>
+                                            </div>
                                         </div>
-                                    )}
-                                    <div className="p-6">
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Desktop Browser Frame */
+                                <div className="bg-slate-100 rounded-2xl overflow-hidden shadow-xl border border-slate-200">
+                                    {/* Browser chrome */}
+                                    <div className="bg-slate-200 px-4 py-2 flex items-center gap-3 border-b border-slate-300">
+                                        {/* Traffic lights */}
+                                        <div className="flex gap-1.5">
+                                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                                            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                        </div>
+                                        {/* URL bar */}
+                                        <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
+                                            votegenerator.com/v/abc123
+                                        </div>
+                                    </div>
+                                    {/* Browser content */}
+                                    <div className="bg-white p-6">
+                                        {/* Template Badge in Preview */}
+                                        {activeTemplate && (
+                                            <div className={`-mx-6 -mt-6 mb-6 px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
+                                                <span className="text-lg">{activeTemplate.icon}</span>
+                                                <span className="font-semibold text-sm">{activeTemplate.name}</span>
+                                            </div>
+                                        )}
                                         <h4 className="text-xl font-bold text-slate-900 mb-2">
                                             {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
                                         </h4>
@@ -836,14 +909,22 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 ))}
                                             </div>
                                         )}
-                                    </div>
-                                    <div className="px-6 pb-6">
-                                        <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
-                                            {buttonText || 'Submit Vote'}
-                                        </button>
+                                        <div className="mt-6">
+                                            <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
+                                                {buttonText || 'Submit Vote'}
+                                            </button>
+                                            {/* Powered by badge for free users */}
+                                            {!isPaidUser && (
+                                                <div className="mt-3 text-center">
+                                                    <span className="text-xs text-slate-400">
+                                                        Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>

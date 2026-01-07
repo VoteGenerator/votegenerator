@@ -33,9 +33,9 @@ import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
 import CustomerFeedbackPage from '../pages/CustomerFeedbackPage';
 import ContactPage from './ContactPage';
-import BlogIndex from './BlogIndex';
-import BlogPostAnonymousSurvey from './BlogPostAnonymousSurvey';
-import BlogPost50Questions from './BlogPost50Questions';
+import BlogIndex from './blog/BlogIndex';
+import BlogPostAnonymousSurvey from './blog/BlogPostAnonymousSurvey';
+import BlogPost50Questions from './blog/BlogPost50Questions';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, getRawVotes } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 

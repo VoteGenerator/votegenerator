@@ -6,8 +6,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ArrowRight, Search } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../NavHeader';
+import Footer from '../Footer';
 
 // ============================================================================
 // BLOG POST DATA

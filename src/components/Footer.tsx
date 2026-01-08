@@ -56,14 +56,14 @@ const Footer: React.FC = () => {
                         </ul>
                     </div>
 
-                    {/* Use Cases */}
+                    {/* For Creators */}
                     <div>
-                        <h4 className="text-white font-bold mb-4">Use Cases</h4>
+                        <h4 className="text-white font-bold mb-4">For Creators</h4>
                         <ul className="space-y-3">
+                            <li><a href="/youtube-polls" className="hover:text-white transition">YouTube Polls</a></li>
+                            <li><a href="/twitch-polls" className="hover:text-white transition">Twitch Polls</a></li>
                             <li><a href="/employee-survey" className="hover:text-white transition">Employee Surveys</a></li>
                             <li><a href="/customer-feedback" className="hover:text-white transition">Customer Feedback</a></li>
-                            <li><a href="/online-rsvp" className="hover:text-white transition">Online RSVP</a></li>
-                            <li><a href="/feedback-form" className="hover:text-white transition">Feedback Forms</a></li>
                             <li><a href="/compare" className="hover:text-white transition">vs StrawPoll</a></li>
                         </ul>
                     </div>
@@ -78,6 +78,7 @@ const Footer: React.FC = () => {
                             <li><a href="/help" className="hover:text-white transition">Help Center</a></li>
                             <li><a href="/privacy" className="hover:text-white transition">Privacy Policy</a></li>
                             <li><a href="/terms" className="hover:text-white transition">Terms of Service</a></li>
+                            <li><a href="/refund" className="hover:text-white transition">Refund Policy</a></li>
                         </ul>
                     </div>
                 </div>

@@ -7,6 +7,8 @@ import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
 import TemplatesPage from './TemplatesPage';
 import PricingPage from './PricingPage';
+import YouTubeCreatorsPage from './YouTubeCreatorsPage';
+import TwitchStreamersPage from './TwitchStreamersPage';
 import AdminDashboard from './AdminDashboard';
 import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
@@ -362,8 +364,12 @@ const VoteGeneratorApp: React.FC = () => {
             ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (
                 <TemplatesPage />
             ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
-                <PricingPage />
-            ) : window.location.pathname === '/survey' || window.location.pathname.startsWith('/survey') ? (
+               <PricingPage />
+           ) : window.location.pathname === '/youtube-polls' || window.location.pathname === '/creators' ? (
+              <YouTubeCreatorsPage />
+            ) : window.location.pathname === '/twitch-polls' || window.location.pathname === '/streamers' ? (
+           <TwitchStreamersPage />
+            ) : (
                 <SurveyPage />
             ) : window.location.pathname === '/employee-survey' ? (
                 <EmployeeSurveyPage />

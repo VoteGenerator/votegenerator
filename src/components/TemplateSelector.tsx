@@ -1,19 +1,19 @@
 // ============================================================================
 // TemplateSelector - Beautiful template browsing and selection
+// NOW WITH: Hash navigation support for /templates#polls and /templates#surveys
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Sparkles, ArrowRight, Clock, Users, CheckCircle, 
     ListOrdered, Star, Image, ArrowLeftRight, X,
-    Zap, ChevronRight
+    Zap, ChevronRight, ClipboardList
 } from 'lucide-react';
 import { 
     POLL_TEMPLATES, 
     TEMPLATE_CATEGORIES, 
     PollTemplate,
-    getTemplatesByCategory 
 } from './pollTemplates';
 
 // Icon mapping for poll types
@@ -25,6 +25,7 @@ const POLL_TYPE_ICONS: Record<string, React.ElementType> = {
     pairwise: ArrowLeftRight,
     meeting: Clock,
     rsvp: Users,
+    survey: ClipboardList,
 };
 
 // Poll type labels
@@ -36,6 +37,7 @@ const POLL_TYPE_LABELS: Record<string, string> = {
     pairwise: 'Compare',
     meeting: 'Schedule',
     rsvp: 'RSVP',
+    survey: 'Survey',
 };
 
 interface TemplateSelectorProps {
@@ -52,7 +54,7 @@ const TemplateCard: React.FC<{
 }> = ({ template, onSelect, index }) => {
     const [isHovered, setIsHovered] = useState(false);
     const PollTypeIcon = POLL_TYPE_ICONS[template.pollType] || CheckCircle;
-
+    
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -95,7 +97,16 @@ const TemplateCard: React.FC<{
                             </svg>
                         )}
                     </div>
-
+                    
+                    {/* Badge (if featured/anonymous) */}
+                    {template.badge && (
+                        <div className="absolute top-3 right-3">
+                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${template.badgeColor || 'bg-white/20 text-white'}`}>
+                                {template.badge}
+                            </span>
+                        </div>
+                    )}
+                    
                     {/* Icon & Category */}
                     <div className="relative z-10 flex items-start justify-between">
                         <motion.div 
@@ -112,7 +123,7 @@ const TemplateCard: React.FC<{
                             {template.categoryLabel}
                         </span>
                     </div>
-
+                    
                     {/* Poll Type Badge */}
                     <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full">
                         <PollTypeIcon size={12} className="text-slate-600" />
@@ -121,7 +132,7 @@ const TemplateCard: React.FC<{
                         </span>
                     </div>
                 </div>
-
+                
                 {/* Content */}
                 <div className="bg-white p-5">
                     <h3 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
@@ -130,7 +141,7 @@ const TemplateCard: React.FC<{
                     <p className="text-slate-500 text-sm mb-4 line-clamp-2">
                         {template.description}
                     </p>
-
+                    
                     {/* Preview Question */}
                     <div className="bg-slate-50 rounded-xl p-3 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-1">
@@ -140,7 +151,7 @@ const TemplateCard: React.FC<{
                             "{template.question}"
                         </p>
                     </div>
-
+                    
                     {/* Meta Info */}
                     <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
                         <div className="flex items-center gap-1.5">
@@ -155,7 +166,7 @@ const TemplateCard: React.FC<{
                             ))}
                         </div>
                     </div>
-
+                    
                     {/* CTA Button */}
                     <motion.button
                         onClick={() => onSelect(template)}
@@ -189,9 +200,50 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 }) => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'polls' | 'surveys'>('all');
     
-    // Filter templates by category and search
+    // Refs for scroll targets
+    const pollsSectionRef = useRef<HTMLDivElement>(null);
+    const surveysSectionRef = useRef<HTMLDivElement>(null);
+    
+    // Handle hash navigation on mount and hash change
+    useEffect(() => {
+        if (isModal) return; // Don't handle hash in modal mode
+        
+        const handleHashNavigation = () => {
+            const hash = window.location.hash.toLowerCase();
+            
+            if (hash === '#polls') {
+                setTypeFilter('polls');
+                setTimeout(() => {
+                    pollsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else if (hash === '#surveys') {
+                setTypeFilter('surveys');
+                setTimeout(() => {
+                    surveysSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        };
+        
+        // Run on mount
+        handleHashNavigation();
+        
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashNavigation);
+        return () => window.removeEventListener('hashchange', handleHashNavigation);
+    }, [isModal]);
+    
+    // Filter templates by category, search, and type
     const filteredTemplates = POLL_TEMPLATES.filter(template => {
+        // Type filter (polls vs surveys)
+        if (typeFilter === 'polls' && template.pollType === 'survey') {
+            return false;
+        }
+        if (typeFilter === 'surveys' && template.pollType !== 'survey') {
+            return false;
+        }
+        
         // Category filter
         const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
         
@@ -207,9 +259,17 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         
         return matchesCategory && matchesSearch;
     });
-
+    
+    // Separate polls and surveys for section display
+    const pollTemplates = filteredTemplates.filter(t => t.pollType !== 'survey');
+    const surveyTemplates = filteredTemplates.filter(t => t.pollType === 'survey');
+    
+    // Count totals
+    const totalPolls = POLL_TEMPLATES.filter(t => t.pollType !== 'survey').length;
+    const totalSurveys = POLL_TEMPLATES.filter(t => t.pollType === 'survey').length;
+    
     const content = (
-        <div className={isModal ? '' : 'min-h-screen bg-gradient-to-b from-slate-50 to-white'}>
+        <div className={isModal ? '' : 'min-h-screen bg-gradient-to-b from-indigo-50/40 via-white to-blue-50/30'}>
             {/* Header */}
             <div className={`${isModal ? 'p-6 border-b border-slate-200' : 'pt-12 pb-8 px-4'}`}>
                 <div className="max-w-5xl mx-auto">
@@ -229,7 +289,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium mb-4">
                             <Zap size={16} />
-                            {POLL_TEMPLATES.length} Ready-to-Use Templates
+                            Free Templates
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
                             Find Your Perfect Template
@@ -262,7 +322,49 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     </motion.div>
                 </div>
             </div>
-
+            
+            {/* Type Filter Toggle (Polls vs Surveys) */}
+            {!isModal && (
+                <div className="px-4 pb-4">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="flex justify-center">
+                            <div className="inline-flex bg-slate-100 rounded-xl p-1">
+                                {[
+                                    { id: 'all', label: 'All Templates', count: POLL_TEMPLATES.length },
+                                    { id: 'polls', label: 'Polls', count: totalPolls },
+                                    { id: 'surveys', label: 'Surveys', count: totalSurveys },
+                                ].map((type) => (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => {
+                                            setTypeFilter(type.id as 'all' | 'polls' | 'surveys');
+                                            // Update URL hash
+                                            if (type.id !== 'all') {
+                                                window.history.pushState({}, '', `/templates#${type.id}`);
+                                            } else {
+                                                window.history.pushState({}, '', '/templates');
+                                            }
+                                        }}
+                                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                                            typeFilter === type.id
+                                                ? 'bg-white text-indigo-600 shadow-sm'
+                                                : 'text-slate-600 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        {type.label}
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                            typeFilter === type.id ? 'bg-indigo-100' : 'bg-slate-200'
+                                        }`}>
+                                            {type.count}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             {/* Category Pills */}
             <div className={`${isModal ? 'px-6 py-4' : 'px-4 pb-8'}`}>
                 <div className="max-w-5xl mx-auto">
@@ -273,9 +375,14 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         className="flex flex-wrap justify-center gap-2"
                     >
                         {TEMPLATE_CATEGORIES.map((cat) => {
-                            const count = cat.id === 'all' 
-                                ? POLL_TEMPLATES.length 
-                                : POLL_TEMPLATES.filter(t => t.category === cat.id).length;
+                            // Count based on current type filter
+                            let count: number;
+                            if (cat.id === 'all') {
+                                count = filteredTemplates.length;
+                            } else {
+                                count = filteredTemplates.filter(t => t.category === cat.id).length;
+                            }
+                            
                             return (
                                 <button
                                     key={cat.id}
@@ -308,44 +415,106 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     )}
                 </div>
             </div>
-
+            
             {/* Templates Grid */}
             <div className={`${isModal ? 'px-6 pb-6 max-h-[60vh] overflow-y-auto' : 'px-4 pb-16'}`}>
                 <div className="max-w-5xl mx-auto">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={selectedCategory}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                        >
-                            {filteredTemplates.map((template, index) => (
-                                <TemplateCard
-                                    key={template.id}
-                                    template={template}
-                                    onSelect={onSelectTemplate}
-                                    index={index}
-                                />
-                            ))}
-                        </motion.div>
-                    </AnimatePresence>
-
+                    {/* Show by section when viewing "all" and not searching */}
+                    {typeFilter === 'all' && !searchQuery && selectedCategory === 'all' ? (
+                        <>
+                            {/* Poll Templates Section */}
+                            {pollTemplates.length > 0 && (
+                                <div ref={pollsSectionRef} className="mb-12 scroll-mt-48">
+                                    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                        <CheckCircle className="w-5 h-5 text-indigo-600" />
+                                        Poll Templates
+                                        <span className="text-sm font-normal text-slate-500">({pollTemplates.length})</span>
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {pollTemplates.map((template, index) => (
+                                            <TemplateCard
+                                                key={template.id}
+                                                template={template}
+                                                onSelect={onSelectTemplate}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Survey Templates Section */}
+                            {surveyTemplates.length > 0 && (
+                                <div ref={surveysSectionRef} className="scroll-mt-48">
+                                    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                        <ClipboardList className="w-5 h-5 text-teal-600" />
+                                        Survey Templates
+                                        <span className="text-sm font-normal text-slate-500">({surveyTemplates.length})</span>
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {surveyTemplates.map((template, index) => (
+                                            <TemplateCard
+                                                key={template.id}
+                                                template={template}
+                                                onSelect={onSelectTemplate}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* Single grid when filtered */
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`${selectedCategory}-${typeFilter}`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <div 
+                                    ref={typeFilter === 'polls' ? pollsSectionRef : typeFilter === 'surveys' ? surveysSectionRef : undefined}
+                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                >
+                                    {filteredTemplates.map((template, index) => (
+                                        <TemplateCard
+                                            key={template.id}
+                                            template={template}
+                                            onSelect={onSelectTemplate}
+                                            index={index}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+                    )}
+                    
                     {/* Empty State */}
                     {filteredTemplates.length === 0 && (
                         <div className="text-center py-16">
                             <div className="text-4xl mb-4">🔍</div>
-                            <p className="text-slate-500">No templates in this category yet.</p>
+                            <p className="text-slate-500 mb-4">No templates found.</p>
+                            <button
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setSelectedCategory('all');
+                                    setTypeFilter('all');
+                                }}
+                                className="text-indigo-600 font-medium hover:text-indigo-700"
+                            >
+                                Clear all filters
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
-
+            
             {/* Or Start Blank */}
             {!isModal && (
                 <div className="max-w-5xl mx-auto px-4 pb-16">
-                    <div className="bg-slate-50 rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
+                    <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
                         <p className="text-slate-500 mb-4">
                             Want more control? Start from scratch.
                         </p>

@@ -316,7 +316,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-8">
+        <div className="min-h-screen bg-gradient-to-b from-indigo-50/40 via-white to-blue-50/30 py-8">
             <div className="max-w-6xl mx-auto px-4">
                 {/* Subscription Status Header for Paid Users */}
                 {isPaidUser && !hideTierBanner && (
@@ -357,17 +357,26 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 <LayoutTemplate size={24} className="text-white" />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-900 text-lg">Start faster with templates</p>
-                                <p className="text-sm text-slate-600">50+ pre-built polls ready to use — just customize and share</p>
+                                <p className="font-bold text-slate-900 text-lg">Start faster with free templates</p>
+                                <p className="text-sm text-slate-600">
+                                    Pre-built and ready to use — just customize and share
+                                </p>
                             </div>
                         </div>
-                        <a 
-                            href="/templates" 
-                            className="px-5 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all flex items-center gap-2"
-                        >
-                            <Sparkles size={18} />
-                            Browse Templates
-                        </a>
+                        <div className="flex gap-2">
+                            <a 
+                                href="/templates#polls" 
+                                className="px-4 py-2.5 bg-white border-2 border-amber-300 text-amber-700 rounded-xl font-semibold hover:bg-amber-50 transition-all"
+                            >
+                                Poll Templates
+                            </a>
+                            <a 
+                                href="/templates#surveys" 
+                                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all"
+                            >
+                                Survey Templates
+                            </a>
+                        </div>
                     </motion.div>
                 )}
 
@@ -382,17 +391,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     {/* Left: Form */}
                     <div className="space-y-6">
                         {/* Poll Type Selection */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="font-bold text-slate-900 flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm">1</span>
-                                    Poll Type
-                                </h2>
-                                <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
-                                    <CheckSquare size={12} />
-                                    ✓ All types included free
-                                </span>
-                            </div>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6">
+                            <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
+                                <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm">1</span>
+                                Poll Type
+                            </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {POLL_TYPES.map((type) => (
                                     <button
@@ -423,7 +426,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         </motion.div>
 
                         {/* Question & Options */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
                             <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
                                 <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm">2</span>
                                 {pollType === 'survey' ? 'Survey Title & Questions' : 'Question & Options'}
@@ -612,7 +615,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
                             subscriptionTier === 'business' ? 'border-2 border-purple-200' :
                             subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                            'border border-slate-200/50'
+                            'border border-amber-200'
                         }`}>
                             <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50">
                                 <span className="font-bold text-slate-900 flex items-center gap-2">

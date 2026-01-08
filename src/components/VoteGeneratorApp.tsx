@@ -351,7 +351,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen pb-10">
+ <div className="min-h-screen pb-10">
             {/* ROUTE: /ad-wall */}
             {window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
@@ -364,12 +364,12 @@ const VoteGeneratorApp: React.FC = () => {
             ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (
                 <TemplatesPage />
             ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
-               <PricingPage />
-           ) : window.location.pathname === '/youtube-polls' || window.location.pathname === '/creators' ? (
-              <YouTubeCreatorsPage />
+                <PricingPage />
+            ) : window.location.pathname === '/youtube-polls' || window.location.pathname === '/creators' ? (
+                <YouTubeCreatorsPage />
             ) : window.location.pathname === '/twitch-polls' || window.location.pathname === '/streamers' ? (
-           <TwitchStreamersPage />
-            ) : (
+                <TwitchStreamersPage />
+            ) : window.location.pathname === '/survey' ? (
                 <SurveyPage />
             ) : window.location.pathname === '/employee-survey' ? (
                 <EmployeeSurveyPage />

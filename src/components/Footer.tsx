@@ -1,6 +1,5 @@
-// Footer.tsx - Clean version
+// Footer.tsx - Using <a> tags instead of <Link> to avoid Router context issues
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -13,10 +12,10 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Product</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link to="/create" className="hover:text-white transition">Create Poll</Link></li>
-                            <li><Link to="/templates" className="hover:text-white transition">Templates</Link></li>
-                            <li><Link to="/pricing" className="hover:text-white transition">Pricing</Link></li>
-                            <li><Link to="/survey" className="hover:text-white transition">Survey Maker</Link></li>
+                            <li><a href="/create" className="hover:text-white transition">Create Poll</a></li>
+                            <li><a href="/templates" className="hover:text-white transition">Templates</a></li>
+                            <li><a href="/pricing" className="hover:text-white transition">Pricing</a></li>
+                            <li><a href="/survey" className="hover:text-white transition">Survey Maker</a></li>
                         </ul>
                     </div>
                     
@@ -24,9 +23,9 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-white mb-4">For Creators</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link to="/youtube-polls" className="hover:text-white transition">YouTube Polls</Link></li>
-                            <li><Link to="/twitch-polls" className="hover:text-white transition">Twitch Polls</Link></li>
-                            <li><Link to="/reddit-polls" className="hover:text-white transition">Reddit Polls</Link></li>
+                            <li><a href="/youtube-polls" className="hover:text-white transition">YouTube Polls</a></li>
+                            <li><a href="/twitch-polls" className="hover:text-white transition">Twitch Polls</a></li>
+                            <li><a href="/reddit-polls" className="hover:text-white transition">Reddit Polls</a></li>
                         </ul>
                     </div>
                     
@@ -34,8 +33,8 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Resources</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link to="/blog" className="hover:text-white transition">Blog</Link></li>
-                            <li><Link to="/how-it-works" className="hover:text-white transition">How It Works</Link></li>
+                            <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
+                            <li><a href="/how-it-works" className="hover:text-white transition">How It Works</a></li>
                             <li><a href="mailto:support@votegenerator.com" className="hover:text-white transition">Support</a></li>
                         </ul>
                     </div>
@@ -44,9 +43,9 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Legal</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
-                            <li><Link to="/terms" className="hover:text-white transition">Terms of Service</Link></li>
-                            <li><Link to="/refund" className="hover:text-white transition">Refund Policy</Link></li>
+                            <li><a href="/privacy" className="hover:text-white transition">Privacy Policy</a></li>
+                            <li><a href="/terms" className="hover:text-white transition">Terms of Service</a></li>
+                            <li><a href="/refund" className="hover:text-white transition">Refund Policy</a></li>
                         </ul>
                     </div>
                 </div>

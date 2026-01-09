@@ -1,20 +1,28 @@
 // ============================================================================
 // TemplateSelector - Beautiful template browsing and selection
+// NOW WITH: Hash navigation support and Creator Templates (YouTube, Twitch, Reddit)
 // ============================================================================
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Sparkles, ArrowRight, Clock, Users, CheckCircle, 
     ListOrdered, Star, Image, ArrowLeftRight, X,
-    Zap, ChevronRight
+    Zap, ChevronRight, ClipboardList, Play
 } from 'lucide-react';
 import { 
     POLL_TEMPLATES, 
     TEMPLATE_CATEGORIES, 
     PollTemplate,
-    getTemplatesByCategory 
 } from './pollTemplates';
+import { CREATOR_TEMPLATES } from './creatorTemplates';
+
+// Merge all templates
+const ALL_TEMPLATES = [...POLL_TEMPLATES, ...CREATOR_TEMPLATES];
+
+// Extended categories (add creators if not in base)
+const EXTENDED_CATEGORIES = TEMPLATE_CATEGORIES.find(c => c.id === 'creators')
+    ? TEMPLATE_CATEGORIES
+    : [...TEMPLATE_CATEGORIES.slice(0, -1), { id: 'creators', label: 'Content Creators', icon: '🎬' }, ...TEMPLATE_CATEGORIES.slice(-1)];
 
 // Icon mapping for poll types
 const POLL_TYPE_ICONS: Record<string, React.ElementType> = {
@@ -25,6 +33,7 @@ const POLL_TYPE_ICONS: Record<string, React.ElementType> = {
     pairwise: ArrowLeftRight,
     meeting: Clock,
     rsvp: Users,
+    survey: ClipboardList,
 };
 
 // Poll type labels
@@ -36,7 +45,71 @@ const POLL_TYPE_LABELS: Record<string, string> = {
     pairwise: 'Compare',
     meeting: 'Schedule',
     rsvp: 'RSVP',
+    survey: 'Survey',
 };
+
+// Creator platform config
+const CREATOR_PLATFORMS = [
+    { 
+        id: 'youtube', 
+        name: 'YouTube', 
+        icon: '▶️',
+        color: 'from-red-500 to-red-600',
+        borderColor: 'border-red-200 hover:border-red-300',
+        textColor: 'text-red-600',
+        bgColor: 'bg-red-50',
+        href: '/youtube-polls',
+        description: 'Engage your audience with video idea polls, upload schedules, and thumbnail tests'
+    },
+    { 
+        id: 'twitch', 
+        name: 'Twitch', 
+        icon: '📺',
+        color: 'from-purple-500 to-purple-600',
+        borderColor: 'border-purple-200 hover:border-purple-300',
+        textColor: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+        href: '/twitch-polls',
+        description: 'Let viewers vote on games, challenges, and stream decisions in real-time'
+    },
+    { 
+        id: 'reddit', 
+        name: 'Reddit', 
+        icon: '🔗',
+        color: 'from-orange-500 to-orange-600',
+        borderColor: 'border-orange-200 hover:border-orange-300',
+        textColor: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+        href: '/reddit-polls',
+        description: 'Create polls that work seamlessly across subreddits and communities'
+    },
+];
+
+// Featured survey types config
+const FEATURED_SURVEY_TYPES = [
+    {
+        id: 'csat',
+        name: 'Customer Satisfaction (CSAT)',
+        icon: '⭐',
+        color: 'from-amber-500 to-yellow-500',
+        borderColor: 'border-amber-200 hover:border-amber-300',
+        textColor: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+        keywords: ['csat', 'customer', 'satisfaction', 'nps', 'feedback'],
+        description: 'Measure customer happiness with CSAT, NPS, and feedback surveys'
+    },
+    {
+        id: 'employee',
+        name: 'Employee Surveys',
+        icon: '👥',
+        color: 'from-emerald-500 to-teal-500',
+        borderColor: 'border-emerald-200 hover:border-emerald-300',
+        textColor: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+        keywords: ['employee', 'engagement', 'workplace', 'hr', 'staff', 'team'],
+        description: 'Boost engagement with pulse checks, satisfaction, and culture surveys'
+    },
+];
 
 interface TemplateSelectorProps {
     onSelectTemplate: (template: PollTemplate) => void;
@@ -52,7 +125,7 @@ const TemplateCard: React.FC<{
 }> = ({ template, onSelect, index }) => {
     const [isHovered, setIsHovered] = useState(false);
     const PollTypeIcon = POLL_TYPE_ICONS[template.pollType] || CheckCircle;
-
+    
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -76,26 +149,35 @@ const TemplateCard: React.FC<{
                 `}>
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-20">
-                        {template.previewStyle.bgPattern === 'dots' && (
+                        {template.previewStyle?.bgPattern === 'dots' && (
                             <div className="absolute inset-0" style={{
                                 backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
                                 backgroundSize: '20px 20px'
                             }} />
                         )}
-                        {template.previewStyle.bgPattern === 'grid' && (
+                        {template.previewStyle?.bgPattern === 'grid' && (
                             <div className="absolute inset-0" style={{
                                 backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
                                 backgroundSize: '30px 30px'
                             }} />
                         )}
-                        {template.previewStyle.bgPattern === 'waves' && (
+                        {template.previewStyle?.bgPattern === 'waves' && (
                             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                                 <path d="M0,50 Q25,30 50,50 T100,50 V100 H0 Z" fill="white" opacity="0.1" />
                                 <path d="M0,60 Q25,40 50,60 T100,60 V100 H0 Z" fill="white" opacity="0.1" />
                             </svg>
                         )}
                     </div>
-
+                    
+                    {/* Badge (if featured/anonymous) */}
+                    {template.badge && (
+                        <div className="absolute top-3 right-3">
+                            <span className={`px-2 py-1 text-xs font-bold rounded-full ${template.badgeColor || 'bg-white/20 text-white'}`}>
+                                {template.badge}
+                            </span>
+                        </div>
+                    )}
+                    
                     {/* Icon & Category */}
                     <div className="relative z-10 flex items-start justify-between">
                         <motion.div 
@@ -112,7 +194,7 @@ const TemplateCard: React.FC<{
                             {template.categoryLabel}
                         </span>
                     </div>
-
+                    
                     {/* Poll Type Badge */}
                     <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full">
                         <PollTypeIcon size={12} className="text-slate-600" />
@@ -121,7 +203,7 @@ const TemplateCard: React.FC<{
                         </span>
                     </div>
                 </div>
-
+                
                 {/* Content */}
                 <div className="bg-white p-5">
                     <h3 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
@@ -130,7 +212,7 @@ const TemplateCard: React.FC<{
                     <p className="text-slate-500 text-sm mb-4 line-clamp-2">
                         {template.description}
                     </p>
-
+                    
                     {/* Preview Question */}
                     <div className="bg-slate-50 rounded-xl p-3 mb-4">
                         <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-1">
@@ -140,7 +222,7 @@ const TemplateCard: React.FC<{
                             "{template.question}"
                         </p>
                     </div>
-
+                    
                     {/* Meta Info */}
                     <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
                         <div className="flex items-center gap-1.5">
@@ -148,14 +230,14 @@ const TemplateCard: React.FC<{
                             <span>{template.estimatedTime}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            {template.bestFor.slice(0, 2).map((use, i) => (
+                            {template.bestFor?.slice(0, 2).map((use, i) => (
                                 <span key={i} className="px-2 py-0.5 bg-slate-100 rounded text-slate-500">
                                     {use}
                                 </span>
                             ))}
                         </div>
                     </div>
-
+                    
                     {/* CTA Button */}
                     <motion.button
                         onClick={() => onSelect(template)}
@@ -181,6 +263,97 @@ const TemplateCard: React.FC<{
     );
 };
 
+// Creator Platform Card Component
+const CreatorPlatformCard: React.FC<{
+    platform: typeof CREATOR_PLATFORMS[0];
+    templates: PollTemplate[];
+}> = ({ platform, templates }) => {
+    return (
+        <a
+            href={platform.href}
+            className={`group block p-6 bg-white border-2 ${platform.borderColor} rounded-2xl hover:shadow-lg transition-all`}
+        >
+            <div className="flex items-center gap-4 mb-4">
+                <div className={`w-14 h-14 bg-gradient-to-br ${platform.color} rounded-xl flex items-center justify-center text-2xl shadow-lg`}>
+                    {platform.icon}
+                </div>
+                <div>
+                    <h3 className="font-bold text-slate-900 text-lg">{platform.name} Polls</h3>
+                    <p className="text-sm text-slate-500">{templates.length} templates</p>
+                </div>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                {platform.description}
+            </p>
+            
+            {/* Preview templates */}
+            <div className="space-y-2 mb-4">
+                {templates.slice(0, 3).map(template => (
+                    <div key={template.id} className="flex items-center gap-2 text-sm text-slate-600">
+                        <span>{template.icon}</span>
+                        <span className="truncate">{template.name}</span>
+                    </div>
+                ))}
+            </div>
+            
+            <div className={`flex items-center gap-2 ${platform.textColor} font-semibold group-hover:gap-3 transition-all`}>
+                View all templates <ArrowRight size={16} />
+            </div>
+        </a>
+    );
+};
+
+// Featured Survey Type Card Component
+const FeaturedSurveyCard: React.FC<{
+    surveyType: typeof FEATURED_SURVEY_TYPES[0];
+    templates: PollTemplate[];
+    onSelectTemplate: (template: PollTemplate) => void;
+    onViewAll: () => void;
+}> = ({ surveyType, templates, onSelectTemplate, onViewAll }) => {
+    return (
+        <div className={`p-6 bg-white border-2 ${surveyType.borderColor} rounded-2xl hover:shadow-lg transition-all`}>
+            <div className="flex items-center gap-4 mb-4">
+                <div className={`w-14 h-14 bg-gradient-to-br ${surveyType.color} rounded-xl flex items-center justify-center text-2xl shadow-lg`}>
+                    {surveyType.icon}
+                </div>
+                <div>
+                    <h3 className="font-bold text-slate-900 text-lg">{surveyType.name}</h3>
+                    <p className="text-sm text-slate-500">{templates.length} templates</p>
+                </div>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-4">
+                {surveyType.description}
+            </p>
+            
+            {/* Preview templates as clickable items */}
+            <div className="space-y-2 mb-4">
+                {templates.slice(0, 3).map(template => (
+                    <button
+                        key={template.id}
+                        onClick={() => onSelectTemplate(template)}
+                        className="w-full flex items-center gap-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition text-left"
+                    >
+                        <span>{template.icon}</span>
+                        <span className="truncate flex-1">{template.name}</span>
+                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100" />
+                    </button>
+                ))}
+            </div>
+            
+            {templates.length > 3 && (
+                <button
+                    onClick={onViewAll}
+                    className={`flex items-center gap-2 ${surveyType.textColor} font-semibold hover:gap-3 transition-all`}
+                >
+                    View all {templates.length} templates <ArrowRight size={16} />
+                </button>
+            )}
+        </div>
+    );
+};
+
 // Main Template Selector
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({ 
     onSelectTemplate, 
@@ -189,9 +362,59 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 }) => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'polls' | 'surveys' | 'creators'>('all');
     
-    // Filter templates by category and search
-    const filteredTemplates = POLL_TEMPLATES.filter(template => {
+    // Refs for scroll targets
+    const pollsSectionRef = useRef<HTMLDivElement>(null);
+    const surveysSectionRef = useRef<HTMLDivElement>(null);
+    const creatorsSectionRef = useRef<HTMLDivElement>(null);
+    
+    // Handle hash navigation on mount and hash change
+    useEffect(() => {
+        if (isModal) return; // Don't handle hash in modal mode
+        
+        const handleHashNavigation = () => {
+            const hash = window.location.hash.toLowerCase();
+            
+            if (hash === '#polls') {
+                setTypeFilter('polls');
+                setTimeout(() => {
+                    pollsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else if (hash === '#surveys') {
+                setTypeFilter('surveys');
+                setTimeout(() => {
+                    surveysSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else if (hash === '#creators') {
+                setTypeFilter('creators');
+                setTimeout(() => {
+                    creatorsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        };
+        
+        // Run on mount
+        handleHashNavigation();
+        
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashNavigation);
+        return () => window.removeEventListener('hashchange', handleHashNavigation);
+    }, [isModal]);
+    
+    // Filter templates by category, search, and type
+    const filteredTemplates = ALL_TEMPLATES.filter(template => {
+        // Type filter (polls vs surveys vs creators)
+        if (typeFilter === 'polls' && (template.pollType === 'survey' || template.category === 'creators')) {
+            return false;
+        }
+        if (typeFilter === 'surveys' && template.pollType !== 'survey') {
+            return false;
+        }
+        if (typeFilter === 'creators' && template.category !== 'creators') {
+            return false;
+        }
+        
         // Category filter
         const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
         
@@ -203,13 +426,50 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             template.name.toLowerCase().includes(query) ||
             template.description.toLowerCase().includes(query) ||
             template.question.toLowerCase().includes(query) ||
-            template.bestFor.some(tag => tag.toLowerCase().includes(query));
+            (template.bestFor?.some(tag => tag.toLowerCase().includes(query)) ?? false);
         
         return matchesCategory && matchesSearch;
     });
-
+    
+    // Separate templates by type for section display
+    const pollTemplates = filteredTemplates.filter(t => t.pollType !== 'survey' && t.category !== 'creators');
+    const surveyTemplates = filteredTemplates.filter(t => t.pollType === 'survey');
+    const creatorTemplates = filteredTemplates.filter(t => t.category === 'creators');
+    
+    // Group creator templates by platform
+    const youtubeTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('youtube-'));
+    const twitchTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('twitch-'));
+    const redditTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('reddit-'));
+    
+    // Group survey templates by type (CSAT and Employee)
+    const csatTemplates = ALL_TEMPLATES.filter(t => 
+        t.pollType === 'survey' && 
+        (t.id.toLowerCase().includes('csat') || 
+         t.id.toLowerCase().includes('nps') ||
+         t.id.toLowerCase().includes('customer') ||
+         t.name.toLowerCase().includes('customer') ||
+         t.name.toLowerCase().includes('satisfaction') ||
+         t.name.toLowerCase().includes('csat'))
+    );
+    
+    const employeeTemplates = ALL_TEMPLATES.filter(t => 
+        t.pollType === 'survey' && 
+        (t.id.toLowerCase().includes('employee') || 
+         t.id.toLowerCase().includes('engagement') ||
+         t.id.toLowerCase().includes('workplace') ||
+         t.category === 'hr' ||
+         t.name.toLowerCase().includes('employee') ||
+         t.name.toLowerCase().includes('staff') ||
+         t.name.toLowerCase().includes('team pulse'))
+    );
+    
+    // Count totals
+    const totalPolls = ALL_TEMPLATES.filter(t => t.pollType !== 'survey' && t.category !== 'creators').length;
+    const totalSurveys = ALL_TEMPLATES.filter(t => t.pollType === 'survey').length;
+    const totalCreators = CREATOR_TEMPLATES.length;
+    
     const content = (
-        <div className={isModal ? '' : 'min-h-screen bg-gradient-to-b from-slate-50 to-white'}>
+        <div className={isModal ? '' : 'min-h-screen bg-gradient-to-b from-indigo-50/40 via-white to-blue-50/30'}>
             {/* Header */}
             <div className={`${isModal ? 'p-6 border-b border-slate-200' : 'pt-12 pb-8 px-4'}`}>
                 <div className="max-w-5xl mx-auto">
@@ -229,7 +489,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium mb-4">
                             <Zap size={16} />
-                            {POLL_TEMPLATES.length} Ready-to-Use Templates
+                            {ALL_TEMPLATES.length}+ Free Templates
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
                             Find Your Perfect Template
@@ -244,7 +504,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search templates... (e.g., team lunch, feedback, event)"
+                                placeholder="Search templates... (e.g., team lunch, YouTube, feedback)"
                                 className="w-full px-5 py-3.5 pl-12 border-2 border-slate-200 rounded-xl text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition bg-white shadow-sm"
                             />
                             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,90 +522,360 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     </motion.div>
                 </div>
             </div>
-
-            {/* Category Pills */}
-            <div className={`${isModal ? 'px-6 py-4' : 'px-4 pb-8'}`}>
-                <div className="max-w-5xl mx-auto">
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="flex flex-wrap justify-center gap-2"
-                    >
-                        {TEMPLATE_CATEGORIES.map((cat) => {
-                            const count = cat.id === 'all' 
-                                ? POLL_TEMPLATES.length 
-                                : POLL_TEMPLATES.filter(t => t.category === cat.id).length;
-                            return (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setSelectedCategory(cat.id)}
-                                    className={`
-                                        px-4 py-2.5 rounded-xl font-medium text-sm
-                                        flex items-center gap-2 transition-all duration-200
-                                        ${selectedCategory === cat.id
-                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                                            : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                                        }
-                                    `}
-                                >
-                                    <span>{cat.icon}</span>
-                                    {cat.label}
-                                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                        selectedCategory === cat.id ? 'bg-white/20' : 'bg-slate-100'
-                                    }`}>{count}</span>
-                                </button>
-                            );
-                        })}
-                    </motion.div>
-                    
-                    {/* Results count */}
-                    {searchQuery && (
-                        <p className="text-center text-sm text-slate-500 mt-4">
-                            Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} 
-                            {searchQuery && ` for "${searchQuery}"`}
-                        </p>
-                    )}
+            
+            {/* Type Filter Toggle (Polls vs Surveys vs Creators) */}
+            {!isModal && (
+                <div className="px-4 pb-4">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="flex justify-center">
+                            <div className="inline-flex bg-slate-100 rounded-xl p-1 flex-wrap justify-center gap-1">
+                                {[
+                                    { id: 'all', label: 'All Templates', count: ALL_TEMPLATES.length },
+                                    { id: 'polls', label: 'Polls', count: totalPolls },
+                                    { id: 'surveys', label: 'Surveys', count: totalSurveys },
+                                    { id: 'creators', label: '🎬 Creators', count: totalCreators },
+                                ].map((type) => (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => {
+                                            setTypeFilter(type.id as 'all' | 'polls' | 'surveys' | 'creators');
+                                            setSelectedCategory('all'); // Reset category when changing type
+                                            // Update URL hash
+                                            if (type.id !== 'all') {
+                                                window.history.pushState({}, '', `/templates#${type.id}`);
+                                            } else {
+                                                window.history.pushState({}, '', '/templates');
+                                            }
+                                        }}
+                                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                                            typeFilter === type.id
+                                                ? 'bg-white text-indigo-600 shadow-sm'
+                                                : 'text-slate-600 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        {type.label}
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                            typeFilter === type.id ? 'bg-indigo-100' : 'bg-slate-200'
+                                        }`}>
+                                            {type.count}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
+            )}
+            
+            {/* Category Pills - Hide when viewing creators (they have their own sections) */}
+            {typeFilter !== 'creators' && (
+                <div className={`${isModal ? 'px-6 py-4' : 'px-4 pb-8'}`}>
+                    <div className="max-w-5xl mx-auto">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="flex flex-wrap justify-center gap-2"
+                        >
+                            {EXTENDED_CATEGORIES.filter(cat => cat.id !== 'creators').map((cat) => {
+                                // Count based on current type filter
+                                let count: number;
+                                if (cat.id === 'all') {
+                                    count = filteredTemplates.length;
+                                } else {
+                                    count = filteredTemplates.filter(t => t.category === cat.id).length;
+                                }
+                                
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`
+                                            px-4 py-2.5 rounded-xl font-medium text-sm
+                                            flex items-center gap-2 transition-all duration-200
+                                            ${selectedCategory === cat.id
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                                            }
+                                        `}
+                                    >
+                                        <span>{cat.icon}</span>
+                                        {cat.label}
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                            selectedCategory === cat.id ? 'bg-white/20' : 'bg-slate-100'
+                                        }`}>{count}</span>
+                                    </button>
+                                );
+                            })}
+                        </motion.div>
+                        
+                        {/* Results count */}
+                        {searchQuery && (
+                            <p className="text-center text-sm text-slate-500 mt-4">
+                                Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} 
+                                {searchQuery && ` for "${searchQuery}"`}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+            
             {/* Templates Grid */}
             <div className={`${isModal ? 'px-6 pb-6 max-h-[60vh] overflow-y-auto' : 'px-4 pb-16'}`}>
                 <div className="max-w-5xl mx-auto">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={selectedCategory}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                        >
-                            {filteredTemplates.map((template, index) => (
-                                <TemplateCard
-                                    key={template.id}
-                                    template={template}
-                                    onSelect={onSelectTemplate}
-                                    index={index}
+                    
+                    {/* CREATORS VIEW - Platform Cards + Templates */}
+                    {typeFilter === 'creators' && (
+                        <div ref={creatorsSectionRef} className="scroll-mt-48">
+                            {/* Platform Cards */}
+                            <div className="grid md:grid-cols-3 gap-6 mb-12">
+                                <CreatorPlatformCard 
+                                    platform={CREATOR_PLATFORMS[0]} 
+                                    templates={youtubeTemplates} 
                                 />
-                            ))}
-                        </motion.div>
-                    </AnimatePresence>
-
+                                <CreatorPlatformCard 
+                                    platform={CREATOR_PLATFORMS[1]} 
+                                    templates={twitchTemplates} 
+                                />
+                                <CreatorPlatformCard 
+                                    platform={CREATOR_PLATFORMS[2]} 
+                                    templates={redditTemplates} 
+                                />
+                            </div>
+                            
+                            {/* All Creator Templates */}
+                            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Play className="w-5 h-5 text-purple-600" />
+                                All Creator Templates
+                                <span className="text-sm font-normal text-slate-500">({creatorTemplates.length})</span>
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {creatorTemplates.map((template, index) => (
+                                    <TemplateCard
+                                        key={template.id}
+                                        template={template}
+                                        onSelect={onSelectTemplate}
+                                        index={index}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* ALL VIEW - Show all sections */}
+                    {typeFilter === 'all' && !searchQuery && selectedCategory === 'all' && (
+                        <>
+                            {/* Creator Platform Cards (compact) */}
+                            <div ref={creatorsSectionRef} className="mb-12 scroll-mt-48">
+                                <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                    <Play className="w-5 h-5 text-purple-600" />
+                                    For Content Creators
+                                    <span className="text-sm font-normal text-slate-500">({totalCreators} templates)</span>
+                                    <a 
+                                        href="/templates#creators" 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setTypeFilter('creators');
+                                            window.history.pushState({}, '', '/templates#creators');
+                                        }}
+                                        className="ml-auto text-sm text-indigo-600 font-medium hover:underline flex items-center gap-1"
+                                    >
+                                        View all <ChevronRight size={14} />
+                                    </a>
+                                </h2>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    {CREATOR_PLATFORMS.map((platform) => {
+                                        const templates = platform.id === 'youtube' ? youtubeTemplates :
+                                                         platform.id === 'twitch' ? twitchTemplates :
+                                                         redditTemplates;
+                                        return (
+                                            <a
+                                                key={platform.id}
+                                                href={platform.href}
+                                                className={`group flex items-center gap-4 p-4 bg-white border-2 ${platform.borderColor} rounded-xl transition-all hover:shadow-md`}
+                                            >
+                                                <div className={`w-12 h-12 bg-gradient-to-br ${platform.color} rounded-xl flex items-center justify-center text-xl`}>
+                                                    {platform.icon}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-slate-900">{platform.name}</h3>
+                                                    <p className="text-sm text-slate-500">{templates.length} templates</p>
+                                                </div>
+                                                <ArrowRight size={16} className={`${platform.textColor} group-hover:translate-x-1 transition-transform`} />
+                                            </a>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            {/* Poll Templates Section */}
+                            {pollTemplates.length > 0 && (
+                                <div ref={pollsSectionRef} className="mb-12 scroll-mt-48">
+                                    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                        <CheckCircle className="w-5 h-5 text-indigo-600" />
+                                        Poll Templates
+                                        <span className="text-sm font-normal text-slate-500">({pollTemplates.length})</span>
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {pollTemplates.map((template, index) => (
+                                            <TemplateCard
+                                                key={template.id}
+                                                template={template}
+                                                onSelect={onSelectTemplate}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Survey Templates Section */}
+                            {surveyTemplates.length > 0 && (
+                                <div ref={surveysSectionRef} className="scroll-mt-48">
+                                    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                        <ClipboardList className="w-5 h-5 text-teal-600" />
+                                        Survey Templates
+                                        <span className="text-sm font-normal text-slate-500">({surveyTemplates.length})</span>
+                                    </h2>
+                                    
+                                    {/* Featured Survey Types */}
+                                    {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                            {csatTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
+                                                    templates={csatTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('customer')}
+                                                />
+                                            )}
+                                            {employeeTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
+                                                    templates={employeeTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('employee')}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {/* All Survey Templates Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {surveyTemplates.map((template, index) => (
+                                            <TemplateCard
+                                                key={template.id}
+                                                template={template}
+                                                onSelect={onSelectTemplate}
+                                                index={index}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                    
+                    {/* POLLS/SURVEYS FILTERED VIEW */}
+                    {(typeFilter === 'polls' || typeFilter === 'surveys') && (
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`${selectedCategory}-${typeFilter}`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {/* Featured Survey Types - Show when viewing surveys */}
+                                {typeFilter === 'surveys' && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                    <div className="mb-8">
+                                        <h3 className="text-lg font-bold text-slate-900 mb-4">Popular Survey Types</h3>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {csatTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
+                                                    templates={csatTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('customer')}
+                                                />
+                                            )}
+                                            {employeeTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
+                                                    templates={employeeTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('employee')}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div 
+                                    ref={typeFilter === 'polls' ? pollsSectionRef : surveysSectionRef}
+                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                >
+                                    {filteredTemplates.map((template, index) => (
+                                        <TemplateCard
+                                            key={template.id}
+                                            template={template}
+                                            onSelect={onSelectTemplate}
+                                            index={index}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+                    )}
+                    
+                    {/* SEARCH/CATEGORY FILTERED VIEW (not 'all' type) */}
+                    {typeFilter === 'all' && (searchQuery || selectedCategory !== 'all') && (
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`${selectedCategory}-search`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredTemplates.map((template, index) => (
+                                        <TemplateCard
+                                            key={template.id}
+                                            template={template}
+                                            onSelect={onSelectTemplate}
+                                            index={index}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+                    )}
+                    
                     {/* Empty State */}
                     {filteredTemplates.length === 0 && (
                         <div className="text-center py-16">
                             <div className="text-4xl mb-4">🔍</div>
-                            <p className="text-slate-500">No templates in this category yet.</p>
+                            <p className="text-slate-500 mb-4">No templates found.</p>
+                            <button
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setSelectedCategory('all');
+                                    setTypeFilter('all');
+                                }}
+                                className="text-indigo-600 font-medium hover:text-indigo-700"
+                            >
+                                Clear all filters
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
-
+            
             {/* Or Start Blank */}
             {!isModal && (
                 <div className="max-w-5xl mx-auto px-4 pb-16">
-                    <div className="bg-slate-50 rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
+                    <div className="bg-white rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
                         <p className="text-slate-500 mb-4">
                             Want more control? Start from scratch.
                         </p>

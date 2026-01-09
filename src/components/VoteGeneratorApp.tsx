@@ -7,6 +7,8 @@ import AdWall from './AdWall';
 import CheckoutSuccess from './CheckoutSuccess';
 import TemplatesPage from './TemplatesPage';
 import PricingPage from './PricingPage';
+import YouTubeCreatorsPage from './YouTubeCreatorsPage';
+import TwitchStreamersPage from './TwitchStreamersPage';
 import AdminDashboard from './AdminDashboard';
 import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
@@ -28,6 +30,7 @@ import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+import RedditCommunityPage from './RedditCommunityPage';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
@@ -349,7 +352,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen pb-10">
+ <div className="min-h-screen pb-10">
             {/* ROUTE: /ad-wall */}
             {window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
@@ -363,7 +366,13 @@ const VoteGeneratorApp: React.FC = () => {
                 <TemplatesPage />
             ) : window.location.pathname === '/pricing' || window.location.pathname.startsWith('/pricing') ? (
                 <PricingPage />
-            ) : window.location.pathname === '/survey' || window.location.pathname.startsWith('/survey') ? (
+            ) : window.location.pathname === '/youtube-polls' || window.location.pathname === '/creators' ? (
+                <YouTubeCreatorsPage />
+            ) : window.location.pathname === '/twitch-polls' || window.location.pathname === '/streamers' ? (
+                <TwitchStreamersPage />
+            ) : window.location.pathname === '/reddit-polls' || window.location.pathname === '/reddit' ? (
+                <RedditCommunityPage />    
+            ) : window.location.pathname === '/survey' ? (
                 <SurveyPage />
             ) : window.location.pathname === '/employee-survey' ? (
                 <EmployeeSurveyPage />

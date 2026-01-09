@@ -13,7 +13,7 @@ export type PollTemplate = {
     id: string;
     name: string;
     description: string;
-    category: 'team' | 'events' | 'feedback' | 'fun' | 'hr' | 'education' | 'survey';
+    category: 'team' | 'events' | 'feedback' | 'fun' | 'hr' | 'education' | 'survey' | 'creators';
     categoryLabel: string;
     pollType: 'multiple' | 'ranked' | 'pairwise' | 'meeting' | 'rating' | 'rsvp' | 'image' | 'survey';
     icon: string;
@@ -41,12 +41,13 @@ export type PollTemplate = {
 
 export const TEMPLATE_CATEGORIES = [
     { id: 'all', label: 'All Templates', icon: '✨' },
-    { id: 'survey', label: 'Surveys & Feedback', icon: '📊' },  // NEW - First after "All"
+    { id: 'survey', label: 'Surveys & Feedback', icon: '📊' },
     { id: 'team', label: 'Team Decisions', icon: '👥' },
     { id: 'events', label: 'Events & Planning', icon: '🎉' },
     { id: 'feedback', label: 'Quick Feedback', icon: '💬' },
     { id: 'hr', label: 'HR & Culture', icon: '🏢' },
     { id: 'education', label: 'Education', icon: '📚' },
+    { id: 'creators', label: 'Content Creators', icon: '🎬' },  // ADD THIS
     { id: 'fun', label: 'Fun & Social', icon: '🎮' },
 ];
 

@@ -240,7 +240,7 @@ const TrustBar: React.FC = () => (
 // ============================================================================
 
 const ProblemSection: React.FC = () => (
-    <section className="py-16 bg-slate-50">
+    <section className="py-16 bg-gradient-to-b from-indigo-50/50 to-white">
         <div className="max-w-5xl mx-auto px-4">
             <div className="text-center mb-12">
                 <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full mb-4">
@@ -300,8 +300,8 @@ const ProblemSection: React.FC = () => (
                     We built VoteGenerator differently.
                 </h3>
                 <p className="text-indigo-100 max-w-2xl mx-auto">
-                    No accounts. No emails. No subscriptions. Just polls that work instantly, 
-                    on any device, with complete privacy for everyone.
+                    No accounts required. No emails collected. Just polls that work instantly, 
+                    on any device, with complete privacy for your voters.
                 </p>
             </motion.div>
         </div>
@@ -370,9 +370,6 @@ const HowItWorksSection: React.FC = () => {
                         </motion.div>
                     ))}
                 </div>
-
-                {/* Connector line on desktop */}
-                <div className="hidden md:block relative h-0.5 bg-gradient-to-r from-indigo-200 via-purple-200 to-emerald-200 -mt-[140px] mx-20 mb-[100px]" />
             </div>
         </section>
     );
@@ -617,7 +614,7 @@ const PollTypesSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-slate-50">
+        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
@@ -951,7 +948,7 @@ const TemplatesSection: React.FC = () => {
                         Get started faster
                     </span>
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                        40+ ready-to-use templates
+                        Free templates for every use case
                     </h2>
                     <p className="text-lg text-slate-500 max-w-2xl mx-auto">
                         Don't start from scratch. Pick a template, customize it, and launch in seconds.
@@ -967,7 +964,7 @@ const TemplatesSection: React.FC = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.05 }}
-                            className="group bg-slate-100 rounded-xl overflow-hidden hover:shadow-xl transition-all cursor-pointer"
+                            className="group bg-white border-2 border-slate-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all cursor-pointer"
                         >
                             {/* Visual preview */}
                             <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 min-h-[120px] flex items-center justify-center">
@@ -989,12 +986,34 @@ const TemplatesSection: React.FC = () => {
                     ))}
                 </div>
 
+                {/* Creator Platform Links */}
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                    <a 
+                        href="/youtube-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-red-50 border-2 border-red-200 text-red-700 font-semibold rounded-xl hover:bg-red-100 hover:border-red-300 transition"
+                    >
+                        <span>▶️</span> For YouTubers
+                    </a>
+                    <a 
+                        href="/twitch-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-50 border-2 border-purple-200 text-purple-700 font-semibold rounded-xl hover:bg-purple-100 hover:border-purple-300 transition"
+                    >
+                        <span>📺</span> For Streamers
+                    </a>
+                    <a 
+                        href="/reddit-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border-2 border-orange-200 text-orange-700 font-semibold rounded-xl hover:bg-orange-100 hover:border-orange-300 transition"
+                    >
+                        <span>🔗</span> For Reddit
+                    </a>
+                </div>
+
                 <div className="text-center">
                     <a 
                         href="/templates" 
                         className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition"
                     >
-                        Browse All 40+ Templates <ArrowRight size={18} />
+                        Browse All Templates <ArrowRight size={18} />
                     </a>
                 </div>
             </div>
@@ -1394,7 +1413,7 @@ const DeviceShowcaseSection: React.FC = () => (
 // ============================================================================
 
 const ExportsSection: React.FC = () => (
-    <section className="py-20 bg-slate-50">
+    <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
         <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
                 <span className="inline-block px-3 py-1 bg-violet-100 text-violet-700 text-sm font-bold rounded-full mb-4">
@@ -1671,7 +1690,7 @@ const ValueSection: React.FC = () => (
                             { icon: Shield, title: 'Anti-Fraud Protection', desc: 'IP detection & browser fingerprinting' },
                             { icon: Bell, title: 'Email Notifications', desc: 'Get notified when votes come in' },
                             { icon: Timer, title: 'Scheduled Close', desc: 'Auto-close polls at a set time' },
-                            { icon: FileText, title: '40+ Templates', desc: 'Ready-to-use poll templates' },
+                            { icon: FileText, title: 'Free Templates', desc: 'Ready-to-use poll templates' },
                             { icon: TrendingUp, title: 'Response Timeline', desc: 'See when votes come in over time' },
                             { icon: Link, title: 'Custom Short Links', desc: 'Branded, memorable poll URLs' },
                         ].map((item, i) => (
@@ -1821,7 +1840,7 @@ const UseCasesSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-slate-50">
+        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -1991,7 +2010,7 @@ const FAQSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-slate-50">
+        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
             <div className="max-w-3xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -2062,7 +2081,7 @@ function LandingPage(): React.ReactElement {
             <TrustBar />
             
             {/* ============ CREATE POLL SECTION ============ */}
-            <section id="create" className="py-16 bg-gradient-to-b from-white to-slate-50">
+            <section id="create" className="py-16 bg-gradient-to-b from-slate-50/50 to-white">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center mb-8">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">

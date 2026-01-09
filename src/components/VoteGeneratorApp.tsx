@@ -30,8 +30,6 @@ import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
-import YouTubeCreatorsPage from './YouTubeCreatorsPage';
-import TwitchStreamersPage from './TwitchStreamersPage';
 import RedditCommunityPage from './RedditCommunityPage';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';

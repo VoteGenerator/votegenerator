@@ -540,15 +540,16 @@ const ShareLocationsSection: React.FC = () => {
 // ============================================================================
 
 const TemplatesSection: React.FC = () => {
+    // Template IDs must match those in pollTemplates.tsx
     const templates = [
-        { name: "Next Video Vote", icon: "🎬", category: "Content Planning" },
-        { name: "Upload Schedule Poll", icon: "📅", category: "Scheduling" },
-        { name: "Game Choice Vote", icon: "🎮", category: "Gaming" },
-        { name: "Thumbnail A/B Test", icon: "🎨", category: "Optimization" },
-        { name: "Q&A Topic Selection", icon: "💬", category: "Engagement" },
-        { name: "Challenge Vote", icon: "🏆", category: "Livestream" },
-        { name: "Collab Partner Poll", icon: "🤝", category: "Content Planning" },
-        { name: "Series Continuation", icon: "📺", category: "Content Planning" },
+        { id: "youtube-video-ideas", name: "Video Ideas Poll", icon: "🎬", category: "Content Planning" },
+        { id: "youtube-upload-schedule", name: "Upload Schedule Vote", icon: "📅", category: "Scheduling" },
+        { id: "youtube-thumbnail-test", name: "Thumbnail A/B Test", icon: "🎨", category: "Optimization" },
+        { id: "youtube-series-vote", name: "Series Topic Vote", icon: "📺", category: "Content Planning" },
+        { id: "twitch-game-choice", name: "Game Choice Vote", icon: "🎮", category: "Gaming" },
+        { id: "twitch-challenge-vote", name: "Challenge Vote", icon: "🏆", category: "Engagement" },
+        { id: "content-feedback", name: "Content Feedback", icon: "💬", category: "Feedback" },
+        { id: "quick-pulse", name: "Quick Audience Pulse", icon: "📊", category: "Engagement" },
     ];
 
     return (
@@ -570,7 +571,7 @@ const TemplatesSection: React.FC = () => {
                     {templates.map((template, index) => (
                         <motion.a
                             key={index}
-                            href={`/create?template=${template.name.toLowerCase().replace(/\s+/g, '-')}`}
+                            href={`/create?template=${template.id}`}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}

@@ -588,15 +588,16 @@ const HowToUseSection: React.FC = () => {
 // ============================================================================
 
 const TemplatesSection: React.FC = () => {
+    // Template IDs must match those in pollTemplates.tsx
     const templates = [
-        { name: "Game Vote", icon: "🎮", category: "Gaming" },
-        { name: "Challenge Poll", icon: "🏆", category: "Interactive" },
-        { name: "Boss Prediction", icon: "⚔️", category: "Gaming" },
-        { name: "Stream Schedule", icon: "📅", category: "Planning" },
-        { name: "Food Choice", icon: "🍕", category: "Fun" },
-        { name: "Difficulty Vote", icon: "💀", category: "Gaming" },
-        { name: "Character Build", icon: "🧙", category: "Gaming" },
-        { name: "Subathon Goal", icon: "🎉", category: "Events" },
+        { id: "twitch-game-choice", name: "Stream Game Vote", icon: "🎮", category: "Gaming" },
+        { id: "twitch-challenge-vote", name: "Challenge Vote", icon: "🏆", category: "Interactive" },
+        { id: "twitch-prediction", name: "Boss Prediction", icon: "⚔️", category: "Gaming" },
+        { id: "twitch-stream-schedule", name: "Stream Schedule", icon: "📅", category: "Planning" },
+        { id: "team-lunch", name: "Food Choice", icon: "🍕", category: "Fun" },
+        { id: "would-you-rather", name: "Would You Rather", icon: "🤔", category: "Fun" },
+        { id: "bracket-challenge", name: "Bracket Vote", icon: "🏅", category: "Gaming" },
+        { id: "quick-pulse", name: "Vibe Check", icon: "💜", category: "Engagement" },
     ];
 
     return (
@@ -618,7 +619,7 @@ const TemplatesSection: React.FC = () => {
                     {templates.map((template, index) => (
                         <motion.a
                             key={index}
-                            href={`/create?template=${template.name.toLowerCase().replace(/\s+/g, '-')}`}
+                            href={`/create?template=${template.id}`}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}

@@ -85,6 +85,32 @@ const CREATOR_PLATFORMS = [
     },
 ];
 
+// Featured survey types config
+const FEATURED_SURVEY_TYPES = [
+    {
+        id: 'csat',
+        name: 'Customer Satisfaction (CSAT)',
+        icon: '⭐',
+        color: 'from-amber-500 to-yellow-500',
+        borderColor: 'border-amber-200 hover:border-amber-300',
+        textColor: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+        keywords: ['csat', 'customer', 'satisfaction', 'nps', 'feedback'],
+        description: 'Measure customer happiness with CSAT, NPS, and feedback surveys'
+    },
+    {
+        id: 'employee',
+        name: 'Employee Surveys',
+        icon: '👥',
+        color: 'from-emerald-500 to-teal-500',
+        borderColor: 'border-emerald-200 hover:border-emerald-300',
+        textColor: 'text-emerald-600',
+        bgColor: 'bg-emerald-50',
+        keywords: ['employee', 'engagement', 'workplace', 'hr', 'staff', 'team'],
+        description: 'Boost engagement with pulse checks, satisfaction, and culture surveys'
+    },
+];
+
 interface TemplateSelectorProps {
     onSelectTemplate: (template: PollTemplate) => void;
     onClose?: () => void;
@@ -278,6 +304,56 @@ const CreatorPlatformCard: React.FC<{
     );
 };
 
+// Featured Survey Type Card Component
+const FeaturedSurveyCard: React.FC<{
+    surveyType: typeof FEATURED_SURVEY_TYPES[0];
+    templates: PollTemplate[];
+    onSelectTemplate: (template: PollTemplate) => void;
+    onViewAll: () => void;
+}> = ({ surveyType, templates, onSelectTemplate, onViewAll }) => {
+    return (
+        <div className={`p-6 bg-white border-2 ${surveyType.borderColor} rounded-2xl hover:shadow-lg transition-all`}>
+            <div className="flex items-center gap-4 mb-4">
+                <div className={`w-14 h-14 bg-gradient-to-br ${surveyType.color} rounded-xl flex items-center justify-center text-2xl shadow-lg`}>
+                    {surveyType.icon}
+                </div>
+                <div>
+                    <h3 className="font-bold text-slate-900 text-lg">{surveyType.name}</h3>
+                    <p className="text-sm text-slate-500">{templates.length} templates</p>
+                </div>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-4">
+                {surveyType.description}
+            </p>
+            
+            {/* Preview templates as clickable items */}
+            <div className="space-y-2 mb-4">
+                {templates.slice(0, 3).map(template => (
+                    <button
+                        key={template.id}
+                        onClick={() => onSelectTemplate(template)}
+                        className="w-full flex items-center gap-2 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition text-left"
+                    >
+                        <span>{template.icon}</span>
+                        <span className="truncate flex-1">{template.name}</span>
+                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100" />
+                    </button>
+                ))}
+            </div>
+            
+            {templates.length > 3 && (
+                <button
+                    onClick={onViewAll}
+                    className={`flex items-center gap-2 ${surveyType.textColor} font-semibold hover:gap-3 transition-all`}
+                >
+                    View all {templates.length} templates <ArrowRight size={16} />
+                </button>
+            )}
+        </div>
+    );
+};
+
 // Main Template Selector
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({ 
     onSelectTemplate, 
@@ -364,6 +440,28 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     const youtubeTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('youtube-'));
     const twitchTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('twitch-'));
     const redditTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('reddit-'));
+    
+    // Group survey templates by type (CSAT and Employee)
+    const csatTemplates = ALL_TEMPLATES.filter(t => 
+        t.pollType === 'survey' && 
+        (t.id.toLowerCase().includes('csat') || 
+         t.id.toLowerCase().includes('nps') ||
+         t.id.toLowerCase().includes('customer') ||
+         t.name.toLowerCase().includes('customer') ||
+         t.name.toLowerCase().includes('satisfaction') ||
+         t.name.toLowerCase().includes('csat'))
+    );
+    
+    const employeeTemplates = ALL_TEMPLATES.filter(t => 
+        t.pollType === 'survey' && 
+        (t.id.toLowerCase().includes('employee') || 
+         t.id.toLowerCase().includes('engagement') ||
+         t.id.toLowerCase().includes('workplace') ||
+         t.category === 'hr' ||
+         t.name.toLowerCase().includes('employee') ||
+         t.name.toLowerCase().includes('staff') ||
+         t.name.toLowerCase().includes('team pulse'))
+    );
     
     // Count totals
     const totalPolls = ALL_TEMPLATES.filter(t => t.pollType !== 'survey' && t.category !== 'creators').length;
@@ -639,6 +737,30 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                         Survey Templates
                                         <span className="text-sm font-normal text-slate-500">({surveyTemplates.length})</span>
                                     </h2>
+                                    
+                                    {/* Featured Survey Types */}
+                                    {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                            {csatTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
+                                                    templates={csatTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('customer')}
+                                                />
+                                            )}
+                                            {employeeTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
+                                                    templates={employeeTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('employee')}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {/* All Survey Templates Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {surveyTemplates.map((template, index) => (
                                             <TemplateCard
@@ -664,6 +786,31 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.2 }}
                             >
+                                {/* Featured Survey Types - Show when viewing surveys */}
+                                {typeFilter === 'surveys' && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                    <div className="mb-8">
+                                        <h3 className="text-lg font-bold text-slate-900 mb-4">Popular Survey Types</h3>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {csatTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
+                                                    templates={csatTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('customer')}
+                                                />
+                                            )}
+                                            {employeeTemplates.length > 0 && (
+                                                <FeaturedSurveyCard
+                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
+                                                    templates={employeeTemplates}
+                                                    onSelectTemplate={onSelectTemplate}
+                                                    onViewAll={() => setSearchQuery('employee')}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 <div 
                                     ref={typeFilter === 'polls' ? pollsSectionRef : surveysSectionRef}
                                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"

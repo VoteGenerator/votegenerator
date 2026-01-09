@@ -1,308 +1,69 @@
-// ============================================================================
-// CREATOR TEMPLATES - Add to pollTemplates.tsx
-// Paste these into the POLL_TEMPLATES array in pollTemplates.tsx
-// Also add { id: 'creators', label: 'Content Creators', icon: '🎬' } to TEMPLATE_CATEGORIES
-// ============================================================================
+// Footer.tsx - Clean version
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-// Add this category to TEMPLATE_CATEGORIES array:
-// { id: 'creators', label: 'Content Creators', icon: '🎬' },
+const Footer: React.FC = () => {
+    const currentYear = new Date().getFullYear();
+    
+    return (
+        <footer className="bg-slate-900 text-slate-300 py-12">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                    {/* Product */}
+                    <div>
+                        <h3 className="font-bold text-white mb-4">Product</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><Link to="/create" className="hover:text-white transition">Create Poll</Link></li>
+                            <li><Link to="/templates" className="hover:text-white transition">Templates</Link></li>
+                            <li><Link to="/pricing" className="hover:text-white transition">Pricing</Link></li>
+                            <li><Link to="/survey" className="hover:text-white transition">Survey Maker</Link></li>
+                        </ul>
+                    </div>
+                    
+                    {/* For Creators */}
+                    <div>
+                        <h3 className="font-bold text-white mb-4">For Creators</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><Link to="/youtube-polls" className="hover:text-white transition">YouTube Polls</Link></li>
+                            <li><Link to="/twitch-polls" className="hover:text-white transition">Twitch Polls</Link></li>
+                            <li><Link to="/reddit-polls" className="hover:text-white transition">Reddit Polls</Link></li>
+                        </ul>
+                    </div>
+                    
+                    {/* Resources */}
+                    <div>
+                        <h3 className="font-bold text-white mb-4">Resources</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><Link to="/blog" className="hover:text-white transition">Blog</Link></li>
+                            <li><Link to="/how-it-works" className="hover:text-white transition">How It Works</Link></li>
+                            <li><a href="mailto:support@votegenerator.com" className="hover:text-white transition">Support</a></li>
+                        </ul>
+                    </div>
+                    
+                    {/* Legal */}
+                    <div>
+                        <h3 className="font-bold text-white mb-4">Legal</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
+                            <li><Link to="/terms" className="hover:text-white transition">Terms of Service</Link></li>
+                            <li><Link to="/refund" className="hover:text-white transition">Refund Policy</Link></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                {/* Bottom */}
+                <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">🗳️</span>
+                        <span className="font-bold text-white">VoteGenerator</span>
+                    </div>
+                    <p className="text-sm text-slate-400">
+                        © {currentYear} VoteGenerator. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    );
+};
 
-// =========================================================================
-// CONTENT CREATOR TEMPLATES (YouTube, Twitch, Reddit)
-// =========================================================================
-
-// YOUTUBE CREATOR TEMPLATES
-{
-    id: 'youtube-video-ideas',
-    name: 'Video Ideas Poll',
-    description: 'Let your audience vote on your next video topic',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🎬',
-    gradient: 'from-red-500 to-rose-600',
-    accentColor: '#ef4444',
-    question: 'What video should I make next?',
-    options: [
-        '🎮 Gaming challenge',
-        '📚 Tutorial / How-to',
-        '🗣️ Q&A / Storytime',
-        '🔍 Deep dive / Analysis',
-        '🎉 Collab with another creator'
-    ],
-    suggestedTheme: 'default',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['YouTube creators', 'Content planning', 'Audience engagement'],
-    estimatedTime: '30 sec to create',
-    badge: 'YouTube',
-    badgeColor: 'bg-red-100 text-red-700',
-},
-{
-    id: 'youtube-upload-schedule',
-    name: 'Upload Schedule Vote',
-    description: 'Find out when your audience wants new content',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '📅',
-    gradient: 'from-red-500 to-orange-500',
-    accentColor: '#ef4444',
-    question: 'When should I upload new videos?',
-    options: [
-        '🌅 Weekday mornings',
-        '🌆 Weekday evenings',
-        '📅 Saturday afternoon',
-        '🍳 Sunday morning',
-        '🌙 Late night drops'
-    ],
-    suggestedTheme: 'minimal',
-    settings: {},
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['YouTube scheduling', 'Audience preferences', 'Content strategy'],
-    estimatedTime: '30 sec to create',
-},
-{
-    id: 'youtube-thumbnail-test',
-    name: 'Thumbnail A/B Test',
-    description: 'Let viewers pick the best thumbnail design',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'image',
-    icon: '🖼️',
-    gradient: 'from-red-600 to-rose-500',
-    accentColor: '#dc2626',
-    question: 'Which thumbnail catches your attention?',
-    options: [
-        'Thumbnail A',
-        'Thumbnail B'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Thumbnail testing', 'CTR optimization', 'Design feedback'],
-    estimatedTime: '1 min to create',
-},
-{
-    id: 'youtube-series-vote',
-    name: 'Series Topic Vote',
-    description: 'Let subscribers vote on your next video series',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '📺',
-    gradient: 'from-red-500 to-pink-600',
-    accentColor: '#ec4899',
-    question: 'What series should I start next?',
-    options: [
-        '🎮 Full game playthrough',
-        '📖 Deep dive documentary',
-        '🎓 Tutorial series',
-        '🆚 Comparison reviews',
-        '🎙️ Interview series'
-    ],
-    suggestedTheme: 'default',
-    settings: {},
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Series planning', 'Long-form content', 'Audience research'],
-    estimatedTime: '30 sec to create',
-},
-
-// TWITCH STREAMER TEMPLATES
-{
-    id: 'twitch-game-choice',
-    name: 'Stream Game Vote',
-    description: 'Let chat decide what game you play',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🎮',
-    gradient: 'from-purple-600 to-indigo-700',
-    accentColor: '#9333ea',
-    question: 'What game should I play next?',
-    options: [
-        '🎯 FPS / Shooter',
-        '🗡️ RPG / Adventure',
-        '🏎️ Racing / Sports',
-        '🧩 Puzzle / Strategy',
-        '🎲 Viewer\'s choice (random)'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Twitch streamers', 'Live decisions', 'Chat engagement'],
-    estimatedTime: '20 sec to create',
-    badge: 'Twitch',
-    badgeColor: 'bg-purple-100 text-purple-700',
-},
-{
-    id: 'twitch-stream-schedule',
-    name: 'Stream Schedule Poll',
-    description: 'Find out when viewers want you live',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'meeting',
-    icon: '⏰',
-    gradient: 'from-purple-500 to-violet-600',
-    accentColor: '#8b5cf6',
-    question: 'When should I stream this week?',
-    options: [
-        'Monday 7pm',
-        'Wednesday 8pm',
-        'Friday 6pm',
-        'Saturday 3pm',
-        'Sunday 5pm'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: true },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Stream scheduling', 'Viewer availability', 'Time zone coordination'],
-    estimatedTime: '30 sec to create',
-},
-{
-    id: 'twitch-challenge-vote',
-    name: 'Challenge Vote',
-    description: 'Let viewers pick your next gaming challenge',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🏆',
-    gradient: 'from-violet-600 to-purple-700',
-    accentColor: '#7c3aed',
-    question: 'Which challenge should I attempt?',
-    options: [
-        '💀 No-death run',
-        '⚔️ Melee only',
-        '⏱️ Speedrun attempt',
-        '🎭 Roleplay playthrough',
-        '🎲 Random loadout'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Gaming challenges', 'Viewer engagement', 'Content variety'],
-    estimatedTime: '20 sec to create',
-},
-{
-    id: 'twitch-prediction',
-    name: 'Stream Prediction',
-    description: 'Will I beat this boss? Let viewers predict!',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🔮',
-    gradient: 'from-purple-700 to-indigo-800',
-    accentColor: '#6366f1',
-    question: 'Will I beat this boss on the first try?',
-    options: [
-        '✅ Yes, ez clap',
-        '❌ No chance',
-        '🤏 Maybe after 5 tries',
-        '💀 RIP to the run'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false, hideResults: true },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Live predictions', 'Viewer engagement', 'Fun interactions'],
-    estimatedTime: '15 sec to create',
-},
-
-// REDDIT COMMUNITY TEMPLATES
-{
-    id: 'reddit-ranking',
-    name: 'Community Ranking',
-    description: 'Let the community rank their favorites',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '🏅',
-    gradient: 'from-orange-500 to-red-600',
-    accentColor: '#f97316',
-    question: 'Rank your top 5 favorites',
-    options: [
-        'Option 1',
-        'Option 2',
-        'Option 3',
-        'Option 4',
-        'Option 5',
-        'Option 6',
-        'Option 7',
-        'Option 8'
-    ],
-    suggestedTheme: 'default',
-    settings: {},
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Reddit communities', 'Best-of lists', 'Community rankings'],
-    estimatedTime: '30 sec to create',
-    badge: 'Reddit',
-    badgeColor: 'bg-orange-100 text-orange-700',
-},
-{
-    id: 'reddit-recommendation',
-    name: 'Recommendation Poll',
-    description: 'Crowdsource recommendations from the community',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '💡',
-    gradient: 'from-orange-500 to-amber-500',
-    accentColor: '#f59e0b',
-    question: 'Which would you recommend?',
-    options: [
-        'Option A',
-        'Option B',
-        'Option C',
-        'Option D',
-        'Option E',
-        'Other (comment)'
-    ],
-    suggestedTheme: 'minimal',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Reddit advice threads', 'Purchase decisions', 'Community input'],
-    estimatedTime: '20 sec to create',
-},
-{
-    id: 'reddit-debate',
-    name: 'Community Debate',
-    description: 'Settle debates with community votes',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'pairwise',
-    icon: '⚔️',
-    gradient: 'from-red-500 to-orange-600',
-    accentColor: '#ef4444',
-    question: 'Which is better?',
-    options: [
-        'Team A',
-        'Team B'
-    ],
-    suggestedTheme: 'default',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Reddit debates', 'Versus polls', 'Settling arguments'],
-    estimatedTime: '15 sec to create',
-},
-{
-    id: 'reddit-mod-decision',
-    name: 'Mod Policy Vote',
-    description: 'Get community input on subreddit rules',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '⚖️',
-    gradient: 'from-orange-600 to-red-500',
-    accentColor: '#ea580c',
-    question: 'Should we change this subreddit rule?',
-    options: [
-        '✅ Yes, update the rule',
-        '❌ No, keep it as is',
-        '🤔 Need more discussion',
-        '📝 Modify slightly (comment)'
-    ],
-    suggestedTheme: 'minimal',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Subreddit mods', 'Policy decisions', 'Community governance'],
-    estimatedTime: '20 sec to create',
-},
+export default Footer;

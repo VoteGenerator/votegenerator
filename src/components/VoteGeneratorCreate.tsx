@@ -1,6 +1,7 @@
 // ============================================================================
 // VoteGeneratorCreate - FORM ONLY (parent handles headers)
 // UPDATED: All poll types FREE, Template loading, Comments, Security sections
+// STYLING FIXES: Better background contrast, template banner, card styling
 // ============================================================================
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -82,21 +83,21 @@ const SECURITY_OPTIONS = [
     { id: 'code', name: 'Access Codes', desc: 'Unique codes for each voter', icon: Key },
 ];
 
-// How It Works
+// How It Works - UPDATED with larger icons
 const HowItWorks: React.FC = () => (
     <div className="mb-8">
         <div className="grid grid-cols-3 gap-4">
             {[
-                { num: '1', title: 'Choose Type', icon: CheckSquare, color: 'from-blue-500 to-indigo-500' },
-                { num: '2', title: 'Add Question', icon: Sparkles, color: 'from-purple-500 to-pink-500' },
-                { num: '3', title: 'Share & Collect', icon: Share2, color: 'from-amber-500 to-orange-500' },
+                { num: '1', title: 'Choose Type', icon: CheckSquare, color: 'from-blue-500 to-indigo-600' },
+                { num: '2', title: 'Add Question', icon: Sparkles, color: 'from-purple-500 to-pink-600' },
+                { num: '3', title: 'Share & Collect', icon: Share2, color: 'from-amber-500 to-orange-600' },
             ].map((step, i) => (
                 <motion.div key={step.num} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="text-center">
-                    <div className={`w-12 h-12 mx-auto mb-2 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                        <step.icon className="text-white" size={20} />
+                    <div className={`w-14 h-14 mx-auto mb-2 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                        <step.icon className="text-white" size={22} />
                     </div>
-                    <div className="text-xs text-indigo-600 font-bold">Step {step.num}</div>
-                    <h3 className="font-bold text-slate-900 text-sm">{step.title}</h3>
+                    <div className="text-xs text-indigo-600 font-bold uppercase tracking-wide">Step {step.num}</div>
+                    <h3 className="font-bold text-slate-900">{step.title}</h3>
                 </motion.div>
             ))}
         </div>
@@ -276,32 +277,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
-                // Save poll to localStorage so AdminDashboard can find it
-                try {
-                    const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
-                    const newPoll = {
-                        id: pollId,
-                        adminKey: adminKey,
-                        question: title.trim(),
-                        type: pollType,
-                        createdAt: new Date().toISOString()
-                    };
-                    // Add to beginning of array (most recent first)
-                    existingPolls.unshift(newPoll);
-                    // Keep only last 50 polls to avoid localStorage bloat
-                    const trimmedPolls = existingPolls.slice(0, 50);
-                    localStorage.setItem('vg_polls', JSON.stringify(trimmedPolls));
-                } catch (e) {
-                    console.error('Failed to save poll to localStorage:', e);
-                }
-                
-                // PAID USERS: Go directly to poll results dashboard
-                // FREE USERS: Go through ad-wall, then to ADMIN DASHBOARD
+                // PAID USERS: Go directly to admin dashboard
+                // FREE USERS: Go through ad-wall first
                 if (isPaidUser) {
                     window.location.href = `/#id=${pollId}&admin=${adminKey}`;
                 } else {
-                    // Redirect to admin dashboard - it will load polls from localStorage
-                    window.location.href = `/ad-wall?redirect=${encodeURIComponent('/admin')}`;
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
                 }
                 return;
             } else { 
@@ -316,7 +297,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-indigo-50/40 via-white to-blue-50/30 py-8">
+        // UPDATED: Better background gradient for more depth
+        <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8">
             <div className="max-w-6xl mx-auto px-4">
                 {/* Subscription Status Header for Paid Users */}
                 {isPaidUser && !hideTierBanner && (
@@ -345,34 +327,32 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     </motion.div>
                 )}
                 
-                {/* Free User - Templates CTA - MORE PROMINENT */}
+                {/* UPDATED: Free User Templates CTA - Better contrast with white bg */}
                 {!isPaidUser && !hideTierBanner && (
                     <motion.div 
                         initial={{ opacity: 0, y: -10 }} 
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 p-5 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-between shadow-sm"
+                        className="mb-6 p-5 bg-white rounded-2xl border-2 border-amber-300 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                     >
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shrink-0">
                                 <LayoutTemplate size={24} className="text-white" />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-900 text-lg">Start faster with free templates</p>
-                                <p className="text-sm text-slate-600">
-                                    Pre-built and ready to use — just customize and share
-                                </p>
+                                <p className="font-bold text-slate-900 text-lg">Start faster with <span className="text-amber-600">free</span> templates</p>
+                                <p className="text-sm text-slate-600">Pre-built and ready to use — just customize and share</p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                             <a 
                                 href="/templates#polls" 
-                                className="px-4 py-2.5 bg-white border-2 border-amber-300 text-amber-700 rounded-xl font-semibold hover:bg-amber-50 transition-all"
+                                className="flex-1 sm:flex-none px-4 py-2.5 bg-white border-2 border-amber-400 text-amber-600 rounded-xl font-bold hover:bg-amber-50 transition-all text-center"
                             >
                                 Poll Templates
                             </a>
                             <a 
                                 href="/templates#surveys" 
-                                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all"
+                                className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all text-center"
                             >
                                 Survey Templates
                             </a>
@@ -382,7 +362,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
 
                 {/* Template Badge (if using a template) */}
                 {activeTemplate && (
-                    <TemplateBadge template={activeTemplate} onClear={clearTemplate} />
+                    <div className="mb-4">
+                        <TemplateBadge template={activeTemplate} onClear={clearTemplate} />
+                    </div>
                 )}
 
                 <HowItWorks />
@@ -390,22 +372,29 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 <div className="grid lg:grid-cols-2 gap-8">
                     {/* Left: Form */}
                     <div className="space-y-6">
-                        {/* Poll Type Selection */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6">
-                            <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
-                                <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm">1</span>
-                                Poll Type
-                            </h2>
+                        {/* Poll Type Selection - UPDATED: Better border and shadow */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm">1</span>
+                                    Poll Type
+                                </h2>
+                                <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                    <CheckSquare size={12} />
+                                    ✓ All types included free
+                                </span>
+                            </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {POLL_TYPES.map((type) => (
                                     <button
                                         key={type.id}
                                         type="button"
                                         onClick={() => setPollType(type.id)}
+                                        // UPDATED: Better selection state with ring
                                         className={`p-3 rounded-xl border-2 transition-all text-left ${
                                             pollType === type.id 
-                                                ? 'border-indigo-500 bg-indigo-50 shadow-md' 
-                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                                ? 'border-indigo-500 bg-indigo-50 shadow-md ring-2 ring-indigo-200' 
+                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-white'
                                         }`}
                                     >
                                         <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${type.gradient} flex items-center justify-center mb-2`}>
@@ -425,8 +414,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             )}
                         </motion.div>
 
-                        {/* Question & Options */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-purple-100 p-6">
+                        {/* Question & Options - UPDATED: Better border */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 hover:shadow-xl transition-shadow">
                             <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
                                 <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm">2</span>
                                 {pollType === 'survey' ? 'Survey Title & Questions' : 'Question & Options'}
@@ -615,7 +604,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
                             subscriptionTier === 'business' ? 'border-2 border-purple-200' :
                             subscriptionTier === 'pro' ? 'border-2 border-indigo-200' :
-                            'border border-amber-200'
+                            'border border-slate-200'
                         }`}>
                             <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50">
                                 <span className="font-bold text-slate-900 flex items-center gap-2">
@@ -821,19 +810,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             
                             {/* Device Frame */}
                             {previewDevice === 'mobile' ? (
-                                /* Mobile Phone Frame - Clean Modern Design */
+                                /* Mobile Phone Frame */
                                 <div className="flex justify-center">
                                     <div className="relative">
-                                        {/* Phone outer shell */}
                                         <div className="w-[280px] bg-slate-800 rounded-[3rem] p-3 shadow-2xl">
-                                            {/* Screen container */}
                                             <div className="relative bg-white rounded-[2.25rem] overflow-hidden">
-                                                {/* Dynamic Island (pill shape) */}
                                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
-                                                
-                                                {/* Screen content */}
                                                 <div className="pt-12 pb-6" style={{ minHeight: '480px' }}>
-                                                    {/* Template Badge in Preview */}
                                                     {activeTemplate && (
                                                         <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
                                                             <span className="text-lg">{activeTemplate.icon}</span>
@@ -868,7 +851,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">
                                                             {buttonText || 'Submit Vote'}
                                                         </button>
-                                                        {/* Powered by badge for free users */}
                                                         {!isPaidUser && (
                                                             <div className="mt-3 text-center">
                                                                 <span className="text-xs text-slate-400">
@@ -878,8 +860,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                 </div>
-                                                
-                                                {/* Home indicator bar */}
                                                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full"></div>
                                             </div>
                                         </div>
@@ -888,22 +868,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             ) : (
                                 /* Desktop Browser Frame */
                                 <div className="bg-slate-100 rounded-2xl overflow-hidden shadow-xl border border-slate-200">
-                                    {/* Browser chrome */}
                                     <div className="bg-slate-200 px-4 py-2 flex items-center gap-3 border-b border-slate-300">
-                                        {/* Traffic lights */}
                                         <div className="flex gap-1.5">
                                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                                             <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                                             <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                         </div>
-                                        {/* URL bar */}
                                         <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
                                             votegenerator.com/v/abc123
                                         </div>
                                     </div>
-                                    {/* Browser content */}
                                     <div className="bg-white p-6">
-                                        {/* Template Badge in Preview */}
                                         {activeTemplate && (
                                             <div className={`-mx-6 -mt-6 mb-6 px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
                                                 <span className="text-lg">{activeTemplate.icon}</span>
@@ -936,7 +911,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
                                                 {buttonText || 'Submit Vote'}
                                             </button>
-                                            {/* Powered by badge for free users */}
                                             {!isPaidUser && (
                                                 <div className="mt-3 text-center">
                                                     <span className="text-xs text-slate-400">

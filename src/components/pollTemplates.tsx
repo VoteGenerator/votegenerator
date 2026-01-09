@@ -1257,3 +1257,18 @@ export const getTemplateCounts = (): Record<string, number> => {
     });
     return counts;
 };
+
+export const TEMPLATE_CATEGORIES = [
+    { id: 'all', label: 'All Templates', icon: '✨' },
+    { id: 'business', label: 'Business', icon: '💼' },
+    { id: 'education', label: 'Education', icon: '📚' },
+    { id: 'events', label: 'Events', icon: '🎉' },
+    { id: 'creators', label: 'Content Creators', icon: '🎬' },  // ADD THIS
+    // ... rest
+];
+import { CREATOR_TEMPLATES } from './creatorTemplates';
+
+export const POLL_TEMPLATES: PollTemplate[] = [
+    // existing templates...
+    ...CREATOR_TEMPLATES,
+];

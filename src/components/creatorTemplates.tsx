@@ -1,308 +1,162 @@
-// ============================================================================
-// CREATOR TEMPLATES - Add to pollTemplates.tsx
-// Paste these into the POLL_TEMPLATES array in pollTemplates.tsx
-// Also add { id: 'creators', label: 'Content Creators', icon: '🎬' } to TEMPLATE_CATEGORIES
-// ============================================================================
+// creatorTemplates.tsx - Creator templates for YouTube, Twitch, Reddit
+// Add these to your pollTemplates.tsx POLL_TEMPLATES array
 
-// Add this category to TEMPLATE_CATEGORIES array:
-// { id: 'creators', label: 'Content Creators', icon: '🎬' },
+import { PollTemplate } from './pollTemplates';
 
-// =========================================================================
-// CONTENT CREATOR TEMPLATES (YouTube, Twitch, Reddit)
-// =========================================================================
+// YouTube Creator Templates
+export const YOUTUBE_TEMPLATES: PollTemplate[] = [
+    {
+        id: 'youtube-video-ideas',
+        name: 'Video Ideas Vote',
+        icon: '🎬',
+        category: 'creators',
+        question: 'What video should I make next?',
+        description: 'Let your subscribers pick your next video topic',
+        options: ['Tutorial: Advanced editing techniques', 'Behind the scenes vlog', 'Q&A session', 'Collab with another creator', 'Challenge video'],
+        pollType: 'multiple',
+        gradient: 'from-red-500 to-red-600',
+        popular: true
+    },
+    {
+        id: 'youtube-upload-schedule',
+        name: 'Upload Schedule',
+        icon: '📅',
+        category: 'creators',
+        question: 'When do you prefer new videos?',
+        description: 'Find the best upload time for your audience',
+        options: ['Weekday mornings', 'Weekday evenings', 'Weekend mornings', 'Weekend evenings'],
+        pollType: 'multiple',
+        gradient: 'from-red-500 to-red-600'
+    },
+    {
+        id: 'youtube-thumbnail-test',
+        name: 'Thumbnail A/B Test',
+        icon: '🖼️',
+        category: 'creators',
+        question: 'Which thumbnail catches your attention?',
+        description: 'Test thumbnails before publishing',
+        options: ['Thumbnail A', 'Thumbnail B', 'Thumbnail C'],
+        pollType: 'image',
+        gradient: 'from-red-500 to-red-600'
+    },
+    {
+        id: 'youtube-series-vote',
+        name: 'Series Continuation',
+        icon: '📺',
+        category: 'creators',
+        question: 'Should I continue this series?',
+        description: 'Get feedback on ongoing content series',
+        options: ['Yes, keep going!', 'Yes, but change the format', 'Take a break from it', 'End the series'],
+        pollType: 'multiple',
+        gradient: 'from-red-500 to-red-600'
+    }
+];
 
-// YOUTUBE CREATOR TEMPLATES
-{
-    id: 'youtube-video-ideas',
-    name: 'Video Ideas Poll',
-    description: 'Let your audience vote on your next video topic',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🎬',
-    gradient: 'from-red-500 to-rose-600',
-    accentColor: '#ef4444',
-    question: 'What video should I make next?',
-    options: [
-        '🎮 Gaming challenge',
-        '📚 Tutorial / How-to',
-        '🗣️ Q&A / Storytime',
-        '🔍 Deep dive / Analysis',
-        '🎉 Collab with another creator'
-    ],
-    suggestedTheme: 'default',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['YouTube creators', 'Content planning', 'Audience engagement'],
-    estimatedTime: '30 sec to create',
-    badge: 'YouTube',
-    badgeColor: 'bg-red-100 text-red-700',
-},
-{
-    id: 'youtube-upload-schedule',
-    name: 'Upload Schedule Vote',
-    description: 'Find out when your audience wants new content',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '📅',
-    gradient: 'from-red-500 to-orange-500',
-    accentColor: '#ef4444',
-    question: 'When should I upload new videos?',
-    options: [
-        '🌅 Weekday mornings',
-        '🌆 Weekday evenings',
-        '📅 Saturday afternoon',
-        '🍳 Sunday morning',
-        '🌙 Late night drops'
-    ],
-    suggestedTheme: 'minimal',
-    settings: {},
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['YouTube scheduling', 'Audience preferences', 'Content strategy'],
-    estimatedTime: '30 sec to create',
-},
-{
-    id: 'youtube-thumbnail-test',
-    name: 'Thumbnail A/B Test',
-    description: 'Let viewers pick the best thumbnail design',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'image',
-    icon: '🖼️',
-    gradient: 'from-red-600 to-rose-500',
-    accentColor: '#dc2626',
-    question: 'Which thumbnail catches your attention?',
-    options: [
-        'Thumbnail A',
-        'Thumbnail B'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Thumbnail testing', 'CTR optimization', 'Design feedback'],
-    estimatedTime: '1 min to create',
-},
-{
-    id: 'youtube-series-vote',
-    name: 'Series Topic Vote',
-    description: 'Let subscribers vote on your next video series',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '📺',
-    gradient: 'from-red-500 to-pink-600',
-    accentColor: '#ec4899',
-    question: 'What series should I start next?',
-    options: [
-        '🎮 Full game playthrough',
-        '📖 Deep dive documentary',
-        '🎓 Tutorial series',
-        '🆚 Comparison reviews',
-        '🎙️ Interview series'
-    ],
-    suggestedTheme: 'default',
-    settings: {},
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Series planning', 'Long-form content', 'Audience research'],
-    estimatedTime: '30 sec to create',
-},
+// Twitch Streamer Templates
+export const TWITCH_TEMPLATES: PollTemplate[] = [
+    {
+        id: 'twitch-game-choice',
+        name: 'Game Vote',
+        icon: '🎮',
+        category: 'creators',
+        question: 'What game should I play next?',
+        description: 'Let chat decide the next game',
+        options: ['Elden Ring', 'Minecraft', 'Valorant', 'Just Chatting', 'Viewer Choice'],
+        pollType: 'multiple',
+        gradient: 'from-purple-600 to-purple-700',
+        popular: true
+    },
+    {
+        id: 'twitch-stream-schedule',
+        name: 'Stream Schedule',
+        icon: '🗓️',
+        category: 'creators',
+        question: 'Best days for streams?',
+        description: 'Find when your community is most active',
+        options: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        pollType: 'multiple',
+        settings: { allowMultiple: true },
+        gradient: 'from-purple-600 to-purple-700'
+    },
+    {
+        id: 'twitch-challenge-vote',
+        name: 'Challenge Vote',
+        icon: '🏆',
+        category: 'creators',
+        question: 'Which challenge should I attempt?',
+        description: 'Let viewers pick your next challenge',
+        options: ['No-hit run', 'Speedrun attempt', 'Blindfolded gameplay', 'One life only', 'Chat controls'],
+        pollType: 'multiple',
+        gradient: 'from-purple-600 to-purple-700'
+    },
+    {
+        id: 'twitch-prediction',
+        name: 'Stream Prediction',
+        icon: '🔮',
+        category: 'creators',
+        question: 'Will I beat this boss today?',
+        description: 'Prediction poll for stream moments',
+        options: ['Yes, first try!', 'Yes, within 5 attempts', 'Yes, but it will take a while', 'No way'],
+        pollType: 'multiple',
+        gradient: 'from-purple-600 to-purple-700'
+    }
+];
 
-// TWITCH STREAMER TEMPLATES
-{
-    id: 'twitch-game-choice',
-    name: 'Stream Game Vote',
-    description: 'Let chat decide what game you play',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🎮',
-    gradient: 'from-purple-600 to-indigo-700',
-    accentColor: '#9333ea',
-    question: 'What game should I play next?',
-    options: [
-        '🎯 FPS / Shooter',
-        '🗡️ RPG / Adventure',
-        '🏎️ Racing / Sports',
-        '🧩 Puzzle / Strategy',
-        '🎲 Viewer\'s choice (random)'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Twitch streamers', 'Live decisions', 'Chat engagement'],
-    estimatedTime: '20 sec to create',
-    badge: 'Twitch',
-    badgeColor: 'bg-purple-100 text-purple-700',
-},
-{
-    id: 'twitch-stream-schedule',
-    name: 'Stream Schedule Poll',
-    description: 'Find out when viewers want you live',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'meeting',
-    icon: '⏰',
-    gradient: 'from-purple-500 to-violet-600',
-    accentColor: '#8b5cf6',
-    question: 'When should I stream this week?',
-    options: [
-        'Monday 7pm',
-        'Wednesday 8pm',
-        'Friday 6pm',
-        'Saturday 3pm',
-        'Sunday 5pm'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: true },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Stream scheduling', 'Viewer availability', 'Time zone coordination'],
-    estimatedTime: '30 sec to create',
-},
-{
-    id: 'twitch-challenge-vote',
-    name: 'Challenge Vote',
-    description: 'Let viewers pick your next gaming challenge',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🏆',
-    gradient: 'from-violet-600 to-purple-700',
-    accentColor: '#7c3aed',
-    question: 'Which challenge should I attempt?',
-    options: [
-        '💀 No-death run',
-        '⚔️ Melee only',
-        '⏱️ Speedrun attempt',
-        '🎭 Roleplay playthrough',
-        '🎲 Random loadout'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Gaming challenges', 'Viewer engagement', 'Content variety'],
-    estimatedTime: '20 sec to create',
-},
-{
-    id: 'twitch-prediction',
-    name: 'Stream Prediction',
-    description: 'Will I beat this boss? Let viewers predict!',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '🔮',
-    gradient: 'from-purple-700 to-indigo-800',
-    accentColor: '#6366f1',
-    question: 'Will I beat this boss on the first try?',
-    options: [
-        '✅ Yes, ez clap',
-        '❌ No chance',
-        '🤏 Maybe after 5 tries',
-        '💀 RIP to the run'
-    ],
-    suggestedTheme: 'dark',
-    settings: { allowMultiple: false, hideResults: true },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Live predictions', 'Viewer engagement', 'Fun interactions'],
-    estimatedTime: '15 sec to create',
-},
+// Reddit Community Templates
+export const REDDIT_TEMPLATES: PollTemplate[] = [
+    {
+        id: 'reddit-ranking',
+        name: 'Community Ranking',
+        icon: '📊',
+        category: 'creators',
+        question: 'Rank these from best to worst',
+        description: 'Get ranked opinions from your community',
+        options: ['Option A', 'Option B', 'Option C', 'Option D', 'Option E'],
+        pollType: 'ranked',
+        gradient: 'from-orange-500 to-orange-600',
+        popular: true
+    },
+    {
+        id: 'reddit-recommendation',
+        name: 'Recommendation Poll',
+        icon: '💡',
+        category: 'creators',
+        question: 'Help me decide: Which should I choose?',
+        description: 'Crowdsource recommendations from the community',
+        options: ['Option 1', 'Option 2', 'Option 3', 'Other (comment below)'],
+        pollType: 'multiple',
+        gradient: 'from-orange-500 to-orange-600'
+    },
+    {
+        id: 'reddit-debate',
+        name: 'Opinion Poll',
+        icon: '🗣️',
+        category: 'creators',
+        question: 'What is your stance on this topic?',
+        description: 'Gauge community opinions on debates',
+        options: ['Strongly agree', 'Somewhat agree', 'Neutral', 'Somewhat disagree', 'Strongly disagree'],
+        pollType: 'multiple',
+        gradient: 'from-orange-500 to-orange-600'
+    },
+    {
+        id: 'reddit-mod-decision',
+        name: 'Mod Decision',
+        icon: '⚖️',
+        category: 'creators',
+        question: 'Should we implement this rule change?',
+        description: 'Let the community vote on subreddit changes',
+        options: ['Yes, implement it', 'Yes, but with modifications', 'No, keep things as they are', 'Need more discussion'],
+        pollType: 'multiple',
+        gradient: 'from-orange-500 to-orange-600'
+    }
+];
 
-// REDDIT COMMUNITY TEMPLATES
-{
-    id: 'reddit-ranking',
-    name: 'Community Ranking',
-    description: 'Let the community rank their favorites',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'ranked',
-    icon: '🏅',
-    gradient: 'from-orange-500 to-red-600',
-    accentColor: '#f97316',
-    question: 'Rank your top 5 favorites',
-    options: [
-        'Option 1',
-        'Option 2',
-        'Option 3',
-        'Option 4',
-        'Option 5',
-        'Option 6',
-        'Option 7',
-        'Option 8'
-    ],
-    suggestedTheme: 'default',
-    settings: {},
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Reddit communities', 'Best-of lists', 'Community rankings'],
-    estimatedTime: '30 sec to create',
-    badge: 'Reddit',
-    badgeColor: 'bg-orange-100 text-orange-700',
-},
-{
-    id: 'reddit-recommendation',
-    name: 'Recommendation Poll',
-    description: 'Crowdsource recommendations from the community',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '💡',
-    gradient: 'from-orange-500 to-amber-500',
-    accentColor: '#f59e0b',
-    question: 'Which would you recommend?',
-    options: [
-        'Option A',
-        'Option B',
-        'Option C',
-        'Option D',
-        'Option E',
-        'Other (comment)'
-    ],
-    suggestedTheme: 'minimal',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'dots' },
-    bestFor: ['Reddit advice threads', 'Purchase decisions', 'Community input'],
-    estimatedTime: '20 sec to create',
-},
-{
-    id: 'reddit-debate',
-    name: 'Community Debate',
-    description: 'Settle debates with community votes',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'pairwise',
-    icon: '⚔️',
-    gradient: 'from-red-500 to-orange-600',
-    accentColor: '#ef4444',
-    question: 'Which is better?',
-    options: [
-        'Team A',
-        'Team B'
-    ],
-    suggestedTheme: 'default',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Reddit debates', 'Versus polls', 'Settling arguments'],
-    estimatedTime: '15 sec to create',
-},
-{
-    id: 'reddit-mod-decision',
-    name: 'Mod Policy Vote',
-    description: 'Get community input on subreddit rules',
-    category: 'creators',
-    categoryLabel: 'Content Creators',
-    pollType: 'multiple',
-    icon: '⚖️',
-    gradient: 'from-orange-600 to-red-500',
-    accentColor: '#ea580c',
-    question: 'Should we change this subreddit rule?',
-    options: [
-        '✅ Yes, update the rule',
-        '❌ No, keep it as is',
-        '🤔 Need more discussion',
-        '📝 Modify slightly (comment)'
-    ],
-    suggestedTheme: 'minimal',
-    settings: { allowMultiple: false },
-    previewStyle: { bgPattern: 'none' },
-    bestFor: ['Subreddit mods', 'Policy decisions', 'Community governance'],
-    estimatedTime: '20 sec to create',
-},
+// Combined export for easy importing
+export const CREATOR_TEMPLATES: PollTemplate[] = [
+    ...YOUTUBE_TEMPLATES,
+    ...TWITCH_TEMPLATES,
+    ...REDDIT_TEMPLATES
+];
+
+// Add this category to TEMPLATE_CATEGORIES in pollTemplates.tsx:
+// { id: 'creators', label: 'Content Creators', icon: '🎬' }

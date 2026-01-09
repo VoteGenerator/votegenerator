@@ -30,6 +30,9 @@ import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+import YouTubeCreatorsPage from './YouTubeCreatorsPage';
+import TwitchStreamersPage from './TwitchStreamersPage';
+import RedditCommunityPage from './RedditCommunityPage';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
@@ -369,6 +372,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <YouTubeCreatorsPage />
             ) : window.location.pathname === '/twitch-polls' || window.location.pathname === '/streamers' ? (
                 <TwitchStreamersPage />
+            ) : window.location.pathname === '/reddit-polls' || window.location.pathname === '/reddit' ? (
+                <RedditCommunityPage />    
             ) : window.location.pathname === '/survey' ? (
                 <SurveyPage />
             ) : window.location.pathname === '/employee-survey' ? (

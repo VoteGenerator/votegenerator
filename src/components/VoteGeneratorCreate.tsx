@@ -297,8 +297,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     };
 
     return (
-        // UPDATED: Better background gradient for more depth
-        <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8">
+        // Background handled by parent component (CreatePage or LandingPage)
+        <div className="py-8">
             <div className="max-w-6xl mx-auto px-4">
                 {/* Subscription Status Header for Paid Users */}
                 {isPaidUser && !hideTierBanner && (

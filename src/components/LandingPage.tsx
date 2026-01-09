@@ -986,6 +986,28 @@ const TemplatesSection: React.FC = () => {
                     ))}
                 </div>
 
+                {/* Creator Platform Links */}
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                    <a 
+                        href="/youtube-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-red-50 border-2 border-red-200 text-red-700 font-semibold rounded-xl hover:bg-red-100 hover:border-red-300 transition"
+                    >
+                        <span>▶️</span> For YouTubers
+                    </a>
+                    <a 
+                        href="/twitch-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-50 border-2 border-purple-200 text-purple-700 font-semibold rounded-xl hover:bg-purple-100 hover:border-purple-300 transition"
+                    >
+                        <span>📺</span> For Streamers
+                    </a>
+                    <a 
+                        href="/reddit-polls"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border-2 border-orange-200 text-orange-700 font-semibold rounded-xl hover:bg-orange-100 hover:border-orange-300 transition"
+                    >
+                        <span>🔗</span> For Reddit
+                    </a>
+                </div>
+
                 <div className="text-center">
                     <a 
                         href="/templates" 
@@ -2059,7 +2081,7 @@ function LandingPage(): React.ReactElement {
             <TrustBar />
             
             {/* ============ CREATE POLL SECTION ============ */}
-            <section id="create" className="py-16 bg-gradient-to-b from-white to-slate-50">
+            <section id="create" className="py-16 bg-gradient-to-b from-slate-50/50 to-white">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center mb-8">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">

@@ -1,4 +1,4 @@
-// Footer.tsx - Using <a> tags instead of <Link> to avoid Router context issues
+// Footer.tsx - Using actual logo and <a> tags
 import React from 'react';
 
 const Footer: React.FC = () => {
@@ -52,10 +52,10 @@ const Footer: React.FC = () => {
                 
                 {/* Bottom */}
                 <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-2xl">🗳️</span>
+                    <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                        <img src="/logo.svg" alt="VoteGenerator" className="h-8 w-auto" />
                         <span className="font-bold text-white">VoteGenerator</span>
-                    </div>
+                    </a>
                     <p className="text-sm text-slate-400">
                         © {currentYear} VoteGenerator. All rights reserved.
                     </p>

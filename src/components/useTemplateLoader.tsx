@@ -1,10 +1,11 @@
 // ============================================================================
 // useTemplateLoader - Hook for loading poll templates from URL params
+// FIXED: Added onSelectTemplate prop to StartFromTemplateButton
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PollTemplate, getTemplateById, POLL_TEMPLATES } from './pollTemplates';
-import { X, LayoutTemplate } from 'lucide-react';
+import { X, LayoutTemplate, Sparkles } from 'lucide-react';
 
 // Hook to load template from URL params
 export const useTemplateLoader = () => {
@@ -72,18 +73,52 @@ export const TemplateBadge: React.FC<TemplateBadgeProps> = ({ template, onClear 
     );
 };
 
-// Button to start from template (used on landing pages)
+// Button to start from template (used on landing pages and create page)
+// FIXED: Added onSelectTemplate prop for callback-based usage
 interface StartFromTemplateButtonProps {
-    templateId: string;
+    templateId?: string;
     className?: string;
     children?: React.ReactNode;
+    onSelectTemplate?: (template: PollTemplate) => void;
 }
 
 export const StartFromTemplateButton: React.FC<StartFromTemplateButtonProps> = ({ 
     templateId, 
     className = '',
-    children 
+    children,
+    onSelectTemplate
 }) => {
+    // If onSelectTemplate is provided, render a button that opens template picker
+    if (onSelectTemplate) {
+        return (
+            <button
+                type="button"
+                onClick={() => {
+                    // Navigate to templates page or show modal
+                    // For now, redirect to templates page
+                    window.location.href = '/templates';
+                }}
+                className={className || "flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 transition-colors"}
+            >
+                <Sparkles size={16} />
+                {children || 'Start from Template'}
+            </button>
+        );
+    }
+    
+    // Otherwise, use templateId for link-based usage
+    if (!templateId) {
+        return (
+            <a
+                href="/templates"
+                className={className || "flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 transition-colors"}
+            >
+                <Sparkles size={16} />
+                {children || 'Browse Templates'}
+            </a>
+        );
+    }
+    
     const template = getTemplateById(templateId);
     
     if (!template) {

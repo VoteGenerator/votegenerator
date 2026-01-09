@@ -1,5 +1,11 @@
+// ============================================================================
 // creatorTemplates.tsx - Creator templates for YouTube, Twitch, Reddit
-// Add these to your pollTemplates.tsx POLL_TEMPLATES array
+// FIXED: Uses proper type that matches updated PollTemplate with 'creators' category
+// 
+// IMPORTANT: Before using this file, ensure pollTemplates.tsx has been updated:
+// 1. category type includes 'creators' 
+// 2. TEMPLATE_CATEGORIES includes { id: 'creators', label: 'Content Creators', icon: '🎬' }
+// ============================================================================
 
 import { PollTemplate } from './pollTemplates';
 
@@ -158,5 +164,7 @@ export const CREATOR_TEMPLATES: PollTemplate[] = [
     ...REDDIT_TEMPLATES
 ];
 
-// Add this category to TEMPLATE_CATEGORIES in pollTemplates.tsx:
-// { id: 'creators', label: 'Content Creators', icon: '🎬' }
+// Instructions for pollTemplates.tsx:
+// 1. Add 'creators' to the category type union
+// 2. Add this to TEMPLATE_CATEGORIES: { id: 'creators', label: 'Content Creators', icon: '🎬' }
+// 3. Import and spread CREATOR_TEMPLATES into POLL_TEMPLATES array

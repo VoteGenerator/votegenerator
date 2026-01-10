@@ -41,7 +41,7 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
-    status?: 'draft' | 'live';  // For Pro/Pro polls
+    status?: 'draft' | 'live' | 'paused';  // For Pro/Pro polls, paused for over-limit
     expiresAt?: string;
     customSlug?: string;
 }

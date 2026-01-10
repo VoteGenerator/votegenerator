@@ -458,23 +458,28 @@ const AdminDashboard: React.FC = () => {
                     createdAt: new Date().toISOString(),
                 };
                 
-                // Save to localStorage for future visits
-                localStorage.setItem('vg_polls', JSON.stringify([newPoll]));
+                // MERGE with existing polls instead of overwriting
+                const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                const pollExists = existingPolls.some((p: any) => p.id === newPoll.id);
+                if (!pollExists) {
+                    existingPolls.unshift(newPoll);
+                }
+                localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
                 
-                // Create a FREE session with this poll
+                // Create a FREE session with ALL polls
                 const freeSession: UserSession = {
                     dashboardToken: 'free_user',
                     tier: 'free',
-                    polls: [{
-                        id: newPoll.id,
-                        adminKey: newPoll.adminKey,
-                        title: newPoll.title,
-                        type: newPoll.type,
-                        createdAt: newPoll.createdAt,
+                    polls: existingPolls.map((p: any) => ({
+                        id: p.id,
+                        adminKey: p.adminKey,
+                        title: p.title || 'Untitled Poll',
+                        type: p.type || 'multiple',
+                        createdAt: p.createdAt,
                         responseCount: 0,
                         status: 'live',
-                    }],
-                    createdAt: newPoll.createdAt,
+                    })),
+                    createdAt: existingPolls[0]?.createdAt || new Date().toISOString(),
                 };
                 setSession(freeSession);
                 setLoading(false);
@@ -650,8 +655,8 @@ const AdminDashboard: React.FC = () => {
                 localStorage.setItem('vg_tier_expires', session.expiresAt);
             }
         }
-        // Navigate to home with #create anchor to scroll to create section
-        window.location.href = '/#create';
+        // Navigate to create section - use query param so app can hide hero
+        window.location.href = '/?create=1#create';
     };
 
     const canCreateMorePolls = () => {
@@ -1085,21 +1090,24 @@ const AdminDashboard: React.FC = () => {
                                                                 {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
                                                             </button>
                                                         )}
-                                                        <button
-                                                            onClick={() => setShowShareCards(poll.id)}
-                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
-                                                            title="Create beautiful invite cards with QR codes"
-                                                        >
-                                                            <Palette size={18} />
-                                                            <span className="hidden sm:inline text-sm font-medium">Invite</span>
-                                                        </button>
+                                                        {/* Hide Invite button for just-created polls - it's in Manage section */}
+                                                        {!isJustCreated && (
+                                                            <button
+                                                                onClick={() => setShowShareCards(poll.id)}
+                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
+                                                                title="Create beautiful invite cards with QR codes"
+                                                            >
+                                                                <Palette size={18} />
+                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
+                                                            </button>
+                                                        )}
                                                         <a
                                                             href={`/#id=${poll.id}&admin=${poll.adminKey}`}
                                                             className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
-                                                            title={isDraft ? "Preview & Edit" : "Manage Poll"}
+                                                            title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
                                                         >
                                                             <ExternalLink size={16} />
-                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage'}</span>
+                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage & Share'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
@@ -1322,44 +1330,123 @@ const AdminDashboard: React.FC = () => {
                         )}
                         </div>
 
-                        {/* Quick Stats - Collapsible */}
-                        <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl border-2 border-slate-200 overflow-hidden">
-                            <button 
-                                onClick={() => setShowStatsPanel(!showStatsPanel)}
-                                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                        {/* Usage Meter - Creates urgency for conversion */}
+                        <div className={`rounded-2xl border-2 overflow-hidden ${
+                            tier === 'free' 
+                                ? 'bg-gradient-to-br from-orange-50 via-white to-amber-50 border-orange-200' 
+                                : 'bg-gradient-to-br from-slate-50 via-white to-slate-50 border-slate-200'
+                        }`}>
+                            <div className="p-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                                        tier === 'free' 
+                                            ? 'bg-gradient-to-br from-orange-400 to-amber-500' 
+                                            : 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                                    } text-white`}>
                                         <BarChart3 size={18} />
                                     </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-800">Quick Stats</h3>
-                                        <p className="text-xs text-slate-500">{polls.length} polls • {totalVotes} votes</p>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800">Usage This Month</h3>
+                                        <p className="text-xs text-slate-500">
+                                            {tier === 'free' ? 'Free plan limits' : `${config.label} plan`}
+                                        </p>
                                     </div>
                                 </div>
-                                {showStatsPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                            </button>
-                            
-                            {showStatsPanel && (
-                                <div className="p-4 pt-0 border-t border-slate-100">
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                            <span className="text-slate-500 text-sm">Total Polls</span>
-                                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{polls.length}</span>
-                                        </div>
-                                        {config.requiresActivation && (
-                                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                                <span className="text-slate-500 text-sm">Live Polls</span>
-                                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{livePolls.length}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                            <span className="text-slate-500 text-sm">Total Votes</span>
-                                            <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{totalVotes}</span>
+                                
+                                {/* Polls Usage */}
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="text-slate-600 font-medium">Polls Created</span>
+                                        <span className={`font-bold ${
+                                            tier === 'free' && polls.length >= config.maxPolls 
+                                                ? 'text-red-600' 
+                                                : tier === 'free' && polls.length >= config.maxPolls - 1
+                                                    ? 'text-orange-600'
+                                                    : 'text-slate-800'
+                                        }`}>
+                                            {polls.length} / {config.maxPolls === Infinity ? '∞' : config.maxPolls}
+                                        </span>
+                                    </div>
+                                    <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full transition-all ${
+                                                tier === 'free' && polls.length >= config.maxPolls 
+                                                    ? 'bg-red-500' 
+                                                    : tier === 'free' && polls.length >= config.maxPolls - 1
+                                                        ? 'bg-orange-500'
+                                                        : 'bg-indigo-500'
+                                            }`}
+                                            style={{ width: `${Math.min(100, (polls.length / (config.maxPolls === Infinity ? 100 : config.maxPolls)) * 100)}%` }}
+                                        />
+                                    </div>
+                                    {tier === 'free' && polls.length >= config.maxPolls && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">
+                                            ⚠️ Limit reached! Upgrade for unlimited polls
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Responses Usage */}
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="text-slate-600 font-medium">Responses Received</span>
+                                        <span className={`font-bold ${
+                                            totalVotes >= config.maxResponses 
+                                                ? 'text-red-600' 
+                                                : totalVotes >= config.maxResponses * 0.8
+                                                    ? 'text-orange-600'
+                                                    : 'text-slate-800'
+                                        }`}>
+                                            {totalVotes.toLocaleString()} / {config.maxResponses.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full transition-all ${
+                                                totalVotes >= config.maxResponses 
+                                                    ? 'bg-red-500' 
+                                                    : totalVotes >= config.maxResponses * 0.8
+                                                        ? 'bg-orange-500'
+                                                        : 'bg-emerald-500'
+                                            }`}
+                                            style={{ width: `${Math.min(100, (totalVotes / config.maxResponses) * 100)}%` }}
+                                        />
+                                    </div>
+                                    {totalVotes >= config.maxResponses * 0.8 && totalVotes < config.maxResponses && (
+                                        <p className="text-xs text-orange-600 mt-1 font-medium">
+                                            ⚡ {Math.round((1 - totalVotes / config.maxResponses) * 100)}% remaining
+                                        </p>
+                                    )}
+                                    {totalVotes >= config.maxResponses && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">
+                                            ⚠️ Limit reached! New votes won't be counted
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Upgrade CTA for Free users */}
+                                {tier === 'free' && (
+                                    <button 
+                                        onClick={() => setShowUpgradeModal(true)}
+                                        className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
+                                    >
+                                        <Zap size={16} />
+                                        Unlock Unlimited Usage
+                                    </button>
+                                )}
+                                
+                                {/* Stats summary for paid users */}
+                                {tier !== 'free' && (
+                                    <div className="pt-3 border-t border-slate-100 mt-3">
+                                        <div className="flex items-center justify-between text-xs text-slate-500">
+                                            <span>Resets monthly</span>
+                                            <span className="text-emerald-600 font-medium">
+                                                {config.maxResponses === 50000 ? '50K' : '5K'} responses included
+                                            </span>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

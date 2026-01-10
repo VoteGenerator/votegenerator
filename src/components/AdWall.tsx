@@ -1,120 +1,211 @@
+// ============================================================================
+// AdWall.tsx - Ad interstitial before accessing poll results (Free users)
+// Location: src/components/AdWall.tsx
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Loader2, ArrowRight, Crown, Sparkles } from 'lucide-react';
+import {
+    Clock, Zap, Crown, Check, Sparkles, ArrowRight,
+    BarChart3, Shield, Palette, Users, Infinity, Download
+} from 'lucide-react';
 
-const AD_DURATION = 8; // seconds
+const AdWall: React.FC = () => {
+    const [countdown, setCountdown] = useState(10);
+    const [canSkip, setCanSkip] = useState(false);
+    
+    // Get redirect URL from query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect') || '/admin';
+    
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    setCanSkip(true);
+                    clearInterval(timer);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        
+        return () => clearInterval(timer);
+    }, []);
+    
+    const handleContinue = () => {
+        window.location.href = decodeURIComponent(redirectUrl);
+    };
+    
+    const handleUpgrade = () => {
+        window.location.href = '/pricing';
+    };
 
-export default function AdWall() {
-  const [countdown, setCountdown] = useState(AD_DURATION);
-  const [canProceed, setCanProceed] = useState(false);
-
-  // Get redirect URL from query params
-  const params = new URLSearchParams(window.location.search);
-  const redirectUrl = params.get('redirect') || '/';
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          setCanProceed(true);
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleProceed = () => {
-    window.location.href = decodeURIComponent(redirectUrl);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-indigo-900 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center"
-      >
-        {/* Success Message */}
-        <div className="mb-6">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Poll Created Successfully!</h1>
-          <p className="text-slate-600">Your admin dashboard is almost ready...</p>
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+            <div className="max-w-4xl w-full">
+                {/* Header */}
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mb-8"
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white/80 text-sm mb-4">
+                        <Clock size={16} />
+                        {canSkip ? 'Ready to continue!' : `Please wait ${countdown} seconds...`}
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
+                        Your Poll is Ready! 🎉
+                    </h1>
+                    <p className="text-white/60">
+                        While you wait, check out what you're missing...
+                    </p>
+                </motion.div>
+                
+                {/* Main Content - Business Plan Promo */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-amber-500/20 backdrop-blur-sm border-2 border-amber-400/30 rounded-3xl p-8 mb-6"
+                >
+                    <div className="flex flex-col lg:flex-row gap-8 items-center">
+                        {/* Left - Plan Info */}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                    <Sparkles size={28} className="text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-white">Business Plan</h2>
+                                    <p className="text-amber-300 font-medium">Best for teams & organizations</p>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>Unlimited polls</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>50,000 responses/month</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>No ads or waiting</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>Custom branding</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>Export CSV/PDF/PNG</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>Priority support</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-baseline gap-2 mb-4">
+                                <span className="text-4xl font-black text-white">$490</span>
+                                <span className="text-white/60">/year</span>
+                                <span className="ml-2 px-2 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full">
+                                    ~$41/mo
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {/* Right - CTA */}
+                        <div className="lg:w-64 w-full">
+                            <button
+                                onClick={handleUpgrade}
+                                className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Zap size={20} />
+                                Upgrade Now
+                            </button>
+                            <p className="text-center text-white/40 text-xs mt-3">
+                                Annual subscription • Cancel anytime
+                            </p>
+                            
+                            {/* Comparison */}
+                            <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <p className="text-white/60 text-sm mb-3 font-medium">Why upgrade?</p>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-white/50">Free</span>
+                                        <span className="text-white/50">3 polls, 100 responses</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-amber-300 font-bold">Business</span>
+                                        <span className="text-amber-300 font-bold flex items-center gap-1">
+                                            <Infinity size={14} /> Unlimited
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+                
+                {/* Skip Button Area */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-center"
+                >
+                    {/* Upgrade CTA for impatient users */}
+                    {!canSkip && (
+                        <div className="mb-4 p-4 bg-white/5 rounded-xl inline-block">
+                            <p className="text-white/80 text-sm flex items-center gap-2">
+                                <Zap size={16} className="text-amber-400" />
+                                <span>Skip the wait!</span>
+                                <button 
+                                    onClick={handleUpgrade}
+                                    className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
+                                >
+                                    Upgrade to Business
+                                </button>
+                                <span>for instant access and no ads.</span>
+                            </p>
+                        </div>
+                    )}
+                    
+                    {/* Continue Button */}
+                    <button
+                        onClick={handleContinue}
+                        disabled={!canSkip}
+                        className={`px-8 py-3 rounded-xl font-bold text-lg transition-all flex items-center gap-2 mx-auto ${
+                            canSkip 
+                                ? 'bg-white text-slate-900 hover:bg-slate-100 hover:scale-105 shadow-lg' 
+                                : 'bg-white/20 text-white/40 cursor-not-allowed'
+                        }`}
+                    >
+                        {canSkip ? (
+                            <>
+                                Continue to Dashboard
+                                <ArrowRight size={20} />
+                            </>
+                        ) : (
+                            <>
+                                <Clock size={20} />
+                                Wait {countdown}s to continue
+                            </>
+                        )}
+                    </button>
+                    
+                    {canSkip && (
+                        <p className="text-white/40 text-sm mt-3">
+                            You can now access your poll dashboard
+                        </p>
+                    )}
+                </motion.div>
+            </div>
         </div>
+    );
+};
 
-        {/* Ad Space */}
-        <div className="mb-6">
-          <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center mb-4 border-2 border-dashed border-slate-300">
-            <div className="text-slate-400">
-              <p className="text-sm font-medium">Advertisement</p>
-              <p className="text-xs mt-1">Powered by Google AdSense</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Countdown / Proceed */}
-        {!canProceed ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-slate-600">
-              <Clock size={20} />
-              <span>Preparing your admin dashboard...</span>
-            </div>
-            <div className="text-5xl font-bold text-indigo-600">
-              {countdown}
-            </div>
-            <div className="flex justify-center">
-              <Loader2 size={24} className="text-slate-400 animate-spin" />
-            </div>
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-3"
-          >
-            <button
-              onClick={handleProceed}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
-            >
-              Go to Admin Dashboard
-              <ArrowRight size={20} />
-            </button>
-            <p className="text-sm text-amber-600 font-medium">
-              ⚠️ Bookmark the next page to access your poll anytime!
-            </p>
-          </motion.div>
-        )}
-
-        {/* Upgrade CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          className="mt-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200"
-        >
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles size={18} className="text-amber-600" />
-            <span className="font-semibold text-amber-800">Skip the wait!</span>
-          </div>
-          <p className="text-sm text-amber-700 mb-3">
-            Upgrade to a paid plan for instant access, premium poll types, and no ads.
-          </p>
-          <a
-            href="/pricing"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-medium text-sm hover:shadow-md transition"
-          >
-            <Crown size={16} />
-            View Plans
-          </a>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
-}
+export default AdWall;

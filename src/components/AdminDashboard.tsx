@@ -407,11 +407,16 @@ const AdminDashboard: React.FC = () => {
             }
             
             // Case 4: No paid session - check for FREE user with polls in localStorage
-            const savedPolls = localStorage.getItem('vg_polls');
+            const savedPolls = localStorage.getItem('vg_polls') || localStorage.getItem('myPolls');
             if (savedPolls) {
                 try {
                     const polls = JSON.parse(savedPolls);
                     if (polls && polls.length > 0) {
+                        // Migrate myPolls to vg_polls if needed
+                        if (!localStorage.getItem('vg_polls') && localStorage.getItem('myPolls')) {
+                            localStorage.setItem('vg_polls', savedPolls);
+                            localStorage.removeItem('myPolls');
+                        }
                         // Create a FREE session with their polls
                         const freeSession: UserSession = {
                             dashboardToken: 'free_user',
@@ -419,7 +424,7 @@ const AdminDashboard: React.FC = () => {
                             polls: polls.map((p: any) => ({
                                 id: p.id,
                                 adminKey: p.adminKey,
-                                title: p.title,
+                                title: p.title || 'Untitled Poll',
                                 type: p.type || 'multiple',
                                 createdAt: p.createdAt,
                                 responseCount: 0,

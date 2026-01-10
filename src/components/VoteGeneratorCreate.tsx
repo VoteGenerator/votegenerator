@@ -307,10 +307,10 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const adminKey = responseData.adminKey;
                 
                 // Store the new poll credentials in localStorage for admin dashboard
-                const existingPolls = JSON.parse(localStorage.getItem('myPolls') || '[]');
+                const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
                 if (!existingPolls.some((p: any) => p.id === pollId)) {
-                    existingPolls.push({ id: pollId, adminKey, createdAt: new Date().toISOString() });
-                    localStorage.setItem('myPolls', JSON.stringify(existingPolls));
+                    existingPolls.unshift({ id: pollId, adminKey, title, type: pollType, createdAt: new Date().toISOString() });
+                    localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
                 }
                 
                 // PAID USERS: Go directly to admin dashboard

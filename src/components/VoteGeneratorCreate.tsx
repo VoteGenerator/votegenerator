@@ -305,7 +305,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 // Set response limits based on tier
                 maxResponses: subscriptionTier === 'business' ? 100000 
                     : subscriptionTier === 'pro' ? 10000 
-                    : 100 // free
+                    : 100, // free
+                // Include selected theme
+                theme: selectedTheme
             };
             
             // Add image URLs for visual polls

@@ -140,6 +140,8 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                         
                         <a
                             href="/pricing"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="block w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl transition-all text-center"
                         >
                             Create Your Own Polls →
@@ -150,6 +152,24 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                         </p>
                     </div>
                 </motion.div>
+                
+                {/* Powered by badge */}
+                <div className="text-center mb-4">
+                    <a 
+                        href="https://votegenerator.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-white/40 hover:text-white/60 text-xs transition"
+                    >
+                        <img 
+                            src="/logo.svg" 
+                            alt="" 
+                            className="w-4 h-4 opacity-50"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        Powered by VoteGenerator
+                    </a>
+                </div>
                 
                 {/* Progress bar */}
                 <motion.div

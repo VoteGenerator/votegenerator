@@ -179,6 +179,12 @@ const VoteGeneratorApp: React.FC = () => {
                 return;
             }
             
+            // If results are hidden, don't show ad-wall - go straight to thank you message
+            if (viewState.poll.settings.hideResults) {
+                setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
+                return;
+            }
+            
             // Check if we need to show ad-wall after voting (free tier only)
             const isAdmin = !!adminKey;
             if (shouldShowVoterAdWall(viewState.poll, isAdmin)) {
@@ -593,7 +599,12 @@ const VoteGeneratorApp: React.FC = () => {
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 hover:text-slate-800 transition-colors"
                                         >
-                                            <img src="/logo.svg" alt="" className="w-4 h-4" />
+                                            <img 
+                                                src="/logo.svg" 
+                                                alt="" 
+                                                className="w-4 h-4" 
+                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
                                             Powered by <span className="font-semibold">VoteGenerator</span>
                                         </a>
                                     </div>

@@ -2,7 +2,6 @@
 // AdminDashboard.tsx - Complete with search, pagination, draft/live
 // Location: src/components/AdminDashboard.tsx
 // ============================================================================
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -166,6 +165,10 @@ const AdminDashboard: React.FC = () => {
     const urlDashboardToken = urlParams.get('t'); // NEW: Short token format from email
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
     const urlTier = urlParams.get('tier') as 'pro' | 'business' | null;
+    const highlightPollId = urlParams.get('highlight'); // Highlight newly created poll
+    
+    // State for highlight animation
+    const [justCreatedPollId, setJustCreatedPollId] = useState<string | null>(highlightPollId);
 
     // Fetch customer data by dashboard token from backend
     const fetchCustomerByToken = async (token: string): Promise<UserSession | null> => {
@@ -263,6 +266,23 @@ const AdminDashboard: React.FC = () => {
             refreshPollData(session);
         }
     }, [loading]);
+
+    // Clear highlight after 10 seconds and clean up URL
+    useEffect(() => {
+        if (highlightPollId) {
+            // Clean URL immediately but keep highlight visible
+            const url = new URL(window.location.href);
+            url.searchParams.delete('highlight');
+            window.history.replaceState({}, '', url.pathname + url.search);
+            
+            // Clear highlight after 10 seconds
+            const timer = setTimeout(() => {
+                setJustCreatedPollId(null);
+            }, 10000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [highlightPollId]);
 
     const validateAndLoadSession = async () => {
         try {
@@ -433,17 +453,31 @@ const AdminDashboard: React.FC = () => {
         return false;
     }, [session]);
 
-    // Filtered and paginated polls
+    // Filtered and paginated polls - with highlight sorting
     const filteredPolls = useMemo(() => {
         if (!session) return [];
-        const polls = session.polls || [];
-        if (!searchQuery.trim()) return polls;
-        const query = searchQuery.toLowerCase();
-        return polls.filter(p => 
-            p.title.toLowerCase().includes(query) ||
-            p.type?.toLowerCase().includes(query)
-        );
-    }, [session, searchQuery]);
+        let polls = session.polls || [];
+        
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            polls = polls.filter(p => 
+                p.title.toLowerCase().includes(query) ||
+                p.type?.toLowerCase().includes(query)
+            );
+        }
+        
+        // Sort: highlighted poll first, then by createdAt descending
+        if (justCreatedPollId) {
+            polls = [...polls].sort((a, b) => {
+                if (a.id === justCreatedPollId) return -1;
+                if (b.id === justCreatedPollId) return 1;
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+        }
+        
+        return polls;
+    }, [session, searchQuery, justCreatedPollId]);
 
     const totalPages = Math.ceil(filteredPolls.length / POLLS_PER_PAGE);
     const paginatedPolls = useMemo(() => {
@@ -700,7 +734,7 @@ const AdminDashboard: React.FC = () => {
                                                         {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
                                                     </button>
                                                     <a
-                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime!`)}`}
+                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime`)}`}
                                                         className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
                                                     >
                                                         <Mail size={16} />
@@ -920,6 +954,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="space-y-4">
                                     {paginatedPolls.map((poll, index) => {
                                         const isDraft = config.requiresActivation && poll.status !== 'live';
+                                        const isJustCreated = poll.id === justCreatedPollId;
                                         return (
                                             <motion.div
                                                 key={poll.id}
@@ -927,11 +962,19 @@ const AdminDashboard: React.FC = () => {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.03 }}
                                                 className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
-                                                    isDraft 
-                                                        ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
-                                                        : 'border-slate-200 hover:border-indigo-200'
+                                                    isJustCreated
+                                                        ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
+                                                        : isDraft 
+                                                            ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                            : 'border-slate-200 hover:border-indigo-200'
                                                 }`}
                                             >
+                                                {isJustCreated && (
+                                                    <div className="flex items-center gap-2 mb-3 text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-medium">
+                                                        <Check size={16} className="text-emerald-600" />
+                                                        Poll created successfully! Share it to start collecting votes.
+                                                    </div>
+                                                )}
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -1087,7 +1130,6 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                     {showAccessPanel ? <ChevronUp size={20} className="text-amber-500" /> : <ChevronDown size={20} className="text-amber-500" />}
                                 </button>
-
                                 {showAccessPanel && (
                                     <div className="p-4 pt-0 border-t border-amber-200/50">
                                         {/* PIN Status */}
@@ -1164,7 +1206,6 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
-
                                     {tier !== 'business' && !isPlanExpired && (
                                     <button 
                                         onClick={() => setShowUpgradeModal(true)}
@@ -1564,7 +1605,6 @@ const GoLiveModalInline: React.FC<{
                         <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Poll</p>
                         <p className="font-bold text-slate-800 truncate">{pollTitle}</p>
                     </div>
-
                     <div className="mb-4 space-y-3">
                         <div className="flex items-center gap-3">
                             <CheckCircle size={18} className="text-emerald-500" />
@@ -1579,7 +1619,6 @@ const GoLiveModalInline: React.FC<{
                             <span className="text-slate-700 text-sm">Uses 1 of {pollsMax} poll credits</span>
                         </div>
                     </div>
-
                     <div className={`mb-4 p-4 rounded-xl ${isLastPoll ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
                         <div className="flex items-start gap-3">
                             <AlertTriangle size={20} className={isLastPoll ? 'text-red-500' : 'text-amber-500'} />
@@ -1593,12 +1632,10 @@ const GoLiveModalInline: React.FC<{
                             </div>
                         </div>
                     </div>
-
                     <label className="flex items-start gap-3 mb-6 cursor-pointer">
                         <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600" />
                         <span className="text-sm text-slate-600">I understand this will use 1 poll credit and cannot be undone.</span>
                     </label>
-
                     <div className="flex gap-3">
                         <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
                         <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>

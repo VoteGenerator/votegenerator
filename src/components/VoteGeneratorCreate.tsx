@@ -306,12 +306,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 const pollId = responseData.id;
                 const adminKey = responseData.adminKey;
                 
+                // Store the new poll credentials in localStorage for admin dashboard
+                const existingPolls = JSON.parse(localStorage.getItem('myPolls') || '[]');
+                if (!existingPolls.some((p: any) => p.id === pollId)) {
+                    existingPolls.push({ id: pollId, adminKey, createdAt: new Date().toISOString() });
+                    localStorage.setItem('myPolls', JSON.stringify(existingPolls));
+                }
+                
                 // PAID USERS: Go directly to admin dashboard
-                // FREE USERS: Go through ad-wall first
+                // FREE USERS: Go through ad-wall first, then to admin dashboard
+                const adminUrl = `/admin?highlight=${pollId}`;
+                
                 if (isPaidUser) {
-                    window.location.href = `/#id=${pollId}&admin=${adminKey}`;
+                    window.location.href = adminUrl;
                 } else {
-                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(`/#id=${pollId}&admin=${adminKey}`)}`;
+                    window.location.href = `/ad-wall?redirect=${encodeURIComponent(adminUrl)}`;
                 }
                 return;
             } else { 

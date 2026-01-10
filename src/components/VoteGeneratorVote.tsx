@@ -905,11 +905,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                     <input 
                                         type="text" 
                                         value={accessCode} 
-                                        onChange={(e) => setAccessCode(e.target.value.replace(/\D/g, '').slice(0, 6))} 
-                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono text-center text-lg tracking-widest" 
-                                        placeholder="• • • • • •" 
-                                        maxLength={6}
-                                        inputMode="numeric"
+                                        onChange={(e) => setAccessCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))} 
+                                        className="w-full p-3 pl-10 border-2 border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all font-mono text-center text-lg tracking-widest uppercase" 
+                                        placeholder="ENTER PIN" 
+                                        maxLength={10}
                                     />
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1">Enter the PIN shared by the organizer</p>

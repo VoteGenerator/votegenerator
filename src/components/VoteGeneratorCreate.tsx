@@ -249,6 +249,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             return;
         }
         
+        // Validate shared PIN if security is 'pin'
+        if (security === 'pin' && sharedPin.trim().length < 4) {
+            setError('Set a PIN with at least 4 characters');
+            return;
+        }
+        
         setIsCreating(true); setError(null);
         
         try {
@@ -281,6 +287,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             // Add access codes if using code security
             if (security === 'code') {
                 pollData.allowedCodes = accessCodes;
+            }
+            
+            // Add shared PIN if using pin security
+            if (security === 'pin') {
+                pollData.pin = sharedPin.trim().toUpperCase();
             }
             
             const res = await fetch('/.netlify/functions/vg-create', { 

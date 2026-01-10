@@ -527,26 +527,26 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                                             Rating Style <span className="text-slate-400 font-normal">(choose icon type)</span>
                                         </label>
-                                        <div className="grid grid-cols-5 gap-2">
+                                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                                             {RATING_ICONS.map((iconOpt) => (
                                                 <button
                                                     key={iconOpt.id}
                                                     type="button"
                                                     onClick={() => setRatingIcon(iconOpt.id as typeof ratingIcon)}
-                                                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                                                    className={`flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border-2 transition-all ${
                                                         ratingIcon === iconOpt.id
                                                             ? 'border-cyan-500 bg-white shadow-md scale-105'
                                                             : 'border-transparent bg-white/60 hover:bg-white hover:border-cyan-200'
                                                     }`}
                                                 >
                                                     <div className="flex gap-0.5">
-                                                        {[1, 2, 3, 4, 5].map((n) => (
-                                                            <span key={n} className={`text-sm ${n <= 3 ? 'opacity-100' : 'opacity-30'}`}>
+                                                        {[1, 2, 3].map((n) => (
+                                                            <span key={n} className="text-sm">
                                                                 {iconOpt.emoji}
                                                             </span>
                                                         ))}
                                                     </div>
-                                                    <span className="text-[10px] font-medium text-slate-500">{iconOpt.name}</span>
+                                                    <span className="text-[10px] font-medium text-slate-500 truncate max-w-full">{iconOpt.name}</span>
                                                 </button>
                                             ))}
                                         </div>

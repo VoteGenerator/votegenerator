@@ -406,6 +406,70 @@ const AdminDashboard: React.FC = () => {
                     }
                 }
                 
+                // IMPORTANT: Check if there are new polls in vg_polls that aren't in session
+                // This happens when user creates a new poll and comes back
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls && sessionData.tier === 'free') {
+                    try {
+                        const pollsFromStorage = JSON.parse(savedPolls);
+                        const existingPollIds = new Set(sessionData.polls.map(p => p.id));
+                        
+                        // Find new polls not in session
+                        const newPolls = pollsFromStorage.filter((p: any) => !existingPollIds.has(p.id));
+                        
+                        if (newPolls.length > 0) {
+                            console.log('AdminDashboard: Merging new polls from vg_polls:', newPolls.length);
+                            const mergedPolls = [
+                                ...newPolls.map((p: any) => ({
+                                    id: p.id,
+                                    adminKey: p.adminKey,
+                                    title: p.title || 'Untitled Poll',
+                                    type: p.type || 'multiple',
+                                    createdAt: p.createdAt,
+                                    responseCount: 0,
+                                    status: 'live' as const,
+                                })),
+                                ...sessionData.polls
+                            ];
+                            sessionData.polls = mergedPolls;
+                            localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                        }
+                    } catch (e) {
+                        console.error('Failed to merge polls:', e);
+                    }
+                }
+                
+                // Also check URL params for a new poll (coming from create flow)
+                if (urlPollId && urlPollKey && !sessionData.polls.some(p => p.id === urlPollId)) {
+                    console.log('AdminDashboard: Adding new poll from URL params');
+                    const newPoll = {
+                        id: urlPollId,
+                        adminKey: urlPollKey,
+                        title: urlPollTitle || 'Untitled Poll',
+                        type: urlPollType || 'multiple',
+                        createdAt: new Date().toISOString(),
+                        responseCount: 0,
+                        status: 'live' as const,
+                    };
+                    sessionData.polls = [newPoll, ...sessionData.polls];
+                    localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                    
+                    // Also update vg_polls
+                    const existingVgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                    if (!existingVgPolls.some((p: any) => p.id === urlPollId)) {
+                        existingVgPolls.unshift({ id: urlPollId, adminKey: urlPollKey, title: urlPollTitle, type: urlPollType, createdAt: new Date().toISOString() });
+                        localStorage.setItem('vg_polls', JSON.stringify(existingVgPolls));
+                    }
+                    
+                    // Clean up URL params
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('pid');
+                    cleanUrl.searchParams.delete('key');
+                    cleanUrl.searchParams.delete('title');
+                    cleanUrl.searchParams.delete('pt');
+                    window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+                }
+                
                 setSession(sessionData);
                 
                 setLoading(false);

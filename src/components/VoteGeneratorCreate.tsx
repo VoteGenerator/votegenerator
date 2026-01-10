@@ -11,8 +11,7 @@ import {
     ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, 
     SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, 
     ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
-    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check,
-    Heart, ThumbsUp, Circle, Flame, Coffee as CoffeeIcon
+    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check
 } from 'lucide-react';
 import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -74,22 +73,23 @@ const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string
 };
 
 // Security options
-type SecurityType = 'none' | 'cookie' | 'fingerprint' | 'code';
+type SecurityType = 'none' | 'cookie' | 'fingerprint' | 'pin' | 'code';
 
 const SECURITY_OPTIONS = [
-    { id: 'none', name: 'No Limit', desc: 'Anyone can vote multiple times', icon: Users, tooltip: 'No restrictions. Good for casual polls but vulnerable to spam.' },
-    { id: 'cookie', name: 'One Per Browser', desc: 'Cookie-based (easy bypass)', icon: Shield, tooltip: 'Stores a cookie to prevent revoting. Users can bypass by clearing cookies or using incognito.' },
-    { id: 'fingerprint', name: 'One Per Device', desc: 'Browser fingerprinting', icon: Lock, tooltip: 'Uses browser fingerprinting for better accuracy. Harder to bypass but not 100% reliable.' },
-    { id: 'code', name: 'Access Codes', desc: 'Unique codes for each voter', icon: Key, tooltip: 'Generate unique codes to distribute. Most secure option - each code works once.' },
+    { id: 'none', name: 'No Limit', desc: 'Anyone can vote multiple times', icon: Users, tooltip: 'No restrictions. Good for casual polls but vulnerable to spam.', isPro: false },
+    { id: 'cookie', name: 'One Per Browser', desc: 'Cookie-based (easy bypass)', icon: Shield, tooltip: 'Stores a cookie to prevent revoting. Users can bypass by clearing cookies or using incognito.', isPro: false },
+    { id: 'fingerprint', name: 'One Per Device', desc: 'Browser fingerprinting', icon: Lock, tooltip: 'Uses browser fingerprinting for better accuracy. Harder to bypass but not 100% reliable.', isPro: false },
+    { id: 'pin', name: 'Shared PIN', desc: 'One password for all voters', icon: Key, tooltip: 'Set a single PIN that all voters must enter. Great for keeping polls private. Combine with cookie/fingerprint to prevent repeat voting.', isPro: true },
+    { id: 'code', name: 'Unique Codes', desc: 'One-time use codes per voter', icon: ClipboardList, tooltip: 'Generate unique codes to distribute. Most secure - each code works exactly once. Best for elections and official votes.', isPro: true },
 ];
 
-// Rating icon options
+// Rating icon options - More beautiful icons
 const RATING_ICONS = [
-    { id: 'star', name: 'Stars', icon: Star, color: 'text-amber-400 fill-amber-400', emoji: '⭐' },
-    { id: 'heart', name: 'Hearts', icon: Heart, color: 'text-red-400 fill-red-400', emoji: '❤️' },
-    { id: 'thumbs', name: 'Thumbs', icon: ThumbsUp, color: 'text-blue-400 fill-blue-400', emoji: '👍' },
-    { id: 'fire', name: 'Fire', icon: Flame, color: 'text-orange-500 fill-orange-500', emoji: '🔥' },
-    { id: 'circle', name: 'Dots', icon: Circle, color: 'text-indigo-400 fill-indigo-400', emoji: '●' },
+    { id: 'star', name: 'Stars', emoji: '⭐', colorClass: 'text-amber-400', fillClass: 'fill-amber-400', bgHover: 'hover:bg-amber-50' },
+    { id: 'heart', name: 'Hearts', emoji: '❤️', colorClass: 'text-rose-500', fillClass: 'fill-rose-500', bgHover: 'hover:bg-rose-50' },
+    { id: 'thumbs', name: 'Thumbs', emoji: '👍', colorClass: 'text-blue-500', fillClass: 'fill-blue-500', bgHover: 'hover:bg-blue-50' },
+    { id: 'fire', name: 'Fire', emoji: '🔥', colorClass: 'text-orange-500', fillClass: 'fill-orange-500', bgHover: 'hover:bg-orange-50' },
+    { id: 'smile', name: 'Smileys', emoji: '😊', colorClass: 'text-yellow-500', fillClass: 'fill-yellow-500', bgHover: 'hover:bg-yellow-50' },
 ];
 
 // How It Works - UPDATED with larger icons
@@ -149,7 +149,10 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [uploadingImage, setUploadingImage] = useState(false);
     
     // Rating scale icon type
-    const [ratingIcon, setRatingIcon] = useState<'star' | 'heart' | 'thumbs' | 'circle' | 'fire'>('star');
+    const [ratingIcon, setRatingIcon] = useState<'star' | 'heart' | 'thumbs' | 'fire' | 'smile'>('star');
+    
+    // Shared PIN for poll protection
+    const [sharedPin, setSharedPin] = useState('');
     
     // Check for subscription tier
     const subscriptionTier = typeof window !== 'undefined' 
@@ -499,33 +502,32 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             {pollType === 'rating' && (
                                 <div className="mt-6 space-y-4">
                                     {/* Rating Icon Selection */}
-                                    <div className="p-4 bg-cyan-50 rounded-xl border border-cyan-200">
+                                    <div className="p-4 bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl border border-cyan-200">
                                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                                             Rating Style <span className="text-slate-400 font-normal">(choose icon type)</span>
                                         </label>
-                                        <div className="flex gap-2 flex-wrap">
-                                            {RATING_ICONS.map((iconOpt) => {
-                                                const IconComponent = iconOpt.icon;
-                                                return (
-                                                    <button
-                                                        key={iconOpt.id}
-                                                        type="button"
-                                                        onClick={() => setRatingIcon(iconOpt.id as typeof ratingIcon)}
-                                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
-                                                            ratingIcon === iconOpt.id
-                                                                ? 'border-cyan-500 bg-white shadow-sm'
-                                                                : 'border-cyan-200 bg-white/50 hover:border-cyan-300'
-                                                        }`}
-                                                    >
-                                                        <div className="flex gap-0.5">
-                                                            {[1, 2, 3].map((n) => (
-                                                                <IconComponent key={n} size={14} className={iconOpt.color} />
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-xs font-medium text-slate-600">{iconOpt.name}</span>
-                                                    </button>
-                                                );
-                                            })}
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {RATING_ICONS.map((iconOpt) => (
+                                                <button
+                                                    key={iconOpt.id}
+                                                    type="button"
+                                                    onClick={() => setRatingIcon(iconOpt.id as typeof ratingIcon)}
+                                                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                                                        ratingIcon === iconOpt.id
+                                                            ? 'border-cyan-500 bg-white shadow-md scale-105'
+                                                            : 'border-transparent bg-white/60 hover:bg-white hover:border-cyan-200'
+                                                    }`}
+                                                >
+                                                    <div className="flex gap-0.5">
+                                                        {[1, 2, 3, 4, 5].map((n) => (
+                                                            <span key={n} className={`text-sm ${n <= 3 ? 'opacity-100' : 'opacity-30'}`}>
+                                                                {iconOpt.emoji}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <span className="text-[10px] font-medium text-slate-500">{iconOpt.name}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                     
@@ -538,8 +540,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         {/* Rating items */}
                                         <div className="space-y-2 mb-3">
                                             {options.map((opt, i) => {
-                                                const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
-                                                const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                const currentEmoji = RATING_ICONS.find(r => r.id === ratingIcon)?.emoji || '⭐';
                                                 return (
                                                     <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-center">
                                                         <input 
@@ -549,9 +550,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             placeholder={`e.g., ${['Service', 'Cleanliness', 'Value', 'Staff', 'Overall'][i] || 'Aspect ' + (i + 1)}`}
                                                             className="flex-1 px-3 py-2 border-2 border-amber-200 rounded-lg text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 bg-white"
                                                         />
-                                                        <div className="flex gap-0.5 shrink-0">
+                                                        <div className="flex gap-0.5 shrink-0 bg-white px-2 py-1 rounded-lg border border-amber-200">
                                                             {[1, 2, 3, 4, 5].map((n) => (
-                                                                <CurrentIcon key={n} size={14} className={iconColor} />
+                                                                <span key={n} className="text-sm">{currentEmoji}</span>
                                                             ))}
                                                         </div>
                                                         {options.length > 1 && (
@@ -572,17 +573,24 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     </div>
                                     
                                     {/* Rating preview */}
-                                    <div className="p-3 bg-white rounded-xl border border-slate-200">
-                                        <p className="text-xs text-slate-500 mb-2 font-medium">Preview: Voters will rate each aspect</p>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm text-slate-600">{options[0] || 'Service'}</span>
-                                            <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map((n) => {
-                                                    const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
-                                                    const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
-                                                    return <CurrentIcon key={n} size={20} className={iconColor} />;
-                                                })}
-                                            </div>
+                                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                        <p className="text-xs text-slate-500 mb-3 font-medium">Preview: How voters will see it</p>
+                                        <div className="space-y-3">
+                                            {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 2) : ['Service', 'Quality']).map((aspect, i) => {
+                                                const currentEmoji = RATING_ICONS.find(r => r.id === ratingIcon)?.emoji || '⭐';
+                                                return (
+                                                    <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                                        <span className="text-sm text-slate-700 font-medium">{aspect}</span>
+                                                        <div className="flex gap-1">
+                                                            {[1, 2, 3, 4, 5].map((n) => (
+                                                                <button key={n} className={`text-xl transition-transform hover:scale-125 ${n <= 3 ? 'grayscale-0' : 'grayscale opacity-30'}`}>
+                                                                    {currentEmoji}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
@@ -1046,7 +1054,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 <p className="text-xs text-slate-500 mb-3">Control how many times someone can vote. Hover for details.</p>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {SECURITY_OPTIONS.map((option) => {
-                                                        const isProFeature = option.id === 'code';
+                                                        const isProFeature = option.isPro;
                                                         const isDisabled = isProFeature && !isPaidUser;
                                                         return (
                                                             <div key={option.id} className="relative group">
@@ -1084,11 +1092,41 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     })}
                                                 </div>
                                                 
+                                                {/* Shared PIN Input */}
+                                                {security === 'pin' && (
+                                                    <div className="mt-4 p-4 bg-white rounded-xl border border-indigo-200">
+                                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Set Poll PIN</label>
+                                                        <p className="text-xs text-slate-500 mb-3">All voters must enter this PIN to access the poll. Share it with your intended audience.</p>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={sharedPin}
+                                                                onChange={(e) => setSharedPin(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+                                                                placeholder="e.g., TEAM2024"
+                                                                maxLength={10}
+                                                                className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-lg text-sm font-mono uppercase tracking-wider focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSharedPin(Math.random().toString(36).substring(2, 8).toUpperCase())}
+                                                                className="px-3 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200 transition"
+                                                            >
+                                                                Generate
+                                                            </button>
+                                                        </div>
+                                                        {sharedPin && (
+                                                            <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                                                                <Check size={12} /> PIN set: <span className="font-mono font-bold">{sharedPin}</span>
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                
                                                 {/* Access Codes Generator */}
                                                 {security === 'code' && (
                                                     <div className="mt-4 p-4 bg-white rounded-xl border border-indigo-200">
                                                         <div className="flex items-center justify-between mb-3">
-                                                            <label className="text-sm font-semibold text-slate-700">Generate Access Codes</label>
+                                                            <label className="text-sm font-semibold text-slate-700">Generate Unique Codes</label>
                                                             <div className="flex items-center gap-2">
                                                                 <input
                                                                     type="number"
@@ -1107,6 +1145,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                                 </button>
                                                             </div>
                                                         </div>
+                                                        <p className="text-xs text-slate-500 mb-3">Each code can only be used once. Distribute to your voters individually.</p>
                                                         {accessCodes.length > 0 && (
                                                             <div className="mt-3 p-3 bg-slate-50 rounded-lg max-h-32 overflow-y-auto">
                                                                 <div className="grid grid-cols-5 gap-1 text-xs font-mono">
@@ -1114,8 +1153,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                                         <span key={i} className="px-2 py-1 bg-white rounded text-center border">{code}</span>
                                                                     ))}
                                                                 </div>
-                                                                <p className="text-xs text-slate-500 mt-2">
-                                                                    {accessCodes.length} codes generated. Each can be used once.
+                                                                <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                                                                    <Check size={12} /> {accessCodes.length} codes generated. Each can be used once.
                                                                 </p>
                                                             </div>
                                                         )}
@@ -1318,86 +1357,90 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Card Content */}
-                                                    <div className={`mx-3 mt-3 rounded-xl ${currentTheme.cardBg} ${currentTheme.cardBorder ? `border-2 ${currentTheme.cardBorder}` : ''} p-4 ${currentTheme.specialEffect === 'glass' ? 'backdrop-blur-sm' : ''}`}>
-                                                        <h4 className={`text-lg font-bold mb-2 ${currentTheme.headerText?.includes('white') ? 'text-white' : 'text-slate-900'}`}>
-                                                            {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
-                                                        </h4>
-                                                        {description && <p className={`text-sm mb-4 ${currentTheme.headerText?.includes('white') ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
-                                                        
-                                                        {pollType === 'image' ? (
-                                                            <div className="grid grid-cols-2 gap-2 mb-4">
-                                                                {imageOptions.length > 0 ? (
-                                                                    imageOptions.map((img, i) => (
-                                                                        <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder}`}>
-                                                                            <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                                        </div>
-                                                                    ))
-                                                                ) : (
-                                                                    /* Placeholder image boxes */
-                                                                    [1, 2].map((n) => (
-                                                                        <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
-                                                                            <ImageIcon size={24} className={currentTheme.cardBg?.includes('slate-8') ? 'text-slate-500' : 'text-slate-300'} />
-                                                                        </div>
-                                                                    ))
-                                                                )}
-                                                            </div>
-                                                        ) : pollType === 'rating' ? (
-                                                            <div className="space-y-2 mb-4">
-                                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 2) : ['Service', 'Quality']).map((aspect, i) => {
-                                                                    const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
-                                                                    const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
-                                                                    return (
-                                                                        <div key={i} className="flex items-center justify-between">
-                                                                            <span className={`text-xs ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-300' : 'text-slate-600'}`}>{aspect}</span>
-                                                                            <div className="flex gap-0.5">
-                                                                                {[1, 2, 3, 4, 5].map((n) => (
-                                                                                    <CurrentIcon key={n} size={14} className={iconColor} />
-                                                                                ))}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        ) : pollType === 'rsvp' ? (
-                                                            <div className="flex gap-2 mb-4">
-                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
-                                                                    <span className="text-lg">✓</span>
-                                                                    <p className="text-xs font-medium">Yes</p>
-                                                                </div>
-                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
-                                                                    <span className="text-lg">✗</span>
-                                                                    <p className="text-xs font-medium">No</p>
-                                                                </div>
-                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
-                                                                    <span className="text-lg">?</span>
-                                                                    <p className="text-xs font-medium">Maybe</p>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="space-y-2 mb-4">
-                                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
-                                                                    <div key={i} className={`p-3 rounded-xl text-sm transition cursor-pointer ${currentTheme.optionStyle}`}>
-                                                                        <span className={currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-700'}>{opt}</span>
+                                                    {/* Card Content - Fix: detect dark card background */}
+                                                    {(() => {
+                                                        const isDarkCard = currentTheme.cardBg?.includes('slate-8') || currentTheme.cardBg?.includes('slate-9');
+                                                        return (
+                                                            <div className={`mx-3 mt-3 rounded-xl ${currentTheme.cardBg} ${currentTheme.cardBorder ? `border-2 ${currentTheme.cardBorder}` : ''} p-4 ${currentTheme.specialEffect === 'glass' ? 'backdrop-blur-sm' : ''}`}>
+                                                                <h4 className={`text-lg font-bold mb-2 ${isDarkCard ? 'text-white' : 'text-slate-900'}`}>
+                                                                    {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
+                                                                </h4>
+                                                                {description && <p className={`text-sm mb-4 ${isDarkCard ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
+                                                                
+                                                                {pollType === 'image' ? (
+                                                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                                                        {imageOptions.length > 0 ? (
+                                                                            imageOptions.map((img, i) => (
+                                                                                <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder}`}>
+                                                                                    <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                                                </div>
+                                                                            ))
+                                                                        ) : (
+                                                                            /* Placeholder image boxes */
+                                                                            [1, 2].map((n) => (
+                                                                                <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${isDarkCard ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+                                                                                    <ImageIcon size={24} className={isDarkCard ? 'text-slate-500' : 'text-slate-300'} />
+                                                                                </div>
+                                                                            ))
+                                                                        )}
                                                                     </div>
-                                                                ))}
+                                                                ) : pollType === 'rating' ? (
+                                                                    <div className="space-y-2 mb-4">
+                                                                        {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 2) : ['Service', 'Quality']).map((aspect, i) => {
+                                                                            const currentEmoji = RATING_ICONS.find(r => r.id === ratingIcon)?.emoji || '⭐';
+                                                                            return (
+                                                                                <div key={i} className="flex items-center justify-between">
+                                                                                    <span className={`text-xs ${isDarkCard ? 'text-slate-300' : 'text-slate-600'}`}>{aspect}</span>
+                                                                                    <div className="flex gap-0.5">
+                                                                                        {[1, 2, 3, 4, 5].map((n) => (
+                                                                                            <span key={n} className="text-sm">{currentEmoji}</span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                ) : pollType === 'rsvp' ? (
+                                                                    <div className="flex gap-2 mb-4">
+                                                                        <div className={`flex-1 p-2 rounded-lg text-center ${isDarkCard ? 'bg-emerald-500/20 border border-emerald-500/30' : 'bg-emerald-50 border border-emerald-200'}`}>
+                                                                            <span className="text-lg">✓</span>
+                                                                            <p className={`text-xs font-medium ${isDarkCard ? 'text-emerald-300' : 'text-emerald-700'}`}>Yes</p>
+                                                                        </div>
+                                                                        <div className={`flex-1 p-2 rounded-lg text-center ${isDarkCard ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
+                                                                            <span className="text-lg">✗</span>
+                                                                            <p className={`text-xs font-medium ${isDarkCard ? 'text-red-300' : 'text-red-700'}`}>No</p>
+                                                                        </div>
+                                                                        <div className={`flex-1 p-2 rounded-lg text-center ${isDarkCard ? 'bg-amber-500/20 border border-amber-500/30' : 'bg-amber-50 border border-amber-200'}`}>
+                                                                            <span className="text-lg">?</span>
+                                                                            <p className={`text-xs font-medium ${isDarkCard ? 'text-amber-300' : 'text-amber-700'}`}>Maybe</p>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="space-y-2 mb-4">
+                                                                        {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
+                                                                            <div key={i} className={`p-3 rounded-xl text-sm transition cursor-pointer ${currentTheme.optionStyle}`}>
+                                                                                <span className={isDarkCard ? 'text-white' : 'text-slate-700'}>{opt}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                <button className={`w-full py-3 font-bold rounded-xl ${currentTheme.buttonBg} ${currentTheme.buttonText}`}>
+                                                                    {buttonText || 'Submit Vote'}
+                                                                </button>
                                                             </div>
-                                                        )}
-                                                        
-                                                        <button className={`w-full py-3 font-bold rounded-xl ${currentTheme.buttonBg} ${currentTheme.buttonText}`}>
-                                                            {buttonText || 'Submit Vote'}
-                                                        </button>
-                                                    </div>
+                                                        );
+                                                    })()}
                                                     
                                                     {!isPaidUser && (
                                                         <div className="mt-3 text-center">
-                                                            <span className={`text-xs ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-400' : 'text-slate-400'}`}>
+                                                            <span className={`text-xs ${currentTheme.pageBg?.includes('slate-9') ? 'text-slate-400' : 'text-slate-400'}`}>
                                                                 Powered by <span className="font-semibold" style={{ color: currentTheme.primary }}>VoteGenerator</span>
                                                             </span>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 rounded-full ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
+                                                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 rounded-full ${currentTheme.pageBg?.includes('slate-9') ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1467,14 +1510,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             ) : pollType === 'rating' ? (
                                                 <div className="space-y-3 mb-6">
                                                     {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 3) : ['Service', 'Quality', 'Value']).map((aspect, i) => {
-                                                        const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
-                                                        const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                        const currentEmoji = RATING_ICONS.find(r => r.id === ratingIcon)?.emoji || '⭐';
+                                                        const isDarkCard = currentTheme.cardBg?.includes('slate-8') || currentTheme.cardBg?.includes('slate-9');
                                                         return (
                                                             <div key={i} className={`flex items-center justify-between p-3 rounded-lg ${currentTheme.optionStyle}`}>
-                                                                <span className={`text-sm font-medium ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-200' : 'text-slate-700'}`}>{aspect}</span>
+                                                                <span className={`text-sm font-medium ${isDarkCard ? 'text-slate-200' : 'text-slate-700'}`}>{aspect}</span>
                                                                 <div className="flex gap-1">
                                                                     {[1, 2, 3, 4, 5].map((n) => (
-                                                                        <CurrentIcon key={n} size={20} className={`${iconColor} hover:scale-110 transition-transform cursor-pointer`} />
+                                                                        <span key={n} className="text-xl hover:scale-110 transition-transform cursor-pointer">{currentEmoji}</span>
                                                                     ))}
                                                                 </div>
                                                             </div>

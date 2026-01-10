@@ -13,7 +13,7 @@ import {
     ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
     MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock
 } from 'lucide-react';
-import ThemeSelector from './ThemeSelector';
+import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 import { useTemplateLoader, TemplateBadge, StartFromTemplateButton } from './useTemplateLoader';
 import { PollTemplate } from './pollTemplates';
@@ -145,6 +145,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     
     const isPaidUser = subscriptionTier === 'pro' || subscriptionTier === 'business';
     const tierConfig = subscriptionTier ? SUBSCRIPTION_CONFIG[subscriptionTier] : SUBSCRIPTION_CONFIG.free;
+    
+    // Get current theme configuration for preview
+    const currentTheme = useMemo(() => getThemeById(selectedTheme), [selectedTheme]);
 
     // Max deadline days based on tier
     const maxDays = isPaidUser ? 365 : 30;
@@ -954,7 +957,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     {/* Theme */}
                                                     <div>
                                                         <label className="block text-sm font-medium text-slate-700 mb-2">Color Theme</label>
-                                                        <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} />
+                                                        <ThemeSelector selectedTheme={selectedTheme} onThemeChange={setSelectedTheme} isPaidUser={isPaidUser} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1006,53 +1009,83 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 <div className="flex justify-center">
                                     <div className="relative">
                                         <div className="w-[280px] bg-slate-800 rounded-[3rem] p-3 shadow-2xl">
-                                            <div className="relative bg-white rounded-[2.25rem] overflow-hidden">
+                                            <div className={`relative rounded-[2.25rem] overflow-hidden ${currentTheme.pageBg}`}>
                                                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
                                                 <div className="pt-12 pb-6" style={{ minHeight: '480px' }}>
-                                                    {activeTemplate && (
-                                                        <div className={`px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
-                                                            <span className="text-lg">{activeTemplate.icon}</span>
-                                                            <span className="font-semibold text-sm">{activeTemplate.name}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="px-5 pt-4">
-                                                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                                                    {/* Header */}
+                                                    <div className={`px-4 py-3 ${currentTheme.headerStyle}`}>
+                                                        {activeTemplate ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-lg">{activeTemplate.icon}</span>
+                                                                <span className={`font-semibold text-sm ${currentTheme.headerText}`}>{activeTemplate.name}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`text-xs font-medium ${currentTheme.headerText} opacity-70`}>
+                                                                {currentTheme.emoji} {currentTheme.name} Theme
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Card Content */}
+                                                    <div className={`mx-3 mt-3 rounded-xl ${currentTheme.cardBg} ${currentTheme.cardBorder ? `border-2 ${currentTheme.cardBorder}` : ''} p-4 ${currentTheme.specialEffect === 'glass' ? 'backdrop-blur-sm' : ''}`}>
+                                                        <h4 className={`text-lg font-bold mb-2 ${currentTheme.headerText?.includes('white') ? 'text-white' : 'text-slate-900'}`}>
                                                             {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
                                                         </h4>
-                                                        {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
+                                                        {description && <p className={`text-sm mb-4 ${currentTheme.headerText?.includes('white') ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
                                                         
                                                         {pollType === 'image' && imageOptions.length > 0 ? (
                                                             <div className="grid grid-cols-2 gap-2 mb-4">
                                                                 {imageOptions.map((img, i) => (
-                                                                    <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
+                                                                    <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder}`}>
                                                                         <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                        ) : pollType === 'rating' ? (
+                                                            <div className="flex justify-center gap-1 mb-4">
+                                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                                    <Star key={star} size={28} className="text-amber-400 fill-amber-400" />
+                                                                ))}
+                                                            </div>
+                                                        ) : pollType === 'rsvp' ? (
+                                                            <div className="flex gap-2 mb-4">
+                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
+                                                                    <span className="text-lg">✓</span>
+                                                                    <p className="text-xs font-medium">Yes</p>
+                                                                </div>
+                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
+                                                                    <span className="text-lg">✗</span>
+                                                                    <p className="text-xs font-medium">No</p>
+                                                                </div>
+                                                                <div className={`flex-1 p-2 rounded-lg text-center ${currentTheme.optionStyle}`}>
+                                                                    <span className="text-lg">?</span>
+                                                                    <p className="text-xs font-medium">Maybe</p>
+                                                                </div>
+                                                            </div>
                                                         ) : (
-                                                            <div className="space-y-2">
+                                                            <div className="space-y-2 mb-4">
                                                                 {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
-                                                                    <div key={i} className="p-3 border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
-                                                                        {opt}
+                                                                    <div key={i} className={`p-3 rounded-xl text-sm transition cursor-pointer ${currentTheme.optionStyle}`}>
+                                                                        <span className={currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-700'}>{opt}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         )}
-                                                    </div>
-                                                    <div className="px-5 pt-4">
-                                                        <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">
+                                                        
+                                                        <button className={`w-full py-3 font-bold rounded-xl ${currentTheme.buttonBg} ${currentTheme.buttonText}`}>
                                                             {buttonText || 'Submit Vote'}
                                                         </button>
-                                                        {!isPaidUser && (
-                                                            <div className="mt-3 text-center">
-                                                                <span className="text-xs text-slate-400">
-                                                                    Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
-                                                                </span>
-                                                            </div>
-                                                        )}
                                                     </div>
+                                                    
+                                                    {!isPaidUser && (
+                                                        <div className="mt-3 text-center">
+                                                            <span className={`text-xs ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-400' : 'text-slate-400'}`}>
+                                                                Powered by <span className="font-semibold" style={{ color: currentTheme.primary }}>VoteGenerator</span>
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 rounded-full"></div>
+                                                <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 rounded-full ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1070,47 +1103,102 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             votegenerator.com/v/abc123
                                         </div>
                                     </div>
-                                    <div className="bg-white p-6">
-                                        {activeTemplate && (
-                                            <div className={`-mx-6 -mt-6 mb-6 px-4 py-2 bg-gradient-to-r ${activeTemplate.gradient} text-white flex items-center gap-2`}>
-                                                <span className="text-lg">{activeTemplate.icon}</span>
-                                                <span className="font-semibold text-sm">{activeTemplate.name}</span>
-                                            </div>
-                                        )}
-                                        <h4 className="text-xl font-bold text-slate-900 mb-2">
-                                            {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
-                                        </h4>
-                                        {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
-                                        
-                                        {pollType === 'image' && imageOptions.length > 0 ? (
-                                            <div className="grid grid-cols-2 gap-2 mb-4">
-                                                {imageOptions.map((img, i) => (
-                                                    <div key={i} className="aspect-square rounded-lg overflow-hidden border-2 border-slate-200">
-                                                        <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
-                                                    <div key={i} className="p-3 border-2 border-slate-200 rounded-lg text-sm text-slate-700 hover:border-indigo-300 transition cursor-pointer">
-                                                        {opt}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <div className="mt-6">
-                                            <button className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
-                                                {buttonText || 'Submit Vote'}
-                                            </button>
-                                            {!isPaidUser && (
-                                                <div className="mt-3 text-center">
-                                                    <span className="text-xs text-slate-400">
-                                                        Powered by <span className="font-semibold text-indigo-500">VoteGenerator</span>
-                                                    </span>
+                                    
+                                    {/* Theme-styled content area */}
+                                    <div className={`${currentTheme.pageBg} p-4`}>
+                                        {/* Header */}
+                                        <div className={`-mx-4 -mt-4 mb-4 px-4 py-3 ${currentTheme.headerStyle}`}>
+                                            {activeTemplate ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg">{activeTemplate.icon}</span>
+                                                    <span className={`font-semibold text-sm ${currentTheme.headerText}`}>{activeTemplate.name}</span>
+                                                </div>
+                                            ) : (
+                                                <div className={`flex items-center gap-2 ${currentTheme.headerText}`}>
+                                                    <span>{currentTheme.emoji}</span>
+                                                    <span className="text-sm font-medium">{currentTheme.name} Theme Preview</span>
                                                 </div>
                                             )}
                                         </div>
+                                        
+                                        {/* Card */}
+                                        <div className={`rounded-xl ${currentTheme.cardBg} ${currentTheme.cardBorder ? `border-2 ${currentTheme.cardBorder}` : ''} p-6 ${currentTheme.specialEffect === 'glass' ? 'backdrop-blur-sm' : ''} ${currentTheme.specialEffect === 'shadow-lg' ? 'shadow-2xl' : 'shadow-lg'}`}
+                                            style={currentTheme.specialEffect === 'glow' ? { 
+                                                boxShadow: `0 0 40px ${currentTheme.primary}30, 0 0 80px ${currentTheme.primary}15` 
+                                            } : undefined}
+                                        >
+                                            <h4 className={`text-xl font-bold mb-2 ${currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-900'}`}>
+                                                {title || POLL_TYPE_PLACEHOLDERS[pollType]?.question || 'Your question here'}
+                                            </h4>
+                                            {description && <p className={`text-sm mb-4 ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
+                                            
+                                            {pollType === 'image' && imageOptions.length > 0 ? (
+                                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                                    {imageOptions.map((img, i) => (
+                                                        <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder} hover:scale-105 transition-transform`}>
+                                                            <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : pollType === 'rating' ? (
+                                                <div className="flex justify-center gap-2 mb-6 py-4">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <Star key={star} size={36} className="text-amber-400 fill-amber-400 hover:scale-110 transition-transform cursor-pointer" />
+                                                    ))}
+                                                </div>
+                                            ) : pollType === 'rsvp' ? (
+                                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                                    <div className={`p-4 rounded-xl text-center border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer`}>
+                                                        <span className="text-2xl block mb-1">✓</span>
+                                                        <span className="font-semibold text-emerald-700">Yes</span>
+                                                    </div>
+                                                    <div className={`p-4 rounded-xl text-center border-2 border-red-300 bg-red-50 hover:bg-red-100 transition cursor-pointer`}>
+                                                        <span className="text-2xl block mb-1">✗</span>
+                                                        <span className="font-semibold text-red-700">No</span>
+                                                    </div>
+                                                    <div className={`p-4 rounded-xl text-center border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 transition cursor-pointer`}>
+                                                        <span className="text-2xl block mb-1">?</span>
+                                                        <span className="font-semibold text-amber-700">Maybe</span>
+                                                    </div>
+                                                </div>
+                                            ) : pollType === 'pairwise' ? (
+                                                <div className="flex gap-4 items-center mb-6">
+                                                    <div className={`flex-1 p-4 rounded-xl text-center ${currentTheme.optionStyle} cursor-pointer`}>
+                                                        <span className={`font-semibold ${currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-700'}`}>
+                                                            {options[0] || 'Option A'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 text-sm">
+                                                        VS
+                                                    </div>
+                                                    <div className={`flex-1 p-4 rounded-xl text-center ${currentTheme.optionStyle} cursor-pointer`}>
+                                                        <span className={`font-semibold ${currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-700'}`}>
+                                                            {options[1] || 'Option B'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2 mb-6">
+                                                    {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()) : POLL_TYPE_PLACEHOLDERS[pollType]?.options || ['Option 1', 'Option 2']).map((opt, i) => (
+                                                        <div key={i} className={`p-4 rounded-xl text-sm transition cursor-pointer ${currentTheme.optionStyle}`}>
+                                                            <span className={currentTheme.cardBg?.includes('slate-8') ? 'text-white' : 'text-slate-700'}>{opt}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            
+                                            <button className={`w-full py-3 font-bold rounded-xl transition-all hover:scale-[1.02] hover:shadow-lg ${currentTheme.buttonBg} ${currentTheme.buttonText}`}>
+                                                {buttonText || 'Submit Vote'}
+                                            </button>
+                                        </div>
+                                        
+                                        {!isPaidUser && (
+                                            <div className="mt-4 text-center">
+                                                <span className={`text-xs ${currentTheme.pageBg?.includes('slate-9') ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                    Powered by <span className="font-semibold" style={{ color: currentTheme.primary }}>VoteGenerator</span>
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

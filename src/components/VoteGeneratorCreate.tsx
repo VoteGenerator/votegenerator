@@ -153,6 +153,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     
     // Shared PIN for poll protection
     const [sharedPin, setSharedPin] = useState('');
+    const [currentPollCount, setCurrentPollCount] = useState(0);
+    const [isOverLimit, setIsOverLimit] = useState(false);
     
     // Check for subscription tier
     const subscriptionTier = typeof window !== 'undefined' 
@@ -161,6 +163,29 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     
     const isPaidUser = subscriptionTier === 'pro' || subscriptionTier === 'business';
     const tierConfig = subscriptionTier ? SUBSCRIPTION_CONFIG[subscriptionTier] : SUBSCRIPTION_CONFIG.free;
+    
+    // Free tier limits
+    const FREE_POLL_LIMIT = 3;
+    
+    // Check poll count on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                try {
+                    const polls = JSON.parse(savedPolls);
+                    const count = polls.length || 0;
+                    setCurrentPollCount(count);
+                    // Check if over limit (only applies to free users)
+                    if (!isPaidUser && count >= FREE_POLL_LIMIT) {
+                        setIsOverLimit(true);
+                    }
+                } catch (e) {
+                    console.error('Failed to parse vg_polls:', e);
+                }
+            }
+        }
+    }, [isPaidUser]);
     
     // Get current theme configuration for preview
     const currentTheme = useMemo(() => getThemeById(selectedTheme), [selectedTheme]);
@@ -276,7 +301,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     deadline: deadline ? new Date(deadline).toISOString() : undefined 
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
-                tier: subscriptionTier || 'free'
+                tier: subscriptionTier || 'free',
+                // Set response limits based on tier
+                maxResponses: subscriptionTier === 'business' ? 100000 
+                    : subscriptionTier === 'pro' ? 10000 
+                    : 100 // free
             };
             
             // Add image URLs for visual polls
@@ -339,6 +368,78 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         // Background handled by parent component (CreatePage or LandingPage)
         <div className="py-8">
             <div className="max-w-6xl mx-auto px-4">
+                {/* OVER LIMIT BLOCK - Show instead of create form for free users over poll limit */}
+                {isOverLimit && !isPaidUser && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }} 
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="max-w-xl mx-auto"
+                    >
+                        <div className="bg-white rounded-3xl shadow-2xl border-2 border-orange-200 overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <AlertCircle size={32} />
+                                </div>
+                                <h2 className="text-2xl font-bold mb-2">Poll Limit Reached</h2>
+                                <p className="text-white/90">
+                                    You have {currentPollCount} polls but the Free plan allows {FREE_POLL_LIMIT}
+                                </p>
+                            </div>
+                            
+                            {/* Body */}
+                            <div className="p-6">
+                                <p className="text-slate-600 text-center mb-6">
+                                    Your existing polls will continue to work. To create new polls, you can:
+                                </p>
+                                
+                                {/* Options */}
+                                <div className="space-y-3 mb-6">
+                                    <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Sparkles size={20} className="text-emerald-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-emerald-800">Upgrade to Pro or Business</p>
+                                            <p className="text-sm text-emerald-600">Get unlimited polls + premium features</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                        <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Trash2 size={20} className="text-slate-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-slate-800">Delete {currentPollCount - FREE_POLL_LIMIT} poll{currentPollCount - FREE_POLL_LIMIT > 1 ? 's' : ''}</p>
+                                            <p className="text-sm text-slate-500">Free up space by removing old polls</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* CTAs */}
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <a 
+                                        href="/pricing" 
+                                        className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl text-center transition shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
+                                    >
+                                        <Zap size={18} />
+                                        Upgrade Now
+                                    </a>
+                                    <a 
+                                        href="/admin" 
+                                        className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-center transition flex items-center justify-center gap-2"
+                                    >
+                                        Go to Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+                
+                {/* Normal create form - only show if not over limit */}
+                {(!isOverLimit || isPaidUser) && (
+                <>
                 {/* Subscription Status Header for Paid Users */}
                 {isPaidUser && !hideTierBanner && (
                     <motion.div 
@@ -1604,6 +1705,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         </div>
                     </div>
                 </div>
+                </>
+                )}
             </div>
         </div>
     );

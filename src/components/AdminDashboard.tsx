@@ -100,12 +100,12 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: Infinity,
-        maxResponses: 5000,
+        maxResponses: 10000,
         activeDays: 365,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '5,000 responses/month', included: true },
+            { name: '10,000 responses/month', included: true },
             { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'Custom branding', included: true },
@@ -118,12 +118,12 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
-        maxResponses: 50000,
+        maxResponses: 100000,
         activeDays: 365,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '50,000 responses/month', included: true },
+            { name: '100,000 responses/month', included: true },
             { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
@@ -197,11 +197,20 @@ const AdminDashboard: React.FC = () => {
         return null;
     };
     
-    // Fetch customer data by session ID (legacy support)
+    // Fetch customer data by session ID (legacy support) with timeout
     const fetchCustomerBySessionId = async (sessionId: string): Promise<UserSession | null> => {
         console.log(`AdminDashboard: Fetching customer by session ID: ${sessionId.substring(0, 20)}...`);
+        
+        // Add timeout to prevent infinite spinning
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
         try {
-            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            const response = await fetch(
+                `/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`,
+                { signal: controller.signal }
+            );
+            clearTimeout(timeoutId);
             console.log(`AdminDashboard: vg-get-customer response status: ${response.status}`);
             
             if (response.ok) {
@@ -224,8 +233,13 @@ const AdminDashboard: React.FC = () => {
                 const errorText = await response.text();
                 console.log(`AdminDashboard: vg-get-customer error: ${errorText}`);
             }
-        } catch (e) {
-            console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
+        } catch (e: any) {
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                console.log('AdminDashboard: Request timed out - webhook may still be processing');
+            } else {
+                console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
+            }
         }
         return null;
     };
@@ -899,6 +913,64 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         )}
 
+                        {/* Payment Processing Banner - for paid users whose webhook hasn't completed */}
+                        {!isPlanExpired && tier !== 'free' && !session?.dashboardToken && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Loader2 size={20} className="text-blue-600 animate-spin" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-blue-800">Setting Up Your Account...</p>
+                                                <p className="text-sm text-blue-600">
+                                                    Your payment was successful! We're just finishing setting up your account.
+                                                    This usually takes a few seconds. You can start creating polls now, or refresh to get your permanent dashboard link.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => window.location.reload()}
+                                            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
+                                        >
+                                            <RefreshCw size={16} />
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Over Poll Limit Banner - for free users who have more polls than allowed */}
+                        {!isPlanExpired && tier === 'free' && polls.length > config.maxPolls && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-orange-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-orange-800">You're Over Your Poll Limit</p>
+                                                <p className="text-sm text-orange-700">
+                                                    You have <strong>{polls.length} polls</strong> but the Free plan allows <strong>{config.maxPolls}</strong>.
+                                                    Your existing polls will continue to work, but you can't create new ones until you upgrade or delete {polls.length - config.maxPolls} poll{polls.length - config.maxPolls > 1 ? 's' : ''}.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowUpgradeModal(true)}
+                                            className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
+                                        >
+                                            <Zap size={16} />
+                                            Upgrade Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* ⚠️ Save Your Dashboard Link Warning */}
                         {(() => {
                             const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
@@ -1505,7 +1577,7 @@ const AdminDashboard: React.FC = () => {
                                         <div className="flex items-center justify-between text-xs text-slate-500">
                                             <span>Resets monthly</span>
                                             <span className="text-emerald-600 font-medium">
-                                                {config.maxResponses === 50000 ? '50K' : '5K'} responses included
+                                                {config.maxResponses === 100000 ? '100K' : '10K'} responses included
                                             </span>
                                         </div>
                                     </div>

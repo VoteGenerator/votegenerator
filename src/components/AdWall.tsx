@@ -88,7 +88,7 @@ const AdWall: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-white/90">
                                     <Check size={18} className="text-emerald-400" />
-                                    <span>50,000 responses/month</span>
+                                    <span>100,000 responses/month</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-white/90">
                                     <Check size={18} className="text-emerald-400" />

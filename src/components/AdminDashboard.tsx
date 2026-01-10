@@ -167,6 +167,12 @@ const AdminDashboard: React.FC = () => {
     const urlTier = urlParams.get('tier') as 'pro' | 'business' | null;
     const highlightPollId = urlParams.get('highlight'); // Highlight newly created poll
     
+    // Fallback poll data from URL (in case localStorage doesn't persist through ad-wall)
+    const urlPollId = urlParams.get('pid');
+    const urlPollKey = urlParams.get('key');
+    const urlPollTitle = urlParams.get('title') ? decodeURIComponent(urlParams.get('title')!) : null;
+    const urlPollType = urlParams.get('pt');
+    
     // State for highlight animation
     const [justCreatedPollId, setJustCreatedPollId] = useState<string | null>(highlightPollId);
 
@@ -439,6 +445,48 @@ const AdminDashboard: React.FC = () => {
                 } catch (e) {
                     console.error('Failed to parse vg_polls:', e);
                 }
+            }
+            
+            // Case 4.5: Fallback - poll data passed in URL params (localStorage didn't persist through ad-wall)
+            if (urlPollId && urlPollKey) {
+                console.log('AdminDashboard: Using URL params fallback for poll data');
+                const newPoll = {
+                    id: urlPollId,
+                    adminKey: urlPollKey,
+                    title: urlPollTitle || 'Untitled Poll',
+                    type: urlPollType || 'multiple',
+                    createdAt: new Date().toISOString(),
+                };
+                
+                // Save to localStorage for future visits
+                localStorage.setItem('vg_polls', JSON.stringify([newPoll]));
+                
+                // Create a FREE session with this poll
+                const freeSession: UserSession = {
+                    dashboardToken: 'free_user',
+                    tier: 'free',
+                    polls: [{
+                        id: newPoll.id,
+                        adminKey: newPoll.adminKey,
+                        title: newPoll.title,
+                        type: newPoll.type,
+                        createdAt: newPoll.createdAt,
+                        responseCount: 0,
+                        status: 'live',
+                    }],
+                    createdAt: newPoll.createdAt,
+                };
+                setSession(freeSession);
+                setLoading(false);
+                
+                // Clean up URL params but keep highlight
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('pid');
+                cleanUrl.searchParams.delete('key');
+                cleanUrl.searchParams.delete('title');
+                cleanUrl.searchParams.delete('pt');
+                window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+                return;
             }
             
             // Case 5: Nothing found - no session, no polls

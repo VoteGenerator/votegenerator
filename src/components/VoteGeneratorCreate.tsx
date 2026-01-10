@@ -315,7 +315,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 
                 // PAID USERS: Go directly to admin dashboard
                 // FREE USERS: Go through ad-wall first, then to admin dashboard
-                const adminUrl = `/admin?highlight=${pollId}`;
+                // Include poll data in URL as fallback in case localStorage doesn't persist
+                const adminUrl = `/admin?highlight=${pollId}&pid=${pollId}&key=${adminKey}&title=${encodeURIComponent(title)}&pt=${pollType}`;
                 
                 if (isPaidUser) {
                     window.location.href = adminUrl;

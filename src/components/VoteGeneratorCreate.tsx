@@ -11,7 +11,7 @@ import {
     ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, 
     SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, 
     ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
-    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock
+    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check
 } from 'lucide-react';
 import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -441,16 +441,16 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 Question & Options
                             </h2>
                             
-                            {/* Poll type hint */}
-                            <div className={`mb-4 p-3 rounded-xl bg-gradient-to-r ${POLL_TYPES.find(t => t.id === pollType)?.gradient || 'from-indigo-500 to-purple-500'} bg-opacity-10`}>
-                                <p className="text-sm text-slate-600">
-                                    {pollType === 'multiple' && '💡 Voters will pick one or more options from your list'}
-                                    {pollType === 'ranked' && '💡 Voters will drag to rank options from favorite to least favorite'}
-                                    {pollType === 'rating' && '💡 Voters will rate using 1-5 stars. Great for reviews and satisfaction.'}
-                                    {pollType === 'meeting' && '💡 Add time slots and voters will mark their availability'}
-                                    {pollType === 'rsvp' && '💡 Voters respond Yes, No, or Maybe to your event'}
-                                    {pollType === 'pairwise' && '💡 Voters choose between two options (A vs B comparison)'}
-                                    {pollType === 'image' && '💡 Upload images and voters will pick their favorite'}
+                            {/* Poll type hint - Better contrast */}
+                            <div className="mb-4 p-3 rounded-xl bg-slate-100 border border-slate-200">
+                                <p className="text-sm text-slate-700 font-medium">
+                                    {pollType === 'multiple' && '💡 Voters will pick one or more options from your list. Best for quick decisions.'}
+                                    {pollType === 'ranked' && '💡 Voters drag to rank options by preference. Best for prioritizing choices.'}
+                                    {pollType === 'rating' && '💡 Voters rate each aspect 1-5 stars. Best for reviews and feedback.'}
+                                    {pollType === 'meeting' && '💡 Voters mark availability for each time slot. Best for scheduling.'}
+                                    {pollType === 'rsvp' && '💡 Voters respond Yes, No, or Maybe. Best for event attendance.'}
+                                    {pollType === 'pairwise' && '💡 Voters choose between two options. Best for A/B testing and comparisons.'}
+                                    {pollType === 'image' && '💡 Upload images for voters to choose from. Supports JPG, PNG up to 5MB each.'}
                                 </p>
                             </div>
                             
@@ -482,121 +482,242 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             </div>
                             
-                            {/* RATING SCALE - Show preview */}
+                            {/* RATING SCALE - Configurable aspects to rate */}
                             {pollType === 'rating' && (
-                                <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                        Rating Preview
-                                    </label>
-                                    <div className="flex justify-center gap-2">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <div key={star} className="flex flex-col items-center">
-                                                <Star size={32} className="text-amber-400 fill-amber-400" />
-                                                <span className="text-xs text-slate-500 mt-1">{star}</span>
-                                            </div>
-                                        ))}
+                                <div className="mt-6 space-y-4">
+                                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            What should voters rate? <span className="text-slate-400 font-normal">(add items to rate)</span>
+                                        </label>
+                                        
+                                        {/* Rating items */}
+                                        <div className="space-y-2 mb-3">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-center">
+                                                    <input 
+                                                        type="text" 
+                                                        value={opt} 
+                                                        onChange={(e) => updateOption(i, e.target.value)} 
+                                                        placeholder={`e.g., ${['Service', 'Cleanliness', 'Value for money', 'Staff friendliness', 'Overall experience'][i] || 'Aspect ' + (i + 1)}`}
+                                                        className="flex-1 px-3 py-2 border-2 border-amber-200 rounded-lg text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                                    />
+                                                    <div className="flex gap-0.5">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star key={star} size={16} className="text-amber-400 fill-amber-400" />
+                                                        ))}
+                                                    </div>
+                                                    {options.length > 1 && (
+                                                        <button onClick={() => removeOption(i)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        
+                                        {options.length < 10 && (
+                                            <button onClick={addOption} className="flex items-center gap-2 px-3 py-2 text-amber-600 hover:bg-amber-100 rounded-lg text-sm font-medium border border-dashed border-amber-300 w-full justify-center">
+                                                <Plus size={16} />Add rating aspect
+                                            </button>
+                                        )}
                                     </div>
-                                    <p className="text-center text-xs text-slate-500 mt-3">
-                                        Voters will click to rate 1-5 stars
-                                    </p>
+                                    
+                                    {/* Rating preview */}
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200">
+                                        <p className="text-xs text-slate-500 mb-2 font-medium">Preview: Voters will rate each aspect</p>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm text-slate-600">{options[0] || 'Service'}</span>
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Star key={star} size={20} className="text-amber-400 fill-amber-400" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             
-                            {/* RSVP - Pre-filled options */}
+                            {/* RSVP - Event details and response options */}
                             {pollType === 'rsvp' && (
-                                <div className="mt-6">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                        Response Options
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl text-center">
-                                            <span className="text-2xl mb-1 block">✓</span>
-                                            <span className="font-semibold text-emerald-700">Yes</span>
-                                        </div>
-                                        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                                            <span className="text-2xl mb-1 block">✗</span>
-                                            <span className="font-semibold text-red-700">No</span>
-                                        </div>
-                                        <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-center">
-                                            <span className="text-2xl mb-1 block">?</span>
-                                            <span className="font-semibold text-amber-700">Maybe</span>
+                                <div className="mt-6 space-y-4">
+                                    {/* Event Details */}
+                                    <div className="p-4 bg-sky-50 rounded-xl border border-sky-200">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            Event Details <span className="text-slate-400 font-normal">(optional but recommended)</span>
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-slate-500 mb-1">Event Date</label>
+                                                <input 
+                                                    type="date" 
+                                                    className="w-full px-3 py-2 border-2 border-sky-200 rounded-lg text-sm focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-500 mb-1">Event Time</label>
+                                                <input 
+                                                    type="time" 
+                                                    className="w-full px-3 py-2 border-2 border-sky-200 rounded-lg text-sm focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                                                />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-xs text-slate-500 mb-1">Location</label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="e.g., 123 Main St or Zoom link"
+                                                    className="w-full px-3 py-2 border-2 border-sky-200 rounded-lg text-sm focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <p className="text-center text-xs text-slate-500 mt-3">
-                                        Standard RSVP options - voters pick one
-                                    </p>
+                                    
+                                    {/* Response Options - Fixed */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            Response Options <span className="text-slate-400 font-normal">(standard RSVP)</span>
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div className="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-xl text-center">
+                                                <span className="text-2xl mb-1 block">✓</span>
+                                                <span className="font-semibold text-emerald-700">Yes</span>
+                                                <p className="text-xs text-emerald-600 mt-1">I'll attend</p>
+                                            </div>
+                                            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-xl text-center">
+                                                <span className="text-2xl mb-1 block">✗</span>
+                                                <span className="font-semibold text-red-700">No</span>
+                                                <p className="text-xs text-red-600 mt-1">Can't make it</p>
+                                            </div>
+                                            <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-xl text-center">
+                                                <span className="text-2xl mb-1 block">?</span>
+                                                <span className="font-semibold text-amber-700">Maybe</span>
+                                                <p className="text-xs text-amber-600 mt-1">Not sure yet</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-center text-xs text-slate-500 mt-3">
+                                            💡 RSVP responses are fixed. Themes affect only the visual styling.
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Additional RSVP Options */}
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                        <label className="flex items-center justify-between cursor-pointer">
+                                            <div>
+                                                <span className="text-sm font-medium text-slate-700">Ask for +1 / guest count</span>
+                                                <p className="text-xs text-slate-500">Attendees can indicate if they're bringing guests</p>
+                                            </div>
+                                            <input type="checkbox" className="w-5 h-5 rounded text-sky-600" />
+                                        </label>
+                                    </div>
                                 </div>
                             )}
                             
                             {/* PAIRWISE (This or That) - Two options side by side */}
                             {pollType === 'pairwise' && (
-                                <div className="mt-6">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                        Options to Compare
-                                    </label>
-                                    <div className="flex gap-4 items-center">
-                                        <div className="flex-1">
-                                            <input 
-                                                type="text" 
-                                                value={options[0] || ''} 
-                                                onChange={(e) => updateOption(0, e.target.value)} 
-                                                placeholder="Option A" 
-                                                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl text-sm focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-center font-semibold"
-                                            />
+                                <div className="mt-6 space-y-4">
+                                    <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            Options to Compare <span className="text-slate-400 font-normal">(exactly 2 choices)</span>
+                                        </label>
+                                        <div className="flex gap-4 items-center">
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-orange-600 font-medium mb-1">Option A</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={options[0] || ''} 
+                                                    onChange={(e) => updateOption(0, e.target.value)} 
+                                                    placeholder="e.g., Design A, Option 1, Team A" 
+                                                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl text-sm focus:border-orange-400 focus:ring-2 focus:ring-orange-100 text-center font-semibold bg-white"
+                                                />
+                                            </div>
+                                            <div className="flex-shrink-0 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg">
+                                                VS
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-red-600 font-medium mb-1">Option B</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={options[1] || ''} 
+                                                    onChange={(e) => updateOption(1, e.target.value)} 
+                                                    placeholder="e.g., Design B, Option 2, Team B" 
+                                                    className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm focus:border-red-400 focus:ring-2 focus:ring-red-100 text-center font-semibold bg-white"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="flex-shrink-0 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-400">
-                                            VS
-                                        </div>
-                                        <div className="flex-1">
-                                            <input 
-                                                type="text" 
-                                                value={options[1] || ''} 
-                                                onChange={(e) => updateOption(1, e.target.value)} 
-                                                placeholder="Option B" 
-                                                className="w-full px-4 py-3 border-2 border-red-200 rounded-xl text-sm focus:border-red-400 focus:ring-2 focus:ring-red-100 text-center font-semibold"
-                                            />
+                                    </div>
+                                    
+                                    {/* Use cases */}
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200">
+                                        <p className="text-xs text-slate-500 font-medium mb-2">Great for:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['Logo comparisons', 'A/B testing', 'Quick decisions', 'Design feedback'].map((use) => (
+                                                <span key={use} className="px-2 py-1 bg-slate-100 rounded-full text-xs text-slate-600">{use}</span>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
                             
-                            {/* MEETING POLL - Time slots */}
+                            {/* MEETING POLL - Time slots with better guidance */}
                             {pollType === 'meeting' && (
-                                <div className="mt-6 space-y-3">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Time Slots
-                                    </label>
-                                    {options.map((opt, i) => (
-                                        <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
-                                            <Calendar size={18} className="text-amber-500" />
-                                            <input 
-                                                type="text" 
-                                                value={opt} 
-                                                onChange={(e) => updateOption(i, e.target.value)} 
-                                                placeholder={`e.g., Monday 2pm, Tuesday 10am`} 
-                                                className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50' : 'border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100'}`} 
-                                            />
-                                            {options.length > 2 && (
-                                                <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </motion.div>
-                                    ))}
-                                    {options.length < 20 && (
-                                        <button onClick={addOption} className="mt-2 flex items-center gap-2 px-4 py-2 text-amber-600 hover:bg-amber-50 rounded-xl text-sm font-semibold border-2 border-dashed border-amber-200 w-full justify-center">
-                                            <Plus size={18} />Add Time Slot
-                                        </button>
-                                    )}
+                                <div className="mt-6 space-y-4">
+                                    {/* Time slots section */}
+                                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            Available Time Slots <span className="text-slate-400 font-normal">(add options for attendees)</span>
+                                        </label>
+                                        <div className="space-y-2">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
+                                                    <Calendar size={18} className="text-amber-500 shrink-0" />
+                                                    <input 
+                                                        type="text" 
+                                                        value={opt} 
+                                                        onChange={(e) => updateOption(i, e.target.value)} 
+                                                        placeholder={[
+                                                            'Monday, Jan 15 at 2:00 PM',
+                                                            'Tuesday, Jan 16 at 10:00 AM', 
+                                                            'Wednesday, Jan 17 at 3:00 PM'
+                                                        ][i] || `Time slot ${i + 1}`} 
+                                                        className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50' : 'border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 bg-white'}`} 
+                                                    />
+                                                    {options.length > 2 && (
+                                                        <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    )}
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {options.length < 20 && (
+                                            <button onClick={addOption} className="mt-3 flex items-center gap-2 px-4 py-2 text-amber-600 hover:bg-amber-100 rounded-xl text-sm font-semibold border-2 border-dashed border-amber-300 w-full justify-center transition">
+                                                <Plus size={18} />Add Time Slot
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {/* How voting works */}
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200">
+                                        <p className="text-xs text-slate-500 font-medium mb-2">How it works:</p>
+                                        <div className="flex items-center gap-4 text-xs text-slate-600">
+                                            <span className="flex items-center gap-1"><span className="w-4 h-4 bg-emerald-100 rounded flex items-center justify-center">✓</span> Available</span>
+                                            <span className="flex items-center gap-1"><span className="w-4 h-4 bg-amber-100 rounded flex items-center justify-center">?</span> Maybe</span>
+                                            <span className="flex items-center gap-1"><span className="w-4 h-4 bg-slate-100 rounded flex items-center justify-center">—</span> Unavailable</span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             
                             {/* Visual Poll Images */}
                             {pollType === 'image' && (
                                 <div className="mt-6">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                        Upload Images ({imageOptions.length}/10)
-                                    </label>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="block text-sm font-semibold text-slate-700">
+                                            Upload Images ({imageOptions.length}/10)
+                                        </label>
+                                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                                            JPG, PNG • Max 5MB each
+                                        </span>
+                                    </div>
                                     
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         {/* Existing Images */}
@@ -616,7 +737,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         updated[i].label = e.target.value;
                                                         setImageOptions(updated);
                                                     }}
-                                                    placeholder={`Label ${i + 1}`}
+                                                    placeholder={`Label (optional)`}
                                                     className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm px-2 py-1 backdrop-blur-sm border-0 focus:outline-none focus:bg-black/70"
                                                 />
                                                 <button 
@@ -633,12 +754,24 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             <label className="aspect-square rounded-xl border-2 border-dashed border-pink-300 bg-pink-50 hover:bg-pink-100 cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors">
                                                 <input 
                                                     type="file" 
-                                                    accept="image/*" 
+                                                    accept="image/jpeg,image/png,image/jpg" 
                                                     className="hidden"
                                                     disabled={uploadingImage}
                                                     onChange={async (e) => {
                                                         const file = e.target.files?.[0];
                                                         if (!file) return;
+                                                        
+                                                        // Validate file type
+                                                        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+                                                            setError('Please upload JPG or PNG images only');
+                                                            return;
+                                                        }
+                                                        
+                                                        // Validate file size (5MB)
+                                                        if (file.size > 5 * 1024 * 1024) {
+                                                            setError('Image must be under 5MB');
+                                                            return;
+                                                        }
                                                         
                                                         setUploadingImage(true);
                                                         setError(null);
@@ -691,54 +824,82 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 ) : (
                                                     <>
                                                         <Upload size={24} className="text-pink-400" />
-                                                        <span className="text-pink-600 text-sm font-medium">Upload Image</span>
+                                                        <span className="text-pink-600 text-sm font-medium">Upload</span>
+                                                        <span className="text-pink-400 text-xs">JPG, PNG</span>
                                                     </>
                                                 )}
                                             </label>
                                         )}
                                     </div>
                                     
+                                    {imageOptions.length === 1 && (
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+                                            <AlertCircle size={16} className="text-amber-600" />
+                                            <p className="text-amber-700 text-sm">Add at least one more image to create your poll</p>
+                                        </div>
+                                    )}
+                                    
                                     {imageOptions.length === 0 && (
-                                        <p className="text-center text-slate-500 text-sm py-4">
-                                            Upload at least 2 images to create your visual poll
-                                        </p>
+                                        <div className="text-center py-6 px-4 bg-pink-50/50 rounded-xl border-2 border-dashed border-pink-200">
+                                            <ImageIcon size={32} className="mx-auto text-pink-300 mb-2" />
+                                            <p className="text-slate-600 text-sm font-medium">Upload at least 2 images</p>
+                                            <p className="text-slate-500 text-xs mt-1">JPG or PNG • Max 5MB each • Up to 10 images</p>
+                                        </div>
                                     )}
                                 </div>
                             )}
                             
                             {/* MULTIPLE CHOICE & RANKED - Standard options list */}
                             {(pollType === 'multiple' || pollType === 'ranked') && (
-                                <div className="mt-6 space-y-3">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        {pollType === 'ranked' ? 'Options to Rank' : 'Answer Options'}
-                                    </label>
-                                    {options.map((opt, i) => (
-                                        <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
-                                            <span className="text-slate-400 text-sm w-6">{i + 1}.</span>
-                                            <input 
-                                                type="text" 
-                                                value={opt} 
-                                                onChange={(e) => updateOption(i, e.target.value)} 
-                                                placeholder={`Option ${i + 1}`} 
-                                                className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50 focus:border-red-400' : 'border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`} 
-                                            />
-                                            {options.length > 2 && (
-                                                <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </motion.div>
-                                    ))}
-                                    {hasDuplicates && (
-                                        <p className="text-red-500 text-sm flex items-center gap-2 mt-2">
-                                            <AlertCircle size={14} /> Duplicate options detected
-                                        </p>
-                                    )}
-                                    {options.length < 20 && (
-                                        <button onClick={addOption} className="mt-2 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center">
-                                            <Plus size={18} />Add Option
-                                        </button>
-                                    )}
+                                <div className="mt-6 space-y-4">
+                                    <div className={`p-4 rounded-xl border ${pollType === 'ranked' ? 'bg-violet-50 border-violet-200' : 'bg-indigo-50 border-indigo-200'}`}>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            {pollType === 'ranked' ? 'Options to Rank' : 'Answer Options'} 
+                                            <span className="text-slate-400 font-normal ml-1">(2-20 options)</span>
+                                        </label>
+                                        <div className="space-y-2">
+                                            {options.map((opt, i) => (
+                                                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
+                                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${pollType === 'ranked' ? 'bg-violet-200 text-violet-700' : 'bg-indigo-200 text-indigo-700'}`}>{i + 1}</span>
+                                                    <input 
+                                                        type="text" 
+                                                        value={opt} 
+                                                        onChange={(e) => updateOption(i, e.target.value)} 
+                                                        placeholder={pollType === 'ranked' 
+                                                            ? ['First choice', 'Second choice', 'Third choice'][i] || `Option ${i + 1}`
+                                                            : `Option ${i + 1}`
+                                                        } 
+                                                        className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition bg-white ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50 focus:border-red-400' : pollType === 'ranked' ? 'border-violet-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100' : 'border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`} 
+                                                    />
+                                                    {options.length > 2 && (
+                                                        <button onClick={() => removeOption(i)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    )}
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        {hasDuplicates && (
+                                            <p className="text-red-500 text-sm flex items-center gap-2 mt-2">
+                                                <AlertCircle size={14} /> Duplicate options detected
+                                            </p>
+                                        )}
+                                        {options.length < 20 && (
+                                            <button onClick={addOption} className={`mt-3 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 border-dashed w-full justify-center transition ${pollType === 'ranked' ? 'text-violet-600 hover:bg-violet-100 border-violet-300' : 'text-indigo-600 hover:bg-indigo-100 border-indigo-300'}`}>
+                                                <Plus size={18} />Add Option
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {/* How voting works */}
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200">
+                                        <p className="text-xs text-slate-500 font-medium mb-2">How voters will interact:</p>
+                                        {pollType === 'ranked' ? (
+                                            <p className="text-xs text-slate-600">Voters drag and drop to arrange options from their #1 choice to their last choice.</p>
+                                        ) : (
+                                            <p className="text-xs text-slate-600">Voters click to select one option (or multiple if enabled in settings).</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </motion.div>
@@ -853,7 +1014,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                                 }`}
                                                             >
                                                                 {isProFeature && !isPaidUser && (
-                                                                    <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full">PRO</span>
+                                                                    <a href="/pricing" className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full hover:from-indigo-600 hover:to-purple-600 transition-all">
+                                                                        Upgrade
+                                                                    </a>
                                                                 )}
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
@@ -905,24 +1068,33 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             </div>
 
                                             {/* ===== PRO FEATURES SECTION ===== */}
-                                            <div className={`p-4 rounded-xl border ${isPaidUser ? 'bg-purple-50 border-purple-100' : 'bg-slate-50 border-slate-200'}`}>
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <Zap size={18} className={isPaidUser ? 'text-purple-600' : 'text-slate-400'} />
-                                                    <h3 className={`text-sm font-bold ${isPaidUser ? 'text-purple-800' : 'text-slate-600'}`}>Pro Features</h3>
+                                            <div className={`p-4 rounded-xl border ${isPaidUser ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isPaidUser ? 'bg-gradient-to-br from-purple-500 to-indigo-500' : 'bg-slate-300'}`}>
+                                                        <Crown size={16} className="text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className={`text-sm font-bold ${isPaidUser ? 'text-purple-800' : 'text-slate-600'}`}>Pro Features</h3>
+                                                        <p className="text-xs text-slate-500">{isPaidUser ? 'All features unlocked' : 'Upgrade to unlock these features'}</p>
+                                                    </div>
                                                     {!isPaidUser && (
-                                                        <a href="/pricing" className="text-xs text-indigo-600 hover:underline ml-auto">Upgrade to unlock</a>
+                                                        <a href="/pricing" className="ml-auto px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all shadow-sm">
+                                                            Upgrade →
+                                                        </a>
                                                     )}
                                                 </div>
+                                                
                                                 <div className="space-y-2">
-                                                    <label className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition ${
-                                                        isPaidUser ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'
+                                                    {/* Allow Comments */}
+                                                    <label className={`group flex items-center justify-between p-3 rounded-lg transition ${
+                                                        isPaidUser ? 'hover:bg-white cursor-pointer' : 'opacity-60 cursor-not-allowed'
                                                     }`}>
-                                                        <div>
-                                                            <span className="font-medium text-slate-700 text-sm flex items-center gap-2">
-                                                                <MessageSquare size={14} />
-                                                                Allow voter comments
-                                                            </span>
-                                                            <p className="text-xs text-slate-500">Voters can leave feedback with their vote</p>
+                                                        <div className="flex items-center gap-3">
+                                                            <MessageSquare size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <div>
+                                                                <span className="font-medium text-slate-700 text-sm">Voter comments</span>
+                                                                <p className="text-xs text-slate-500">Collect feedback with votes</p>
+                                                            </div>
                                                         </div>
                                                         <input 
                                                             type="checkbox" 
@@ -932,6 +1104,70 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             className="w-5 h-5 rounded text-purple-600" 
                                                         />
                                                     </label>
+                                                    
+                                                    {/* Remove Branding - Display only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <X size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <div>
+                                                                <span className="font-medium text-slate-700 text-sm">Remove VoteGenerator badge</span>
+                                                                <p className="text-xs text-slate-500">Clean, unbranded polls</p>
+                                                            </div>
+                                                        </div>
+                                                        {isPaidUser ? (
+                                                            <Check size={18} className="text-emerald-500" />
+                                                        ) : (
+                                                            <Lock size={14} className="text-slate-400" />
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Custom Logo - Display only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <ImageIcon size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <div>
+                                                                <span className="font-medium text-slate-700 text-sm">Upload custom logo</span>
+                                                                <p className="text-xs text-slate-500">Add your brand to polls</p>
+                                                            </div>
+                                                        </div>
+                                                        {isPaidUser ? (
+                                                            <Check size={18} className="text-emerald-500" />
+                                                        ) : (
+                                                            <Lock size={14} className="text-slate-400" />
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Custom Thank You - Display only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <Sparkles size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <div>
+                                                                <span className="font-medium text-slate-700 text-sm">Custom thank-you message</span>
+                                                                <p className="text-xs text-slate-500">Personalized post-vote screen</p>
+                                                            </div>
+                                                        </div>
+                                                        {isPaidUser ? (
+                                                            <Check size={18} className="text-emerald-500" />
+                                                        ) : (
+                                                            <Lock size={14} className="text-slate-400" />
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Custom Short Links - Display only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <Share2 size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <div>
+                                                                <span className="font-medium text-slate-700 text-sm">Custom short links</span>
+                                                                <p className="text-xs text-slate-500">votegenerator.com/your-name</p>
+                                                            </div>
+                                                        </div>
+                                                        {isPaidUser ? (
+                                                            <Check size={18} className="text-emerald-500" />
+                                                        ) : (
+                                                            <Lock size={14} className="text-slate-400" />
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                             

@@ -11,7 +11,8 @@ import {
     ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, 
     SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, 
     ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
-    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check
+    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check,
+    Heart, ThumbsUp, Circle, Flame, Coffee as CoffeeIcon
 } from 'lucide-react';
 import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -76,10 +77,19 @@ const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string
 type SecurityType = 'none' | 'cookie' | 'fingerprint' | 'code';
 
 const SECURITY_OPTIONS = [
-    { id: 'none', name: 'No Limit', desc: 'Anyone can vote multiple times', icon: Users },
-    { id: 'cookie', name: 'One Per Browser', desc: 'Cookie-based (easy bypass)', icon: Shield },
-    { id: 'fingerprint', name: 'One Per Device', desc: 'Browser fingerprinting', icon: Lock },
-    { id: 'code', name: 'Access Codes', desc: 'Unique codes for each voter', icon: Key },
+    { id: 'none', name: 'No Limit', desc: 'Anyone can vote multiple times', icon: Users, tooltip: 'No restrictions. Good for casual polls but vulnerable to spam.' },
+    { id: 'cookie', name: 'One Per Browser', desc: 'Cookie-based (easy bypass)', icon: Shield, tooltip: 'Stores a cookie to prevent revoting. Users can bypass by clearing cookies or using incognito.' },
+    { id: 'fingerprint', name: 'One Per Device', desc: 'Browser fingerprinting', icon: Lock, tooltip: 'Uses browser fingerprinting for better accuracy. Harder to bypass but not 100% reliable.' },
+    { id: 'code', name: 'Access Codes', desc: 'Unique codes for each voter', icon: Key, tooltip: 'Generate unique codes to distribute. Most secure option - each code works once.' },
+];
+
+// Rating icon options
+const RATING_ICONS = [
+    { id: 'star', name: 'Stars', icon: Star, color: 'text-amber-400 fill-amber-400', emoji: '⭐' },
+    { id: 'heart', name: 'Hearts', icon: Heart, color: 'text-red-400 fill-red-400', emoji: '❤️' },
+    { id: 'thumbs', name: 'Thumbs', icon: ThumbsUp, color: 'text-blue-400 fill-blue-400', emoji: '👍' },
+    { id: 'fire', name: 'Fire', icon: Flame, color: 'text-orange-500 fill-orange-500', emoji: '🔥' },
+    { id: 'circle', name: 'Dots', icon: Circle, color: 'text-indigo-400 fill-indigo-400', emoji: '●' },
 ];
 
 // How It Works - UPDATED with larger icons
@@ -137,6 +147,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     // Visual Poll image options
     const [imageOptions, setImageOptions] = useState<{ url: string; label: string }[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
+    
+    // Rating scale icon type
+    const [ratingIcon, setRatingIcon] = useState<'star' | 'heart' | 'thumbs' | 'circle' | 'fire'>('star');
     
     // Check for subscription tier
     const subscriptionTier = typeof window !== 'undefined' 
@@ -482,37 +495,73 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </div>
                             </div>
                             
-                            {/* RATING SCALE - Configurable aspects to rate */}
+                            {/* RATING SCALE - Configurable aspects and icon type */}
                             {pollType === 'rating' && (
                                 <div className="mt-6 space-y-4">
+                                    {/* Rating Icon Selection */}
+                                    <div className="p-4 bg-cyan-50 rounded-xl border border-cyan-200">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                            Rating Style <span className="text-slate-400 font-normal">(choose icon type)</span>
+                                        </label>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {RATING_ICONS.map((iconOpt) => {
+                                                const IconComponent = iconOpt.icon;
+                                                return (
+                                                    <button
+                                                        key={iconOpt.id}
+                                                        type="button"
+                                                        onClick={() => setRatingIcon(iconOpt.id as typeof ratingIcon)}
+                                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                                                            ratingIcon === iconOpt.id
+                                                                ? 'border-cyan-500 bg-white shadow-sm'
+                                                                : 'border-cyan-200 bg-white/50 hover:border-cyan-300'
+                                                        }`}
+                                                    >
+                                                        <div className="flex gap-0.5">
+                                                            {[1, 2, 3].map((n) => (
+                                                                <IconComponent key={n} size={14} className={iconOpt.color} />
+                                                            ))}
+                                                        </div>
+                                                        <span className="text-xs font-medium text-slate-600">{iconOpt.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Rating aspects */}
                                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
                                         <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                            What should voters rate? <span className="text-slate-400 font-normal">(add items to rate)</span>
+                                            What should voters rate? <span className="text-slate-400 font-normal">(add items)</span>
                                         </label>
                                         
                                         {/* Rating items */}
                                         <div className="space-y-2 mb-3">
-                                            {options.map((opt, i) => (
-                                                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-center">
-                                                    <input 
-                                                        type="text" 
-                                                        value={opt} 
-                                                        onChange={(e) => updateOption(i, e.target.value)} 
-                                                        placeholder={`e.g., ${['Service', 'Cleanliness', 'Value for money', 'Staff friendliness', 'Overall experience'][i] || 'Aspect ' + (i + 1)}`}
-                                                        className="flex-1 px-3 py-2 border-2 border-amber-200 rounded-lg text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                                                    />
-                                                    <div className="flex gap-0.5">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star key={star} size={16} className="text-amber-400 fill-amber-400" />
-                                                        ))}
-                                                    </div>
-                                                    {options.length > 1 && (
-                                                        <button onClick={() => removeOption(i)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                </motion.div>
-                                            ))}
+                                            {options.map((opt, i) => {
+                                                const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
+                                                const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                return (
+                                                    <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-center">
+                                                        <input 
+                                                            type="text" 
+                                                            value={opt} 
+                                                            onChange={(e) => updateOption(i, e.target.value)} 
+                                                            placeholder={`e.g., ${['Service', 'Cleanliness', 'Value', 'Staff', 'Overall'][i] || 'Aspect ' + (i + 1)}`}
+                                                            className="flex-1 px-3 py-2 border-2 border-amber-200 rounded-lg text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 bg-white"
+                                                        />
+                                                        <div className="flex gap-0.5 shrink-0">
+                                                            {[1, 2, 3, 4, 5].map((n) => (
+                                                                <CurrentIcon key={n} size={14} className={iconColor} />
+                                                            ))}
+                                                        </div>
+                                                        {options.length > 1 && (
+                                                            <button onClick={() => removeOption(i)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                    </motion.div>
+                                                );
+                                            })}
                                         </div>
                                         
                                         {options.length < 10 && (
@@ -528,9 +577,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm text-slate-600">{options[0] || 'Service'}</span>
                                             <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={20} className="text-amber-400 fill-amber-400" />
-                                                ))}
+                                                {[1, 2, 3, 4, 5].map((n) => {
+                                                    const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
+                                                    const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                    return <CurrentIcon key={n} size={20} className={iconColor} />;
+                                                })}
                                             </div>
                                         </div>
                                     </div>
@@ -833,17 +884,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     </div>
                                     
                                     {imageOptions.length === 1 && (
-                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
-                                            <AlertCircle size={16} className="text-amber-600" />
-                                            <p className="text-amber-700 text-sm">Add at least one more image to create your poll</p>
+                                        <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                                            <AlertCircle size={14} className="text-amber-600 shrink-0" />
+                                            <p className="text-amber-700 text-xs">Add one more image to create your poll</p>
                                         </div>
                                     )}
                                     
                                     {imageOptions.length === 0 && (
-                                        <div className="text-center py-6 px-4 bg-pink-50/50 rounded-xl border-2 border-dashed border-pink-200">
-                                            <ImageIcon size={32} className="mx-auto text-pink-300 mb-2" />
-                                            <p className="text-slate-600 text-sm font-medium">Upload at least 2 images</p>
-                                            <p className="text-slate-500 text-xs mt-1">JPG or PNG • Max 5MB each • Up to 10 images</p>
+                                        <div className="text-center py-3 px-3 bg-pink-50/50 rounded-lg border border-dashed border-pink-200">
+                                            <p className="text-slate-500 text-xs">Upload at least 2 images • JPG/PNG • Max 5MB</p>
                                         </div>
                                     )}
                                 </div>
@@ -994,36 +1043,43 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                     <Shield size={18} className="text-slate-600" />
                                                     <h3 className="text-sm font-bold text-slate-800">Vote Protection</h3>
                                                 </div>
-                                                <p className="text-xs text-slate-500 mb-3">Control how many times someone can vote</p>
+                                                <p className="text-xs text-slate-500 mb-3">Control how many times someone can vote. Hover for details.</p>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {SECURITY_OPTIONS.map((option) => {
                                                         const isProFeature = option.id === 'code';
                                                         const isDisabled = isProFeature && !isPaidUser;
                                                         return (
-                                                            <button
-                                                                key={option.id}
-                                                                type="button"
-                                                                onClick={() => !isDisabled && setSecurity(option.id as SecurityType)}
-                                                                disabled={isDisabled}
-                                                                className={`p-3 rounded-xl border-2 text-left transition relative ${
-                                                                    security === option.id 
-                                                                        ? 'border-indigo-500 bg-white shadow-sm' 
-                                                                        : isDisabled
-                                                                            ? 'border-slate-200 bg-slate-100 opacity-60 cursor-not-allowed'
-                                                                            : 'border-slate-200 bg-white hover:border-indigo-300'
-                                                                }`}
-                                                            >
-                                                                {isProFeature && !isPaidUser && (
-                                                                    <a href="/pricing" className="absolute -top-2 -right-2 px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full hover:from-indigo-600 hover:to-purple-600 transition-all">
-                                                                        Upgrade
-                                                                    </a>
-                                                                )}
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
-                                                                    <span className="font-medium text-sm text-slate-900">{option.name}</span>
+                                                            <div key={option.id} className="relative group">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => !isDisabled && setSecurity(option.id as SecurityType)}
+                                                                    disabled={isDisabled}
+                                                                    className={`w-full p-3 rounded-xl border-2 text-left transition relative ${
+                                                                        security === option.id 
+                                                                            ? 'border-indigo-500 bg-white shadow-sm' 
+                                                                            : isDisabled
+                                                                                ? 'border-slate-200 bg-slate-100 opacity-60 cursor-not-allowed'
+                                                                                : 'border-slate-200 bg-white hover:border-indigo-300'
+                                                                    }`}
+                                                                >
+                                                                    {isProFeature && !isPaidUser && (
+                                                                        <a href="/pricing" className="absolute -top-2 -right-2 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded-full hover:bg-purple-700 transition-all shadow-sm">
+                                                                            Upgrade
+                                                                        </a>
+                                                                    )}
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <option.icon size={14} className={security === option.id ? 'text-indigo-600' : 'text-slate-400'} />
+                                                                        <span className="font-medium text-sm text-slate-900">{option.name}</span>
+                                                                    </div>
+                                                                    <span className="text-xs text-slate-500">{option.desc}</span>
+                                                                </button>
+                                                                
+                                                                {/* Hover tooltip */}
+                                                                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 w-56 shadow-lg">
+                                                                    {option.tooltip}
+                                                                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
                                                                 </div>
-                                                                <span className="text-xs text-slate-500">{option.desc}</span>
-                                                            </button>
+                                                            </div>
                                                         );
                                                     })}
                                                 </div>
@@ -1070,15 +1126,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             {/* ===== PRO FEATURES SECTION ===== */}
                                             <div className={`p-4 rounded-xl border ${isPaidUser ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
                                                 <div className="flex items-center gap-2 mb-4">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isPaidUser ? 'bg-gradient-to-br from-purple-500 to-indigo-500' : 'bg-slate-300'}`}>
-                                                        <Crown size={16} className="text-white" />
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isPaidUser ? 'bg-gradient-to-br from-amber-400 to-yellow-500' : 'bg-gradient-to-br from-amber-300 to-yellow-400'}`}>
+                                                        <Crown size={16} className="text-white drop-shadow-sm" />
                                                     </div>
                                                     <div>
                                                         <h3 className={`text-sm font-bold ${isPaidUser ? 'text-purple-800' : 'text-slate-600'}`}>Pro Features</h3>
                                                         <p className="text-xs text-slate-500">{isPaidUser ? 'All features unlocked' : 'Upgrade to unlock these features'}</p>
                                                     </div>
                                                     {!isPaidUser && (
-                                                        <a href="/pricing" className="ml-auto px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all shadow-sm">
+                                                        <a href="/pricing" className="ml-auto px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-all shadow-sm">
                                                             Upgrade →
                                                         </a>
                                                     )}
@@ -1269,19 +1325,39 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         </h4>
                                                         {description && <p className={`text-sm mb-4 ${currentTheme.headerText?.includes('white') ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
                                                         
-                                                        {pollType === 'image' && imageOptions.length > 0 ? (
+                                                        {pollType === 'image' ? (
                                                             <div className="grid grid-cols-2 gap-2 mb-4">
-                                                                {imageOptions.map((img, i) => (
-                                                                    <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder}`}>
-                                                                        <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                                    </div>
-                                                                ))}
+                                                                {imageOptions.length > 0 ? (
+                                                                    imageOptions.map((img, i) => (
+                                                                        <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder}`}>
+                                                                            <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    /* Placeholder image boxes */
+                                                                    [1, 2].map((n) => (
+                                                                        <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+                                                                            <ImageIcon size={24} className={currentTheme.cardBg?.includes('slate-8') ? 'text-slate-500' : 'text-slate-300'} />
+                                                                        </div>
+                                                                    ))
+                                                                )}
                                                             </div>
                                                         ) : pollType === 'rating' ? (
-                                                            <div className="flex justify-center gap-1 mb-4">
-                                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                                    <Star key={star} size={28} className="text-amber-400 fill-amber-400" />
-                                                                ))}
+                                                            <div className="space-y-2 mb-4">
+                                                                {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 2) : ['Service', 'Quality']).map((aspect, i) => {
+                                                                    const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
+                                                                    const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                                    return (
+                                                                        <div key={i} className="flex items-center justify-between">
+                                                                            <span className={`text-xs ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-300' : 'text-slate-600'}`}>{aspect}</span>
+                                                                            <div className="flex gap-0.5">
+                                                                                {[1, 2, 3, 4, 5].map((n) => (
+                                                                                    <CurrentIcon key={n} size={14} className={iconColor} />
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         ) : pollType === 'rsvp' ? (
                                                             <div className="flex gap-2 mb-4">
@@ -1368,19 +1444,42 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             </h4>
                                             {description && <p className={`text-sm mb-4 ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>}
                                             
-                                            {pollType === 'image' && imageOptions.length > 0 ? (
+                                            {pollType === 'image' ? (
                                                 <div className="grid grid-cols-2 gap-3 mb-4">
-                                                    {imageOptions.map((img, i) => (
-                                                        <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder} hover:scale-105 transition-transform`}>
-                                                            <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ))}
+                                                    {imageOptions.length > 0 ? (
+                                                        imageOptions.map((img, i) => (
+                                                            <div key={i} className={`aspect-square rounded-lg overflow-hidden border-2 ${currentTheme.cardBorder} hover:scale-105 transition-transform`}>
+                                                                <img src={img.url} alt={img.label || `Option ${i + 1}`} className="w-full h-full object-cover" />
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        /* Placeholder image boxes */
+                                                        [1, 2].map((n) => (
+                                                            <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+                                                                <div className="text-center">
+                                                                    <ImageIcon size={32} className={currentTheme.cardBg?.includes('slate-8') ? 'text-slate-500 mx-auto' : 'text-slate-300 mx-auto'} />
+                                                                    <span className={`text-xs mt-1 block ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-500' : 'text-slate-400'}`}>Image {n}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
                                                 </div>
                                             ) : pollType === 'rating' ? (
-                                                <div className="flex justify-center gap-2 mb-6 py-4">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <Star key={star} size={36} className="text-amber-400 fill-amber-400 hover:scale-110 transition-transform cursor-pointer" />
-                                                    ))}
+                                                <div className="space-y-3 mb-6">
+                                                    {(options.filter(o => o.trim()).length > 0 ? options.filter(o => o.trim()).slice(0, 3) : ['Service', 'Quality', 'Value']).map((aspect, i) => {
+                                                        const CurrentIcon = RATING_ICONS.find(r => r.id === ratingIcon)?.icon || Star;
+                                                        const iconColor = RATING_ICONS.find(r => r.id === ratingIcon)?.color || 'text-amber-400 fill-amber-400';
+                                                        return (
+                                                            <div key={i} className={`flex items-center justify-between p-3 rounded-lg ${currentTheme.optionStyle}`}>
+                                                                <span className={`text-sm font-medium ${currentTheme.cardBg?.includes('slate-8') ? 'text-slate-200' : 'text-slate-700'}`}>{aspect}</span>
+                                                                <div className="flex gap-1">
+                                                                    {[1, 2, 3, 4, 5].map((n) => (
+                                                                        <CurrentIcon key={n} size={20} className={`${iconColor} hover:scale-110 transition-transform cursor-pointer`} />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             ) : pollType === 'rsvp' ? (
                                                 <div className="grid grid-cols-3 gap-3 mb-6">

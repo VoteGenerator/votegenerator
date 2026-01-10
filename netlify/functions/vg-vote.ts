@@ -1,6 +1,5 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
-
 interface VoteRequest {
     pollId: string;
     rankedOptionIds?: string[];
@@ -18,7 +17,6 @@ interface VoteRequest {
     _hp?: string; // Honeypot - should be empty
     _t?: number;  // Page load timestamp - for timing validation
 }
-
 interface VoteAnalytics {
     device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
     country?: string;
@@ -27,7 +25,6 @@ interface VoteAnalytics {
     utmSource?: string;
     timestamp: string;
 }
-
 interface Vote {
     id: string;
     rankedOptionIds?: string[];
@@ -44,7 +41,6 @@ interface Vote {
     timestamp: string;
     analytics?: VoteAnalytics;
 }
-
 interface Poll {
     id: string;
     adminKey: string;
@@ -108,15 +104,12 @@ interface Poll {
         lastBlocked?: string;
     };
 }
-
 // Milestone points for notifications
 const MILESTONE_POINTS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
-
 // Check if vote count hit a milestone
 function checkMilestone(voteCount: number): number | null {
     return MILESTONE_POINTS.includes(voteCount) ? voteCount : null;
 }
-
 // Check if approaching response limit
 function checkLimitApproaching(voteCount: number, maxResponses: number): number | null {
     const percent80 = Math.floor(maxResponses * 0.8);
@@ -126,7 +119,6 @@ function checkLimitApproaching(voteCount: number, maxResponses: number): number 
     if (voteCount === percent80) return 80;
     return null;
 }
-
 // Detect suspicious activity patterns
 interface SuspiciousActivityResult {
     isSuspicious: boolean;
@@ -134,7 +126,6 @@ interface SuspiciousActivityResult {
     severity?: 'low' | 'medium' | 'high';
     details?: Record<string, any>;
 }
-
 async function detectSuspiciousActivity(
     poll: Poll,
     ipHash: string,
@@ -207,7 +198,6 @@ async function detectSuspiciousActivity(
     
     return { isSuspicious: false };
 }
-
 // Fire notification (non-blocking)
 async function triggerNotification(
     poll: Poll,
@@ -258,7 +248,6 @@ async function triggerNotification(
         console.error('Failed to trigger notification:', error);
     }
 }
-
 const generateVoteId = (): string => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -267,7 +256,6 @@ const generateVoteId = (): string => {
     }
     return result;
 };
-
 // Create hash of IP for GDPR-compliant rate limiting (no raw IP stored)
 const createIpHash = async (input: string): Promise<string> => {
     const encoder = new TextEncoder();
@@ -276,7 +264,6 @@ const createIpHash = async (input: string): Promise<string> => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 };
-
 // Detect device type from User-Agent (GDPR safe - no storage of full UA)
 const detectDevice = (userAgent: string | undefined): 'mobile' | 'desktop' | 'tablet' | 'unknown' => {
     if (!userAgent) return 'unknown';
@@ -288,7 +275,6 @@ const detectDevice = (userAgent: string | undefined): 'mobile' | 'desktop' | 'ta
     
     return 'unknown';
 };
-
 // Extract domain from referrer (GDPR safe - no storage of full URL)
 const extractReferrerDomain = (referrer: string | undefined): string | undefined => {
     if (!referrer) return undefined;
@@ -299,7 +285,6 @@ const extractReferrerDomain = (referrer: string | undefined): string | undefined
         return undefined;
     }
 };
-
 // Get country from IP using ipinfo.io (GDPR safe - IP is not stored, only country)
 const getGeoFromIP = async (ip: string | undefined): Promise<{ country?: string; region?: string }> => {
     if (!ip || !process.env.IPINFO_TOKEN) {
@@ -331,7 +316,6 @@ const getGeoFromIP = async (ip: string | undefined): Promise<{ country?: string;
         return {};
     }
 };
-
 // Extract UTM source from referrer URL
 const extractUtmSource = (referrer: string | undefined): string | undefined => {
     if (!referrer) return undefined;
@@ -342,7 +326,6 @@ const extractUtmSource = (referrer: string | undefined): string | undefined => {
         return undefined;
     }
 };
-
 // ============================================
 // PHASE 2: Check if anonymous mode is enabled
 // ============================================
@@ -357,7 +340,6 @@ const isAnonymousMode = (poll: Poll): boolean => {
     }
     return false;
 };
-
 export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -365,11 +347,9 @@ export const handler: Handler = async (event) => {
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json'
     };
-
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
-
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -377,13 +357,11 @@ export const handler: Handler = async (event) => {
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
-
     try {
         const body: VoteRequest = JSON.parse(event.body || '{}');
         
         console.log('vg-vote: Received body:', JSON.stringify(body));
         console.log('vg-vote: Body keys:', Object.keys(body));
-
         if (!body.pollId || typeof body.pollId !== 'string') {
             return {
                 statusCode: 400,
@@ -391,7 +369,6 @@ export const handler: Handler = async (event) => {
                 body: JSON.stringify({ error: 'Poll ID is required' })
             };
         }
-
         // Get poll from storage with explicit config
         const store = getStore({
             name: 'polls',
@@ -408,7 +385,6 @@ export const handler: Handler = async (event) => {
         console.log('vg-vote: Poll type:', poll?.pollType);
         console.log('vg-vote: selectedOptionIds:', body.selectedOptionIds);
         console.log('vg-vote: rankedOptionIds:', body.rankedOptionIds);
-
         if (!poll) {
             return {
                 statusCode: 404,
@@ -416,7 +392,6 @@ export const handler: Handler = async (event) => {
                 body: JSON.stringify({ error: 'Poll not found' })
             };
         }
-
         // ============================================
         // PHASE 2: Check anonymous mode early
         // ============================================
@@ -424,7 +399,6 @@ export const handler: Handler = async (event) => {
         if (anonymousMode) {
             console.log('vg-vote: Anonymous mode ENABLED - will not store identifying data');
         }
-
         // ============================================
         // ANTI-BOT VALIDATION
         // ============================================
@@ -509,7 +483,6 @@ export const handler: Handler = async (event) => {
         }
         
         // ============================================
-
         // Check poll status - block voting on draft, paused or closed polls
         if (poll.status === 'draft') {
             return {
@@ -551,9 +524,11 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Security: Validate PIN
+        // Security: Validate Shared PIN (case-insensitive, alphanumeric)
         if (poll.settings.security === 'pin' && poll.pin) {
-            if (!body.code || body.code !== poll.pin) {
+            const submittedPin = (body.code || '').toString().toUpperCase().trim();
+            const storedPin = poll.pin.toUpperCase().trim();
+            if (!submittedPin || submittedPin !== storedPin) {
                 return {
                     statusCode: 403,
                     headers,
@@ -593,16 +568,13 @@ export const handler: Handler = async (event) => {
                 };
             }
         }
-
         // Accept multiple field names for flexibility
         const selectedIds = body.selectedOptionIds || (body as any).choices || (body as any).optionIds || (body as any).selections || (body as any).options;
         const rankedIds = body.rankedOptionIds || (body as any).rankings || (body as any).ranked;
         
         console.log('vg-vote: Normalized selectedIds:', selectedIds);
         console.log('vg-vote: Normalized rankedIds:', rankedIds);
-
         const validOptionIds = new Set(poll.options.map(o => o.id));
-
         // ============================================
         // SURVEY MODE - Different validation
         // ============================================
@@ -632,7 +604,6 @@ export const handler: Handler = async (event) => {
                     body: JSON.stringify({ error: 'Please rank your choices' })
                 };
             }
-
             const invalidIds = rankedIds.filter((id: string) => !validOptionIds.has(id));
             if (invalidIds.length > 0) {
                 return {
@@ -653,7 +624,6 @@ export const handler: Handler = async (event) => {
                     body: JSON.stringify({ error: 'Please select at least one option' })
                 };
             }
-
             const invalidIds = selectedIds.filter((id: string) => !validOptionIds.has(id));
             if (invalidIds.length > 0) {
                 console.log('vg-vote: VALIDATION FAILED - invalid option IDs:', invalidIds);
@@ -663,10 +633,8 @@ export const handler: Handler = async (event) => {
                     body: JSON.stringify({ error: 'Invalid options selected' })
                 };
             }
-
             // Use normalized field
             body.selectedOptionIds = selectedIds;
-
             if (!poll.settings.allowMultiple && body.selectedOptionIds.length > 1) {
                 return {
                     statusCode: 400,
@@ -675,7 +643,6 @@ export const handler: Handler = async (event) => {
                 };
             }
         }
-
         // ============================================
         // COLLECT ANALYTICS (GDPR-COMPLIANT)
         // PHASE 2: Skip if anonymous mode
@@ -708,7 +675,6 @@ export const handler: Handler = async (event) => {
             console.log('vg-vote: Anonymous mode - skipping analytics collection');
             analytics = undefined;
         }
-
         // ============================================
         // CREATE VOTE RECORD
         // PHASE 2: Minimal data for anonymous mode
@@ -721,12 +687,10 @@ export const handler: Handler = async (event) => {
                 ? new Date().toISOString().split('T')[0] + 'T00:00:00.000Z'  // Just the date
                 : new Date().toISOString(),  // Full timestamp
         };
-
         // Only add analytics if not anonymous
         if (analytics && !anonymousMode) {
             vote.analytics = analytics;
         }
-
         // Add vote data based on poll type
         if (isSurvey) {
             // Survey mode - store survey answers
@@ -737,7 +701,6 @@ export const handler: Handler = async (event) => {
         } else {
             vote.selectedOptionIds = body.selectedOptionIds;
         }
-
         // Add optional fields
         // PHASE 2: In anonymous mode, don't store voterName even if provided
         if (body.voterName && !anonymousMode) {
@@ -750,20 +713,15 @@ export const handler: Handler = async (event) => {
         if (body.matrixVotes) vote.matrixVotes = body.matrixVotes;
         if (body.pairwiseVotes) vote.pairwiseVotes = body.pairwiseVotes;
         if (body.ratingVotes) vote.ratingVotes = body.ratingVotes;
-
         // Track used unique code (if applicable)
         if (poll.settings.security === 'code' && body.code) {
             poll.usedCodes = poll.usedCodes || [];
             poll.usedCodes.push(body.code.trim().toUpperCase());
         }
-
         poll.votes.push(vote);
         poll.voteCount = poll.votes.length;
-
         await store.setJSON(body.pollId, poll);
-
         console.log(`Vote recorded for poll ${body.pollId}. Total: ${poll.voteCount}${anonymousMode ? ' (anonymous)' : ''}`);
-
         // ============================================
         // TRIGGER NOTIFICATIONS (non-blocking)
         // PHASE 2: Still send notifications in anonymous mode
@@ -819,7 +777,6 @@ export const handler: Handler = async (event) => {
                 });
             }
         }
-
         return {
             statusCode: 200,
             headers,
@@ -830,7 +787,6 @@ export const handler: Handler = async (event) => {
                 anonymous: anonymousMode || undefined
             })
         };
-
     } catch (error) {
         console.error('Error submitting vote:', error);
         return {

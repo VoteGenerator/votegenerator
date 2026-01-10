@@ -4,7 +4,7 @@
 // Updated: Pro $19/mo ($190/yr), Business $49/mo ($490/yr)
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Check, X, Zap, Crown, Users, BarChart3, Clock, ArrowRight, Star, 
@@ -74,8 +74,9 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 name: 'Responses per month', 
                 tooltip: 'Total votes across all your polls each month. Resets on the 1st.',
                 free: '100', 
-                pro: '5,000', 
-                business: '50,000' 
+                pro: '10,000', 
+                business: '100,000',
+                highlight: 'pro'
             },
             { 
                 name: 'Poll duration', 
@@ -91,6 +92,14 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 pro: '2 years', 
                 business: 'Forever' 
             },
+            { 
+                name: 'Survey questions', 
+                tooltip: 'Maximum questions per multi-question survey',
+                free: '10', 
+                pro: '25', 
+                business: 'Unlimited',
+                highlight: 'business'
+            },
         ]
     },
     {
@@ -98,7 +107,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
         name: 'Poll Types',
         icon: Layers,
         color: 'purple',
-        description: 'All 8 poll types included on every plan',
+        description: 'All 7 poll types included on every plan',
         features: [
             { 
                 name: 'Multiple Choice', 
@@ -709,15 +718,6 @@ function PricingPage(): React.ReactElement {
     const [isAnnual, setIsAnnual] = useState(true);
     const [expandedSections, setExpandedSections] = useState<string[]>(['polls-responses', 'poll-types']);
 
-    // Handle direct checkout links like /pricing#checkout-business
-    useEffect(() => {
-        const hash = window.location.hash;
-        if (hash === '#checkout-business' || hash === '#checkout-pro') {
-            const tier = hash.includes('business') ? 'business' : 'pro';
-            window.location.href = `/.netlify/functions/vg-checkout?tier=${tier}&billing=${isAnnual ? 'annual' : 'monthly'}`;
-        }
-    }, [isAnnual]);
-
     const toggleSection = (id: string) => {
         setExpandedSections(prev => 
             prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
@@ -736,13 +736,6 @@ function PricingPage(): React.ReactElement {
             return Math.round(PRICING[tier].annual / 12 * 100) / 100;
         }
         return PRICING[tier].monthly;
-    };
-
-    // Calculate yearly savings
-    const getSavings = (tier: 'pro' | 'business') => {
-        const monthlyTotal = PRICING[tier].monthly * 12;
-        const annualPrice = PRICING[tier].annual;
-        return monthlyTotal - annualPrice;
     };
 
     return (
@@ -812,14 +805,14 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-6">
                             <span className="text-4xl font-black text-slate-900">$0</span>
-                            <span className="text-slate-500 ml-1">USD forever</span>
+                            <span className="text-slate-500 ml-1">forever</span>
                         </div>
                         
                         <ul className="space-y-3 mb-8">
                             {[
                                 '3 active polls',
                                 '100 responses/month',
-                                'All 8 poll types',
+                                'All 7 poll types',
                                 'Real-time results',
                                 'QR codes & embedding',
                                 '3 basic themes',
@@ -861,15 +854,15 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}</span>
-                            <span className="text-indigo-200 ml-1">USD/month</span>
+                            <span className="text-indigo-200 ml-1">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-indigo-200 mb-6">
-                                ${getPrice('pro')} USD/year <span className="text-amber-300 font-semibold">(Save ${getSavings('pro')})</span>
+                                ${getPrice('pro')} billed annually
                             </p>
                         ) : (
                             <p className="text-sm text-indigo-200 mb-6">
-                                or ${PRICING.pro.annual} USD/year (save ${getSavings('pro')})
+                                Limited time pricing
                             </p>
                         )}
                         
@@ -917,15 +910,15 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}</span>
-                            <span className="text-slate-400 ml-1">USD/month</span>
+                            <span className="text-slate-400 ml-1">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-slate-400 mb-6">
-                                ${getPrice('business')} USD/year <span className="text-amber-400 font-semibold">(Save ${getSavings('business')})</span>
+                                ${getPrice('business')} billed annually
                             </p>
                         ) : (
                             <p className="text-sm text-slate-400 mb-6">
-                                or ${PRICING.business.annual} USD/year (save ${getSavings('business')})
+                                Limited time pricing
                             </p>
                         )}
                         
@@ -1116,7 +1109,7 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'How does "2 months free" work?', 
-                            a: 'Annual plans give you 2 months free! Pro is $190/year (instead of $228 if paid monthly) — save $38. Business is $490/year (instead of $588 if paid monthly) — save $98. Plus, these are limited-time USD rates locked in for as long as you stay subscribed.' 
+                            a: 'Annual plans are priced at 10 months instead of 12. Pro is $190/year (instead of $192 monthly) and Business is $490/year (instead of $492 monthly). You\'re essentially getting 2 months completely free! Plus, these are limited-time USD rates locked in for as long as you stay subscribed.' 
                         },
                         { 
                             q: 'Can I switch plans later?', 

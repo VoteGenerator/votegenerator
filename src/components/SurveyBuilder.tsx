@@ -860,6 +860,8 @@ interface SectionEditorProps {
     onChange: (updated: SurveySection) => void;
     onDelete: () => void;
     onDuplicate: () => void;
+    canAddQuestion: boolean;
+    questionLimitMessage?: string;
 }
 
 const SectionEditor: React.FC<SectionEditorProps> = ({
@@ -868,7 +870,9 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
     totalSections,
     onChange,
     onDelete,
-    onDuplicate
+    onDuplicate,
+    canAddQuestion,
+    questionLimitMessage
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showQuestionPicker, setShowQuestionPicker] = useState(false);
@@ -878,6 +882,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
     };
     
     const addQuestion = (type: QuestionType) => {
+        if (!canAddQuestion) return;
         updateSection({
             questions: [...section.questions, createDefaultQuestion(type)]
         });
@@ -990,12 +995,26 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
                         
                         {/* Add Question Button */}
                         <div className="relative">
-                            <button
-                                onClick={() => setShowQuestionPicker(!showQuestionPicker)}
-                                className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition flex items-center justify-center gap-2"
-                            >
-                                <Plus size={18} /> Add Question
-                            </button>
+                            {canAddQuestion ? (
+                                <button
+                                    onClick={() => setShowQuestionPicker(!showQuestionPicker)}
+                                    className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={18} /> Add Question
+                                </button>
+                            ) : (
+                                <div className="w-full py-3 px-4 border-2 border-dashed border-amber-300 bg-amber-50 rounded-xl text-amber-600 flex items-center justify-center gap-2">
+                                    <span className="text-sm font-medium">
+                                        {questionLimitMessage || 'Question limit reached'}
+                                    </span>
+                                    <a 
+                                        href="/pricing" 
+                                        className="text-sm font-bold text-amber-700 hover:text-amber-800 underline"
+                                    >
+                                        Upgrade →
+                                    </a>
+                                </div>
+                            )}
                             
                             {/* Question Type Picker */}
                             <AnimatePresence>
@@ -1071,9 +1090,19 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     const [showTemplates, setShowTemplates] = useState(!initialSections);
     const [showSettings, setShowSettings] = useState(false);
     
-    // Tier limits
-    const maxSections = tier === 'free' ? 1 : tier === 'starter' ? 3 : Infinity;
-    const maxQuestionsPerSection = tier === 'free' ? 3 : tier === 'starter' ? 5 : Infinity;
+    // Get subscription tier from localStorage if not passed
+    const subscriptionTier = tier || (typeof window !== 'undefined' 
+        ? (localStorage.getItem('vg_subscription_tier') || 'free') 
+        : 'free');
+    
+    // Question limits by tier (TOTAL questions across all sections)
+    // Free: 10 questions | Pro: 25 questions | Business: Unlimited
+    const maxQuestions = subscriptionTier === 'business' ? Infinity : subscriptionTier === 'pro' ? 25 : 10;
+    const maxSections = subscriptionTier === 'business' ? Infinity : subscriptionTier === 'pro' ? 10 : 3;
+    
+    // Calculate total questions
+    const totalQuestions = sections.reduce((sum, s) => sum + s.questions.length, 0);
+    const canAddQuestion = totalQuestions < maxQuestions;
     
     // Notify parent of changes
     const handleChange = useCallback((newSections: SurveySection[], newSettings: SurveySettings) => {
@@ -1137,8 +1166,7 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
         setShowTemplates(false);
     };
     
-    // Calculate totals
-    const totalQuestions = sections.reduce((sum, s) => sum + s.questions.length, 0);
+    // Calculate totals - moved to top with tier limits
     
     return (
         <div className="space-y-6">
@@ -1156,11 +1184,18 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                 <span className="text-xs text-indigo-400">/ {maxSections}</span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-purple-100">
-                            <HelpCircle size={18} className="text-purple-600" />
-                            <span className="font-semibold text-purple-600">
+                        <div className={`flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border ${
+                            totalQuestions >= maxQuestions ? 'border-amber-300 bg-amber-50' : 'border-purple-100'
+                        }`}>
+                            <HelpCircle size={18} className={totalQuestions >= maxQuestions ? 'text-amber-600' : 'text-purple-600'} />
+                            <span className={`font-semibold ${totalQuestions >= maxQuestions ? 'text-amber-600' : 'text-purple-600'}`}>
                                 {totalQuestions} Question{totalQuestions !== 1 ? 's' : ''}
                             </span>
+                            {maxQuestions !== Infinity && (
+                                <span className={`text-xs ${totalQuestions >= maxQuestions ? 'text-amber-500' : 'text-purple-400'}`}>
+                                    / {maxQuestions}
+                                </span>
+                            )}
                         </div>
                         {/* Anonymous Mode indicator */}
                         {settings.anonymousMode && (
@@ -1414,6 +1449,12 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                         onChange={(updated) => updateSection(section.id, updated)}
                         onDelete={() => deleteSection(section.id)}
                         onDuplicate={() => duplicateSection(section.id)}
+                        canAddQuestion={canAddQuestion}
+                        questionLimitMessage={
+                            maxQuestions !== Infinity 
+                                ? `Question limit reached (${totalQuestions}/${maxQuestions})` 
+                                : undefined
+                        }
                     />
                 ))}
             </div>

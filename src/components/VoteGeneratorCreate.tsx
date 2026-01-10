@@ -31,27 +31,27 @@ const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, {
         label: '', 
         colors: '', 
         responses: '100/month',
-        features: ['3 active polls', 'All 8 poll types', 'Basic themes']
+        features: ['3 active polls', 'All 7 poll types', 'Basic themes']
     },
     pro: { 
         label: 'PRO', 
         colors: 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white', 
-        responses: '5,000/month',
+        responses: '10,000/month',
         features: ['Business polls', 'Remove branding', 'PIN codes', 'CSV export']
     },
     business: { 
         label: 'BUSINESS', 
         colors: 'bg-gradient-to-r from-violet-500 to-purple-600 text-white', 
-        responses: '50,000/month',
+        responses: '100,000/month',
         features: ['Business polls', 'Custom logo', 'PDF reports', 'Advanced analytics']
     }
 };
 
 // ALL poll types are FREE - no tier restrictions!
+// Note: Survey (multi-question) is at /survey - these are single-question poll types
 const POLL_TYPES = [
     { id: 'multiple', name: 'Multiple Choice', icon: CheckSquare, shortDesc: 'Pick one or more', gradient: 'from-blue-500 to-indigo-500' },
     { id: 'ranked', name: 'Ranked Choice', icon: ListOrdered, shortDesc: 'Drag to rank', gradient: 'from-indigo-500 to-purple-500' },
-    { id: 'survey', name: 'Survey', icon: ClipboardList, shortDesc: 'Multi-question form', gradient: 'from-teal-500 to-emerald-500' },
     { id: 'pairwise', name: 'This or That', icon: ArrowLeftRight, shortDesc: 'A vs B comparisons', gradient: 'from-orange-500 to-red-500' },
     { id: 'meeting', name: 'Meeting Poll', icon: Calendar, shortDesc: 'Find best time', gradient: 'from-amber-500 to-orange-500' },
     { id: 'rating', name: 'Rating Scale', icon: SlidersHorizontal, shortDesc: 'Rate 1-5 stars', gradient: 'from-cyan-500 to-blue-500' },
@@ -65,7 +65,6 @@ const PLACEHOLDER_QUESTIONS = ["Where should we eat lunch?", "What movie should 
 const POLL_TYPE_PLACEHOLDERS: Record<string, { question: string; options: string[] }> = {
     multiple: { question: "What movie should we watch?", options: ["Option 1", "Option 2", "Option 3"] },
     ranked: { question: "Rank your favorite restaurants", options: ["Pizza Place", "Burger Joint", "Sushi Bar"] },
-    survey: { question: "Team Satisfaction Survey", options: ["How satisfied are you?", "What could improve?", "Any feedback?"] },
     pairwise: { question: "Which logo do you prefer?", options: ["Design A", "Design B"] },
     meeting: { question: "When can you meet?", options: ["Monday 2pm", "Tuesday 10am", "Wednesday 3pm"] },
     rating: { question: "How was your experience?", options: ["Rate 1-5 stars"] },
@@ -351,10 +350,10 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 Poll Templates
                             </a>
                             <a 
-                                href="/templates#surveys" 
+                                href="/survey" 
                                 className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold hover:from-amber-600 hover:to-orange-600 hover:shadow-lg transition-all text-center"
                             >
-                                Survey Templates
+                                Create Survey →
                             </a>
                         </div>
                     </motion.div>
@@ -408,8 +407,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             
                             {/* Template button */}
                             {!activeTemplate && (
-                                <div className="mt-4 pt-4 border-t border-slate-100 flex justify-center">
+                                <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-center gap-3">
                                     <StartFromTemplateButton onSelectTemplate={applyTemplate} />
+                                    <a 
+                                        href="/survey"
+                                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-xl transition-all border border-teal-200 hover:border-teal-300"
+                                    >
+                                        <ClipboardList size={16} />
+                                        Need multiple questions? Create Survey →
+                                    </a>
                                 </div>
                             )}
                         </motion.div>
@@ -418,13 +424,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 hover:shadow-xl transition-shadow">
                             <h2 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
                                 <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm">2</span>
-                                {pollType === 'survey' ? 'Survey Title & Questions' : 'Question & Options'}
+                                Question & Options
                             </h2>
                             
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        {pollType === 'survey' ? 'Survey Title' : 'Your Question'}
+                                        Your Question
                                     </label>
                                     <input
                                         type="text"
@@ -566,7 +572,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 /* Text Options */
                                 <div className="mt-6 space-y-3">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        {pollType === 'survey' ? 'Questions' : 'Options'}
+                                        Options
                                     </label>
                                     {options.map((opt, i) => (
                                         <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-2 items-center">
@@ -575,7 +581,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 type="text" 
                                                 value={opt} 
                                                 onChange={(e) => updateOption(i, e.target.value)} 
-                                                placeholder={pollType === 'survey' ? `Question ${i + 1}` : `Option ${i + 1}`} 
+                                                placeholder={`Option ${i + 1}`} 
                                                 className={`flex-1 px-4 py-3 border-2 rounded-xl text-sm transition ${duplicateIndices.has(i) ? 'border-red-300 bg-red-50 focus:border-red-400' : 'border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`} 
                                             />
                                             {options.length > 2 && (
@@ -595,7 +601,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             
                             {pollType !== 'image' && options.length < 20 && (
                                 <button onClick={addOption} className="mt-4 flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl text-sm font-semibold border-2 border-dashed border-indigo-200 w-full justify-center">
-                                    <Plus size={18} />Add {pollType === 'survey' ? 'Question' : 'Option'}
+                                    <Plus size={18} />Add Option
                                 </button>
                             )}
                         </motion.div>

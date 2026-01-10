@@ -12,7 +12,8 @@ import {
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
-    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
+    Pause, Play
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
@@ -158,6 +159,8 @@ const AdminDashboard: React.FC = () => {
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
+    const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -942,30 +945,57 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {/* Over Poll Limit Banner - for free users who have more polls than allowed */}
+                        {/* Over Poll Limit Banner - URGENT action required */}
                         {!isPlanExpired && tier === 'free' && polls.length > config.maxPolls && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl">
-                                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                                            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <AlertTriangle size={20} className="text-orange-600" />
+                                <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-lg">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <AlertTriangle size={24} className="text-red-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-red-800 text-lg mb-1">
+                                                ⚠️ {polls.length - config.maxPolls} Poll{polls.length - config.maxPolls > 1 ? 's' : ''} Will Be Paused
+                                            </p>
+                                            <p className="text-sm text-red-700 mb-4">
+                                                Free plan allows <strong>{config.maxPolls} active polls</strong>. You have <strong>{polls.length}</strong>. 
+                                                Choose which {config.maxPolls} to keep active, or <strong>upgrade to keep all {polls.length} running</strong>.
+                                            </p>
+                                            
+                                            {/* Loss aversion: Show what they'll lose */}
+                                            <div className="p-3 bg-white/60 rounded-lg mb-4 border border-red-200">
+                                                <p className="text-xs font-semibold text-red-800 mb-2">If you don't take action:</p>
+                                                <ul className="text-xs text-red-700 space-y-1">
+                                                    <li>• {polls.length - config.maxPolls} poll{polls.length - config.maxPolls > 1 ? 's' : ''} will show "Poll Paused" to voters</li>
+                                                    <li>• Voters will be told to contact you to activate</li>
+                                                    <li>• You'll lose potential responses</li>
+                                                </ul>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-orange-800">You're Over Your Poll Limit</p>
-                                                <p className="text-sm text-orange-700">
-                                                    You have <strong>{polls.length} polls</strong> but the Free plan allows <strong>{config.maxPolls}</strong>.
-                                                    Your existing polls will continue to work, but you can't create new ones until you upgrade or delete {polls.length - config.maxPolls} poll{polls.length - config.maxPolls > 1 ? 's' : ''}.
-                                                </p>
+                                            
+                                            <div className="flex flex-wrap gap-3">
+                                                <button 
+                                                    onClick={() => setShowUpgradeModal(true)}
+                                                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition"
+                                                >
+                                                    <Sparkles size={16} />
+                                                    Keep All {polls.length} Active - Upgrade
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        // Pre-select the most recent polls
+                                                        const sorted = [...polls].sort((a, b) => 
+                                                            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                                                        );
+                                                        const activeIds = new Set(sorted.slice(0, config.maxPolls).map(p => p.id));
+                                                        setSelectedActivePolls(activeIds);
+                                                        setShowChooseActiveModal(true);
+                                                    }}
+                                                    className="px-5 py-2.5 bg-white border-2 border-red-300 text-red-700 rounded-xl font-semibold flex items-center gap-2 hover:bg-red-50 transition"
+                                                >
+                                                    Choose Which {config.maxPolls} to Keep
+                                                </button>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => setShowUpgradeModal(true)}
-                                            className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
-                                        >
-                                            <Zap size={16} />
-                                            Upgrade Now
-                                        </button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -1148,6 +1178,7 @@ const AdminDashboard: React.FC = () => {
                                 <div className="space-y-4">
                                     {paginatedPolls.map((poll, index) => {
                                         const isDraft = config.requiresActivation && poll.status !== 'live';
+                                        const isPaused = poll.status === 'paused';
                                         const isJustCreated = poll.id === justCreatedPollId;
                                         return (
                                             <motion.div
@@ -1158,9 +1189,11 @@ const AdminDashboard: React.FC = () => {
                                                 className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
                                                     isJustCreated
                                                         ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
-                                                        : isDraft 
-                                                            ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
-                                                            : 'border-slate-200 hover:border-indigo-200'
+                                                        : isPaused
+                                                            ? 'border-red-200 bg-gradient-to-r from-red-50/50 to-white opacity-75'
+                                                            : isDraft 
+                                                                ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                                : 'border-slate-200 hover:border-indigo-200'
                                                 }`}
                                             >
                                                 {isJustCreated && (
@@ -1169,10 +1202,16 @@ const AdminDashboard: React.FC = () => {
                                                         Poll created successfully! Share it to start collecting votes.
                                                     </div>
                                                 )}
+                                                {isPaused && (
+                                                    <div className="flex items-center gap-2 mb-3 text-red-700 bg-red-100 px-3 py-1.5 rounded-lg text-sm font-medium">
+                                                        <Pause size={16} className="text-red-600" />
+                                                        This poll is paused and not accepting votes. Upgrade or delete another poll to reactivate.
+                                                    </div>
+                                                )}
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                            <h3 className="font-bold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                            <h3 className={`font-bold text-lg truncate ${isPaused ? 'text-slate-500' : 'text-slate-800'}`}>{poll.title}</h3>
                                                             {/* Poll Type Badge */}
                                                             {poll.type && POLL_TYPE_CONFIG[poll.type] && (
                                                                 <span className={`px-2 py-0.5 ${POLL_TYPE_CONFIG[poll.type].bg} ${POLL_TYPE_CONFIG[poll.type].color} text-xs font-bold rounded-full flex items-center gap-1`}>
@@ -1180,12 +1219,17 @@ const AdminDashboard: React.FC = () => {
                                                                     {POLL_TYPE_CONFIG[poll.type].label}
                                                                 </span>
                                                             )}
-                                                            {isDraft && (
+                                                            {isPaused && (
+                                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                    <Pause size={12} /> Paused
+                                                                </span>
+                                                            )}
+                                                            {isDraft && !isPaused && (
                                                                 <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
                                                                     <FileEdit size={12} /> Draft
                                                                 </span>
                                                             )}
-                                                            {!isDraft && config.requiresActivation && (
+                                                            {!isDraft && !isPaused && config.requiresActivation && (
                                                                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1 animate-pulse">
                                                                     <Rocket size={12} /> Live
                                                                 </span>
@@ -1200,7 +1244,7 @@ const AdminDashboard: React.FC = () => {
                                                                 <Users size={14} />
                                                                 {poll.responseCount || 0} votes
                                                             </span>
-                                                            {(poll.responseCount || 0) === 0 && !isDraft && (
+                                                            {(poll.responseCount || 0) === 0 && !isDraft && !isPaused && (
                                                                 <span className="text-amber-600 flex items-center gap-1">
                                                                     <Share2 size={12} />
                                                                     Share to get responses
@@ -1210,7 +1254,14 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
 
                                                     <div className="flex items-center gap-2">
-                                                        {isDraft ? (
+                                                        {isPaused ? (
+                                                            <button
+                                                                onClick={() => setShowUpgradeModal(true)}
+                                                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
+                                                            >
+                                                                <Play size={16} /> Reactivate
+                                                            </button>
+                                                        ) : isDraft ? (
                                                             <button
                                                                 onClick={() => setShowGoLiveModal(poll.id)}
                                                                 className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
@@ -1744,6 +1795,62 @@ const AdminDashboard: React.FC = () => {
                 currentTier={tier}
                 source="admin_dashboard"
             />
+
+            {/* Choose Active Polls Modal */}
+            <AnimatePresence>
+                {showChooseActiveModal && (
+                    <ChooseActivePollsModal
+                        isOpen={showChooseActiveModal}
+                        polls={polls}
+                        maxActive={config.maxPolls}
+                        selectedIds={selectedActivePolls}
+                        onToggle={(pollId) => {
+                            const newSelected = new Set(selectedActivePolls);
+                            if (newSelected.has(pollId)) {
+                                newSelected.delete(pollId);
+                            } else if (newSelected.size < config.maxPolls) {
+                                newSelected.add(pollId);
+                            }
+                            setSelectedActivePolls(newSelected);
+                        }}
+                        onConfirm={async () => {
+                            // Update poll statuses
+                            const updatedPolls = polls.map(p => ({
+                                ...p,
+                                status: selectedActivePolls.has(p.id) ? 'live' as const : 'paused' as const
+                            }));
+                            
+                            // Save to session and localStorage
+                            if (session) {
+                                const updatedSession = { ...session, polls: updatedPolls };
+                                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                                setSession(updatedSession);
+                                
+                                // Also update vg_polls
+                                const vgPolls = updatedPolls.map(p => ({
+                                    id: p.id,
+                                    adminKey: p.adminKey,
+                                    title: p.title,
+                                    type: p.type,
+                                    createdAt: p.createdAt,
+                                    status: p.status
+                                }));
+                                localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
+                            }
+                            
+                            // TODO: Call backend to update poll statuses
+                            // await fetch('/.netlify/functions/vg-update-status', { ... });
+                            
+                            setShowChooseActiveModal(false);
+                        }}
+                        onClose={() => setShowChooseActiveModal(false)}
+                        onUpgrade={() => {
+                            setShowChooseActiveModal(false);
+                            setShowUpgradeModal(true);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -1916,6 +2023,166 @@ const GoLiveModalInline: React.FC<{
                         <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
                         <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
                             <Rocket size={18} /> Go Live
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Choose Active Polls Modal (self-contained)
+// Science-backed: Loss aversion, forced choice creates upgrade pressure
+// ============================================================================
+
+const ChooseActivePollsModal: React.FC<{
+    isOpen: boolean;
+    polls: UserPoll[];
+    maxActive: number;
+    selectedIds: Set<string>;
+    onToggle: (pollId: string) => void;
+    onConfirm: () => void;
+    onClose: () => void;
+    onUpgrade: () => void;
+}> = ({ isOpen, polls, maxActive, selectedIds, onToggle, onConfirm, onClose, onUpgrade }) => {
+    const pausedCount = polls.length - selectedIds.size;
+    const canConfirm = selectedIds.size === maxActive;
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" 
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header - Loss Aversion Framing */}
+                <div className="bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold text-lg">Choose Your {maxActive} Active Polls</h2>
+                            <p className="text-white/80 text-sm">
+                                {pausedCount > 0 
+                                    ? `${pausedCount} poll${pausedCount > 1 ? 's' : ''} will be paused and stop accepting votes`
+                                    : `Select ${maxActive} polls to keep active`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Upgrade CTA - Anchoring (show the easy path first) */}
+                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Sparkles size={20} className="text-emerald-600" />
+                            <div>
+                                <p className="font-semibold text-emerald-800">Keep all {polls.length} polls active</p>
+                                <p className="text-xs text-emerald-600">Upgrade and never worry about limits</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={onUpgrade}
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-lg hover:shadow-lg transition text-sm"
+                        >
+                            Upgrade →
+                        </button>
+                    </div>
+                </div>
+
+                {/* Poll Selection - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    <p className="text-sm text-slate-500 mb-3">
+                        Or choose {maxActive} polls to keep active ({selectedIds.size}/{maxActive} selected):
+                    </p>
+                    <div className="space-y-2">
+                        {polls.map((poll) => {
+                            const isSelected = selectedIds.has(poll.id);
+                            const canSelect = isSelected || selectedIds.size < maxActive;
+                            
+                            return (
+                                <button
+                                    key={poll.id}
+                                    onClick={() => canSelect && onToggle(poll.id)}
+                                    disabled={!canSelect}
+                                    className={`w-full p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
+                                        isSelected 
+                                            ? 'border-emerald-500 bg-emerald-50' 
+                                            : canSelect
+                                                ? 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                : 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {/* Checkbox */}
+                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                        isSelected 
+                                            ? 'bg-emerald-500 text-white' 
+                                            : 'border-2 border-slate-300'
+                                    }`}>
+                                        {isSelected && <Check size={16} />}
+                                    </div>
+                                    
+                                    {/* Poll Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold truncate ${isSelected ? 'text-emerald-800' : 'text-slate-700'}`}>
+                                            {poll.title}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {poll.responseCount || 0} votes • Created {new Date(poll.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Status indicator */}
+                                    {!isSelected && (
+                                        <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                                            Will pause
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer - Consequences reminder */}
+                <div className="p-4 border-t border-slate-200 bg-slate-50">
+                    {pausedCount > 0 && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
+                            <p className="text-xs text-red-700">
+                                <strong>Warning:</strong> {pausedCount} poll{pausedCount > 1 ? 's' : ''} will show "Poll Paused" to voters and stop collecting responses.
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={onConfirm} 
+                            disabled={!canConfirm}
+                            className={`flex-1 py-3 font-bold rounded-xl transition flex items-center justify-center gap-2 ${
+                                canConfirm
+                                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:shadow-lg'
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            }`}
+                        >
+                            {canConfirm ? `Pause ${pausedCount} Poll${pausedCount > 1 ? 's' : ''}` : `Select ${maxActive} polls`}
                         </button>
                     </div>
                 </div>

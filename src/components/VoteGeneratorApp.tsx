@@ -30,6 +30,7 @@ import { SkipLink, LiveRegion } from './AccessibilityUtils';
 import VoteGeneratorVote from './VoteGeneratorVote';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import VoteGeneratorEdit from './VoteGeneratorEdit';
+import VoterAdWall from './VoterAdWall';
 import RedditCommunityPage from './RedditCommunityPage';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';
@@ -45,7 +46,9 @@ import { Poll, RunoffResult } from '../types';
 type ViewState = 
     | { type: 'create' }
     | { type: 'loading' }
+    | { type: 'ad-wall-before'; poll: Poll }
     | { type: 'vote'; poll: Poll }
+    | { type: 'ad-wall-after'; poll: Poll }
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
     | { type: 'error'; message: string };
@@ -75,6 +78,12 @@ const VoteGeneratorApp: React.FC = () => {
             adminKey: params.get('admin')
         };
     }, []);
+
+    // Helper: Check if poll should show voter ad-wall (free tier, non-admin)
+    const shouldShowVoterAdWall = (poll: Poll, isAdmin: boolean): boolean => {
+        const pollTier = (poll as any).tier || 'free';
+        return pollTier === 'free' && !isAdmin;
+    };
 
     const loadView = useCallback(async (silent = false) => {
         const { pollId, adminKey } = parseHash();
@@ -109,8 +118,15 @@ const VoteGeneratorApp: React.FC = () => {
                  // Voted but results are hidden
                  setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
             } else {
-                // User hasn't voted yet, or results are not force-shown
-                setViewState({ type: 'vote', poll });
+                // User hasn't voted yet - check if we need to show ad-wall first
+                const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
+                
+                if (shouldShowVoterAdWall(poll, isAdmin) && !adWallShown) {
+                    // Show ad-wall before poll for free tier
+                    setViewState({ type: 'ad-wall-before', poll });
+                } else {
+                    setViewState({ type: 'vote', poll });
+                }
             }
 
         } catch (error) {
@@ -151,7 +167,7 @@ const VoteGeneratorApp: React.FC = () => {
 
 
     const handleVoteSuccess = async () => {
-        const { pollId } = parseHash();
+        const { pollId, adminKey } = parseHash();
         if(!pollId) return;
         
         // Check for Business tier redirect URL
@@ -162,10 +178,44 @@ const VoteGeneratorApp: React.FC = () => {
                 window.location.href = redirectUrl;
                 return;
             }
+            
+            // Check if we need to show ad-wall after voting (free tier only)
+            const isAdmin = !!adminKey;
+            if (shouldShowVoterAdWall(viewState.poll, isAdmin)) {
+                setViewState({ type: 'ad-wall-after', poll: viewState.poll });
+                return;
+            }
         }
         
         // Reload to switch to results view
         loadView(); 
+    };
+
+    // Handler for completing ad-wall before poll
+    const handleAdWallBeforeComplete = () => {
+        if (viewState.type === 'ad-wall-before') {
+            const { pollId } = parseHash();
+            if (pollId) {
+                // Mark that user has seen the before-poll ad-wall for this poll
+                localStorage.setItem(`vg_adwall_before_${pollId}`, 'true');
+            }
+            setViewState({ type: 'vote', poll: viewState.poll });
+        }
+    };
+
+    // Handler for completing ad-wall after voting
+    const handleAdWallAfterComplete = async () => {
+        if (viewState.type === 'ad-wall-after') {
+            const { pollId, adminKey } = parseHash();
+            if (pollId) {
+                try {
+                    const results = await getResults(pollId, adminKey || undefined);
+                    setViewState({ type: 'results', poll: viewState.poll, results, isAdmin: !!adminKey });
+                } catch (error) {
+                    loadView();
+                }
+            }
+        }
     };
 
     const handleManualRefresh = async () => {
@@ -506,6 +556,23 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
+                    {/* Ad-Wall Before Poll - FREE tier voters only */}
+                    {viewState.type === 'ad-wall-before' && (
+                        <motion.div 
+                            key="ad-wall-before" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                        >
+                            <VoterAdWall
+                                variant="before-poll"
+                                pollTitle={viewState.poll.title}
+                                onComplete={handleAdWallBeforeComplete}
+                                countdownSeconds={10}
+                            />
+                        </motion.div>
+                    )}
+
                     {viewState.type === 'vote' && (
                         <motion.div key="vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <VoteGeneratorVote 
@@ -532,6 +599,23 @@ const VoteGeneratorApp: React.FC = () => {
                                     </div>
                                 );
                             })()}
+                        </motion.div>
+                    )}
+
+                    {/* Ad-Wall After Vote - FREE tier voters only */}
+                    {viewState.type === 'ad-wall-after' && (
+                        <motion.div 
+                            key="ad-wall-after" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                        >
+                            <VoterAdWall
+                                variant="after-vote"
+                                pollTitle={viewState.poll.title}
+                                onComplete={handleAdWallAfterComplete}
+                                countdownSeconds={10}
+                            />
                         </motion.div>
                     )}
 

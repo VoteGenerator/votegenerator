@@ -400,16 +400,18 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     </div>
                 )}
                 
-                {/* Error message - special styling for limit errors */}
+                {/* Error message - special styling for limit and paused errors */}
                 {errorMessage && (
-                    errorMessage.toLowerCase().includes('limit') ? (
+                    errorMessage.toLowerCase().includes('limit') || errorMessage.toLowerCase().includes('paused') ? (
                         <div className="mb-6 p-5 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     <AlertTriangle size={20} className="text-orange-600" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-orange-800 mb-1">Response Limit Reached</p>
+                                    <p className="font-bold text-orange-800 mb-1">
+                                        {errorMessage.toLowerCase().includes('paused') ? 'Poll Paused' : 'Response Limit Reached'}
+                                    </p>
                                     <p className="text-sm text-orange-700">{errorMessage}</p>
                                 </div>
                             </div>

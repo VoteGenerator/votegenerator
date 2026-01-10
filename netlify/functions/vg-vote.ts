@@ -508,6 +508,19 @@ export const handler: Handler = async (event) => {
             };
         }
         
+        // Check if poll is paused (free user over limit)
+        if (poll.status === 'paused') {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ 
+                    error: 'This poll is currently paused. The poll creator needs to upgrade their plan or reactivate this poll.',
+                    code: 'POLL_PAUSED',
+                    isPaused: true
+                })
+            };
+        }
+        
         // Check response limit (enforced for free tier polls)
         if (poll.maxResponses && poll.voteCount >= poll.maxResponses) {
             const isFreeLimit = poll.tier === 'free';

@@ -638,21 +638,95 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     return (
         <>
-            {/* Print styles to preserve colors */}
+            {/* Comprehensive Print Styles */}
             <style>{`
                 @media print {
+                    /* Preserve colors */
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                         color-adjust: exact !important;
                     }
-                    .bg-indigo-500, .bg-blue-500, .bg-green-500, .bg-purple-500,
-                    .bg-pink-500, .bg-cyan-500, .bg-lime-500, .bg-orange-500,
-                    .bg-red-500, .bg-teal-500, .bg-yellow-500 {
-                        background-color: inherit !important;
+                    
+                    /* Page setup */
+                    @page {
+                        size: A4;
+                        margin: 1.5cm;
+                    }
+                    
+                    /* Hide non-print elements */
+                    .print\\:hidden, 
+                    button:not(.print-show),
+                    nav,
+                    .view-switcher,
+                    [class*="hover:"],
+                    .animate-spin {
+                        display: none !important;
+                    }
+                    
+                    /* Show print elements */
+                    .print\\:block {
+                        display: block !important;
+                    }
+                    
+                    /* Clean backgrounds */
+                    body {
+                        background: white !important;
+                    }
+                    
+                    /* Typography adjustments */
+                    .text-4xl { font-size: 24pt !important; }
+                    .text-3xl { font-size: 20pt !important; }
+                    .text-2xl { font-size: 16pt !important; }
+                    .text-xl { font-size: 14pt !important; }
+                    .text-lg { font-size: 12pt !important; }
+                    
+                    /* Card styling for print */
+                    .rounded-3xl, .rounded-2xl, .rounded-xl {
+                        border-radius: 8px !important;
+                        box-shadow: none !important;
+                        border: 1px solid #e2e8f0 !important;
+                    }
+                    
+                    /* Prevent breaks inside elements */
+                    .break-inside-avoid {
+                        break-inside: avoid;
+                    }
+                    
+                    /* Chart containers */
+                    #poll-results-chart {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+                    
+                    /* Bar chart bars - preserve gradient */
+                    [class*="bg-gradient"] {
+                        background: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)) !important;
+                    }
+                    
+                    /* SVG pie chart */
+                    svg path, svg circle {
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>
+            
+            {/* Print Header - Only visible when printing */}
+            <div className="hidden print:block mb-6 pb-4 border-b-2 border-slate-200">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800">{poll.title}</h1>
+                        {poll.description && (
+                            <p className="text-slate-500 mt-1">{poll.description}</p>
+                        )}
+                    </div>
+                    <div className="text-right text-sm text-slate-500">
+                        <div className="font-semibold">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</div>
+                        <div>Printed {new Date().toLocaleDateString()}</div>
+                    </div>
+                </div>
+            </div>
+            
             <div className="space-y-6 print:space-y-4">
             
             {/* Results Summary Cards - Admin Only */}
@@ -2709,12 +2783,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
             </AnimatePresence>
             
             {/* Branding footer for PNG exports */}
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-indigo-400">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" opacity="0.3"/>
-                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm print:mt-4 print:pt-2">
+                <img src="/logo.svg" alt="VoteGenerator" className="h-5 w-5" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 <span className="font-medium">VoteGenerator.com</span>
             </div>
             </div>

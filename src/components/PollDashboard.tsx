@@ -967,6 +967,184 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
+                        {/* Share Results Publicly */}
+                        <CollapsibleSection
+                            title="Share Results Publicly"
+                            icon={<Share2 size={20} />}
+                            badge={<span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">New</span>}
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4 space-y-4">
+                                <p className="text-sm text-slate-600">
+                                    Create a beautiful public page to share your poll results with anyone.
+                                </p>
+                                
+                                {/* Public Results Toggle */}
+                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Globe size={18} className="text-slate-500" />
+                                        <div>
+                                            <div className="font-medium text-slate-700">Public Results Link</div>
+                                            <div className="text-xs text-slate-500">Anyone with the link can view results</div>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={poll.settings?.publicResults || false}
+                                            onChange={async (e) => {
+                                                const enabled = e.target.checked;
+                                                try {
+                                                    await fetch('/.netlify/functions/vg-update-settings', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            pollId: poll.id,
+                                                            adminKey,
+                                                            settings: { publicResults: enabled }
+                                                        })
+                                                    });
+                                                    onRefresh?.();
+                                                } catch (err) {
+                                                    console.error('Failed to update setting:', err);
+                                                }
+                                            }}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                
+                                {/* Public results URL */}
+                                {poll.settings?.publicResults && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        className="space-y-3"
+                                    >
+                                        <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                                            <label className="block text-sm font-medium text-indigo-800 mb-2">
+                                                Shareable Results Link
+                                            </label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={`${window.location.origin}/#results=${poll.id}`}
+                                                    readOnly
+                                                    className="flex-1 px-3 py-2 bg-white border border-indigo-200 rounded-lg text-sm font-mono text-slate-600"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(`${window.location.origin}/#results=${poll.id}`);
+                                                        setCopiedShare(true);
+                                                        setTimeout(() => setCopiedShare(false), 2000);
+                                                    }}
+                                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm flex items-center gap-1"
+                                                >
+                                                    {copiedShare ? <Check size={16} /> : <Copy size={16} />}
+                                                    {copiedShare ? 'Copied!' : 'Copy'}
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-indigo-600 mt-2 flex items-center gap-1">
+                                                <Sparkles size={12} />
+                                                Beautiful public page with animated charts and social sharing
+                                            </p>
+                                        </div>
+                                        
+                                        {/* View Selection - Pro only */}
+                                        {isPro && (
+                                            <div className="p-3 bg-slate-50 rounded-xl">
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                    Allowed Views
+                                                </label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['bar', 'pie'].map(view => (
+                                                        <label key={view} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-300">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={(poll.settings?.allowedViews || ['bar', 'pie']).includes(view)}
+                                                                onChange={async (e) => {
+                                                                    const current = poll.settings?.allowedViews || ['bar', 'pie'];
+                                                                    const updated = e.target.checked 
+                                                                        ? [...current, view]
+                                                                        : current.filter(v => v !== view);
+                                                                    try {
+                                                                        await fetch('/.netlify/functions/vg-update-settings', {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({
+                                                                                pollId: poll.id,
+                                                                                adminKey,
+                                                                                settings: { allowedViews: updated }
+                                                                            })
+                                                                        });
+                                                                        onRefresh?.();
+                                                                    } catch (err) {
+                                                                        console.error('Failed to update:', err);
+                                                                    }
+                                                                }}
+                                                                className="w-4 h-4 text-indigo-600 rounded"
+                                                            />
+                                                            <span className="text-sm text-slate-600 capitalize">{view} Chart</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </div>
+                        </CollapsibleSection>
+
+                        {/* Voting Page Settings */}
+                        <CollapsibleSection
+                            title="Voting Page Settings"
+                            icon={<Eye size={20} />}
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4 space-y-4">
+                                {/* Show Share Button Toggle */}
+                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <Share2 size={18} className="text-slate-500" />
+                                        <div>
+                                            <div className="font-medium text-slate-700">Show "Share Poll" Button</div>
+                                            <div className="text-xs text-slate-500">Display share button on voting page</div>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={poll.settings?.showShareButton || false}
+                                            onChange={async (e) => {
+                                                const enabled = e.target.checked;
+                                                try {
+                                                    await fetch('/.netlify/functions/vg-update-settings', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            pollId: poll.id,
+                                                            adminKey,
+                                                            settings: { showShareButton: enabled }
+                                                        })
+                                                    });
+                                                    onRefresh?.();
+                                                } catch (err) {
+                                                    console.error('Failed to update setting:', err);
+                                                }
+                                            }}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <p className="text-xs text-slate-500 px-1">
+                                    When disabled, voters won't see the share option on the poll page. Recommended for private polls.
+                                </p>
+                            </div>
+                        </CollapsibleSection>
+
                         {/* Advanced Settings Preview - PAID */}
                         {isFree && (
                             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-5">

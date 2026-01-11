@@ -24,6 +24,8 @@ import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
 import CustomerFeedbackPage from '../pages/CustomerFeedbackPage';
 import ContactPage from './ContactPage';
+import ManageSubscription from './ManageSubscription';
+import PublicResults from './PublicResults';
 import BlogIndex from './blog/BlogIndex';
 import BlogPostAnonymousSurvey from './blog/BlogPostAnonymousSurvey';
 import BlogPost50Questions from './blog/BlogPost50Questions';
@@ -33,6 +35,8 @@ import { Poll, RunoffResult } from '../types';
 type ViewState = 
     | { type: 'create' }
     | { type: 'loading' }
+    | { type: 'manage-subscription' }
+    | { type: 'public-results'; pollId: string; shareKey?: string }
     | { type: 'ad-wall-before'; poll: Poll }
     | { type: 'vote'; poll: Poll }
     | { type: 'ad-wall-after'; poll: Poll }
@@ -50,10 +54,32 @@ const VoteGeneratorApp: React.FC = () => {
 
     const parseHash = useCallback(() => {
         const hash = window.location.hash.slice(1);
+        
+        // Handle special routes first
+        if (hash === 'manage-subscription' || hash.startsWith('manage-subscription?')) {
+            return { specialRoute: 'manage-subscription', pollId: null, adminKey: null, resultsId: null, shareKey: null };
+        }
+        
         const params = new URLSearchParams(hash);
+        
+        // Check for public results route
+        const resultsId = params.get('results');
+        if (resultsId) {
+            return { 
+                specialRoute: 'public-results', 
+                pollId: null, 
+                adminKey: null, 
+                resultsId,
+                shareKey: params.get('key')
+            };
+        }
+        
         return {
+            specialRoute: null,
             pollId: params.get('id'),
-            adminKey: params.get('admin')
+            adminKey: params.get('admin'),
+            resultsId: null,
+            shareKey: null
         };
     }, []);
 
@@ -64,7 +90,18 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     const loadView = useCallback(async (silent = false) => {
-        const { pollId, adminKey } = parseHash();
+        const { specialRoute, pollId, adminKey, resultsId, shareKey } = parseHash();
+
+        // Handle special routes
+        if (specialRoute === 'manage-subscription') {
+            setViewState({ type: 'manage-subscription' });
+            return;
+        }
+        
+        if (specialRoute === 'public-results' && resultsId) {
+            setViewState({ type: 'public-results', pollId: resultsId, shareKey: shareKey || undefined });
+            return;
+        }
 
         if (!pollId) {
             setViewState({ type: 'create' });
@@ -312,8 +349,8 @@ const VoteGeneratorApp: React.FC = () => {
                         })()}
                         
                         <div className="flex items-center gap-2">
-                             {/* Only show share button if viewing results (not while voting) */}
-                             {viewState.type === 'results' && !viewState.isAdmin && (
+                             {/* Only show share button if viewing results and setting is enabled */}
+                             {viewState.type === 'results' && !viewState.isAdmin && viewState.poll.settings?.showShareButton && (
                                 <button
                                     onClick={() => copyToClipboard(getShareUrl())}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
@@ -390,6 +427,20 @@ const VoteGeneratorApp: React.FC = () => {
                                 <Loader2 className="animate-spin mr-2" size={20} />
                                 <span className="font-medium">Loading poll...</span>
                             </div>
+                        </motion.div>
+                    )}
+
+                    {/* Manage Subscription Page */}
+                    {viewState.type === 'manage-subscription' && (
+                        <motion.div key="manage-subscription" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <ManageSubscription />
+                        </motion.div>
+                    )}
+
+                    {/* Public Results Page - Shareable results view */}
+                    {viewState.type === 'public-results' && (
+                        <motion.div key="public-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <PublicResults pollId={viewState.pollId} shareKey={viewState.shareKey} />
                         </motion.div>
                     )}
 

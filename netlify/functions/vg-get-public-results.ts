@@ -1,0 +1,185 @@
+// ============================================================================
+// vg-get-public-results.ts - Get publicly shared poll results
+// Location: netlify/functions/vg-get-public-results.ts
+// ============================================================================
+import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
+
+interface Poll {
+    id: string;
+    title: string;
+    description?: string;
+    options: Array<{ id: string; text: string; imageUrl?: string }>;
+    type: string;
+    theme?: string;
+    settings?: {
+        publicResults?: boolean;
+        shareKey?: string;
+        allowedViews?: string[]; // ['bar', 'pie', 'velocity'] - which views are public
+        hideVoteCount?: boolean;
+    };
+    createdAt: string;
+    status: string;
+}
+
+interface Vote {
+    id: string;
+    choices?: string[];
+    selectedOptionIds?: string[];
+    rankedOptionIds?: string[];
+    votedAt: string;
+    analytics?: {
+        country?: string;
+        device?: string;
+    };
+}
+
+interface Results {
+    votes: Vote[];
+    simpleCounts?: Record<string, number>;
+    winnerId?: string;
+}
+
+const handler: Handler = async (event) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 204, headers, body: '' };
+    }
+
+    if (event.httpMethod !== 'GET') {
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
+
+    try {
+        const { pollId, shareKey } = event.queryStringParameters || {};
+
+        if (!pollId) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Poll ID is required' })
+            };
+        }
+
+        // Get poll from store
+        const pollStore = getStore({ name: 'polls', consistency: 'strong' });
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+
+        if (!pollData) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ error: 'Poll not found' })
+            };
+        }
+
+        // Check if results are public
+        const settings = pollData.settings || {};
+        
+        if (!settings.publicResults) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Results are not publicly shared' })
+            };
+        }
+
+        // If share key is required, validate it
+        if (settings.shareKey && settings.shareKey !== shareKey) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Invalid share key' })
+            };
+        }
+
+        // Get results from store
+        const resultsStore = getStore({ name: 'results', consistency: 'strong' });
+        const resultsData = await resultsStore.get(pollId, { type: 'json' }) as Results | null;
+
+        // Prepare public poll data (strip sensitive info)
+        const publicPoll = {
+            id: pollData.id,
+            title: pollData.title,
+            description: pollData.description,
+            options: pollData.options.map(o => ({
+                id: o.id,
+                text: o.text,
+                imageUrl: o.imageUrl
+            })),
+            type: pollData.type,
+            theme: pollData.theme,
+            createdAt: pollData.createdAt,
+            allowedViews: settings.allowedViews || ['bar', 'pie']
+        };
+
+        // Prepare public results (strip sensitive vote data)
+        const votes = resultsData?.votes || [];
+        const publicVotes = settings.hideVoteCount ? [] : votes.map(v => ({
+            id: v.id,
+            choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
+            votedAt: v.votedAt,
+            // Only include basic analytics, no IP or detailed location
+            analytics: v.analytics ? {
+                country: v.analytics.country,
+                device: v.analytics.device
+            } : undefined
+        }));
+
+        // Calculate simple counts
+        const simpleCounts: Record<string, number> = {};
+        publicPoll.options.forEach(o => simpleCounts[o.id] = 0);
+        
+        votes.forEach(vote => {
+            const choices = vote.choices || vote.selectedOptionIds || [];
+            choices.forEach(id => {
+                if (simpleCounts[id] !== undefined) {
+                    simpleCounts[id]++;
+                }
+            });
+        });
+
+        // Determine winner
+        let winnerId: string | undefined;
+        let maxVotes = 0;
+        Object.entries(simpleCounts).forEach(([id, count]) => {
+            if (count > maxVotes) {
+                maxVotes = count;
+                winnerId = id;
+            }
+        });
+
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                poll: publicPoll,
+                results: {
+                    votes: publicVotes,
+                    simpleCounts,
+                    winnerId,
+                    totalVotes: votes.length
+                }
+            })
+        };
+
+    } catch (error) {
+        console.error('Error fetching public results:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Failed to fetch results' })
+        };
+    }
+};
+
+export { handler };

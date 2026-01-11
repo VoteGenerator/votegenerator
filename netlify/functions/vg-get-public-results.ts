@@ -115,13 +115,9 @@ const handler: Handler = async (event) => {
             };
         }
 
-        // Get results from store
-        const resultsStore = getStore({ 
-            name: 'results', 
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-        const resultsData = await resultsStore.get(pollId, { type: 'json' }) as Results | null;
+        // Votes are stored directly in the poll object
+        const votes = (pollData as any).votes || [];
+        console.log('Found votes:', votes.length);
 
         // Prepare public poll data (strip sensitive info)
         const publicPoll = {
@@ -140,13 +136,12 @@ const handler: Handler = async (event) => {
             showSocialShare: settings.showSocialShare !== false // Default true
         };
 
-        // Prepare public results (strip sensitive vote data)
-        const votes = resultsData?.votes || [];
-        const publicVotes = settings.hideVoteCount ? [] : votes.map(v => ({
+        // Prepare public votes (strip sensitive data like IPs)
+        const publicVotes = votes.map((v: any) => ({
             id: v.id,
             choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
             votedAt: v.votedAt,
-            // Only include basic analytics, no IP or detailed location
+            // Only include basic analytics, no IP
             analytics: v.analytics ? {
                 country: v.analytics.country,
                 device: v.analytics.device
@@ -157,14 +152,16 @@ const handler: Handler = async (event) => {
         const simpleCounts: Record<string, number> = {};
         publicPoll.options.forEach(o => simpleCounts[o.id] = 0);
         
-        votes.forEach(vote => {
+        votes.forEach((vote: any) => {
             const choices = vote.choices || vote.selectedOptionIds || [];
-            choices.forEach(id => {
+            choices.forEach((id: string) => {
                 if (simpleCounts[id] !== undefined) {
                     simpleCounts[id]++;
                 }
             });
         });
+
+        console.log('Simple counts:', simpleCounts);
 
         // Determine winner
         let winnerId: string | undefined;

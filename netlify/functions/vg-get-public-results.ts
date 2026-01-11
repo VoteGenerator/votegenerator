@@ -70,26 +70,39 @@ const handler: Handler = async (event) => {
             };
         }
 
+        console.log('Fetching public results for pollId:', pollId);
+
         // Get poll from store
-        const pollStore = getStore({ name: 'polls', consistency: 'strong' });
+        const pollStore = getStore({ 
+            name: 'polls', 
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+
+        console.log('Poll data found:', pollData ? 'yes' : 'no');
 
         if (!pollData) {
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ error: 'Poll not found', pollId })
             };
         }
 
         // Check if results are public
         const settings = pollData.settings || {};
+        console.log('Poll settings:', JSON.stringify(settings));
+        console.log('publicResults value:', settings.publicResults);
         
         if (!settings.publicResults) {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'Results are not publicly shared' })
+                body: JSON.stringify({ 
+                    error: 'Results are not publicly shared',
+                    hint: 'Enable "Public Results Page" in poll settings'
+                })
             };
         }
 
@@ -103,7 +116,11 @@ const handler: Handler = async (event) => {
         }
 
         // Get results from store
-        const resultsStore = getStore({ name: 'results', consistency: 'strong' });
+        const resultsStore = getStore({ 
+            name: 'results', 
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
         const resultsData = await resultsStore.get(pollId, { type: 'json' }) as Results | null;
 
         // Prepare public poll data (strip sensitive info)

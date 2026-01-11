@@ -74,7 +74,11 @@ const handler: Handler = async (event) => {
         }
 
         // Get poll from store
-        const pollStore = getStore({ name: 'polls', consistency: 'strong' });
+        const pollStore = getStore({ 
+            name: 'polls', 
+            siteID: process.env.VG_SITE_ID || '',
+            token: process.env.NETLIFY_AUTH_TOKEN || ''
+        });
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
 
         if (!pollData) {

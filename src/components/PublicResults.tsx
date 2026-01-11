@@ -115,18 +115,24 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     useEffect(() => {
         const fetchResults = async () => {
             try {
+                console.log('Fetching public results for pollId:', pollId);
                 const response = await fetch(`/.netlify/functions/vg-get-public-results?pollId=${pollId}${shareKey ? `&shareKey=${shareKey}` : ''}`);
+                
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Public results error:', response.status, errorData);
+                    
                     if (response.status === 404) {
-                        setError('Results not found or not publicly shared');
+                        setError('Poll not found');
                     } else if (response.status === 403) {
-                        setError('This poll\'s results are not public');
+                        setError(errorData.hint || 'This poll\'s results are not public');
                     } else {
-                        throw new Error('Failed to fetch results');
+                        setError(errorData.error || 'Failed to fetch results');
                     }
                     return;
                 }
                 const data = await response.json();
+                console.log('Public results loaded:', data);
                 setPoll(data.poll);
                 setResults(data.results);
                 
@@ -134,6 +140,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 4000);
             } catch (err) {
+                console.error('Public results fetch error:', err);
                 setError('Unable to load results');
             } finally {
                 setLoading(false);

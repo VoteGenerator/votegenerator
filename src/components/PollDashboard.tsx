@@ -193,6 +193,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
+    // Sync local state when poll props change (e.g., after external refresh)
+    React.useEffect(() => {
+        setLocalPublicResults(poll.settings?.publicResults || false);
+        setLocalShowShareButton(poll.settings?.showShareButton || false);
+        setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews]);
+    
     // Helper to update poll settings
     const updatePollSetting = async (settingKey: string, value: any) => {
         setSettingsUpdating(true);
@@ -211,8 +218,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 throw new Error('Failed to update setting');
             }
             
-            // Optionally refresh to sync with server
-            onRefresh?.();
+            // Success - don't call onRefresh immediately to avoid race condition
+            // The local state is already updated, refresh will happen on next user action
+            console.log(`Setting ${settingKey} updated to:`, value);
         } catch (err) {
             console.error('Failed to update setting:', err);
             // Revert local state on error

@@ -6,12 +6,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    BarChart3, Share2, Settings, Crown, Lock, ChevronDown, ChevronUp,
+    BarChart3, Share2, Settings, Lock, ChevronDown,
     Copy, Check, Globe, MessageCircle, Smartphone, Mail, QrCode, Palette,
     Code, Image as ImageIcon, Link2, Bell, FileSpreadsheet, Download,
-    Clock, Users, Zap, TrendingUp, Calendar, LayoutDashboard, Key,
-    RefreshCw, Loader2, ExternalLink, Eye, EyeOff, ArrowRight, Filter,
-    ShieldAlert, X, Sparkles, AlertTriangle
+    Clock, TrendingUp, LayoutDashboard, Key,
+    RefreshCw, Loader2, Eye, EyeOff, ArrowRight,
+    ShieldAlert, X, Sparkles, AlertTriangle, FileDown
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import ShareCards from './ShareCards';
@@ -26,6 +26,7 @@ import CrossTabFilter from './CrossTabFilter';
 import EmbedModal from './EmbedPoll';
 import UpgradeModal from './UpgradeModal';
 import EmailAdminLink from './EmailAdminLink';
+import DraftLiveToggle from './DraftLiveToggle';
 import { AnimatedCounter, PulseIndicator } from './AnimatedComponents';
 import { Poll, RunoffResult } from '../types';
 
@@ -39,6 +40,30 @@ interface PollDashboardProps {
 }
 
 type TabType = 'results' | 'share' | 'settings' | 'analytics';
+
+// Tab color configurations
+const tabColors: Record<TabType, { active: string; hover: string; icon: string }> = {
+    results: { 
+        active: 'bg-indigo-600 text-white shadow-lg shadow-indigo-200', 
+        hover: 'hover:bg-indigo-50 text-slate-600',
+        icon: 'text-indigo-500'
+    },
+    share: { 
+        active: 'bg-emerald-600 text-white shadow-lg shadow-emerald-200', 
+        hover: 'hover:bg-emerald-50 text-slate-600',
+        icon: 'text-emerald-500'
+    },
+    settings: { 
+        active: 'bg-slate-700 text-white shadow-lg shadow-slate-200', 
+        hover: 'hover:bg-slate-100 text-slate-600',
+        icon: 'text-slate-500'
+    },
+    analytics: { 
+        active: 'bg-purple-600 text-white shadow-lg shadow-purple-200', 
+        hover: 'hover:bg-purple-50 text-slate-600',
+        icon: 'text-purple-500'
+    },
+};
 
 // Collapsible Section Component
 const CollapsibleSection: React.FC<{
@@ -87,15 +112,11 @@ const CollapsibleSection: React.FC<{
     );
 };
 
-// Premium Lock Badge
-const PremiumBadge: React.FC<{ tier: 'pro' | 'business'; small?: boolean }> = ({ tier, small }) => (
-    <span className={`inline-flex items-center gap-1 ${small ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-full font-bold ${
-        tier === 'business' 
-            ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700' 
-            : 'bg-purple-100 text-purple-700'
-    }`}>
+// Upgrade Badge
+const UpgradeBadge: React.FC<{ small?: boolean }> = ({ small }) => (
+    <span className={`inline-flex items-center gap-1 ${small ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-full font-bold bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700`}>
         <Lock size={small ? 10 : 12} />
-        {tier === 'business' ? 'Business' : 'Pro'}
+        Upgrade
     </span>
 );
 
@@ -154,9 +175,31 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     };
 
     const handleExportCSV = async () => {
+        if (!isPro) {
+            setUpgradeHighlight('export');
+            setShowUpgradeModal(true);
+            return;
+        }
         setIsExporting(true);
-        // Export logic here
+        // Export logic would go here
         setTimeout(() => setIsExporting(false), 1000);
+    };
+
+    const handleDownloadQR = async () => {
+        try {
+            const response = await fetch(qrUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'poll-qrcode.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Failed to download QR", e);
+        }
     };
 
     const shareToWhatsapp = () => {
@@ -199,7 +242,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     const tabs = [
         { id: 'results' as TabType, label: 'Results', icon: BarChart3 },
-        { id: 'share' as TabType, label: 'Share & Embed', icon: Share2 },
+        { id: 'share' as TabType, label: 'Share', icon: Share2 },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings },
         { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: !isPro },
     ];
@@ -207,7 +250,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     return (
         <div className="max-w-5xl mx-auto px-4 py-6">
             {/* ================================================================ */}
-            {/* HEADER */}
+            {/* HEADER WITH POLL STATUS TOGGLE */}
             {/* ================================================================ */}
             <div className="mb-6">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -223,25 +266,31 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             }`}>
                                 {tier.charAt(0).toUpperCase() + tier.slice(1)}
                             </span>
-                            {(poll as any).status === 'live' && (
-                                <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
-                                    <PulseIndicator color="green" size="sm" />
-                                    Live
-                                </span>
-                            )}
                         </div>
                         {poll.description && (
                             <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
                         )}
                     </div>
-                    <button
-                        onClick={onRefresh}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                    >
-                        <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onRefresh}
+                            disabled={isRefreshing}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                        >
+                            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Poll Status Toggle (Pause/Resume) */}
+                <div className="mt-4">
+                    <DraftLiveToggle
+                        pollId={poll.id}
+                        adminKey={adminKey}
+                        status={(poll as any).status || 'live'}
+                        voteCount={voteCount}
+                        onStatusChange={onRefresh}
+                    />
                 </div>
             </div>
 
@@ -338,14 +387,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             )}
 
             {/* ================================================================ */}
-            {/* TAB NAVIGATION */}
+            {/* TAB NAVIGATION - Colored Tabs */}
             {/* ================================================================ */}
             <div className="mb-6">
-                <div className="flex gap-1 p-1 bg-slate-100 rounded-2xl overflow-x-auto">
+                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl overflow-x-auto">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
                         const isLocked = tab.premium;
+                        const colors = tabColors[tab.id];
                         
                         return (
                             <button
@@ -358,15 +408,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         setActiveTab(tab.id);
                                     }
                                 }}
-                                className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                                className={`flex-1 min-w-[90px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                                     isActive 
-                                        ? 'bg-white text-slate-900 shadow-sm' 
+                                        ? colors.active
                                         : isLocked
                                             ? 'text-slate-400 hover:text-slate-500'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                            : colors.hover
                                 }`}
                             >
-                                <Icon size={18} />
+                                <Icon size={18} className={isActive ? '' : colors.icon} />
                                 <span className="hidden sm:inline">{tab.label}</span>
                                 {isLocked && <Lock size={14} className="text-amber-500" />}
                             </button>
@@ -416,22 +466,73 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </CollapsibleSection>
                         )}
 
+                        {/* Downloads Section */}
+                        <CollapsibleSection
+                            title="Downloads"
+                            icon={<FileDown size={20} />}
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4 space-y-3">
+                                {/* QR Code - Free */}
+                                <button
+                                    onClick={handleDownloadQR}
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <QrCode size={20} className="text-slate-600" />
+                                        <span className="font-medium text-slate-700">QR Code (PNG)</span>
+                                    </div>
+                                    <Download size={18} className="text-slate-400" />
+                                </button>
+                                
+                                {/* CSV Export - Paid */}
+                                <button
+                                    onClick={handleExportCSV}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <FileSpreadsheet size={20} className="text-emerald-600" />
+                                        <span className="font-medium text-slate-700">Export CSV</span>
+                                        {!isPro && <UpgradeBadge small />}
+                                    </div>
+                                    {isExporting ? (
+                                        <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                    ) : (
+                                        <Download size={18} className="text-slate-400" />
+                                    )}
+                                </button>
+                                
+                                {/* PDF Report - Paid */}
+                                <button
+                                    onClick={() => {
+                                        if (!isPro) {
+                                            setUpgradeHighlight('export');
+                                            setShowUpgradeModal(true);
+                                        } else {
+                                            window.print();
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <FileDown size={20} className="text-red-500" />
+                                        <span className="font-medium text-slate-700">PDF Report</span>
+                                        {!isPro && <UpgradeBadge small />}
+                                    </div>
+                                    <Download size={18} className="text-slate-400" />
+                                </button>
+                            </div>
+                        </CollapsibleSection>
+
                         {/* Quick Actions */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setActiveTab('share')}
-                                className="flex items-center justify-center gap-2 p-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-semibold transition-colors"
+                                className="flex items-center justify-center gap-2 p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl font-semibold transition-colors"
                             >
                                 <Share2 size={18} />
                                 Share Poll
-                            </button>
-                            <button
-                                onClick={handleExportCSV}
-                                disabled={isExporting}
-                                className="flex items-center justify-center gap-2 p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl font-semibold transition-colors"
-                            >
-                                {isExporting ? <Loader2 size={18} className="animate-spin" /> : <FileSpreadsheet size={18} />}
-                                Export CSV
                             </button>
                             <button
                                 onClick={onEdit}
@@ -440,18 +541,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <Settings size={18} />
                                 Edit Poll
                             </button>
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center justify-center gap-2 p-4 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl font-semibold transition-colors"
-                            >
-                                <Download size={18} />
-                                Download PDF
-                            </button>
                         </div>
                     </motion.div>
                 )}
 
-                {/* SHARE & EMBED TAB */}
+                {/* SHARE TAB */}
                 {activeTab === 'share' && (
                     <motion.div
                         key="share"
@@ -596,7 +690,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     }}
                                                     className="text-indigo-600 hover:underline"
                                                 >
-                                                    Upgrade to Pro
+                                                    Upgrade
                                                 </button>
                                                 {' '}to remove branding
                                             </p>
@@ -606,15 +700,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Custom Short Link - Business Only */}
+                        {/* Custom Short Link - Paid Feature */}
                         <CollapsibleSection
                             title="Custom Short Link"
                             icon={<Link2 size={20} />}
-                            badge={!isBusiness && <PremiumBadge tier="business" small />}
+                            badge={!isPro && <UpgradeBadge small />}
                             defaultOpen={false}
                         >
                             <div className="pt-4">
-                                {isBusiness ? (
+                                {isPro ? (
                                     <CustomSlugInput
                                         pollId={poll.id}
                                         adminKey={adminKey}
@@ -630,7 +724,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="flex items-start gap-3">
                                             <Sparkles size={20} className="text-amber-500 mt-0.5" />
                                             <div>
-                                                <p className="font-semibold text-amber-800">Business Feature</p>
+                                                <p className="font-semibold text-amber-800">Paid Feature</p>
                                                 <p className="text-sm text-amber-700 mt-1">
                                                     Create memorable links like <code className="bg-amber-100 px-1.5 py-0.5 rounded text-xs">vote.gen/your-poll</code>
                                                 </p>
@@ -641,7 +735,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     }}
                                                     className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm transition-colors"
                                                 >
-                                                    Upgrade to Business
+                                                    Upgrade Now
                                                 </button>
                                             </div>
                                         </div>
@@ -650,36 +744,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Admin Link */}
+                        {/* Backup Admin Link */}
                         <CollapsibleSection
-                            title="Admin Access"
+                            title="Backup Dashboard Link"
                             icon={<Key size={20} />}
                             defaultOpen={false}
                         >
                             <div className="pt-4 space-y-4">
-                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                                    <p className="text-sm text-amber-800 flex items-start gap-2">
-                                        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-                                        Keep this link private! Anyone with it can manage your poll.
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                    <p className="text-sm text-blue-800 flex items-start gap-2">
+                                        <Mail size={16} className="mt-0.5 flex-shrink-0" />
+                                        <span>
+                                            Email yourself this link to access this poll's dashboard from any device. 
+                                            <strong> This link only manages THIS poll</strong>, not your other polls.
+                                        </span>
                                     </p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
-                                        readOnly 
-                                        value={adminUrl}
-                                        className="flex-1 px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none font-mono text-xs"
-                                    />
-                                    <button
-                                        onClick={() => copyToClipboard(adminUrl, 'admin')}
-                                        className={`px-4 rounded-xl font-bold transition-all ${
-                                            copiedAdmin 
-                                                ? 'bg-emerald-500 text-white' 
-                                                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                                        }`}
-                                    >
-                                        {copiedAdmin ? <Check size={18} /> : <Copy size={18} />}
-                                    </button>
                                 </div>
                                 <EmailAdminLink
                                     pollId={poll.id}
@@ -782,10 +861,35 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Email Notifications"
                             icon={<Bell size={20} />}
-                            badge={!isPro && <PremiumBadge tier="pro" small />}
+                            badge={isFree ? (
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
+                                    1 included
+                                </span>
+                            ) : (
+                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                                    All included
+                                </span>
+                            )}
                             defaultOpen={false}
                         >
                             <div className="pt-4">
+                                {isFree && (
+                                    <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <p className="text-sm text-slate-600">
+                                            <strong>Free plan:</strong> Get notified when your poll reaches 100 votes or closes.{' '}
+                                            <button
+                                                onClick={() => {
+                                                    setUpgradeHighlight('notifications');
+                                                    setShowUpgradeModal(true);
+                                                }}
+                                                className="text-indigo-600 hover:underline font-medium"
+                                            >
+                                                Upgrade
+                                            </button>
+                                            {' '}for real-time alerts, daily digests, and more.
+                                        </p>
+                                    </div>
+                                )}
                                 <NotificationSettings 
                                     pollId={poll.id}
                                     adminKey={adminKey}
@@ -795,11 +899,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Branding - Pro+ */}
+                        {/* Custom Branding */}
                         <CollapsibleSection
                             title="Custom Branding"
                             icon={<ImageIcon size={20} />}
-                            badge={!isPro && <PremiumBadge tier="pro" small />}
+                            badge={!isPro && <UpgradeBadge small />}
                             defaultOpen={false}
                         >
                             <div className="pt-4">
@@ -821,7 +925,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="flex items-start gap-3">
                                             <ImageIcon size={20} className="text-purple-500 mt-0.5" />
                                             <div>
-                                                <p className="font-semibold text-purple-800">Pro Feature</p>
+                                                <p className="font-semibold text-purple-800">Paid Feature</p>
                                                 <p className="text-sm text-purple-700 mt-1">
                                                     Remove "Powered by VoteGenerator" and add your own logo.
                                                 </p>
@@ -832,7 +936,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     }}
                                                     className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm transition-colors"
                                                 >
-                                                    Upgrade to Pro
+                                                    Upgrade Now
                                                 </button>
                                             </div>
                                         </div>
@@ -961,12 +1065,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <img src={qrUrl} alt="QR Code" className="w-48 h-48" />
                             </div>
                             <button
-                                onClick={() => {
-                                    const a = document.createElement('a');
-                                    a.href = qrUrl;
-                                    a.download = 'poll-qrcode.png';
-                                    a.click();
-                                }}
+                                onClick={handleDownloadQR}
                                 className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors"
                             >
                                 Download QR Code

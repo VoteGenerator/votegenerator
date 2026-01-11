@@ -931,7 +931,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     </button>
                     
                     <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <MapIcon size={16} /> Map
+                        <MapIcon size={16} /> Geography
                     </button>
 
                     <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
@@ -1373,33 +1373,55 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
                     >
-                         <div className="relative w-64 h-64 shrink-0">
+                         <motion.div 
+                            className="relative w-64 h-64 shrink-0"
+                            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
+                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                         >
                              <div 
                                 className="w-full h-full rounded-full border-4 border-slate-50 shadow-inner"
                                 style={{ background: `conic-gradient(${pieGradient})` }}
                              />
-                             <div className="absolute inset-0 flex items-center justify-center">
+                             <motion.div 
+                                className="absolute inset-0 flex items-center justify-center"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                             >
                                  <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
                                      {isDot || isBudget ? <Coins size={24} /> : totalVotes}
                                  </div>
-                             </div>
-                         </div>
+                             </motion.div>
+                         </motion.div>
                          
                          <div className="flex-1 w-full max-w-sm">
                              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
                                  {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
                              </h3>
                              <div className="space-y-3">
-                                 {pieData.map(d => (
-                                     <div key={d.id} className="flex items-center justify-between group">
+                                 {pieData.map((d, i) => (
+                                     <motion.div 
+                                        key={d.id} 
+                                        className="flex items-center justify-between group"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.3 + (i * 0.1), duration: 0.3 }}
+                                     >
                                          <div className="flex items-center gap-3">
-                                             <div className="w-4 h-4 rounded-full" style={{ background: d.color }}></div>
+                                             <motion.div 
+                                                className="w-4 h-4 rounded-full" 
+                                                style={{ background: d.color }}
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
+                                             />
                                              <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
                                          </div>
                                          <div className="text-sm font-bold text-slate-500">
                                              {d.percentage.toFixed(1)}%
                                          </div>
-                                     </div>
+                                     </motion.div>
                                  ))}
                              </div>
                          </div>
@@ -1468,9 +1490,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         const height = Math.max((d.count / maxVal) * 100, d.count > 0 ? 10 : 0);
                                         return (
                                             <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
-                                                <div 
-                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-all cursor-pointer shadow-sm"
-                                                    style={{ height: `${height}%`, minHeight: d.count > 0 ? '8px' : '0' }}
+                                                <motion.div 
+                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-colors cursor-pointer shadow-sm"
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${height}%` }}
+                                                    transition={{ duration: 0.5, delay: i * 0.02, ease: "easeOut" }}
+                                                    style={{ minHeight: d.count > 0 ? '8px' : '0' }}
                                                 >
                                                     {d.count > 0 && (
                                                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none shadow-lg">
@@ -1478,7 +1503,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                         </div>
                                                     )}
-                                                </div>
+                                                </motion.div>
                                             </div>
                                         )
                                     })}
@@ -1546,18 +1571,42 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 <>
                                     {/* Summary Stats */}
                                     <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center">
-                                            <div className="text-3xl font-black text-indigo-600">{countryCount}</div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center"
+                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.4 }}
+                                        >
+                                            <motion.div 
+                                                className="text-3xl font-black text-indigo-600"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.3 }}
+                                            >
+                                                {countryCount}
+                                            </motion.div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
                                                 {countryCount === 1 ? 'Country' : 'Countries'} Represented
                                             </div>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
-                                            <div className="text-3xl font-black text-emerald-600">{votesWithLocation}</div>
+                                        </motion.div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center"
+                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.4, delay: 0.1 }}
+                                        >
+                                            <motion.div 
+                                                className="text-3xl font-black text-emerald-600"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.4 }}
+                                            >
+                                                {votesWithLocation}
+                                            </motion.div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
                                                 Vote{votesWithLocation !== 1 ? 's' : ''} Tracked
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     </div>
                                     
                                     {/* Country list with flags */}
@@ -1566,8 +1615,21 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                             const percentage = Math.round((count / totalWithLocation) * 100);
                                             const flag = getCountryFlag(country);
                                             return (
-                                                <div key={country} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}>
-                                                    <span className="text-3xl">{flag}</span>
+                                                <motion.div 
+                                                    key={country} 
+                                                    className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}
+                                                    initial={{ opacity: 0, x: -30 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.1, duration: 0.4 }}
+                                                >
+                                                    <motion.span 
+                                                        className="text-3xl"
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        transition={{ delay: idx * 0.1 + 0.2, type: "spring", stiffness: 200 }}
+                                                    >
+                                                        {flag}
+                                                    </motion.span>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className={`font-semibold ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
@@ -1579,13 +1641,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             </span>
                                                         </div>
                                                         <div className="bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
-                                                                style={{ width: `${percentage}%` }}
+                                                            <motion.div 
+                                                                className={`h-full rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${percentage}%` }}
+                                                                transition={{ delay: idx * 0.1 + 0.3, duration: 0.6, ease: "easeOut" }}
                                                             />
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             );
                                         })}
                                     </div>
@@ -1631,13 +1695,19 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {votes.map((vote: any, i: number) => {
+                                        {votes.slice(0, 50).map((vote: any, i: number) => {
                                             const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
                                             const countryCode = vote.analytics?.country;
                                             const device = vote.analytics?.device;
                                             
                                             return (
-                                                <tr key={i} className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                                                <motion.tr 
+                                                    key={i} 
+                                                    className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: i * 0.03, duration: 0.3 }}
+                                                >
                                                     <td className="p-3 font-medium text-slate-600 sticky left-0 bg-inherit border-r border-slate-100">
                                                         <span className="text-slate-400 text-xs">#{i + 1}</span>
                                                         <div className="text-xs text-slate-400">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
@@ -1703,9 +1773,16 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     <td className="p-3 text-slate-500 border-l border-slate-100 text-xs max-w-[150px] truncate" title={vote.comment || ''}>
                                                         {vote.comment ? `"${vote.comment.substring(0, 30)}${vote.comment.length > 30 ? '...' : ''}"` : ''}
                                                     </td>
-                                                </tr>
+                                                </motion.tr>
                                             );
                                         })}
+                                        {votes.length > 50 && (
+                                            <tr>
+                                                <td colSpan={poll.options.length + 4} className="p-4 text-center text-slate-500 bg-slate-50">
+                                                    Showing first 50 of {votes.length} votes. Export CSV for full data.
+                                                </td>
+                                            </tr>
+                                        )}
                                         {votes.length === 0 && (
                                             <tr>
                                                 <td colSpan={poll.options.length + 4} className="p-8 text-center text-slate-400 italic">

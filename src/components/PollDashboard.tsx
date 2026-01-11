@@ -1,6 +1,6 @@
 // ============================================================================
-// PollDashboard.tsx - Redesigned Poll Dashboard
-// Typeform-inspired, organized with tabs and collapsible sections
+// PollDashboard.tsx - Poll Dashboard with Proper Feature Gating
+// Conversion-optimized layout showing free users what they're missing
 // Location: src/components/PollDashboard.tsx
 // ============================================================================
 import React, { useState, useMemo } from 'react';
@@ -9,9 +9,10 @@ import {
     BarChart3, Share2, Settings, Lock, ChevronDown,
     Copy, Check, Globe, MessageCircle, Smartphone, Mail, QrCode, Palette,
     Code, Image as ImageIcon, Link2, Bell, FileSpreadsheet, Download,
-    Clock, TrendingUp, LayoutDashboard, Key,
-    RefreshCw, Loader2, Eye, EyeOff, ArrowRight,
-    ShieldAlert, X, Sparkles, AlertTriangle, FileDown
+    Clock, TrendingUp, LayoutDashboard, Key, Users, Zap,
+    RefreshCw, Loader2, Eye, EyeOff, ArrowRight, Activity,
+    ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
+    PieChart, Calendar, Filter, MessageSquare, Crown
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import ShareCards from './ShareCards';
@@ -120,6 +121,45 @@ const UpgradeBadge: React.FC<{ small?: boolean }> = ({ small }) => (
     </span>
 );
 
+// Locked Feature Preview Card (for showing free users what they're missing)
+const LockedFeaturePreview: React.FC<{
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    mockValue?: string;
+    onClick: () => void;
+}> = ({ icon, title, description, mockValue, onClick }) => (
+    <button
+        onClick={onClick}
+        className="relative w-full p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all text-left group overflow-hidden"
+    >
+        {/* Blur overlay */}
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/30 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                <Lock size={12} /> Unlock
+            </span>
+        </div>
+        
+        <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
+                {icon}
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="font-semibold text-slate-700 text-sm flex items-center gap-2">
+                    {title}
+                    <Lock size={12} className="text-amber-500" />
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                {mockValue && (
+                    <div className="mt-2 text-lg font-bold text-slate-300 blur-[3px] select-none">
+                        {mockValue}
+                    </div>
+                )}
+            </div>
+        </div>
+    </button>
+);
+
 const PollDashboard: React.FC<PollDashboardProps> = ({
     poll,
     results,
@@ -158,6 +198,28 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const voteCount = results.totalVotes || 0;
     const maxVotes = isFree ? 100 : (tier === 'pro' ? 10000 : 100000);
     const usagePercentage = (voteCount / maxVotes) * 100;
+    const votes = results.votes || [];
+    
+    // Calculate what insights free users are missing
+    const uniqueCountries = useMemo(() => {
+        const countries = new Set<string>();
+        votes.forEach((v: any) => {
+            if (v.analytics?.country) countries.add(v.analytics.country);
+        });
+        return countries.size;
+    }, [votes]);
+    
+    const uniqueDevices = useMemo(() => {
+        const devices = new Set<string>();
+        votes.forEach((v: any) => {
+            if (v.analytics?.device) devices.add(v.analytics.device);
+        });
+        return devices.size;
+    }, [votes]);
+    
+    const commentsCount = useMemo(() => {
+        return votes.filter((v: any) => v.comment && v.comment.trim()).length;
+    }, [votes]);
     
     // Handlers
     const copyToClipboard = async (text: string, type: 'share' | 'admin' | 'codes') => {
@@ -181,7 +243,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             return;
         }
         setIsExporting(true);
-        // Export logic would go here
         setTimeout(() => setIsExporting(false), 1000);
     };
 
@@ -218,39 +279,42 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
     };
 
+    const openUpgradeModal = (feature: string) => {
+        setUpgradeHighlight(feature);
+        setShowUpgradeModal(true);
+    };
+
     // Stats calculations
     const velocity = useMemo(() => {
-        const votes = results.votes || [];
         if (votes.length === 0) return 0;
         const now = Date.now();
         return votes.filter((v: any) => 
             new Date(v.timestamp).getTime() > now - 24 * 60 * 60 * 1000
         ).length;
-    }, [results.votes]);
+    }, [votes]);
 
     const firstVoteDate = useMemo(() => {
-        const votes = results.votes || [];
         if (votes.length === 0) return null;
         return new Date(votes[0]?.timestamp);
-    }, [results.votes]);
+    }, [votes]);
 
     const lastVoteDate = useMemo(() => {
-        const votes = results.votes || [];
         if (votes.length === 0) return null;
         return new Date(votes[votes.length - 1]?.timestamp);
-    }, [results.votes]);
+    }, [votes]);
 
+    // Tabs - Analytics locked for free users
     const tabs = [
         { id: 'results' as TabType, label: 'Results', icon: BarChart3 },
         { id: 'share' as TabType, label: 'Share', icon: Share2 },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings },
-        { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: !isPro },
+        { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: isFree },
     ];
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6">
             {/* ================================================================ */}
-            {/* HEADER WITH POLL STATUS TOGGLE */}
+            {/* HEADER */}
             {/* ================================================================ */}
             <div className="mb-6">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -271,18 +335,16 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={onRefresh}
-                            disabled={isRefreshing}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                        >
-                            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-                        </button>
-                    </div>
+                    <button
+                        onClick={onRefresh}
+                        disabled={isRefreshing}
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                    >
+                        <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+                    </button>
                 </div>
                 
-                {/* Poll Status Toggle (Pause/Resume) */}
+                {/* Poll Status Toggle */}
                 <div className="mt-4">
                     <DraftLiveToggle
                         pollId={poll.id}
@@ -295,7 +357,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             </div>
 
             {/* ================================================================ */}
-            {/* QUICK STATS BAR */}
+            {/* QUICK STATS */}
             {/* ================================================================ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-4 border border-indigo-100">
@@ -349,10 +411,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </span>
                         </div>
                         <button 
-                            onClick={() => {
-                                setUpgradeHighlight('unlimited');
-                                setShowUpgradeModal(true);
-                            }}
+                            onClick={() => openUpgradeModal('unlimited')}
                             className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                         >
                             Upgrade for 10K+ responses <ArrowRight size={12} />
@@ -369,25 +428,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             }`}
                         />
                     </div>
-                    {usagePercentage >= 75 && (
-                        <p className={`text-xs mt-2 ${usagePercentage >= 90 ? 'text-red-700' : 'text-amber-700'}`}>
-                            ⚠️ {usagePercentage >= 90 ? 'Almost at limit! New votes will be blocked.' : 'Approaching limit.'}{' '}
-                            <button 
-                                onClick={() => {
-                                    setUpgradeHighlight('unlimited');
-                                    setShowUpgradeModal(true);
-                                }}
-                                className="underline hover:no-underline font-semibold"
-                            >
-                                Upgrade now
-                            </button>
-                        </p>
-                    )}
                 </div>
             )}
 
             {/* ================================================================ */}
-            {/* TAB NAVIGATION - Colored Tabs */}
+            {/* TAB NAVIGATION */}
             {/* ================================================================ */}
             <div className="mb-6">
                 <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl overflow-x-auto">
@@ -402,8 +447,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 key={tab.id}
                                 onClick={() => {
                                     if (isLocked) {
-                                        setUpgradeHighlight('analytics');
-                                        setShowUpgradeModal(true);
+                                        openUpgradeModal('analytics');
                                     } else {
                                         setActiveTab(tab.id);
                                     }
@@ -429,7 +473,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             {/* TAB CONTENT */}
             {/* ================================================================ */}
             <AnimatePresence mode="wait">
+                {/* ============================================================ */}
                 {/* RESULTS TAB */}
+                {/* ============================================================ */}
                 {activeTab === 'results' && (
                     <motion.div
                         key="results"
@@ -438,7 +484,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
-                        {/* Poll Results */}
+                        {/* Poll Results - Available to ALL */}
                         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                             <VoteGeneratorResults 
                                 poll={poll} 
@@ -449,23 +495,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             />
                         </div>
 
-                        {/* Vote Activity Timeline */}
-                        {results.votes && results.votes.length > 0 && (
-                            <CollapsibleSection
-                                title="Vote Activity"
-                                icon={<TrendingUp size={20} />}
-                                defaultOpen={true}
-                            >
-                                <div className="pt-4">
-                                    <ResponseTimelineChart
-                                        votes={results.votes}
-                                        days={7}
-                                        showTrend={true}
-                                    />
-                                </div>
-                            </CollapsibleSection>
-                        )}
-
                         {/* Downloads Section */}
                         <CollapsibleSection
                             title="Downloads"
@@ -473,7 +502,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             defaultOpen={false}
                         >
                             <div className="pt-4 space-y-3">
-                                {/* QR Code - Free */}
+                                {/* QR Code - FREE */}
                                 <button
                                     onClick={handleDownloadQR}
                                     className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
@@ -481,11 +510,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     <div className="flex items-center gap-3">
                                         <QrCode size={20} className="text-slate-600" />
                                         <span className="font-medium text-slate-700">QR Code (PNG)</span>
+                                        <span className="text-xs text-emerald-600 font-medium">Free</span>
                                     </div>
                                     <Download size={18} className="text-slate-400" />
                                 </button>
                                 
-                                {/* CSV Export - Paid */}
+                                {/* CSV Export - PAID */}
                                 <button
                                     onClick={handleExportCSV}
                                     disabled={isExporting}
@@ -503,12 +533,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     )}
                                 </button>
                                 
-                                {/* PDF Report - Paid */}
+                                {/* PDF Report - PAID */}
                                 <button
                                     onClick={() => {
                                         if (!isPro) {
-                                            setUpgradeHighlight('export');
-                                            setShowUpgradeModal(true);
+                                            openUpgradeModal('export');
                                         } else {
                                             window.print();
                                         }
@@ -524,6 +553,69 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 </button>
                             </div>
                         </CollapsibleSection>
+
+                        {/* ======================================================== */}
+                        {/* PAID ANALYTICS PREVIEWS - Show free users what they're missing */}
+                        {/* ======================================================== */}
+                        {isFree && voteCount > 0 && (
+                            <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-2xl border border-purple-200 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                            <Sparkles size={20} className="text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-800">Unlock Poll Insights</h3>
+                                            <p className="text-sm text-slate-500">
+                                                You have <span className="font-semibold text-purple-600">{voteCount} votes</span> with hidden insights
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => openUpgradeModal('analytics')}
+                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center gap-2"
+                                    >
+                                        <Crown size={16} /> Upgrade
+                                    </button>
+                                </div>
+                                
+                                {/* Preview cards of locked features */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <LockedFeaturePreview
+                                        icon={<Activity size={20} />}
+                                        title="Response Timeline"
+                                        description="See when votes come in"
+                                        mockValue={`${velocity}/day trend`}
+                                        onClick={() => openUpgradeModal('analytics')}
+                                    />
+                                    <LockedFeaturePreview
+                                        icon={<MapPin size={20} />}
+                                        title="Geographic Data"
+                                        description="See where voters are"
+                                        mockValue={uniqueCountries > 0 ? `${uniqueCountries} countries` : '—'}
+                                        onClick={() => openUpgradeModal('analytics')}
+                                    />
+                                    <LockedFeaturePreview
+                                        icon={<Smartphone size={20} />}
+                                        title="Device Breakdown"
+                                        description="Mobile vs desktop"
+                                        mockValue={uniqueDevices > 0 ? `${uniqueDevices} device types` : '—'}
+                                        onClick={() => openUpgradeModal('analytics')}
+                                    />
+                                    <LockedFeaturePreview
+                                        icon={<MessageSquare size={20} />}
+                                        title="Comment Analysis"
+                                        description="Word cloud & themes"
+                                        mockValue={commentsCount > 0 ? `${commentsCount} comments` : '—'}
+                                        onClick={() => openUpgradeModal('analytics')}
+                                    />
+                                </div>
+                                
+                                <p className="text-xs text-slate-500 mt-4 text-center">
+                                    Plus: Hourly heatmap, Cross-tabulation filters, Suspicious activity alerts, and more
+                                </p>
+                            </div>
+                        )}
 
                         {/* Quick Actions */}
                         <div className="grid grid-cols-2 gap-3">
@@ -545,7 +637,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     </motion.div>
                 )}
 
+                {/* ============================================================ */}
                 {/* SHARE TAB */}
+                {/* ============================================================ */}
                 {activeTab === 'share' && (
                     <motion.div
                         key="share"
@@ -554,14 +648,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
-                        {/* Share Link */}
+                        {/* Share Link - FREE */}
                         <CollapsibleSection
                             title="Share Link"
                             icon={<Link2 size={20} />}
                             defaultOpen={true}
                         >
                             <div className="pt-4 space-y-4">
-                                {/* Voter Link */}
                                 <div>
                                     <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
                                         Voter Link
@@ -590,7 +683,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Share Buttons */}
+                                {/* Share Buttons - FREE */}
                                 <div className="grid grid-cols-5 gap-2">
                                     <button 
                                         onClick={shareToWhatsapp}
@@ -631,7 +724,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Embed Poll - Available to ALL */}
+                        {/* Embed Poll - Available to ALL (branding removal = paid) */}
                         <CollapsibleSection
                             title="Embed Poll"
                             icon={<Code size={20} />}
@@ -650,15 +743,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <div>
                                                 <p className="font-semibold text-red-800">Response Limit Reached</p>
                                                 <p className="text-sm text-red-700 mt-1">
-                                                    Your embedded poll will show a "limit reached" message to voters. 
-                                                    Upgrade to continue collecting responses.
+                                                    Your embedded poll will show a "limit reached" message. Upgrade to continue.
                                                 </p>
                                                 <button
-                                                    onClick={() => {
-                                                        setUpgradeHighlight('unlimited');
-                                                        setShowUpgradeModal(true);
-                                                    }}
-                                                    className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-sm transition-colors"
+                                                    onClick={() => openUpgradeModal('unlimited')}
+                                                    className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-sm"
                                                 >
                                                     Upgrade Now
                                                 </button>
@@ -684,15 +773,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
                                                 <Lock size={12} className="text-amber-500" />
                                                 <button
-                                                    onClick={() => {
-                                                        setUpgradeHighlight('branding');
-                                                        setShowUpgradeModal(true);
-                                                    }}
+                                                    onClick={() => openUpgradeModal('branding')}
                                                     className="text-indigo-600 hover:underline"
                                                 >
                                                     Upgrade
                                                 </button>
-                                                {' '}to remove branding
+                                                {' '}to remove branding & restrict domains
                                             </p>
                                         )}
                                     </>
@@ -700,7 +786,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Custom Short Link - Paid Feature */}
+                        {/* Custom Short Link - PAID */}
                         <CollapsibleSection
                             title="Custom Short Link"
                             icon={<Link2 size={20} />}
@@ -714,10 +800,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         adminKey={adminKey}
                                         currentSlug={(poll as any).customSlug}
                                         tier={tier}
-                                        onUpgradeClick={() => {
-                                            setUpgradeHighlight('branding');
-                                            setShowUpgradeModal(true);
-                                        }}
+                                        onUpgradeClick={() => openUpgradeModal('branding')}
                                     />
                                 ) : (
                                     <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
@@ -729,11 +812,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     Create memorable links like <code className="bg-amber-100 px-1.5 py-0.5 rounded text-xs">vote.gen/your-poll</code>
                                                 </p>
                                                 <button
-                                                    onClick={() => {
-                                                        setUpgradeHighlight('branding');
-                                                        setShowUpgradeModal(true);
-                                                    }}
-                                                    className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm transition-colors"
+                                                    onClick={() => openUpgradeModal('branding')}
+                                                    className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
                                                 >
                                                     Upgrade Now
                                                 </button>
@@ -770,7 +850,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     </motion.div>
                 )}
 
+                {/* ============================================================ */}
                 {/* SETTINGS TAB */}
+                {/* ============================================================ */}
                 {activeTab === 'settings' && (
                     <motion.div
                         key="settings"
@@ -786,7 +868,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             defaultOpen={true}
                         >
                             <div className="pt-4 space-y-4">
-                                {/* Current Settings Display */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 bg-slate-50 rounded-xl">
                                         <div className="text-xs text-slate-500 font-medium mb-1">Security</div>
@@ -825,7 +906,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Access Codes */}
+                        {/* Access Codes (if poll has them) */}
                         {poll.allowedCodes && poll.allowedCodes.length > 0 && (
                             <CollapsibleSection
                                 title="Access Codes"
@@ -863,7 +944,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             icon={<Bell size={20} />}
                             badge={isFree ? (
                                 <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
-                                    1 included
+                                    Limited
                                 </span>
                             ) : (
                                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
@@ -876,17 +957,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 {isFree && (
                                     <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                                         <p className="text-sm text-slate-600">
-                                            <strong>Free plan:</strong> Get notified when your poll reaches 100 votes or closes.{' '}
+                                            <strong>Free plan:</strong> Get notified when your poll closes.{' '}
                                             <button
-                                                onClick={() => {
-                                                    setUpgradeHighlight('notifications');
-                                                    setShowUpgradeModal(true);
-                                                }}
+                                                onClick={() => openUpgradeModal('notifications')}
                                                 className="text-indigo-600 hover:underline font-medium"
                                             >
                                                 Upgrade
                                             </button>
-                                            {' '}for real-time alerts, daily digests, and more.
+                                            {' '}for real-time alerts, milestone notifications, suspicious activity alerts, and more.
                                         </p>
                                     </div>
                                 )}
@@ -899,7 +977,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Custom Branding */}
+                        {/* Custom Branding - PAID */}
                         <CollapsibleSection
                             title="Custom Branding"
                             icon={<ImageIcon size={20} />}
@@ -910,14 +988,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 {isPro ? (
                                     <div className="space-y-4">
                                         <p className="text-sm text-slate-600">
-                                            Upload your logo to display on the poll and embed.
+                                            Upload your logo, customize colors, and set a custom thank-you message.
                                         </p>
                                         <button
                                             onClick={onEdit}
                                             className="w-full py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                                         >
                                             <ImageIcon size={18} />
-                                            Upload Logo
+                                            Customize Branding
                                         </button>
                                     </div>
                                 ) : (
@@ -927,14 +1005,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <div>
                                                 <p className="font-semibold text-purple-800">Paid Feature</p>
                                                 <p className="text-sm text-purple-700 mt-1">
-                                                    Remove "Powered by VoteGenerator" and add your own logo.
+                                                    Remove "Powered by VoteGenerator", add your logo, custom colors, and thank-you message.
                                                 </p>
                                                 <button
-                                                    onClick={() => {
-                                                        setUpgradeHighlight('branding');
-                                                        setShowUpgradeModal(true);
-                                                    }}
-                                                    className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm transition-colors"
+                                                    onClick={() => openUpgradeModal('branding')}
+                                                    className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm"
                                                 >
                                                     Upgrade Now
                                                 </button>
@@ -944,10 +1019,50 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 )}
                             </div>
                         </CollapsibleSection>
+
+                        {/* Advanced Settings Preview - PAID */}
+                        {isFree && (
+                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-5">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center">
+                                        <Zap size={20} className="text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-700">Advanced Settings</h3>
+                                        <p className="text-xs text-slate-500">Available with paid plans</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {[
+                                        'PIN code access',
+                                        'One-time vote codes',
+                                        'IP allowlist/blocklist',
+                                        'Scheduled close',
+                                        'Undo close (5 min)',
+                                        'Version history',
+                                        'Duplicate polls',
+                                        'Domain restriction'
+                                    ].map((feature, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-slate-500">
+                                            <Lock size={10} className="text-amber-500" />
+                                            {feature}
+                                        </div>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => openUpgradeModal('settings')}
+                                    className="w-full mt-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-sm transition-colors"
+                                >
+                                    Unlock Advanced Settings
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
-                {/* ANALYTICS TAB - Pro+ Only */}
+                {/* ============================================================ */}
+                {/* ANALYTICS TAB - PAID ONLY */}
+                {/* ============================================================ */}
                 {activeTab === 'analytics' && isPro && (
                     <motion.div
                         key="analytics"
@@ -961,36 +1076,48 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <div className="flex items-center gap-2">
                                 <LayoutDashboard size={20} className="text-purple-500" />
                                 <h3 className="font-bold text-slate-800">Analytics Dashboard</h3>
-                                {(analyticsDateRange.start || analyticsDateRange.end) && (
-                                    <span className="text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
-                                        Filtered
-                                    </span>
-                                )}
                             </div>
                             <DateRangeFilter 
                                 onRangeChange={(start, end) => setAnalyticsDateRange({ start, end })}
-                                minDate={results.votes && results.votes.length > 0 ? new Date(results.votes[0]?.timestamp) : undefined}
+                                minDate={votes.length > 0 ? new Date(votes[0]?.timestamp) : undefined}
                             />
                         </div>
 
                         {/* Cross-Tab Filters */}
-                        {results.votes && results.votes.length >= 5 && (
+                        {votes.length >= 5 && (
                             <div className="bg-white p-4 rounded-2xl border border-slate-200">
                                 <CrossTabFilter 
-                                    votes={results.votes}
+                                    votes={votes}
                                     onFilteredVotesChange={setCrossTabFilteredVotes}
                                 />
                             </div>
                         )}
 
+                        {/* Response Timeline - PAID */}
+                        {votes.length > 0 && (
+                            <CollapsibleSection
+                                title="Response Timeline"
+                                icon={<Activity size={20} />}
+                                defaultOpen={true}
+                            >
+                                <div className="pt-4">
+                                    <ResponseTimelineChart
+                                        votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes}
+                                        days={7}
+                                        showTrend={true}
+                                    />
+                                </div>
+                            </CollapsibleSection>
+                        )}
+
                         {/* Analytics Grid */}
-                        {results.votes && results.votes.length >= 5 ? (
+                        {votes.length >= 5 ? (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                                    <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : results.votes} />
+                                    <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                                    <GeoChart votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : results.votes} maxCountries={5} />
+                                    <GeoChart votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} maxCountries={5} />
                                 </div>
                                 {results.comments && results.comments.length >= 3 && (
                                     <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200">
@@ -1003,7 +1130,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <BarChart3 size={48} className="text-slate-300 mx-auto mb-4" />
                                 <h3 className="font-bold text-slate-600 mb-2">Not Enough Data Yet</h3>
                                 <p className="text-slate-500 text-sm">
-                                    Analytics will appear once you have at least 5 votes.
+                                    Detailed analytics will appear once you have at least 5 votes.
                                 </p>
                             </div>
                         )}
@@ -1019,9 +1146,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <h4 className="font-bold text-amber-800">Bot Protection Active</h4>
                                         <p className="text-sm text-amber-700">
                                             Blocked <span className="font-bold">{(poll as any).blockedVotes.total}</span> suspicious attempts
-                                            {(poll as any).blockedVotes.honeypot > 0 && ` • ${(poll as any).blockedVotes.honeypot} honeypot`}
-                                            {(poll as any).blockedVotes.timing > 0 && ` • ${(poll as any).blockedVotes.timing} timing`}
-                                            {(poll as any).blockedVotes.rateLimit > 0 && ` • ${(poll as any).blockedVotes.rateLimit} rate limit`}
                                         </p>
                                     </div>
                                 </div>
@@ -1112,8 +1236,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 isPremium={isPro}
                 onUpgradeClick={() => {
                     setShowEmbedModal(false);
-                    setUpgradeHighlight('branding');
-                    setShowUpgradeModal(true);
+                    openUpgradeModal('branding');
                 }}
             />
 

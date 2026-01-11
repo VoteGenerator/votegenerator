@@ -284,23 +284,32 @@ const VoteGeneratorApp: React.FC = () => {
                             <span className="hidden sm:inline text-xl">Vote<span className="text-indigo-600">Generator</span></span>
                         </a>
                         
-                        {/* Nav Links for Admin */}
-                        {viewState.type === 'results' && viewState.isAdmin && (
-                            <nav className="hidden md:flex items-center gap-1">
-                                <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                    <PlusCircle size={16} /> Create Poll
-                                </a>
-                                <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                    <LayoutDashboard size={16} /> My Dashboard
-                                </a>
-                                <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                    <Zap size={16} /> Templates
-                                </a>
-                                <a href="/pricing" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                    <Crown size={16} /> Pricing
-                                </a>
-                            </nav>
-                        )}
+                        {/* Nav Links for Admin - Only show if user has this poll in their localStorage */}
+                        {viewState.type === 'results' && viewState.isAdmin && (() => {
+                            // Check if this poll exists in user's localStorage (meaning they're the actual owner)
+                            const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                            const isActualOwner = userPolls.some((p: any) => p.id === viewState.poll.id);
+                            
+                            return (
+                                <nav className="hidden md:flex items-center gap-1">
+                                    <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                        <PlusCircle size={16} /> Create Poll
+                                    </a>
+                                    {/* Only show My Dashboard if they actually own polls */}
+                                    {isActualOwner && (
+                                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                            <LayoutDashboard size={16} /> My Dashboard
+                                        </a>
+                                    )}
+                                    <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                        <Zap size={16} /> Templates
+                                    </a>
+                                    <a href="/pricing" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                        <Crown size={16} /> Pricing
+                                    </a>
+                                </nav>
+                            );
+                        })()}
                         
                         <div className="flex items-center gap-2">
                              {/* Only show share button if viewing results (not while voting) */}

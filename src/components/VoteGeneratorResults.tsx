@@ -1036,6 +1036,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 </div>
             </div>
 
+            {/* Chart Container - for PNG export */}
+            <div id="poll-results-chart" className="bg-white rounded-2xl">
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
                 {/* Show TIE banner when there's a tie */}
@@ -2485,6 +2487,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 )}
 
             </AnimatePresence>
+            </div>
         </div>
         </>
     );

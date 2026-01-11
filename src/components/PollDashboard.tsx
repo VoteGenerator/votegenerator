@@ -1024,7 +1024,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 Download Options
                             </h3>
                             <p className="text-sm text-slate-500 mb-6">
-                                Export your poll data in different formats. QR code is free for all users. CSV and PDF exports require a paid plan.
+                                Export your poll data in different formats. QR code, charts, and share cards are free for all users.
                             </p>
                             
                             <div className="space-y-3">
@@ -1040,6 +1040,69 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700">QR Code</div>
                                             <div className="text-xs text-slate-500">Download PNG image for printing or sharing</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Free</span>
+                                        <Download size={18} className="text-slate-400" />
+                                    </div>
+                                </button>
+
+                                {/* Results Chart PNG - FREE */}
+                                <button
+                                    onClick={async () => {
+                                        // Use html2canvas to capture the results chart
+                                        const resultsEl = document.getElementById('poll-results-chart');
+                                        if (!resultsEl) {
+                                            alert('Results chart not found. Make sure you\'re on the Results tab first.');
+                                            return;
+                                        }
+                                        try {
+                                            // Dynamically import html2canvas
+                                            const html2canvas = (await import('html2canvas')).default;
+                                            const canvas = await html2canvas(resultsEl, {
+                                                backgroundColor: '#ffffff',
+                                                scale: 2, // Higher quality
+                                                logging: false
+                                            });
+                                            const link = document.createElement('a');
+                                            link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_results.png`;
+                                            link.href = canvas.toDataURL('image/png');
+                                            link.click();
+                                        } catch (error) {
+                                            console.error('Failed to export chart:', error);
+                                            alert('Failed to export chart. Please try again.');
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                            <BarChart3 size={24} className="text-indigo-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700">Results Chart (PNG)</div>
+                                            <div className="text-xs text-slate-500">Download results graph as an image</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Free</span>
+                                        <Download size={18} className="text-slate-400" />
+                                    </div>
+                                </button>
+
+                                {/* Share Cards - FREE */}
+                                <button
+                                    onClick={() => setShowShareCards(true)}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                            <ImageIcon size={24} className="text-purple-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700">Share Cards</div>
+                                            <div className="text-xs text-slate-500">Beautiful social media cards with QR code</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">

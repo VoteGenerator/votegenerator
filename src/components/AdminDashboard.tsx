@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play
+    Pause, Play, CreditCard
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
@@ -946,7 +946,7 @@ const AdminDashboard: React.FC = () => {
                         )}
 
                         {/* Over Poll Limit Banner - URGENT action required */}
-                        {!isPlanExpired && tier === 'free' && polls.length > config.maxPolls && (
+                        {!isPlanExpired && tier === 'free' && livePolls.length > config.maxPolls && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                                 <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-lg">
                                     <div className="flex items-start gap-4">
@@ -955,18 +955,18 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                         <div className="flex-1">
                                             <p className="font-bold text-red-800 text-lg mb-1">
-                                                ⚠️ {polls.length - config.maxPolls} Poll{polls.length - config.maxPolls > 1 ? 's' : ''} Will Be Paused
+                                                ⚠️ {livePolls.length - config.maxPolls} Poll{livePolls.length - config.maxPolls > 1 ? 's' : ''} Will Be Paused
                                             </p>
                                             <p className="text-sm text-red-700 mb-4">
-                                                Free plan allows <strong>{config.maxPolls} active polls</strong>. You have <strong>{polls.length}</strong>. 
-                                                Choose which {config.maxPolls} to keep active, or <strong>upgrade to keep all {polls.length} running</strong>.
+                                                Free plan allows <strong>{config.maxPolls} active polls</strong>. You have <strong>{livePolls.length} live</strong>. 
+                                                Choose which {config.maxPolls} to keep active, or <strong>upgrade to keep all {livePolls.length} running</strong>.
                                             </p>
                                             
                                             {/* Loss aversion: Show what they'll lose */}
                                             <div className="p-3 bg-white/60 rounded-lg mb-4 border border-red-200">
                                                 <p className="text-xs font-semibold text-red-800 mb-2">If you don't take action:</p>
                                                 <ul className="text-xs text-red-700 space-y-1">
-                                                    <li>• {polls.length - config.maxPolls} poll{polls.length - config.maxPolls > 1 ? 's' : ''} will show "Poll Paused" to voters</li>
+                                                    <li>• {livePolls.length - config.maxPolls} poll{livePolls.length - config.maxPolls > 1 ? 's' : ''} will show "Poll Paused" to voters</li>
                                                     <li>• Voters will be told to contact you to activate</li>
                                                     <li>• You'll lose potential responses</li>
                                                 </ul>
@@ -978,12 +978,12 @@ const AdminDashboard: React.FC = () => {
                                                     className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition"
                                                 >
                                                     <Sparkles size={16} />
-                                                    Keep All {polls.length} Active - Upgrade
+                                                    Keep All {livePolls.length} Active - Upgrade
                                                 </button>
                                                 <button 
                                                     onClick={() => {
-                                                        // Pre-select the most recent polls
-                                                        const sorted = [...polls].sort((a, b) => 
+                                                        // Pre-select the most recent live polls
+                                                        const sorted = [...livePolls].sort((a, b) => 
                                                             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                                                         );
                                                         const activeIds = new Set(sorted.slice(0, config.maxPolls).map(p => p.id));
@@ -1700,6 +1700,28 @@ const AdminDashboard: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Manage Subscription - Paid users only */}
+                                {session && session.tier !== 'free' && (
+                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <CreditCard size={20} className="text-indigo-600" />
+                                                <div>
+                                                    <p className="font-medium text-slate-800">Subscription</p>
+                                                    <p className="text-xs text-slate-500">Update payment, change plan, or cancel</p>
+                                                </div>
+                                            </div>
+                                            <a 
+                                                href="/#manage-subscription" 
+                                                onClick={() => setShowSettings(false)}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                                            >
+                                                Manage
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>

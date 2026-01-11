@@ -40,7 +40,7 @@ interface PollDashboardProps {
     isRefreshing: boolean;
 }
 
-type TabType = 'results' | 'share' | 'settings' | 'analytics';
+type TabType = 'results' | 'share' | 'settings' | 'downloads' | 'analytics';
 
 // Tab color configurations
 const tabColors: Record<TabType, { active: string; hover: string; icon: string }> = {
@@ -58,6 +58,11 @@ const tabColors: Record<TabType, { active: string; hover: string; icon: string }
         active: 'bg-slate-700 text-white shadow-lg shadow-slate-200', 
         hover: 'hover:bg-slate-100 text-slate-600',
         icon: 'text-slate-500'
+    },
+    downloads: { 
+        active: 'bg-amber-600 text-white shadow-lg shadow-amber-200', 
+        hover: 'hover:bg-amber-50 text-slate-600',
+        icon: 'text-amber-500'
     },
     analytics: { 
         active: 'bg-purple-600 text-white shadow-lg shadow-purple-200', 
@@ -308,6 +313,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         { id: 'results' as TabType, label: 'Results', icon: BarChart3 },
         { id: 'share' as TabType, label: 'Share', icon: Share2 },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings },
+        { id: 'downloads' as TabType, label: 'Downloads', icon: FileDown },
         { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: isFree },
     ];
 
@@ -495,65 +501,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             />
                         </div>
 
-                        {/* Downloads Section */}
-                        <CollapsibleSection
-                            title="Downloads"
-                            icon={<FileDown size={20} />}
-                            defaultOpen={false}
-                        >
-                            <div className="pt-4 space-y-3">
-                                {/* QR Code - FREE */}
-                                <button
-                                    onClick={handleDownloadQR}
-                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <QrCode size={20} className="text-slate-600" />
-                                        <span className="font-medium text-slate-700">QR Code (PNG)</span>
-                                        <span className="text-xs text-emerald-600 font-medium">Free</span>
-                                    </div>
-                                    <Download size={18} className="text-slate-400" />
-                                </button>
-                                
-                                {/* CSV Export - PAID */}
-                                <button
-                                    onClick={handleExportCSV}
-                                    disabled={isExporting}
-                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <FileSpreadsheet size={20} className="text-emerald-600" />
-                                        <span className="font-medium text-slate-700">Export CSV</span>
-                                        {!isPro && <UpgradeBadge small />}
-                                    </div>
-                                    {isExporting ? (
-                                        <Loader2 size={18} className="text-slate-400 animate-spin" />
-                                    ) : (
-                                        <Download size={18} className="text-slate-400" />
-                                    )}
-                                </button>
-                                
-                                {/* PDF Report - PAID */}
-                                <button
-                                    onClick={() => {
-                                        if (!isPro) {
-                                            openUpgradeModal('export');
-                                        } else {
-                                            window.print();
-                                        }
-                                    }}
-                                    className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <FileDown size={20} className="text-red-500" />
-                                        <span className="font-medium text-slate-700">PDF Report</span>
-                                        {!isPro && <UpgradeBadge small />}
-                                    </div>
-                                    <Download size={18} className="text-slate-400" />
-                                </button>
-                            </div>
-                        </CollapsibleSection>
-
                         {/* ======================================================== */}
                         {/* PAID ANALYTICS PREVIEWS - Show free users what they're missing */}
                         {/* ======================================================== */}
@@ -605,7 +552,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     <LockedFeaturePreview
                                         icon={<MessageSquare size={20} />}
                                         title="Comment Analysis"
-                                        description="Word cloud & themes"
+                                        description="Word cloud visualization"
                                         mockValue={commentsCount > 0 ? `${commentsCount} comments` : '—'}
                                         onClick={() => openUpgradeModal('analytics')}
                                     />
@@ -1057,6 +1004,123 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 </button>
                             </div>
                         )}
+                    </motion.div>
+                )}
+
+                {/* ============================================================ */}
+                {/* DOWNLOADS TAB */}
+                {/* ============================================================ */}
+                {activeTab === 'downloads' && (
+                    <motion.div
+                        key="downloads"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-6"
+                    >
+                        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <FileDown size={20} className="text-amber-500" />
+                                Download Options
+                            </h3>
+                            <p className="text-sm text-slate-500 mb-6">
+                                Export your poll data in different formats. QR code is free for all users. CSV and PDF exports require a paid plan.
+                            </p>
+                            
+                            <div className="space-y-3">
+                                {/* QR Code - FREE */}
+                                <button
+                                    onClick={handleDownloadQR}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center">
+                                            <QrCode size={24} className="text-white" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700">QR Code</div>
+                                            <div className="text-xs text-slate-500">Download PNG image for printing or sharing</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Free</span>
+                                        <Download size={18} className="text-slate-400" />
+                                    </div>
+                                </button>
+                                
+                                {/* CSV Export - PAID */}
+                                <button
+                                    onClick={handleExportCSV}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <FileSpreadsheet size={24} className="text-emerald-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700">Export to CSV</div>
+                                            <div className="text-xs text-slate-500">Spreadsheet format for Excel, Google Sheets, etc.</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {!isPro && <UpgradeBadge small />}
+                                        {isExporting ? (
+                                            <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                        ) : (
+                                            <Download size={18} className="text-slate-400" />
+                                        )}
+                                    </div>
+                                </button>
+                                
+                                {/* PDF Report - PAID */}
+                                <button
+                                    onClick={() => {
+                                        if (!isPro) {
+                                            openUpgradeModal('export');
+                                        } else {
+                                            window.print();
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                            <FileDown size={24} className="text-red-500" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700">PDF Report</div>
+                                            <div className="text-xs text-slate-500">Print-ready report with results and charts</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {!isPro && <UpgradeBadge small />}
+                                        <Download size={18} className="text-slate-400" />
+                                    </div>
+                                </button>
+                            </div>
+                            
+                            {/* Upgrade CTA for free users */}
+                            {isFree && (
+                                <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                    <div className="flex items-start gap-3">
+                                        <Sparkles size={20} className="text-amber-500 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800">Unlock all export options</p>
+                                            <p className="text-sm text-amber-700 mt-1">
+                                                Export your complete poll data including all votes, comments, and analytics to CSV or PDF.
+                                            </p>
+                                            <button
+                                                onClick={() => openUpgradeModal('export')}
+                                                className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
+                                            >
+                                                Upgrade Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </motion.div>
                 )}
 

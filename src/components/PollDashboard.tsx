@@ -865,7 +865,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                             <DateRangeFilter 
                                 onRangeChange={(start, end) => setAnalyticsDateRange({ start, end })}
-                                minDate={results.votes?.length > 0 ? new Date(results.votes[0]?.timestamp) : undefined}
+                                minDate={results.votes && results.votes.length > 0 ? new Date(results.votes[0]?.timestamp) : undefined}
                             />
                         </div>
 
@@ -994,7 +994,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             onClick={e => e.stopPropagation()}
                         >
                             <ShareCards
+                                pollId={poll.id}
                                 pollTitle={poll.title}
+                                pollDescription={poll.description}
                                 pollUrl={shareUrl}
                                 onClose={() => setShowShareCards(false)}
                             />

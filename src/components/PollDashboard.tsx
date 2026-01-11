@@ -186,7 +186,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
     const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
     const [isExporting, setIsExporting] = useState(false);
-    const [isExportingPng, setIsExportingPng] = useState(false);
 
     // Computed values
     const tier = useMemo(() => {
@@ -1025,7 +1024,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 Download Options
                             </h3>
                             <p className="text-sm text-slate-500 mb-6">
-                                Export your poll data in different formats. QR code, charts, and share cards are free for all users.
+                                Export your poll data in different formats. QR code and share cards are free for all users.
                             </p>
                             
                             <div className="space-y-3">
@@ -1041,85 +1040,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700">QR Code</div>
                                             <div className="text-xs text-slate-500">Download PNG image for printing or sharing</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Free</span>
-                                        <Download size={18} className="text-slate-400" />
-                                    </div>
-                                </button>
-
-                                {/* Results Chart PNG - FREE */}
-                                <button
-                                    disabled={isExportingPng}
-                                    onClick={async () => {
-                                        setIsExportingPng(true);
-                                        
-                                        // Switch to Results tab first to ensure chart is rendered
-                                        const previousTab = activeTab;
-                                        setActiveTab('results');
-                                        
-                                        // Wait for React to render the Results tab
-                                        await new Promise(resolve => setTimeout(resolve, 500));
-                                        
-                                        const resultsEl = document.getElementById('poll-results-chart');
-                                        if (!resultsEl) {
-                                            alert('Results chart not found. Please try again.');
-                                            setActiveTab(previousTab);
-                                            setIsExportingPng(false);
-                                            return;
-                                        }
-                                        
-                                        try {
-                                            // Load html2canvas from CDN if not already loaded
-                                            if (!(window as any).html2canvas) {
-                                                await new Promise<void>((resolve, reject) => {
-                                                    const script = document.createElement('script');
-                                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                                                    script.onload = () => resolve();
-                                                    script.onerror = () => reject(new Error('Failed to load html2canvas'));
-                                                    document.head.appendChild(script);
-                                                });
-                                            }
-                                            
-                                            const html2canvas = (window as any).html2canvas;
-                                            const canvas = await html2canvas(resultsEl, {
-                                                backgroundColor: '#ffffff',
-                                                scale: 2,
-                                                logging: false,
-                                                useCORS: true
-                                            });
-                                            
-                                            const link = document.createElement('a');
-                                            link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_results.png`;
-                                            link.href = canvas.toDataURL('image/png');
-                                            link.click();
-                                            
-                                            // Switch back to Downloads tab
-                                            setActiveTab(previousTab);
-                                        } catch (error) {
-                                            console.error('Failed to export chart:', error);
-                                            alert('Failed to export chart. Please try again.');
-                                            setActiveTab(previousTab);
-                                        } finally {
-                                            setIsExportingPng(false);
-                                        }
-                                    }}
-                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 disabled:opacity-50"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                            {isExportingPng ? (
-                                                <Loader2 size={24} className="text-indigo-600 animate-spin" />
-                                            ) : (
-                                                <BarChart3 size={24} className="text-indigo-600" />
-                                            )}
-                                        </div>
-                                        <div className="text-left">
-                                            <div className="font-semibold text-slate-700">
-                                                {isExportingPng ? 'Generating...' : 'Results Chart (PNG)'}
-                                            </div>
-                                            <div className="text-xs text-slate-500">Download results graph as an image</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">

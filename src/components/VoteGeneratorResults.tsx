@@ -305,6 +305,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     // === FREE ANALYTICS COMPUTATIONS ===
     const [showInsights, setShowInsights] = useState(false);
+    const [isExportingPng, setIsExportingPng] = useState(false);
     
     // Device breakdown (computed from user agent in votes)
     const deviceStats = useMemo(() => {
@@ -1034,10 +1035,81 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <LayoutGrid size={16} /> Grid
                     </button>
                 </div>
+
+                {/* Download Chart as PNG */}
+                <button
+                    disabled={isExportingPng}
+                    onClick={async () => {
+                        setIsExportingPng(true);
+                        
+                        // Small delay to ensure any animations complete
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        const chartEl = document.getElementById('poll-results-chart');
+                        if (!chartEl) {
+                            alert('Chart not found. Please try again.');
+                            setIsExportingPng(false);
+                            return;
+                        }
+                        
+                        try {
+                            // Load html2canvas from CDN if not already loaded
+                            if (!(window as any).html2canvas) {
+                                await new Promise<void>((resolve, reject) => {
+                                    const script = document.createElement('script');
+                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                                    script.onload = () => resolve();
+                                    script.onerror = () => reject(new Error('Failed to load library'));
+                                    document.head.appendChild(script);
+                                });
+                            }
+                            
+                            const html2canvas = (window as any).html2canvas;
+                            const canvas = await html2canvas(chartEl, {
+                                backgroundColor: '#ffffff',
+                                scale: 2,
+                                logging: false,
+                                useCORS: true,
+                                allowTaint: true
+                            });
+                            
+                            const link = document.createElement('a');
+                            link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_chart.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                        } catch (error) {
+                            console.error('Failed to export chart:', error);
+                            alert('Failed to export chart. Please try again.');
+                        } finally {
+                            setIsExportingPng(false);
+                        }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
+                        isExportingPng 
+                            ? 'bg-slate-100 text-slate-400 cursor-wait' 
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 hover:shadow-md'
+                    }`}
+                    title="Download chart as PNG image"
+                >
+                    {isExportingPng ? (
+                        <>
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            <Download size={16} />
+                            Save PNG
+                        </>
+                    )}
+                </button>
             </div>
 
             {/* Chart Container - for PNG export */}
-            <div id="poll-results-chart" className="bg-white rounded-2xl">
+            <div id="poll-results-chart" className="bg-white rounded-2xl p-4">
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
                 {/* Show TIE banner when there's a tie */}

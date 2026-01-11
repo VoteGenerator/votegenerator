@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText, Crown, Lock } from 'lucide-react';
 import { RunoffResult, Poll, SurveyResponse } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SurveyResults from './SurveyResults';
@@ -236,6 +236,13 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
+    // Get tier for feature gating
+    const tier = useMemo(() => {
+        return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    }, []);
+    const isPaidUser = tier === 'pro' || tier === 'business';
+    const isFreeUser = tier === 'free';
+    
     // Get theme configuration
     const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
     const isDarkTheme = theme.cardBg?.includes('slate-9') || theme.cardBg?.includes('slate-950');
@@ -691,195 +698,284 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 </div>
             )}
             
-            {/* Insights Panel - Admin Only */}
+            {/* Poll Insights Panel - Tier Gated */}
             {isAdmin && totalVotes >= 3 && votes.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
-                    <button 
-                        onClick={() => setShowInsights(!showInsights)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
-                    >
-                        <div className="flex items-center gap-2">
-                            <Activity size={18} className="text-indigo-500" />
-                            <span className="font-semibold text-slate-700">Poll Insights</span>
-                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">Free Analytics</span>
-                        </div>
-                        {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
-                    </button>
-                    
-                    <AnimatePresence>
-                        {showInsights && (
-                            <motion.div 
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="border-t border-slate-100"
-                            >
-                                <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {/* Device Breakdown */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Smartphone size={14} className="text-blue-500" />
-                                            <span className="text-xs font-medium text-slate-600">Devices</span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
-                                                <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
-                                                <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
-                                            </div>
-                                            {deviceStats.tablet > 0 && (
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span>Tablet</span>
-                                                    <span className="font-semibold">{deviceStats.tablet}</span>
-                                                </div>
-                                            )}
-                                        </div>
+                <>
+                    {/* FREE USERS: Show locked preview */}
+                    {isFreeUser && (
+                        <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl border border-purple-200 p-5 print:hidden">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <Activity size={20} className="text-purple-600" />
                                     </div>
-                                    
-                                    {/* Peak Hour */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Clock size={14} className="text-purple-500" />
-                                            <span className="text-xs font-medium text-slate-600">Peak Time</span>
-                                        </div>
-                                        {peakHour ? (
-                                            <div>
-                                                <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
-                                                <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Not enough data</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Geographic */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Globe size={14} className="text-emerald-500" />
-                                            <span className="text-xs font-medium text-slate-600">Top Locations</span>
-                                        </div>
-                                        {geoStats.length > 0 ? (
-                                            <div className="space-y-1">
-                                                {geoStats.slice(0, 3).map(g => (
-                                                    <div key={g.country} className="flex items-center justify-between text-xs">
-                                                        <span className="flex items-center gap-1">
-                                                            {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
-                                                        </span>
-                                                        <span className="font-semibold">{g.percentage}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">No location data</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Momentum */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Zap size={14} className="text-amber-500" />
-                                            <span className="text-xs font-medium text-slate-600">24h Activity</span>
-                                        </div>
-                                        {momentum ? (
-                                            <div>
-                                                <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
-                                                <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                    {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Tracking activity...</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Traffic Sources */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <ExternalLink size={14} className="text-purple-500" />
-                                            <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
-                                        </div>
-                                        {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
-                                            <div className="space-y-1">
-                                                {referrerStats.slice(0, 3).map(r => (
-                                                    <div key={r.source} className="flex items-center justify-between text-xs">
-                                                        <span className="truncate max-w-[100px]" title={r.source}>
-                                                            {r.source === 'Direct' ? '🔗 Direct' : r.source}
-                                                        </span>
-                                                        <span className="font-semibold">{r.percentage}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Mostly direct traffic</p>
-                                        )}
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                            Poll Insights
+                                            <Lock size={14} className="text-amber-500" />
+                                        </h3>
+                                        <p className="text-sm text-slate-500">
+                                            <span className="font-semibold text-purple-600">{totalVotes} votes</span> with hidden insights
+                                        </p>
                                     </div>
                                 </div>
-                                
-                                {/* Response Timeline */}
-                                {timelineStats.length > 1 && (
-                                    <div className="px-4 pb-4">
-                                        <div className="bg-slate-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <TrendingUp size={14} className="text-indigo-500" />
-                                                <span className="text-xs font-medium text-slate-600">Response Timeline</span>
-                                            </div>
-                                            <div className="flex items-end gap-1 h-16">
-                                                {timelineStats.map((t, i) => {
-                                                    const maxCount = Math.max(...timelineStats.map(s => s.count));
-                                                    const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
-                                                    return (
-                                                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                                            <div 
-                                                                className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
-                                                                style={{ height: `${Math.max(height, 4)}%` }}
-                                                                title={`${t.day}: ${t.count} votes`}
-                                                            />
-                                                            <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
+                                <a
+                                    href="/pricing"
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center gap-2"
+                                >
+                                    <Crown size={16} /> Upgrade
+                                </a>
+                            </div>
+                            
+                            {/* Blurred preview cards */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Smartphone size={12} className="text-blue-500" />
+                                        <span className="text-xs font-medium text-slate-500">Device Breakdown</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {deviceStats.desktop > deviceStats.mobile ? 'Desktop 65%' : 'Mobile 70%'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Globe size={12} className="text-emerald-500" />
+                                        <span className="text-xs font-medium text-slate-500">Geographic</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {geoStats.length > 0 ? `${geoStats.length} countries` : '1 country'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Clock size={12} className="text-purple-500" />
+                                        <span className="text-xs font-medium text-slate-500">Hourly Heatmap</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        Peak: {peakHour ? formatHour(peakHour.hour) : '2 PM'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <TrendingUp size={12} className="text-indigo-500" />
+                                        <span className="text-xs font-medium text-slate-500">Response Timeline</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {momentum ? `${momentum.last24h}/day` : 'View trends'}
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-xs text-center text-slate-500 mt-3">
+                                Plus: Cross-tabulation filters, Word cloud, Suspicious activity alerts, Export CSV/Excel/PDF
+                            </p>
+                        </div>
+                    )}
+                    
+                    {/* PAID USERS: Show full insights */}
+                    {isPaidUser && (
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
+                            <button 
+                                onClick={() => setShowInsights(!showInsights)}
+                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Activity size={18} className="text-indigo-500" />
+                                    <span className="font-semibold text-slate-700">Poll Insights</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                        tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
+                                    }`}>
+                                        {tier === 'business' ? 'Business' : 'Pro'}
+                                    </span>
+                                </div>
+                                {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                            </button>
+                            
+                            <AnimatePresence>
+                                {showInsights && (
+                                    <motion.div 
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-slate-100"
+                                    >
+                                        <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {/* Device Breakdown */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Smartphone size={14} className="text-blue-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Devices</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
+                                                        <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
+                                                        <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
+                                                    </div>
+                                                    {deviceStats.tablet > 0 && (
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span>Tablet</span>
+                                                            <span className="font-semibold">{deviceStats.tablet}</span>
                                                         </div>
-                                                    );
-                                                })}
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Peak Hour */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Clock size={14} className="text-purple-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Peak Time</span>
+                                                </div>
+                                                {peakHour ? (
+                                                    <div>
+                                                        <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
+                                                        <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Not enough data</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Geographic */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Globe size={14} className="text-emerald-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Top Locations</span>
+                                                </div>
+                                                {geoStats.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {geoStats.slice(0, 3).map(g => (
+                                                            <div key={g.country} className="flex items-center justify-between text-xs">
+                                                                <span className="flex items-center gap-1">
+                                                                    {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
+                                                                </span>
+                                                                <span className="font-semibold">{g.percentage}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">No location data</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Momentum */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Zap size={14} className="text-amber-500" />
+                                                    <span className="text-xs font-medium text-slate-600">24h Activity</span>
+                                                </div>
+                                                {momentum ? (
+                                                    <div>
+                                                        <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
+                                                        <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                            {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Tracking activity...</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Traffic Sources */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <ExternalLink size={14} className="text-purple-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
+                                                </div>
+                                                {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
+                                                    <div className="space-y-1">
+                                                        {referrerStats.slice(0, 3).map(r => (
+                                                            <div key={r.source} className="flex items-center justify-between text-xs">
+                                                                <span className="truncate max-w-[100px]" title={r.source}>
+                                                                    {r.source === 'Direct' ? '🔗 Direct' : r.source}
+                                                                </span>
+                                                                <span className="font-semibold">{r.percentage}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Mostly direct traffic</p>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                        
+                                        {/* Response Timeline */}
+                                        {timelineStats.length > 1 && (
+                                            <div className="px-4 pb-4">
+                                                <div className="bg-slate-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <TrendingUp size={14} className="text-indigo-500" />
+                                                        <span className="text-xs font-medium text-slate-600">Response Timeline</span>
+                                                    </div>
+                                                    <div className="flex items-end gap-1 h-16">
+                                                        {timelineStats.map((t, i) => {
+                                                            const maxCount = Math.max(...timelineStats.map(s => s.count));
+                                                            const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
+                                                            return (
+                                                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                                                    <motion.div 
+                                                                        className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
+                                                                        initial={{ height: 0 }}
+                                                                        animate={{ height: `${Math.max(height, 4)}%` }}
+                                                                        transition={{ delay: i * 0.05, duration: 0.4 }}
+                                                                        title={`${t.day}: ${t.count} votes`}
+                                                                    />
+                                                                    <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
-                                {/* Hourly Distribution */}
-                                {hourlyStats.some(h => h.count > 0) && (
-                                    <div className="px-4 pb-4">
-                                        <div className="bg-slate-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Clock size={14} className="text-purple-500" />
-                                                <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
+                                        {/* Hourly Distribution */}
+                                        {hourlyStats.some(h => h.count > 0) && (
+                                            <div className="px-4 pb-4">
+                                                <div className="bg-slate-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <Clock size={14} className="text-purple-500" />
+                                                        <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
+                                                    </div>
+                                                    <div className="flex items-end gap-px h-12">
+                                                        {hourlyStats.map((h, i) => {
+                                                            const maxCount = Math.max(...hourlyStats.map(s => s.count));
+                                                            const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
+                                                            return (
+                                                                <motion.div 
+                                                                    key={i} 
+                                                                    className="flex-1 bg-purple-300 rounded-t transition-colors hover:bg-purple-400 cursor-pointer"
+                                                                    initial={{ height: 0 }}
+                                                                    animate={{ height: `${Math.max(height, 2)}%` }}
+                                                                    transition={{ delay: i * 0.02, duration: 0.3 }}
+                                                                    style={{ opacity: height > 0 ? 1 : 0.3 }}
+                                                                    title={`${formatHour(h.hour)}: ${h.count} votes`}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="flex justify-between mt-1">
+                                                        <span className="text-[9px] text-slate-400">12 AM</span>
+                                                        <span className="text-[9px] text-slate-400">12 PM</span>
+                                                        <span className="text-[9px] text-slate-400">11 PM</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex items-end gap-px h-12">
-                                                {hourlyStats.map((h, i) => {
-                                                    const maxCount = Math.max(...hourlyStats.map(s => s.count));
-                                                    const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
-                                                    return (
-                                                        <div 
-                                                            key={i} 
-                                                            className="flex-1 bg-purple-300 rounded-t transition-all hover:bg-purple-400 cursor-pointer"
-                                                            style={{ height: `${Math.max(height, 2)}%`, opacity: height > 0 ? 1 : 0.3 }}
-                                                            title={`${formatHour(h.hour)}: ${h.count} votes`}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                            <div className="flex justify-between mt-1">
-                                                <span className="text-[9px] text-slate-400">12 AM</span>
-                                                <span className="text-[9px] text-slate-400">12 PM</span>
-                                                <span className="text-[9px] text-slate-400">11 PM</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        )}
+                                    </motion.div>
                                 )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            </AnimatePresence>
+                        </div>
+                    )}
+                </>
             )}
             
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
@@ -1798,9 +1894,9 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 )}
                 
                 {/* ============================================ */}
-                {/* POLL INSIGHTS SECTION - Shows for all views */}
+                {/* POLL INSIGHTS SECTION - PAID ONLY */}
                 {/* ============================================ */}
-                {votes.length > 0 && (
+                {votes.length > 0 && isPaidUser && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1809,6 +1905,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
                             <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <Activity size={18} className="text-indigo-500" /> Poll Insights
+                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                    tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                    {tier === 'business' ? 'Business' : 'Pro'}
+                                </span>
                             </h4>
                             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     
@@ -2368,8 +2469,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     </motion.div>
                 )}
 
-                {/* --- ANALYTICS DASHBOARD (Admin Only) --- */}
-                {isAdmin && adminKey && (
+                {/* --- ANALYTICS DASHBOARD (Paid Users Only) --- */}
+                {isAdmin && adminKey && isPaidUser && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -2378,12 +2479,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <AnalyticsDashboard 
                             pollId={poll.id}
                             adminKey={adminKey}
-                            currentTier={(() => {
-                                const tier = localStorage.getItem('vg_subscription_tier');
-                                if (tier === 'business') return 'business';
-                                if (tier === 'pro') return 'pro';
-                                return 'free';
-                            })()}
+                            currentTier={tier as 'free' | 'pro' | 'business'}
                         />
                     </motion.div>
                 )}

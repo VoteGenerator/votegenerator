@@ -186,6 +186,43 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
     const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
     const [isExporting, setIsExporting] = useState(false);
+    
+    // Local state for settings toggles (for immediate UI feedback)
+    const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
+    const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
+    const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
+    const [settingsUpdating, setSettingsUpdating] = useState(false);
+    
+    // Helper to update poll settings
+    const updatePollSetting = async (settingKey: string, value: any) => {
+        setSettingsUpdating(true);
+        try {
+            const response = await fetch('/.netlify/functions/vg-update-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey,
+                    settings: { [settingKey]: value }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update setting');
+            }
+            
+            // Optionally refresh to sync with server
+            onRefresh?.();
+        } catch (err) {
+            console.error('Failed to update setting:', err);
+            // Revert local state on error
+            if (settingKey === 'publicResults') setLocalPublicResults(poll.settings?.publicResults || false);
+            if (settingKey === 'showShareButton') setLocalShowShareButton(poll.settings?.showShareButton || false);
+            if (settingKey === 'allowedViews') setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+        } finally {
+            setSettingsUpdating(false);
+        }
+    };
 
     // Computed values
     const tier = useMemo(() => {
@@ -692,32 +729,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input 
                                             type="checkbox" 
-                                            checked={poll.settings?.publicResults || false}
-                                            onChange={async (e) => {
+                                            checked={localPublicResults}
+                                            disabled={settingsUpdating}
+                                            onChange={(e) => {
                                                 const enabled = e.target.checked;
-                                                try {
-                                                    await fetch('/.netlify/functions/vg-update-settings', {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            pollId: poll.id,
-                                                            adminKey,
-                                                            settings: { publicResults: enabled }
-                                                        })
-                                                    });
-                                                    onRefresh?.();
-                                                } catch (err) {
-                                                    console.error('Failed to update setting:', err);
-                                                }
+                                                setLocalPublicResults(enabled);
+                                                updatePollSetting('publicResults', enabled);
                                             }}
                                             className="sr-only peer"
                                         />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <div className={`w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${settingsUpdating ? 'opacity-50' : ''}`}></div>
                                     </label>
                                 </div>
                                 
                                 {/* Public results URL - Only show when enabled */}
-                                {poll.settings?.publicResults && (
+                                {localPublicResults && (
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
@@ -803,29 +829,17 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 </label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {['bar', 'pie'].map(view => (
-                                                        <label key={view} className="flex items-center gap-2 px-4 py-2 bg-white border border-purple-200 rounded-lg cursor-pointer hover:border-purple-400 transition-colors">
+                                                        <label key={view} className={`flex items-center gap-2 px-4 py-2 bg-white border border-purple-200 rounded-lg cursor-pointer hover:border-purple-400 transition-colors ${settingsUpdating ? 'opacity-50' : ''}`}>
                                                             <input
                                                                 type="checkbox"
-                                                                checked={(poll.settings?.allowedViews || ['bar', 'pie']).includes(view)}
-                                                                onChange={async (e) => {
-                                                                    const current = poll.settings?.allowedViews || ['bar', 'pie'];
+                                                                checked={localAllowedViews.includes(view)}
+                                                                disabled={settingsUpdating}
+                                                                onChange={(e) => {
                                                                     const updated = e.target.checked 
-                                                                        ? [...current, view]
-                                                                        : current.filter((v: string) => v !== view);
-                                                                    try {
-                                                                        await fetch('/.netlify/functions/vg-update-settings', {
-                                                                            method: 'POST',
-                                                                            headers: { 'Content-Type': 'application/json' },
-                                                                            body: JSON.stringify({
-                                                                                pollId: poll.id,
-                                                                                adminKey,
-                                                                                settings: { allowedViews: updated }
-                                                                            })
-                                                                        });
-                                                                        onRefresh?.();
-                                                                    } catch (err) {
-                                                                        console.error('Failed to update:', err);
-                                                                    }
+                                                                        ? [...localAllowedViews, view]
+                                                                        : localAllowedViews.filter((v: string) => v !== view);
+                                                                    setLocalAllowedViews(updated);
+                                                                    updatePollSetting('allowedViews', updated);
                                                                 }}
                                                                 className="w-4 h-4 text-purple-600 rounded"
                                                             />
@@ -850,27 +864,16 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input 
                                             type="checkbox" 
-                                            checked={poll.settings?.showShareButton || false}
-                                            onChange={async (e) => {
+                                            checked={localShowShareButton}
+                                            disabled={settingsUpdating}
+                                            onChange={(e) => {
                                                 const enabled = e.target.checked;
-                                                try {
-                                                    await fetch('/.netlify/functions/vg-update-settings', {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            pollId: poll.id,
-                                                            adminKey,
-                                                            settings: { showShareButton: enabled }
-                                                        })
-                                                    });
-                                                    onRefresh?.();
-                                                } catch (err) {
-                                                    console.error('Failed to update setting:', err);
-                                                }
+                                                setLocalShowShareButton(enabled);
+                                                updatePollSetting('showShareButton', enabled);
                                             }}
                                             className="sr-only peer"
                                         />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <div className={`w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${settingsUpdating ? 'opacity-50' : ''}`}></div>
                                     </label>
                                 </div>
                             </div>

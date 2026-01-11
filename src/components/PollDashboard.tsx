@@ -191,6 +191,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
     const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
+    const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
     // Sync local state when poll props change (e.g., after external refresh)
@@ -198,7 +199,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         setLocalPublicResults(poll.settings?.publicResults || false);
         setLocalShowShareButton(poll.settings?.showShareButton || false);
         setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
-    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews]);
+        setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
+    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare]);
     
     // Helper to update poll settings
     const updatePollSetting = async (settingKey: string, value: any) => {
@@ -808,9 +810,33 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 </div>
                                                 <div className="flex items-center gap-2 text-slate-600">
                                                     <Check size={14} className="text-emerald-500" />
-                                                    Social sharing buttons
+                                                    Winner highlight
                                                 </div>
                                             </div>
+                                        </div>
+                                        
+                                        {/* Show Social Sharing Toggle */}
+                                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                            <div className="flex items-center gap-3">
+                                                <Share2 size={18} className="text-slate-500" />
+                                                <div>
+                                                    <div className="font-medium text-slate-700 text-sm">Show social sharing buttons</div>
+                                                    <div className="text-xs text-slate-500">Let visitors share results on social media</div>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={localShowSocialShare}
+                                                    onChange={(e) => {
+                                                        const enabled = e.target.checked;
+                                                        setLocalShowSocialShare(enabled);
+                                                        updatePollSetting('showSocialShare', enabled);
+                                                    }}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            </label>
                                         </div>
                                         
                                         {/* Pro feature teaser */}
@@ -859,31 +885,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         )}
                                     </motion.div>
                                 )}
-                                
-                                {/* Show Share Button on Results Page */}
-                                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-                                    <div className="flex items-center gap-3">
-                                        <Share2 size={18} className="text-slate-500" />
-                                        <div>
-                                            <div className="font-medium text-slate-700 text-sm">Show "Share Poll" button to voters</div>
-                                            <div className="text-xs text-slate-500">When disabled, voters can't share the poll link</div>
-                                        </div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={localShowShareButton}
-                                            disabled={settingsUpdating}
-                                            onChange={(e) => {
-                                                const enabled = e.target.checked;
-                                                setLocalShowShareButton(enabled);
-                                                updatePollSetting('showShareButton', enabled);
-                                            }}
-                                            className="sr-only peer"
-                                        />
-                                        <div className={`w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${settingsUpdating ? 'opacity-50' : ''}`}></div>
-                                    </label>
-                                </div>
                             </div>
                         </CollapsibleSection>
 
@@ -1057,6 +1058,37 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             </div>
                                         </div>
                                     )}
+                                </div>
+                                
+                                {/* Show Share Poll Button Toggle */}
+                                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <Share2 size={20} className="text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-slate-800">Share Poll Button</div>
+                                                <div className="text-xs text-slate-500">Show "Share this poll" link to voters</div>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={localShowShareButton}
+                                                onChange={(e) => {
+                                                    const enabled = e.target.checked;
+                                                    setLocalShowShareButton(enabled);
+                                                    updatePollSetting('showShareButton', enabled);
+                                                }}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-2 ml-13">
+                                        When enabled, voters see a share button while taking the poll.
+                                    </p>
                                 </div>
                                 
                                 <button

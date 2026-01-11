@@ -136,7 +136,8 @@ const handler: Handler = async (event) => {
             type: pollData.type,
             theme: pollData.theme,
             createdAt: pollData.createdAt,
-            allowedViews: settings.allowedViews || ['bar', 'pie']
+            allowedViews: settings.allowedViews || ['bar', 'pie'],
+            showSocialShare: settings.showSocialShare !== false // Default true
         };
 
         // Prepare public results (strip sensitive vote data)

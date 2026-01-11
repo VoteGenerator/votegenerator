@@ -194,6 +194,7 @@ export interface PollSettings {
     allowedViews?: string[];      // Which views are available on public page ['bar', 'pie']
     showShareButton?: boolean;    // Show share button on voting/results page
     shareKey?: string;            // Optional key for restricted public access
+    showSocialShare?: boolean;    // Show social share buttons on public results page
 }
 
 export interface EmailEntry {

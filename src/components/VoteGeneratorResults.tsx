@@ -1027,13 +1027,37 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <Activity size={16} /> Velocity
                     </button>
                     
-                    <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <MapIcon size={16} /> Geography
-                    </button>
+                    {/* Geography - Premium only */}
+                    {isPaidUser ? (
+                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <MapIcon size={16} /> Geography
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => setViewMode('map')}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
+                            title="Upgrade to Pro for Geography view"
+                        >
+                            <MapIcon size={16} /> Geography
+                            <Lock size={12} className="text-slate-400" />
+                        </button>
+                    )}
 
-                    <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <LayoutGrid size={16} /> Grid
-                    </button>
+                    {/* Grid - Premium only */}
+                    {isPaidUser ? (
+                        <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <LayoutGrid size={16} /> Grid
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
+                            title="Upgrade to Pro for Grid view"
+                        >
+                            <LayoutGrid size={16} /> Grid
+                            <Lock size={12} className="text-slate-400" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Download Chart as PNG */}
@@ -1110,6 +1134,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
             {/* Chart Container - for PNG export */}
             <div id="poll-results-chart" className="bg-white rounded-2xl p-4">
+            
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
                 {/* Show TIE banner when there's a tie */}
@@ -1549,10 +1574,44 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             animate={{ rotate: 0, scale: 1, opacity: 1 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                          >
-                             <div 
-                                className="w-full h-full rounded-full border-4 border-slate-50 shadow-inner"
-                                style={{ background: `conic-gradient(${pieGradient})` }}
-                             />
+                             {/* SVG Pie Chart for better PNG export */}
+                             <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                                 {pieData.map((d, i) => {
+                                     const startAngle = d.startAngle * (Math.PI / 180);
+                                     const endAngle = (d.startAngle + d.angle) * (Math.PI / 180);
+                                     const largeArcFlag = d.angle > 180 ? 1 : 0;
+                                     const x1 = 50 + 48 * Math.cos(startAngle);
+                                     const y1 = 50 + 48 * Math.sin(startAngle);
+                                     const x2 = 50 + 48 * Math.cos(endAngle);
+                                     const y2 = 50 + 48 * Math.sin(endAngle);
+                                     
+                                     // Handle full circle case
+                                     if (d.angle >= 359.9) {
+                                         return (
+                                             <circle
+                                                 key={d.id}
+                                                 cx="50"
+                                                 cy="50"
+                                                 r="48"
+                                                 fill={d.color}
+                                                 stroke="#fff"
+                                                 strokeWidth="1"
+                                             />
+                                         );
+                                     }
+                                     
+                                     const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                                     return (
+                                         <path
+                                             key={d.id}
+                                             d={pathData}
+                                             fill={d.color}
+                                             stroke="#fff"
+                                             strokeWidth="1"
+                                         />
+                                     );
+                                 })}
+                             </svg>
                              <motion.div 
                                 className="absolute inset-0 flex items-center justify-center"
                                 initial={{ scale: 0 }}
@@ -1581,7 +1640,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                          <div className="flex items-center gap-3">
                                              <motion.div 
                                                 className="w-4 h-4 rounded-full" 
-                                                style={{ background: d.color }}
+                                                style={{ backgroundColor: d.color }}
                                                 initial={{ scale: 0 }}
                                                 animate={{ scale: 1 }}
                                                 transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
@@ -1625,15 +1684,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     <div key={i} className="flex items-center gap-4">
                                         <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
                                         <div className="flex-1 h-0.5 bg-indigo-200"></div>
-                                        <div className="bg-indigo-50 px-3 py-2 rounded-lg">
-                                            <span className="text-sm font-medium text-indigo-700">
+                                        <div className="bg-indigo-50 px-4 py-2 rounded-lg text-center min-w-[140px]">
+                                            <span className="text-sm font-medium text-indigo-700 block">
                                                 {new Date(getVoteTime(vote)).toLocaleString([], { 
                                                     month: 'short', day: 'numeric', 
                                                     hour: '2-digit', minute: '2-digit' 
                                                 })}
                                             </span>
                                             {vote.analytics?.country && (
-                                                <span className="ml-2 text-xs text-slate-500">
+                                                <span className="text-xs text-slate-500">
                                                     {getCountryFlag(getCountryName(vote.analytics.country))}
                                                 </span>
                                             )}
@@ -1696,6 +1755,36 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
                     >
+                        {/* Free user upgrade prompt */}
+                        {isFreeUser ? (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <MapIcon size={32} className="text-indigo-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Geographic Insights</h3>
+                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                                    See where your voters are located with detailed country breakdowns, flags, and percentage distribution.
+                                </p>
+                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 max-w-sm mx-auto border border-indigo-100">
+                                    <div className="flex items-center justify-center gap-3 text-slate-600 mb-4">
+                                        <span className="text-2xl">🇺🇸</span>
+                                        <span className="text-2xl">🇬🇧</span>
+                                        <span className="text-2xl">🇨🇦</span>
+                                        <span className="text-2xl">🇦🇺</span>
+                                        <span className="text-slate-400">...</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Unlock voter location data</p>
+                                    <a 
+                                        href="/#pricing" 
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg shadow-indigo-200"
+                                    >
+                                        <Crown size={18} />
+                                        Upgrade to Pro
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                        <>
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <MapIcon size={24} className="text-indigo-500"/> Voter Geography
@@ -1834,6 +1923,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 </>
                             );
                         })()}
+                        </>
+                        )}
                     </motion.div>
                 )}
 
@@ -1846,6 +1937,61 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
+                        {/* Free user upgrade prompt */}
+                        {isFreeUser ? (
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <LayoutGrid size={32} className="text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Detailed Vote Grid</h3>
+                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                                    See every individual vote in a detailed table view with timestamps, locations, devices, and selected options.
+                                </p>
+                                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto border border-emerald-100">
+                                    {/* Preview table */}
+                                    <div className="overflow-hidden rounded-lg border border-slate-200 mb-4">
+                                        <table className="w-full text-xs">
+                                            <thead className="bg-slate-50">
+                                                <tr>
+                                                    <th className="p-2 text-left text-slate-500">#</th>
+                                                    <th className="p-2 text-center text-slate-500">🌍</th>
+                                                    <th className="p-2 text-center text-slate-500">📱</th>
+                                                    <th className="p-2 text-slate-500">Choice</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-slate-400">
+                                                <tr className="border-t border-slate-100">
+                                                    <td className="p-2">1</td>
+                                                    <td className="p-2 text-center">🇺🇸</td>
+                                                    <td className="p-2 text-center">💻</td>
+                                                    <td className="p-2">✓</td>
+                                                </tr>
+                                                <tr className="border-t border-slate-100 opacity-50">
+                                                    <td className="p-2">2</td>
+                                                    <td className="p-2 text-center">🇬🇧</td>
+                                                    <td className="p-2 text-center">📱</td>
+                                                    <td className="p-2">✓</td>
+                                                </tr>
+                                                <tr className="border-t border-slate-100 opacity-30">
+                                                    <td className="p-2">...</td>
+                                                    <td className="p-2 text-center">...</td>
+                                                    <td className="p-2 text-center">...</td>
+                                                    <td className="p-2">...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <a 
+                                        href="/#pricing" 
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-200"
+                                    >
+                                        <Crown size={18} />
+                                        Upgrade to Pro
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                        <>
                         {/* Main Table */}
                         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
                             <div className="overflow-x-auto">
@@ -1924,13 +2070,13 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             }
                                                         } else if (isMeeting) {
                                                             if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
                                                             } else if (vote.choicesMaybe?.includes(opt.id)) {
-                                                                cellContent = <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
                                                             }
                                                         } else {
                                                             if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
                                                             }
                                                         }
                                                         
@@ -1964,6 +2110,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 </table>
                             </div>
                         </div>
+                        </>
+                        )}
                     </motion.div>
                 )}
                 
@@ -2559,6 +2707,16 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 )}
 
             </AnimatePresence>
+            
+            {/* Branding footer for PNG exports */}
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-indigo-400">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" opacity="0.3"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="font-medium">VoteGenerator.com</span>
+            </div>
             </div>
         </div>
         </>

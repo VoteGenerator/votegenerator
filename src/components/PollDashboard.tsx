@@ -1067,7 +1067,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                                     const current = poll.settings?.allowedViews || ['bar', 'pie'];
                                                                     const updated = e.target.checked 
                                                                         ? [...current, view]
-                                                                        : current.filter(v => v !== view);
+                                                                        : current.filter((v: string) => v !== view);
                                                                     try {
                                                                         await fetch('/.netlify/functions/vg-update-settings', {
                                                                             method: 'POST',

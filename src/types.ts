@@ -187,6 +187,13 @@ export interface PollSettings {
     // ANONYMOUS MODE (Phase 2)
     // =========================================
     anonymousMode?: boolean;      // Hide individual responses, show only aggregates
+    // =========================================
+    // PUBLIC SHARING SETTINGS
+    // =========================================
+    publicResults?: boolean;      // Enable public shareable results page
+    allowedViews?: string[];      // Which views are available on public page ['bar', 'pie']
+    showShareButton?: boolean;    // Show share button on voting/results page
+    shareKey?: string;            // Optional key for restricted public access
 }
 
 export interface EmailEntry {

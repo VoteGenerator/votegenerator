@@ -186,6 +186,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [analyticsDateRange, setAnalyticsDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
     const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
     const [isExporting, setIsExporting] = useState(false);
+    const [isExportingPng, setIsExportingPng] = useState(false);
 
     // Computed values
     const tier = useMemo(() => {
@@ -1050,38 +1051,74 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
                                 {/* Results Chart PNG - FREE */}
                                 <button
+                                    disabled={isExportingPng}
                                     onClick={async () => {
-                                        // Use html2canvas to capture the results chart
+                                        setIsExportingPng(true);
+                                        
+                                        // Switch to Results tab first to ensure chart is rendered
+                                        const previousTab = activeTab;
+                                        setActiveTab('results');
+                                        
+                                        // Wait for React to render the Results tab
+                                        await new Promise(resolve => setTimeout(resolve, 500));
+                                        
                                         const resultsEl = document.getElementById('poll-results-chart');
                                         if (!resultsEl) {
-                                            alert('Results chart not found. Make sure you\'re on the Results tab first.');
+                                            alert('Results chart not found. Please try again.');
+                                            setActiveTab(previousTab);
+                                            setIsExportingPng(false);
                                             return;
                                         }
+                                        
                                         try {
-                                            // Dynamically import html2canvas
-                                            const html2canvas = (await import('html2canvas')).default;
+                                            // Load html2canvas from CDN if not already loaded
+                                            if (!(window as any).html2canvas) {
+                                                await new Promise<void>((resolve, reject) => {
+                                                    const script = document.createElement('script');
+                                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                                                    script.onload = () => resolve();
+                                                    script.onerror = () => reject(new Error('Failed to load html2canvas'));
+                                                    document.head.appendChild(script);
+                                                });
+                                            }
+                                            
+                                            const html2canvas = (window as any).html2canvas;
                                             const canvas = await html2canvas(resultsEl, {
                                                 backgroundColor: '#ffffff',
-                                                scale: 2, // Higher quality
-                                                logging: false
+                                                scale: 2,
+                                                logging: false,
+                                                useCORS: true
                                             });
+                                            
                                             const link = document.createElement('a');
                                             link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_results.png`;
                                             link.href = canvas.toDataURL('image/png');
                                             link.click();
+                                            
+                                            // Switch back to Downloads tab
+                                            setActiveTab(previousTab);
                                         } catch (error) {
                                             console.error('Failed to export chart:', error);
                                             alert('Failed to export chart. Please try again.');
+                                            setActiveTab(previousTab);
+                                        } finally {
+                                            setIsExportingPng(false);
                                         }
                                     }}
-                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 disabled:opacity-50"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                            <BarChart3 size={24} className="text-indigo-600" />
+                                            {isExportingPng ? (
+                                                <Loader2 size={24} className="text-indigo-600 animate-spin" />
+                                            ) : (
+                                                <BarChart3 size={24} className="text-indigo-600" />
+                                            )}
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-semibold text-slate-700">Results Chart (PNG)</div>
+                                            <div className="font-semibold text-slate-700">
+                                                {isExportingPng ? 'Generating...' : 'Results Chart (PNG)'}
+                                            </div>
                                             <div className="text-xs text-slate-500">Download results graph as an image</div>
                                         </div>
                                     </div>

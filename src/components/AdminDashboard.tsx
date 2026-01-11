@@ -1842,26 +1842,44 @@ const AdminDashboard: React.FC = () => {
                                 status: selectedActivePolls.has(p.id) ? 'live' as const : 'paused' as const
                             }));
                             
-                            // Save to session and localStorage
-                            if (session) {
-                                const updatedSession = { ...session, polls: updatedPolls };
-                                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
-                                setSession(updatedSession);
-                                
-                                // Also update vg_polls
-                                const vgPolls = updatedPolls.map(p => ({
-                                    id: p.id,
-                                    adminKey: p.adminKey,
-                                    title: p.title,
-                                    type: p.type,
-                                    createdAt: p.createdAt,
-                                    status: p.status
-                                }));
-                                localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
-                            }
+                            // Call backend to update poll statuses for each poll that changed
+                            const pollsToUpdate = updatedPolls.filter((p, i) => p.status !== polls[i].status);
                             
-                            // TODO: Call backend to update poll statuses
-                            // await fetch('/.netlify/functions/vg-update-status', { ... });
+                            try {
+                                await Promise.all(pollsToUpdate.map(p => 
+                                    fetch('/.netlify/functions/vg-update-status', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            pollId: p.id,
+                                            adminKey: p.adminKey,
+                                            status: p.status
+                                        })
+                                    })
+                                ));
+                                
+                                // Save to session and localStorage after successful backend update
+                                if (session) {
+                                    const updatedSession = { ...session, polls: updatedPolls };
+                                    localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                                    setSession(updatedSession);
+                                    
+                                    // Also update vg_polls
+                                    const vgPolls = updatedPolls.map(p => ({
+                                        id: p.id,
+                                        adminKey: p.adminKey,
+                                        title: p.title,
+                                        type: p.type,
+                                        createdAt: p.createdAt,
+                                        status: p.status
+                                    }));
+                                    localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
+                                }
+                            } catch (error) {
+                                console.error('Failed to update poll statuses:', error);
+                                alert('Failed to update poll statuses. Please try again.');
+                                return; // Don't close modal on error
+                            }
                             
                             setShowChooseActiveModal(false);
                         }}

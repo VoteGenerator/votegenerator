@@ -18,10 +18,23 @@ import {
 } from '../types';
 
 // ============================================================================
-// TIER CONFIGURATION (matches poll limits - shared pool)
+// TIER CONFIGURATION (matches actual pricing - monthly/yearly subscriptions)
+// Free: $0 | Pro: $19/mo or $190/yr | Business: $49/mo or $490/yr
 // ============================================================================
 
-const SURVEY_TIER_CONFIG = {
+type UserTier = 'free' | 'pro' | 'business';
+
+const SURVEY_TIER_CONFIG: Record<UserTier, {
+    maxQuestions: number;
+    maxSections: number;
+    maxResponses: number;
+    canExportCSV: boolean;
+    canExportExcel: boolean;
+    canExportPDF: boolean;
+    canViewIndividual: boolean;
+    canViewAllText: boolean;
+    textPreviewCount: number;
+}> = {
     free: {
         maxQuestions: 10,
         maxSections: 3,
@@ -488,7 +501,7 @@ const UpgradeCTA: React.FC<{ onUpgrade?: () => void }> = ({ onUpgrade }) => {
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:shadow-lg transition"
                     >
                         <Crown size={16} />
-                        Upgrade to Pro
+                        Upgrade to Pro - $19/mo
                     </a>
                 </div>
             </div>
@@ -735,13 +748,19 @@ interface SurveyResultsProps {
 const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin = false, onUpgrade }) => {
     const isAnonymous = poll.settings?.anonymousMode === true;
     
-    // Detect user tier
+    // Detect user tier - Pro ($19/mo) or Business ($49/mo)
     const tier: UserTier = useMemo(() => {
+        // Check poll's tier first (attached at creation)
+        const pollTier = (poll as any).tier;
+        if (pollTier === 'business') return 'business';
+        if (pollTier === 'pro') return 'pro';
+        
+        // Then check user's subscription tier from localStorage
         const storedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
         if (storedTier === 'business') return 'business';
         if (storedTier === 'pro') return 'pro';
         return 'free';
-    }, []);
+    }, [poll]);
     
     const tierConfig = SURVEY_TIER_CONFIG[tier];
     const isPaidUser = tier !== 'free';

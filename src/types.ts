@@ -107,15 +107,15 @@ export interface SurveySettings {
     // Display
     oneQuestionPerPage?: boolean; // Show one question at a time
     randomizeSections?: boolean;  // Randomize section order
+    shuffleQuestions?: boolean;   // Shuffle question order within sections
     
     // Completion
     redirectUrl?: string;         // Redirect after completion
     completionMessage?: string;   // Custom thank you message
     
-    // =========================================
-    // ANONYMOUS MODE (Phase 2)
-    // =========================================
-    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
+    // Privacy
+    anonymousMode?: boolean;      // Hide individual responses
+    hideResults?: boolean;        // Hide results from respondents
 }
 
 // Individual response to a survey
@@ -124,9 +124,9 @@ export interface SurveyResponse {
     pollId: string;
     respondentId?: string;        // Anonymous ID for tracking
     voterName?: string;
-    submittedAt?: string;
-    completedAt?: string;         // When the survey was completed
+    submittedAt: string;
     startedAt?: string;
+    completedAt?: string;         // When survey was completed
     completionTime?: number;      // Seconds to complete
     
     // Answers keyed by question ID
@@ -183,18 +183,6 @@ export interface PollSettings {
     dotBudget?: number;
     // Budget voting
     budgetLimit?: number;
-    // =========================================
-    // ANONYMOUS MODE (Phase 2)
-    // =========================================
-    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
-    // =========================================
-    // PUBLIC SHARING SETTINGS
-    // =========================================
-    publicResults?: boolean;      // Enable public shareable results page
-    allowedViews?: string[];      // Which views are available on public page ['bar', 'pie']
-    showShareButton?: boolean;    // Show share button on voting/results page
-    shareKey?: string;            // Optional key for restricted public access
-    showSocialShare?: boolean;    // Show social share buttons on public results page
 }
 
 export interface EmailEntry {
@@ -224,6 +212,7 @@ export interface Poll {
     displayName?: string;  // Internal name for admin dashboard (shorter than title)
     description?: string;
     pollType: string;
+    type?: string;         // Poll type identifier: 'multiple' | 'ranked' | 'survey' | etc.
     options: PollOption[];
     settings: PollSettings;
     createdAt: string;
@@ -455,4 +444,33 @@ export interface StoredVote {
     ratingVotes?: Record<string, number>;
     surveyAnswers?: Record<string, SurveyAnswer>;
     isSurvey?: boolean;
+}
+
+// ============================================================================
+// COMPONENT PROPS INTERFACES
+// ============================================================================
+
+// SurveyBuilder component props
+export interface SurveyBuilderProps {
+    sections: SurveySection[];
+    onChange: (sections: SurveySection[]) => void;
+    maxQuestions?: number;
+    maxSections?: number;
+    tier?: 'free' | 'pro' | 'business';
+    readOnly?: boolean;
+}
+
+// SurveyVote component props
+export interface SurveyVoteProps {
+    poll: Poll;
+    onComplete?: () => void | Promise<void>;
+    onSubmit?: (answers: Record<string, SurveyAnswer>) => void | Promise<void>;
+}
+
+// SurveyResults component props
+export interface SurveyResultsProps {
+    poll: Poll;
+    responses: SurveyResponse[];
+    isAdmin?: boolean;
+    onUpgrade?: () => void;
 }

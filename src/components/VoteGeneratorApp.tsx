@@ -705,7 +705,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     results={{ 
                                         totalVotes: viewState.responses.length, 
                                         votes: viewState.responses,
-                                        counts: {},
+                                        rounds: [],
                                         winnerId: null 
                                     }}
                                     adminKey={(() => {

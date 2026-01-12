@@ -263,12 +263,13 @@ const SurveyCreatePage: React.FC = () => {
                             
                             {/* Survey Builder */}
                             <SurveyBuilder
-                                sections={sections}
-                                onChange={setSections}
-                                settings={surveySettings}
-                                updateSettings={setSurveySettings}
-                                maxQuestions={maxQuestions}
-                                maxSections={maxSections}
+                                initialSections={sections}
+                                initialSettings={surveySettings}
+                                onChange={(newSections, newSettings) => {
+                                    setSections(newSections);
+                                    setSurveySettings(newSettings);
+                                }}
+                                tier={tier}
                             />
                             
                             {/* Next Button */}

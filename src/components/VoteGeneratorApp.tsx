@@ -626,7 +626,7 @@ const VoteGeneratorApp: React.FC = () => {
                         <motion.div key="survey-vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <SurveyVote 
                                 poll={viewState.poll} 
-                                onComplete={async () => {
+                                onSubmit={async () => {
                                     const { surveyId, adminKey } = parseHash();
                                     if (!surveyId) return;
                                     

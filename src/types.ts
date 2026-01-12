@@ -183,6 +183,13 @@ export interface PollSettings {
     dotBudget?: number;
     // Budget voting
     budgetLimit?: number;
+    // Public results sharing
+    publicResults?: boolean;
+    showShareButton?: boolean;
+    allowedViews?: string[];
+    showSocialShare?: boolean;
+    // Survey/Anonymous mode
+    anonymousMode?: boolean;
 }
 
 export interface EmailEntry {
@@ -452,19 +459,17 @@ export interface StoredVote {
 
 // SurveyBuilder component props
 export interface SurveyBuilderProps {
-    sections: SurveySection[];
-    onChange: (sections: SurveySection[]) => void;
-    maxQuestions?: number;
-    maxSections?: number;
-    tier?: 'free' | 'pro' | 'business';
-    readOnly?: boolean;
+    initialSections?: SurveySection[];
+    initialSettings?: SurveySettings;
+    onChange?: (sections: SurveySection[], settings: SurveySettings) => void;
+    tier?: string;
 }
 
 // SurveyVote component props
 export interface SurveyVoteProps {
     poll: Poll;
-    onComplete?: () => void | Promise<void>;
-    onSubmit?: (answers: Record<string, SurveyAnswer>) => void | Promise<void>;
+    onSubmit: (response: SurveyResponse) => Promise<void>;
+    voterName?: string;
 }
 
 // SurveyResults component props

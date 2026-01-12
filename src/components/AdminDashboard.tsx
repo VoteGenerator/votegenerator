@@ -27,6 +27,7 @@ const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string
     rating: { label: 'Rating', icon: SlidersHorizontal, color: 'text-cyan-600', bg: 'bg-cyan-50' },
     rsvp: { label: 'RSVP', icon: Users, color: 'text-sky-600', bg: 'bg-sky-50' },
     image: { label: 'Visual', icon: ImageIcon, color: 'text-pink-600', bg: 'bg-pink-50' },
+    survey: { label: 'Survey', icon: FileEdit, color: 'text-emerald-600', bg: 'bg-emerald-50' },
 };
 
 // ============================================================================
@@ -631,9 +632,13 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
+        // Use different hash for surveys vs polls
+        const isSurvey = poll.type === 'survey';
+        const hashParam = isSurvey ? 'survey' : 'id';
+        
         const url = type === 'admin'
-            ? `${window.location.origin}/#id=${poll.id}&admin=${poll.adminKey}`
-            : `${window.location.origin}/#id=${poll.id}`;
+            ? `${window.location.origin}/#${hashParam}=${poll.id}&admin=${poll.adminKey}`
+            : `${window.location.origin}/#${hashParam}=${poll.id}`;
         navigator.clipboard.writeText(url);
         setCopiedId(`${poll.id}-${type}`);
         setTimeout(() => setCopiedId(null), 2000);
@@ -1289,7 +1294,10 @@ const AdminDashboard: React.FC = () => {
                                                             </button>
                                                         )}
                                                         <a
-                                                            href={`/#id=${poll.id}&admin=${poll.adminKey}`}
+                                                            href={poll.type === 'survey' 
+                                                                ? `/#survey=${poll.id}&admin=${poll.adminKey}`
+                                                                : `/#id=${poll.id}&admin=${poll.adminKey}`
+                                                            }
                                                             className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
                                                             title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
                                                         >
@@ -1779,9 +1787,10 @@ const AdminDashboard: React.FC = () => {
                 {showShareCards && (() => {
                     const poll = polls.find(p => p.id === showShareCards);
                     if (!poll) return null;
+                    const hashParam = poll.type === 'survey' ? 'survey' : 'id';
                     const pollUrl = poll.customSlug 
                         ? `${window.location.origin}/p/${poll.customSlug}`
-                        : `${window.location.origin}/#id=${poll.id}`;
+                        : `${window.location.origin}/#${hashParam}=${poll.id}`;
                     return (
                         <motion.div 
                             initial={{ opacity: 0 }} 

@@ -19,6 +19,9 @@ import VoteGeneratorEdit from './VoteGeneratorEdit';
 import VoterAdWall from './VoterAdWall';
 import PollDashboard from './PollDashboard';
 import RedditCommunityPage from './RedditCommunityPage';
+// Survey components
+import SurveyVote from './SurveyVote';
+import SurveyResults from './SurveyResults';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
@@ -42,6 +45,10 @@ type ViewState =
     | { type: 'ad-wall-after'; poll: Poll }
     | { type: 'results'; poll: Poll; results: RunoffResult; isAdmin?: boolean }
     | { type: 'edit'; poll: Poll; isAdmin: boolean }
+    | { type: 'survey-vote'; poll: Poll }
+    | { type: 'survey-ad-wall-before'; poll: Poll }
+    | { type: 'survey-ad-wall-after'; poll: Poll }
+    | { type: 'survey-results'; poll: Poll; responses: any[]; isAdmin?: boolean }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -57,7 +64,7 @@ const VoteGeneratorApp: React.FC = () => {
         
         // Handle special routes first
         if (hash === 'manage-subscription' || hash.startsWith('manage-subscription?')) {
-            return { specialRoute: 'manage-subscription', pollId: null, adminKey: null, resultsId: null, shareKey: null };
+            return { specialRoute: 'manage-subscription', pollId: null, adminKey: null, resultsId: null, shareKey: null, surveyId: null };
         }
         
         const params = new URLSearchParams(hash);
@@ -70,7 +77,21 @@ const VoteGeneratorApp: React.FC = () => {
                 pollId: null, 
                 adminKey: null, 
                 resultsId,
-                shareKey: params.get('key')
+                shareKey: params.get('key'),
+                surveyId: null
+            };
+        }
+        
+        // Check for survey route - /#survey=ID or /#survey=ID&admin=KEY
+        const surveyId = params.get('survey');
+        if (surveyId) {
+            return {
+                specialRoute: 'survey',
+                pollId: null,
+                adminKey: params.get('admin'),
+                resultsId: null,
+                shareKey: null,
+                surveyId
             };
         }
         
@@ -79,7 +100,8 @@ const VoteGeneratorApp: React.FC = () => {
             pollId: params.get('id'),
             adminKey: params.get('admin'),
             resultsId: null,
-            shareKey: null
+            shareKey: null,
+            surveyId: null
         };
     }, []);
 
@@ -90,7 +112,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     const loadView = useCallback(async (silent = false) => {
-        const { specialRoute, pollId, adminKey, resultsId, shareKey } = parseHash();
+        const { specialRoute, pollId, adminKey, resultsId, shareKey, surveyId } = parseHash();
 
         // Handle special routes
         if (specialRoute === 'manage-subscription') {
@@ -100,6 +122,53 @@ const VoteGeneratorApp: React.FC = () => {
         
         if (specialRoute === 'public-results' && resultsId) {
             setViewState({ type: 'public-results', pollId: resultsId, shareKey: shareKey || undefined });
+            return;
+        }
+        
+        // Handle survey routes
+        if (specialRoute === 'survey' && surveyId) {
+            if (!silent) setViewState({ type: 'loading' });
+            
+            try {
+                let survey: Poll;
+                let isAdmin = false;
+                
+                if (adminKey) {
+                    survey = await getPollAsAdmin(surveyId, adminKey);
+                    isAdmin = true;
+                } else {
+                    survey = await getPoll(surveyId);
+                }
+                
+                // Check if user has completed this survey
+                const hasCompletedSurvey = localStorage.getItem(`vg_survey_completed_${surveyId}`);
+                const showSurveyResults = isAdmin || (hasCompletedSurvey && !survey.settings?.hideResults);
+                
+                if (showSurveyResults) {
+                    // Fetch survey responses
+                    const resultsResponse = await fetch(`/.netlify/functions/vg-get-results?id=${surveyId}${adminKey ? `&admin=${adminKey}` : ''}`);
+                    const resultsData = await resultsResponse.json();
+                    const responses = resultsData.votes || [];
+                    setViewState({ type: 'survey-results', poll: survey, responses, isAdmin });
+                } else if (hasCompletedSurvey && survey.settings?.hideResults) {
+                    setViewState({ type: 'error', message: "Thanks for completing the survey! Results are hidden by the organizer." });
+                } else {
+                    // Show survey - check for ad-wall
+                    const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
+                    
+                    if (shouldShowVoterAdWall(survey, isAdmin) && !adWallShown) {
+                        setViewState({ type: 'survey-ad-wall-before', poll: survey });
+                    } else {
+                        setViewState({ type: 'survey-vote', poll: survey });
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load survey:', error);
+                setViewState({ 
+                    type: 'error', 
+                    message: "Survey not found. It might have expired or the link is incorrect."
+                });
+            }
             return;
         }
 
@@ -526,6 +595,197 @@ const VoteGeneratorApp: React.FC = () => {
                                 onUpdate={() => loadView(false)}
                             />
                          </motion.div>
+                    )}
+
+                    {/* SURVEY VIEWS */}
+                    {/* Survey Ad-Wall Before - FREE tier only */}
+                    {viewState.type === 'survey-ad-wall-before' && (
+                        <motion.div 
+                            key="survey-ad-wall-before" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                        >
+                            <VoterAdWall
+                                variant="before-poll"
+                                pollTitle={viewState.poll.title}
+                                onComplete={() => {
+                                    const { surveyId } = parseHash();
+                                    if (surveyId) {
+                                        localStorage.setItem(`vg_adwall_before_${surveyId}`, 'true');
+                                    }
+                                    setViewState({ type: 'survey-vote', poll: viewState.poll });
+                                }}
+                                countdownSeconds={10}
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* Survey Vote View */}
+                    {viewState.type === 'survey-vote' && (
+                        <motion.div key="survey-vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <SurveyVote 
+                                poll={viewState.poll} 
+                                onComplete={async () => {
+                                    const { surveyId, adminKey } = parseHash();
+                                    if (!surveyId) return;
+                                    
+                                    // Mark survey as completed
+                                    localStorage.setItem(`vg_survey_completed_${surveyId}`, 'true');
+                                    
+                                    // Check if results are hidden
+                                    if (viewState.poll.settings?.hideResults) {
+                                        setViewState({ type: 'error', message: "Thanks for completing the survey! Results are hidden by the organizer." });
+                                        return;
+                                    }
+                                    
+                                    // Check if we need to show ad-wall after
+                                    const isAdmin = !!adminKey;
+                                    if (shouldShowVoterAdWall(viewState.poll, isAdmin)) {
+                                        setViewState({ type: 'survey-ad-wall-after', poll: viewState.poll });
+                                        return;
+                                    }
+                                    
+                                    // Go straight to results
+                                    loadView();
+                                }}
+                            />
+                            
+                            {/* Powered by VoteGenerator Badge - FREE tier only */}
+                            {(() => {
+                                const surveyTier = (viewState.poll as any).tier || 'free';
+                                if (surveyTier !== 'free') return null;
+                                
+                                return (
+                                    <div className="mt-8 text-center print:hidden">
+                                        <a 
+                                            href="https://votegenerator.com?ref=survey" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 hover:text-slate-800 transition-colors"
+                                        >
+                                            <img 
+                                                src="/logo.svg" 
+                                                alt="" 
+                                                className="w-4 h-4" 
+                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
+                                            Powered by <span className="font-semibold">VoteGenerator</span>
+                                        </a>
+                                    </div>
+                                );
+                            })()}
+                        </motion.div>
+                    )}
+
+                    {/* Survey Ad-Wall After - FREE tier only */}
+                    {viewState.type === 'survey-ad-wall-after' && (
+                        <motion.div 
+                            key="survey-ad-wall-after" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                        >
+                            <VoterAdWall
+                                variant="after-vote"
+                                pollTitle={viewState.poll.title}
+                                onComplete={() => loadView()}
+                                countdownSeconds={10}
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* Survey Results View */}
+                    {viewState.type === 'survey-results' && (
+                        <motion.div key="survey-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            {/* ADMIN VIEW - Full Dashboard with Survey Results */}
+                            {viewState.isAdmin ? (
+                                <PollDashboard
+                                    poll={viewState.poll}
+                                    results={{ 
+                                        totalVotes: viewState.responses.length, 
+                                        votes: viewState.responses,
+                                        counts: {},
+                                        winnerId: null 
+                                    }}
+                                    adminKey={(() => {
+                                        const hash = window.location.hash.slice(1);
+                                        const params = new URLSearchParams(hash);
+                                        return params.get('admin') || '';
+                                    })()}
+                                    onEdit={handleEditPoll}
+                                    onRefresh={() => loadView(true)}
+                                    isRefreshing={isRefreshing}
+                                    isSurvey={true}
+                                    surveyResponses={viewState.responses}
+                                />
+                            ) : (
+                                /* NON-ADMIN VIEW - Simple Survey Results Display */
+                                <div className="max-w-4xl mx-auto px-4 py-8">
+                                    <div className="flex justify-end mb-4 print:hidden">
+                                        <button 
+                                            onClick={handleManualRefresh}
+                                            className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors"
+                                            disabled={isRefreshing}
+                                        >
+                                            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                                            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-sm">
+                                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 text-center">
+                                            {viewState.poll.title}
+                                        </h1>
+                                        {viewState.poll.description && (
+                                            <p className="text-slate-500 text-center mb-8 max-w-2xl mx-auto">
+                                                {viewState.poll.description}
+                                            </p>
+                                        )}
+                                        
+                                        <SurveyResults 
+                                            poll={viewState.poll} 
+                                            responses={viewState.responses}
+                                            isAdmin={false}
+                                        />
+                                        
+                                        <div className="mt-10 text-center print:hidden">
+                                            <a 
+                                                href="/"
+                                                className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                            >
+                                                Create your own survey <ArrowRight size={14}/>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Powered by VoteGenerator Badge - FREE tier only */}
+                                    {(() => {
+                                        const surveyTier = (viewState.poll as any).tier || 'free';
+                                        if (surveyTier !== 'free') return null;
+                                        
+                                        return (
+                                            <div className="mt-8 text-center print:hidden">
+                                                <a 
+                                                    href="https://votegenerator.com?ref=survey-results" 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 hover:text-slate-800 transition-colors"
+                                                >
+                                                    <img 
+                                                        src="/logo.svg" 
+                                                        alt="" 
+                                                        className="w-4 h-4"
+                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                    />
+                                                    Powered by <span className="font-semibold">VoteGenerator</span>
+                                                </a>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                        </motion.div>
                     )}
 
                     {viewState.type === 'results' && (

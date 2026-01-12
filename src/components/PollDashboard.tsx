@@ -15,6 +15,7 @@ import {
     PieChart, Calendar, Filter, MessageSquare, Crown
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
+import SurveyResults from './SurveyResults';
 import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
 import CustomSlugInput from './CustomSlugInput';
@@ -38,6 +39,9 @@ interface PollDashboardProps {
     onEdit: () => void;
     onRefresh: () => void;
     isRefreshing: boolean;
+    // Survey-specific props
+    isSurvey?: boolean;
+    surveyResponses?: any[];
 }
 
 type TabType = 'results' | 'share' | 'settings' | 'downloads' | 'analytics';
@@ -171,7 +175,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     adminKey,
     onEdit,
     onRefresh,
-    isRefreshing
+    isRefreshing,
+    isSurvey = false,
+    surveyResponses = []
 }) => {
     // State
     const [activeTab, setActiveTab] = useState<TabType>('results');
@@ -623,13 +629,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     >
                         {/* Poll Results - Available to ALL */}
                         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                            <VoteGeneratorResults 
-                                poll={poll} 
-                                results={results}
-                                onEdit={onEdit}
-                                adminKey={adminKey}
-                                isAdmin={true}
-                            />
+                            {isSurvey || poll.type === 'survey' ? (
+                                <SurveyResults 
+                                    poll={poll} 
+                                    responses={surveyResponses.length > 0 ? surveyResponses : results.votes || []}
+                                    isAdmin={true}
+                                />
+                            ) : (
+                                <VoteGeneratorResults 
+                                    poll={poll} 
+                                    results={results}
+                                    onEdit={onEdit}
+                                    adminKey={adminKey}
+                                    isAdmin={true}
+                                />
+                            )}
                         </div>
 
                         {/* ======================================================== */}

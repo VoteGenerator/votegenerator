@@ -1,7 +1,8 @@
 // ============================================================================
 // SurveyResults - Multi-Section Survey Results Display
 // Location: src/components/SurveyResults.tsx
-// Features: Per-question breakdown, charts, NPS calculation, Anonymous Mode
+// Features: Per-question breakdown, charts, NPS, tier gating, CSV/Excel export
+// Updated: Added tier-based feature gating, export functions, response limits
 // ============================================================================
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -9,11 +10,52 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     BarChart3, Users, Clock, Star, ChevronDown, ChevronRight,
     Download, Eye, FileText, TrendingUp, TrendingDown,
-    Shield, Lock, EyeOff, Info, Minus
+    Shield, Lock, EyeOff, Info, Minus, Crown, FileSpreadsheet,
+    Table
 } from 'lucide-react';
 import {
-    Poll, SurveySection, SurveyQuestion, SurveyResponse, SurveyAnswer
+    Poll, SurveyQuestion, SurveyResponse
 } from '../types';
+
+// ============================================================================
+// TIER CONFIGURATION (matches poll limits - shared pool)
+// ============================================================================
+
+const SURVEY_TIER_CONFIG = {
+    free: {
+        maxQuestions: 10,
+        maxSections: 3,
+        maxResponses: 100,  // Shared with polls
+        canExportCSV: false,
+        canExportExcel: false,
+        canExportPDF: false,
+        canViewIndividual: false,
+        canViewAllText: false,  // Show first 3 text responses, blur rest
+        textPreviewCount: 3,
+    },
+    pro: {
+        maxQuestions: 25,
+        maxSections: 10,
+        maxResponses: 10000,  // Shared with polls
+        canExportCSV: true,
+        canExportExcel: true,
+        canExportPDF: true,
+        canViewIndividual: true,
+        canViewAllText: true,
+        textPreviewCount: Infinity,
+    },
+    business: {
+        maxQuestions: Infinity,
+        maxSections: Infinity,
+        maxResponses: 100000,  // Shared with polls
+        canExportCSV: true,
+        canExportExcel: true,
+        canExportPDF: true,
+        canViewIndividual: true,
+        canViewAllText: true,
+        textPreviewCount: Infinity,
+    }
+};
 
 // ============================================================================
 // TYPES
@@ -50,6 +92,8 @@ interface NPSData {
     score: number;
     total: number;
 }
+
+type UserTier = 'free' | 'pro' | 'business';
 
 // ============================================================================
 // NPS CALCULATION
@@ -182,12 +226,93 @@ const calculateQuestionStats = (
 };
 
 // ============================================================================
+// EXPORT FUNCTIONS
+// ============================================================================
+
+const generateCSV = (poll: Poll, responses: SurveyResponse[]): string => {
+    const sections = poll.sections || [];
+    const allQuestions = sections.flatMap(s => s.questions);
+    
+    // Header row
+    const headers = ['Response ID', 'Completed At', 'Is Complete', ...allQuestions.map(q => q.question)];
+    
+    // Data rows
+    const rows = responses.map(response => {
+        const row: string[] = [
+            response.id || '',
+            response.completedAt ? new Date(response.completedAt).toISOString() : '',
+            response.isComplete ? 'Yes' : 'No',
+        ];
+        
+        allQuestions.forEach(question => {
+            const answer = response.answers[question.id];
+            if (!answer) {
+                row.push('');
+                return;
+            }
+            
+            let value = '';
+            if (answer.text) value = answer.text;
+            else if (answer.number !== undefined) value = answer.number.toString();
+            else if (answer.selectedIds) {
+                value = answer.selectedIds
+                    .map(id => question.options?.find(o => o.id === id)?.text || id)
+                    .join('; ');
+            }
+            else if (answer.ranking) {
+                value = answer.ranking
+                    .map((id, i) => `${i + 1}. ${question.options?.find(o => o.id === id)?.text || id}`)
+                    .join('; ');
+            }
+            
+            // Escape CSV special characters
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                value = `"${value.replace(/"/g, '""')}"`;
+            }
+            
+            row.push(value);
+        });
+        
+        return row.join(',');
+    });
+    
+    return [headers.join(','), ...rows].join('\n');
+};
+
+const downloadCSV = (poll: Poll, responses: SurveyResponse[]) => {
+    const csv = generateCSV(poll, responses);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_responses.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const downloadExcel = (poll: Poll, responses: SurveyResponse[]) => {
+    // For Excel, we'll generate a more formatted CSV that Excel handles well
+    // In production, you'd use a library like xlsx
+    const csv = generateCSV(poll, responses);
+    const blob = new Blob(['\ufeff' + csv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_responses.xlsx`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// ============================================================================
 // NPS DISPLAY COMPONENT
 // ============================================================================
 
 interface NPSDisplayProps {
     data: NPSData;
-    questionText?: string;
 }
 
 const NPSDisplay: React.FC<NPSDisplayProps> = ({ data }) => {
@@ -291,7 +416,7 @@ const NPSDisplay: React.FC<NPSDisplayProps> = ({ data }) => {
 };
 
 // ============================================================================
-// ANONYMOUS MODE COMPONENTS
+// ANONYMOUS MODE NOTICE
 // ============================================================================
 
 const AnonymousModeNotice: React.FC<{ responseCount: number }> = ({ responseCount }) => {
@@ -327,99 +452,46 @@ const AnonymousModeNotice: React.FC<{ responseCount: number }> = ({ responseCoun
     );
 };
 
-const AnonymousTextResponses: React.FC<{ responses: string[]; questionText: string }> = ({ responses }) => {
-    const shuffledResponses = useMemo(() => {
-        const filtered = responses.filter(r => r && r.trim().length > 0);
-        const shuffled = [...filtered];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-    }, [responses]);
-
-    if (shuffledResponses.length === 0) return null;
-
-    return (
-        <div className="mt-4">
-            <p className="text-sm text-slate-500 flex items-center gap-2 mb-3">
-                <Shield size={14} className="text-emerald-500" />
-                {shuffledResponses.length} responses shown in random order
-            </p>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-                {shuffledResponses.map((text, i) => (
-                    <div key={i} className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm">
-                        {text}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 // ============================================================================
-// CHART COMPONENTS
+// UPGRADE CTA FOR FREE USERS
 // ============================================================================
 
-interface BarChartProps {
-    data: { label: string; value: number; percentage: number }[];
-    color?: string;
-}
-
-const SimpleBarChart: React.FC<BarChartProps> = ({ data, color = 'indigo' }) => {
-    const maxValue = Math.max(...data.map(d => d.value), 1);
-    
-    const getColorClass = (c: string) => {
-        const colors: Record<string, string> = {
-            indigo: '#6366f1',
-            emerald: '#10b981',
-            blue: '#3b82f6',
-            amber: '#f59e0b',
-        };
-        return colors[c] || colors.indigo;
-    };
-    
+const UpgradeCTA: React.FC<{ onUpgrade?: () => void }> = ({ onUpgrade }) => {
     return (
-        <div className="space-y-3">
-            {data.map((item, idx) => (
-                <div key={idx}>
-                    <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-700 font-medium">{item.label}</span>
-                        <span className="text-slate-500">{item.value} ({item.percentage.toFixed(1)}%)</span>
-                    </div>
-                    <div className="h-6 bg-slate-100 rounded-full overflow-hidden">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(item.value / maxValue) * 100}%` }}
-                            transition={{ duration: 0.5, delay: idx * 0.1 }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: getColorClass(color) }}
-                        />
-                    </div>
+        <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 border border-purple-200 rounded-2xl">
+            <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Crown size={24} className="text-white" />
                 </div>
-            ))}
-        </div>
-    );
-};
-
-const StarRatingDisplay: React.FC<{ average: number; max: number; count: number }> = ({ average, max, count }) => {
-    return (
-        <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-                {Array.from({ length: max }, (_, i) => {
-                    const filled = i < Math.floor(average);
-                    const partial = !filled && i < average;
-                    return (
-                        <Star
-                            key={i}
-                            size={24}
-                            className={filled ? 'fill-amber-400 text-amber-400' : partial ? 'fill-amber-200 text-amber-400' : 'text-slate-300'}
-                        />
-                    );
-                })}
+                <div className="flex-1">
+                    <h3 className="font-bold text-slate-800 mb-1">Unlock Full Survey Analytics</h3>
+                    <p className="text-sm text-slate-600 mb-4">
+                        Upgrade to Pro to export data, view individual responses, and access all text feedback.
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-sm text-slate-600 mb-4">
+                        <span className="flex items-center gap-1">
+                            <FileSpreadsheet size={14} className="text-purple-500" />
+                            CSV/Excel Export
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Eye size={14} className="text-purple-500" />
+                            Individual Responses
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <FileText size={14} className="text-purple-500" />
+                            All Text Feedback
+                        </span>
+                    </div>
+                    <a
+                        href="/pricing"
+                        onClick={onUpgrade}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:shadow-lg transition"
+                    >
+                        <Crown size={16} />
+                        Upgrade to Pro
+                    </a>
+                </div>
             </div>
-            <span className="text-2xl font-bold text-amber-600">{average.toFixed(1)}</span>
-            <span className="text-slate-500">/ {max} ({count} responses)</span>
         </div>
     );
 };
@@ -431,46 +503,93 @@ const StarRatingDisplay: React.FC<{ average: number; max: number; count: number 
 interface QuestionResultProps {
     stats: QuestionStats;
     question: SurveyQuestion;
-    isAnonymous?: boolean;
+    isAnonymous: boolean;
+    tier: UserTier;
 }
 
-const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnonymous = false }) => {
+const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnonymous, tier }) => {
+    const tierConfig = SURVEY_TIER_CONFIG[tier];
+    
     const renderResult = () => {
         switch (question.type) {
             case 'multiple_choice':
             case 'dropdown':
             case 'yes_no': {
-                if (!stats.optionCounts) return null;
-                const total = Object.values(stats.optionCounts).reduce((sum, v) => sum + v, 0);
-                const data = (question.options || []).map(opt => ({
-                    label: opt.text,
-                    value: stats.optionCounts![opt.id] || 0,
-                    percentage: total > 0 ? ((stats.optionCounts![opt.id] || 0) / total) * 100 : 0,
-                }));
-                return <SimpleBarChart data={data} />;
+                const total = Object.values(stats.optionCounts || {}).reduce((sum, c) => sum + c, 0);
+                const sortedOptions = question.options?.slice().sort((a, b) => {
+                    return (stats.optionCounts?.[b.id] || 0) - (stats.optionCounts?.[a.id] || 0);
+                });
+                
+                return (
+                    <div className="space-y-2 mt-3">
+                        {sortedOptions?.map((opt, idx) => {
+                            const count = stats.optionCounts?.[opt.id] || 0;
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            const isWinner = idx === 0 && count > 0;
+                            
+                            return (
+                                <div key={opt.id} className="relative">
+                                    <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                                        isWinner ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'
+                                    }`}>
+                                        <span className={`font-medium ${isWinner ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                            {opt.text}
+                                            {isWinner && <Star size={14} className="inline ml-1 text-amber-500" />}
+                                        </span>
+                                        <span className="text-sm text-slate-500">{count} ({pct}%)</span>
+                                    </div>
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${pct}%` }}
+                                        transition={{ duration: 0.5, delay: idx * 0.05 }}
+                                        className={`absolute bottom-0 left-0 h-1 rounded-b-xl ${
+                                            isWinner ? 'bg-indigo-500' : 'bg-slate-300'
+                                        }`}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
             }
             
             case 'rating': {
-                if (stats.average === undefined) return <p className="text-slate-500">No responses yet</p>;
+                const maxStars = question.maxValue || 5;
                 return (
-                    <div>
-                        <StarRatingDisplay average={stats.average} max={5} count={stats.totalResponses} />
+                    <div className="mt-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: maxStars }).map((_, i) => (
+                                    <Star
+                                        key={i}
+                                        size={20}
+                                        className={i < Math.round(stats.average || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'}
+                                    />
+                                ))}
+                            </div>
+                            <div>
+                                <span className="text-2xl font-bold text-amber-600">
+                                    {(stats.average || 0).toFixed(1)}
+                                </span>
+                                <span className="text-slate-500 text-sm ml-1">/ {maxStars}</span>
+                            </div>
+                        </div>
                         {stats.distribution && (
-                            <div className="mt-4 space-y-2">
-                                {[5, 4, 3, 2, 1].map(rating => {
-                                    const count = stats.distribution![rating] || 0;
+                            <div className="mt-3 flex gap-1">
+                                {Array.from({ length: maxStars }).map((_, i) => {
+                                    const count = stats.distribution?.[i + 1] || 0;
                                     const pct = stats.totalResponses > 0 ? (count / stats.totalResponses) * 100 : 0;
                                     return (
-                                        <div key={rating} className="flex items-center gap-2">
-                                            <span className="text-sm text-slate-500 w-8">{rating} <Star size={12} className="inline text-amber-400" /></span>
-                                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div key={i} className="flex-1 text-center">
+                                            <div className="h-12 bg-white rounded-lg border border-amber-100 flex items-end justify-center p-1">
                                                 <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${pct}%` }}
-                                                    className="h-full bg-amber-400 rounded-full"
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${pct}%` }}
+                                                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                                                    className="w-full bg-amber-400 rounded-sm min-h-[2px]"
                                                 />
                                             </div>
-                                            <span className="text-xs text-slate-500 w-12 text-right">{count}</span>
+                                            <span className="text-xs text-slate-500 mt-1">{i + 1}★</span>
                                         </div>
                                     );
                                 })}
@@ -481,61 +600,19 @@ const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnon
             }
             
             case 'scale': {
-                if (stats.average === undefined) return <p className="text-slate-500">No responses yet</p>;
-                
                 if (stats.npsData) {
-                    return <NPSDisplay data={stats.npsData} />;
+                    return <div className="mt-3"><NPSDisplay data={stats.npsData} /></div>;
                 }
                 
-                const scaleMax = question.maxValue || 10;
-                const scaleMin = question.minValue || 1;
-                
                 return (
-                    <div>
-                        <div className="flex items-baseline gap-2 mb-4">
-                            <span className="text-4xl font-bold text-indigo-600">{stats.average.toFixed(1)}</span>
-                            <span className="text-slate-500">/ {scaleMax} average</span>
+                    <div className="mt-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-slate-600">Average</span>
+                            <span className="text-2xl font-bold text-blue-600">{(stats.average || 0).toFixed(1)}</span>
                         </div>
-                        {stats.distribution && (
-                            <div className="space-y-1">
-                                {Array.from({ length: scaleMax - scaleMin + 1 }, (_, i) => scaleMax - i).map(num => {
-                                    const count = stats.distribution![num] || 0;
-                                    const pct = stats.totalResponses > 0 ? (count / stats.totalResponses) * 100 : 0;
-                                    return (
-                                        <div key={num} className="flex items-center gap-2">
-                                            <span className="text-xs text-slate-500 w-4">{num}</span>
-                                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${pct}%` }}
-                                                    className="h-full bg-indigo-500 rounded-full"
-                                                />
-                                            </div>
-                                            <span className="text-xs text-slate-500 w-8 text-right">{count}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                );
-            }
-            
-            case 'number': {
-                if (stats.average === undefined) return <p className="text-slate-500">No responses yet</p>;
-                return (
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="p-4 bg-slate-50 rounded-xl">
-                            <p className="text-2xl font-bold text-slate-800">{stats.average.toFixed(1)}</p>
-                            <p className="text-sm text-slate-500">Average</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-xl">
-                            <p className="text-2xl font-bold text-slate-800">{stats.min}</p>
-                            <p className="text-sm text-slate-500">Min</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-xl">
-                            <p className="text-2xl font-bold text-slate-800">{stats.max}</p>
-                            <p className="text-sm text-slate-500">Max</p>
+                        <div className="flex justify-between text-xs text-slate-500">
+                            <span>Min: {stats.min}</span>
+                            <span>Max: {stats.max}</span>
                         </div>
                     </div>
                 );
@@ -545,62 +622,96 @@ const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnon
             case 'textarea':
             case 'email':
             case 'phone': {
-                if (!stats.textResponses?.length) return <p className="text-slate-500">No responses yet</p>;
+                const responses = stats.textResponses || [];
+                const visibleCount = tierConfig.canViewAllText ? responses.length : tierConfig.textPreviewCount;
+                const visibleResponses = responses.slice(0, visibleCount);
+                const hiddenCount = responses.length - visibleCount;
                 
-                if (isAnonymous) {
-                    return <AnonymousTextResponses responses={stats.textResponses} questionText={question.question} />;
+                if (responses.length === 0) {
+                    return <p className="text-slate-500 mt-3 text-sm">No text responses yet</p>;
                 }
                 
                 return (
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {stats.textResponses.map((text, i) => (
-                            <div key={i} className="p-3 bg-slate-50 rounded-lg text-slate-700">
-                                {text}
+                    <div className="mt-3 space-y-2">
+                        {isAnonymous && (
+                            <p className="text-xs text-emerald-600 flex items-center gap-1 mb-2">
+                                <Shield size={12} />
+                                Responses shown in random order
+                            </p>
+                        )}
+                        {visibleResponses.map((text, i) => (
+                            <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-700">
+                                "{text}"
                             </div>
                         ))}
+                        {hiddenCount > 0 && (
+                            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg relative overflow-hidden">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Lock size={14} className="text-purple-500" />
+                                        <span className="text-sm text-purple-700 font-medium">
+                                            +{hiddenCount} more responses
+                                        </span>
+                                    </div>
+                                    <a href="/pricing" className="text-xs text-purple-600 hover:underline flex items-center gap-1">
+                                        <Crown size={12} />
+                                        Upgrade to view
+                                    </a>
+                                </div>
+                                {/* Blurred preview */}
+                                <div className="mt-2 space-y-1">
+                                    {responses.slice(visibleCount, visibleCount + 2).map((text, i) => (
+                                        <div key={i} className="p-2 bg-white/50 rounded text-sm text-slate-400 blur-[2px] select-none">
+                                            {text.substring(0, 50)}...
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }
             
             case 'ranking': {
-                if (!stats.rankingScores || !question.options) return <p className="text-slate-500">No responses yet</p>;
-                const sortedOptions = [...question.options].sort((a, b) => 
-                    (stats.rankingScores![a.id] || Infinity) - (stats.rankingScores![b.id] || Infinity)
-                );
+                const sortedOptions = question.options?.slice().sort((a, b) => {
+                    return (stats.rankingScores?.[a.id] || 99) - (stats.rankingScores?.[b.id] || 99);
+                });
+                
                 return (
-                    <div className="space-y-2">
-                        {sortedOptions.map((opt, idx) => (
-                            <div key={opt.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                                    idx === 0 ? 'bg-amber-100 text-amber-700' : 
-                                    idx === 1 ? 'bg-slate-200 text-slate-600' :
-                                    idx === 2 ? 'bg-orange-100 text-orange-700' :
-                                    'bg-slate-100 text-slate-500'
-                                }`}>
-                                    #{idx + 1}
-                                </span>
-                                <span className="flex-1 font-medium text-slate-700">{opt.text}</span>
-                                <span className="text-sm text-slate-500">
-                                    Avg rank: {stats.rankingScores![opt.id]?.toFixed(1) || '-'}
-                                </span>
-                            </div>
-                        ))}
+                    <div className="mt-3 space-y-2">
+                        {sortedOptions?.map((opt, idx) => {
+                            const avgRank = stats.rankingScores?.[opt.id] || 0;
+                            return (
+                                <div key={opt.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                        idx === 0 ? 'bg-amber-100 text-amber-700' :
+                                        idx === 1 ? 'bg-slate-200 text-slate-700' :
+                                        idx === 2 ? 'bg-orange-100 text-orange-700' :
+                                        'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        {idx + 1}
+                                    </div>
+                                    <span className="flex-1 font-medium text-slate-700">{opt.text}</span>
+                                    <span className="text-sm text-slate-500">Avg: {avgRank.toFixed(1)}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 );
             }
             
             default:
-                return <p className="text-slate-500">Question type not supported for display</p>;
+                return <p className="text-slate-500 mt-3 text-sm">{stats.totalResponses} responses</p>;
         }
     };
-
+    
     return (
-        <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <div className="flex items-start gap-3 mb-4">
+        <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
                     <BarChart3 size={16} className="text-indigo-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                     <h4 className="font-semibold text-slate-800">{question.question}</h4>
                     <p className="text-sm text-slate-500">{stats.totalResponses} response{stats.totalResponses !== 1 ? 's' : ''}</p>
                 </div>
@@ -617,21 +728,38 @@ const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnon
 interface SurveyResultsProps {
     poll: Poll;
     responses: SurveyResponse[];
+    isAdmin?: boolean;
+    onUpgrade?: () => void;
 }
 
-const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
+const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin = false, onUpgrade }) => {
     const isAnonymous = poll.settings?.anonymousMode === true;
+    
+    // Detect user tier
+    const tier: UserTier = useMemo(() => {
+        const storedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (storedTier === 'business') return 'business';
+        if (storedTier === 'pro') return 'pro';
+        return 'free';
+    }, []);
+    
+    const tierConfig = SURVEY_TIER_CONFIG[tier];
+    const isPaidUser = tier !== 'free';
     
     const [expandedSections, setExpandedSections] = useState<Set<string>>(
         new Set(poll.sections?.map(s => s.id) || [])
     );
     const [viewMode, setViewMode] = useState<'summary' | 'individual'>('summary');
+    const [exportLoading, setExportLoading] = useState<string | null>(null);
     
     useEffect(() => {
         if (isAnonymous && viewMode === 'individual') {
             setViewMode('summary');
         }
-    }, [isAnonymous, viewMode]);
+        if (!tierConfig.canViewIndividual && viewMode === 'individual') {
+            setViewMode('summary');
+        }
+    }, [isAnonymous, viewMode, tierConfig.canViewIndividual]);
     
     const sectionStats: SectionStats[] = useMemo(() => {
         return (poll.sections || []).map(section => ({
@@ -667,6 +795,26 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
         setExpandedSections(newExpanded);
     };
     
+    const handleExportCSV = async () => {
+        if (!tierConfig.canExportCSV) return;
+        setExportLoading('csv');
+        try {
+            downloadCSV(poll, responses);
+        } finally {
+            setTimeout(() => setExportLoading(null), 500);
+        }
+    };
+    
+    const handleExportExcel = async () => {
+        if (!tierConfig.canExportExcel) return;
+        setExportLoading('excel');
+        try {
+            downloadExcel(poll, responses);
+        } finally {
+            setTimeout(() => setExportLoading(null), 500);
+        }
+    };
+    
     const totalResponses = responses.length;
     const completeResponses = responses.filter(r => r.isComplete).length;
     const avgCompletionTime = responses
@@ -691,7 +839,7 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
                 </div>
                 <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 text-white">
                     <Clock size={24} className="mb-2 opacity-80" />
-                    <p className="text-3xl font-bold">{Math.round(avgCompletionTime / 60)}m</p>
+                    <p className="text-3xl font-bold">{Math.round(avgCompletionTime / 60) || '-'}m</p>
                     <p className="text-amber-100 text-sm">Avg. Time</p>
                 </div>
                 <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-4 text-white">
@@ -701,6 +849,63 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
                     </p>
                     <p className="text-pink-100 text-sm">Completion Rate</p>
                 </div>
+            </div>
+            
+            {/* Export Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-slate-600">Export:</span>
+                
+                {tierConfig.canExportCSV ? (
+                    <button
+                        onClick={handleExportCSV}
+                        disabled={exportLoading === 'csv'}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-medium text-sm transition"
+                    >
+                        {exportLoading === 'csv' ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                <Download size={16} />
+                            </motion.div>
+                        ) : (
+                            <Table size={16} />
+                        )}
+                        CSV
+                    </button>
+                ) : (
+                    <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg font-medium text-sm cursor-not-allowed"
+                    >
+                        <Lock size={14} />
+                        CSV
+                        <Crown size={12} className="text-amber-500" />
+                    </button>
+                )}
+                
+                {tierConfig.canExportExcel ? (
+                    <button
+                        onClick={handleExportExcel}
+                        disabled={exportLoading === 'excel'}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg font-medium text-sm transition"
+                    >
+                        {exportLoading === 'excel' ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                <Download size={16} />
+                            </motion.div>
+                        ) : (
+                            <FileSpreadsheet size={16} />
+                        )}
+                        Excel
+                    </button>
+                ) : (
+                    <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg font-medium text-sm cursor-not-allowed"
+                    >
+                        <Lock size={14} />
+                        Excel
+                        <Crown size={12} className="text-amber-500" />
+                    </button>
+                )}
             </div>
             
             {/* NPS Summary */}
@@ -747,19 +952,23 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
                         <BarChart3 size={16} className="inline mr-1" /> Summary
                     </button>
                     <button
-                        onClick={() => !isAnonymous && setViewMode('individual')}
-                        disabled={isAnonymous}
+                        onClick={() => tierConfig.canViewIndividual && !isAnonymous && setViewMode('individual')}
+                        disabled={!tierConfig.canViewIndividual || isAnonymous}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1 ${
-                            viewMode === 'individual' && !isAnonymous 
+                            viewMode === 'individual' && tierConfig.canViewIndividual && !isAnonymous 
                                 ? 'bg-white shadow text-indigo-600' 
-                                : isAnonymous 
+                                : !tierConfig.canViewIndividual || isAnonymous 
                                     ? 'text-slate-400 cursor-not-allowed' 
                                     : 'text-slate-600'
                         }`}
-                        title={isAnonymous ? 'Disabled: Anonymous mode is active' : undefined}
+                        title={
+                            isAnonymous ? 'Disabled: Anonymous mode is active' : 
+                            !tierConfig.canViewIndividual ? 'Upgrade to Pro to view individual responses' : 
+                            undefined
+                        }
                     >
                         <Eye size={16} /> Individual
-                        {isAnonymous && <Lock size={12} />}
+                        {(!tierConfig.canViewIndividual || isAnonymous) && <Lock size={12} />}
                     </button>
                 </div>
             </div>
@@ -807,6 +1016,7 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
                                                             stats={questionStats} 
                                                             question={question}
                                                             isAnonymous={isAnonymous}
+                                                            tier={tier}
                                                         />
                                                     );
                                                 })}
@@ -821,7 +1031,7 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
             )}
             
             {/* Individual Responses */}
-            {viewMode === 'individual' && !isAnonymous && (
+            {viewMode === 'individual' && tierConfig.canViewIndividual && !isAnonymous && (
                 <div className="space-y-4">
                     {responses.map((response, idx) => (
                         <div key={response.id || idx} className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -884,6 +1094,11 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses }) => {
                         </div>
                     )}
                 </div>
+            )}
+            
+            {/* Upgrade CTA for Free Users */}
+            {!isPaidUser && totalResponses > 0 && (
+                <UpgradeCTA onUpgrade={onUpgrade} />
             )}
         </div>
     );

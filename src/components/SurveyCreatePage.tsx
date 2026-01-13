@@ -4,7 +4,7 @@
 // Features: Build survey → Configure settings → Publish → Get shareable link
 // ============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, ArrowRight, Check, Send, Link2, Copy, Settings,
@@ -78,6 +78,30 @@ const SurveyCreatePage: React.FC = () => {
     // Tier
     const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
     const isFree = tier === 'free';
+    
+    // Load template from sessionStorage if present
+    useEffect(() => {
+        const templateData = sessionStorage.getItem('vg_survey_template');
+        if (templateData) {
+            try {
+                const template = JSON.parse(templateData);
+                // Clear the template from storage
+                sessionStorage.removeItem('vg_survey_template');
+                
+                // Apply template data
+                if (template.question) setTitle(template.question);
+                if (template.description) setDescription(template.description);
+                if (template.sections) setSections(template.sections);
+                if (template.surveySettings) setSurveySettings(prev => ({ ...prev, ...template.surveySettings }));
+                if (template.settings?.hideResults) setHideResults(true);
+                if (template.settings?.anonymousMode) {
+                    setSurveySettings(prev => ({ ...prev, anonymousMode: true }));
+                }
+            } catch (e) {
+                console.error('Failed to load survey template:', e);
+            }
+        }
+    }, []);
     const maxQuestions = isFree ? 10 : (tier === 'pro' ? 25 : Infinity);
     const maxSections = isFree ? 3 : (tier === 'pro' ? 10 : Infinity);
     

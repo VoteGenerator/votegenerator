@@ -22,6 +22,7 @@ import RedditCommunityPage from './RedditCommunityPage';
 // Survey components
 import SurveyVote from './SurveyVote';
 import SurveyResults from './SurveyResults';
+import SurveyCreatePage from './SurveyCreatePage';
 // NEW: Path-based survey pages
 import SurveyPage from '../pages/SurveyPage';
 import EmployeeSurveyPage from '../pages/EmployeeSurveyPage';
@@ -350,6 +351,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <CheckoutSuccess />
             ) : window.location.pathname === '/admin' ? (
                 <AdminDashboard />
+            ) : window.location.pathname === '/create/survey' || window.location.pathname.startsWith('/create/survey') ? (
+                <SurveyCreatePage />
             ) : window.location.pathname === '/create' ? (
                 <CreatePage />
             ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (

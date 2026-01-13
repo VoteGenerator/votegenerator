@@ -203,6 +203,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
 
     // Apply template data to form
     const applyTemplate = (template: PollTemplate) => {
+        // If this is a multi-question survey template, redirect to survey creator
+        if (template.pollType === 'survey' && (template as any).sections) {
+            // Store template in sessionStorage for SurveyCreatePage to pick up
+            sessionStorage.setItem('vg_survey_template', JSON.stringify(template));
+            window.location.href = '/create/survey?template=' + template.id;
+            return;
+        }
+        
+        // For regular poll templates (including basic "survey" type without sections)
         setTitle(template.question);
         setDescription(''); // Template description is for the template card, not the poll
         setOptions(template.options);

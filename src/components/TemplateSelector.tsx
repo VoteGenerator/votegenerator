@@ -711,6 +711,31 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </div>
                             </div>
                             
+                            {/* Featured Polls - Customer & Employee */}
+                            {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Polls</h3>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {csatTemplates.length > 0 && (
+                                            <FeaturedPollCard
+                                                pollCategory={FEATURED_POLL_CATEGORIES[0]}
+                                                templates={csatTemplates}
+                                                onSelectTemplate={onSelectTemplate}
+                                                onViewAll={() => setSearchQuery('customer')}
+                                            />
+                                        )}
+                                        {employeeTemplates.length > 0 && (
+                                            <FeaturedPollCard
+                                                pollCategory={FEATURED_POLL_CATEGORIES[1]}
+                                                templates={employeeTemplates}
+                                                onSelectTemplate={onSelectTemplate}
+                                                onViewAll={() => setSearchQuery('employee')}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
                             {/* Poll Templates Section */}
                             {pollTemplates.length > 0 && (
                                 <div ref={pollsSectionRef} className="mb-12 scroll-mt-48">
@@ -785,8 +810,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                {/* Featured Polls - Show when viewing polls or all */}
-                                {(typeFilter === 'polls' || typeFilter === 'all') && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                {/* Featured Polls - Show when viewing polls */}
+                                {typeFilter === 'polls' && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
                                     <div className="mb-8">
                                         <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Polls</h3>
                                         <div className="grid md:grid-cols-2 gap-6">

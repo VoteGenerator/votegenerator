@@ -296,20 +296,33 @@ const SurveyCreatePage: React.FC = () => {
                                 tier={tier}
                             />
                             
-                            {/* Next Button */}
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={() => setStep('settings')}
-                                    disabled={!canProceedToSettings}
-                                    className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition ${
-                                        canProceedToSettings
-                                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                    }`}
-                                >
-                                    Next: Settings
-                                    <ArrowRight size={18} />
-                                </button>
+                            {/* Next Button - Sticky at bottom */}
+                            <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-8 pb-4 -mx-4 px-4">
+                                <div className="flex justify-between items-center bg-white rounded-xl border border-slate-200 p-4 shadow-lg">
+                                    <div className="text-sm text-slate-600">
+                                        {title.trim() === '' && (
+                                            <span className="text-amber-600">⚠️ Enter a survey title above</span>
+                                        )}
+                                        {title.trim() !== '' && totalQuestions === 0 && (
+                                            <span className="text-amber-600">⚠️ Add at least one question</span>
+                                        )}
+                                        {title.trim() !== '' && totalQuestions > 0 && (
+                                            <span className="text-emerald-600">✓ Ready to continue</span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setStep('settings')}
+                                        disabled={!canProceedToSettings}
+                                        className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition ${
+                                            canProceedToSettings
+                                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md'
+                                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        Next: Settings
+                                        <ArrowRight size={18} />
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     )}

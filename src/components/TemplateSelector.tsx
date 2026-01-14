@@ -352,7 +352,7 @@ const FeaturedSurveyCard: React.FC<{
                     </button>
                 )}
                 <a
-                    href="/create/survey"
+                    href="/survey"
                     className="ml-auto px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
                 >
                     <Zap size={14} />
@@ -543,7 +543,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 Create Poll
                             </a>
                             <a
-                                href="/create/survey"
+                                href="/survey"
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
                             >
                                 <ClipboardList size={16} />
@@ -798,7 +798,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {/* Create Blank Survey Card */}
                                         <a
-                                            href="/create/survey"
+                                            href="/survey"
                                             className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-teal-300 hover:border-teal-500 bg-gradient-to-br from-teal-50 to-emerald-50 transition-all duration-300 hover:shadow-lg"
                                         >
                                             <div className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
@@ -870,7 +870,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     {/* Create Blank Survey Card - Show in surveys view */}
                                     {typeFilter === 'surveys' && (
                                         <a
-                                            href="/create/survey"
+                                            href="/survey"
                                             className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-teal-300 hover:border-teal-500 bg-gradient-to-br from-teal-50 to-emerald-50 transition-all duration-300 hover:shadow-lg"
                                         >
                                             <div className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">

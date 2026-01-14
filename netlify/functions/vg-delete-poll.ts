@@ -15,7 +15,7 @@ export const handler: Handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'DELETE, POST, OPTIONS',
         'Content-Type': 'application/json',
     };
 
@@ -23,7 +23,8 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
-    if (event.httpMethod !== 'POST') {
+    // Accept both DELETE and POST
+    if (event.httpMethod !== 'DELETE' && event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 

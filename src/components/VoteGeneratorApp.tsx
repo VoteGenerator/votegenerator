@@ -351,8 +351,6 @@ const VoteGeneratorApp: React.FC = () => {
                 <CheckoutSuccess />
             ) : window.location.pathname === '/admin' ? (
                 <AdminDashboard />
-            ) : window.location.pathname === '/create/survey' || window.location.pathname.startsWith('/create/survey') ? (
-                <SurveyCreatePage />
             ) : window.location.pathname === '/create' ? (
                 <CreatePage />
             ) : window.location.pathname === '/templates' || window.location.pathname.startsWith('/templates') ? (
@@ -365,8 +363,8 @@ const VoteGeneratorApp: React.FC = () => {
                 <TwitchStreamersPage />
             ) : window.location.pathname === '/reddit-polls' || window.location.pathname === '/reddit' ? (
                 <RedditCommunityPage />    
-            ) : window.location.pathname === '/survey' ? (
-                <SurveyPage />
+            ) : window.location.pathname === '/survey' || window.location.pathname === '/create/survey' ? (
+                <SurveyCreatePage />
             ) : window.location.pathname === '/employee-survey' ? (
                 <EmployeeSurveyPage />
             ) : window.location.pathname === '/customer-feedback' ? (

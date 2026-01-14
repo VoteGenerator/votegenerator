@@ -207,7 +207,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         if (template.pollType === 'survey') {
             // Store template in sessionStorage for SurveyCreatePage to pick up
             sessionStorage.setItem('vg_survey_template', JSON.stringify(template));
-            window.location.href = '/create/survey?template=' + template.id;
+            window.location.href = '/survey?template=' + template.id;
             return;
         }
         
@@ -502,7 +502,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 Poll Templates
                             </a>
                             <a 
-                                href="/create/survey" 
+                                href="/survey" 
                                 className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-xl font-bold hover:from-teal-600 hover:to-emerald-700 hover:shadow-lg transition-all text-center"
                             >
                                 Create Survey →

@@ -9,6 +9,7 @@ import { getStore } from '@netlify/blobs';
 interface DeletePollPayload {
     pollId: string;
     adminKey: string;
+    dashboardToken?: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -30,7 +31,7 @@ export const handler: Handler = async (event) => {
 
     try {
         const payload: DeletePollPayload = JSON.parse(event.body || '{}');
-        const { pollId, adminKey } = payload;
+        const { pollId, adminKey, dashboardToken } = payload;
 
         // Validate
         if (!pollId || !adminKey) {
@@ -41,14 +42,13 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get poll from store
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
+        const siteID = process.env.VG_SITE_ID || '';
+        const token = process.env.NETLIFY_AUTH_TOKEN || '';
 
-        const poll = await store.get(pollId, { type: 'json' }) as any;
+        // Get poll from store
+        const pollStore = getStore({ name: 'polls', siteID, token });
+
+        const poll = await pollStore.get(pollId, { type: 'json' }) as any;
         
         if (!poll) {
             return { 
@@ -66,10 +66,27 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Delete the poll
-        await store.delete(pollId);
+        // Delete the poll from polls store
+        await pollStore.delete(pollId);
+        console.log(`Poll ${pollId} deleted from polls store`);
 
-        console.log(`Poll ${pollId} deleted successfully by admin`);
+        // ALSO remove from customer record if dashboardToken provided
+        if (dashboardToken && dashboardToken !== 'free_user') {
+            try {
+                const customerStore = getStore({ name: 'customers', siteID, token });
+                const customer = await customerStore.get(dashboardToken, { type: 'json' }) as any;
+                
+                if (customer && customer.polls) {
+                    // Remove poll from customer's polls array
+                    customer.polls = customer.polls.filter((p: any) => p.id !== pollId);
+                    await customerStore.setJSON(dashboardToken, customer);
+                    console.log(`Poll ${pollId} removed from customer ${dashboardToken} record`);
+                }
+            } catch (customerErr) {
+                // Log but don't fail - poll is already deleted
+                console.error('Failed to update customer record:', customerErr);
+            }
+        }
 
         return {
             statusCode: 200,

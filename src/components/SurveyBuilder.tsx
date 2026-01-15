@@ -1193,7 +1193,8 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
             const pollData = {
                 title: surveyTitle,
                 description: surveyDescription,
-                type: 'survey',
+                pollType: 'survey',
+                isSurvey: true,
                 options: [],
                 sections,
                 surveySettings: settings,
@@ -1205,7 +1206,7 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                 tier: subscriptionTier,
             };
             
-            const response = await fetch('/.netlify/functions/vg-create-poll', {
+            const response = await fetch('/.netlify/functions/vg-create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pollData),

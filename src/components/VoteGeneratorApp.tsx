@@ -363,7 +363,9 @@ const VoteGeneratorApp: React.FC = () => {
                 <TwitchStreamersPage />
             ) : window.location.pathname === '/reddit-polls' || window.location.pathname === '/reddit' ? (
                 <RedditCommunityPage />    
-            ) : window.location.pathname === '/survey' || window.location.pathname === '/create/survey' ? (
+            ) : window.location.pathname === '/survey' ? (
+                <SurveyPage />
+            ) : window.location.pathname === '/create/survey' ? (
                 <SurveyCreatePage />
             ) : window.location.pathname === '/employee-survey' ? (
                 <EmployeeSurveyPage />

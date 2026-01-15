@@ -13,7 +13,8 @@ import {
     List, ListOrdered, CheckSquare, ToggleLeft, Grid3X3,
     Settings2, HelpCircle, Sparkles,
     FileText, Users, Heart, Briefcase, PartyPopper, Baby,
-    Shield, TrendingUp, MessageSquare
+    Shield, TrendingUp, MessageSquare,
+    Send, Link2, Loader2, Check, ExternalLink
 } from 'lucide-react';
 import { SurveySection, SurveyQuestion, QuestionType, SurveySettings } from '../types';
 
@@ -1090,6 +1091,14 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     const [showTemplates, setShowTemplates] = useState(!initialSections);
     const [showSettings, setShowSettings] = useState(false);
     
+    // Publishing state
+    const [surveyTitle, setSurveyTitle] = useState('');
+    const [surveyDescription, setSurveyDescription] = useState('');
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [publishError, setPublishError] = useState<string | null>(null);
+    const [createdSurvey, setCreatedSurvey] = useState<{ id: string; adminKey: string } | null>(null);
+    const [copiedLink, setCopiedLink] = useState(false);
+    
     // Get subscription tier from localStorage if not passed
     const subscriptionTier = tier || (typeof window !== 'undefined' 
         ? (localStorage.getItem('vg_subscription_tier') || 'free') 
@@ -1164,6 +1173,75 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
         }
         
         setShowTemplates(false);
+    };
+    
+    // Publish survey
+    const handlePublish = async () => {
+        if (!surveyTitle.trim()) {
+            setPublishError('Please enter a survey title');
+            return;
+        }
+        if (totalQuestions === 0) {
+            setPublishError('Please add at least one question');
+            return;
+        }
+        
+        setIsPublishing(true);
+        setPublishError(null);
+        
+        try {
+            const pollData = {
+                title: surveyTitle,
+                description: surveyDescription,
+                type: 'survey',
+                options: [],
+                sections,
+                surveySettings: settings,
+                settings: {
+                    hideResults: false,
+                    allowMultiple: false,
+                    anonymousMode: settings.anonymousMode || false,
+                },
+                tier: subscriptionTier,
+            };
+            
+            const response = await fetch('/.netlify/functions/vg-create-poll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pollData),
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to create survey');
+            }
+            
+            const result = await response.json();
+            setCreatedSurvey({ id: result.id, adminKey: result.adminKey });
+            
+            // Save to localStorage
+            const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+            existingPolls.push({
+                id: result.id,
+                adminKey: result.adminKey,
+                title: surveyTitle,
+                type: 'survey',
+                createdAt: new Date().toISOString(),
+            });
+            localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
+            
+        } catch (err: any) {
+            setPublishError(err.message || 'Failed to create survey');
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+    
+    // Copy link
+    const copyLink = (link: string) => {
+        navigator.clipboard.writeText(link);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
     };
     
     // Calculate totals - moved to top with tier limits
@@ -1478,6 +1556,141 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                     <a href="/pricing" className="text-amber-600 hover:underline text-sm">
                         Upgrade for unlimited sections
                     </a>
+                </div>
+            )}
+            
+            {/* ============================================ */}
+            {/* PUBLISH SECTION */}
+            {/* ============================================ */}
+            {!showTemplates && (
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border-2 border-indigo-200 p-6 mt-8">
+                    {!createdSurvey ? (
+                        <>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                                    <Send size={24} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-800">Publish Your Survey</h3>
+                                    <p className="text-sm text-slate-600">Give it a title and share with your audience</p>
+                                </div>
+                            </div>
+                            
+                            {/* Title & Description */}
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Survey Title *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={surveyTitle}
+                                        onChange={(e) => setSurveyTitle(e.target.value)}
+                                        placeholder="e.g., Employee Satisfaction Survey 2024"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none text-lg"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Description (optional)
+                                    </label>
+                                    <textarea
+                                        value={surveyDescription}
+                                        onChange={(e) => setSurveyDescription(e.target.value)}
+                                        placeholder="Tell respondents what this survey is about..."
+                                        rows={2}
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Error */}
+                            {publishError && (
+                                <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                                    {publishError}
+                                </div>
+                            )}
+                            
+                            {/* Publish Button */}
+                            <button
+                                onClick={handlePublish}
+                                disabled={isPublishing || !surveyTitle.trim() || totalQuestions === 0}
+                                className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition ${
+                                    isPublishing || !surveyTitle.trim() || totalQuestions === 0
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
+                                }`}
+                            >
+                                {isPublishing ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        Publishing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send size={20} />
+                                        Publish Survey
+                                    </>
+                                )}
+                            </button>
+                            
+                            {/* Validation hints */}
+                            {(!surveyTitle.trim() || totalQuestions === 0) && (
+                                <div className="mt-3 text-sm text-slate-500 text-center">
+                                    {!surveyTitle.trim() && <span>Enter a title above</span>}
+                                    {surveyTitle.trim() && totalQuestions === 0 && <span>Add at least one question</span>}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* SUCCESS STATE */
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Check size={32} className="text-emerald-600" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-2">Survey Published! 🎉</h3>
+                            <p className="text-slate-600 mb-6">Share the link below with your respondents</p>
+                            
+                            {/* Share Link */}
+                            <div className="bg-white rounded-xl border-2 border-slate-200 p-4 mb-4">
+                                <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+                                    Share Link
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={`${window.location.origin}/#survey=${createdSurvey.id}`}
+                                        className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono"
+                                    />
+                                    <button
+                                        onClick={() => copyLink(`${window.location.origin}/#survey=${createdSurvey.id}`)}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2"
+                                    >
+                                        {copiedLink ? <Check size={16} /> : <Link2 size={16} />}
+                                        {copiedLink ? 'Copied!' : 'Copy'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Action buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                <a
+                                    href={`/#survey=${createdSurvey.id}&admin=${createdSurvey.adminKey}`}
+                                    className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2"
+                                >
+                                    <ExternalLink size={18} />
+                                    View Results
+                                </a>
+                                <a
+                                    href="/admin"
+                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2"
+                                >
+                                    Go to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

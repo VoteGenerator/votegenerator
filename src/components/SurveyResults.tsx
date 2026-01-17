@@ -151,9 +151,21 @@ const calculateQuestionStats = (
     question: SurveyQuestion,
     responses: SurveyResponse[]
 ): QuestionStats => {
-    const answers = responses
-        .map(r => r.answers[question.id])
-        .filter(Boolean);
+    // Default stats in case of error
+    const defaultStats: QuestionStats = {
+        questionId: question?.id || 'unknown',
+        questionText: question?.question || 'Unknown Question',
+        questionType: question?.type || 'text',
+        totalResponses: 0,
+    };
+    
+    try {
+        if (!question || !question.id) return defaultStats;
+        
+        const answers = (responses || [])
+            .filter(r => r && r.answers && typeof r.answers === 'object')
+            .map(r => r.answers[question.id])
+            .filter(Boolean);
     
     const stats: QuestionStats = {
         questionId: question.id,
@@ -234,6 +246,10 @@ const calculateQuestionStats = (
     }
     
     return stats;
+    } catch (error) {
+        console.error('Error calculating question stats:', error, { questionId: question?.id });
+        return defaultStats;
+    }
 };
 
 // ============================================================================
@@ -256,7 +272,7 @@ const generateCSV = (poll: Poll, responses: SurveyResponse[]): string => {
         ];
         
         allQuestions.forEach(question => {
-            const answer = response.answers[question.id];
+            const answer = response.answers?.[question.id];
             if (!answer) {
                 row.push('');
                 return;
@@ -882,7 +898,13 @@ interface SurveyResultsProps {
     onUpgrade?: () => void;
 }
 
-const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin = false, onUpgrade }) => {
+const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawResponses, isAdmin = false, onUpgrade }) => {
+    // Ensure responses is always a valid array with valid entries
+    const responses = useMemo(() => {
+        if (!rawResponses || !Array.isArray(rawResponses)) return [];
+        return rawResponses.filter(r => r && typeof r === 'object');
+    }, [rawResponses]);
+    
     const isAnonymous = poll.settings?.anonymousMode === true;
     
     // Detect user tier - Pro ($19/mo) or Business ($49/mo)
@@ -918,18 +940,21 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin 
     }, [isAnonymous, viewMode, tierConfig.canViewIndividual]);
     
     const sectionStats: SectionStats[] = useMemo(() => {
-        return (poll.sections || []).map(section => ({
+        if (!poll.sections || !Array.isArray(poll.sections)) return [];
+        return poll.sections.map(section => ({
             sectionId: section.id,
             sectionTitle: section.title,
-            questions: section.questions.map(q => calculateQuestionStats(q, responses)),
+            questions: (section.questions || []).map(q => calculateQuestionStats(q, responses)),
         }));
     }, [poll.sections, responses]);
     
     const npsQuestions = useMemo(() => {
         const npsData: { sectionTitle: string; questionText: string; nps: NPSData }[] = [];
+        if (!sectionStats || !Array.isArray(sectionStats)) return npsData;
         sectionStats.forEach(section => {
+            if (!section.questions || !Array.isArray(section.questions)) return;
             section.questions.forEach(q => {
-                if (q.npsData) {
+                if (q && q.npsData) {
                     npsData.push({
                         sectionTitle: section.sectionTitle,
                         questionText: q.questionText,
@@ -1072,25 +1097,28 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin 
                         NPS Overview
                     </h3>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {npsQuestions.map((item, i) => (
-                            <div key={i} className="bg-white rounded-xl p-4 border border-blue-100">
-                                <p className="text-xs text-slate-500 mb-1">{item.sectionTitle}</p>
-                                <p className="text-sm font-medium text-slate-700 mb-3 line-clamp-2">{item.questionText}</p>
-                                <div className="flex items-center justify-between">
-                                    <span className={`text-3xl font-black ${
-                                        item.nps.score >= 30 ? 'text-emerald-600' :
-                                        item.nps.score >= 0 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
-                                        {item.nps.score > 0 ? '+' : ''}{item.nps.score}
-                                    </span>
-                                    <div className="flex h-2 w-24 rounded-full overflow-hidden">
-                                        <div className="bg-emerald-500" style={{ width: `${item.nps.promoterPct}%` }} />
-                                        <div className="bg-amber-400" style={{ width: `${item.nps.passivePct}%` }} />
-                                        <div className="bg-red-400" style={{ width: `${item.nps.detractorPct}%` }} />
+                        {npsQuestions.map((item, i) => {
+                            if (!item || !item.nps) return null;
+                            return (
+                                <div key={i} className="bg-white rounded-xl p-4 border border-blue-100">
+                                    <p className="text-xs text-slate-500 mb-1">{item.sectionTitle}</p>
+                                    <p className="text-sm font-medium text-slate-700 mb-3 line-clamp-2">{item.questionText}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className={`text-3xl font-black ${
+                                            item.nps.score >= 30 ? 'text-emerald-600' :
+                                            item.nps.score >= 0 ? 'text-amber-600' : 'text-red-600'
+                                        }`}>
+                                            {item.nps.score > 0 ? '+' : ''}{item.nps.score}
+                                        </span>
+                                        <div className="flex h-2 w-24 rounded-full overflow-hidden">
+                                            <div className="bg-emerald-500" style={{ width: `${item.nps.promoterPct || 0}%` }} />
+                                            <div className="bg-amber-400" style={{ width: `${item.nps.passivePct || 0}%` }} />
+                                            <div className="bg-red-400" style={{ width: `${item.nps.detractorPct || 0}%` }} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -1148,7 +1176,7 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin 
                                         </div>
                                         <div className="text-left">
                                             <h3 className="font-bold text-slate-800">{section.sectionTitle}</h3>
-                                            <p className="text-sm text-slate-500">{section.questions.length} questions</p>
+                                            <p className="text-sm text-slate-500">{section.questions?.length || 0} questions</p>
                                         </div>
                                     </div>
                                     {isExpanded ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
@@ -1163,8 +1191,8 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin 
                                             className="px-4 pb-4"
                                         >
                                             <div className="space-y-4">
-                                                {section.questions.map((questionStats, qIdx) => {
-                                                    const question = pollSection?.questions[qIdx];
+                                                {(section.questions || []).map((questionStats, qIdx) => {
+                                                    const question = pollSection?.questions?.[qIdx];
                                                     if (!question) return null;
                                                     return (
                                                         <QuestionResult 
@@ -1212,8 +1240,8 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses, isAdmin 
                                 {poll.sections?.map(section => (
                                     <div key={section.id}>
                                         <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">{section.title}</p>
-                                        {section.questions.map(question => {
-                                            const answer = response.answers[question.id];
+                                        {(section.questions || []).map(question => {
+                                            const answer = response.answers?.[question.id];
                                             if (!answer) return null;
                                             
                                             let displayValue = '';

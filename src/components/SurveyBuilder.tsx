@@ -5,7 +5,7 @@
 // Updated: Added Employee Engagement, CSAT, NPS templates + Anonymous Mode setting
 // ============================================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Copy,
@@ -1248,56 +1248,100 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     // Can publish check
     const canPublish = surveyTitle.trim() !== '' && totalQuestions > 0;
     
-    // If survey was created, show success
+    // Ad countdown state for free tier
+    const [adCountdown, setAdCountdown] = useState(10);
+    const [adComplete, setAdComplete] = useState(subscriptionTier !== 'free');
+    
+    // Ad countdown effect
+    useEffect(() => {
+        if (createdSurvey && subscriptionTier === 'free' && adCountdown > 0) {
+            const timer = setTimeout(() => setAdCountdown(adCountdown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+        if (adCountdown === 0) {
+            setAdComplete(true);
+        }
+    }, [createdSurvey, adCountdown, subscriptionTier]);
+    
+    // If survey was created, show success with ad wall for free users
     if (createdSurvey) {
         return (
-            <div className="max-w-2xl mx-auto">
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-200 p-8 text-center">
-                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Check size={40} className="text-emerald-600" />
+            <div className="max-w-2xl mx-auto space-y-6">
+                {/* Ad Wall for Free Users */}
+                {subscriptionTier === 'free' && !adComplete && (
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-6 text-center">
+                        <div className="text-amber-600 font-semibold mb-2">
+                            🎉 Survey Published Successfully!
+                        </div>
+                        <p className="text-slate-600 mb-4">
+                            Please wait while we prepare your share link...
+                        </p>
+                        {/* Ad placeholder */}
+                        <div className="bg-white rounded-xl border border-amber-200 p-8 mb-4">
+                            <div className="text-slate-400 text-sm">Advertisement</div>
+                            <div className="h-32 flex items-center justify-center text-slate-300">
+                                [Ad Space - 300x250]
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 text-slate-600">
+                            <Loader2 size={16} className="animate-spin" />
+                            Continue in {adCountdown} seconds...
+                        </div>
+                        <p className="text-xs text-slate-400 mt-3">
+                            <a href="/pricing" className="text-indigo-600 hover:underline">Upgrade to Pro</a> to skip ads
+                        </p>
                     </div>
-                    <h2 className="text-3xl font-bold text-slate-800 mb-2">Survey Published! 🎉</h2>
-                    <p className="text-slate-600 mb-8">Share the link below with your respondents</p>
-                    
-                    {/* Share Link */}
-                    <div className="bg-white rounded-xl border-2 border-slate-200 p-4 mb-6">
-                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
-                            Share Link
-                        </label>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="text"
-                                readOnly
-                                value={`${window.location.origin}/#survey=${createdSurvey.id}`}
-                                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono"
-                            />
-                            <button
-                                onClick={() => copyLink(`${window.location.origin}/#survey=${createdSurvey.id}`)}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2"
+                )}
+                
+                {/* Success Card - shown after ad or immediately for paid */}
+                {adComplete && (
+                    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-200 p-8 text-center">
+                        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Check size={40} className="text-emerald-600" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-slate-800 mb-2">Survey Published! 🎉</h2>
+                        <p className="text-slate-600 mb-8">Share the link below with your respondents</p>
+                        
+                        {/* Share Link */}
+                        <div className="bg-white rounded-xl border-2 border-slate-200 p-4 mb-6">
+                            <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+                                Share Link
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={`${window.location.origin}/#survey=${createdSurvey.id}`}
+                                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono"
+                                />
+                                <button
+                                    onClick={() => copyLink(`${window.location.origin}/#survey=${createdSurvey.id}`)}
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2"
+                                >
+                                    {copiedLink ? <Check size={16} /> : <Link2 size={16} />}
+                                    {copiedLink ? 'Copied!' : 'Copy'}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <a
+                                href={`/#survey=${createdSurvey.id}&admin=${createdSurvey.adminKey}`}
+                                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2"
                             >
-                                {copiedLink ? <Check size={16} /> : <Link2 size={16} />}
-                                {copiedLink ? 'Copied!' : 'Copy'}
-                            </button>
+                                <ExternalLink size={18} />
+                                View Results
+                            </a>
+                            <a
+                                href="/admin"
+                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2"
+                            >
+                                Go to Dashboard
+                            </a>
                         </div>
                     </div>
-                    
-                    {/* Action buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <a
-                            href={`/#survey=${createdSurvey.id}&admin=${createdSurvey.adminKey}`}
-                            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2"
-                        >
-                            <ExternalLink size={18} />
-                            View Results
-                        </a>
-                        <a
-                            href="/admin"
-                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2"
-                        >
-                            Go to Dashboard
-                        </a>
-                    </div>
-                </div>
+                )}
             </div>
         );
     }

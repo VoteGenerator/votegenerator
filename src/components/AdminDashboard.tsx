@@ -414,7 +414,15 @@ const AdminDashboard: React.FC = () => {
                     
                     if (customerData && customerData.dashboardToken) {
                         // Got it! Update localStorage and state
-                        const updatedSession = { ...sessionData, ...customerData };
+                        // IMPORTANT: Preserve local polls if they exist (in case delete happened)
+                        const updatedSession = { 
+                            ...sessionData, 
+                            ...customerData,
+                            // Keep local polls if we have them - they might be more up-to-date after deletes
+                            polls: sessionData.polls && sessionData.polls.length > 0 
+                                ? sessionData.polls 
+                                : customerData.polls || []
+                        };
                         localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
                         setSession(updatedSession);
                         
@@ -678,10 +686,22 @@ const AdminDashboard: React.FC = () => {
             const data = await response.json();
             
             if (response.ok) {
-                // Remove from local state
+                // Remove from local state (vg_user_session)
                 const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
                 localStorage.setItem('vg_user_session', JSON.stringify(updated));
                 setSession(updated);
+                
+                // ALSO remove from vg_polls (used by free users and merge logic)
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls) {
+                    try {
+                        const polls = JSON.parse(savedPolls);
+                        const updatedPolls = polls.filter((p: any) => p.id !== poll.id);
+                        localStorage.setItem('vg_polls', JSON.stringify(updatedPolls));
+                    } catch (e) {
+                        console.error('Failed to update vg_polls:', e);
+                    }
+                }
             } else if (data.upgradeRequired) {
                 // Tier restriction error
                 alert(data.error);
@@ -694,6 +714,18 @@ const AdminDashboard: React.FC = () => {
             const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
             localStorage.setItem('vg_user_session', JSON.stringify(updated));
             setSession(updated);
+            
+            // ALSO remove from vg_polls
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                try {
+                    const polls = JSON.parse(savedPolls);
+                    const updatedPolls = polls.filter((p: any) => p.id !== poll.id);
+                    localStorage.setItem('vg_polls', JSON.stringify(updatedPolls));
+                } catch (e) {
+                    console.error('Failed to update vg_polls:', e);
+                }
+            }
         }
     };
 

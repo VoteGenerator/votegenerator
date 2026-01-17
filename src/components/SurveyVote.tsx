@@ -589,7 +589,7 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                             }}
                         >
                             <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                                {poll.title || poll.question || 'Survey'}
+                                {poll.title || 'Survey'}
                             </h1>
                             {poll.description && (
                                 <p className="text-white/80">{poll.description}</p>

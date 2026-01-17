@@ -997,10 +997,21 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
     };
     
     const totalResponses = responses.length;
-    const completeResponses = responses.filter(r => r.isComplete).length;
-    const avgCompletionTime = responses
-        .filter(r => r.completionTime)
-        .reduce((sum, r) => sum + (r.completionTime || 0), 0) / (responses.filter(r => r.completionTime).length || 1);
+    // Treat responses as complete if they exist (submitted = complete)
+    const completeResponses = responses.filter(r => r.isComplete !== false).length;
+    
+    // Calculate average completion time (in seconds)
+    const responsesWithTime = responses.filter(r => r.completionTime && r.completionTime > 0);
+    const avgCompletionTime = responsesWithTime.length > 0
+        ? responsesWithTime.reduce((sum, r) => sum + (r.completionTime || 0), 0) / responsesWithTime.length
+        : 0;
+    
+    // Format time display
+    const formatTime = (seconds: number) => {
+        if (seconds <= 0) return '-';
+        if (seconds < 60) return `${Math.round(seconds)}s`;
+        return `${Math.round(seconds / 60)}m`;
+    };
     
     return (
         <div className="space-y-6">
@@ -1020,13 +1031,13 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                 </div>
                 <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 text-white">
                     <Clock size={24} className="mb-2 opacity-80" />
-                    <p className="text-3xl font-bold">{Math.round(avgCompletionTime / 60) || '-'}m</p>
+                    <p className="text-3xl font-bold">{formatTime(avgCompletionTime)}</p>
                     <p className="text-amber-100 text-sm">Avg. Time</p>
                 </div>
                 <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-4 text-white">
                     <TrendingUp size={24} className="mb-2 opacity-80" />
                     <p className="text-3xl font-bold">
-                        {totalResponses > 0 ? Math.round((completeResponses / totalResponses) * 100) : 0}%
+                        {totalResponses > 0 ? Math.round((completeResponses / totalResponses) * 100) : 100}%
                     </p>
                     <p className="text-pink-100 text-sm">Completion Rate</p>
                 </div>
@@ -1089,6 +1100,129 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                 )}
             </div>
             
+            {/* ============================================ */}
+            {/* VISUAL OVERVIEW - Charts for ALL users */}
+            {/* ============================================ */}
+            {totalResponses > 0 && (
+                <div className="bg-white rounded-2xl border-2 border-indigo-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4">
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                            <BarChart3 size={20} />
+                            Visual Overview
+                        </h3>
+                        <p className="text-indigo-100 text-sm">Quick insights from your survey responses</p>
+                    </div>
+                    
+                    <div className="p-6">
+                        {/* Show first 3 multiple choice questions as charts */}
+                        {(() => {
+                            const chartQuestions = sectionStats
+                                .flatMap(s => s.questions.map(q => ({ ...q, sectionTitle: s.sectionTitle })))
+                                .filter(q => ['multiple_choice', 'dropdown', 'yes_no'].includes(q.questionType))
+                                .slice(0, isPaidUser ? 6 : 3);
+                            
+                            if (chartQuestions.length === 0) {
+                                return (
+                                    <div className="text-center py-8 text-slate-500">
+                                        <BarChart3 size={48} className="mx-auto mb-3 text-slate-300" />
+                                        <p>No multiple choice questions to visualize</p>
+                                    </div>
+                                );
+                            }
+                            
+                            return (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {chartQuestions.map((q, idx) => {
+                                        const total = Object.values(q.optionCounts || {}).reduce((sum, c) => sum + c, 0);
+                                        const sortedEntries = Object.entries(q.optionCounts || {})
+                                            .sort(([,a], [,b]) => b - a);
+                                        
+                                        // Find the question to get option text
+                                        const questionData = poll.sections
+                                            ?.flatMap(s => s.questions || [])
+                                            .find(sq => sq.id === q.questionId);
+                                        
+                                        return (
+                                            <div key={q.questionId} className="bg-slate-50 rounded-xl p-4">
+                                                <p className="text-xs text-indigo-600 font-medium mb-1">{q.sectionTitle}</p>
+                                                <p className="text-sm font-semibold text-slate-800 mb-4 line-clamp-2">{q.questionText}</p>
+                                                
+                                                {/* Mini bar chart */}
+                                                <div className="space-y-2">
+                                                    {sortedEntries.slice(0, 4).map(([optId, count], i) => {
+                                                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                                        const optText = questionData?.options?.find(o => o.id === optId)?.text || optId;
+                                                        const colors = ['bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-amber-500'];
+                                                        
+                                                        return (
+                                                            <div key={optId}>
+                                                                <div className="flex justify-between text-xs mb-1">
+                                                                    <span className="text-slate-600 truncate max-w-[70%]">{optText}</span>
+                                                                    <span className="font-medium text-slate-700">{pct}%</span>
+                                                                </div>
+                                                                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                                    <motion.div
+                                                                        initial={{ width: 0 }}
+                                                                        animate={{ width: `${pct}%` }}
+                                                                        transition={{ duration: 0.5, delay: i * 0.1 }}
+                                                                        className={`h-full ${colors[i % colors.length]} rounded-full`}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {sortedEntries.length > 4 && (
+                                                        <p className="text-xs text-slate-400">+{sortedEntries.length - 4} more options</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                        
+                        {/* Upgrade prompt for more charts */}
+                        {!isPaidUser && (
+                            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Crown size={20} className="text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-slate-800 mb-1">Unlock Advanced Visualizations</h4>
+                                        <p className="text-sm text-slate-600 mb-3">
+                                            Get pie charts, donut charts, word clouds, and more with Pro.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <BarChart3 size={12} className="text-purple-500" /> Pie &amp; Donut Charts
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <FileText size={12} className="text-purple-500" /> Word Clouds
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <TrendingUp size={12} className="text-purple-500" /> NPS Gauges
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <Download size={12} className="text-purple-500" /> PDF Reports
+                                            </span>
+                                        </div>
+                                        <a
+                                            href="/pricing"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg text-sm hover:shadow-lg transition"
+                                        >
+                                            <Crown size={14} />
+                                            Upgrade to Pro - $19/mo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+            
             {/* NPS Summary */}
             {npsQuestions.length > 0 && (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
@@ -1123,9 +1257,12 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                 </div>
             )}
             
-            {/* View Toggle */}
+            {/* View Toggle - Detailed Results */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-800">Results by Section</h2>
+                <h2 className="text-xl font-bold text-slate-800">
+                    Detailed Results
+                    <span className="text-sm font-normal text-slate-500 ml-2">by question</span>
+                </h2>
                 <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
                     <button
                         onClick={() => setViewMode('summary')}
@@ -1278,11 +1415,6 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                         </div>
                     )}
                 </div>
-            )}
-            
-            {/* Upgrade CTA for Free Users */}
-            {!isPaidUser && totalResponses > 0 && (
-                <UpgradeCTA onUpgrade={onUpgrade} />
             )}
         </div>
     );

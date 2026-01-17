@@ -8,7 +8,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, Check, Star, AlertCircle,
-    Calendar, Clock, Upload, Loader2, Send
+    Calendar, Clock, Upload, Loader2, Send, Shield, Play,
+    FileText, Users
 } from 'lucide-react';
 import {
     Poll, SurveySection, SurveyQuestion, SurveyAnswer,
@@ -371,12 +372,16 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
     const sections = poll.sections || [];
     const settings = poll.surveySettings || {};
     
+    // Check if welcome screen should be shown (has content to show)
+    const hasWelcomeContent = settings.welcomeMessage || settings.estimatedTime || settings.logoUrl || settings.showAnonymousNotice;
+    
+    const [showWelcome, setShowWelcome] = useState(hasWelcomeContent);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
-    const [startTime] = useState(new Date().toISOString());
+    const [startTime, setStartTime] = useState<string | null>(null); // Track when survey actually starts
     
     const currentSection = sections[currentSectionIndex];
     const isFirstSection = currentSectionIndex === 0;
@@ -521,8 +526,8 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                 respondentId: localStorage.getItem('vg_respondent_id') || Math.random().toString(36).substring(2, 15),
                 voterName,
                 submittedAt: new Date().toISOString(),
-                startedAt: startTime,
-                completionTime: Math.round((Date.now() - new Date(startTime).getTime()) / 1000),
+                startedAt: startTime || new Date().toISOString(),
+                completionTime: startTime ? Math.round((Date.now() - new Date(startTime).getTime()) / 1000) : 0,
                 answers,
                 isComplete: true,
             };
@@ -542,6 +547,115 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
             setIsSubmitting(false);
         }
     };
+    
+    // Handler to start survey from welcome screen
+    const handleStartSurvey = () => {
+        setStartTime(new Date().toISOString()); // Start timing when they click start
+        setShowWelcome(false);
+    };
+    
+    // Render Welcome Screen
+    if (showWelcome) {
+        const themeColor = settings.themeColor || '#6366f1';
+        const bgColor = settings.backgroundColor || '#f8fafc';
+        
+        return (
+            <div 
+                className="min-h-[60vh] flex items-center justify-center p-4"
+                style={{ backgroundColor: bgColor }}
+            >
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-lg w-full"
+                >
+                    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+                        {/* Logo */}
+                        {settings.logoUrl && (
+                            <div className="p-6 flex justify-center bg-slate-50 border-b border-slate-100">
+                                <img 
+                                    src={settings.logoUrl} 
+                                    alt="Survey logo" 
+                                    className="max-h-16 max-w-[200px] object-contain"
+                                />
+                            </div>
+                        )}
+                        
+                        {/* Header */}
+                        <div 
+                            className="p-8 text-center"
+                            style={{ 
+                                background: `linear-gradient(135deg, ${themeColor}, ${themeColor}dd)`,
+                            }}
+                        >
+                            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                {poll.title || poll.question || 'Survey'}
+                            </h1>
+                            {poll.description && (
+                                <p className="text-white/80">{poll.description}</p>
+                            )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-8 space-y-6">
+                            {/* Welcome Message */}
+                            {settings.welcomeMessage && (
+                                <div className="text-center">
+                                    <p className="text-slate-600 text-lg leading-relaxed">
+                                        {settings.welcomeMessage}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* Info Cards */}
+                            <div className="flex flex-wrap gap-3 justify-center">
+                                {settings.estimatedTime && (
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                                        <Clock size={16} className="text-slate-500" />
+                                        <span className="text-sm text-slate-600">
+                                            ~{settings.estimatedTime} min
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                                    <FileText size={16} className="text-slate-500" />
+                                    <span className="text-sm text-slate-600">
+                                        {sections.reduce((sum, s) => sum + (s.questions?.length || 0), 0)} questions
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Privacy Notice */}
+                            {settings.showAnonymousNotice !== false && (
+                                <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                    <Shield size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-emerald-800">
+                                            Your responses are anonymous
+                                        </p>
+                                        <p className="text-xs text-emerald-600 mt-1">
+                                            We don't collect email addresses or track individual identities.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Start Button */}
+                            <button
+                                onClick={handleStartSurvey}
+                                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-3"
+                                style={{ backgroundColor: themeColor }}
+                            >
+                                <Play size={20} />
+                                {settings.startButtonText || 'Start Survey'}
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
     
     // Render Summary
     if (showSummary) {

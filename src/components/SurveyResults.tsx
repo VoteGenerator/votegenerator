@@ -477,22 +477,41 @@ const UpgradeCTA: React.FC<{ onUpgrade?: () => void }> = ({ onUpgrade }) => {
                 <div className="flex-1">
                     <h3 className="font-bold text-slate-800 mb-1">Unlock Full Survey Analytics</h3>
                     <p className="text-sm text-slate-600 mb-4">
-                        Upgrade to Pro to export data, view individual responses, and access all text feedback.
+                        Upgrade to Pro to access powerful visualization and export tools.
                     </p>
-                    <div className="flex flex-wrap gap-3 text-sm text-slate-600 mb-4">
-                        <span className="flex items-center gap-1">
-                            <FileSpreadsheet size={14} className="text-purple-500" />
-                            CSV/Excel Export
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Eye size={14} className="text-purple-500" />
-                            Individual Responses
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <FileText size={14} className="text-purple-500" />
-                            All Text Feedback
-                        </span>
+                    
+                    {/* Feature Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <BarChart3 size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">Pie &amp; Donut Charts</p>
+                                <p className="text-xs text-slate-500">Visualize data beautifully</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <FileSpreadsheet size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">CSV &amp; Excel Export</p>
+                                <p className="text-xs text-slate-500">Download all response data</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <Eye size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">Individual Responses</p>
+                                <p className="text-xs text-slate-500">See each person's answers</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <FileText size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">All Text Feedback</p>
+                                <p className="text-xs text-slate-500">No blurred responses</p>
+                            </div>
+                        </div>
                     </div>
+                    
                     <a
                         href="/pricing"
                         onClick={onUpgrade}
@@ -520,6 +539,89 @@ interface QuestionResultProps {
 
 const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnonymous, tier }) => {
     const tierConfig = SURVEY_TIER_CONFIG[tier];
+    const isPaidUser = tier !== 'free';
+    const [chartType, setChartType] = useState<'bar' | 'pie' | 'donut'>('bar');
+    
+    // Calculate colors for pie/donut charts
+    const chartColors = [
+        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+        '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1'
+    ];
+    
+    const renderPieChart = (options: typeof question.options, total: number) => {
+        let cumulativeAngle = 0;
+        const size = 160;
+        const center = size / 2;
+        const outerRadius = 70;
+        const innerRadius = chartType === 'donut' ? 40 : 0;
+        
+        return (
+            <div className="flex items-center gap-6 mt-4">
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    {options?.map((opt, idx) => {
+                        const count = stats.optionCounts?.[opt.id] || 0;
+                        const pct = total > 0 ? count / total : 0;
+                        const angle = pct * 360;
+                        
+                        const startAngle = cumulativeAngle;
+                        cumulativeAngle += angle;
+                        const endAngle = cumulativeAngle;
+                        
+                        // Convert angles to radians and calculate arc
+                        const startRad = (startAngle - 90) * Math.PI / 180;
+                        const endRad = (endAngle - 90) * Math.PI / 180;
+                        
+                        const x1 = center + outerRadius * Math.cos(startRad);
+                        const y1 = center + outerRadius * Math.sin(startRad);
+                        const x2 = center + outerRadius * Math.cos(endRad);
+                        const y2 = center + outerRadius * Math.sin(endRad);
+                        
+                        const x1Inner = center + innerRadius * Math.cos(startRad);
+                        const y1Inner = center + innerRadius * Math.sin(startRad);
+                        const x2Inner = center + innerRadius * Math.cos(endRad);
+                        const y2Inner = center + innerRadius * Math.sin(endRad);
+                        
+                        const largeArc = angle > 180 ? 1 : 0;
+                        
+                        const pathData = innerRadius > 0
+                            ? `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} L ${x2Inner} ${y2Inner} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1Inner} ${y1Inner} Z`
+                            : `M ${center} ${center} L ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                        
+                        if (pct === 0) return null;
+                        
+                        return (
+                            <motion.path
+                                key={opt.id}
+                                d={pathData}
+                                fill={chartColors[idx % chartColors.length]}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                className="hover:opacity-80 transition-opacity cursor-pointer"
+                            />
+                        );
+                    })}
+                </svg>
+                <div className="flex-1 space-y-1">
+                    {options?.map((opt, idx) => {
+                        const count = stats.optionCounts?.[opt.id] || 0;
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        return (
+                            <div key={opt.id} className="flex items-center gap-2 text-sm">
+                                <div 
+                                    className="w-3 h-3 rounded-sm flex-shrink-0" 
+                                    style={{ backgroundColor: chartColors[idx % chartColors.length] }}
+                                />
+                                <span className="text-slate-700 truncate">{opt.text}</span>
+                                <span className="text-slate-400 ml-auto">{pct}%</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
     
     const renderResult = () => {
         switch (question.type) {
@@ -532,34 +634,71 @@ const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnon
                 });
                 
                 return (
-                    <div className="space-y-2 mt-3">
-                        {sortedOptions?.map((opt, idx) => {
-                            const count = stats.optionCounts?.[opt.id] || 0;
-                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                            const isWinner = idx === 0 && count > 0;
-                            
-                            return (
-                                <div key={opt.id} className="relative">
-                                    <div className={`flex items-center justify-between p-3 rounded-xl border ${
-                                        isWinner ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'
-                                    }`}>
-                                        <span className={`font-medium ${isWinner ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                            {opt.text}
-                                            {isWinner && <Star size={14} className="inline ml-1 text-amber-500" />}
-                                        </span>
-                                        <span className="text-sm text-slate-500">{count} ({pct}%)</span>
-                                    </div>
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${pct}%` }}
-                                        transition={{ duration: 0.5, delay: idx * 0.05 }}
-                                        className={`absolute bottom-0 left-0 h-1 rounded-b-xl ${
-                                            isWinner ? 'bg-indigo-500' : 'bg-slate-300'
+                    <div className="mt-3">
+                        {/* Chart Type Toggle - Pro+ Feature */}
+                        {isPaidUser && total > 0 && (
+                            <div className="flex items-center gap-1 mb-3">
+                                <span className="text-xs text-slate-500 mr-2">View:</span>
+                                {(['bar', 'pie', 'donut'] as const).map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setChartType(type)}
+                                        className={`px-2 py-1 text-xs rounded-lg transition ${
+                                            chartType === type
+                                                ? 'bg-indigo-100 text-indigo-700 font-medium'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                         }`}
-                                    />
-                                </div>
-                            );
-                        })}
+                                    >
+                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Upgrade prompt for chart options */}
+                        {!isPaidUser && total > 0 && (
+                            <div className="flex items-center gap-2 mb-3 p-2 bg-purple-50 rounded-lg border border-purple-100">
+                                <Crown size={14} className="text-purple-500" />
+                                <span className="text-xs text-purple-700">
+                                    <a href="/pricing" className="underline font-medium">Upgrade to Pro</a> for pie &amp; donut charts
+                                </span>
+                            </div>
+                        )}
+                        
+                        {/* Render chart based on type */}
+                        {chartType === 'bar' || !isPaidUser ? (
+                            <div className="space-y-2">
+                                {sortedOptions?.map((opt, idx) => {
+                                    const count = stats.optionCounts?.[opt.id] || 0;
+                                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                    const isWinner = idx === 0 && count > 0;
+                                    
+                                    return (
+                                        <div key={opt.id} className="relative">
+                                            <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                                                isWinner ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'
+                                            }`}>
+                                                <span className={`font-medium ${isWinner ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                    {opt.text}
+                                                    {isWinner && <Star size={14} className="inline ml-1 text-amber-500" />}
+                                                </span>
+                                                <span className="text-sm text-slate-500">{count} ({pct}%)</span>
+                                            </div>
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.5, delay: idx * 0.05 }}
+                                                className={`absolute bottom-0 left-0 h-1 rounded-b-xl ${
+                                                    isWinner ? 'bg-indigo-500' : 'bg-slate-300'
+                                                }`}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            renderPieChart(sortedOptions, total)
+                        )}
                     </div>
                 );
             }

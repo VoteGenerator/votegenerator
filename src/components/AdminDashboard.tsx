@@ -161,6 +161,7 @@ const AdminDashboard: React.FC = () => {
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
+    const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
     const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
 
     // Get token and session_id from URL (supports multiple formats)
@@ -257,7 +258,7 @@ const AdminDashboard: React.FC = () => {
         if (!sessionData.polls || sessionData.polls.length === 0) return;
         
         try {
-            const updatedPolls = await Promise.all(
+            const refreshedPolls: (UserPoll | null)[] = await Promise.all(
                 sessionData.polls.map(async (poll) => {
                     try {
                         const response = await fetch(`/.netlify/functions/vg-get?id=${poll.id}&admin=${poll.adminKey}`);
@@ -268,6 +269,10 @@ const AdminDashboard: React.FC = () => {
                                 responseCount: freshData.voteCount || freshData.responseCount || 0,
                                 status: freshData.status || poll.status,
                             };
+                        } else if (response.status === 404) {
+                            // Poll was deleted from backend - remove from local list
+                            console.log(`Poll ${poll.id} not found on server - removing from local list`);
+                            return null; // Mark for removal
                         }
                     } catch (e) {
                         console.warn(`Failed to refresh poll ${poll.id}:`, e);
@@ -276,9 +281,31 @@ const AdminDashboard: React.FC = () => {
                 })
             );
             
-            const updatedSession = { ...sessionData, polls: updatedPolls };
-            setSession(updatedSession);
-            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+            // Filter out deleted polls (null values)
+            const updatedPolls = refreshedPolls.filter((p): p is UserPoll => p !== null);
+            
+            // Only update if something changed
+            if (updatedPolls.length !== sessionData.polls.length || 
+                JSON.stringify(updatedPolls) !== JSON.stringify(sessionData.polls)) {
+                const updatedSession = { ...sessionData, polls: updatedPolls };
+                setSession(updatedSession);
+                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                
+                // Also clean up vg_polls
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls) {
+                    try {
+                        const vgPolls = JSON.parse(savedPolls);
+                        const validPollIds = new Set(updatedPolls.map(p => p.id));
+                        const cleanedPolls = vgPolls.filter((p: any) => validPollIds.has(p.id));
+                        if (cleanedPolls.length !== vgPolls.length) {
+                            localStorage.setItem('vg_polls', JSON.stringify(cleanedPolls));
+                        }
+                    } catch (e) {
+                        console.error('Failed to clean vg_polls:', e);
+                    }
+                }
+            }
         } catch (e) {
             console.error('Failed to refresh poll data:', e);
         }
@@ -659,18 +686,23 @@ const AdminDashboard: React.FC = () => {
         const hasResponses = (poll.responseCount || 0) > 0;
         const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
         
-        // Different confirmation messages based on tier and responses
-        let confirmMessage = `Delete "${poll.title}"?`;
-        if (hasResponses) {
-            if (isRestrictedTier) {
-                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the Free plan, you can only delete polls with 0 responses. Upgrade to Pro or higher to delete polls with responses.`);
-                return;
-            } else {
-                confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
-            }
+        // Check tier restriction
+        if (hasResponses && isRestrictedTier) {
+            // Show upgrade modal instead
+            setPollToDelete(null);
+            setShowUpgradeModal(true);
+            return;
         }
         
-        if (!confirm(confirmMessage)) return;
+        // Show custom delete confirmation modal
+        setPollToDelete(poll);
+    };
+    
+    const confirmDeletePoll = async () => {
+        if (!session || !pollToDelete) return;
+        
+        const poll = pollToDelete;
+        setPollToDelete(null); // Close modal immediately
         
         try {
             const response = await fetch('/.netlify/functions/vg-delete-poll', {
@@ -704,7 +736,7 @@ const AdminDashboard: React.FC = () => {
                 }
             } else if (data.upgradeRequired) {
                 // Tier restriction error
-                alert(data.error);
+                setShowUpgradeModal(true);
             } else {
                 alert(data.error || 'Failed to delete poll. Please try again.');
             }
@@ -1858,6 +1890,80 @@ const AdminDashboard: React.FC = () => {
                 currentTier={tier}
                 source="admin_dashboard"
             />
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {pollToDelete && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={() => setPollToDelete(null)}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                            animate={{ scale: 1, opacity: 1, y: 0 }} 
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", duration: 0.3 }}
+                            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header with warning icon */}
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Trash2 size={32} className="text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white">Delete {pollToDelete.type === 'survey' ? 'Survey' : 'Poll'}?</h3>
+                            </div>
+                            
+                            {/* Content */}
+                            <div className="p-6">
+                                <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                                    <p className="font-semibold text-slate-800 text-center mb-1">"{pollToDelete.title}"</p>
+                                    {(pollToDelete.responseCount || 0) > 0 && (
+                                        <p className="text-sm text-slate-500 text-center">
+                                            {pollToDelete.responseCount} response{pollToDelete.responseCount !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Warning */}
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800 text-sm">This action cannot be undone</p>
+                                            <p className="text-amber-700 text-sm mt-1">
+                                                {(pollToDelete.responseCount || 0) > 0 
+                                                    ? `All ${pollToDelete.responseCount} responses will be permanently deleted.`
+                                                    : 'This will permanently remove the poll and its settings.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Buttons */}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setPollToDelete(null)}
+                                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDeletePoll}
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={18} />
+                                        Delete Forever
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Choose Active Polls Modal */}
             <AnimatePresence>

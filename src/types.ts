@@ -95,27 +95,39 @@ export interface SurveySection {
 
 // Survey-specific settings
 export interface SurveySettings {
-    // Navigation
-    allowBack?: boolean;          // Allow going back to previous sections
-    showProgress?: boolean;       // Show progress bar
+    // === INTRO SCREEN ===
+    welcomeMessage?: string;        // Custom welcome text
+    estimatedTime?: number;         // Estimated minutes to complete
+    showAnonymousNotice?: boolean;  // Show "responses are anonymous" notice
+    startButtonText?: string;       // Custom start button text (default: "Start Survey")
+    
+    // === BRANDING (Pro/Business) ===
+    logoUrl?: string;               // Custom logo URL
+    themeColor?: string;            // Primary theme color (hex)
+    backgroundColor?: string;       // Background color
+    
+    // === NAVIGATION ===
+    allowBack?: boolean;            // Allow going back to previous sections
+    showProgress?: boolean;         // Show progress bar
     progressStyle?: 'bar' | 'steps' | 'percentage';
     
-    // Submission
-    showSummary?: boolean;        // Show summary before submit
-    confirmSubmit?: boolean;      // Require confirmation
+    // === SUBMISSION ===
+    showSummary?: boolean;          // Show summary before submit
+    confirmSubmit?: boolean;        // Require confirmation
     
-    // Display
-    oneQuestionPerPage?: boolean; // Show one question at a time
-    randomizeSections?: boolean;  // Randomize section order
-    shuffleQuestions?: boolean;   // Shuffle question order within sections
+    // === DISPLAY ===
+    oneQuestionPerPage?: boolean;   // Show one question at a time
+    randomizeSections?: boolean;    // Randomize section order
+    shuffleQuestions?: boolean;     // Shuffle question order within sections
     
-    // Completion
-    redirectUrl?: string;         // Redirect after completion
-    completionMessage?: string;   // Custom thank you message
+    // === COMPLETION ===
+    redirectUrl?: string;           // Redirect after completion
+    completionMessage?: string;     // Custom thank you message
     
-    // Privacy
-    anonymousMode?: boolean;      // Hide individual responses
-    hideResults?: boolean;        // Hide results from respondents
+    // === PRIVACY & RESULTS ===
+    anonymousMode?: boolean;        // Hide individual responses from admin view
+    hideResults?: boolean;          // Hide results from respondents (DEFAULT: true for surveys)
+    resultsVisibility?: 'admin_only' | 'after_vote' | 'always' | 'never';
 }
 
 // Individual response to a survey

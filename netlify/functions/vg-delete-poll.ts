@@ -77,8 +77,8 @@ export const handler: Handler = async (event) => {
         // ALWAYS try to clean up customer record if dashboardToken provided
         if (dashboardToken && dashboardToken !== 'free_user') {
             try {
-                const customerStore = getStore({ name: 'customers', siteID, token });
-                const customer = await customerStore.get(dashboardToken, { type: 'json' }) as any;
+                const customerStore = getStore({ name: 'vg-customers', siteID, token });
+                const customer = await customerStore.get(`token_${dashboardToken}`, { type: 'json' }) as any;
                 
                 if (customer && customer.polls) {
                     const originalLength = customer.polls.length;
@@ -86,7 +86,7 @@ export const handler: Handler = async (event) => {
                     customer.polls = customer.polls.filter((p: any) => p.id !== pollId);
                     
                     if (customer.polls.length < originalLength) {
-                        await customerStore.setJSON(dashboardToken, customer);
+                        await customerStore.setJSON(`token_${dashboardToken}`, customer);
                         customerUpdated = true;
                         console.log(`Poll ${pollId} removed from customer ${dashboardToken} record`);
                     }

@@ -2853,6 +2853,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 source="poll_dashboard"
             />
         </div>
+        </>
     );
 };
 

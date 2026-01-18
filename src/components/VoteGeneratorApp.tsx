@@ -479,30 +479,55 @@ const VoteGeneratorApp: React.FC = () => {
                             <span className="hidden sm:inline text-xl">Vote<span className="text-indigo-600">Generator</span></span>
                         </a>
                         
-                        {/* Nav Links for Admin - Only show if user has this poll in their localStorage */}
+                        {/* Nav Links for Admin viewing results/dashboard */}
                         {(viewState.type === 'results' || viewState.type === 'survey-results') && viewState.isAdmin && (() => {
-                            // Check if this poll exists in user's localStorage (meaning they're the actual owner)
+                            // Check if this poll exists in user's localStorage
                             const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
-                            const isActualOwner = userPolls.some((p: any) => p.id === viewState.poll.id);
+                            const hasPolls = userPolls.length > 0;
+                            const pollTier = (viewState.poll as any).tier || 'free';
+                            const isFreeUser = pollTier === 'free';
                             
                             return (
-                                <nav className="hidden md:flex items-center gap-1">
-                                    <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                        <PlusCircle size={16} /> Create Poll
-                                    </a>
-                                    {/* Only show My Dashboard if they actually own polls */}
-                                    {isActualOwner && (
-                                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                            <LayoutDashboard size={16} /> My Dashboard
+                                <>
+                                    <nav className="hidden md:flex items-center gap-1">
+                                        <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                            <PlusCircle size={16} /> Create Poll
                                         </a>
-                                    )}
-                                    <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                        <Zap size={16} /> Templates
-                                    </a>
-                                    <a href="/pricing" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                        <Crown size={16} /> Pricing
-                                    </a>
-                                </nav>
+                                        {/* Always show My Dashboard if they have polls */}
+                                        {hasPolls && (
+                                            <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                                <LayoutDashboard size={16} /> My Dashboard
+                                            </a>
+                                        )}
+                                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                            <Zap size={16} /> Templates
+                                        </a>
+                                    </nav>
+                                    
+                                    {/* Right side - Upgrade button for free users */}
+                                    <div className="hidden md:flex items-center gap-2">
+                                        {isFreeUser ? (
+                                            <button
+                                                onClick={() => {
+                                                    setUpgradeHighlight(undefined);
+                                                    setShowUpgradeModal(true);
+                                                }}
+                                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                                            >
+                                                <Crown size={16} /> Upgrade
+                                            </button>
+                                        ) : (
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                                                pollTier === 'business' 
+                                                    ? 'bg-amber-100 text-amber-700' 
+                                                    : 'bg-purple-100 text-purple-700'
+                                            }`}>
+                                                <Crown size={14} />
+                                                {pollTier === 'business' ? 'Business' : 'Pro'}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
                             );
                         })()}
                         
@@ -1052,56 +1077,50 @@ const VoteGeneratorApp: React.FC = () => {
                                     viewState.status === 'expired' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
                                     viewState.status === 'paused' ? 'bg-gradient-to-br from-slate-500 to-slate-600' :
                                     viewState.status === 'draft' ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
-                                    viewState.status === 'not_found' ? 'bg-gradient-to-br from-slate-600 to-slate-700' :
+                                    viewState.status === 'not_found' ? 'bg-gradient-to-br from-indigo-500 to-purple-600' :
                                     'bg-gradient-to-br from-red-500 to-rose-500'
                                 }`}>
                                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                         {viewState.status === 'expired' && (
-                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            <span className="text-4xl">⏰</span>
                                         )}
-                                        {(viewState.status === 'closed' || viewState.status === 'not_found') && (
-                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
+                                        {viewState.status === 'closed' && (
+                                            <span className="text-4xl">🔒</span>
+                                        )}
+                                        {viewState.status === 'not_found' && (
+                                            <span className="text-4xl">🔍</span>
                                         )}
                                         {viewState.status === 'paused' && (
-                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            <span className="text-4xl">⏸️</span>
                                         )}
                                         {viewState.status === 'draft' && (
-                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
+                                            <span className="text-4xl">🚧</span>
                                         )}
                                     </div>
                                     <h2 className="text-2xl font-bold text-white mb-2">
-                                        {viewState.status === 'expired' && 'Poll Has Ended'}
-                                        {viewState.status === 'closed' && 'Poll Closed'}
-                                        {viewState.status === 'paused' && 'Poll Paused'}
-                                        {viewState.status === 'draft' && 'Poll Not Available'}
-                                        {viewState.status === 'not_found' && 'Poll Not Found'}
+                                        {viewState.status === 'expired' && "Time's Up!"}
+                                        {viewState.status === 'closed' && 'All Wrapped Up'}
+                                        {viewState.status === 'paused' && 'Taking a Break'}
+                                        {viewState.status === 'draft' && 'Coming Soon!'}
+                                        {viewState.status === 'not_found' && 'Oops! Wrong Turn?'}
                                     </h2>
                                     <p className="text-white/80">
-                                        {viewState.status === 'expired' && 'This poll has reached its end date.'}
-                                        {viewState.status === 'closed' && 'The organizer has closed this poll.'}
-                                        {viewState.status === 'paused' && 'This poll is temporarily paused.'}
-                                        {viewState.status === 'draft' && 'This poll is not yet published.'}
-                                        {viewState.status === 'not_found' && 'The link may be incorrect or the poll was deleted.'}
+                                        {viewState.status === 'expired' && 'This poll has crossed the finish line.'}
+                                        {viewState.status === 'closed' && 'The votes are in and the poll is closed.'}
+                                        {viewState.status === 'paused' && 'This poll is catching its breath.'}
+                                        {viewState.status === 'draft' && "Still in the workshop — not ready for visitors yet!"}
+                                        {viewState.status === 'not_found' && "We searched high and low, but couldn't find this poll."}
                                     </p>
                                 </div>
                                 
                                 {/* Body */}
                                 <div className="p-8">
                                     <p className="text-slate-600 mb-6">
-                                        {viewState.status === 'expired' && 'Voting is no longer available. The poll closed automatically after reaching its deadline.'}
-                                        {viewState.status === 'closed' && 'Voting is no longer available. Contact the organizer if you believe this is an error.'}
-                                        {viewState.status === 'paused' && 'Check back later or contact the organizer for more information.'}
-                                        {viewState.status === 'draft' && 'The poll creator hasn\'t published this poll yet. Please check back later.'}
-                                        {viewState.status === 'not_found' && 'Please check the link and try again, or contact the person who shared it with you.'}
+                                        {viewState.status === 'expired' && "The deadline has passed and voting is now closed. Thanks to everyone who participated! 🎉"}
+                                        {viewState.status === 'closed' && "The organizer has closed this poll. If you think this is a mistake, reach out to whoever sent you the link."}
+                                        {viewState.status === 'paused' && "The organizer has temporarily paused voting. Check back soon — it might reopen!"}
+                                        {viewState.status === 'draft' && "The creator is still perfecting this poll. Give them a moment and check back later!"}
+                                        {viewState.status === 'not_found' && "The link might be mistyped, or the poll may have been removed. Double-check with whoever shared it!"}
                                     </p>
                                     
                                     <div className="space-y-3">

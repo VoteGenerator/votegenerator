@@ -208,6 +208,113 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState(false);
     
+    // Response Filters state (Pro+ feature)
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterDateRange, setFilterDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+    const [filterDevice, setFilterDevice] = useState<string>('all');
+    const [filterComplete, setFilterComplete] = useState<string>('all');
+    
+    // Keyboard shortcuts help modal
+    const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+    
+    // Keyboard shortcuts
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger if typing in input/textarea
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            
+            // Don't trigger if modifier keys are pressed (except for ?)
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            
+            switch (e.key.toLowerCase()) {
+                case 'c':
+                    // Copy share link
+                    navigator.clipboard.writeText(shareUrl);
+                    setCopiedShare(true);
+                    setTimeout(() => setCopiedShare(false), 2000);
+                    break;
+                case 'r':
+                    // Refresh
+                    if (!isRefreshing) onRefresh();
+                    break;
+                case '?':
+                    // Show keyboard shortcuts help
+                    setShowKeyboardHelp(true);
+                    break;
+                case 'escape':
+                    // Close any modals
+                    setShowKeyboardHelp(false);
+                    setShowQuickActions(false);
+                    setShowDeleteModal(false);
+                    setShowFilters(false);
+                    break;
+                case '1':
+                    setActiveTab('results');
+                    break;
+                case '2':
+                    setActiveTab('share');
+                    break;
+                case '3':
+                    setActiveTab('notify');
+                    break;
+                case '4':
+                    setActiveTab('settings');
+                    break;
+                case '5':
+                    setActiveTab('downloads');
+                    break;
+                case '6':
+                    if (!isFree) setActiveTab('analytics');
+                    break;
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [shareUrl, isRefreshing, onRefresh, isFree]);
+    
+    // Filtered votes (Pro+ feature)
+    const filteredVotes = useMemo(() => {
+        if (!isPro) return votes; // Free users see all (no filtering)
+        
+        return votes.filter((vote: any) => {
+            // Date filter
+            if (filterDateRange.start || filterDateRange.end) {
+                const voteDate = new Date(vote.timestamp || vote.votedAt || vote.submittedAt);
+                if (filterDateRange.start && voteDate < filterDateRange.start) return false;
+                if (filterDateRange.end) {
+                    const endOfDay = new Date(filterDateRange.end);
+                    endOfDay.setHours(23, 59, 59, 999);
+                    if (voteDate > endOfDay) return false;
+                }
+            }
+            
+            // Device filter
+            if (filterDevice !== 'all') {
+                const device = vote.analytics?.device?.toLowerCase() || 'unknown';
+                if (filterDevice === 'mobile' && !['mobile', 'phone', 'tablet'].some(d => device.includes(d))) return false;
+                if (filterDevice === 'desktop' && !['desktop', 'windows', 'mac', 'linux'].some(d => device.includes(d))) return false;
+            }
+            
+            // Completion filter (for surveys)
+            if (filterComplete !== 'all' && isSurvey) {
+                const isComplete = vote.isComplete !== false;
+                if (filterComplete === 'complete' && !isComplete) return false;
+                if (filterComplete === 'incomplete' && isComplete) return false;
+            }
+            
+            return true;
+        });
+    }, [votes, filterDateRange, filterDevice, filterComplete, isPro, isSurvey]);
+    
+    const hasActiveFilters = filterDateRange.start || filterDateRange.end || filterDevice !== 'all' || filterComplete !== 'all';
+    
+    const clearFilters = () => {
+        setFilterDateRange({ start: null, end: null });
+        setFilterDevice('all');
+        setFilterComplete('all');
+    };
+    
     // Local state for settings toggles (for immediate UI feedback)
     const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
@@ -866,6 +973,99 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 )}
             </AnimatePresence>
 
+            {/* Keyboard Shortcuts Help Modal */}
+            <AnimatePresence>
+                {showKeyboardHelp && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowKeyboardHelp(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-5 text-white">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-bold flex items-center gap-2">
+                                        ⌨️ Keyboard Shortcuts
+                                    </h3>
+                                    <button 
+                                        onClick={() => setShowKeyboardHelp(false)}
+                                        className="p-1 hover:bg-white/20 rounded-lg transition"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="p-5 space-y-4">
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase">Quick Actions</h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Copy link</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">C</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Refresh</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">R</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Help</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">?</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Close modal</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">Esc</kbd>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase">Navigate Tabs</h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Results</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">1</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Share</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">2</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Notify</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">3</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Settings</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">4</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Downloads</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">5</kbd>
+                                        </div>
+                                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                                            <span className="text-sm text-slate-600">Analytics</span>
+                                            <kbd className="px-2 py-1 bg-slate-200 text-slate-700 text-xs font-mono rounded">6</kbd>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-xs text-slate-400 text-center pt-2">
+                                    Press <kbd className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-xs font-mono rounded">?</kbd> anytime to see shortcuts
+                                </p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* ================================================================ */}
             {/* QUICK STATS */}
             {/* ================================================================ */}
@@ -1249,12 +1449,149 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 )}
                                 
+                                {/* Response Filters - Pro+ Feature */}
+                                {votes.length > 0 && (
+                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                        <button
+                                            onClick={() => isPro ? setShowFilters(!showFilters) : openUpgradeModal('filters')}
+                                            className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Filter size={18} className={hasActiveFilters ? 'text-indigo-600' : 'text-slate-400'} />
+                                                <span className="font-semibold text-slate-800">Filter Responses</span>
+                                                {hasActiveFilters && (
+                                                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
+                                                        {filteredVotes.length} of {votes.length}
+                                                    </span>
+                                                )}
+                                                {!isPro && (
+                                                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                        <Crown size={10} /> Pro
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <ChevronDown size={18} className={`text-slate-400 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        
+                                        <AnimatePresence>
+                                            {showFilters && isPro && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="border-t border-slate-200"
+                                                >
+                                                    <div className="p-4 space-y-4">
+                                                        {/* Date Range Filter */}
+                                                        <div>
+                                                            <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
+                                                                Date Range
+                                                            </label>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={filterDateRange.start?.toISOString().split('T')[0] || ''}
+                                                                        onChange={(e) => setFilterDateRange(prev => ({
+                                                                            ...prev,
+                                                                            start: e.target.value ? new Date(e.target.value) : null
+                                                                        }))}
+                                                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                        placeholder="Start date"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={filterDateRange.end?.toISOString().split('T')[0] || ''}
+                                                                        onChange={(e) => setFilterDateRange(prev => ({
+                                                                            ...prev,
+                                                                            end: e.target.value ? new Date(e.target.value) : null
+                                                                        }))}
+                                                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                        placeholder="End date"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Device Filter */}
+                                                        <div>
+                                                            <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
+                                                                Device Type
+                                                            </label>
+                                                            <div className="flex gap-2">
+                                                                {[
+                                                                    { value: 'all', label: 'All' },
+                                                                    { value: 'mobile', label: '📱 Mobile' },
+                                                                    { value: 'desktop', label: '💻 Desktop' }
+                                                                ].map(opt => (
+                                                                    <button
+                                                                        key={opt.value}
+                                                                        onClick={() => setFilterDevice(opt.value)}
+                                                                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                                                            filterDevice === opt.value
+                                                                                ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
+                                                                                : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
+                                                                        }`}
+                                                                    >
+                                                                        {opt.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Completion Filter (Surveys only) */}
+                                                        {isSurvey && (
+                                                            <div>
+                                                                <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
+                                                                    Completion Status
+                                                                </label>
+                                                                <div className="flex gap-2">
+                                                                    {[
+                                                                        { value: 'all', label: 'All' },
+                                                                        { value: 'complete', label: '✓ Complete' },
+                                                                        { value: 'incomplete', label: '○ Incomplete' }
+                                                                    ].map(opt => (
+                                                                        <button
+                                                                            key={opt.value}
+                                                                            onClick={() => setFilterComplete(opt.value)}
+                                                                            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                                                                filterComplete === opt.value
+                                                                                    ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
+                                                                                    : 'bg-slate-50 text-slate-600 border-2 border-transparent hover:bg-slate-100'
+                                                                            }`}
+                                                                        >
+                                                                            {opt.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Clear Filters */}
+                                                        {hasActiveFilters && (
+                                                            <button
+                                                                onClick={clearFilters}
+                                                                className="w-full py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                                                            >
+                                                                <X size={14} />
+                                                                Clear All Filters
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                                
                                 {/* Poll Results - Available to ALL */}
                                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                                     {isSurvey || poll.type === 'survey' ? (
                                 <SurveyResults 
                                     poll={poll} 
-                                    responses={surveyResponses.length > 0 ? surveyResponses : (results.votes || []).map((v: any, idx: number) => ({
+                                    responses={surveyResponses.length > 0 ? surveyResponses : (filteredVotes || []).map((v: any, idx: number) => ({
                                         id: v.id || `response_${idx}`,
                                         pollId: poll.id,
                                         submittedAt: v.timestamp || v.votedAt,

@@ -163,6 +163,13 @@ const AdminDashboard: React.FC = () => {
     const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
     const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
     const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
+    
+    // Bulk Actions State
+    const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
+    const [selectedPolls, setSelectedPolls] = useState<Set<string>>(new Set());
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isBulkExporting, setIsBulkExporting] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -792,6 +799,139 @@ const AdminDashboard: React.FC = () => {
         window.location.href = `/admin?token=${newToken}`;
     };
 
+    // ========================================================================
+    // BULK ACTION HANDLERS
+    // ========================================================================
+    
+    const togglePollSelection = (pollId: string) => {
+        setSelectedPolls(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(pollId)) {
+                newSet.delete(pollId);
+            } else {
+                newSet.add(pollId);
+            }
+            return newSet;
+        });
+    };
+    
+    const selectAllPolls = () => {
+        setSelectedPolls(new Set(polls.map(p => p.id)));
+    };
+    
+    const deselectAllPolls = () => {
+        setSelectedPolls(new Set());
+    };
+    
+    const exitBulkMode = () => {
+        setBulkSelectionMode(false);
+        setSelectedPolls(new Set());
+    };
+    
+    // Check if any selected polls have responses (for tier restriction)
+    const selectedPollsWithResponses = useMemo(() => {
+        if (!session) return [];
+        return polls.filter(p => selectedPolls.has(p.id) && (p.responseCount || 0) > 0);
+    }, [selectedPolls, polls, session]);
+    
+    const canBulkDelete = useMemo(() => {
+        if (!session) return false;
+        // Business tier can delete anything
+        if (session.tier === 'business') return true;
+        // Free/Pro can only delete polls without responses
+        return selectedPollsWithResponses.length === 0;
+    }, [session, selectedPollsWithResponses]);
+    
+    const handleBulkDelete = () => {
+        if (!canBulkDelete && selectedPollsWithResponses.length > 0) {
+            // Show upgrade modal
+            setShowUpgradeModal(true);
+            return;
+        }
+        setShowBulkDeleteModal(true);
+    };
+    
+    const confirmBulkDelete = async () => {
+        if (!session || selectedPolls.size === 0) return;
+        
+        setIsBulkDeleting(true);
+        const pollsToDelete = polls.filter(p => selectedPolls.has(p.id));
+        
+        try {
+            // Delete all selected polls
+            await Promise.all(pollsToDelete.map(poll =>
+                fetch('/.netlify/functions/vg-delete-poll', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pollId: poll.id,
+                        adminKey: poll.adminKey,
+                        dashboardToken: session.dashboardToken
+                    })
+                })
+            ));
+            
+            // Update local state
+            const remainingPolls = polls.filter(p => !selectedPolls.has(p.id));
+            const updated = { ...session, polls: remainingPolls };
+            localStorage.setItem('vg_user_session', JSON.stringify(updated));
+            setSession(updated);
+            
+            // Update vg_polls
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                const vgPolls = JSON.parse(savedPolls);
+                const updatedVgPolls = vgPolls.filter((p: any) => !selectedPolls.has(p.id));
+                localStorage.setItem('vg_polls', JSON.stringify(updatedVgPolls));
+            }
+            
+            // Exit bulk mode
+            exitBulkMode();
+        } catch (err) {
+            console.error('Bulk delete error:', err);
+            alert('Some polls could not be deleted. Please try again.');
+        }
+        
+        setIsBulkDeleting(false);
+        setShowBulkDeleteModal(false);
+    };
+    
+    const handleBulkExport = async () => {
+        if (!session || selectedPolls.size === 0) return;
+        
+        // Pro+ feature
+        if (session.tier === 'free') {
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        setIsBulkExporting(true);
+        
+        try {
+            const pollsToExport = polls.filter(p => selectedPolls.has(p.id));
+            
+            // Create CSV content
+            let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
+            pollsToExport.forEach(p => {
+                csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
+            });
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Bulk export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsBulkExporting(false);
+    };
+
     const goHome = () => {
         window.location.href = '/';
     };
@@ -1244,11 +1384,82 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         ) : (
                             <>
+                                {/* Bulk Actions Bar */}
+                                <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+                                    <div className="flex items-center gap-3">
+                                        {!bulkSelectionMode ? (
+                                            <button
+                                                onClick={() => setBulkSelectionMode(true)}
+                                                className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                            >
+                                                <CheckSquare size={16} />
+                                                Select Multiple
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={exitBulkMode}
+                                                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                                >
+                                                    <X size={16} />
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={selectedPolls.size === polls.length ? deselectAllPolls : selectAllPolls}
+                                                    className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                >
+                                                    {selectedPolls.size === polls.length ? 'Deselect All' : 'Select All'}
+                                                </button>
+                                                <span className="text-sm text-slate-500">
+                                                    {selectedPolls.size} selected
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Bulk Actions */}
+                                    {bulkSelectionMode && selectedPolls.size > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <button
+                                                onClick={handleBulkExport}
+                                                disabled={isBulkExporting}
+                                                className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {isBulkExporting ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <ArrowRight size={16} />
+                                                )}
+                                                Export
+                                                {session?.tier === 'free' && (
+                                                    <Crown size={12} className="text-amber-500" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={handleBulkDelete}
+                                                className="px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition flex items-center gap-2"
+                                            >
+                                                <Trash2 size={16} />
+                                                Delete
+                                                {!canBulkDelete && (
+                                                    <Crown size={12} className="text-amber-500" />
+                                                )}
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                                
                                 <div className="space-y-4">
                                     {paginatedPolls.map((poll, index) => {
                                         const isDraft = config.requiresActivation && poll.status !== 'live';
                                         const isPaused = poll.status === 'paused';
                                         const isJustCreated = poll.id === justCreatedPollId;
+                                        const isSelected = selectedPolls.has(poll.id);
+                                        
                                         return (
                                             <motion.div
                                                 key={poll.id}
@@ -1256,14 +1467,17 @@ const AdminDashboard: React.FC = () => {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.03 }}
                                                 className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
-                                                    isJustCreated
-                                                        ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
-                                                        : isPaused
-                                                            ? 'border-red-200 bg-gradient-to-r from-red-50/50 to-white opacity-75'
-                                                            : isDraft 
-                                                                ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
-                                                                : 'border-slate-200 hover:border-indigo-200'
+                                                    isSelected
+                                                        ? 'border-indigo-400 bg-indigo-50/50 ring-2 ring-indigo-200'
+                                                        : isJustCreated
+                                                            ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
+                                                            : isPaused
+                                                                ? 'border-red-200 bg-gradient-to-r from-red-50/50 to-white opacity-75'
+                                                                : isDraft 
+                                                                    ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                                    : 'border-slate-200 hover:border-indigo-200'
                                                 }`}
+                                                onClick={() => bulkSelectionMode && togglePollSelection(poll.id)}
                                             >
                                                 {isJustCreated && (
                                                     <div className="flex items-center gap-2 mb-3 text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-medium">
@@ -1278,6 +1492,19 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                 )}
                                                 <div className="flex items-start justify-between gap-4">
+                                                    {/* Bulk selection checkbox */}
+                                                    {bulkSelectionMode && (
+                                                        <div 
+                                                            className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-1 cursor-pointer transition ${
+                                                                isSelected 
+                                                                    ? 'bg-indigo-600 text-white' 
+                                                                    : 'border-2 border-slate-300 hover:border-indigo-400'
+                                                            }`}
+                                                            onClick={(e) => { e.stopPropagation(); togglePollSelection(poll.id); }}
+                                                        >
+                                                            {isSelected && <Check size={16} />}
+                                                        </div>
+                                                    )}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                             <h3 className={`font-bold text-lg truncate ${isPaused ? 'text-slate-500' : 'text-slate-800'}`}>{poll.title}</h3>
@@ -1957,6 +2184,97 @@ const AdminDashboard: React.FC = () => {
                                     >
                                         <Trash2 size={18} />
                                         Delete Forever
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Bulk Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showBulkDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowBulkDeleteModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <Trash2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">Delete {selectedPolls.size} Poll{selectedPolls.size !== 1 ? 's' : ''}?</h3>
+                                        <p className="text-white/80 text-sm">This cannot be undone</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="p-6">
+                                <p className="text-slate-600 mb-4">
+                                    You're about to permanently delete {selectedPolls.size} poll{selectedPolls.size !== 1 ? 's' : ''}:
+                                </p>
+                                
+                                {/* List selected polls */}
+                                <div className="bg-slate-50 rounded-xl p-3 mb-4 max-h-40 overflow-y-auto">
+                                    {polls.filter(p => selectedPolls.has(p.id)).map(poll => (
+                                        <div key={poll.id} className="py-2 border-b border-slate-200 last:border-0">
+                                            <p className="font-medium text-slate-800 truncate">{poll.title}</p>
+                                            <p className="text-xs text-slate-500">{poll.responseCount || 0} responses</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Warning */}
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                        <p className="text-sm text-amber-800">
+                                            All responses, analytics, and settings will be permanently deleted.
+                                            {(() => {
+                                                const totalResponses = polls
+                                                    .filter(p => selectedPolls.has(p.id))
+                                                    .reduce((sum, p) => sum + (p.responseCount || 0), 0);
+                                                return totalResponses > 0 ? ` You will lose ${totalResponses} response${totalResponses !== 1 ? 's' : ''}.` : '';
+                                            })()}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowBulkDeleteModal(false)}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmBulkDelete}
+                                        disabled={isBulkDeleting}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isBulkDeleting ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Deleting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 size={18} />
+                                                Delete All
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>

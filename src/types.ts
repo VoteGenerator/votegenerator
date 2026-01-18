@@ -202,6 +202,11 @@ export interface PollSettings {
     showSocialShare?: boolean;
     // Survey/Anonymous mode
     anonymousMode?: boolean;
+    // Thank you page customization (after completion when results hidden)
+    thankYouMessage?: string;
+    thankYouTitle?: string;
+    // Business feature: Custom redirect URL after completion
+    redirectUrl?: string;
 }
 
 export interface EmailEntry {

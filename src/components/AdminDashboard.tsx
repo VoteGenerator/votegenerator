@@ -1661,7 +1661,50 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         {/* Hide Invite button for just-created polls - it's in Manage section */}
                                                         {!isJustCreated && (
-<a
+                                                            <button
+                                                                onClick={() => setShowShareCards(poll.id)}
+                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
+                                                                title="Create beautiful invite cards with QR codes"
+                                                            >
+                                                                <Palette size={18} />
+                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
+                                                            </button>
+                                                        )}
+                                                        {/* Duplicate button */}
+                                                        <button
+                                                            onClick={() => handleDuplicatePoll(poll)}
+                                                            disabled={duplicatingPollId === poll.id}
+                                                            className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition"
+                                                            title="Duplicate poll"
+                                                        >
+                                                            {duplicatingPollId === poll.id ? (
+                                                                <Loader2 size={18} className="animate-spin" />
+                                                            ) : (
+                                                                <Copy size={18} />
+                                                            )}
+                                                        </button>
+                                                        {/* Pause/Resume button - only for live polls */}
+                                                        {!isDraft && (
+                                                            <button
+                                                                onClick={() => handleTogglePause(poll)}
+                                                                disabled={pausingPollId === poll.id}
+                                                                className={`p-2.5 rounded-lg transition ${
+                                                                    isPaused 
+                                                                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' 
+                                                                        : 'bg-amber-50 hover:bg-amber-100 text-amber-600'
+                                                                }`}
+                                                                title={isPaused ? 'Resume poll' : 'Pause poll'}
+                                                            >
+                                                                {pausingPollId === poll.id ? (
+                                                                    <Loader2 size={18} className="animate-spin" />
+                                                                ) : isPaused ? (
+                                                                    <Play size={18} />
+                                                                ) : (
+                                                                    <Pause size={18} />
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                        <a
                                                             href={poll.type === 'survey' 
                                                                 ? `/#survey=${poll.id}&admin=${poll.adminKey}`
                                                                 : `/#id=${poll.id}&admin=${poll.adminKey}`

@@ -176,6 +176,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [activeView, setActiveView] = useState<'bar' | 'pie'>('bar');
     
+    // Detect if this is a survey
+    const isSurvey = poll?.type === 'survey' || poll?.sections?.length > 0;
+    
     // Fetch results
     useEffect(() => {
         const fetchResults = async () => {
@@ -304,6 +307,92 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     
     const { totalVotes, sortedOptions, winner } = resultsData;
     
+    // Process survey results
+    const surveyStats = useMemo(() => {
+        if (!isSurvey || !poll?.sections || !results?.surveyResponses) return null;
+        
+        const responses = results.surveyResponses || [];
+        const sections = poll.sections || [];
+        
+        // Calculate stats for each question
+        const questionStats: any[] = [];
+        
+        sections.forEach((section: any) => {
+            section.questions?.forEach((question: any) => {
+                const answers = responses.map((r: any) => r.answers?.[question.id]).filter(Boolean);
+                
+                if (question.type === 'multiple_choice' || question.type === 'dropdown' || question.type === 'yes_no') {
+                    // Count option selections
+                    const counts: Record<string, number> = {};
+                    answers.forEach((answer: any) => {
+                        const value = Array.isArray(answer) ? answer[0] : answer;
+                        counts[value] = (counts[value] || 0) + 1;
+                    });
+                    
+                    const options = question.type === 'yes_no' 
+                        ? [{ id: 'yes', text: 'Yes' }, { id: 'no', text: 'No' }]
+                        : question.options || [];
+                    
+                    const sortedResults = options.map((opt: any) => ({
+                        text: opt.text || opt,
+                        count: counts[opt.id || opt] || 0,
+                        percentage: answers.length > 0 ? ((counts[opt.id || opt] || 0) / answers.length) * 100 : 0
+                    })).sort((a: any, b: any) => b.count - a.count);
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'choice',
+                        sectionTitle: section.title,
+                        totalResponses: answers.length,
+                        results: sortedResults
+                    });
+                } else if (question.type === 'rating' || question.type === 'scale') {
+                    // Calculate average rating
+                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const avg = numericAnswers.length > 0 
+                        ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
+                        : 0;
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'rating',
+                        sectionTitle: section.title,
+                        totalResponses: numericAnswers.length,
+                        average: avg,
+                        max: question.maxRating || question.max || 5
+                    });
+                } else if (question.type === 'nps') {
+                    // Calculate NPS
+                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const promoters = numericAnswers.filter((n: number) => n >= 9).length;
+                    const detractors = numericAnswers.filter((n: number) => n <= 6).length;
+                    const total = numericAnswers.length;
+                    const npsScore = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : 0;
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'nps',
+                        sectionTitle: section.title,
+                        totalResponses: total,
+                        npsScore,
+                        promoters: Math.round((promoters / total) * 100) || 0,
+                        passives: Math.round(((total - promoters - detractors) / total) * 100) || 0,
+                        detractors: Math.round((detractors / total) * 100) || 0
+                    });
+                }
+            });
+        });
+        
+        return {
+            totalResponses: responses.length,
+            completionRate: 100, // Assume all submitted responses are complete
+            questionStats
+        };
+    }, [isSurvey, poll, results]);
+    
     // Color palettes
     const barGradients = [
         'from-indigo-500 via-purple-500 to-pink-500',
@@ -361,40 +450,43 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     )}
                 </motion.header>
                 
-                {/* Stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-                    <StatCard
-                        icon={<Users size={20} />}
-                        value={totalVotes}
-                        label="Votes"
-                        gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
-                        delay={0.1}
-                    />
-                    <StatCard
-                        icon={<Vote size={20} />}
-                        value={sortedOptions.length}
-                        label="Options"
-                        gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
-                        delay={0.2}
-                    />
-                    <StatCard
-                        icon={<Trophy size={20} />}
-                        value={`${Math.round(winner?.percentage || 0)}%`}
-                        label="Leader"
-                        gradient="bg-gradient-to-br from-amber-500 to-orange-600"
-                        delay={0.3}
-                    />
-                    <StatCard
-                        icon={<Sparkles size={20} />}
-                        value="Live"
-                        label="Status"
-                        gradient="bg-gradient-to-br from-pink-500 to-rose-600"
-                        delay={0.4}
-                    />
-                </div>
-                
-                {/* Winner Card */}
-                {winner && totalVotes > 0 && (
+                {/* Stats - Different for polls vs surveys */}
+                {!isSurvey ? (
+                    <>
+                        {/* Poll Stats */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                            <StatCard
+                                icon={<Users size={20} />}
+                                value={totalVotes}
+                                label="Votes"
+                                gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
+                                delay={0.1}
+                            />
+                            <StatCard
+                                icon={<Vote size={20} />}
+                                value={sortedOptions.length}
+                                label="Options"
+                                gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+                                delay={0.2}
+                            />
+                            <StatCard
+                                icon={<Trophy size={20} />}
+                                value={`${Math.round(winner?.percentage || 0)}%`}
+                                label="Leader"
+                                gradient="bg-gradient-to-br from-amber-500 to-orange-600"
+                                delay={0.3}
+                            />
+                            <StatCard
+                                icon={<Sparkles size={20} />}
+                                value="Live"
+                                label="Status"
+                                gradient="bg-gradient-to-br from-pink-500 to-rose-600"
+                                delay={0.4}
+                            />
+                        </div>
+                        
+                        {/* Winner Card */}
+                        {winner && totalVotes > 0 && (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 30 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -441,15 +533,15 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                             </div>
                         </div>
                     </motion.div>
-                )}
+                        )}
                 
-                {/* View Toggle */}
-                <motion.div 
-                    className="flex justify-center mb-5"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                >
+                        {/* View Toggle */}
+                        <motion.div 
+                            className="flex justify-center mb-5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.6 }}
+                        >
                     <div className="inline-flex bg-white/10 backdrop-blur rounded-xl p-1 border border-white/20">
                         <button
                             onClick={() => setActiveView('bar')}
@@ -609,6 +701,125 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         )}
                     </AnimatePresence>
                 </motion.div>
+                    </>
+                ) : (
+                    /* Survey Results Section */
+                    <div className="space-y-6 mb-8">
+                        {/* Survey Stats Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <StatCard
+                                icon={<Users size={20} />}
+                                value={surveyStats?.totalResponses || 0}
+                                label="Responses"
+                                gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
+                                delay={0.1}
+                            />
+                            <StatCard
+                                icon={<Vote size={20} />}
+                                value={surveyStats?.questionStats?.length || 0}
+                                label="Questions"
+                                gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+                                delay={0.2}
+                            />
+                            <StatCard
+                                icon={<Sparkles size={20} />}
+                                value="Live"
+                                label="Status"
+                                gradient="bg-gradient-to-br from-pink-500 to-rose-600"
+                                delay={0.3}
+                            />
+                        </div>
+                        
+                        {/* Question Results */}
+                        {surveyStats?.questionStats?.map((question: any, qIdx: number) => (
+                            <motion.div
+                                key={question.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 + qIdx * 0.1 }}
+                                className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/20"
+                            >
+                                {question.sectionTitle && (
+                                    <div className="text-xs uppercase tracking-wider text-indigo-300 font-semibold mb-2">
+                                        {question.sectionTitle}
+                                    </div>
+                                )}
+                                <h3 className="text-lg font-bold text-white mb-4">{question.text}</h3>
+                                <div className="text-xs text-white/40 mb-4">{question.totalResponses} responses</div>
+                                
+                                {question.type === 'choice' && (
+                                    <div className="space-y-3">
+                                        {question.results?.slice(0, 6).map((result: any, idx: number) => (
+                                            <div key={idx}>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-sm text-white/80 truncate flex-1 mr-4">{result.text}</span>
+                                                    <span className="text-sm font-bold text-white">{Math.round(result.percentage)}%</span>
+                                                </div>
+                                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        className={`h-full bg-gradient-to-r ${barGradients[idx % barGradients.length]}`}
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${result.percentage}%` }}
+                                                        transition={{ delay: 0.5 + idx * 0.1, duration: 0.8 }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {question.type === 'rating' && (
+                                    <div className="text-center">
+                                        <div className="text-5xl font-black bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent mb-2">
+                                            {question.average.toFixed(1)}
+                                        </div>
+                                        <div className="text-white/40 text-sm">out of {question.max}</div>
+                                        <div className="flex items-center justify-center gap-1 mt-3">
+                                            {Array.from({ length: question.max }, (_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`w-3 h-3 rounded-full ${
+                                                        i < Math.round(question.average) 
+                                                            ? 'bg-gradient-to-r from-amber-400 to-yellow-400' 
+                                                            : 'bg-white/20'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {question.type === 'nps' && (
+                                    <div>
+                                        <div className="text-center mb-4">
+                                            <div className={`text-5xl font-black ${
+                                                question.npsScore >= 50 ? 'text-emerald-400' :
+                                                question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
+                                            }`}>
+                                                {question.npsScore > 0 ? '+' : ''}{question.npsScore}
+                                            </div>
+                                            <div className="text-white/40 text-sm">NPS Score</div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                                            <div className="bg-emerald-500/20 rounded-lg p-2">
+                                                <div className="text-emerald-400 font-bold">{question.promoters}%</div>
+                                                <div className="text-white/40">Promoters</div>
+                                            </div>
+                                            <div className="bg-amber-500/20 rounded-lg p-2">
+                                                <div className="text-amber-400 font-bold">{question.passives}%</div>
+                                                <div className="text-white/40">Passives</div>
+                                            </div>
+                                            <div className="bg-red-500/20 rounded-lg p-2">
+                                                <div className="text-red-400 font-bold">{question.detractors}%</div>
+                                                <div className="text-white/40">Detractors</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
                 
                 {/* Social Share - Conditional on poll.showSocialShare */}
                 {poll.showSocialShare !== false && (

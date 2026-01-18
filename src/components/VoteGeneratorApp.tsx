@@ -30,6 +30,7 @@ import CustomerFeedbackPage from '../pages/CustomerFeedbackPage';
 import ContactPage from './ContactPage';
 import ManageSubscription from './ManageSubscription';
 import PublicResults from './PublicResults';
+import ThankYouPage from './ThankYouPage';
 import BlogIndex from './blog/BlogIndex';
 import BlogPostAnonymousSurvey from './blog/BlogPostAnonymousSurvey';
 import BlogPost50Questions from './blog/BlogPost50Questions';
@@ -51,6 +52,7 @@ type ViewState =
     | { type: 'survey-ad-wall-after'; poll: Poll }
     | { type: 'survey-results'; poll: Poll; responses: any[]; isAdmin?: boolean }
     | { type: 'poll-closed'; status: 'expired' | 'closed' | 'paused' | 'draft' | 'not_found'; pollId?: string }
+    | { type: 'thank-you'; pollType: 'poll' | 'survey'; customMessage?: string; title?: string }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -197,7 +199,12 @@ const VoteGeneratorApp: React.FC = () => {
                     
                     setViewState({ type: 'survey-results', poll: survey, responses, isAdmin });
                 } else if (hasCompletedSurvey && survey.settings?.hideResults) {
-                    setViewState({ type: 'error', message: "Thanks for completing the survey! Results are hidden by the organizer." });
+                    setViewState({ 
+                        type: 'thank-you', 
+                        pollType: 'survey',
+                        customMessage: survey.settings?.thankYouMessage,
+                        title: survey.settings?.thankYouTitle
+                    });
                 } else {
                     // Show survey - check for ad-wall
                     const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
@@ -256,8 +263,13 @@ const VoteGeneratorApp: React.FC = () => {
                 const results = await getResults(pollId, adminKey || undefined);
                 setViewState({ type: 'results', poll, results, isAdmin });
             } else if (userVoted && poll.settings.hideResults) {
-                 // Voted but results are hidden
-                 setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
+                 // Voted but results are hidden - show thank you page
+                 setViewState({ 
+                     type: 'thank-you', 
+                     pollType: 'poll',
+                     customMessage: poll.settings?.thankYouMessage,
+                     title: poll.settings?.thankYouTitle
+                 });
             } else {
                 // User hasn't voted yet - check if we need to show ad-wall first
                 const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
@@ -331,9 +343,14 @@ const VoteGeneratorApp: React.FC = () => {
                 return;
             }
             
-            // If results are hidden, don't show ad-wall - go straight to thank you message
+            // If results are hidden, don't show ad-wall - go straight to thank you page
             if (viewState.poll.settings.hideResults) {
-                setViewState({ type: 'error', message: "Thanks for voting! Results are hidden by the organizer." });
+                setViewState({ 
+                    type: 'thank-you', 
+                    pollType: 'poll',
+                    customMessage: viewState.poll.settings?.thankYouMessage,
+                    title: viewState.poll.settings?.thankYouTitle
+                });
                 return;
             }
             
@@ -750,7 +767,12 @@ const VoteGeneratorApp: React.FC = () => {
                                     
                                     // Check if results are hidden
                                     if (viewState.poll.settings?.hideResults) {
-                                        setViewState({ type: 'error', message: "Thanks for completing the survey! Results are hidden by the organizer." });
+                                        setViewState({ 
+                                            type: 'thank-you', 
+                                            pollType: 'survey',
+                                            customMessage: viewState.poll.settings?.thankYouMessage,
+                                            title: viewState.poll.settings?.thankYouTitle
+                                        });
                                         return;
                                     }
                                     
@@ -1102,6 +1124,22 @@ const VoteGeneratorApp: React.FC = () => {
                             <p className="text-slate-400 text-sm mt-6">
                                 Powered by VoteGenerator
                             </p>
+                        </motion.div>
+                    )}
+
+                    {viewState.type === 'thank-you' && (
+                        <motion.div
+                            key="thank-you"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <ThankYouPage
+                                type={viewState.pollType}
+                                customMessage={viewState.customMessage}
+                                title={viewState.title}
+                                showCreateCTA={true}
+                            />
                         </motion.div>
                     )}
 

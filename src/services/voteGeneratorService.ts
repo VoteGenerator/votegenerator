@@ -145,7 +145,8 @@ export const submitVote = async (
     pairwiseVotes?: { winnerId: string; loserId: string }[],
     ratingVotes?: Record<string, number>,
     surveyAnswers?: Record<string, any>,
-    antiBotFields?: AntiBotFields
+    antiBotFields?: AntiBotFields,
+    surveyMeta?: { startedAt?: string; completionTime?: number }
 ): Promise<void> => {
     const votePayload = {
         pollId,
@@ -158,6 +159,11 @@ export const submitVote = async (
         pairwiseVotes,
         ratingVotes,
         surveyAnswers,
+        // Survey timing metadata
+        ...(surveyMeta && {
+            startedAt: surveyMeta.startedAt,
+            completionTime: surveyMeta.completionTime
+        }),
         // Anti-bot protection fields
         ...(antiBotFields && {
             _hp: antiBotFields._hp,

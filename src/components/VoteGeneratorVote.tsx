@@ -369,7 +369,8 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     undefined, // pairwiseVotes
                     undefined, // ratingVotes
                     response.answers, // surveyAnswers
-                    antiBotFields // anti-bot protection
+                    antiBotFields, // anti-bot protection
+                    { startedAt: response.startedAt, completionTime: response.completionTime } // survey timing
                 );
                 
                 // Mark as voted in localStorage

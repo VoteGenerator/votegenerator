@@ -372,10 +372,11 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
     const sections = poll.sections || [];
     const settings = poll.surveySettings || {};
     
-    // Check if welcome screen should be shown (has content to show)
-    const hasWelcomeContent = settings.welcomeMessage || settings.estimatedTime || settings.logoUrl || settings.showAnonymousNotice;
+    // Welcome screen should ALWAYS show for surveys - it displays the title at minimum
+    // Only skip if explicitly disabled via a setting (which doesn't exist yet)
+    const showWelcomeDefault = true;
     
-    const [showWelcome, setShowWelcome] = useState(hasWelcomeContent);
+    const [showWelcome, setShowWelcome] = useState(showWelcomeDefault);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});

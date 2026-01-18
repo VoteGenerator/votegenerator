@@ -38,6 +38,8 @@ interface Vote {
     ratingVotes?: Record<string, number>;
     // Survey mode
     surveyAnswers?: Record<string, any>;
+    startedAt?: string;       // When survey was started
+    completionTime?: number;  // Seconds to complete
     timestamp: string;
     analytics?: VoteAnalytics;
 }
@@ -706,9 +708,11 @@ export const handler: Handler = async (event) => {
         }
         // Add vote data based on poll type
         if (isSurvey) {
-            // Survey mode - store survey answers
+            // Survey mode - store survey answers and timing
             vote.surveyAnswers = body.surveyAnswers;
-            console.log('vg-vote: Storing survey answers');
+            if (body.startedAt) vote.startedAt = body.startedAt;
+            if (body.completionTime) vote.completionTime = body.completionTime;
+            console.log('vg-vote: Storing survey answers, completionTime:', body.completionTime);
         } else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             vote.rankedOptionIds = body.rankedOptionIds;
         } else {

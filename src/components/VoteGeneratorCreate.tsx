@@ -135,7 +135,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [multipleSelection, setMultipleSelection] = useState(false);
     const [requireNames, setRequireNames] = useState(false);
-    const [hideResults, setHideResults] = useState(false);
+    const [hideResults, setHideResults] = useState(true); // Default: hide results from respondents
     const [allowComments, setAllowComments] = useState(false);
     const [buttonText, setButtonText] = useState('Submit Vote');
     const [deadline, setDeadline] = useState('');
@@ -218,7 +218,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
         setPollType(template.pollType);
         if (template.settings) {
             setMultipleSelection(template.settings.allowMultiple || false);
-            setHideResults(template.settings.hideResults || false);
+            setHideResults(template.settings.hideResults ?? true);
         }
         setActiveTemplate(template);
     };

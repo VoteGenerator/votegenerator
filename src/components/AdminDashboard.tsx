@@ -799,8 +799,76 @@ const AdminDashboard: React.FC = () => {
         window.location.href = `/admin?token=${newToken}`;
     };
 
+    const goHome = () => {
+        window.location.href = '/';
+    };
+    
+    const goToCreate = () => {
+        // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
+        if (session?.tier) {
+            localStorage.setItem('vg_purchased_tier', session.tier);
+            // Also store expiration info
+            if (session.expiresAt) {
+                localStorage.setItem('vg_tier_expires', session.expiresAt);
+            }
+        }
+        // Navigate to create section - use query param so app can hide hero
+        window.location.href = '/create';
+    };
+
+    const canCreateMorePolls = () => {
+        if (!session) return false;
+        // Block creation if plan is expired
+        if (isPlanExpired) return false;
+        const config = TIER_CONFIG[session.tier];
+        // For Pro/Pro, only count LIVE polls toward the limit
+        if (config.requiresActivation) {
+            return livePolls.length < config.maxPolls;
+        }
+        return session.polls.length < config.maxPolls;
+    };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 size={32} className="text-indigo-600 animate-spin" />
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !session) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={32} className="text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
+                    <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
+                    <div className="flex gap-3">
+                        <a href="/recover" className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center">
+                            Recover Link
+                        </a>
+                        <button onClick={goHome} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">
+                            Go Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const tier = session.tier;
+    const config = TIER_CONFIG[tier];
+    const polls = session.polls || [];
+    const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
+    const isBusiness = tier === 'business';
+    const showSearch = isBusiness && polls.length > 5;
+
     // ========================================================================
-    // BULK ACTION HANDLERS
+    // BULK ACTION HANDLERS (must be after polls declaration)
     // ========================================================================
     
     const togglePollSelection = (pollId: string) => {
@@ -829,18 +897,15 @@ const AdminDashboard: React.FC = () => {
     };
     
     // Check if any selected polls have responses (for tier restriction)
-    const selectedPollsWithResponses = useMemo(() => {
-        if (!session) return [];
-        return polls.filter(p => selectedPolls.has(p.id) && (p.responseCount || 0) > 0);
-    }, [selectedPolls, polls, session]);
+    const selectedPollsWithResponses = polls.filter(p => selectedPolls.has(p.id) && (p.responseCount || 0) > 0);
     
-    const canBulkDelete = useMemo(() => {
+    const canBulkDelete = (() => {
         if (!session) return false;
         // Business tier can delete anything
         if (session.tier === 'business') return true;
         // Free/Pro can only delete polls without responses
         return selectedPollsWithResponses.length === 0;
-    }, [session, selectedPollsWithResponses]);
+    })();
     
     const handleBulkDelete = () => {
         if (!canBulkDelete && selectedPollsWithResponses.length > 0) {
@@ -931,74 +996,6 @@ const AdminDashboard: React.FC = () => {
         
         setIsBulkExporting(false);
     };
-
-    const goHome = () => {
-        window.location.href = '/';
-    };
-    
-    const goToCreate = () => {
-        // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
-        if (session?.tier) {
-            localStorage.setItem('vg_purchased_tier', session.tier);
-            // Also store expiration info
-            if (session.expiresAt) {
-                localStorage.setItem('vg_tier_expires', session.expiresAt);
-            }
-        }
-        // Navigate to create section - use query param so app can hide hero
-        window.location.href = '/create';
-    };
-
-    const canCreateMorePolls = () => {
-        if (!session) return false;
-        // Block creation if plan is expired
-        if (isPlanExpired) return false;
-        const config = TIER_CONFIG[session.tier];
-        // For Pro/Pro, only count LIVE polls toward the limit
-        if (config.requiresActivation) {
-            return livePolls.length < config.maxPolls;
-        }
-        return session.polls.length < config.maxPolls;
-    };
-
-    // Loading state
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <Loader2 size={32} className="text-indigo-600 animate-spin" />
-            </div>
-        );
-    }
-
-    // Error state
-    if (error || !session) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle size={32} className="text-red-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Access Denied</h2>
-                    <p className="text-slate-500 mb-6">{error || 'Unable to load dashboard'}</p>
-                    <div className="flex gap-3">
-                        <a href="/recover" className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition text-center">
-                            Recover Link
-                        </a>
-                        <button onClick={goHome} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">
-                            Go Home
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const tier = session.tier;
-    const config = TIER_CONFIG[tier];
-    const polls = session.polls || [];
-    const totalVotes = polls.reduce((sum, p) => sum + (p.responseCount || 0), 0);
-    const isBusiness = tier === 'business';
-    const showSearch = isBusiness && polls.length > 5;
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>

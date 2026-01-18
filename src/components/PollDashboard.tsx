@@ -217,6 +217,92 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Keyboard shortcuts help modal
     const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
     
+    // Local state for settings toggles (for immediate UI feedback)
+    const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
+    const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
+    const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
+    const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
+    const [settingsUpdating, setSettingsUpdating] = useState(false);
+    
+    // Sync local state when poll props change (e.g., after external refresh)
+    React.useEffect(() => {
+        setLocalPublicResults(poll.settings?.publicResults || false);
+        setLocalShowShareButton(poll.settings?.showShareButton || false);
+        setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+        setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
+    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare]);
+    
+    // Helper to update poll settings
+    const updatePollSetting = async (settingKey: string, value: any) => {
+        setSettingsUpdating(true);
+        try {
+            const response = await fetch('/.netlify/functions/vg-update-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey,
+                    settings: { [settingKey]: value }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update setting');
+            }
+            
+            // Success - don't call onRefresh immediately to avoid race condition
+            // The local state is already updated, refresh will happen on next user action
+            console.log(`Setting ${settingKey} updated to:`, value);
+        } catch (err) {
+            console.error('Failed to update setting:', err);
+            // Revert local state on error
+            if (settingKey === 'publicResults') setLocalPublicResults(poll.settings?.publicResults || false);
+            if (settingKey === 'showShareButton') setLocalShowShareButton(poll.settings?.showShareButton || false);
+            if (settingKey === 'allowedViews') setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+        } finally {
+            setSettingsUpdating(false);
+        }
+    };
+
+    // Computed values
+    const tier = useMemo(() => {
+        return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    }, []);
+    
+    const isPro = tier === 'pro' || tier === 'business';
+    const isBusiness = tier === 'business';
+    const isFree = tier === 'free';
+    
+    const shareUrl = `${window.location.origin}/#id=${poll.id}`;
+    const adminUrl = `${window.location.origin}/#id=${poll.id}&admin=${adminKey}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff`;
+    
+    const voteCount = results.totalVotes || 0;
+    const maxVotes = isFree ? 100 : (tier === 'pro' ? 10000 : 100000);
+    const usagePercentage = (voteCount / maxVotes) * 100;
+    const votes = results.votes || [];
+    
+    // Calculate what insights free users are missing
+    const uniqueCountries = useMemo(() => {
+        const countries = new Set<string>();
+        votes.forEach((v: any) => {
+            if (v.analytics?.country) countries.add(v.analytics.country);
+        });
+        return countries.size;
+    }, [votes]);
+    
+    const uniqueDevices = useMemo(() => {
+        const devices = new Set<string>();
+        votes.forEach((v: any) => {
+            if (v.analytics?.device) devices.add(v.analytics.device);
+        });
+        return devices.size;
+    }, [votes]);
+    
+    const commentsCount = useMemo(() => {
+        return votes.filter((v: any) => v.comment && v.comment.trim()).length;
+    }, [votes]);
+    
     // Keyboard shortcuts
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -314,92 +400,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         setFilterDevice('all');
         setFilterComplete('all');
     };
-    
-    // Local state for settings toggles (for immediate UI feedback)
-    const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
-    const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
-    const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
-    const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
-    const [settingsUpdating, setSettingsUpdating] = useState(false);
-    
-    // Sync local state when poll props change (e.g., after external refresh)
-    React.useEffect(() => {
-        setLocalPublicResults(poll.settings?.publicResults || false);
-        setLocalShowShareButton(poll.settings?.showShareButton || false);
-        setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
-        setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
-    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare]);
-    
-    // Helper to update poll settings
-    const updatePollSetting = async (settingKey: string, value: any) => {
-        setSettingsUpdating(true);
-        try {
-            const response = await fetch('/.netlify/functions/vg-update-settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pollId: poll.id,
-                    adminKey,
-                    settings: { [settingKey]: value }
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update setting');
-            }
-            
-            // Success - don't call onRefresh immediately to avoid race condition
-            // The local state is already updated, refresh will happen on next user action
-            console.log(`Setting ${settingKey} updated to:`, value);
-        } catch (err) {
-            console.error('Failed to update setting:', err);
-            // Revert local state on error
-            if (settingKey === 'publicResults') setLocalPublicResults(poll.settings?.publicResults || false);
-            if (settingKey === 'showShareButton') setLocalShowShareButton(poll.settings?.showShareButton || false);
-            if (settingKey === 'allowedViews') setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
-        } finally {
-            setSettingsUpdating(false);
-        }
-    };
-
-    // Computed values
-    const tier = useMemo(() => {
-        return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
-    }, []);
-    
-    const isPro = tier === 'pro' || tier === 'business';
-    const isBusiness = tier === 'business';
-    const isFree = tier === 'free';
-    
-    const shareUrl = `${window.location.origin}/#id=${poll.id}`;
-    const adminUrl = `${window.location.origin}/#id=${poll.id}&admin=${adminKey}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff`;
-    
-    const voteCount = results.totalVotes || 0;
-    const maxVotes = isFree ? 100 : (tier === 'pro' ? 10000 : 100000);
-    const usagePercentage = (voteCount / maxVotes) * 100;
-    const votes = results.votes || [];
-    
-    // Calculate what insights free users are missing
-    const uniqueCountries = useMemo(() => {
-        const countries = new Set<string>();
-        votes.forEach((v: any) => {
-            if (v.analytics?.country) countries.add(v.analytics.country);
-        });
-        return countries.size;
-    }, [votes]);
-    
-    const uniqueDevices = useMemo(() => {
-        const devices = new Set<string>();
-        votes.forEach((v: any) => {
-            if (v.analytics?.device) devices.add(v.analytics.device);
-        });
-        return devices.size;
-    }, [votes]);
-    
-    const commentsCount = useMemo(() => {
-        return votes.filter((v: any) => v.comment && v.comment.trim()).length;
-    }, [votes]);
     
     // Handlers
     const copyToClipboard = async (text: string, type: 'share' | 'admin' | 'codes') => {

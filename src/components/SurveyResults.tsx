@@ -1430,12 +1430,13 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
             }
         }
         
-        if (poll?.sections?.length > 0) {
-            console.log('First section:', poll.sections[0]);
-            console.log('First section questions count:', poll.sections[0].questions?.length || 0);
-            if (poll.sections[0].questions?.[0]) {
-                console.log('First question ID:', poll.sections[0].questions[0].id);
-                console.log('First question type:', poll.sections[0].questions[0].type);
+        const sections = poll?.sections;
+        if (sections && sections.length > 0) {
+            console.log('First section:', sections[0]);
+            console.log('First section questions count:', sections[0].questions?.length || 0);
+            if (sections[0].questions?.[0]) {
+                console.log('First question ID:', sections[0].questions[0].id);
+                console.log('First question type:', sections[0].questions[0].type);
             }
         }
         console.log('========== End SurveyResults Debug ==========');

@@ -579,6 +579,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 voterName: v.voterName,
                 submittedAt: v.votedAt || v.timestamp || new Date().toISOString(),
                 startedAt: v.startedAt,
+                completedAt: v.votedAt || v.timestamp,
                 completionTime: v.completionTime,
                 answers: v.surveyAnswers || v.answers || {},
                 isComplete: true,
@@ -619,6 +620,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 <SurveyResults 
                     poll={poll} 
                     responses={surveyResponses}
+                    isAdmin={isAdmin}
                 />
                 
                 {/* Edit Button */}

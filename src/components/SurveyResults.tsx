@@ -1,2798 +1,2241 @@
-import React, { useState, useMemo } from 'react';
+// ============================================================================
+// SurveyResults - Multi-Section Survey Results Display
+// Location: src/components/SurveyResults.tsx
+// Features: Per-question breakdown, charts, NPS, tier gating, CSV/Excel export
+// Updated: Added tier-based feature gating, export functions, response limits
+// ============================================================================
+
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText, Crown, Lock } from 'lucide-react';
-import { RunoffResult, Poll, SurveyResponse } from '../types';
-import AnalyticsDashboard from './AnalyticsDashboard';
-import SurveyResults from './SurveyResults';
-import { THEMES, ThemeConfig } from './ThemeSelector';
+import {
+    BarChart3, Users, Clock, Star, ChevronDown, ChevronRight,
+    Download, Eye, FileText, TrendingUp, TrendingDown,
+    Shield, Lock, EyeOff, Info, Minus, Crown, FileSpreadsheet,
+    Table, Calendar, Cloud, FileDown, Filter
+} from 'lucide-react';
+import {
+    Poll, SurveyQuestion, SurveyResponse
+} from '../types';
 
-// Get theme config from theme ID
-const getThemeConfig = (themeId?: string): ThemeConfig => {
-    if (!themeId) return THEMES[0];
-    return THEMES.find(t => t.id === themeId) || THEMES[0];
-};
+// ============================================================================
+// TIER CONFIGURATION (matches actual pricing - monthly/yearly subscriptions)
+// Free: $0 | Pro: $19/mo or $190/yr | Business: $49/mo or $490/yr
+// ============================================================================
 
-// Generate CSS classes for special effects
-const getSpecialEffectClasses = (effect?: string): string => {
-    switch (effect) {
-        case 'glow': return 'shadow-2xl';
-        case 'shimmer': return 'relative overflow-hidden';
-        case 'glass': return 'backdrop-blur-xl bg-opacity-80';
-        case 'shadow-lg': return 'shadow-2xl';
-        default: return '';
+type UserTier = 'free' | 'pro' | 'business';
+
+const SURVEY_TIER_CONFIG: Record<UserTier, {
+    maxQuestions: number;
+    maxSections: number;
+    maxResponses: number;
+    canExportCSV: boolean;
+    canExportExcel: boolean;
+    canExportPDF: boolean;
+    canViewIndividual: boolean;
+    canViewAllText: boolean;
+    canViewWordCloud: boolean;
+    canFilterByDate: boolean;
+    textPreviewCount: number;
+}> = {
+    free: {
+        maxQuestions: 10,
+        maxSections: 3,
+        maxResponses: 100,
+        canExportCSV: false,
+        canExportExcel: false,
+        canExportPDF: false,
+        canViewIndividual: false,
+        canViewAllText: false,
+        canViewWordCloud: false,  // Locked for free
+        canFilterByDate: false,   // Basic preset filters only
+        textPreviewCount: 3,
+    },
+    pro: {
+        maxQuestions: 25,
+        maxSections: 10,
+        maxResponses: 10000,
+        canExportCSV: true,
+        canExportExcel: true,
+        canExportPDF: true,
+        canViewIndividual: true,
+        canViewAllText: true,
+        canViewWordCloud: true,
+        canFilterByDate: true,
+        textPreviewCount: Infinity,
+    },
+    business: {
+        maxQuestions: Infinity,
+        maxSections: Infinity,
+        maxResponses: 100000,
+        canExportCSV: true,
+        canExportExcel: true,
+        canExportPDF: true,
+        canViewIndividual: true,
+        canViewAllText: true,
+        canViewWordCloud: true,
+        canFilterByDate: true,
+        textPreviewCount: Infinity,
     }
 };
 
-// Helper: Get country name from code
-const COUNTRY_NAMES: Record<string, string> = {
-    'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia',
-    'DE': 'Germany', 'FR': 'France', 'JP': 'Japan', 'IN': 'India', 'BR': 'Brazil',
-    'MX': 'Mexico', 'ES': 'Spain', 'IT': 'Italy', 'NL': 'Netherlands', 'SE': 'Sweden',
-    'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'PL': 'Poland', 'IE': 'Ireland',
-    'NZ': 'New Zealand', 'KR': 'South Korea', 'SG': 'Singapore', 'CH': 'Switzerland',
-    'AT': 'Austria', 'BE': 'Belgium', 'PT': 'Portugal', 'AR': 'Argentina', 'CL': 'Chile',
-    'CO': 'Colombia', 'PH': 'Philippines', 'ID': 'Indonesia', 'MY': 'Malaysia',
-    'TH': 'Thailand', 'VN': 'Vietnam', 'ZA': 'South Africa', 'IL': 'Israel',
-    'AE': 'United Arab Emirates', 'SA': 'Saudi Arabia', 'TR': 'Turkey', 'RU': 'Russia',
-    'UA': 'Ukraine', 'CZ': 'Czech Republic', 'RO': 'Romania', 'GR': 'Greece', 'HU': 'Hungary'
-};
-
-const getCountryName = (code: string): string => COUNTRY_NAMES[code] || code;
-
-// Helper: Get country flag emoji
-const COUNTRY_FLAGS: Record<string, string> = {
-    'United States': '🇺🇸', 'United Kingdom': '🇬🇧', 'Canada': '🇨🇦', 'Australia': '🇦🇺',
-    'Germany': '🇩🇪', 'France': '🇫🇷', 'Japan': '🇯🇵', 'India': '🇮🇳', 'Brazil': '🇧🇷',
-    'Mexico': '🇲🇽', 'Spain': '🇪🇸', 'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Sweden': '🇸🇪',
-    'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Finland': '🇫🇮', 'Poland': '🇵🇱', 'Ireland': '🇮🇪',
-    'New Zealand': '🇳🇿', 'South Korea': '🇰🇷', 'Singapore': '🇸🇬', 'Switzerland': '🇨🇭',
-    'Austria': '🇦🇹', 'Belgium': '🇧🇪', 'Portugal': '🇵🇹', 'Argentina': '🇦🇷', 'Chile': '🇨🇱',
-    'Colombia': '🇨🇴', 'Philippines': '🇵🇭', 'Indonesia': '🇮🇩', 'Malaysia': '🇲🇾',
-    'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'South Africa': '🇿🇦', 'Israel': '🇮🇱',
-    'United Arab Emirates': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Turkey': '🇹🇷', 'Russia': '🇷🇺',
-    'Ukraine': '🇺🇦', 'Czech Republic': '🇨🇿', 'Romania': '🇷🇴', 'Greece': '🇬🇷', 'Hungary': '🇭🇺'
-};
-
-const getCountryFlag = (country: string): string => COUNTRY_FLAGS[country] || '🌍';
-
-// Helper to safely get timestamp from vote
-const getVoteTime = (vote: any): number => {
-    const timeStr = vote.votedAt || vote.timestamp;
-    return timeStr ? new Date(timeStr).getTime() : Date.now();
-};
-
 // ============================================================================
-// Calendar Integration Helpers
+// WORD FILTERING - Common words, profanity, and validation
 // ============================================================================
 
-// Parse meeting time slot text to extract date/time info
-// Handles formats like: "Monday, Jan 15 at 2:00 PM", "2025-01-15 14:00", "Friday 3pm", etc.
-const parseMeetingTimeSlot = (slotText: string): { start: Date } | null => {
-    try {
-        const now = new Date();
-        let start: Date | null = null;
+// Common stop words to exclude from word clouds
+const STOP_WORDS = new Set([
+    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for',
+    'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his',
+    'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my',
+    'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if',
+    'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like',
+    'time', 'no', 'just', 'him', 'know', 'take', 'people', 'into', 'year',
+    'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then',
+    'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back',
+    'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even',
+    'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us',
+    'is', 'are', 'was', 'were', 'been', 'being', 'has', 'had', 'does', 'did',
+    'am', 'very', 'really', 'more', 'much', 'many', 'such', 'here', 'where',
+    'why', 'thing', 'things', 'something', 'nothing', 'everything', 'anything',
+    'yeah', 'yes', 'no', 'ok', 'okay', 'etc', 'ie', 'eg', 'im', 'ive', 'dont',
+    'didnt', 'doesnt', 'wont', 'cant', 'couldnt', 'shouldnt', 'wouldnt', 'isnt',
+    'arent', 'wasnt', 'werent', 'hasnt', 'havent', 'hadnt', 'thats', 'theres',
+    'heres', 'whats', 'whos', 'wheres', 'whens', 'hows', 'whys', 'lets', 'got',
+    'getting', 'gonna', 'gotta', 'wanna', 'kinda', 'sorta', 'lot', 'lots',
+    'bit', 'little', 'big', 'small', 'great', 'nice', 'bad', 'few', 'every',
+]);
+
+// Basic profanity filter (common bad words - keeping it family friendly)
+const PROFANITY_LIST = new Set([
+    'fuck', 'fucking', 'fucked', 'fucker', 'fucks', 'shit', 'shits', 'shitty',
+    'bullshit', 'ass', 'asses', 'asshole', 'assholes', 'damn', 'damned',
+    'bitch', 'bitches', 'bastard', 'bastards', 'crap', 'crappy', 'dick',
+    'dicks', 'piss', 'pissed', 'cock', 'cocks', 'pussy', 'pussies', 'whore',
+    'whores', 'slut', 'sluts', 'cunt', 'cunts', 'nigger', 'nigga', 'faggot',
+    'fag', 'retard', 'retarded', 'penis', 'vagina', 'sex', 'porn', 'xxx',
+]);
+
+// Check if a word looks like a real English word (basic heuristics)
+const isValidWord = (word: string): boolean => {
+    // Must be at least 2 characters
+    if (word.length < 2) return false;
+    
+    // Must not be too long (likely spam/gibberish)
+    if (word.length > 20) return false;
+    
+    // Must contain at least one vowel (basic English word check)
+    if (!/[aeiouy]/i.test(word)) return false;
+    
+    // Must not be all consonants
+    if (/^[bcdfghjklmnpqrstvwxz]+$/i.test(word)) return false;
+    
+    // Must not have more than 3 consecutive consonants (unusual in English)
+    if (/[bcdfghjklmnpqrstvwxz]{4,}/i.test(word)) return false;
+    
+    // Must not have more than 2 consecutive vowels (unusual patterns)
+    if (/[aeiou]{3,}/i.test(word)) return false;
+    
+    // Must not be repeating characters (like 'aaaa' or 'abab')
+    if (/(.)\1{2,}/i.test(word)) return false;
+    
+    // Must not be a number
+    if (/^\d+$/.test(word)) return false;
+    
+    // Must be mostly letters
+    if (!/^[a-z]+$/i.test(word)) return false;
+    
+    return true;
+};
+
+// Extract and count words from text responses
+const extractWords = (texts: string[]): Map<string, number> => {
+    const wordCounts = new Map<string, number>();
+    
+    texts.forEach(text => {
+        if (!text || typeof text !== 'string') return;
         
-        // Try ISO format first (2025-01-15T14:00)
-        if (/^\d{4}-\d{2}-\d{2}/.test(slotText)) {
-            start = new Date(slotText);
-        }
+        // Split into words, lowercase, remove punctuation
+        const words = text
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 0);
         
-        // Try parsing natural language with date
-        if (!start || isNaN(start.getTime())) {
-            // Look for patterns like "Jan 15", "January 15", "1/15", etc.
-            const dateMatch = slotText.match(/(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?/i);
-            const timeMatch = slotText.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+        words.forEach(word => {
+            // Skip stop words
+            if (STOP_WORDS.has(word)) return;
             
-            if (dateMatch) {
-                const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                const monthStr = dateMatch[1].toLowerCase().slice(0, 3);
-                const monthIndex = monthNames.indexOf(monthStr);
-                const day = parseInt(dateMatch[2]);
-                const year = dateMatch[3] ? parseInt(dateMatch[3]) : now.getFullYear();
-                
-                if (monthIndex !== -1 && day >= 1 && day <= 31) {
-                    start = new Date(year, monthIndex, day);
-                    
-                    // Add time if found
-                    if (timeMatch) {
-                        let hour = parseInt(timeMatch[1]);
-                        const minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-                        const ampm = timeMatch[3]?.toLowerCase();
-                        
-                        if (ampm === 'pm' && hour < 12) hour += 12;
-                        if (ampm === 'am' && hour === 12) hour = 0;
-                        
-                        start.setHours(hour, minute, 0, 0);
-                    } else {
-                        start.setHours(12, 0, 0, 0); // Default to noon
-                    }
-                }
-            }
-        }
-        
-        // If still no valid date, try just time for "next occurrence"
-        if (!start || isNaN(start.getTime())) {
-            const timeOnlyMatch = slotText.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
-            if (timeOnlyMatch) {
-                start = new Date(now);
-                let hour = parseInt(timeOnlyMatch[1]);
-                const minute = timeOnlyMatch[2] ? parseInt(timeOnlyMatch[2]) : 0;
-                const ampm = timeOnlyMatch[3].toLowerCase();
-                
-                if (ampm === 'pm' && hour < 12) hour += 12;
-                if (ampm === 'am' && hour === 12) hour = 0;
-                
-                start.setHours(hour, minute, 0, 0);
-                
-                // If time has passed today, set for tomorrow
-                if (start < now) {
-                    start.setDate(start.getDate() + 1);
-                }
-            }
-        }
-        
-        if (!start || isNaN(start.getTime())) {
-            return null;
-        }
-        
-        // Return just the start - duration will be applied by caller
-        return { start };
-    } catch {
-        return null;
-    }
-};
-
-// Format date for Google Calendar (YYYYMMDDTHHmmssZ)
-const formatGoogleDate = (date: Date): string => {
-    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-};
-
-// Generate Google Calendar link
-const generateGoogleCalendarLink = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
-    const parsed = parseMeetingTimeSlot(slotText);
-    if (!parsed) return null;
-    
-    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
-    
-    const params = new URLSearchParams({
-        action: 'TEMPLATE',
-        text: pollTitle || title,
-        dates: `${formatGoogleDate(parsed.start)}/${formatGoogleDate(end)}`,
-        details: `Scheduled via VoteGenerator\nTime slot: ${slotText}\nDuration: ${durationMinutes} minutes`,
+            // Skip profanity
+            if (PROFANITY_LIST.has(word)) return;
+            
+            // Skip invalid words
+            if (!isValidWord(word)) return;
+            
+            // Count the word
+            wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+        });
     });
     
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    return wordCounts;
 };
 
-// Generate Outlook Calendar link
-const generateOutlookCalendarLink = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
-    const parsed = parseMeetingTimeSlot(slotText);
-    if (!parsed) return null;
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface QuestionStats {
+    questionId: string;
+    questionText: string;
+    questionType: string;
+    totalResponses: number;
+    optionCounts?: Record<string, number>;
+    average?: number;
+    min?: number;
+    max?: number;
+    distribution?: Record<number, number>;
+    textResponses?: string[];
+    rankingScores?: Record<string, number>;
+    npsData?: NPSData;
+}
+
+interface SectionStats {
+    sectionId: string;
+    sectionTitle: string;
+    questions: QuestionStats[];
+}
+
+interface NPSData {
+    promoters: number;
+    passives: number;
+    detractors: number;
+    promoterPct: number;
+    passivePct: number;
+    detractorPct: number;
+    score: number;
+    total: number;
+}
+
+// ============================================================================
+// NPS CALCULATION
+// ============================================================================
+
+const calculateNPS = (responses: number[]): NPSData | null => {
+    const validResponses = responses.filter(r => r >= 0 && r <= 10);
+    const total = validResponses.length;
     
-    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
+    if (total === 0) return null;
     
-    const params = new URLSearchParams({
-        path: '/calendar/action/compose',
-        rru: 'addevent',
-        subject: pollTitle || title,
-        startdt: parsed.start.toISOString(),
-        enddt: end.toISOString(),
-        body: `Scheduled via VoteGenerator\nTime slot: ${slotText}\nDuration: ${durationMinutes} minutes`,
-    });
+    const promoters = validResponses.filter(r => r >= 9).length;
+    const passives = validResponses.filter(r => r >= 7 && r <= 8).length;
+    const detractors = validResponses.filter(r => r <= 6).length;
     
-    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+    const promoterPct = Math.round((promoters / total) * 100);
+    const passivePct = Math.round((passives / total) * 100);
+    const detractorPct = Math.round((detractors / total) * 100);
+    
+    return {
+        promoters,
+        passives,
+        detractors,
+        promoterPct,
+        passivePct,
+        detractorPct,
+        score: promoterPct - detractorPct,
+        total
+    };
 };
 
-// Generate .ics file content
-const generateICSContent = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60): string | null => {
-    const parsed = parseMeetingTimeSlot(slotText);
-    if (!parsed) return null;
-    
-    const end = new Date(parsed.start.getTime() + durationMinutes * 60 * 1000);
-    
-    const formatICSDate = (date: Date): string => {
-        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+const isNPSQuestion = (questionText: string, questionType: string): boolean => {
+    if (questionType !== 'scale') return false;
+    const npsKeywords = ['recommend', 'likely to recommend', 'nps', 'net promoter', 'friend or colleague', 'refer'];
+    const lowerText = questionText.toLowerCase();
+    return npsKeywords.some(keyword => lowerText.includes(keyword));
+};
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+const calculateQuestionStats = (
+    question: SurveyQuestion,
+    responses: SurveyResponse[]
+): QuestionStats => {
+    // Default stats in case of error
+    const defaultStats: QuestionStats = {
+        questionId: question?.id || 'unknown',
+        questionText: question?.question || 'Unknown Question',
+        questionType: question?.type || 'text',
+        totalResponses: 0,
     };
     
-    const uid = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}@votegenerator.com`;
-    const now = formatICSDate(new Date());
+    try {
+        if (!question || !question.id) return defaultStats;
+        
+        const answers = (responses || [])
+            .filter(r => r && r.answers && typeof r.answers === 'object')
+            .map(r => r.answers[question.id])
+            .filter(Boolean);
     
-    return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//VoteGenerator//Meeting Poll//EN
-BEGIN:VEVENT
-UID:${uid}
-DTSTAMP:${now}
-DTSTART:${formatICSDate(parsed.start)}
-DTEND:${formatICSDate(end)}
-SUMMARY:${pollTitle || title}
-DESCRIPTION:Scheduled via VoteGenerator\\nTime slot: ${slotText}\\nDuration: ${durationMinutes} minutes
-END:VEVENT
-END:VCALENDAR`;
+    const stats: QuestionStats = {
+        questionId: question.id,
+        questionText: question.question,
+        questionType: question.type,
+        totalResponses: answers.length,
+    };
+    
+    switch (question.type) {
+        case 'multiple_choice':
+        case 'dropdown':
+        case 'yes_no': {
+            const counts: Record<string, number> = {};
+            question.options?.forEach(opt => { counts[opt.id] = 0; });
+            
+            answers.forEach(a => {
+                a.selectedIds?.forEach(id => {
+                    counts[id] = (counts[id] || 0) + 1;
+                });
+            });
+            
+            stats.optionCounts = counts;
+            break;
+        }
+        
+        case 'rating':
+        case 'scale':
+        case 'number': {
+            const numbers = answers.map(a => a.number).filter((n): n is number => n !== undefined);
+            if (numbers.length > 0) {
+                stats.average = numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
+                stats.min = Math.min(...numbers);
+                stats.max = Math.max(...numbers);
+                
+                if (question.type === 'rating' || question.type === 'scale') {
+                    const dist: Record<number, number> = {};
+                    numbers.forEach(n => { dist[n] = (dist[n] || 0) + 1; });
+                    stats.distribution = dist;
+                }
+                
+                if (question.type === 'scale' && isNPSQuestion(question.question, question.type)) {
+                    stats.npsData = calculateNPS(numbers) || undefined;
+                }
+            }
+            break;
+        }
+        
+        case 'text':
+        case 'textarea':
+        case 'email':
+        case 'phone': {
+            stats.textResponses = answers
+                .map(a => a.text)
+                .filter((t): t is string => !!t);
+            break;
+        }
+        
+        case 'ranking': {
+            const scores: Record<string, number[]> = {};
+            question.options?.forEach(opt => { scores[opt.id] = []; });
+            
+            answers.forEach(a => {
+                a.ranking?.forEach((optId, idx) => {
+                    if (scores[optId]) {
+                        scores[optId].push(idx + 1);
+                    }
+                });
+            });
+            
+            stats.rankingScores = {};
+            Object.entries(scores).forEach(([optId, ranks]) => {
+                if (ranks.length > 0) {
+                    stats.rankingScores![optId] = ranks.reduce((sum, r) => sum + r, 0) / ranks.length;
+                }
+            });
+            break;
+        }
+    }
+    
+    return stats;
+    } catch (error) {
+        console.error('Error calculating question stats:', error, { questionId: question?.id });
+        return defaultStats;
+    }
 };
 
-// Download .ics file
-const downloadICS = (title: string, slotText: string, pollTitle: string, durationMinutes: number = 60) => {
-    const content = generateICSContent(title, slotText, pollTitle, durationMinutes);
-    if (!content) return;
+// ============================================================================
+// EXPORT FUNCTIONS
+// ============================================================================
+
+const generateCSV = (poll: Poll, responses: SurveyResponse[]): string => {
+    const sections = poll.sections || [];
+    const allQuestions = sections.flatMap(s => s.questions);
     
-    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    // Header row
+    const headers = ['Response ID', 'Completed At', 'Is Complete', ...allQuestions.map(q => q.question)];
+    
+    // Data rows
+    const rows = responses.map(response => {
+        const row: string[] = [
+            response.id || '',
+            response.completedAt ? new Date(response.completedAt).toISOString() : '',
+            response.isComplete ? 'Yes' : 'No',
+        ];
+        
+        allQuestions.forEach(question => {
+            const answer = response.answers?.[question.id];
+            if (!answer) {
+                row.push('');
+                return;
+            }
+            
+            let value = '';
+            if (answer.text) value = answer.text;
+            else if (answer.number !== undefined) value = answer.number.toString();
+            else if (answer.selectedIds) {
+                value = answer.selectedIds
+                    .map(id => question.options?.find(o => o.id === id)?.text || id)
+                    .join('; ');
+            }
+            else if (answer.ranking) {
+                value = answer.ranking
+                    .map((id, i) => `${i + 1}. ${question.options?.find(o => o.id === id)?.text || id}`)
+                    .join('; ');
+            }
+            
+            // Escape CSV special characters
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                value = `"${value.replace(/"/g, '""')}"`;
+            }
+            
+            row.push(value);
+        });
+        
+        return row.join(',');
+    });
+    
+    return [headers.join(','), ...rows].join('\n');
+};
+
+const downloadCSV = (poll: Poll, responses: SurveyResponse[]) => {
+    const csv = generateCSV(poll, responses);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `${(pollTitle || title).replace(/[^a-z0-9]/gi, '_')}.ics`;
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_responses.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
 };
 
-interface Props {
-    poll: Poll;
-    results: RunoffResult & { votes?: any[] };
-    onEdit?: () => void;
-    adminKey?: string | null;
-    isAdmin?: boolean;
+const downloadExcel = (poll: Poll, responses: SurveyResponse[]) => {
+    // For Excel, we'll generate a more formatted CSV that Excel handles well
+    // In production, you'd use a library like xlsx
+    const csv = generateCSV(poll, responses);
+    const blob = new Blob(['\ufeff' + csv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${poll.title.replace(/[^a-z0-9]/gi, '_')}_responses.xlsx`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// ============================================================================
+// NPS DISPLAY COMPONENT
+// ============================================================================
+
+interface NPSDisplayProps {
+    data: NPSData;
 }
 
-const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
-    // Get tier for feature gating
-    const tier = useMemo(() => {
-        return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
-    }, []);
-    const isPaidUser = tier === 'pro' || tier === 'business';
-    const isFreeUser = tier === 'free';
-    
-    // Get theme configuration
-    const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
-    const isDarkTheme = theme.cardBg?.includes('slate-9') || theme.cardBg?.includes('slate-950');
-    
-    const { winnerId, rounds, totalVotes, simpleCounts, maybeCounts, comments, matrixAverages, pairwiseScores, ratingStats, budgetStats } = results;
-    const votes: any[] = (results as any).votes || [];
-    const isRanked = poll.pollType === 'ranked';
-    const isMeeting = poll.pollType === 'meeting';
-    const isDot = poll.pollType === 'dot';
-    const isMatrix = poll.pollType === 'matrix';
-    const isPairwise = poll.pollType === 'pairwise';
-    const isRating = poll.pollType === 'rating';
-    const isBudget = poll.pollType === 'budget';
-    const isSurvey = poll.pollType === 'survey' || (poll as any).isSurvey;
-    // For this-or-that and multiple choice, check if it's a simple poll (not one of the special types)
-    const isSimplePoll = !isRanked && !isMeeting && !isDot && !isMatrix && !isPairwise && !isRating && !isBudget && !isSurvey;
-    const isThisOrThat = isSimplePoll && poll.options.length === 2;
-    const isMultipleChoice = isSimplePoll && poll.options.length > 2;
-    
-    const [viewMode, setViewMode] = useState<'bar' | 'flow' | 'pie' | 'grid' | 'heatmap' | 'velocity' | 'map' | 'matrix' | 'pairwise' | 'rating'>(
-        isRanked ? 'flow' : isMeeting ? 'heatmap' : isMatrix ? 'matrix' : isPairwise ? 'pairwise' : isRating ? 'rating' : 'bar'
-    );
-
-    const getOptionText = (id: string) => poll.options.find(o => o.id === id)?.text || 'Unknown Option';
-
-    const barChartData: Record<string, number> = (() => {
-        if (isBudget && budgetStats) {
-            const data: Record<string, number> = {};
-            Object.entries(budgetStats).forEach(([id, stat]) => {
-                const value = (stat as any).totalValue ?? (stat as any).totalSpent ?? 0;
-                data[id] = typeof value === 'number' ? value : 0;
-            });
-            return data;
-        }
-        if (simpleCounts) return simpleCounts;
-        if (isRanked && rounds.length > 0) {
-            const firstRoundCounts = rounds[0].counts;
-            return firstRoundCounts ?? {};
-        }
-        const counts: Record<string, number> = {};
-        poll.options.forEach(o => counts[o.id] = 0);
-        return counts;
-    })();
-
-    const meetingScoreData = (() => {
-        const scores: Record<string, number> = {};
-        poll.options.forEach(o => scores[o.id] = 0);
-        if (simpleCounts) Object.entries(simpleCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + c);
-        if (maybeCounts) Object.entries(maybeCounts).forEach(([id, c]) => scores[id] = (scores[id] || 0) + (c * 0.5));
-        return scores;
-    })();
-
-    // Check for ties (multiple options with same top vote count)
-    const topVoteCount = simpleCounts ? Math.max(...Object.values(simpleCounts)) : 0;
-    const tiedOptions = simpleCounts ? Object.entries(simpleCounts).filter(([_, count]) => count === topVoteCount) : [];
-    const isTie = tiedOptions.length > 1 && topVoteCount > 0;
-
-    const meetingWinnerId = isMeeting ? Object.keys(meetingScoreData).reduce((a, b) => meetingScoreData[a] > meetingScoreData[b] ? a : b, poll.options[0].id) : winnerId;
-    const activeWinnerId = isMeeting ? meetingWinnerId : winnerId;
-
-    // === FREE ANALYTICS COMPUTATIONS ===
-    const [showInsights, setShowInsights] = useState(false);
-    const [isExportingPng, setIsExportingPng] = useState(false);
-    
-    // Device breakdown (computed from user agent in votes)
-    const deviceStats = useMemo(() => {
-        if (!votes.length) return { mobile: 0, desktop: 0, tablet: 0 };
-        let mobile = 0, desktop = 0, tablet = 0;
-        votes.forEach(v => {
-            const ua = v.userAgent || v.device || '';
-            if (/iPad|Android(?!.*Mobile)|Tablet/i.test(ua)) tablet++;
-            else if (/Mobile|iPhone|Android/i.test(ua)) mobile++;
-            else desktop++;
-        });
-        return { mobile, desktop, tablet };
-    }, [votes]);
-
-    // Hourly distribution (peak voting times)
-    const hourlyStats = useMemo(() => {
-        if (!votes.length) return [];
-        const hours: Record<number, number> = {};
-        for (let i = 0; i < 24; i++) hours[i] = 0;
-        votes.forEach(v => {
-            const time = getVoteTime(v);
-            const hour = new Date(time).getHours();
-            hours[hour]++;
-        });
-        return Object.entries(hours).map(([h, count]) => ({ hour: parseInt(h), count }));
-    }, [votes]);
-
-    const peakHour = useMemo(() => {
-        if (!hourlyStats.length) return null;
-        const peak = hourlyStats.reduce((a, b) => a.count > b.count ? a : b);
-        return peak.count > 0 ? peak : null;
-    }, [hourlyStats]);
-
-    // Geographic breakdown
-    const geoStats = useMemo(() => {
-        if (!votes.length) return [];
-        const countries: Record<string, number> = {};
-        votes.forEach(v => {
-            const country = v.country || v.geo?.country || v.analytics?.country || 'Unknown';
-            countries[country] = (countries[country] || 0) + 1;
-        });
-        return Object.entries(countries)
-            .map(([country, count]) => ({ country: getCountryName(country), count, percentage: Math.round((count / votes.length) * 100) }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
-    }, [votes]);
-
-    // Traffic source breakdown (referrer domains)
-    const referrerStats = useMemo(() => {
-        if (!votes.length) return [];
-        const sources: Record<string, number> = {};
-        votes.forEach(v => {
-            const source = v.analytics?.referrerDomain || v.analytics?.utmSource || v.referrer || 'Direct';
-            sources[source] = (sources[source] || 0) + 1;
-        });
-        return Object.entries(sources)
-            .map(([source, count]) => ({ source, count, percentage: Math.round((count / votes.length) * 100) }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 5);
-    }, [votes]);
-
-    // Response timeline (votes per day)
-    const timelineStats = useMemo(() => {
-        if (!votes.length) return [];
-        const days: Record<string, number> = {};
-        votes.forEach(v => {
-            const time = getVoteTime(v);
-            const day = new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            days[day] = (days[day] || 0) + 1;
-        });
-        return Object.entries(days).map(([day, count]) => ({ day, count }));
-    }, [votes]);
-
-    // Recent momentum (last 24h vs previous 24h)
-    const momentum = useMemo(() => {
-        if (!votes.length) return null;
-        const now = Date.now();
-        const last24h = votes.filter(v => now - getVoteTime(v) < 24 * 60 * 60 * 1000).length;
-        const prev24h = votes.filter(v => {
-            const age = now - getVoteTime(v);
-            return age >= 24 * 60 * 60 * 1000 && age < 48 * 60 * 60 * 1000;
-        }).length;
-        if (prev24h === 0 && last24h === 0) return null;
-        const change = prev24h === 0 ? 100 : Math.round(((last24h - prev24h) / prev24h) * 100);
-        return { last24h, prev24h, change };
-    }, [votes]);
-
-    // Format hour for display
-    const formatHour = (h: number) => {
-        if (h === 0) return '12 AM';
-        if (h === 12) return '12 PM';
-        return h < 12 ? `${h} AM` : `${h - 12} PM`;
+const NPSDisplay: React.FC<NPSDisplayProps> = ({ data }) => {
+    const getScoreInfo = (score: number) => {
+        if (score >= 70) return { label: 'Excellent', color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: TrendingUp };
+        if (score >= 30) return { label: 'Great', color: 'text-blue-600', bgColor: 'bg-blue-50', icon: TrendingUp };
+        if (score >= 0) return { label: 'Good', color: 'text-amber-600', bgColor: 'bg-amber-50', icon: Minus };
+        return { label: 'Needs Work', color: 'text-red-600', bgColor: 'bg-red-50', icon: TrendingDown };
     };
 
-    const CHART_COLORS = [
-        '#6366f1', '#ec4899', '#06b6d4', '#84cc16', 
-        '#f97316', '#ef4444', '#14b8a6', '#3b82f6', '#eab308', '#a855f7'
-    ];
-
-    const getHexColor = (id: string) => {
-        const index = poll.options.findIndex(o => o.id === id);
-        return CHART_COLORS[index % CHART_COLORS.length];
-    };
-
-    const getBarColorClass = (id: string) => {
-        const index = poll.options.findIndex(o => o.id === id);
-        const colors = [
-            'bg-indigo-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 
-            'bg-orange-500', 'bg-red-500', 'bg-teal-500', 'bg-blue-500', 'bg-yellow-500', 'bg-purple-500'
-        ];
-        return colors[index % colors.length];
-    };
-
-    const shouldShowComments = comments && comments.length > 0 && (poll.isAdmin || (poll.settings.allowComments && poll.settings.publicComments));
-
-    const pieData = (() => {
-        const counts = barChartData; 
-        const total = Object.values(counts).reduce((a,b) => a+b, 0);
-        let currentAngle = 0;
-        return Object.entries(counts)
-            .sort(([, a], [, b]) => b - a)
-            .map(([id, count]) => {
-                const angle = total > 0 ? (count / total) * 360 : 0;
-                const d = { id, count, percentage: total > 0 ? (count / total) * 100 : 0, color: getHexColor(id), startAngle: currentAngle, angle };
-                currentAngle += angle;
-                return d;
-            });
-    })();
-    const pieGradient = pieData.map(d => `${d.color} ${d.startAngle}deg ${d.startAngle + d.angle}deg`).join(', ');
-
-    const maxHeat = Math.max(...Object.values(meetingScoreData), 1);
-
-    const velocityData = (() => {
-        if (!votes || votes.length === 0) return [];
-        const sortedVotes = [...votes].sort((a, b) => getVoteTime(a) - getVoteTime(b));
-        if(sortedVotes.length === 0) return [];
-        
-        const startTime = getVoteTime(sortedVotes[0]);
-        const endTime = Date.now();
-        const duration = endTime - startTime;
-        
-        // For very short durations (< 10 min), show each vote as a point
-        if (duration < 600000 || votes.length < 3) {
-            return sortedVotes.map(v => ({
-                time: new Date(getVoteTime(v)),
-                count: 1
-            }));
-        }
-        
-        const buckets = Math.min(10, votes.length);
-        const bucketSize = Math.max(duration / buckets, 60000); 
-        
-        const data = Array(buckets).fill(0).map((_, i) => ({ 
-            time: new Date(startTime + (i * bucketSize)), 
-            count: 0 
-        }));
-
-        sortedVotes.forEach(v => {
-            const time = getVoteTime(v);
-            const bucketIndex = Math.min(Math.floor((time - startTime) / bucketSize), buckets - 1);
-            if(bucketIndex >= 0) data[bucketIndex].count++;
-        });
-        return data;
-    })();
-
-    const sankeyData = useMemo(() => {
-        if (rounds.length === 0) return { nodes: [], links: [], width: 0, height: 400 };
-        const nodes: any[] = [];
-        const links: any[] = [];
-        const canvasHeight = 400;
-        const roundWidth = 150;
-        const gap = 10;
-        const firstCounts: Record<string, number> = rounds[0].counts || {};
-        const firstRoundTotal = Object.values(firstCounts).reduce((a: number, b: number) => a + b, 0);
-
-        rounds.forEach((round, roundIdx) => {
-            let yOffset = 0;
-            const counts: Record<string, number> = round.counts || {};
-            const sortedIds = Object.keys(counts).sort((a,b) => (counts[b] || 0) - (counts[a] || 0));
-            sortedIds.forEach(id => {
-                const count = counts[id] || 0;
-                const height = firstRoundTotal > 0 ? (count / firstRoundTotal) * (canvasHeight - (sortedIds.length * gap)) : 0; 
-                if (count >= 0) {
-                    nodes.push({ id: `${roundIdx}-${id}`, optionId: id, round: roundIdx, value: count, x: roundIdx * roundWidth, y: yOffset, height: Math.max(height, 2), color: getHexColor(id) });
-                    yOffset += height + gap;
-                }
-            });
-        });
-
-        for (let i = 0; i < rounds.length - 1; i++) {
-            const currentRound = rounds[i];
-            const nextRound = rounds[i+1];
-            const eliminatedId = currentRound.eliminatedId;
-            const currentMap: Record<string, number> = currentRound.counts || {};
-            const nextMap: Record<string, number> = nextRound.counts || {};
-
-            Object.keys(nextMap).forEach(id => {
-                const prevCount = currentMap[id] || 0;
-                const newCount = nextMap[id] || 0;
-                const delta = newCount - prevCount;
-                if (prevCount > 0) {
-                    links.push({ source: `${i}-${id}`, target: `${i+1}-${id}`, value: prevCount, color: getHexColor(id), opacity: 0.5 });
-                }
-                if (delta > 0 && eliminatedId) {
-                    links.push({ source: `${i}-${eliminatedId}`, target: `${i+1}-${id}`, value: delta, color: getHexColor(eliminatedId), opacity: 0.3 });
-                }
-            });
-        }
-        return { nodes, links, width: rounds.length * roundWidth, height: canvasHeight };
-    }, [rounds]);
-
-    const renderSankeySVG = () => {
-        const { nodes, links, width, height } = sankeyData;
-        return (
-            <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" className="overflow-visible">
-                {links.map((link, i) => {
-                    const sourceNode = nodes.find(n => n.id === link.source);
-                    const targetNode = nodes.find(n => n.id === link.target);
-                    if (!sourceNode || !targetNode) return null;
-                    const sy = sourceNode.y + sourceNode.height / 2;
-                    const ty = targetNode.y + targetNode.height / 2;
-                    const sx = sourceNode.x + 20; 
-                    const tx = targetNode.x;
-                    const strokeWidth = (link.value / totalVotes) * height;
-                    const path = `M ${sx} ${sy} C ${sx + 50} ${sy}, ${tx - 50} ${ty}, ${tx} ${ty}`;
-                    return <path key={i} d={path} stroke={link.color} strokeWidth={Math.max(strokeWidth, 1)} fill="none" opacity={link.opacity} className="transition-all hover:opacity-80" />;
-                })}
-                {nodes.map(node => (
-                    <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
-                        <rect width={20} height={node.height} fill={node.color} rx={4} className="shadow-sm" />
-                        <text x={10} y={-5} textAnchor="middle" fontSize="10" className="fill-slate-500 font-bold">{node.value}</text>
-                        {node.round === 0 && <text x={0} y={node.height / 2} dx={-5} dy={4} textAnchor="end" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
-                        {node.round === rounds.length - 1 && <text x={25} y={node.height / 2} dy={4} textAnchor="start" fontSize="11" className="fill-slate-700 font-bold">{getOptionText(node.optionId)}</text>}
-                    </g>
-                ))}
-            </svg>
-        );
-    };
-
-
-    if (totalVotes === 0) {
-        return (
-            <div className="text-center py-10 bg-white rounded-3xl shadow-lg p-8 border border-slate-100">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users size={32} className="text-slate-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800">No votes yet</h3>
-                <p className="text-slate-500 mt-2">Share the link to get started!</p>
-                {onEdit && (
-                    <button 
-                        onClick={onEdit}
-                        className="mt-6 px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition-colors inline-flex items-center gap-2"
-                    >
-                        <Settings size={16} /> Edit Poll Settings
-                    </button>
-                )}
-            </div>
-        );
-    }
-
-    // =========================================================================
-    // SURVEY MODE - Multi-section form results
-    // =========================================================================
-    if (isSurvey && (poll as any).sections?.length > 0) {
-        // Extract survey responses from votes
-        const surveyResponses: SurveyResponse[] = votes
-            .filter((v: any) => v.surveyAnswers || v.answers)
-            .map((v: any) => ({
-                id: v.id || Math.random().toString(36).substring(2, 9),
-                pollId: poll.id,
-                voterName: v.voterName,
-                submittedAt: v.votedAt || v.timestamp || new Date().toISOString(),
-                startedAt: v.startedAt,
-                completedAt: v.votedAt || v.timestamp,
-                completionTime: v.completionTime,
-                answers: v.surveyAnswers || v.answers || {},
-                isComplete: true,
-            }));
-        
-        return (
-            <div className="space-y-6">
-                {/* Survey Header */}
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <FileText size={24} />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold">Survey Results</h2>
-                            <p className="text-emerald-100">{poll.title}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-6 mt-4 text-sm">
-                        <div>
-                            <span className="text-emerald-200">Responses:</span>{' '}
-                            <span className="font-bold">{surveyResponses.length}</span>
-                        </div>
-                        <div>
-                            <span className="text-emerald-200">Sections:</span>{' '}
-                            <span className="font-bold">{(poll as any).sections?.length || 0}</span>
-                        </div>
-                        <div>
-                            <span className="text-emerald-200">Questions:</span>{' '}
-                            <span className="font-bold">
-                                {(poll as any).sections?.reduce((sum: number, s: any) => sum + (s.questions?.length || 0), 0) || 0}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                {/* Survey Results Component */}
-                <SurveyResults 
-                    poll={poll} 
-                    responses={surveyResponses}
-                    isAdmin={isAdmin}
-                />
-                
-                {/* Edit Button */}
-                {onEdit && isAdmin && (
-                    <div className="flex justify-center">
-                        <button 
-                            onClick={onEdit}
-                            className="px-6 py-3 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-2"
-                        >
-                            <Settings size={18} /> Edit Survey Settings
-                        </button>
-                    </div>
-                )}
-            </div>
-        );
-    }
+    const scoreInfo = getScoreInfo(data.score);
+    const ScoreIcon = scoreInfo.icon;
 
     return (
-        <>
-            {/* Comprehensive Print Styles */}
-            <style>{`
-                @media print {
-                    /* Preserve colors */
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        color-adjust: exact !important;
-                    }
-                    
-                    /* Page setup */
-                    @page {
-                        size: A4;
-                        margin: 1.5cm;
-                    }
-                    
-                    /* Hide non-print elements */
-                    .print\\:hidden, 
-                    button:not(.print-show),
-                    nav,
-                    .view-switcher,
-                    [class*="hover:"],
-                    .animate-spin {
-                        display: none !important;
-                    }
-                    
-                    /* Show print elements */
-                    .print\\:block {
-                        display: block !important;
-                    }
-                    
-                    /* Clean backgrounds */
-                    body {
-                        background: white !important;
-                    }
-                    
-                    /* Typography adjustments */
-                    .text-4xl { font-size: 24pt !important; }
-                    .text-3xl { font-size: 20pt !important; }
-                    .text-2xl { font-size: 16pt !important; }
-                    .text-xl { font-size: 14pt !important; }
-                    .text-lg { font-size: 12pt !important; }
-                    
-                    /* Card styling for print */
-                    .rounded-3xl, .rounded-2xl, .rounded-xl {
-                        border-radius: 8px !important;
-                        box-shadow: none !important;
-                        border: 1px solid #e2e8f0 !important;
-                    }
-                    
-                    /* Prevent breaks inside elements */
-                    .break-inside-avoid {
-                        break-inside: avoid;
-                    }
-                    
-                    /* Chart containers */
-                    #poll-results-chart {
-                        break-inside: avoid;
-                        page-break-inside: avoid;
-                    }
-                    
-                    /* Bar chart bars - preserve gradient */
-                    [class*="bg-gradient"] {
-                        background: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)) !important;
-                    }
-                    
-                    /* SVG pie chart */
-                    svg path, svg circle {
-                        print-color-adjust: exact !important;
-                    }
-                }
-            `}</style>
-            
-            {/* Print Header - Only visible when printing */}
-            <div className="hidden print:block mb-6 pb-4 border-b-2 border-slate-200">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800">{poll.title}</h1>
-                        {poll.description && (
-                            <p className="text-slate-500 mt-1">{poll.description}</p>
-                        )}
+        <div className={`rounded-2xl border-2 border-blue-200 ${scoreInfo.bgColor} overflow-hidden`}>
+            <div className="p-4 border-b border-white/50 bg-white/50">
+                <div className="flex items-center gap-2">
+                    <TrendingUp size={18} className="text-blue-600" />
+                    <span className="font-bold text-slate-800">Net Promoter Score</span>
+                    <span className="text-sm text-slate-500 ml-auto">{data.total} responses</span>
+                </div>
+            </div>
+
+            <div className="p-6 text-center">
+                <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", duration: 0.6 }}
+                    className="inline-flex flex-col items-center"
+                >
+                    <div className="flex items-center gap-2">
+                        <span className={`text-5xl font-black ${scoreInfo.color}`}>
+                            {data.score > 0 ? '+' : ''}{data.score}
+                        </span>
+                        <ScoreIcon size={28} className={scoreInfo.color} />
                     </div>
-                    <div className="text-right text-sm text-slate-500">
-                        <div className="font-semibold">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</div>
-                        <div>Printed {new Date().toLocaleDateString()}</div>
+                    <div className={`mt-2 px-3 py-1 rounded-full ${scoreInfo.bgColor} ${scoreInfo.color} font-semibold text-sm`}>
+                        {scoreInfo.label}
+                    </div>
+                </motion.div>
+            </div>
+
+            <div className="px-6 pb-4">
+                <div className="flex h-3 rounded-full overflow-hidden mb-3">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${data.promoterPct}%` }}
+                        transition={{ duration: 0.6 }}
+                        className="bg-emerald-500"
+                    />
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${data.passivePct}%` }}
+                        transition={{ duration: 0.6, delay: 0.1 }}
+                        className="bg-amber-400"
+                    />
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${data.detractorPct}%` }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        className="bg-red-400"
+                    />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                            <span className="text-slate-600 text-xs">Promoters</span>
+                        </div>
+                        <p className="text-lg font-bold text-slate-800">{data.promoterPct}%</p>
+                        <p className="text-xs text-slate-500">{data.promoters} (9-10)</p>
+                    </div>
+                    <div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <div className="w-2 h-2 bg-amber-400 rounded-full" />
+                            <span className="text-slate-600 text-xs">Passives</span>
+                        </div>
+                        <p className="text-lg font-bold text-slate-800">{data.passivePct}%</p>
+                        <p className="text-xs text-slate-500">{data.passives} (7-8)</p>
+                    </div>
+                    <div>
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                            <div className="w-2 h-2 bg-red-400 rounded-full" />
+                            <span className="text-slate-600 text-xs">Detractors</span>
+                        </div>
+                        <p className="text-lg font-bold text-slate-800">{data.detractorPct}%</p>
+                        <p className="text-xs text-slate-500">{data.detractors} (0-6)</p>
                     </div>
                 </div>
             </div>
-            
-            <div className="space-y-6 print:space-y-4">
-            
-            {/* Results Summary Cards - Admin Only */}
-            {isAdmin && totalVotes > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Users size={16} className="text-indigo-500" />
-                            <span className="text-xs font-medium text-indigo-600">Total Responses</span>
-                        </div>
-                        <p className="text-2xl font-black text-indigo-900">{totalVotes}</p>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100">
-                        <div className="flex items-center gap-2 mb-1">
-                            <TrendingUp size={16} className="text-emerald-500" />
-                            <span className="text-xs font-medium text-emerald-600">Options</span>
-                        </div>
-                        <p className="text-2xl font-black text-emerald-900">{poll.options.length}</p>
-                    </div>
-                    
-                    {activeWinnerId && !isTie && (
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Trophy size={16} className="text-amber-500" />
-                                <span className="text-xs font-medium text-amber-600">{isMeeting ? 'Best Time' : 'Leading'}</span>
-                            </div>
-                            <p className="text-lg font-bold text-amber-900 truncate">{getOptionText(activeWinnerId)}</p>
-                            {simpleCounts && simpleCounts[activeWinnerId] !== undefined && (
-                                <p className="text-xs text-amber-600">{simpleCounts[activeWinnerId]} votes ({totalVotes > 0 ? Math.round((simpleCounts[activeWinnerId] / totalVotes) * 100) : 0}%)</p>
-                            )}
-                        </div>
-                    )}
-                    
-                    {isTie && tiedOptions.length > 0 && (
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 col-span-2">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Users size={16} className="text-amber-500" />
-                                <span className="text-xs font-medium text-amber-600">It's a Tie!</span>
-                            </div>
-                            <p className="text-sm font-bold text-amber-900">{tiedOptions.length} options with {topVoteCount} votes each</p>
-                        </div>
-                    )}
-                </div>
-            )}
-            
-            {/* Poll Insights Panel - Tier Gated */}
-            {isAdmin && totalVotes >= 3 && votes.length > 0 && (
-                <>
-                    {/* FREE USERS: Show locked preview */}
-                    {isFreeUser && (
-                        <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl border border-purple-200 p-5 print:hidden">
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                                        <Activity size={20} className="text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                            Poll Insights
-                                            <Lock size={14} className="text-amber-500" />
-                                        </h3>
-                                        <p className="text-sm text-slate-500">
-                                            <span className="font-semibold text-purple-600">{totalVotes} votes</span> with hidden insights
-                                        </p>
-                                    </div>
-                                </div>
-                                <a
-                                    href="/pricing"
-                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center gap-2"
-                                >
-                                    <Crown size={16} /> Upgrade
-                                </a>
-                            </div>
-                            
-                            {/* Blurred preview cards */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
-                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Smartphone size={12} className="text-blue-500" />
-                                        <span className="text-xs font-medium text-slate-500">Device Breakdown</span>
-                                    </div>
-                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
-                                        {deviceStats.desktop > deviceStats.mobile ? 'Desktop 65%' : 'Mobile 70%'}
-                                    </div>
-                                </div>
-                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
-                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Globe size={12} className="text-emerald-500" />
-                                        <span className="text-xs font-medium text-slate-500">Geographic</span>
-                                    </div>
-                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
-                                        {geoStats.length > 0 ? `${geoStats.length} countries` : '1 country'}
-                                    </div>
-                                </div>
-                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
-                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Clock size={12} className="text-purple-500" />
-                                        <span className="text-xs font-medium text-slate-500">Hourly Heatmap</span>
-                                    </div>
-                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
-                                        Peak: {peakHour ? formatHour(peakHour.hour) : '2 PM'}
-                                    </div>
-                                </div>
-                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
-                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <TrendingUp size={12} className="text-indigo-500" />
-                                        <span className="text-xs font-medium text-slate-500">Response Timeline</span>
-                                    </div>
-                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
-                                        {momentum ? `${momentum.last24h}/day` : 'View trends'}
-                                    </div>
-                                </div>
-                            </div>
-                            <p className="text-xs text-center text-slate-500 mt-3">
-                                Plus: Cross-tabulation filters, Word cloud, Suspicious activity alerts, Export CSV/Excel/PDF
-                            </p>
-                        </div>
-                    )}
-                    
-                    {/* PAID USERS: Show full insights */}
-                    {isPaidUser && (
-                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
-                            <button 
-                                onClick={() => setShowInsights(!showInsights)}
-                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Activity size={18} className="text-indigo-500" />
-                                    <span className="font-semibold text-slate-700">Poll Insights</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                        tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
-                                    }`}>
-                                        {tier === 'business' ? 'Business' : 'Pro'}
-                                    </span>
-                                </div>
-                                {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
-                            </button>
-                            
-                            <AnimatePresence>
-                                {showInsights && (
-                                    <motion.div 
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="border-t border-slate-100"
-                                    >
-                                        <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {/* Device Breakdown */}
-                                            <div className="bg-slate-50 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Smartphone size={14} className="text-blue-500" />
-                                                    <span className="text-xs font-medium text-slate-600">Devices</span>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center justify-between text-xs">
-                                                        <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
-                                                        <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between text-xs">
-                                                        <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
-                                                        <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
-                                                    </div>
-                                                    {deviceStats.tablet > 0 && (
-                                                        <div className="flex items-center justify-between text-xs">
-                                                            <span>Tablet</span>
-                                                            <span className="font-semibold">{deviceStats.tablet}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Peak Hour */}
-                                            <div className="bg-slate-50 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Clock size={14} className="text-purple-500" />
-                                                    <span className="text-xs font-medium text-slate-600">Peak Time</span>
-                                                </div>
-                                                {peakHour ? (
-                                                    <div>
-                                                        <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
-                                                        <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-slate-400">Not enough data</p>
-                                                )}
-                                            </div>
-                                            
-                                            {/* Geographic */}
-                                            <div className="bg-slate-50 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Globe size={14} className="text-emerald-500" />
-                                                    <span className="text-xs font-medium text-slate-600">Top Locations</span>
-                                                </div>
-                                                {geoStats.length > 0 ? (
-                                                    <div className="space-y-1">
-                                                        {geoStats.slice(0, 3).map(g => (
-                                                            <div key={g.country} className="flex items-center justify-between text-xs">
-                                                                <span className="flex items-center gap-1">
-                                                                    {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
-                                                                </span>
-                                                                <span className="font-semibold">{g.percentage}%</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-slate-400">No location data</p>
-                                                )}
-                                            </div>
-                                            
-                                            {/* Momentum */}
-                                            <div className="bg-slate-50 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Zap size={14} className="text-amber-500" />
-                                                    <span className="text-xs font-medium text-slate-600">24h Activity</span>
-                                                </div>
-                                                {momentum ? (
-                                                    <div>
-                                                        <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
-                                                        <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                            {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-slate-400">Tracking activity...</p>
-                                                )}
-                                            </div>
-                                            
-                                            {/* Traffic Sources */}
-                                            <div className="bg-slate-50 rounded-lg p-3">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <ExternalLink size={14} className="text-purple-500" />
-                                                    <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
-                                                </div>
-                                                {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
-                                                    <div className="space-y-1">
-                                                        {referrerStats.slice(0, 3).map(r => (
-                                                            <div key={r.source} className="flex items-center justify-between text-xs">
-                                                                <span className="truncate max-w-[100px]" title={r.source}>
-                                                                    {r.source === 'Direct' ? '🔗 Direct' : r.source}
-                                                                </span>
-                                                                <span className="font-semibold">{r.percentage}%</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-slate-400">Mostly direct traffic</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Response Timeline */}
-                                        {timelineStats.length > 1 && (
-                                            <div className="px-4 pb-4">
-                                                <div className="bg-slate-50 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <TrendingUp size={14} className="text-indigo-500" />
-                                                        <span className="text-xs font-medium text-slate-600">Response Timeline</span>
-                                                    </div>
-                                                    <div className="flex items-end gap-1 h-16">
-                                                        {timelineStats.map((t, i) => {
-                                                            const maxCount = Math.max(...timelineStats.map(s => s.count));
-                                                            const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
-                                                            return (
-                                                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                                                    <motion.div 
-                                                                        className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
-                                                                        initial={{ height: 0 }}
-                                                                        animate={{ height: `${Math.max(height, 4)}%` }}
-                                                                        transition={{ delay: i * 0.05, duration: 0.4 }}
-                                                                        title={`${t.day}: ${t.count} votes`}
-                                                                    />
-                                                                    <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
 
-                                        {/* Hourly Distribution */}
-                                        {hourlyStats.some(h => h.count > 0) && (
-                                            <div className="px-4 pb-4">
-                                                <div className="bg-slate-50 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <Clock size={14} className="text-purple-500" />
-                                                        <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
-                                                    </div>
-                                                    <div className="flex items-end gap-px h-12">
-                                                        {hourlyStats.map((h, i) => {
-                                                            const maxCount = Math.max(...hourlyStats.map(s => s.count));
-                                                            const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
-                                                            return (
-                                                                <motion.div 
-                                                                    key={i} 
-                                                                    className="flex-1 bg-purple-300 rounded-t transition-colors hover:bg-purple-400 cursor-pointer"
-                                                                    initial={{ height: 0 }}
-                                                                    animate={{ height: `${Math.max(height, 2)}%` }}
-                                                                    transition={{ delay: i * 0.02, duration: 0.3 }}
-                                                                    style={{ opacity: height > 0 ? 1 : 0.3 }}
-                                                                    title={`${formatHour(h.hour)}: ${h.count} votes`}
-                                                                />
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    <div className="flex justify-between mt-1">
-                                                        <span className="text-[9px] text-slate-400">12 AM</span>
-                                                        <span className="text-[9px] text-slate-400">12 PM</span>
-                                                        <span className="text-[9px] text-slate-400">11 PM</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <Info size={12} />
+                    NPS = % Promoters - % Detractors (Range: -100 to +100)
+                </p>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// ENHANCED NPS GAUGE COMPONENT
+// ============================================================================
+
+interface NPSGaugeProps {
+    score: number;
+    size?: 'sm' | 'md' | 'lg';
+}
+
+const NPSGauge: React.FC<NPSGaugeProps> = ({ score, size = 'md' }) => {
+    const dimensions = {
+        sm: { width: 120, height: 70, strokeWidth: 8, fontSize: 20 },
+        md: { width: 180, height: 100, strokeWidth: 12, fontSize: 28 },
+        lg: { width: 240, height: 130, strokeWidth: 16, fontSize: 36 },
+    };
+    
+    const { width, height, strokeWidth, fontSize } = dimensions[size];
+    const radius = (width - strokeWidth) / 2;
+    const centerX = width / 2;
+    const centerY = height - 10;
+    
+    // NPS ranges from -100 to +100, map to 0-180 degrees
+    const normalizedScore = (score + 100) / 200; // 0 to 1
+    const angle = normalizedScore * 180; // 0 to 180 degrees
+    
+    // Calculate arc paths
+    const polarToCartesian = (cx: number, cy: number, r: number, angleDeg: number) => {
+        const angleRad = (angleDeg - 180) * Math.PI / 180;
+        return {
+            x: cx + r * Math.cos(angleRad),
+            y: cy + r * Math.sin(angleRad),
+        };
+    };
+    
+    const describeArc = (cx: number, cy: number, r: number, startAngle: number, endAngle: number) => {
+        const start = polarToCartesian(cx, cy, r, startAngle);
+        const end = polarToCartesian(cx, cy, r, endAngle);
+        const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+        return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+    };
+    
+    // Needle position
+    const needleEnd = polarToCartesian(centerX, centerY, radius - strokeWidth, angle);
+    
+    // Color based on score
+    const getColor = () => {
+        if (score >= 50) return '#10b981'; // Excellent - emerald
+        if (score >= 30) return '#22c55e'; // Great - green
+        if (score >= 0) return '#eab308';  // Good - yellow
+        if (score >= -30) return '#f97316'; // Needs work - orange
+        return '#ef4444'; // Critical - red
+    };
+    
+    return (
+        <div className="relative inline-flex flex-col items-center">
+            <svg width={width} height={height} className="overflow-visible">
+                {/* Background arc - gray */}
+                <path
+                    d={describeArc(centerX, centerY, radius, 0, 180)}
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                />
+                
+                {/* Colored segments */}
+                <path
+                    d={describeArc(centerX, centerY, radius, 0, 36)}
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    opacity={0.3}
+                />
+                <path
+                    d={describeArc(centerX, centerY, radius, 36, 72)}
+                    fill="none"
+                    stroke="#f97316"
+                    strokeWidth={strokeWidth}
+                    opacity={0.3}
+                />
+                <path
+                    d={describeArc(centerX, centerY, radius, 72, 108)}
+                    fill="none"
+                    stroke="#eab308"
+                    strokeWidth={strokeWidth}
+                    opacity={0.3}
+                />
+                <path
+                    d={describeArc(centerX, centerY, radius, 108, 144)}
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth={strokeWidth}
+                    opacity={0.3}
+                />
+                <path
+                    d={describeArc(centerX, centerY, radius, 144, 180)}
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    opacity={0.3}
+                />
+                
+                {/* Active arc up to score */}
+                <motion.path
+                    d={describeArc(centerX, centerY, radius, 0, angle)}
+                    fill="none"
+                    stroke={getColor()}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                />
+                
+                {/* Needle */}
+                <motion.line
+                    x1={centerX}
+                    y1={centerY}
+                    x2={needleEnd.x}
+                    y2={needleEnd.y}
+                    stroke="#334155"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                />
+                <circle cx={centerX} cy={centerY} r={6} fill="#334155" />
+                
+                {/* Labels */}
+                <text x={strokeWidth} y={centerY + 15} fontSize={10} fill="#94a3b8">-100</text>
+                <text x={width - strokeWidth - 20} y={centerY + 15} fontSize={10} fill="#94a3b8">+100</text>
+            </svg>
+            
+            {/* Score display */}
+            <div className="absolute bottom-0 text-center">
+                <span 
+                    className="font-black"
+                    style={{ fontSize, color: getColor() }}
+                >
+                    {score > 0 ? '+' : ''}{score}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// WORD CLOUD COMPONENT
+// ============================================================================
+
+interface WordCloudProps {
+    words: Map<string, number>;
+    maxWords?: number;
+    locked?: boolean;
+}
+
+const WordCloud: React.FC<WordCloudProps> = ({ words, maxWords = 30, locked = false }) => {
+    // Sort words by frequency and take top N
+    const sortedWords = Array.from(words.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, maxWords);
+    
+    if (sortedWords.length === 0) {
+        return (
+            <div className="text-center py-8 text-slate-400">
+                <FileText size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No significant words found</p>
+            </div>
+        );
+    }
+    
+    const maxCount = sortedWords[0][1];
+    const minCount = sortedWords[sortedWords.length - 1][1];
+    
+    // Calculate font size based on frequency
+    const getFontSize = (count: number) => {
+        const range = maxCount - minCount || 1;
+        const normalized = (count - minCount) / range;
+        return 12 + normalized * 24; // 12px to 36px
+    };
+    
+    // Color palette
+    const colors = [
+        'text-indigo-600', 'text-purple-600', 'text-pink-600', 'text-blue-600',
+        'text-emerald-600', 'text-amber-600', 'text-cyan-600', 'text-rose-600',
+    ];
+    
+    if (locked) {
+        return (
+            <div className="relative">
+                <div className="flex flex-wrap gap-2 justify-center items-center p-4 blur-sm select-none">
+                    {sortedWords.slice(0, 15).map(([word, count], i) => (
+                        <span
+                            key={word}
+                            className={`${colors[i % colors.length]} font-semibold`}
+                            style={{ fontSize: getFontSize(count) }}
+                        >
+                            {word}
+                        </span>
+                    ))}
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                    <div className="text-center">
+                        <Lock size={24} className="mx-auto mb-2 text-purple-500" />
+                        <p className="text-sm font-medium text-slate-700">Word Cloud</p>
+                        <a href="/pricing" className="text-xs text-purple-600 hover:underline flex items-center justify-center gap-1 mt-1">
+                            <Crown size={12} /> Upgrade to unlock
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex flex-wrap gap-3 justify-center items-center p-4">
+            {sortedWords.map(([word, count], i) => (
+                <motion.span
+                    key={word}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                    className={`${colors[i % colors.length]} font-semibold hover:opacity-70 cursor-default transition-opacity`}
+                    style={{ fontSize: getFontSize(count) }}
+                    title={`"${word}" appears ${count} time${count !== 1 ? 's' : ''}`}
+                >
+                    {word}
+                </motion.span>
+            ))}
+        </div>
+    );
+};
+
+// ============================================================================
+// DATE FILTER COMPONENT
+// ============================================================================
+
+interface DateFilterProps {
+    responses: SurveyResponse[];
+    onFilter: (filtered: SurveyResponse[] | null) => void;
+    canUseCustom: boolean;
+}
+
+const DateFilter: React.FC<DateFilterProps> = ({ responses, onFilter, canUseCustom }) => {
+    const [preset, setPreset] = useState<string>('all');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
+    const [showCustom, setShowCustom] = useState(false);
+    
+    const applyFilter = (filterType: string) => {
+        setPreset(filterType);
+        setShowCustom(false);
+        
+        if (filterType === 'all') {
+            onFilter(null); // null means show all
+            return;
+        }
+        
+        const now = new Date();
+        let startDate: Date;
+        
+        switch (filterType) {
+            case 'today':
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                break;
+            case 'week':
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'month':
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                onFilter(null);
+                return;
+        }
+        
+        const filtered = responses.filter(r => {
+            const dateStr = r.submittedAt || r.startedAt || r.completedAt;
+            if (!dateStr) return true; // Include responses without dates
+            const responseDate = new Date(dateStr);
+            return !isNaN(responseDate.getTime()) && responseDate >= startDate;
+        });
+        
+        onFilter(filtered);
+    };
+    
+    const applyCustomFilter = () => {
+        if (!customStart && !customEnd) {
+            onFilter(null);
+            return;
+        }
+        
+        const filtered = responses.filter(r => {
+            const dateStr = r.submittedAt || r.startedAt || r.completedAt;
+            if (!dateStr) return true;
+            const responseDate = new Date(dateStr);
+            if (isNaN(responseDate.getTime())) return true;
+            
+            if (customStart && responseDate < new Date(customStart)) return false;
+            if (customEnd) {
+                const endDate = new Date(customEnd);
+                endDate.setHours(23, 59, 59, 999);
+                if (responseDate > endDate) return false;
+            }
+            
+            return true;
+        });
+        
+        onFilter(filtered);
+    };
+    
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-slate-500">Filter:</span>
+            
+            {['all', 'today', 'week', 'month'].map(filter => (
+                <button
+                    key={filter}
+                    onClick={() => applyFilter(filter)}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-medium transition ${
+                        preset === filter && !showCustom
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                >
+                    {filter === 'all' ? 'All Time' : 
+                     filter === 'today' ? 'Today' :
+                     filter === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
+                </button>
+            ))}
+            
+            {canUseCustom ? (
+                <>
+                    <button
+                        onClick={() => setShowCustom(!showCustom)}
+                        className={`px-3 py-1.5 text-xs rounded-lg font-medium transition flex items-center gap-1 ${
+                            showCustom
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        <Calendar size={12} />
+                        Custom
+                    </button>
+                    
+                    {showCustom && (
+                        <div className="flex items-center gap-2 ml-2">
+                            <input
+                                type="date"
+                                value={customStart}
+                                onChange={(e) => setCustomStart(e.target.value)}
+                                className="px-2 py-1 text-xs border border-slate-200 rounded-lg"
+                            />
+                            <span className="text-slate-400">to</span>
+                            <input
+                                type="date"
+                                value={customEnd}
+                                onChange={(e) => setCustomEnd(e.target.value)}
+                                className="px-2 py-1 text-xs border border-slate-200 rounded-lg"
+                            />
+                            <button
+                                onClick={applyCustomFilter}
+                                className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                                Apply
+                            </button>
                         </div>
                     )}
                 </>
-            )}
-            
-            <div className="flex flex-wrap justify-end gap-2 print:hidden">
-                <div className="bg-white border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm overflow-x-auto max-w-full">
-                    {isMatrix && (
-                         <button onClick={() => setViewMode('matrix')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'matrix' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <LayoutGrid size={16} /> Matrix
-                        </button>
-                    )}
-
-                    {isPairwise && (
-                         <button onClick={() => setViewMode('pairwise')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pairwise' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <GitCompare size={16} /> Leaderboard
-                        </button>
-                    )}
-
-                    {isRating && (
-                         <button onClick={() => setViewMode('rating')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'rating' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <SlidersHorizontal size={16} /> Averages
-                        </button>
-                    )}
-                    
-                    {!isPairwise && !isRating && (
-                         <button onClick={() => setViewMode('bar')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'bar' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <BarChart size={16} /> Bar
-                        </button>
-                    )}
-                    
-                    {isRanked && (
-                        <button onClick={() => setViewMode('flow')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'flow' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <GitMerge size={16} /> Flow Chart
-                        </button>
-                    )}
-
-                    {isMeeting && (
-                        <button onClick={() => setViewMode('heatmap')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'heatmap' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <Calendar size={16} /> Heatmap
-                        </button>
-                    )}
-
-                    {!isPairwise && !isRating && (
-                     <button onClick={() => setViewMode('pie')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'pie' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <PieChart size={16} /> Pie
-                    </button>
-                    )}
-
-                    <button onClick={() => setViewMode('velocity')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'velocity' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <Activity size={16} /> Velocity
-                    </button>
-                    
-                    {/* Geography - Premium only */}
-                    {isPaidUser ? (
-                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <MapIcon size={16} /> Geography
-                        </button>
-                    ) : (
-                        <button 
-                            onClick={() => setViewMode('map')}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
-                            title="Upgrade to Pro for Geography view"
-                        >
-                            <MapIcon size={16} /> Geography
-                            <Lock size={12} className="text-slate-400" />
-                        </button>
-                    )}
-
-                    {/* Grid - Premium only */}
-                    {isPaidUser ? (
-                        <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            <LayoutGrid size={16} /> Grid
-                        </button>
-                    ) : (
-                        <button 
-                            onClick={() => setViewMode('grid')}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
-                            title="Upgrade to Pro for Grid view"
-                        >
-                            <LayoutGrid size={16} /> Grid
-                            <Lock size={12} className="text-slate-400" />
-                        </button>
-                    )}
-                </div>
-
-                {/* Download Chart as PNG */}
+            ) : (
                 <button
-                    disabled={isExportingPng}
-                    onClick={async () => {
-                        setIsExportingPng(true);
-                        
-                        // Small delay to ensure any animations complete
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                        const chartEl = document.getElementById('poll-results-chart');
-                        if (!chartEl) {
-                            alert('Chart not found. Please try again.');
-                            setIsExportingPng(false);
-                            return;
-                        }
-                        
-                        try {
-                            // Load html2canvas from CDN if not already loaded
-                            if (!(window as any).html2canvas) {
-                                await new Promise<void>((resolve, reject) => {
-                                    const script = document.createElement('script');
-                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                                    script.onload = () => resolve();
-                                    script.onerror = () => reject(new Error('Failed to load library'));
-                                    document.head.appendChild(script);
-                                });
-                            }
-                            
-                            const html2canvas = (window as any).html2canvas;
-                            const canvas = await html2canvas(chartEl, {
-                                backgroundColor: '#ffffff',
-                                scale: 2,
-                                logging: false,
-                                useCORS: true,
-                                allowTaint: true
-                            });
-                            
-                            const link = document.createElement('a');
-                            link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_chart.png`;
-                            link.href = canvas.toDataURL('image/png');
-                            link.click();
-                        } catch (error) {
-                            console.error('Failed to export chart:', error);
-                            alert('Failed to export chart. Please try again.');
-                        } finally {
-                            setIsExportingPng(false);
-                        }
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
-                        isExportingPng 
-                            ? 'bg-slate-100 text-slate-400 cursor-wait' 
-                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 hover:shadow-md'
-                    }`}
-                    title="Download chart as PNG image"
+                    disabled
+                    className="px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-100 text-slate-400 cursor-not-allowed flex items-center gap-1"
+                    title="Upgrade to Pro for custom date ranges"
                 >
-                    {isExportingPng ? (
-                        <>
-                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Saving...
-                        </>
-                    ) : (
-                        <>
-                            <Download size={16} />
-                            Save PNG
-                        </>
-                    )}
+                    <Calendar size={12} />
+                    Custom
+                    <Crown size={10} className="text-amber-500" />
                 </button>
-            </div>
+            )}
+        </div>
+    );
+};
 
-            {/* Chart Container - for PNG export */}
-            <div id="poll-results-chart" className="bg-white rounded-2xl p-4">
-            
-            <AnimatePresence mode="wait">
-                {/* --- WINNER CARD --- */}
-                {/* Show TIE banner when there's a tie */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && isTie && !isDot && !isMatrix && !isRanked) && (
-                     <motion.div 
-                        key="tie"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden print:border print:border-slate-300 print:bg-none print:text-black mb-6"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden">
-                            <Users size={120} />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="uppercase tracking-widest text-sm font-semibold text-amber-200 mb-2 print:text-slate-500">
-                                It's a Tie!
+// ============================================================================
+// ANONYMOUS MODE NOTICE
+// ============================================================================
+
+const AnonymousModeNotice: React.FC<{ responseCount: number }> = ({ responseCount }) => {
+    return (
+        <div className="mb-6 p-5 bg-emerald-50 border border-emerald-200 rounded-2xl">
+            <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Shield size={20} className="text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                    <h3 className="font-semibold text-emerald-800 mb-1">Anonymous Mode Active</h3>
+                    <p className="text-sm text-emerald-700 mb-3">
+                        Individual responses are hidden to protect respondent privacy. 
+                        You are viewing aggregated data only.
+                    </p>
+                    <div className="flex flex-wrap gap-4 text-sm text-emerald-600">
+                        <span className="flex items-center gap-1">
+                            <Users size={14} />
+                            {responseCount} responses
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <EyeOff size={14} />
+                            Individual view disabled
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Lock size={14} />
+                            Timestamps hidden
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// UPGRADE CTA FOR FREE USERS
+// ============================================================================
+
+const UpgradeCTA: React.FC<{ onUpgrade?: () => void }> = ({ onUpgrade }) => {
+    return (
+        <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 border border-purple-200 rounded-2xl">
+            <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Crown size={24} className="text-white" />
+                </div>
+                <div className="flex-1">
+                    <h3 className="font-bold text-slate-800 mb-1">Unlock Full Survey Analytics</h3>
+                    <p className="text-sm text-slate-600 mb-4">
+                        Upgrade to Pro to access powerful visualization and export tools.
+                    </p>
+                    
+                    {/* Feature Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <BarChart3 size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">Pie &amp; Donut Charts</p>
+                                <p className="text-xs text-slate-500">Visualize data beautifully</p>
                             </div>
-                            <h2 className="text-2xl md:text-4xl font-black font-serif mb-4">
-                                {tiedOptions.length} options tied with {topVoteCount} vote{topVoteCount !== 1 ? 's' : ''} each
-                            </h2>
-                            <div className="flex flex-wrap justify-center gap-2 mt-4">
-                                {tiedOptions.map(([optId]) => (
-                                    <span key={optId} className="bg-white/20 px-4 py-2 rounded-full text-sm font-semibold">
-                                        {getOptionText(optId)}
-                                    </span>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <FileSpreadsheet size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">CSV &amp; Excel Export</p>
+                                <p className="text-xs text-slate-500">Download all response data</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <Eye size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">Individual Responses</p>
+                                <p className="text-xs text-slate-500">See each person's answers</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 p-2 bg-white/60 rounded-lg">
+                            <FileText size={16} className="text-purple-500 mt-0.5" />
+                            <div>
+                                <p className="font-medium text-slate-700 text-sm">All Text Feedback</p>
+                                <p className="text-xs text-slate-500">No blurred responses</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a
+                        href="/pricing"
+                        onClick={onUpgrade}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:shadow-lg transition"
+                    >
+                        <Crown size={16} />
+                        Upgrade to Pro
+                    </a>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// QUESTION RESULT COMPONENT
+// ============================================================================
+
+interface QuestionResultProps {
+    stats: QuestionStats;
+    question: SurveyQuestion;
+    isAnonymous: boolean;
+    tier: UserTier;
+}
+
+const QuestionResult: React.FC<QuestionResultProps> = ({ stats, question, isAnonymous, tier }) => {
+    const tierConfig = SURVEY_TIER_CONFIG[tier];
+    const isPaidUser = tier !== 'free';
+    const [chartType, setChartType] = useState<'bar' | 'pie' | 'donut'>('bar');
+    
+    // Calculate colors for pie/donut charts
+    const chartColors = [
+        '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+        '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+        '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1'
+    ];
+    
+    const renderPieChart = (options: typeof question.options, total: number) => {
+        let cumulativeAngle = 0;
+        const size = 160;
+        const center = size / 2;
+        const outerRadius = 70;
+        const innerRadius = chartType === 'donut' ? 40 : 0;
+        
+        return (
+            <div className="flex items-center gap-6 mt-4">
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    {options?.map((opt, idx) => {
+                        const count = stats.optionCounts?.[opt.id] || 0;
+                        const pct = total > 0 ? count / total : 0;
+                        const angle = pct * 360;
+                        
+                        const startAngle = cumulativeAngle;
+                        cumulativeAngle += angle;
+                        const endAngle = cumulativeAngle;
+                        
+                        // Convert angles to radians and calculate arc
+                        const startRad = (startAngle - 90) * Math.PI / 180;
+                        const endRad = (endAngle - 90) * Math.PI / 180;
+                        
+                        const x1 = center + outerRadius * Math.cos(startRad);
+                        const y1 = center + outerRadius * Math.sin(startRad);
+                        const x2 = center + outerRadius * Math.cos(endRad);
+                        const y2 = center + outerRadius * Math.sin(endRad);
+                        
+                        const x1Inner = center + innerRadius * Math.cos(startRad);
+                        const y1Inner = center + innerRadius * Math.sin(startRad);
+                        const x2Inner = center + innerRadius * Math.cos(endRad);
+                        const y2Inner = center + innerRadius * Math.sin(endRad);
+                        
+                        const largeArc = angle > 180 ? 1 : 0;
+                        
+                        const pathData = innerRadius > 0
+                            ? `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} L ${x2Inner} ${y2Inner} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1Inner} ${y1Inner} Z`
+                            : `M ${center} ${center} L ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                        
+                        if (pct === 0) return null;
+                        
+                        return (
+                            <motion.path
+                                key={opt.id}
+                                d={pathData}
+                                fill={chartColors[idx % chartColors.length]}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                className="hover:opacity-80 transition-opacity cursor-pointer"
+                            />
+                        );
+                    })}
+                </svg>
+                <div className="flex-1 space-y-1">
+                    {options?.map((opt, idx) => {
+                        const count = stats.optionCounts?.[opt.id] || 0;
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        return (
+                            <div key={opt.id} className="flex items-center gap-2 text-sm">
+                                <div 
+                                    className="w-3 h-3 rounded-sm flex-shrink-0" 
+                                    style={{ backgroundColor: chartColors[idx % chartColors.length] }}
+                                />
+                                <span className="text-slate-700 truncate">{opt.text}</span>
+                                <span className="text-slate-400 ml-auto">{pct}%</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+    
+    const renderResult = () => {
+        switch (question.type) {
+            case 'multiple_choice':
+            case 'dropdown':
+            case 'yes_no': {
+                const total = Object.values(stats.optionCounts || {}).reduce((sum, c) => sum + c, 0);
+                const sortedOptions = question.options?.slice().sort((a, b) => {
+                    return (stats.optionCounts?.[b.id] || 0) - (stats.optionCounts?.[a.id] || 0);
+                });
+                
+                return (
+                    <div className="mt-3">
+                        {/* Chart Type Toggle - Pro+ Feature */}
+                        {isPaidUser && total > 0 && (
+                            <div className="flex items-center gap-1 mb-3">
+                                <span className="text-xs text-slate-500 mr-2">View:</span>
+                                {(['bar', 'pie', 'donut'] as const).map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setChartType(type)}
+                                        className={`px-2 py-1 text-xs rounded-lg transition ${
+                                            chartType === type
+                                                ? 'bg-indigo-100 text-indigo-700 font-medium'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </button>
                                 ))}
                             </div>
-                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm print:bg-slate-100 print:text-slate-900 mt-4">
-                                <Users size={18} />
-                                <span className="font-semibold">{totalVotes} Total Voters</span>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* Show WINNER banner when there's a clear winner (no tie) */}
-                {((viewMode === 'flow' || viewMode === 'bar' || viewMode === 'heatmap' || viewMode === 'pairwise' || viewMode === 'rating') && activeWinnerId && !isDot && !isMatrix && !isTie) && (
-                     <motion.div 
-                        key="winner"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden print:border print:border-slate-300 print:bg-none print:text-black mb-6"
-                    >
-                        <div className="absolute top-0 right-0 p-8 opacity-10 print:hidden">
-                            <Trophy size={120} />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="uppercase tracking-widest text-sm font-semibold text-indigo-200 mb-2 print:text-slate-500">
-                                {isMeeting ? "Best Time Slot" : isBudget ? "Top Funded Feature" : "The Winner Is"}
-                            </div>
-                            <h2 className="text-3xl md:text-5xl font-black font-serif mb-4">
-                                {getOptionText(activeWinnerId)}
-                            </h2>
-                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm print:bg-slate-100 print:text-slate-900">
-                                <Users size={18} />
-                                <span className="font-semibold">{totalVotes} Total Voters</span>
-                            </div>
-                            {isMeeting && meetingScoreData[activeWinnerId] !== undefined && (
-                                <div className="mt-2 text-indigo-200 text-sm">
-                                    Score: {meetingScoreData[activeWinnerId]} (Yes=1, Maybe=0.5)
-                                </div>
-                            )}
-                            
-                            {/* Calendar Integration - Meeting Polls Only */}
-                            {isMeeting && activeWinnerId && (() => {
-                                const duration = poll.meetingDuration || 60;
-                                const durationLabel = duration < 60 ? `${duration} min` : duration === 60 ? '1 hour' : `${duration / 60} hours`;
-                                const slotText = getOptionText(activeWinnerId);
-                                
-                                return (
-                                    <div className="mt-6 print:hidden">
-                                        <p className="text-indigo-200 text-xs mb-3 uppercase tracking-wide">
-                                            Add to Calendar <span className="opacity-60">({durationLabel} meeting)</span>
-                                        </p>
-                                        <div className="flex flex-wrap justify-center gap-2">
-                                            {/* Google Calendar */}
-                                            {generateGoogleCalendarLink(slotText, slotText, poll.title, duration) && (
-                                                <a
-                                                    href={generateGoogleCalendarLink(slotText, slotText, poll.title, duration) || '#'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
-                                                >
-                                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm1-8h4v2h-6V7h2v5z"/>
-                                                    </svg>
-                                                    Google
-                                                </a>
-                                            )}
-                                            
-                                            {/* Outlook Calendar */}
-                                            {generateOutlookCalendarLink(slotText, slotText, poll.title, duration) && (
-                                                <a
-                                                    href={generateOutlookCalendarLink(slotText, slotText, poll.title, duration) || '#'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
-                                                >
-                                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M21.5 3h-19C1.67 3 1 3.67 1 4.5v15c0 .83.67 1.5 1.5 1.5h19c.83 0 1.5-.67 1.5-1.5v-15c0-.83-.67-1.5-1.5-1.5zm-14 16H3V7h4.5v12zm7 0h-5V7h5v12zm5 0h-3.5V7H20v12z"/>
-                                                    </svg>
-                                                    Outlook
-                                                </a>
-                                            )}
-                                            
-                                            {/* Download .ics */}
-                                            <button
-                                                onClick={() => downloadICS(slotText, slotText, poll.title, duration)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-sm font-medium transition backdrop-blur-sm"
-                                            >
-                                                <Download size={16} />
-                                                Download .ics
-                                            </button>
-                                        </div>
-                                        <p className="text-indigo-300/60 text-xs mt-2">Works with Apple Calendar, Outlook Desktop & more</p>
-                                    </div>
-                                );
-                            })()}
-                            
-                            {isPairwise && pairwiseScores && pairwiseScores[activeWinnerId] && (
-                                <div className="mt-2 text-indigo-200 text-sm">
-                                    Win Rate: {pairwiseScores[activeWinnerId].score.toFixed(1)}% ({pairwiseScores[activeWinnerId].wins} wins)
-                                </div>
-                            )}
-                            {isRating && ratingStats && ratingStats[activeWinnerId] && (
-                                <div className="mt-2 text-indigo-200 text-sm">
-                                    Average Rating: {ratingStats[activeWinnerId].average.toFixed(1)} / 100
-                                </div>
-                            )}
-                            {isBudget && budgetStats && budgetStats[activeWinnerId] && (
-                                <div className="mt-2 text-indigo-200 text-sm flex items-center justify-center gap-1">
-                                    <DollarSign size={16} />
-                                    Total Value: ${(budgetStats[activeWinnerId].totalValue ?? 0).toLocaleString()} ({(budgetStats[activeWinnerId] as any).totalQuantity ?? budgetStats[activeWinnerId].purchaseCount ?? 0} purchased)
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* --- RATING VIEW --- */}
-                {viewMode === 'rating' && ratingStats && (
-                    <motion.div
-                        key="rating"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
-                    >
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                <SlidersHorizontal size={24} className="text-indigo-500"/> Average Ratings
-                            </h3>
-                            <div className="text-xs text-slate-500 flex items-center gap-2">
-                                <span className="w-4 h-1 bg-black/20 rounded"></span> Error bars = Standard Deviation
-                            </div>
-                        </div>
+                        )}
                         
-                        <div className="space-y-6">
-                            {Object.entries(ratingStats)
-                                .sort(([, a], [, b]) => b.average - a.average)
-                                .map(([id, stats], index) => {
-                                    return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {index + 1}
-                                                    </div>
-                                                    <span className="text-slate-800 font-bold text-lg">
-                                                        {getOptionText(id)}
-                                                    </span>
-                                                </div>
-                                                <span className="text-slate-600 font-bold">
-                                                    {stats.average.toFixed(1)} <span className="text-slate-400 font-normal text-xs ml-1">/ 100</span>
-                                                </span>
-                                            </div>
-                                            <div className="relative h-8 bg-slate-100 rounded-lg mt-2 overflow-visible print:border print:border-slate-200">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${stats.average}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
-                                                />
-                                                {stats.count > 1 && typeof stats.stdDev === 'number' && (() => {
-                                                    const stdDev = stats.stdDev || 0;
-                                                    return (
-                                                    <div 
-                                                        className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
-                                                        style={{ 
-                                                            left: `${Math.max(0, stats.average - stdDev)}%`, 
-                                                            width: `${Math.min(100 - (stats.average - stdDev), stdDev * 2)}%`
-                                                        }}
-                                                    >
-                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
-                                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
-                                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
-                                                    </div>
-                                                )})()}
-                                            </div>
-                                            <div className="text-xs text-slate-400 mt-1 flex justify-between">
-                                                <span>Std Dev: {(stats.stdDev || 0).toFixed(1)}</span>
-                                                <span>{stats.count} votes</span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* --- PAIRWISE VIEW --- */}
-                {viewMode === 'pairwise' && pairwiseScores && (
-                    <motion.div
-                        key="pairwise"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
-                    >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <GitCompare size={24} className="text-indigo-500"/> Comparison Leaderboard
-                        </h3>
-                        
-                        <div className="space-y-4">
-                            {Object.entries(pairwiseScores)
-                                .sort(([, a], [, b]) => b.score - a.score)
-                                .map(([id, data], index) => {
-                                    return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {index + 1}
-                                                    </div>
-                                                    <span className="text-slate-800 font-bold text-lg">
-                                                        {getOptionText(id)}
-                                                    </span>
-                                                </div>
-                                                <span className="text-slate-600 font-bold">
-                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins{data.matches ? ` / ${data.matches} matches` : ''})</span>
-                                                </span>
-                                            </div>
-                                            <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${data.score}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className={`h-full rounded-full ${getBarColorClass(id)} opacity-90`}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* --- MATRIX VIEW --- */}
-                {viewMode === 'matrix' && matrixAverages && (
-                     <motion.div 
-                        key="matrix"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
-                    >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <LayoutGrid size={24} className="text-indigo-500"/> Priority Matrix Results
-                        </h3>
-                        
-                        <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
-                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-                                <div className="bg-emerald-50/50 flex items-start justify-start p-2"><span className="text-[10px] font-bold text-emerald-800 opacity-40 uppercase">Quick Wins</span></div>
-                                <div className="bg-blue-50/50 flex items-start justify-end p-2"><span className="text-[10px] font-bold text-blue-800 opacity-40 uppercase">Major Projects</span></div>
-                                <div className="bg-slate-50/50 flex items-end justify-start p-2"><span className="text-[10px] font-bold text-slate-500 opacity-40 uppercase">Fill Ins</span></div>
-                                <div className="bg-red-50/50 flex items-end justify-end p-2"><span className="text-[10px] font-bold text-red-800 opacity-40 uppercase">Thankless Tasks</span></div>
+                        {/* Upgrade prompt for chart options */}
+                        {!isPaidUser && total > 0 && (
+                            <div className="flex items-center gap-2 mb-3 p-2 bg-purple-50 rounded-lg border border-purple-100">
+                                <Crown size={14} className="text-purple-500" />
+                                <span className="text-xs text-purple-700">
+                                    <a href="/pricing" className="underline font-medium">Upgrade to Pro</a> for pie &amp; donut charts
+                                </span>
                             </div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-px bg-slate-300"></div></div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="h-full w-px bg-slate-300"></div></div>
-                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">High Impact</div>
-                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">Low Impact</div>
-                            <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">Low Effort</div>
-                            <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">High Effort</div>
-                             {Object.entries(matrixAverages).map(([id, coords]) => {
-                                 const top = 100 - coords.y;
-                                 return (
-                                     <div key={id} className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20" style={{ left: `${coords.x}%`, top: `${top}%` }}>
-                                         <span className="text-[10px] text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
-                                         <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
-                                             {getOptionText(id)}
-                                         </div>
-                                     </div>
-                                 )
-                             })}
-                        </div>
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-500">
-                             {poll.options.map((opt, i) => (
-                                 <div key={opt.id} className="flex items-center gap-2">
-                                     <span className="w-4 h-4 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-[9px]">{i + 1}</span>
-                                     <span className="truncate">{opt.text}</span>
-                                 </div>
-                             ))}
-                        </div>
-                     </motion.div>
-                )}
-
-                {/* --- BAR VIEW (Standard for Dot/Multiple/Budget) --- */}
-                {viewMode === 'bar' && (
-                     <motion.div 
-                        key="bar"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className={`rounded-3xl shadow-xl p-6 md:p-8 print:shadow-none print:border-slate-300 ${
-                            isDarkTheme 
-                                ? 'bg-slate-900 border-2 border-slate-700' 
-                                : theme.cardBg || 'bg-white border border-slate-100'
-                        } ${getSpecialEffectClasses(theme.specialEffect)}`}
-                        style={theme.specialEffect === 'glow' ? {
-                            boxShadow: `0 0 40px ${theme.primary}25, 0 0 80px ${theme.primary}10`
-                        } : undefined}
-                    >
-                        <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
-                            <BarChart size={24} style={{ color: theme.primary }}/> 
-                            {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : isBudget ? 'Value Allocated' : 'Vote Breakdown'}
-                        </h3>
+                        )}
                         
-                        <div className="space-y-4">
-                            {Object.entries(barChartData)
-                                .sort(([, a], [, b]) => b - a)
-                                .map(([id, value], index) => {
-                                    const denominator = isDot || isBudget ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
-                                    const percentage = denominator > 0 ? (value / denominator) * 100 : 0;
+                        {/* Render chart based on type */}
+                        {chartType === 'bar' || !isPaidUser ? (
+                            <div className="space-y-2">
+                                {sortedOptions?.map((opt, idx) => {
+                                    const count = stats.optionCounts?.[opt.id] || 0;
+                                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                    const isWinner = idx === 0 && count > 0;
                                     
                                     return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
-                                                <span className={`font-bold text-lg ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
-                                                    {getOptionText(id)}
+                                        <div key={opt.id} className="relative">
+                                            <div className={`flex items-center justify-between p-3 rounded-xl border ${
+                                                isWinner ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'
+                                            }`}>
+                                                <span className={`font-medium ${isWinner ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                    {opt.text}
+                                                    {isWinner && <Star size={14} className="inline ml-1 text-amber-500" />}
                                                 </span>
-                                                <span className={`font-bold ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className={`font-normal text-xs ml-1 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>({percentage.toFixed(0)}%)</span>
-                                                </span>
+                                                <span className="text-sm text-slate-500">{count} ({pct}%)</span>
                                             </div>
-                                            <div className={`h-6 rounded-lg overflow-hidden print:border print:border-slate-200 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${percentage}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className="h-full rounded-lg print:bg-slate-600"
-                                                    style={{ 
-                                                        backgroundColor: index === 0 ? theme.primary : theme.accent || theme.secondary,
-                                                        opacity: 1 - (index * 0.1)
-                                                    }}
-                                                />
-                                            </div>
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.5, delay: idx * 0.05 }}
+                                                className={`absolute bottom-0 left-0 h-1 rounded-b-xl ${
+                                                    isWinner ? 'bg-indigo-500' : 'bg-slate-300'
+                                                }`}
+                                            />
                                         </div>
                                     );
                                 })}
-                        </div>
-                     </motion.div>
-                )}
-
-                {/* --- FLOW CHART (SANKEY) VIEW --- */}
-                {viewMode === 'flow' && isRanked && rounds.length > 0 && (
-                    <motion.div 
-                        key="flow"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 overflow-x-auto"
-                    >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <GitMerge size={24} className="text-indigo-500"/>
-                            Vote Transfer Flow
-                        </h3>
-                        
-                        <div className="min-w-[600px] h-[450px]">
-                            {renderSankeySVG()}
-                        </div>
-                        
-                        <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <Info size={16} className="text-indigo-500"/>
-                            <span>
-                                This diagram shows how votes from eliminated candidates (faded lines) are transferred to their next choice in subsequent rounds.
-                            </span>
-                        </div>
-                    </motion.div>
-                )}
-                
-                {/* --- HEATMAP VIEW (Meeting) --- */}
-                {viewMode === 'heatmap' && (
-                    <motion.div
-                        key="heatmap"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
-                    >
-                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <Calendar size={24} className="text-indigo-500"/> Availability Heatmap
-                        </h3>
-                        {isMeeting && <p className="text-sm text-slate-500 mb-4">Intensity based on: Yes = 1, Maybe = 0.5</p>}
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {Object.entries(meetingScoreData).map(([id, score]) => {
-                                const intensity = score / maxHeat;
-                                return (
-                                    <div key={id} className="relative group overflow-hidden rounded-xl border border-slate-100 aspect-video flex flex-col items-center justify-center p-4 text-center transition-all hover:scale-105"
-                                         style={{ backgroundColor: `rgba(16, 185, 129, ${0.05 + (intensity * 0.4)})` }}>
-                                        <div className="font-bold text-slate-800 mb-1 leading-tight">{getOptionText(id)}</div>
-                                        <div className="text-2xl font-black text-emerald-600">{score}</div>
-                                        <div className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Score</div>
-                                        {/* Intensity Bar */}
-                                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-100">
-                                            <div className="h-full bg-emerald-500" style={{ width: `${(score / (totalVotes || 1)) * 100}%` }}></div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* --- PIE CHART VIEW --- */}
-                {viewMode === 'pie' && (
-                     <motion.div
-                        key="pie"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
-                    >
-                         <motion.div 
-                            className="relative w-64 h-64 shrink-0"
-                            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
-                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                         >
-                             {/* SVG Pie Chart for better PNG export */}
-                             <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                                 {pieData.map((d, i) => {
-                                     const startAngle = d.startAngle * (Math.PI / 180);
-                                     const endAngle = (d.startAngle + d.angle) * (Math.PI / 180);
-                                     const largeArcFlag = d.angle > 180 ? 1 : 0;
-                                     const x1 = 50 + 48 * Math.cos(startAngle);
-                                     const y1 = 50 + 48 * Math.sin(startAngle);
-                                     const x2 = 50 + 48 * Math.cos(endAngle);
-                                     const y2 = 50 + 48 * Math.sin(endAngle);
-                                     
-                                     // Handle full circle case
-                                     if (d.angle >= 359.9) {
-                                         return (
-                                             <circle
-                                                 key={d.id}
-                                                 cx="50"
-                                                 cy="50"
-                                                 r="48"
-                                                 fill={d.color}
-                                                 stroke="#fff"
-                                                 strokeWidth="1"
-                                             />
-                                         );
-                                     }
-                                     
-                                     const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-                                     return (
-                                         <path
-                                             key={d.id}
-                                             d={pathData}
-                                             fill={d.color}
-                                             stroke="#fff"
-                                             strokeWidth="1"
-                                         />
-                                     );
-                                 })}
-                             </svg>
-                             <motion.div 
-                                className="absolute inset-0 flex items-center justify-center"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                             >
-                                 <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
-                                     {isDot || isBudget ? <Coins size={24} /> : totalVotes}
-                                 </div>
-                             </motion.div>
-                         </motion.div>
-                         
-                         <div className="flex-1 w-full max-w-sm">
-                             <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
-                                 {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
-                             </h3>
-                             <div className="space-y-3">
-                                 {pieData.map((d, i) => (
-                                     <motion.div 
-                                        key={d.id} 
-                                        className="flex items-center justify-between group"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.3 + (i * 0.1), duration: 0.3 }}
-                                     >
-                                         <div className="flex items-center gap-3">
-                                             <motion.div 
-                                                className="w-4 h-4 rounded-full" 
-                                                style={{ backgroundColor: d.color }}
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
-                                             />
-                                             <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
-                                         </div>
-                                         <div className="text-sm font-bold text-slate-500">
-                                             {d.percentage.toFixed(1)}%
-                                         </div>
-                                     </motion.div>
-                                 ))}
-                             </div>
-                         </div>
-                    </motion.div>
-                )}
-
-                {/* --- VELOCITY VIEW (Timeline) --- */}
-                {viewMode === 'velocity' && (
-                    <motion.div
-                        key="velocity"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
-                    >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <TrendingUp size={24} className="text-indigo-500"/> Vote Timeline
-                        </h3>
-                        
-                        {votes.length === 0 ? (
-                            <div className="h-64 flex items-center justify-center text-slate-400">
-                                <div className="text-center">
-                                    <Activity size={48} className="mx-auto mb-2 opacity-50" />
-                                    <p>No votes recorded yet</p>
-                                </div>
-                            </div>
-                        ) : votes.length < 3 ? (
-                            /* Timeline view for few votes */
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-500 mb-4">Vote activity timeline:</p>
-                                {[...votes].sort((a: any, b: any) => getVoteTime(a) - getVoteTime(b)).map((vote: any, i: number) => (
-                                    <div key={i} className="flex items-center gap-4">
-                                        <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-                                        <div className="flex-1 h-0.5 bg-indigo-200"></div>
-                                        <div className="bg-indigo-50 px-4 py-2 rounded-lg text-center min-w-[140px]">
-                                            <span className="text-sm font-medium text-indigo-700 block">
-                                                {new Date(getVoteTime(vote)).toLocaleString([], { 
-                                                    month: 'short', day: 'numeric', 
-                                                    hour: '2-digit', minute: '2-digit' 
-                                                })}
-                                            </span>
-                                            {vote.analytics?.country && (
-                                                <span className="text-xs text-slate-500">
-                                                    {getCountryFlag(getCountryName(vote.analytics.country))}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                                <div className="mt-6 p-4 bg-slate-50 rounded-xl">
-                                    <p className="text-sm text-slate-600">
-                                        <strong>{votes.length}</strong> vote{votes.length !== 1 ? 's' : ''} total
-                                        {votes.length > 0 && (
-                                            <span className="text-slate-400 ml-2">
-                                                • First: {new Date(getVoteTime([...votes].sort((a: any, b: any) => getVoteTime(a) - getVoteTime(b))[0])).toLocaleDateString()}
-                                            </span>
-                                        )}
-                                    </p>
-                                </div>
                             </div>
                         ) : (
-                            /* Bar chart for more votes */
-                            <>
-                                <div className="h-64 flex items-end gap-2 border-b border-l border-slate-200 p-4 relative">
-                                    {velocityData.map((d, i) => {
-                                        const maxVal = Math.max(...velocityData.map(v => v.count), 1);
-                                        const height = Math.max((d.count / maxVal) * 100, d.count > 0 ? 10 : 0);
-                                        return (
-                                            <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
-                                                <motion.div 
-                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-colors cursor-pointer shadow-sm"
-                                                    initial={{ height: 0 }}
-                                                    animate={{ height: `${height}%` }}
-                                                    transition={{ duration: 0.5, delay: i * 0.02, ease: "easeOut" }}
-                                                    style={{ minHeight: d.count > 0 ? '8px' : '0' }}
-                                                >
-                                                    {d.count > 0 && (
-                                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none shadow-lg">
-                                                            <strong>{d.count}</strong> vote{d.count !== 1 ? 's' : ''}<br/>
-                                                            {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                                <div className="flex justify-between text-xs text-slate-400 mt-2 px-4">
-                                    <span>{velocityData[0]?.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                    <span className="text-slate-500 font-medium">{votes.length} total votes</span>
-                                    <span>{velocityData[velocityData.length - 1]?.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                </div>
-                            </>
+                            renderPieChart(sortedOptions, total)
                         )}
-                    </motion.div>
-                )}
-
-                {/* --- MAP VIEW (Geography) --- */}
-                {viewMode === 'map' && (
-                    <motion.div
-                        key="map"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
-                    >
-                        {/* Free user upgrade prompt */}
-                        {isFreeUser ? (
-                            <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <MapIcon size={32} className="text-indigo-500" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">Geographic Insights</h3>
-                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                                    See where your voters are located with detailed country breakdowns, flags, and percentage distribution.
-                                </p>
-                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 max-w-sm mx-auto border border-indigo-100">
-                                    <div className="flex items-center justify-center gap-3 text-slate-600 mb-4">
-                                        <span className="text-2xl">🇺🇸</span>
-                                        <span className="text-2xl">🇬🇧</span>
-                                        <span className="text-2xl">🇨🇦</span>
-                                        <span className="text-2xl">🇦🇺</span>
-                                        <span className="text-slate-400">...</span>
+                    </div>
+                );
+            }
+            
+            case 'rating': {
+                const maxStars = question.maxValue || 5;
+                return (
+                    <div className="mt-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: maxStars }).map((_, i) => (
+                                    <Star
+                                        key={i}
+                                        size={20}
+                                        className={i < Math.round(stats.average || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'}
+                                    />
+                                ))}
+                            </div>
+                            <div>
+                                <span className="text-2xl font-bold text-amber-600">
+                                    {(stats.average || 0).toFixed(1)}
+                                </span>
+                                <span className="text-slate-500 text-sm ml-1">/ {maxStars}</span>
+                            </div>
+                        </div>
+                        {stats.distribution && (
+                            <div className="mt-3 flex gap-1">
+                                {Array.from({ length: maxStars }).map((_, i) => {
+                                    const count = stats.distribution?.[i + 1] || 0;
+                                    const pct = stats.totalResponses > 0 ? (count / stats.totalResponses) * 100 : 0;
+                                    return (
+                                        <div key={i} className="flex-1 text-center">
+                                            <div className="h-12 bg-white rounded-lg border border-amber-100 flex items-end justify-center p-1">
+                                                <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${pct}%` }}
+                                                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                                                    className="w-full bg-amber-400 rounded-sm min-h-[2px]"
+                                                />
+                                            </div>
+                                            <span className="text-xs text-slate-500 mt-1">{i + 1}★</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+            
+            case 'scale': {
+                if (stats.npsData) {
+                    return <div className="mt-3"><NPSDisplay data={stats.npsData} /></div>;
+                }
+                
+                return (
+                    <div className="mt-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-slate-600">Average</span>
+                            <span className="text-2xl font-bold text-blue-600">{(stats.average || 0).toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-500">
+                            <span>Min: {stats.min}</span>
+                            <span>Max: {stats.max}</span>
+                        </div>
+                    </div>
+                );
+            }
+            
+            case 'text':
+            case 'textarea':
+            case 'email':
+            case 'phone': {
+                const responses = stats.textResponses || [];
+                const visibleCount = tierConfig.canViewAllText ? responses.length : tierConfig.textPreviewCount;
+                const visibleResponses = responses.slice(0, visibleCount);
+                const hiddenCount = responses.length - visibleCount;
+                
+                if (responses.length === 0) {
+                    return <p className="text-slate-500 mt-3 text-sm">No text responses yet</p>;
+                }
+                
+                return (
+                    <div className="mt-3 space-y-2">
+                        {isAnonymous && (
+                            <p className="text-xs text-emerald-600 flex items-center gap-1 mb-2">
+                                <Shield size={12} />
+                                Responses shown in random order
+                            </p>
+                        )}
+                        {visibleResponses.map((text, i) => (
+                            <div key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-700">
+                                "{text}"
+                            </div>
+                        ))}
+                        {hiddenCount > 0 && (
+                            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg relative overflow-hidden">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Lock size={14} className="text-purple-500" />
+                                        <span className="text-sm text-purple-700 font-medium">
+                                            +{hiddenCount} more responses
+                                        </span>
                                     </div>
-                                    <p className="text-sm text-slate-500 mb-4">Unlock voter location data</p>
-                                    <a 
-                                        href="/#pricing" 
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg shadow-indigo-200"
-                                    >
-                                        <Crown size={18} />
-                                        Upgrade to Pro
+                                    <a href="/pricing" className="text-xs text-purple-600 hover:underline flex items-center gap-1">
+                                        <Crown size={12} />
+                                        Upgrade to view
                                     </a>
                                 </div>
+                                {/* Blurred preview */}
+                                <div className="mt-2 space-y-1">
+                                    {responses.slice(visibleCount, visibleCount + 2).map((text, i) => (
+                                        <div key={i} className="p-2 bg-white/50 rounded text-sm text-slate-400 blur-[2px] select-none">
+                                            {text.substring(0, 50)}...
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ) : (
-                        <>
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                <MapIcon size={24} className="text-indigo-500"/> Voter Geography
-                            </h3>
+                        )}
+                    </div>
+                );
+            }
+            
+            case 'ranking': {
+                const sortedOptions = question.options?.slice().sort((a, b) => {
+                    return (stats.rankingScores?.[a.id] || 99) - (stats.rankingScores?.[b.id] || 99);
+                });
+                
+                return (
+                    <div className="mt-3 space-y-2">
+                        {sortedOptions?.map((opt, idx) => {
+                            const avgRank = stats.rankingScores?.[opt.id] || 0;
+                            return (
+                                <div key={opt.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                        idx === 0 ? 'bg-amber-100 text-amber-700' :
+                                        idx === 1 ? 'bg-slate-200 text-slate-700' :
+                                        idx === 2 ? 'bg-orange-100 text-orange-700' :
+                                        'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        {idx + 1}
+                                    </div>
+                                    <span className="flex-1 font-medium text-slate-700">{opt.text}</span>
+                                    <span className="text-sm text-slate-500">Avg: {avgRank.toFixed(1)}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+            
+            default:
+                return <p className="text-slate-500 mt-3 text-sm">{stats.totalResponses} responses</p>;
+        }
+    };
+    
+    return (
+        <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 size={16} className="text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                    <h4 className="font-semibold text-slate-800">{question.question}</h4>
+                    <p className="text-sm text-slate-500">{stats.totalResponses} response{stats.totalResponses !== 1 ? 's' : ''}</p>
+                </div>
+            </div>
+            {renderResult()}
+        </div>
+    );
+};
+
+// ============================================================================
+// MAIN SURVEY RESULTS COMPONENT
+// ============================================================================
+
+interface SurveyResultsProps {
+    poll: Poll;
+    responses: SurveyResponse[];
+    isAdmin?: boolean;
+    onUpgrade?: () => void;
+}
+
+const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawResponses, isAdmin = false, onUpgrade }) => {
+    // Ensure responses is always a valid array with valid entries
+    const allResponses = useMemo(() => {
+        if (!rawResponses || !Array.isArray(rawResponses)) return [];
+        return rawResponses.filter(r => r && typeof r === 'object');
+    }, [rawResponses]);
+    
+    // Filtered responses (null = no filter applied, use all)
+    const [filteredResponses, setFilteredResponses] = useState<SurveyResponse[] | null>(null);
+    
+    // Use filtered responses if filter is active, otherwise use all
+    const responses = filteredResponses !== null ? filteredResponses : allResponses;
+    const isFiltered = filteredResponses !== null && filteredResponses.length !== allResponses.length;
+    
+    const isAnonymous = poll.settings?.anonymousMode === true;
+    
+    // Detect user tier - Pro ($19/mo) or Business ($49/mo)
+    const tier: UserTier = useMemo(() => {
+        // Check poll's tier first (attached at creation)
+        const pollTier = (poll as any).tier;
+        if (pollTier === 'business') return 'business';
+        if (pollTier === 'pro') return 'pro';
+        
+        // Then check user's subscription tier from localStorage
+        const storedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (storedTier === 'business') return 'business';
+        if (storedTier === 'pro') return 'pro';
+        return 'free';
+    }, [poll]);
+    
+    const tierConfig = SURVEY_TIER_CONFIG[tier];
+    const isPaidUser = tier !== 'free';
+    
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(
+        new Set(poll.sections?.map(s => s.id) || [])
+    );
+    const [viewMode, setViewMode] = useState<'summary' | 'individual'>('summary');
+    const [exportLoading, setExportLoading] = useState<string | null>(null);
+    
+    useEffect(() => {
+        if (isAnonymous && viewMode === 'individual') {
+            setViewMode('summary');
+        }
+        if (!tierConfig.canViewIndividual && viewMode === 'individual') {
+            setViewMode('summary');
+        }
+    }, [isAnonymous, viewMode, tierConfig.canViewIndividual]);
+    
+    const sectionStats: SectionStats[] = useMemo(() => {
+        if (!poll.sections || !Array.isArray(poll.sections)) return [];
+        return poll.sections.map(section => ({
+            sectionId: section.id,
+            sectionTitle: section.title,
+            questions: (section.questions || []).map(q => calculateQuestionStats(q, responses)),
+        }));
+    }, [poll.sections, responses]);
+    
+    // Extract all text responses for word cloud
+    const allTextResponses = useMemo(() => {
+        const texts: string[] = [];
+        if (!poll.sections) return texts;
+        
+        poll.sections.forEach(section => {
+            (section.questions || []).forEach(question => {
+                if (['text', 'textarea'].includes(question.type)) {
+                    responses.forEach(r => {
+                        const answer = r.answers?.[question.id];
+                        if (answer?.text) {
+                            texts.push(answer.text);
+                        }
+                    });
+                }
+            });
+        });
+        
+        return texts;
+    }, [poll.sections, responses]);
+    
+    // Calculate word frequencies
+    const wordFrequencies = useMemo(() => {
+        return extractWords(allTextResponses);
+    }, [allTextResponses]);
+    
+    const npsQuestions = useMemo(() => {
+        const npsData: { sectionTitle: string; questionText: string; nps: NPSData }[] = [];
+        if (!sectionStats || !Array.isArray(sectionStats)) return npsData;
+        sectionStats.forEach(section => {
+            if (!section.questions || !Array.isArray(section.questions)) return;
+            section.questions.forEach(q => {
+                if (q && q.npsData) {
+                    npsData.push({
+                        sectionTitle: section.sectionTitle,
+                        questionText: q.questionText,
+                        nps: q.npsData
+                    });
+                }
+            });
+        });
+        return npsData;
+    }, [sectionStats]);
+    
+    const toggleSection = (sectionId: string) => {
+        const newExpanded = new Set(expandedSections);
+        if (newExpanded.has(sectionId)) {
+            newExpanded.delete(sectionId);
+        } else {
+            newExpanded.add(sectionId);
+        }
+        setExpandedSections(newExpanded);
+    };
+    
+    const handleExportCSV = async () => {
+        if (!tierConfig.canExportCSV) return;
+        setExportLoading('csv');
+        try {
+            downloadCSV(poll, responses);
+        } finally {
+            setTimeout(() => setExportLoading(null), 500);
+        }
+    };
+    
+    const handleExportExcel = async () => {
+        if (!tierConfig.canExportExcel) return;
+        setExportLoading('excel');
+        try {
+            downloadExcel(poll, responses);
+        } finally {
+            setTimeout(() => setExportLoading(null), 500);
+        }
+    };
+    
+    const handleExportPDF = async () => {
+        if (!tierConfig.canExportPDF) return;
+        setExportLoading('pdf');
+        try {
+            // Create a printable version of the results
+            const printContent = document.createElement('div');
+            printContent.innerHTML = `
+                <html>
+                <head>
+                    <title>${poll.title || 'Survey'} - Results Report</title>
+                    <style>
+                        body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #1e293b; }
+                        h1 { color: #4f46e5; margin-bottom: 8px; }
+                        h2 { color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 32px; }
+                        h3 { color: #475569; margin-top: 24px; }
+                        .meta { color: #64748b; margin-bottom: 24px; }
+                        .stats { display: flex; gap: 24px; margin: 24px 0; }
+                        .stat { background: #f8fafc; padding: 16px; border-radius: 8px; text-align: center; }
+                        .stat-value { font-size: 28px; font-weight: bold; color: #4f46e5; }
+                        .stat-label { font-size: 12px; color: #64748b; }
+                        .question { margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; }
+                        .question-text { font-weight: 600; margin-bottom: 8px; }
+                        .option { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+                        .bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 4px; }
+                        .bar-fill { height: 100%; background: #4f46e5; border-radius: 4px; }
+                        .nps { text-align: center; padding: 24px; background: #f0fdf4; border-radius: 8px; margin: 24px 0; }
+                        .nps-score { font-size: 48px; font-weight: bold; }
+                        @media print { body { padding: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>${poll.title || 'Survey Results'}</h1>
+                    <p class="meta">Generated on ${new Date().toLocaleDateString()} • ${totalResponses} responses</p>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value">${totalResponses}</div>
+                            <div class="stat-label">Total Responses</div>
                         </div>
-                        
+                        <div class="stat">
+                            <div class="stat-value">${completeResponses}</div>
+                            <div class="stat-label">Complete</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${formatTime(avgCompletionTime)}</div>
+                            <div class="stat-label">Avg. Time</div>
+                        </div>
+                    </div>
+                    
+                    ${sectionStats.map(section => `
+                        <h2>${section.sectionTitle}</h2>
+                        ${section.questions.map(q => {
+                            const question = poll.sections?.flatMap(s => s.questions || []).find(sq => sq.id === q.questionId);
+                            let content = '';
+                            
+                            if (q.optionCounts && Object.keys(q.optionCounts).length > 0) {
+                                const total = Object.values(q.optionCounts).reduce((sum, c) => sum + c, 0);
+                                content = Object.entries(q.optionCounts)
+                                    .sort(([,a], [,b]) => b - a)
+                                    .map(([optId, count]) => {
+                                        const opt = question?.options?.find(o => o.id === optId);
+                                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                        return `<div class="option"><span>${opt?.text || optId}</span><span>${count} (${pct}%)</span></div>`;
+                                    }).join('');
+                            } else if (q.average !== undefined) {
+                                content = `<p>Average: <strong>${q.average.toFixed(1)}</strong></p>`;
+                            } else if (q.textResponses && q.textResponses.length > 0) {
+                                content = `<p>${q.textResponses.length} text responses</p>`;
+                            }
+                            
+                            return `<div class="question"><div class="question-text">${q.questionText}</div>${content}</div>`;
+                        }).join('')}
+                    `).join('')}
+                    
+                    ${npsQuestions.length > 0 ? `
+                        <h2>NPS Summary</h2>
+                        ${npsQuestions.map(item => `
+                            <div class="nps">
+                                <div class="nps-score" style="color: ${item.nps.score >= 30 ? '#10b981' : item.nps.score >= 0 ? '#eab308' : '#ef4444'}">
+                                    ${item.nps.score > 0 ? '+' : ''}${item.nps.score}
+                                </div>
+                                <p>${item.questionText}</p>
+                                <p style="color: #64748b; font-size: 14px;">
+                                    Promoters: ${item.nps.promoterPct}% • Passives: ${item.nps.passivePct}% • Detractors: ${item.nps.detractorPct}%
+                                </p>
+                            </div>
+                        `).join('')}
+                    ` : ''}
+                </body>
+                </html>
+            `;
+            
+            // Open print dialog
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(printContent.innerHTML);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            }
+        } finally {
+            setTimeout(() => setExportLoading(null), 500);
+        }
+    };
+    
+    // Handle date filter
+    const handleDateFilter = useCallback((filtered: SurveyResponse[] | null) => {
+        setFilteredResponses(filtered);
+    }, []);
+    
+    const totalResponses = responses.length;
+    const totalAllResponses = allResponses.length; // Total before filtering
+    // Treat responses as complete if they exist (submitted = complete)
+    const completeResponses = responses.filter(r => r.isComplete !== false).length;
+    
+    // Calculate average completion time (in seconds)
+    const responsesWithTime = responses.filter(r => r.completionTime && r.completionTime > 0);
+    const avgCompletionTime = responsesWithTime.length > 0
+        ? responsesWithTime.reduce((sum, r) => sum + (r.completionTime || 0), 0) / responsesWithTime.length
+        : 0;
+    
+    // Format time display
+    const formatTime = (seconds: number) => {
+        if (seconds <= 0) return '-';
+        if (seconds < 60) return `${Math.round(seconds)}s`;
+        return `${Math.round(seconds / 60)}m`;
+    };
+    
+    return (
+        <div className="space-y-6">
+            {isAnonymous && <AnonymousModeNotice responseCount={totalResponses} />}
+            
+            {/* Overview Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl p-4 text-white">
+                    <Users size={24} className="mb-2 opacity-80" />
+                    <p className="text-3xl font-bold">{totalResponses}</p>
+                    <p className="text-indigo-100 text-sm">Total Responses</p>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl p-4 text-white">
+                    <FileText size={24} className="mb-2 opacity-80" />
+                    <p className="text-3xl font-bold">{completeResponses}</p>
+                    <p className="text-emerald-100 text-sm">Complete</p>
+                </div>
+                <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-4 text-white">
+                    <Clock size={24} className="mb-2 opacity-80" />
+                    <p className="text-3xl font-bold">{formatTime(avgCompletionTime)}</p>
+                    <p className="text-amber-100 text-sm">Avg. Time</p>
+                </div>
+                <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl p-4 text-white">
+                    <TrendingUp size={24} className="mb-2 opacity-80" />
+                    <p className="text-3xl font-bold">
+                        {totalResponses > 0 ? Math.round((completeResponses / totalResponses) * 100) : 100}%
+                    </p>
+                    <p className="text-pink-100 text-sm">Completion Rate</p>
+                </div>
+            </div>
+            
+            {/* Export Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-slate-600">Export:</span>
+                
+                {tierConfig.canExportCSV ? (
+                    <button
+                        onClick={handleExportCSV}
+                        disabled={exportLoading === 'csv'}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-medium text-sm transition"
+                    >
+                        {exportLoading === 'csv' ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                <Download size={16} />
+                            </motion.div>
+                        ) : (
+                            <Table size={16} />
+                        )}
+                        CSV
+                    </button>
+                ) : (
+                    <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg font-medium text-sm cursor-not-allowed"
+                    >
+                        <Lock size={14} />
+                        CSV
+                        <Crown size={12} className="text-amber-500" />
+                    </button>
+                )}
+                
+                {tierConfig.canExportExcel ? (
+                    <button
+                        onClick={handleExportExcel}
+                        disabled={exportLoading === 'excel'}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg font-medium text-sm transition"
+                    >
+                        {exportLoading === 'excel' ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                <Download size={16} />
+                            </motion.div>
+                        ) : (
+                            <FileSpreadsheet size={16} />
+                        )}
+                        Excel
+                    </button>
+                ) : (
+                    <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg font-medium text-sm cursor-not-allowed"
+                    >
+                        <Lock size={14} />
+                        Excel
+                        <Crown size={12} className="text-amber-500" />
+                    </button>
+                )}
+                
+                {/* PDF Export */}
+                {tierConfig.canExportPDF ? (
+                    <button
+                        onClick={handleExportPDF}
+                        disabled={exportLoading === 'pdf'}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium text-sm transition"
+                    >
+                        {exportLoading === 'pdf' ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                <Download size={16} />
+                            </motion.div>
+                        ) : (
+                            <FileDown size={16} />
+                        )}
+                        PDF Report
+                    </button>
+                ) : (
+                    <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 rounded-lg font-medium text-sm cursor-not-allowed"
+                    >
+                        <Lock size={14} />
+                        PDF
+                        <Crown size={12} className="text-amber-500" />
+                    </button>
+                )}
+            </div>
+            
+            {/* Date Filter */}
+            {totalAllResponses > 0 && (
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <DateFilter 
+                        responses={allResponses} 
+                        onFilter={handleDateFilter}
+                        canUseCustom={tierConfig.canFilterByDate}
+                    />
+                    {isFiltered && (
+                        <p className="text-xs text-slate-500 mt-2">
+                            Showing {responses.length} of {allResponses.length} responses
+                        </p>
+                    )}
+                </div>
+            )}
+            
+            {/* ============================================ */}
+            {/* VISUAL OVERVIEW - Charts for ALL users */}
+            {/* ============================================ */}
+            {totalResponses > 0 && (
+                <div className="bg-white rounded-2xl border-2 border-indigo-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4">
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                            <BarChart3 size={20} />
+                            Visual Overview
+                        </h3>
+                        <p className="text-indigo-100 text-sm">Quick insights from your survey responses</p>
+                    </div>
+                    
+                    <div className="p-6">
+                        {/* Show visualizable questions - multiple choice AND rating/scale */}
                         {(() => {
-                            // Aggregate country data from votes with analytics
-                            const countryCounts: Record<string, number> = {};
-                            let votesWithLocation = 0;
+                            // Get multiple choice type questions
+                            const choiceQuestions = sectionStats
+                                .flatMap(s => s.questions.map(q => ({ ...q, sectionTitle: s.sectionTitle })))
+                                .filter(q => ['multiple_choice', 'dropdown', 'yes_no'].includes(q.questionType) && q.optionCounts && Object.keys(q.optionCounts).length > 0);
                             
-                            (votes || []).forEach((v: any) => {
-                                const countryCode = v.analytics?.country;
-                                if (countryCode) {
-                                    const countryName = getCountryName(countryCode);
-                                    countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
-                                    votesWithLocation++;
-                                }
-                            });
+                            // Get rating/scale questions
+                            const ratingQuestions = sectionStats
+                                .flatMap(s => s.questions.map(q => ({ ...q, sectionTitle: s.sectionTitle })))
+                                .filter(q => ['rating', 'scale'].includes(q.questionType) && q.distribution && Object.keys(q.distribution).length > 0);
                             
-                            const sortedCountries = Object.entries(countryCounts)
-                                .sort((a, b) => b[1] - a[1]);
+                            // Combine and limit
+                            const allChartQuestions = [...choiceQuestions, ...ratingQuestions];
+                            const chartQuestions = allChartQuestions.slice(0, isPaidUser ? 6 : 3);
                             
-                            const totalWithLocation = votesWithLocation || 1;
-                            const countryCount = Object.keys(countryCounts).length;
-                            
-                            if (sortedCountries.length === 0) {
+                            if (chartQuestions.length === 0) {
                                 return (
-                                    <div className="text-center py-12">
-                                        <MapIcon size={48} className="text-slate-300 mx-auto mb-4" />
-                                        <p className="text-slate-500 font-medium">No location data yet</p>
-                                        <p className="text-slate-400 text-sm mt-1">
-                                            {votes.length > 0 
-                                                ? `${votes.length} vote${votes.length !== 1 ? 's' : ''} recorded, but no geo data attached`
-                                                : 'Geographic data will appear as votes come in'
-                                            }
-                                        </p>
+                                    <div className="text-center py-8 text-slate-500">
+                                        <BarChart3 size={48} className="mx-auto mb-3 text-slate-300" />
+                                        <p>No responses to visualize yet</p>
+                                        <p className="text-sm mt-1">Charts will appear once you receive responses</p>
                                     </div>
                                 );
                             }
                             
                             return (
-                                <>
-                                    {/* Summary Stats */}
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <motion.div 
-                                            className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center"
-                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            transition={{ duration: 0.4 }}
-                                        >
-                                            <motion.div 
-                                                className="text-3xl font-black text-indigo-600"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ delay: 0.3 }}
-                                            >
-                                                {countryCount}
-                                            </motion.div>
-                                            <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
-                                                {countryCount === 1 ? 'Country' : 'Countries'} Represented
-                                            </div>
-                                        </motion.div>
-                                        <motion.div 
-                                            className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center"
-                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            transition={{ duration: 0.4, delay: 0.1 }}
-                                        >
-                                            <motion.div 
-                                                className="text-3xl font-black text-emerald-600"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ delay: 0.4 }}
-                                            >
-                                                {votesWithLocation}
-                                            </motion.div>
-                                            <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
-                                                Vote{votesWithLocation !== 1 ? 's' : ''} Tracked
-                                            </div>
-                                        </motion.div>
-                                    </div>
-                                    
-                                    {/* Country list with flags */}
-                                    <div className="space-y-3">
-                                        {sortedCountries.map(([country, count], idx) => {
-                                            const percentage = Math.round((count / totalWithLocation) * 100);
-                                            const flag = getCountryFlag(country);
-                                            return (
-                                                <motion.div 
-                                                    key={country} 
-                                                    className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}
-                                                    initial={{ opacity: 0, x: -30 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: idx * 0.1, duration: 0.4 }}
-                                                >
-                                                    <motion.span 
-                                                        className="text-3xl"
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
-                                                        transition={{ delay: idx * 0.1 + 0.2, type: "spring", stiffness: 200 }}
-                                                    >
-                                                        {flag}
-                                                    </motion.span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className={`font-semibold ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                                                {country}
-                                                                {idx === 0 && <span className="ml-2 text-xs bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded-full">Top</span>}
-                                                            </span>
-                                                            <span className="text-sm text-slate-500 font-medium">
-                                                                {count} vote{count !== 1 ? 's' : ''} • {percentage}%
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                                                            <motion.div 
-                                                                className={`h-full rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
-                                                                initial={{ width: 0 }}
-                                                                animate={{ width: `${percentage}%` }}
-                                                                transition={{ delay: idx * 0.1 + 0.3, duration: 0.6, ease: "easeOut" }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </div>
-                                    
-                                    <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                                        <span className="flex items-center gap-1">
-                                            <Info size={12} />
-                                            Location data by ipinfo.io
-                                        </span>
-                                        <span>IP addresses are never stored</span>
-                                    </div>
-                                </>
-                            );
-                        })()}
-                        </>
-                        )}
-                    </motion.div>
-                )}
-
-                {/* --- GRID / TABLE VIEW --- */}
-                {viewMode === 'grid' && (
-                    <motion.div
-                        key="grid"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="space-y-6"
-                    >
-                        {/* Free user upgrade prompt */}
-                        {isFreeUser ? (
-                            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
-                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <LayoutGrid size={32} className="text-emerald-500" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">Detailed Vote Grid</h3>
-                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                                    See every individual vote in a detailed table view with timestamps, locations, devices, and selected options.
-                                </p>
-                                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto border border-emerald-100">
-                                    {/* Preview table */}
-                                    <div className="overflow-hidden rounded-lg border border-slate-200 mb-4">
-                                        <table className="w-full text-xs">
-                                            <thead className="bg-slate-50">
-                                                <tr>
-                                                    <th className="p-2 text-left text-slate-500">#</th>
-                                                    <th className="p-2 text-center text-slate-500">🌍</th>
-                                                    <th className="p-2 text-center text-slate-500">📱</th>
-                                                    <th className="p-2 text-slate-500">Choice</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="text-slate-400">
-                                                <tr className="border-t border-slate-100">
-                                                    <td className="p-2">1</td>
-                                                    <td className="p-2 text-center">🇺🇸</td>
-                                                    <td className="p-2 text-center">💻</td>
-                                                    <td className="p-2">✓</td>
-                                                </tr>
-                                                <tr className="border-t border-slate-100 opacity-50">
-                                                    <td className="p-2">2</td>
-                                                    <td className="p-2 text-center">🇬🇧</td>
-                                                    <td className="p-2 text-center">📱</td>
-                                                    <td className="p-2">✓</td>
-                                                </tr>
-                                                <tr className="border-t border-slate-100 opacity-30">
-                                                    <td className="p-2">...</td>
-                                                    <td className="p-2 text-center">...</td>
-                                                    <td className="p-2 text-center">...</td>
-                                                    <td className="p-2">...</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <a 
-                                        href="/#pricing" 
-                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-200"
-                                    >
-                                        <Crown size={18} />
-                                        Upgrade to Pro
-                                    </a>
-                                </div>
-                            </div>
-                        ) : (
-                        <>
-                        {/* Main Table */}
-                        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                                            <th className="p-4 font-bold text-slate-700 min-w-[140px] sticky left-0 bg-slate-50">#</th>
-                                            <th className="p-4 font-bold text-slate-700 min-w-[80px] text-center border-l border-slate-200">🌍</th>
-                                            <th className="p-4 font-bold text-slate-700 min-w-[80px] text-center border-l border-slate-200">📱</th>
-                                            {poll.options.map((opt, idx) => (
-                                                <th key={opt.id} className="p-4 font-bold text-slate-700 min-w-[100px] text-center border-l border-slate-200">
-                                                    <span className="inline-block w-6 h-6 rounded-full mr-1 align-middle" style={{ backgroundColor: `hsl(${idx * 360 / poll.options.length}, 70%, 80%)` }}></span>
-                                                    <span className="text-xs">{opt.text.length > 12 ? opt.text.substring(0, 12) + '...' : opt.text}</span>
-                                                </th>
-                                            ))}
-                                            <th className="p-4 font-bold text-slate-700 min-w-[150px] border-l border-slate-200">💬</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {votes.slice(0, 50).map((vote: any, i: number) => {
-                                            const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
-                                            const countryCode = vote.analytics?.country;
-                                            const device = vote.analytics?.device;
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {chartQuestions.map((q, idx) => {
+                                        // Find the question to get option text
+                                        const questionData = poll.sections
+                                            ?.flatMap(s => s.questions || [])
+                                            .find(sq => sq.id === q.questionId);
+                                        
+                                        // Handle rating/scale questions
+                                        if (['rating', 'scale'].includes(q.questionType) && q.distribution) {
+                                            const dist = q.distribution;
+                                            const total = Object.values(dist).reduce((sum, c) => sum + c, 0);
+                                            const minVal = questionData?.minValue ?? 1;
+                                            const maxVal = questionData?.maxValue ?? 5;
                                             
                                             return (
-                                                <motion.tr 
-                                                    key={i} 
-                                                    className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: i * 0.03, duration: 0.3 }}
-                                                >
-                                                    <td className="p-3 font-medium text-slate-600 sticky left-0 bg-inherit border-r border-slate-100">
-                                                        <span className="text-slate-400 text-xs">#{i + 1}</span>
-                                                        <div className="text-xs text-slate-400">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
-                                                    </td>
-                                                    <td className="p-3 text-center border-l border-slate-100">
-                                                        {countryCode ? (
-                                                            <span title={getCountryName(countryCode)} className="text-lg">
-                                                                {getCountryFlag(getCountryName(countryCode))}
-                                                            </span>
-                                                        ) : <span className="text-slate-300">-</span>}
-                                                    </td>
-                                                    <td className="p-3 text-center border-l border-slate-100">
-                                                        {device === 'mobile' ? '📱' : device === 'desktop' ? '💻' : device === 'tablet' ? '📲' : <span className="text-slate-300">-</span>}
-                                                    </td>
-                                                    {poll.options.map((opt, idx) => {
-                                                        let cellContent = <span className="text-slate-200">-</span>;
-                                                        const bgColor = `hsl(${idx * 360 / poll.options.length}, 70%, 95%)`;
-                                                        const textColor = `hsl(${idx * 360 / poll.options.length}, 70%, 35%)`;
-                                                        
-                                                        if (isMatrix && vote.matrixVotes) {
-                                                            const pos = vote.matrixVotes[opt.id];
-                                                            if (pos) {
-                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>({Math.round(pos.x)},{Math.round(pos.y)})</span>;
-                                                            }
-                                                        } else if (isPairwise && vote.pairwiseVotes) {
-                                                            const voterWins = vote.pairwiseVotes.filter((p: any) => p.winnerId === opt.id).length;
-                                                            if (voterWins > 0) {
-                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>{voterWins}W</span>;
-                                                            }
-                                                        } else if (isRating && vote.ratingVotes) {
-                                                            const val = vote.ratingVotes[opt.id];
-                                                            if (val !== undefined) {
-                                                                cellContent = <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: bgColor, color: textColor }}>{val}</span>;
-                                                            }
-                                                        } else if (isRanked) {
-                                                            const rank = voteChoices.indexOf(opt.id);
-                                                            if (rank !== -1) {
-                                                                cellContent = <span className="font-bold w-6 h-6 rounded-full flex items-center justify-center mx-auto text-xs" style={{ backgroundColor: bgColor, color: textColor }}>{rank + 1}</span>;
-                                                            }
-                                                        } else if (isDot || isBudget) {
-                                                            const dots = voteChoices.filter((c: string) => c === opt.id).length;
-                                                            if (dots > 0) {
-                                                                cellContent = <span className="font-bold px-2 py-1 rounded-full text-xs" style={{ backgroundColor: bgColor, color: textColor }}>{dots}</span>;
-                                                            }
-                                                        } else if (isMeeting) {
-                                                            if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="inline-flex items-center justify-center text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
-                                                            } else if (vote.choicesMaybe?.includes(opt.id)) {
-                                                                cellContent = <span className="inline-flex items-center justify-center text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
-                                                            }
-                                                        } else {
-                                                            if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
-                                                            }
-                                                        }
+                                                <div key={q.questionId} className="bg-slate-50 rounded-xl p-4">
+                                                    <p className="text-xs text-indigo-600 font-medium mb-1">{q.sectionTitle}</p>
+                                                    <p className="text-sm font-semibold text-slate-800 mb-2 line-clamp-2">{q.questionText}</p>
+                                                    
+                                                    {/* Average display */}
+                                                    {q.average !== undefined && (
+                                                        <div className="text-center mb-3">
+                                                            <span className="text-3xl font-bold text-indigo-600">{q.average.toFixed(1)}</span>
+                                                            <span className="text-slate-400 text-sm ml-1">/ {maxVal}</span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Distribution bars */}
+                                                    <div className="space-y-1">
+                                                        {Array.from({ length: maxVal - minVal + 1 }, (_, i) => minVal + i).map((val, i) => {
+                                                            const count = dist[val] || 0;
+                                                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                                            const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-lime-400', 'bg-emerald-400'];
+                                                            const colorIndex = Math.floor((val - minVal) / (maxVal - minVal) * (colors.length - 1));
+                                                            
+                                                            return (
+                                                                <div key={val} className="flex items-center gap-2 text-xs">
+                                                                    <span className="w-4 text-right text-slate-500">{val}</span>
+                                                                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                                        <motion.div
+                                                                            initial={{ width: 0 }}
+                                                                            animate={{ width: `${pct}%` }}
+                                                                            transition={{ duration: 0.5, delay: i * 0.05 }}
+                                                                            className={`h-full ${colors[colorIndex]} rounded-full`}
+                                                                        />
+                                                                    </div>
+                                                                    <span className="w-8 text-slate-500">{pct}%</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <p className="text-xs text-slate-400 mt-2 text-center">{total} response{total !== 1 ? 's' : ''}</p>
+                                                </div>
+                                            );
+                                        }
+                                        
+                                        // Handle multiple choice questions
+                                        const total = Object.values(q.optionCounts || {}).reduce((sum, c) => sum + c, 0);
+                                        const sortedEntries = Object.entries(q.optionCounts || {})
+                                            .sort(([,a], [,b]) => b - a);
+                                        
+                                        return (
+                                            <div key={q.questionId} className="bg-slate-50 rounded-xl p-4">
+                                                <p className="text-xs text-indigo-600 font-medium mb-1">{q.sectionTitle}</p>
+                                                <p className="text-sm font-semibold text-slate-800 mb-4 line-clamp-2">{q.questionText}</p>
+                                                
+                                                {/* Mini bar chart */}
+                                                <div className="space-y-2">
+                                                    {sortedEntries.slice(0, 4).map(([optId, count], i) => {
+                                                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                                        const optText = questionData?.options?.find(o => o.id === optId)?.text || optId;
+                                                        const colors = ['bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-amber-500'];
                                                         
                                                         return (
-                                                            <td key={opt.id} className="p-3 text-center border-l border-slate-100">
-                                                                {cellContent}
-                                                            </td>
+                                                            <div key={optId}>
+                                                                <div className="flex justify-between text-xs mb-1">
+                                                                    <span className="text-slate-600 truncate max-w-[70%]">{optText}</span>
+                                                                    <span className="font-medium text-slate-700">{pct}%</span>
+                                                                </div>
+                                                                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                                    <motion.div
+                                                                        initial={{ width: 0 }}
+                                                                        animate={{ width: `${pct}%` }}
+                                                                        transition={{ duration: 0.5, delay: i * 0.1 }}
+                                                                        className={`h-full ${colors[i % colors.length]} rounded-full`}
+                                                                    />
+                                                                </div>
+                                                            </div>
                                                         );
                                                     })}
-                                                    <td className="p-3 text-slate-500 border-l border-slate-100 text-xs max-w-[150px] truncate" title={vote.comment || ''}>
-                                                        {vote.comment ? `"${vote.comment.substring(0, 30)}${vote.comment.length > 30 ? '...' : ''}"` : ''}
-                                                    </td>
-                                                </motion.tr>
-                                            );
-                                        })}
-                                        {votes.length > 50 && (
-                                            <tr>
-                                                <td colSpan={poll.options.length + 4} className="p-4 text-center text-slate-500 bg-slate-50">
-                                                    Showing first 50 of {votes.length} votes. Export CSV for full data.
-                                                </td>
-                                            </tr>
-                                        )}
-                                        {votes.length === 0 && (
-                                            <tr>
-                                                <td colSpan={poll.options.length + 4} className="p-8 text-center text-slate-400 italic">
-                                                    No votes recorded yet.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        </>
-                        )}
-                    </motion.div>
-                )}
-                
-                {/* ============================================ */}
-                {/* POLL INSIGHTS SECTION - PAID ONLY */}
-                {/* ============================================ */}
-                {votes.length > 0 && isPaidUser && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-6"
-                    >
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
-                            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <Activity size={18} className="text-indigo-500" /> Poll Insights
-                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-                                    tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
-                                }`}>
-                                    {tier === 'business' ? 'Business' : 'Pro'}
-                                </span>
-                            </h4>
-                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    
-                                    {/* Consensus Level */}
-                                    {(() => {
-                                        const choiceCounts: Record<string, number> = {};
-                                        votes.forEach((v: any) => {
-                                            const choices = v.choices || v.selectedOptionIds || [];
-                                            choices.forEach((c: string) => {
-                                                choiceCounts[c] = (choiceCounts[c] || 0) + 1;
-                                            });
-                                        });
-                                        const sorted = Object.entries(choiceCounts).sort((a, b) => b[1] - a[1]);
-                                        if (sorted.length === 0) return null;
-                                        
-                                        // Check for tie at the top
-                                        const topCount = sorted[0][1];
-                                        const tiedAtTop = sorted.filter(([_, count]) => count === topCount).length;
-                                        const totalChoices = Object.values(choiceCounts).reduce((a, b) => a + b, 0);
-                                        
-                                        // If there's a tie at the top, it's split
-                                        if (tiedAtTop > 1) {
-                                            return (
-                                                <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-xl">⚖️</span>
-                                                        <span className="font-medium text-slate-700">Consensus</span>
-                                                    </div>
-                                                    <p className="text-sm text-slate-600">
-                                                        <strong className="text-amber-600">Tied</strong> ({tiedAtTop} options equal)
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-                                        
-                                        const consensusPct = Math.round((topCount / totalChoices) * 100);
-                                        const consensusLevel = consensusPct >= 70 ? 'Strong' : consensusPct > 50 ? 'Moderate' : 'Split';
-                                        const consensusColor = consensusPct >= 70 ? 'text-emerald-600' : consensusPct > 50 ? 'text-amber-600' : 'text-red-500';
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">🎯</span>
-                                                    <span className="font-medium text-slate-700">Consensus</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    <strong className={consensusColor}>{consensusLevel}</strong> ({consensusPct}% agreement)
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* Device preference */}
-                                    {(() => {
-                                        const deviceCounts: Record<string, number> = {};
-                                        votes.forEach((v: any) => {
-                                            const device = v.analytics?.device;
-                                            if (device) deviceCounts[device] = (deviceCounts[device] || 0) + 1;
-                                        });
-                                        const topDevice = Object.entries(deviceCounts).sort((a, b) => b[1] - a[1])[0];
-                                        if (!topDevice) return null;
-                                        const icon = topDevice[0] === 'mobile' ? '📱' : topDevice[0] === 'desktop' ? '💻' : '📲';
-                                        const pct = Math.round((topDevice[1] / votes.length) * 100);
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">{icon}</span>
-                                                    <span className="font-medium text-slate-700">Top Device</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    <strong className="text-indigo-600">{topDevice[0].charAt(0).toUpperCase() + topDevice[0].slice(1)}</strong> ({pct}%)
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* Voting Velocity */}
-                                    {(() => {
-                                        if (votes.length < 2) return null;
-                                        const timestamps = votes.map((v: any) => getVoteTime(v)).filter(Boolean).sort((a, b) => a - b);
-                                        if (timestamps.length < 2) return null;
-                                        const firstVote = timestamps[0];
-                                        const lastVote = timestamps[timestamps.length - 1];
-                                        const durationHrs = (lastVote - firstVote) / (1000 * 60 * 60);
-                                        if (durationHrs < 0.1) return null;
-                                        const votesPerHour = (votes.length / durationHrs).toFixed(1);
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">⚡</span>
-                                                    <span className="font-medium text-slate-700">Velocity</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    <strong className="text-indigo-600">{votesPerHour}</strong> votes/hour avg
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* Geographic Reach */}
-                                    {(() => {
-                                        const countries = new Set<string>();
-                                        votes.forEach((v: any) => {
-                                            if (v.analytics?.country) countries.add(v.analytics.country);
-                                        });
-                                        if (countries.size === 0) return null;
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">🌍</span>
-                                                    <span className="font-medium text-slate-700">Reach</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    <strong className="text-indigo-600">{countries.size}</strong> {countries.size === 1 ? 'country' : 'countries'}
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* Top choice by top country */}
-                                    {(() => {
-                                        const countryChoices: Record<string, Record<string, number>> = {};
-                                        votes.forEach((v: any) => {
-                                            const country = v.analytics?.country;
-                                            if (!country) return;
-                                            const countryName = getCountryName(country);
-                                            if (!countryChoices[countryName]) countryChoices[countryName] = {};
-                                            const choices = v.choices || v.selectedOptionIds || [];
-                                            choices.forEach((c: string) => {
-                                                countryChoices[countryName][c] = (countryChoices[countryName][c] || 0) + 1;
-                                            });
-                                        });
-                                        
-                                        // Get top country
-                                        const countryCounts: Record<string, number> = {};
-                                        votes.forEach((v: any) => {
-                                            if (v.analytics?.country) {
-                                                const name = getCountryName(v.analytics.country);
-                                                countryCounts[name] = (countryCounts[name] || 0) + 1;
-                                            }
-                                        });
-                                        const topCountry = Object.entries(countryCounts).sort((a, b) => b[1] - a[1])[0];
-                                        if (!topCountry) return null;
-                                        
-                                        const choices = countryChoices[topCountry[0]];
-                                        const sortedChoices = Object.entries(choices || {}).sort((a, b) => b[1] - a[1]);
-                                        if (sortedChoices.length === 0) return null;
-                                        
-                                        const topChoice = sortedChoices[0];
-                                        // Check for tie
-                                        const tiedChoices = sortedChoices.filter(([_, count]) => count === topChoice[1]);
-                                        
-                                        if (tiedChoices.length > 1) {
-                                            return (
-                                                <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-xl">{getCountryFlag(topCountry[0])}</span>
-                                                        <span className="font-medium text-slate-700">{topCountry[0]}</span>
-                                                    </div>
-                                                    <p className="text-sm text-slate-600">
-                                                        <strong className="text-amber-600">Split</strong> ({tiedChoices.length} options tied)
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-                                        
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">{getCountryFlag(topCountry[0])}</span>
-                                                    <span className="font-medium text-slate-700">{topCountry[0]}</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    Prefers: <strong className="text-indigo-600">{getOptionText(topChoice[0])}</strong>
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* Mobile vs Desktop choice difference */}
-                                    {(() => {
-                                        const mobileChoices: Record<string, number> = {};
-                                        const desktopChoices: Record<string, number> = {};
-                                        let mobileCount = 0, desktopCount = 0;
-                                        
-                                        votes.forEach((v: any) => {
-                                            const device = v.analytics?.device;
-                                            const choices = v.choices || v.selectedOptionIds || [];
-                                            if (device === 'mobile') {
-                                                mobileCount++;
-                                                choices.forEach((c: string) => {
-                                                    mobileChoices[c] = (mobileChoices[c] || 0) + 1;
-                                                });
-                                            } else if (device === 'desktop') {
-                                                desktopCount++;
-                                                choices.forEach((c: string) => {
-                                                    desktopChoices[c] = (desktopChoices[c] || 0) + 1;
-                                                });
-                                            }
-                                        });
-                                        
-                                        if (mobileCount < 2 || desktopCount < 2) return null;
-                                        
-                                        const topMobile = Object.entries(mobileChoices).sort((a, b) => b[1] - a[1])[0];
-                                        const topDesktop = Object.entries(desktopChoices).sort((a, b) => b[1] - a[1])[0];
-                                        
-                                        if (!topMobile || !topDesktop || topMobile[0] === topDesktop[0]) return null;
-                                        
-                                        return (
-                                            <div className="bg-white rounded-xl p-4 shadow-sm col-span-2">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">📊</span>
-                                                    <span className="font-medium text-slate-700">Device Preference Split</span>
-                                                </div>
-                                                <p className="text-sm text-slate-600">
-                                                    📱 Mobile prefers <strong className="text-blue-600">{getOptionText(topMobile[0])}</strong> • 
-                                                    💻 Desktop prefers <strong className="text-green-600">{getOptionText(topDesktop[0])}</strong>
-                                                </p>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* ========================================= */}
-                                    {/* TYPE-SPECIFIC INSIGHTS */}
-                                    {/* ========================================= */}
-                                    
-                                    {/* RANKED CHOICE: Vote Transfer Analysis */}
-                                    {isRanked && rounds && rounds.length > 1 && (() => {
-                                        // Find who got the most transferred votes
-                                        const transferGains: Record<string, number> = {};
-                                        for (let i = 1; i < rounds.length; i++) {
-                                            const prevCounts: Record<string, number> = rounds[i - 1].counts || {};
-                                            const currCounts: Record<string, number> = rounds[i].counts || {};
-                                            Object.keys(currCounts).forEach(optId => {
-                                                const gain = (currCounts[optId] || 0) - (prevCounts[optId] || 0);
-                                                if (gain > 0) {
-                                                    transferGains[optId] = (transferGains[optId] || 0) + gain;
-                                                }
-                                            });
-                                        }
-                                        
-                                        const topGainer = Object.entries(transferGains).sort((a, b) => b[1] - a[1])[0];
-                                        if (!topGainer || topGainer[1] === 0) return null;
-                                        
-                                        // Find who got eliminated first
-                                        const eliminated = rounds.length > 1 ? rounds[0].eliminatedId : null;
-                                        
-                                        return (
-                                            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 shadow-sm col-span-2 border border-purple-100">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">🔄</span>
-                                                    <span className="font-medium text-purple-700">Ranked Choice Analysis</span>
-                                                </div>
-                                                <div className="space-y-1 text-sm text-slate-600">
-                                                    <p>
-                                                        <strong className="text-purple-600">{getOptionText(topGainer[0])}</strong> gained the most transferred votes (+{topGainer[1]})
-                                                    </p>
-                                                    {eliminated && (
-                                                        <p className="text-slate-500">
-                                                            First eliminated: {getOptionText(eliminated)}
-                                                        </p>
-                                                    )}
-                                                    <p className="text-xs text-purple-500 mt-2">
-                                                        {rounds.length} rounds needed to determine winner
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* RATING SCALE: Standard Deviation & Consensus */}
-                                    {isRating && ratingStats && (() => {
-                                        // Calculate overall stats
-                                        const allRatings: number[] = [];
-                                        const optionStats: Array<{ id: string; avg: number; stdDev: number }> = [];
-                                        
-                                        Object.entries(ratingStats).forEach(([optId, stats]: [string, any]) => {
-                                            if (stats.ratings && stats.ratings.length > 0) {
-                                                allRatings.push(...stats.ratings);
-                                                const avg = stats.ratings.reduce((a: number, b: number) => a + b, 0) / stats.ratings.length;
-                                                const variance = stats.ratings.reduce((sum: number, r: number) => sum + Math.pow(r - avg, 2), 0) / stats.ratings.length;
-                                                const stdDev = Math.sqrt(variance);
-                                                optionStats.push({ id: optId, avg, stdDev });
-                                            }
-                                        });
-                                        
-                                        if (optionStats.length === 0) return null;
-                                        
-                                        // Find most controversial (highest std dev) and most agreed upon (lowest std dev)
-                                        const sorted = [...optionStats].sort((a, b) => a.stdDev - b.stdDev);
-                                        const mostAgreed = sorted[0];
-                                        const mostControversial = sorted[sorted.length - 1];
-                                        
-                                        // Overall consensus level
-                                        const avgStdDev = optionStats.reduce((sum, o) => sum + o.stdDev, 0) / optionStats.length;
-                                        const consensusLevel = avgStdDev < 1 ? 'High' : avgStdDev < 2 ? 'Moderate' : 'Low';
-                                        const consensusColor = avgStdDev < 1 ? 'text-emerald-600' : avgStdDev < 2 ? 'text-amber-600' : 'text-red-500';
-                                        
-                                        return (
-                                            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 shadow-sm col-span-2 border border-cyan-100">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">⭐</span>
-                                                    <span className="font-medium text-cyan-700">Rating Analysis</span>
-                                                </div>
-                                                <div className="space-y-1 text-sm text-slate-600">
-                                                    <p>
-                                                        Overall consensus: <strong className={consensusColor}>{consensusLevel}</strong>
-                                                    </p>
-                                                    {mostAgreed && mostControversial && mostAgreed.id !== mostControversial.id && (
-                                                        <>
-                                                            <p>
-                                                                Most agreed on: <strong className="text-emerald-600">{getOptionText(mostAgreed.id)}</strong>
-                                                                <span className="text-slate-400 ml-1">(avg {mostAgreed.avg.toFixed(1)})</span>
-                                                            </p>
-                                                            <p>
-                                                                Most divisive: <strong className="text-amber-600">{getOptionText(mostControversial.id)}</strong>
-                                                                <span className="text-slate-400 ml-1">(opinions vary widely)</span>
-                                                            </p>
-                                                        </>
+                                                    {sortedEntries.length > 4 && (
+                                                        <p className="text-xs text-slate-400">+{sortedEntries.length - 4} more options</p>
                                                     )}
                                                 </div>
                                             </div>
                                         );
-                                    })()}
-                                    
-                                    {/* MEETING POLL: Availability Summary */}
-                                    {isMeeting && (() => {
-                                        // Calculate availability percentages
-                                        const availability: Array<{ id: string; yesCount: number; maybeCount: number; score: number }> = [];
-                                        
-                                        poll.options.forEach(opt => {
-                                            let yesCount = 0;
-                                            let maybeCount = 0;
-                                            votes.forEach((v: any) => {
-                                                const choices = v.choices || v.selectedOptionIds || [];
-                                                const maybes = v.choicesMaybe || [];
-                                                if (choices.includes(opt.id)) yesCount++;
-                                                if (maybes.includes(opt.id)) maybeCount++;
-                                            });
-                                            const score = yesCount + (maybeCount * 0.5);
-                                            availability.push({ id: opt.id, yesCount, maybeCount, score });
-                                        });
-                                        
-                                        const sorted = [...availability].sort((a, b) => b.score - a.score);
-                                        const best = sorted[0];
-                                        const bestPct = votes.length > 0 ? Math.round((best.yesCount / votes.length) * 100) : 0;
-                                        
-                                        // Find if there's a clear winner or multiple good options
-                                        const goodOptions = sorted.filter(o => o.score >= best.score * 0.8);
-                                        
-                                        // Find who can't make any times
-                                        const noAvailability = votes.filter((v: any) => {
-                                            const choices = v.choices || v.selectedOptionIds || [];
-                                            return choices.length === 0;
-                                        }).length;
-                                        
-                                        return (
-                                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 shadow-sm col-span-2 border border-emerald-100">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">📅</span>
-                                                    <span className="font-medium text-emerald-700">Meeting Availability</span>
-                                                </div>
-                                                <div className="space-y-1 text-sm text-slate-600">
-                                                    <p>
-                                                        Best time: <strong className="text-emerald-600">{getOptionText(best.id)}</strong>
-                                                        <span className="text-slate-400 ml-1">({bestPct}% available, {best.maybeCount} maybes)</span>
-                                                    </p>
-                                                    {goodOptions.length > 1 && (
-                                                        <p className="text-slate-500">
-                                                            {goodOptions.length} time slots work well for the group
-                                                        </p>
-                                                    )}
-                                                    {noAvailability > 0 && (
-                                                        <p className="text-amber-600">
-                                                            ⚠️ {noAvailability} {noAvailability === 1 ? 'person has' : 'people have'} no availability
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* THIS OR THAT: Margin of Victory */}
-                                    {isThisOrThat && simpleCounts && (() => {
-                                        const option1 = poll.options[0];
-                                        const option2 = poll.options[1];
-                                        const count1 = simpleCounts[option1.id] || 0;
-                                        const count2 = simpleCounts[option2.id] || 0;
-                                        const total = count1 + count2;
-                                        
-                                        if (total === 0) return null;
-                                        
-                                        const winner = count1 >= count2 ? option1 : option2;
-                                        const loser = count1 >= count2 ? option2 : option1;
-                                        const winnerCount = Math.max(count1, count2);
-                                        const loserCount = Math.min(count1, count2);
-                                        
-                                        const margin = winnerCount - loserCount;
-                                        const marginPct = Math.round((margin / total) * 100);
-                                        const winnerPct = Math.round((winnerCount / total) * 100);
-                                        
-                                        const isLandslide = marginPct >= 40;
-                                        const isClose = marginPct <= 10;
-                                        const isTied = margin === 0;
-                                        
-                                        return (
-                                            <div className={`rounded-xl p-4 shadow-sm col-span-2 border ${
-                                                isTied ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100' :
-                                                isLandslide ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100' :
-                                                'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100'
-                                            }`}>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">{isTied ? '⚖️' : isLandslide ? '🏆' : '🤝'}</span>
-                                                    <span className={`font-medium ${
-                                                        isTied ? 'text-amber-700' : isLandslide ? 'text-emerald-700' : 'text-blue-700'
-                                                    }`}>
-                                                        {isTied ? 'Perfect Tie!' : isLandslide ? 'Clear Winner!' : 'Close Call!'}
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1 text-sm text-slate-600">
-                                                    {isTied ? (
-                                                        <p>Both options received exactly <strong>{count1} votes</strong></p>
-                                                    ) : (
-                                                        <>
-                                                            <p>
-                                                                <strong className={isLandslide ? 'text-emerald-600' : 'text-blue-600'}>{getOptionText(winner.id)}</strong> wins with {winnerPct}%
-                                                            </p>
-                                                            <p className="text-slate-500">
-                                                                {isClose ? (
-                                                                    <>Only {margin} vote{margin !== 1 ? 's' : ''} separated them!</>
-                                                                ) : isLandslide ? (
-                                                                    <>Won by a {margin}-vote margin</>
-                                                                ) : (
-                                                                    <>Margin: {margin} vote{margin !== 1 ? 's' : ''} ({marginPct}%)</>
-                                                                )}
-                                                            </p>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-                                    
-                                    {/* MULTIPLE CHOICE (3+ options): Competition Analysis */}
-                                    {isMultipleChoice && !isThisOrThat && simpleCounts && (() => {
-                                        const sorted = Object.entries(simpleCounts)
-                                            .sort((a, b) => b[1] - a[1]);
-                                        
-                                        if (sorted.length < 2) return null;
-                                        
-                                        const [first, second] = sorted;
-                                        const total = sorted.reduce((sum, [_, c]) => sum + c, 0);
-                                        
-                                        if (total === 0) return null;
-                                        
-                                        // Check for tie at top
-                                        const tiedAtTop = sorted.filter(([_, count]) => count === first[1]).length;
-                                        
-                                        if (tiedAtTop > 1) {
-                                            return (
-                                                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 shadow-sm col-span-2 border border-amber-100">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-xl">⚖️</span>
-                                                        <span className="font-medium text-amber-700">It's a Tie!</span>
-                                                    </div>
-                                                    <div className="space-y-1 text-sm text-slate-600">
-                                                        <p>
-                                                            <strong className="text-amber-600">{tiedAtTop} options</strong> tied with {first[1]} vote{first[1] !== 1 ? 's' : ''} each
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-                                        
-                                        const firstPct = Math.round((first[1] / total) * 100);
-                                        const secondPct = Math.round((second[1] / total) * 100);
-                                        const gap = first[1] - second[1];
-                                        const gapPct = Math.round((gap / total) * 100);
-                                        
-                                        // Check if it's competitive
-                                        const isCompetitive = gapPct <= 15;
-                                        const isDominant = firstPct >= 50;
-                                        
-                                        return (
-                                            <div className={`rounded-xl p-4 shadow-sm col-span-2 border ${
-                                                isDominant ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100' :
-                                                isCompetitive ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100' :
-                                                'bg-gradient-to-br from-slate-50 to-gray-50 border-slate-200'
-                                            }`}>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="text-xl">{isDominant ? '👑' : isCompetitive ? '🔥' : '📈'}</span>
-                                                    <span className={`font-medium ${
-                                                        isDominant ? 'text-emerald-700' : isCompetitive ? 'text-amber-700' : 'text-slate-700'
-                                                    }`}>
-                                                        {isDominant ? 'Clear Favorite' : isCompetitive ? 'Tight Race' : 'Results Breakdown'}
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1 text-sm text-slate-600">
-                                                    {isDominant ? (
-                                                        <p>
-                                                            <strong className="text-emerald-600">{getOptionText(first[0])}</strong> leads with majority support ({firstPct}%)
-                                                        </p>
-                                                    ) : isCompetitive ? (
-                                                        <>
-                                                            <p>
-                                                                Only <strong className="text-amber-600">{gap} vote{gap !== 1 ? 's' : ''}</strong> between top 2!
-                                                            </p>
-                                                            <p className="text-slate-500">
-                                                                {getOptionText(first[0])} ({firstPct}%) vs {getOptionText(second[0])} ({secondPct}%)
-                                                            </p>
-                                                        </>
-                                                    ) : (
-                                                        <p>
-                                                            <strong>{getOptionText(first[0])}</strong> leads at {firstPct}%, followed by {getOptionText(second[0])} at {secondPct}%
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
+                                    })}
                                 </div>
-                                <p className="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                                    <Info size={12} /> Insights based on anonymous aggregate data. No personal information stored.
-                                </p>
+                            );
+                        })()}
+                        
+                        {/* Word Cloud Section */}
+                        {allTextResponses.length > 0 && (
+                            <div className="mt-6 pt-6 border-t border-slate-200">
+                                <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                    <Cloud size={18} className="text-indigo-500" />
+                                    Word Cloud
+                                    <span className="text-xs text-slate-500 font-normal">
+                                        from {allTextResponses.length} text response{allTextResponses.length !== 1 ? 's' : ''}
+                                    </span>
+                                </h4>
+                                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                                    <WordCloud 
+                                        words={wordFrequencies} 
+                                        locked={!tierConfig.canViewWordCloud}
+                                        maxWords={isPaidUser ? 40 : 20}
+                                    />
+                                </div>
                             </div>
-                    </motion.div>
-                )}
-
-                {/* --- COMMENTS SECTION --- */}
-                {shouldShowComments && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 mt-6 break-inside-avoid"
-                    >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <MessageSquare size={24} className="text-indigo-500"/> Comments
-                        </h3>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {comments!.map((comment, i) => {
-                                const name = String(comment.name || comment.voterName || 'Anonymous');
-                                const text = String(comment.text || '');
-                                const date = comment.date || comment.timestamp;
-                                return (
-                                <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100 relative group hover:border-indigo-100 transition-colors">
-                                    <Quote size={20} className="text-indigo-200 absolute top-4 right-4" />
-                                    <p className="text-slate-700 italic mb-3 relative z-10 pr-6">"{text}"</p>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xs">
-                                            {name.charAt(0).toUpperCase()}
+                        )}
+                        
+                        {/* Upgrade prompt for more charts */}
+                        {!isPaidUser && (
+                            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Crown size={20} className="text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-slate-800 mb-1">Unlock Advanced Visualizations</h4>
+                                        <p className="text-sm text-slate-600 mb-3">
+                                            Get pie charts, donut charts, word clouds, and more with Pro.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <BarChart3 size={12} className="text-purple-500" /> Pie &amp; Donut Charts
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <FileText size={12} className="text-purple-500" /> Word Clouds
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <TrendingUp size={12} className="text-purple-500" /> NPS Gauges
+                                            </span>
+                                            <span className="px-2 py-1 bg-white rounded-lg text-xs text-slate-600 flex items-center gap-1">
+                                                <Download size={12} className="text-purple-500" /> PDF Reports
+                                            </span>
                                         </div>
-                                        <span className="font-bold text-slate-600">{name}</span>
-                                        <span className="text-slate-400 text-xs">• {date ? new Date(date).toLocaleDateString() : ''}</span>
+                                        <a
+                                            href="/pricing"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg text-sm hover:shadow-lg transition"
+                                        >
+                                            <Crown size={14} />
+                                            Upgrade to Pro
+                                        </a>
                                     </div>
                                 </div>
-                            )})}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* --- ANALYTICS DASHBOARD (Paid Users Only) --- */}
-                {isAdmin && adminKey && isPaidUser && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-6"
-                    >
-                        <AnalyticsDashboard 
-                            pollId={poll.id}
-                            adminKey={adminKey}
-                            currentTier={tier as 'free' | 'pro' | 'business'}
-                        />
-                    </motion.div>
-                )}
-
-            </AnimatePresence>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
             
-            {/* Branding footer for PNG exports */}
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm print:mt-4 print:pt-2">
-                <img src="/logo.svg" alt="VoteGenerator" className="h-5 w-5" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                <span className="font-medium">VoteGenerator.com</span>
+            {/* NPS Summary - Enhanced with Gauge for Pro+ */}
+            {npsQuestions.length > 0 && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <TrendingUp size={20} className="text-blue-600" />
+                        NPS Overview
+                        {isPaidUser && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Enhanced</span>}
+                    </h3>
+                    
+                    {/* Enhanced Gauge Display for Paid Users */}
+                    {isPaidUser && npsQuestions.length === 1 && (
+                        <div className="flex flex-col items-center mb-6 p-6 bg-white rounded-xl border border-blue-100">
+                            <NPSGauge score={npsQuestions[0].nps.score} size="lg" />
+                            <p className="text-sm text-slate-600 mt-4 text-center max-w-md">
+                                {npsQuestions[0].questionText}
+                            </p>
+                            <div className="flex gap-6 mt-4 text-sm">
+                                <div className="text-center">
+                                    <div className="w-3 h-3 bg-emerald-500 rounded-full mx-auto mb-1" />
+                                    <span className="font-bold text-emerald-600">{npsQuestions[0].nps.promoterPct}%</span>
+                                    <p className="text-xs text-slate-500">Promoters</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-3 h-3 bg-amber-400 rounded-full mx-auto mb-1" />
+                                    <span className="font-bold text-amber-600">{npsQuestions[0].nps.passivePct}%</span>
+                                    <p className="text-xs text-slate-500">Passives</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-3 h-3 bg-red-400 rounded-full mx-auto mb-1" />
+                                    <span className="font-bold text-red-600">{npsQuestions[0].nps.detractorPct}%</span>
+                                    <p className="text-xs text-slate-500">Detractors</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Multiple NPS Questions or Free Users - Card Grid */}
+                    {(npsQuestions.length > 1 || !isPaidUser) && (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {npsQuestions.map((item, i) => {
+                                if (!item || !item.nps) return null;
+                                return (
+                                    <div key={i} className="bg-white rounded-xl p-4 border border-blue-100">
+                                        <p className="text-xs text-slate-500 mb-1">{item.sectionTitle}</p>
+                                        <p className="text-sm font-medium text-slate-700 mb-3 line-clamp-2">{item.questionText}</p>
+                                        
+                                        {/* Show mini gauge for paid users with multiple questions */}
+                                        {isPaidUser ? (
+                                            <div className="flex flex-col items-center">
+                                                <NPSGauge score={item.nps.score} size="sm" />
+                                                <div className="flex gap-2 mt-2 text-xs">
+                                                    <span className="text-emerald-600">{item.nps.promoterPct}%</span>
+                                                    <span className="text-amber-600">{item.nps.passivePct}%</span>
+                                                    <span className="text-red-600">{item.nps.detractorPct}%</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between">
+                                                <span className={`text-3xl font-black ${
+                                                    item.nps.score >= 30 ? 'text-emerald-600' :
+                                                    item.nps.score >= 0 ? 'text-amber-600' : 'text-red-600'
+                                                }`}>
+                                                    {item.nps.score > 0 ? '+' : ''}{item.nps.score}
+                                                </span>
+                                                <div className="flex h-2 w-24 rounded-full overflow-hidden">
+                                                    <div className="bg-emerald-500" style={{ width: `${item.nps.promoterPct || 0}%` }} />
+                                                    <div className="bg-amber-400" style={{ width: `${item.nps.passivePct || 0}%` }} />
+                                                    <div className="bg-red-400" style={{ width: `${item.nps.detractorPct || 0}%` }} />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    
+                    {/* Upgrade hint for free users */}
+                    {!isPaidUser && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-blue-600">
+                            <Crown size={14} className="text-amber-500" />
+                            <a href="/pricing" className="hover:underline">Upgrade to Pro for enhanced NPS gauges</a>
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {/* View Toggle - Detailed Results */}
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-800">
+                    Detailed Results
+                    <span className="text-sm font-normal text-slate-500 ml-2">by question</span>
+                </h2>
+                <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                    <button
+                        onClick={() => setViewMode('summary')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                            viewMode === 'summary' ? 'bg-white shadow text-indigo-600' : 'text-slate-600'
+                        }`}
+                    >
+                        <BarChart3 size={16} className="inline mr-1" /> Summary
+                    </button>
+                    <button
+                        onClick={() => tierConfig.canViewIndividual && !isAnonymous && setViewMode('individual')}
+                        disabled={!tierConfig.canViewIndividual || isAnonymous}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1 ${
+                            viewMode === 'individual' && tierConfig.canViewIndividual && !isAnonymous 
+                                ? 'bg-white shadow text-indigo-600' 
+                                : !tierConfig.canViewIndividual || isAnonymous 
+                                    ? 'text-slate-400 cursor-not-allowed' 
+                                    : 'text-slate-600'
+                        }`}
+                        title={
+                            isAnonymous ? 'Disabled: Anonymous mode is active' : 
+                            !tierConfig.canViewIndividual ? 'Upgrade to Pro to view individual responses' : 
+                            undefined
+                        }
+                    >
+                        <Eye size={16} /> Individual
+                        {(!tierConfig.canViewIndividual || isAnonymous) && <Lock size={12} />}
+                    </button>
+                </div>
             </div>
-            </div>
+            
+            {/* Section Results */}
+            {viewMode === 'summary' && (
+                <div className="space-y-4">
+                    {sectionStats.map((section) => {
+                        const pollSection = poll.sections?.find(s => s.id === section.sectionId);
+                        const isExpanded = expandedSections.has(section.sectionId);
+                        
+                        return (
+                            <div key={section.sectionId} className="bg-slate-50 rounded-2xl overflow-hidden">
+                                <button
+                                    onClick={() => toggleSection(section.sectionId)}
+                                    className="w-full p-4 flex items-center justify-between hover:bg-slate-100 transition"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                            <FileText size={20} className="text-indigo-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="font-bold text-slate-800">{section.sectionTitle}</h3>
+                                            <p className="text-sm text-slate-500">{section.questions?.length || 0} questions</p>
+                                        </div>
+                                    </div>
+                                    {isExpanded ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
+                                </button>
+                                
+                                <AnimatePresence>
+                                    {isExpanded && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="px-4 pb-4"
+                                        >
+                                            <div className="space-y-4">
+                                                {(section.questions || []).map((questionStats, qIdx) => {
+                                                    const question = pollSection?.questions?.[qIdx];
+                                                    if (!question) return null;
+                                                    return (
+                                                        <QuestionResult 
+                                                            key={questionStats.questionId} 
+                                                            stats={questionStats} 
+                                                            question={question}
+                                                            isAnonymous={isAnonymous}
+                                                            tier={tier}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            
+            {/* Individual Responses */}
+            {viewMode === 'individual' && tierConfig.canViewIndividual && !isAnonymous && (
+                <div className="space-y-4">
+                    {responses.map((response, idx) => (
+                        <div key={response.id || idx} className="bg-white rounded-2xl border border-slate-200 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold text-slate-800">Response #{idx + 1}</h3>
+                                <div className="flex items-center gap-4 text-sm text-slate-500">
+                                    {response.completedAt && (
+                                        <span className="flex items-center gap-1">
+                                            <Clock size={14} />
+                                            {new Date(response.completedAt).toLocaleString()}
+                                        </span>
+                                    )}
+                                    {response.isComplete ? (
+                                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">Complete</span>
+                                    ) : (
+                                        <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">Partial</span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                {poll.sections?.map(section => (
+                                    <div key={section.id}>
+                                        <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">{section.title}</p>
+                                        {(section.questions || []).map(question => {
+                                            const answer = response.answers?.[question.id];
+                                            if (!answer) return null;
+                                            
+                                            let displayValue = '';
+                                            if (answer.text) displayValue = answer.text;
+                                            else if (answer.number !== undefined) displayValue = answer.number.toString();
+                                            else if (answer.selectedIds) {
+                                                displayValue = answer.selectedIds
+                                                    .map(id => question.options?.find(o => o.id === id)?.text || id)
+                                                    .join(', ');
+                                            }
+                                            else if (answer.ranking) {
+                                                displayValue = answer.ranking
+                                                    .map((id, i) => `${i + 1}. ${question.options?.find(o => o.id === id)?.text || id}`)
+                                                    .join(' | ');
+                                            }
+                                            
+                                            return (
+                                                <div key={question.id} className="flex items-start gap-2 py-1">
+                                                    <span className="text-sm text-slate-600 min-w-0 flex-shrink-0">{question.question}:</span>
+                                                    <span className="text-sm font-medium text-slate-800">{displayValue || '(no answer)'}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    
+                    {responses.length === 0 && (
+                        <div className="text-center py-12 text-slate-500">
+                            <Users size={48} className="mx-auto mb-4 text-slate-300" />
+                            <p>No responses yet</p>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
-        </>
     );
 };
 
-export default VoteGeneratorResults;
+export default SurveyResults;

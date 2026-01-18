@@ -240,7 +240,7 @@ const VoteGeneratorApp: React.FC = () => {
     useEffect(() => {
         window.clearInterval(pollInterval.current);
 
-        if (viewState.type === 'results') {
+        if (viewState.type === 'results' || viewState.type === 'survey-results') {
             // Refresh every 8 seconds
             pollInterval.current = window.setInterval(() => {
                loadView(true); // silent reload
@@ -394,7 +394,7 @@ const VoteGeneratorApp: React.FC = () => {
                         </a>
                         
                         {/* Nav Links for Admin - Only show if user has this poll in their localStorage */}
-                        {viewState.type === 'results' && viewState.isAdmin && (() => {
+                        {(viewState.type === 'results' || viewState.type === 'survey-results') && viewState.isAdmin && (() => {
                             // Check if this poll exists in user's localStorage (meaning they're the actual owner)
                             const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
                             const isActualOwner = userPolls.some((p: any) => p.id === viewState.poll.id);
@@ -629,12 +629,49 @@ const VoteGeneratorApp: React.FC = () => {
                         <motion.div key="survey-vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <SurveyVote 
                                 poll={viewState.poll} 
-                                onSubmit={async () => {
+                                onSubmit={async (response: any) => {
                                     const { surveyId, adminKey } = parseHash();
                                     if (!surveyId) return;
                                     
+                                    // Debug: Log what we're submitting
+                                    console.log('VoteGeneratorApp: Submitting survey response');
+                                    console.log('VoteGeneratorApp: surveyId:', surveyId);
+                                    console.log('VoteGeneratorApp: response.answers:', response.answers);
+                                    console.log('VoteGeneratorApp: answers keys:', Object.keys(response.answers || {}));
+                                    
+                                    // Actually submit to the API!
+                                    try {
+                                        const apiResponse = await fetch('/.netlify/functions/vg-vote', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                pollId: surveyId,
+                                                choices: [],
+                                                voterName: response.voterName,
+                                                surveyAnswers: response.answers,
+                                                startedAt: response.startedAt,
+                                                completionTime: response.completionTime
+                                            })
+                                        });
+                                        
+                                        console.log('VoteGeneratorApp: API response status:', apiResponse.status);
+                                        
+                                        if (!apiResponse.ok) {
+                                            const errorData = await apiResponse.json();
+                                            console.error('VoteGeneratorApp: API error:', errorData);
+                                            throw new Error(errorData.error || 'Failed to submit survey');
+                                        }
+                                        
+                                        const responseData = await apiResponse.json();
+                                        console.log('VoteGeneratorApp: API response data:', responseData);
+                                    } catch (error) {
+                                        console.error('Survey submission error:', error);
+                                        throw error;
+                                    }
+                                    
                                     // Mark survey as completed
                                     localStorage.setItem(`vg_survey_completed_${surveyId}`, 'true');
+                                    localStorage.setItem(`vg_has_voted_${surveyId}`, 'true');
                                     
                                     // Check if results are hidden
                                     if (viewState.poll.settings?.hideResults) {

@@ -570,6 +570,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     // SURVEY MODE - Multi-section form results
     // =========================================================================
     if (isSurvey && (poll as any).sections?.length > 0) {
+        // Debug: Log raw votes
+        console.log('VoteGeneratorResults: Raw votes count:', votes.length);
+        if (votes[0]) {
+            console.log('VoteGeneratorResults: First vote:', votes[0]);
+            console.log('VoteGeneratorResults: First vote surveyAnswers:', votes[0].surveyAnswers);
+            console.log('VoteGeneratorResults: First vote answers:', votes[0].answers);
+        }
+        
         // Extract survey responses from votes
         const surveyResponses: SurveyResponse[] = votes
             .filter((v: any) => v.surveyAnswers || v.answers)
@@ -584,6 +592,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 answers: v.surveyAnswers || v.answers || {},
                 isComplete: true,
             }));
+        
+        console.log('VoteGeneratorResults: Mapped surveyResponses count:', surveyResponses.length);
+        if (surveyResponses[0]) {
+            console.log('VoteGeneratorResults: First mapped response:', surveyResponses[0]);
+        }
         
         return (
             <div className="space-y-6">

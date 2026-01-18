@@ -806,7 +806,7 @@ const AdminDashboard: React.FC = () => {
             }
         }
         // Navigate to create section - use query param so app can hide hero
-        window.location.href = '/?create=1#create';
+        window.location.href = '/create';
     };
 
     const canCreateMorePolls = () => {

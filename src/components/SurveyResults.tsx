@@ -271,10 +271,23 @@ const calculateQuestionStats = (
     try {
         if (!question || !question.id) return defaultStats;
         
+        // Debug: Log what we're receiving
+        console.log('calculateQuestionStats for question:', question.id, question.type);
+        console.log('Total responses:', responses?.length || 0);
+        if (responses?.[0]) {
+            console.log('First response answers:', responses[0].answers);
+            console.log('First response answer for this question:', responses[0].answers?.[question.id]);
+        }
+        
         const answers = (responses || [])
             .filter(r => r && r.answers && typeof r.answers === 'object')
             .map(r => r.answers[question.id])
             .filter(Boolean);
+        
+        console.log('Extracted answers count:', answers.length);
+        if (answers[0]) {
+            console.log('First extracted answer:', answers[0]);
+        }
     
     const stats: QuestionStats = {
         questionId: question.id,

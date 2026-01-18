@@ -597,8 +597,11 @@ export const handler: Handler = async (event) => {
         
         if (isSurvey) {
             console.log('vg-vote: Survey mode - validating survey answers');
+            console.log('vg-vote: body.surveyAnswers type:', typeof body.surveyAnswers);
+            console.log('vg-vote: body.surveyAnswers:', JSON.stringify(body.surveyAnswers));
             
             if (!body.surveyAnswers || typeof body.surveyAnswers !== 'object') {
+                console.log('vg-vote: Survey answers validation FAILED');
                 return {
                     statusCode: 400,
                     headers,
@@ -609,6 +612,7 @@ export const handler: Handler = async (event) => {
             // For surveys, we don't validate against poll.options
             // The surveyAnswers contain question IDs from sections
             console.log('vg-vote: Survey answers count:', Object.keys(body.surveyAnswers).length);
+            console.log('vg-vote: Survey answers keys:', Object.keys(body.surveyAnswers));
         }
         // Check for ranked polls (ranked, ranked_choice)
         else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {

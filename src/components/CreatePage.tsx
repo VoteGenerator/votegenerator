@@ -56,14 +56,23 @@ const CreatePage: React.FC = () => {
     const daysRemaining = expiresAt 
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : 365;
+    
+    // Check if user has existing polls
+    const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+    const hasPolls = userPolls.length > 0;
 
-    // Nav items - different for free vs paid
+    // Nav items - different for free vs paid, and free with polls
     const navItems = isPaid ? [
-        { label: 'Create Poll', href: '/', icon: PlusCircle, active: true },
+        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
         { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
         { label: 'Help', href: '/help', icon: HelpCircle },
+    ] : hasPolls ? [
+        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
+        { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
+        { label: 'Templates', href: '/templates', icon: Sparkles },
+        { label: 'Pricing', href: '/pricing', icon: Zap },
     ] : [
-        { label: 'Create Poll', href: '/', icon: PlusCircle, active: true },
+        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
         { label: 'Templates', href: '/templates', icon: Sparkles },
         { label: 'Pricing', href: '/pricing', icon: Zap },
     ];

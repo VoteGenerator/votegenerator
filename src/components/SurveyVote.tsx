@@ -571,13 +571,21 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                     className="max-w-lg w-full"
                 >
                     <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
-                        {/* Logo */}
-                        {settings.logoUrl && (
-                            <div className="p-6 flex justify-center bg-slate-50 border-b border-slate-100">
+                        {/* Logo - only show if URL exists, is not empty, and is a valid URL */}
+                        {settings.logoUrl && settings.logoUrl.trim() && settings.logoUrl.startsWith('http') && (
+                            <div 
+                                id="survey-logo-container"
+                                className="p-6 flex justify-center bg-slate-50 border-b border-slate-100"
+                            >
                                 <img 
                                     src={settings.logoUrl} 
                                     alt="Survey logo" 
                                     className="max-h-16 max-w-[200px] object-contain"
+                                    onError={(e) => {
+                                        // Hide the entire logo container if image fails to load
+                                        const container = document.getElementById('survey-logo-container');
+                                        if (container) container.style.display = 'none';
+                                    }}
                                 />
                             </div>
                         )}

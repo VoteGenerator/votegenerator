@@ -154,17 +154,24 @@ const VoteGeneratorApp: React.FC = () => {
                     console.log('=== VoteGeneratorApp Survey Results Debug ===');
                     console.log('Survey ID:', surveyId);
                     console.log('isAdmin:', isAdmin);
-                    console.log('resultsData:', resultsData);
-                    console.log('resultsData keys:', Object.keys(resultsData));
+                    console.log('Survey from vg-get sections:', survey.sections?.length || 0);
+                    console.log('ResultsData sections:', resultsData.sections?.length || 0);
                     console.log('voteCount:', resultsData.voteCount);
-                    console.log('surveyResponses:', resultsData.surveyResponses);
                     console.log('surveyResponses count:', resultsData.surveyResponses?.length);
-                    console.log('votes count:', resultsData.votes?.length);
                     if (resultsData.surveyResponses?.[0]) {
                         console.log('First surveyResponse:', resultsData.surveyResponses[0]);
-                        console.log('First surveyResponse.answers:', resultsData.surveyResponses[0].answers);
+                        console.log('First surveyResponse.answers keys:', Object.keys(resultsData.surveyResponses[0].answers || {}));
+                    }
+                    if (survey.sections?.[0]?.questions?.[0]) {
+                        console.log('First question ID:', survey.sections[0].questions[0].id);
                     }
                     console.log('=== End Debug ===');
+                    
+                    // IMPORTANT: Merge sections from resultsData if survey doesn't have them
+                    if ((!survey.sections || survey.sections.length === 0) && resultsData.sections?.length > 0) {
+                        console.log('VoteGeneratorApp: Using sections from resultsData');
+                        survey.sections = resultsData.sections;
+                    }
                     
                     // Use surveyResponses if available (already mapped with 'answers'), otherwise map votes
                     let responses = resultsData.surveyResponses || [];

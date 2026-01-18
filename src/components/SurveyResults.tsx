@@ -1410,23 +1410,35 @@ interface SurveyResultsProps {
 const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawResponses, isAdmin = false, onUpgrade }) => {
     // DEBUG LOGGING - Remove after debugging
     useEffect(() => {
-        console.log('=== SurveyResults Debug ===');
+        console.log('========== SurveyResults Debug ==========');
         console.log('Poll ID:', poll?.id);
-        console.log('Poll sections:', poll?.sections?.length || 0);
+        console.log('Poll sections count:', poll?.sections?.length || 0);
+        console.log('Poll sections:', poll?.sections);
+        console.log('Raw responses type:', typeof rawResponses);
+        console.log('Raw responses is array:', Array.isArray(rawResponses));
         console.log('Raw responses count:', rawResponses?.length || 0);
-        if (rawResponses?.[0]) {
+        console.log('Raw responses:', rawResponses);
+        
+        if (rawResponses?.length > 0) {
             console.log('First raw response:', rawResponses[0]);
-            console.log('First response answers:', rawResponses[0].answers);
-            console.log('First response answers keys:', Object.keys(rawResponses[0].answers || {}));
-        }
-        if (poll?.sections?.[0]) {
-            console.log('First section:', poll.sections[0].title);
-            console.log('First section questions:', poll.sections[0].questions?.length || 0);
-            if (poll.sections[0].questions?.[0]) {
-                console.log('First question:', poll.sections[0].questions[0]);
+            console.log('First response type:', typeof rawResponses[0]);
+            console.log('First response keys:', Object.keys(rawResponses[0] || {}));
+            console.log('First response.answers:', rawResponses[0]?.answers);
+            console.log('First response.answers type:', typeof rawResponses[0]?.answers);
+            if (rawResponses[0]?.answers) {
+                console.log('First response.answers keys:', Object.keys(rawResponses[0].answers));
             }
         }
-        console.log('=== End Debug ===');
+        
+        if (poll?.sections?.length > 0) {
+            console.log('First section:', poll.sections[0]);
+            console.log('First section questions count:', poll.sections[0].questions?.length || 0);
+            if (poll.sections[0].questions?.[0]) {
+                console.log('First question ID:', poll.sections[0].questions[0].id);
+                console.log('First question type:', poll.sections[0].questions[0].type);
+            }
+        }
+        console.log('========== End SurveyResults Debug ==========');
     }, [poll, rawResponses]);
     
     // Ensure responses is always a valid array with valid entries
@@ -1850,11 +1862,41 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                             const chartQuestions = allChartQuestions.slice(0, isPaidUser ? 6 : 3);
                             
                             if (chartQuestions.length === 0) {
+                                // Debug: Show why there are no charts
+                                console.log('SurveyResults Visual Overview: No charts to show');
+                                console.log('- sectionStats length:', sectionStats.length);
+                                console.log('- choiceQuestions length:', choiceQuestions.length);
+                                console.log('- ratingQuestions length:', ratingQuestions.length);
+                                console.log('- poll.sections exists:', !!poll.sections);
+                                console.log('- poll.sections length:', poll.sections?.length || 0);
+                                console.log('- responses length:', responses.length);
+                                
+                                // Show different message based on the issue
+                                if (!poll.sections || poll.sections.length === 0) {
+                                    return (
+                                        <div className="text-center py-8 text-slate-500">
+                                            <BarChart3 size={48} className="mx-auto mb-3 text-slate-300" />
+                                            <p>Survey structure not loaded</p>
+                                            <p className="text-sm mt-1">Try refreshing the page</p>
+                                        </div>
+                                    );
+                                }
+                                
+                                if (responses.length === 0) {
+                                    return (
+                                        <div className="text-center py-8 text-slate-500">
+                                            <BarChart3 size={48} className="mx-auto mb-3 text-slate-300" />
+                                            <p>No responses to visualize yet</p>
+                                            <p className="text-sm mt-1">Charts will appear once you receive responses</p>
+                                        </div>
+                                    );
+                                }
+                                
                                 return (
                                     <div className="text-center py-8 text-slate-500">
                                         <BarChart3 size={48} className="mx-auto mb-3 text-slate-300" />
-                                        <p>No responses to visualize yet</p>
-                                        <p className="text-sm mt-1">Charts will appear once you receive responses</p>
+                                        <p>No visualizable questions found</p>
+                                        <p className="text-sm mt-1">This survey may only contain text questions</p>
                                     </div>
                                 );
                             }

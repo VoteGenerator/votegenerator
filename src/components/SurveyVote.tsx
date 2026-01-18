@@ -139,26 +139,30 @@ const RatingQuestion: React.FC<QuestionProps> = ({ question, answer, onChange })
     const maxStars = question.maxValue || 5;
     
     return (
-        <div className="flex items-center justify-center gap-2">
-            {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
-                <button
-                    key={star}
-                    type="button"
-                    onClick={() => onChange({
-                        questionId: question.id,
-                        questionType: question.type,
-                        number: star,
-                    })}
-                    className="p-1 transition-transform hover:scale-110"
-                >
-                    <Star
-                        size={40}
-                        className={star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}
-                    />
-                </button>
-            ))}
+        <div className="flex flex-col items-center gap-3">
+            {/* Stars row - responsive sizing */}
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+                {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        onClick={() => onChange({
+                            questionId: question.id,
+                            questionType: question.type,
+                            number: star,
+                        })}
+                        className="p-0.5 sm:p-1 transition-transform hover:scale-110"
+                    >
+                        <Star
+                            size={32}
+                            className={`sm:w-10 sm:h-10 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                    </button>
+                ))}
+            </div>
+            {/* Rating display - below stars on all screens */}
             {rating > 0 && (
-                <span className="ml-4 text-2xl font-bold text-amber-600">{rating}/{maxStars}</span>
+                <span className="text-xl sm:text-2xl font-bold text-amber-600">{rating}/{maxStars}</span>
             )}
         </div>
     );
@@ -169,6 +173,7 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
     const value = answer?.number;
     const min = question.minValue || 1;
     const max = question.maxValue || 10;
+    const numButtons = max - min + 1;
     
     return (
         <div>
@@ -176,8 +181,9 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
                 <span>{question.minLabel || min}</span>
                 <span>{question.maxLabel || max}</span>
             </div>
-            <div className="flex gap-2">
-                {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((num) => {
+            {/* Grid layout for mobile - 5 columns for 10 buttons (2 rows) */}
+            <div className={`grid ${numButtons > 5 ? 'grid-cols-5 sm:grid-cols-10' : `grid-cols-${numButtons}`} gap-2`}>
+                {Array.from({ length: numButtons }, (_, i) => min + i).map((num) => {
                     const isSelected = value === num;
                     return (
                         <button
@@ -188,7 +194,7 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
                                 questionType: question.type,
                                 number: num,
                             })}
-                            className={`flex-1 py-3 rounded-xl border-2 font-semibold transition ${
+                            className={`py-3 px-1 rounded-xl border-2 font-semibold text-sm transition ${
                                 isSelected
                                     ? 'border-indigo-500 bg-indigo-500 text-white'
                                     : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'

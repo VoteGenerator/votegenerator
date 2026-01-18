@@ -68,6 +68,21 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // Debug logging for surveys
+        if (poll.isSurvey || poll.pollType === 'survey') {
+            console.log('vg-get: Loading survey', pollId);
+            console.log('vg-get: poll.sections exists:', !!poll.sections);
+            console.log('vg-get: poll.sections length:', poll.sections?.length || 0);
+            if (poll.sections?.[0]) {
+                console.log('vg-get: First section title:', poll.sections[0].title);
+                console.log('vg-get: First section questions:', poll.sections[0].questions?.length || 0);
+                if (poll.sections[0].questions?.[0]) {
+                    console.log('vg-get: First question ID:', poll.sections[0].questions[0].id);
+                    console.log('vg-get: First question type:', poll.sections[0].questions[0].type);
+                }
+            }
+        }
+
         // If admin key provided, verify it
         const isAdmin = adminKey && poll.adminKey === adminKey;
 

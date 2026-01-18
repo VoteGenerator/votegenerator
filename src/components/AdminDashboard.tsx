@@ -1091,36 +1091,48 @@ const AdminDashboard: React.FC = () => {
             {/* Header with Paid Nav */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+                    <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                     </a>
                     
                     {/* Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <PlusCircle size={18} /> Create Poll
+                        <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                            <PlusCircle size={16} /> Create Poll
                         </a>
-                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition">
-                            <LayoutDashboard size={18} /> My Dashboard
+                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
+                            <LayoutDashboard size={16} /> My Dashboard
                         </a>
-                        <a href="/help" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <AlertCircle size={18} /> Help
+                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                            <Zap size={16} /> Templates
                         </a>
                     </nav>
                     
                     <div className="flex items-center gap-3">
-                        <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                            {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
-                            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
-                                {isPlanExpired 
-                                    ? 'Expired' 
-                                    : session?.expiresAt 
-                                        ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
-                                        : ''
-                                }
-                            </span>
-                        </div>
+                        {/* Free users see Upgrade button */}
+                        {tier === 'free' && (
+                            <button
+                                onClick={() => setShowUpgradeModal(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                            >
+                                <Crown size={16} /> Upgrade
+                            </button>
+                        )}
+                        {/* Paid users see tier badge */}
+                        {tier !== 'free' && (
+                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                                {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
+                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                    {isPlanExpired 
+                                        ? 'Expired' 
+                                        : session?.expiresAt 
+                                            ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
+                                            : ''
+                                    }
+                                </span>
+                            </div>
+                        )}
                         {isBusiness && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />

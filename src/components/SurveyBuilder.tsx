@@ -1357,6 +1357,71 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     return (
         <div className="space-y-6">
             {/* ============================================ */}
+            {/* STICKY PUBLISH BAR AT TOP - More visible! */}
+            {/* ============================================ */}
+            {!showTemplates && (
+                <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm mb-6">
+                    <div className="flex items-center justify-between gap-4">
+                        {/* Left: Status */}
+                        <div className="flex items-center gap-3">
+                            {/* Ready indicator */}
+                            {surveyTitle.trim() && totalQuestions > 0 ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 border border-emerald-200 rounded-full">
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    <span className="text-sm font-medium text-emerald-700">
+                                        Ready to publish
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full">
+                                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                                    <span className="text-sm font-medium text-amber-700">
+                                        {!surveyTitle.trim() ? 'Add title' : 'Add questions'}
+                                    </span>
+                                </div>
+                            )}
+                            
+                            {/* Question count */}
+                            <div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-500">
+                                <FileText size={14} />
+                                <span>{totalQuestions} question{totalQuestions !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                        
+                        {/* Right: Publish Button */}
+                        <button
+                            onClick={handlePublish}
+                            disabled={isPublishing || !canPublish}
+                            className={`px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                                isPublishing || !canPublish
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                            }`}
+                        >
+                            {isPublishing ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    <span className="hidden sm:inline">Publishing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Send size={18} />
+                                    <span>Publish Survey</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    
+                    {/* Error message */}
+                    {publishError && (
+                        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                            {publishError}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ============================================ */}
             {/* TITLE & DESCRIPTION - AT THE TOP */}
             {/* ============================================ */}
             <div className="bg-white rounded-2xl border-2 border-indigo-200 p-6 shadow-sm">
@@ -1940,68 +2005,7 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                 </div>
             )}
             
-            {/* ============================================ */}
-            {/* STICKY PUBLISH BUTTON AT BOTTOM */}
-            {/* ============================================ */}
-            {!showTemplates && (
-                <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-4 -mx-4 px-4 mt-8">
-                    <div className="bg-white rounded-2xl border-2 border-indigo-200 p-4 shadow-lg">
-                        {/* Error */}
-                        {publishError && (
-                            <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                                {publishError}
-                            </div>
-                        )}
-                        
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            {/* Status */}
-                            <div className="text-sm text-slate-600">
-                                {!surveyTitle.trim() && (
-                                    <span className="text-amber-600 flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                                        Enter a survey title above
-                                    </span>
-                                )}
-                                {surveyTitle.trim() && totalQuestions === 0 && (
-                                    <span className="text-amber-600 flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                                        Add at least one question
-                                    </span>
-                                )}
-                                {surveyTitle.trim() && totalQuestions > 0 && (
-                                    <span className="text-emerald-600 flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                                        Ready to publish ({sections.length} section{sections.length !== 1 ? 's' : ''}, {totalQuestions} question{totalQuestions !== 1 ? 's' : ''})
-                                    </span>
-                                )}
-                            </div>
-                            
-                            {/* Publish Button */}
-                            <button
-                                onClick={handlePublish}
-                                disabled={isPublishing || !canPublish}
-                                className={`px-8 py-3 rounded-xl font-bold text-lg flex items-center gap-2 transition ${
-                                    isPublishing || !canPublish
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
-                                }`}
-                            >
-                                {isPublishing ? (
-                                    <>
-                                        <Loader2 size={20} className="animate-spin" />
-                                        Publishing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send size={20} />
-                                        Publish Survey
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Bottom publish section removed - Now using sticky top bar for better visibility */}
         </div>
     );
 };

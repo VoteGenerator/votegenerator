@@ -1284,10 +1284,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             {/* ================================================================ */}
             <div className="mb-6 relative">
                 {/* Scroll hint gradients for mobile */}
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none sm:hidden" />
-                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none sm:hidden" />
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
                 
-                <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-slate-100 rounded-2xl overflow-x-auto scrollbar-hide">
+                <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-white border-2 border-slate-200 rounded-2xl overflow-x-auto scrollbar-hide shadow-sm">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;

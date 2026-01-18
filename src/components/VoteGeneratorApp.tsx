@@ -470,22 +470,21 @@ const VoteGeneratorApp: React.FC = () => {
             {/* Header */}
             {viewState.type !== 'create' && viewState.type !== 'loading' && (
                 <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
-                    <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                    <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                         <a 
                             href="/"
-                            className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 font-bold transition-colors"
+                            className="flex items-center gap-2 hover:opacity-80 transition"
                         >
-                            <img src="/logo.svg" alt="" className="w-8 h-8" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            <span className="hidden sm:inline text-xl">Vote<span className="text-indigo-600">Generator</span></span>
+                            <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                         </a>
                         
-                        {/* Nav Links for Admin viewing results/dashboard */}
+                        {/* Nav Links - consistent with AdminDashboard */}
                         {(viewState.type === 'results' || viewState.type === 'survey-results') && viewState.isAdmin && (() => {
-                            // Check if this poll exists in user's localStorage
                             const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
                             const hasPolls = userPolls.length > 0;
-                            const pollTier = (viewState.poll as any).tier || 'free';
-                            const isFreeUser = pollTier === 'free';
+                            const subscriptionTier = localStorage.getItem('vg_subscription_tier') || 'free';
+                            const isFreeUser = subscriptionTier === 'free';
                             
                             return (
                                 <>
@@ -493,7 +492,6 @@ const VoteGeneratorApp: React.FC = () => {
                                         <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                                             <PlusCircle size={16} /> Create Poll
                                         </a>
-                                        {/* Always show My Dashboard if they have polls */}
                                         {hasPolls && (
                                             <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                                                 <LayoutDashboard size={16} /> My Dashboard
@@ -504,8 +502,8 @@ const VoteGeneratorApp: React.FC = () => {
                                         </a>
                                     </nav>
                                     
-                                    {/* Right side - Upgrade button for free users */}
-                                    <div className="hidden md:flex items-center gap-2">
+                                    {/* Right side - Upgrade or Tier badge */}
+                                    <div className="hidden md:flex items-center gap-3">
                                         {isFreeUser ? (
                                             <button
                                                 onClick={() => {
@@ -517,13 +515,13 @@ const VoteGeneratorApp: React.FC = () => {
                                                 <Crown size={16} /> Upgrade
                                             </button>
                                         ) : (
-                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
-                                                pollTier === 'business' 
-                                                    ? 'bg-amber-100 text-amber-700' 
-                                                    : 'bg-purple-100 text-purple-700'
-                                            }`}>
-                                                <Crown size={14} />
-                                                {pollTier === 'business' ? 'Business' : 'Pro'}
+                                            <div className={`px-4 py-2 bg-gradient-to-r ${
+                                                subscriptionTier === 'business' 
+                                                    ? 'from-amber-500 to-orange-500' 
+                                                    : 'from-purple-500 to-indigo-500'
+                                            } text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                                                <Crown size={16} />
+                                                {subscriptionTier === 'business' ? 'Business' : 'Pro'}
                                             </div>
                                         )}
                                     </div>
@@ -531,18 +529,16 @@ const VoteGeneratorApp: React.FC = () => {
                             );
                         })()}
                         
-                        <div className="flex items-center gap-2">
-                             {/* Only show share button if viewing results and setting is enabled */}
-                             {viewState.type === 'results' && !viewState.isAdmin && viewState.poll.settings?.showShareButton && (
-                                <button
-                                    onClick={() => copyToClipboard(getShareUrl())}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    {copiedShare ? <Check size={16} /> : <Share2 size={16} />}
-                                    {copiedShare ? 'Copied!' : 'Share Poll'}
-                                </button>
-                             )}
-                        </div>
+                        {/* Share button for non-admin voters */}
+                        {viewState.type === 'results' && !viewState.isAdmin && viewState.poll.settings?.showShareButton && (
+                            <button
+                                onClick={() => copyToClipboard(getShareUrl())}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                {copiedShare ? <Check size={16} /> : <Share2 size={16} />}
+                                {copiedShare ? 'Copied!' : 'Share Poll'}
+                            </button>
+                        )}
                     </div>
                 </header>
             )}

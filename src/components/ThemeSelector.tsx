@@ -4,8 +4,8 @@
 // Exports: THEMES, ThemeConfig, ThemeSelector component
 // ============================================================================
 
-import React from 'react';
-import { Check, Sparkles, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Sparkles, Lock, Palette } from 'lucide-react';
 
 // ============================================================================
 // THEME CONFIGURATION TYPE
@@ -404,15 +404,43 @@ interface ThemeSelectorProps {
     selectedTheme: string;
     onThemeChange: (themeId: string) => void;
     isPaidUser?: boolean;
+    customColors?: {
+        primary: string;
+        background: string;
+    };
+    onCustomColorsChange?: (colors: { primary: string; background: string }) => void;
 }
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ 
     selectedTheme, 
     onThemeChange,
-    isPaidUser = false
+    isPaidUser = false,
+    customColors,
+    onCustomColorsChange
 }) => {
+    const [showCustomColors, setShowCustomColors] = useState(selectedTheme === 'custom');
+    const [localPrimary, setLocalPrimary] = useState(customColors?.primary || '#6366f1');
+    const [localBackground, setLocalBackground] = useState(customColors?.background || '#ffffff');
+    
     const freeThemes = THEMES.filter(t => !t.isPremium);
     const premiumThemes = THEMES.filter(t => t.isPremium);
+    
+    // Update custom colors when user changes them
+    const handleCustomColorChange = (type: 'primary' | 'background', value: string) => {
+        if (type === 'primary') {
+            setLocalPrimary(value);
+            onCustomColorsChange?.({ primary: value, background: localBackground });
+        } else {
+            setLocalBackground(value);
+            onCustomColorsChange?.({ primary: localPrimary, background: value });
+        }
+    };
+    
+    const selectCustomTheme = () => {
+        setShowCustomColors(true);
+        onThemeChange('custom');
+        onCustomColorsChange?.({ primary: localPrimary, background: localBackground });
+    };
     
     const ThemeCard = ({ theme }: { theme: ThemeConfig }) => {
         const isSelected = selectedTheme === theme.id;
@@ -421,10 +449,15 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         return (
             <button
                 type="button"
-                onClick={() => !isLocked && onThemeChange(theme.id)}
+                onClick={() => {
+                    if (!isLocked) {
+                        onThemeChange(theme.id);
+                        setShowCustomColors(false);
+                    }
+                }}
                 disabled={isLocked}
                 className={`relative group p-2 rounded-xl border-2 transition-all duration-200 text-left ${
-                    isSelected
+                    isSelected && !showCustomColors
                         ? 'border-indigo-500 ring-2 ring-indigo-200 shadow-lg'
                         : isLocked
                             ? 'border-slate-200 opacity-60 cursor-not-allowed'
@@ -444,7 +477,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                     </div>
                     
                     {/* Selected check */}
-                    {isSelected && (
+                    {isSelected && !showCustomColors && (
                         <div className="absolute top-1 right-1 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
                             <Check size={12} className="text-white" />
                         </div>
@@ -495,6 +528,127 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                         <ThemeCard key={theme.id} theme={theme} />
                     ))}
                 </div>
+            </div>
+            
+            {/* Custom Colors (Pro/Business only) */}
+            <div>
+                <div className="flex items-center gap-2 mb-2">
+                    <Palette size={12} className="text-purple-500" />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Custom Colors</span>
+                    {!isPaidUser && (
+                        <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-medium ml-auto">Pro</span>
+                    )}
+                </div>
+                
+                {isPaidUser ? (
+                    <div className="space-y-3">
+                        {/* Custom theme button */}
+                        <button
+                            type="button"
+                            onClick={selectCustomTheme}
+                            className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+                                showCustomColors
+                                    ? 'border-purple-500 ring-2 ring-purple-200 bg-purple-50'
+                                    : 'border-slate-200 hover:border-purple-300'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div 
+                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                    style={{ backgroundColor: localPrimary }}
+                                >
+                                    <Palette size={20} className="text-white" />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-sm text-slate-700">Custom Colors</div>
+                                    <div className="text-xs text-slate-500">Pick your brand colors</div>
+                                </div>
+                                {showCustomColors && (
+                                    <Check size={16} className="text-purple-600 ml-auto" />
+                                )}
+                            </div>
+                        </button>
+                        
+                        {/* Color pickers - show when custom is selected */}
+                        {showCustomColors && (
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                                {/* Primary color */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-2">
+                                        Primary Color (buttons, accents)
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={localPrimary}
+                                            onChange={(e) => handleCustomColorChange('primary', e.target.value)}
+                                            className="w-10 h-10 rounded-lg cursor-pointer border-2 border-slate-200"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={localPrimary}
+                                            onChange={(e) => handleCustomColorChange('primary', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono uppercase"
+                                            placeholder="#6366f1"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                {/* Background color */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-2">
+                                        Background Color
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={localBackground}
+                                            onChange={(e) => handleCustomColorChange('background', e.target.value)}
+                                            className="w-10 h-10 rounded-lg cursor-pointer border-2 border-slate-200"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={localBackground}
+                                            onChange={(e) => handleCustomColorChange('background', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono uppercase"
+                                            placeholder="#ffffff"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                {/* Preview */}
+                                <div className="mt-4">
+                                    <label className="block text-xs font-medium text-slate-600 mb-2">Preview</label>
+                                    <div 
+                                        className="p-4 rounded-xl border border-slate-200"
+                                        style={{ backgroundColor: localBackground }}
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-8 h-8 rounded-full" style={{ backgroundColor: localPrimary }}></div>
+                                            <div className="flex-1">
+                                                <div className="h-3 rounded" style={{ backgroundColor: localPrimary, width: '60%' }}></div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            className="w-full py-2 rounded-lg text-white text-sm font-medium"
+                                            style={{ backgroundColor: localPrimary }}
+                                        >
+                                            Vote Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-center">
+                        <Palette size={24} className="text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm text-slate-500 mb-2">Choose your brand colors</p>
+                        <a href="/pricing" className="text-xs text-indigo-600 hover:underline font-medium">
+                            Upgrade to Pro →
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );

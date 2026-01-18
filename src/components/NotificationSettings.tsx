@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Bell, 
     Mail, 
     Check, 
     Loader2, 
-    Plus, 
     Trash2, 
     AlertCircle,
     Calendar,
@@ -18,7 +16,8 @@ import {
     Send,
     CheckCircle2,
     Clock4,
-    RefreshCw
+    RefreshCw,
+    Zap
 } from 'lucide-react';
 
 interface EmailEntry {
@@ -34,6 +33,7 @@ interface NotificationSettingsData {
     emails: EmailEntry[];
     skipFirstVotes: number;
     notifyOn: {
+        eachResponse: boolean;  // NEW: Email for every response
         milestones: boolean;
         dailyDigest: boolean;
         pollClosed: boolean;
@@ -48,7 +48,7 @@ interface Props {
     pollTitle?: string;
     currentSettings?: NotificationSettingsData;
     onSave?: (settings: NotificationSettingsData) => void;
-    onSettingsChange?: () => void; // Callback when settings are saved
+    onSettingsChange?: () => void;
     tier?: string;
 }
 
@@ -57,6 +57,7 @@ const DEFAULT_SETTINGS: NotificationSettingsData = {
     emails: [],
     skipFirstVotes: 3,
     notifyOn: {
+        eachResponse: false,  // Off by default (can be spammy)
         milestones: true,
         dailyDigest: false,
         pollClosed: true,
@@ -92,11 +93,11 @@ const NotificationSettings: React.FC<Props> = ({
         },
         'pro': { 
             maxEmails: 5, 
-            features: ['milestones', 'pollClosed', 'limitReached', 'newComment'] 
+            features: ['eachResponse', 'milestones', 'pollClosed', 'limitReached', 'newComment'] 
         },
         'business': { 
             maxEmails: 10, 
-            features: ['milestones', 'dailyDigest', 'pollClosed', 'limitReached', 'newComment'] 
+            features: ['eachResponse', 'milestones', 'dailyDigest', 'pollClosed', 'limitReached', 'newComment'] 
         }
     };
     
@@ -244,7 +245,7 @@ const NotificationSettings: React.FC<Props> = ({
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
             onSave?.(settings);
-            onSettingsChange?.(); // Trigger refresh
+            onSettingsChange?.();
         } catch (error) {
             console.error('Failed to save notification settings:', error);
         } finally {
@@ -260,7 +261,8 @@ const NotificationSettings: React.FC<Props> = ({
         checked, 
         onChange,
         locked = false,
-        lockedMessage = 'Upgrade to unlock'
+        lockedMessage = 'Upgrade to unlock',
+        highlight = false
     }: {
         id: keyof NotificationSettingsData['notifyOn'];
         icon: React.ElementType;
@@ -270,23 +272,33 @@ const NotificationSettings: React.FC<Props> = ({
         onChange: () => void;
         locked?: boolean;
         lockedMessage?: string;
+        highlight?: boolean;
     }) => (
         <label className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
             locked 
                 ? 'bg-slate-50 border-2 border-slate-100 cursor-not-allowed opacity-60' 
+                : highlight && checked
+                    ? 'bg-emerald-50 border-2 border-emerald-200 cursor-pointer'
                 : checked 
                     ? 'bg-indigo-50 border-2 border-indigo-200 cursor-pointer' 
                     : 'bg-slate-50 border-2 border-transparent hover:border-slate-200 cursor-pointer'
         }`}>
             <div className={`p-2 rounded-lg ${
-                locked ? 'bg-slate-200 text-slate-400' : checked ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'
+                locked ? 'bg-slate-200 text-slate-400' : 
+                highlight && checked ? 'bg-emerald-100 text-emerald-600' :
+                checked ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'
             }`}>
                 <Icon size={18} />
             </div>
             <div className="flex-1">
-                <span className={`font-medium ${locked ? 'text-slate-400' : checked ? 'text-indigo-800' : 'text-slate-700'}`}>
+                <span className={`font-medium ${
+                    locked ? 'text-slate-400' : 
+                    highlight && checked ? 'text-emerald-800' :
+                    checked ? 'text-indigo-800' : 'text-slate-700'
+                }`}>
                     {title}
                     {locked && <Crown size={12} className="inline ml-1 text-amber-500" />}
+                    {highlight && !locked && <Zap size={12} className="inline ml-1 text-emerald-500" />}
                 </span>
                 <p className="text-xs text-slate-500 mt-0.5">
                     {locked ? lockedMessage : description}
@@ -474,6 +486,19 @@ const NotificationSettings: React.FC<Props> = ({
                                 Notify when...
                             </label>
                             <div className="space-y-2">
+                                {/* NEW: Each Response - highlighted as key feature */}
+                                <NotificationOption
+                                    id="eachResponse"
+                                    icon={Zap}
+                                    title="Each New Response"
+                                    description="Get an email every time someone responds"
+                                    checked={settings.notifyOn.eachResponse}
+                                    onChange={() => toggleNotification('eachResponse')}
+                                    locked={!availableFeatures.includes('eachResponse')}
+                                    lockedMessage="Upgrade to Pro to unlock real-time alerts"
+                                    highlight={true}
+                                />
+                                
                                 <NotificationOption
                                     id="milestones"
                                     icon={TrendingUp}
@@ -484,6 +509,7 @@ const NotificationSettings: React.FC<Props> = ({
                                     locked={!availableFeatures.includes('milestones')}
                                     lockedMessage="Upgrade to Pro to unlock"
                                 />
+
                                 <NotificationOption
                                     id="pollClosed"
                                     icon={Clock}
@@ -494,6 +520,7 @@ const NotificationSettings: React.FC<Props> = ({
                                     locked={!availableFeatures.includes('pollClosed')}
                                     lockedMessage="Upgrade to Pro to unlock"
                                 />
+
                                 <NotificationOption
                                     id="limitReached"
                                     icon={Users}
@@ -504,6 +531,7 @@ const NotificationSettings: React.FC<Props> = ({
                                     locked={!availableFeatures.includes('limitReached')}
                                     lockedMessage="Upgrade to Pro to unlock"
                                 />
+
                                 <NotificationOption
                                     id="dailyDigest"
                                     icon={Calendar}
@@ -514,6 +542,7 @@ const NotificationSettings: React.FC<Props> = ({
                                     locked={!availableFeatures.includes('dailyDigest')}
                                     lockedMessage="Upgrade to Business to unlock"
                                 />
+
                                 <NotificationOption
                                     id="newComment"
                                     icon={MessageSquare}

@@ -654,11 +654,88 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     ];
 
     return (
-        <div className="max-w-5xl mx-auto px-4 py-6">
-            {/* ================================================================ */}
-            {/* HEADER - Redesigned with prominent status & quick actions */}
-            {/* ================================================================ */}
-            <div className="mb-6">
+        <>
+            {/* Print-Friendly Styles */}
+            <style>{`
+                @media print {
+                    /* Hide non-essential elements */
+                    header, footer, nav, 
+                    .print\\:hidden,
+                    button:not(.print-include),
+                    [data-print-hide="true"] {
+                        display: none !important;
+                    }
+                    
+                    /* Reset backgrounds and colors for printing */
+                    body {
+                        background: white !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    
+                    /* Full width layout */
+                    .max-w-5xl, .max-w-6xl, .max-w-7xl {
+                        max-width: 100% !important;
+                        padding: 0 !important;
+                    }
+                    
+                    /* Keep charts and gradients */
+                    .bg-gradient-to-r, .bg-gradient-to-br {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    
+                    /* Better spacing */
+                    .space-y-6 > * + * {
+                        margin-top: 1rem !important;
+                    }
+                    
+                    /* Page break control */
+                    .print-break-before {
+                        page-break-before: always;
+                    }
+                    .print-avoid-break {
+                        page-break-inside: avoid;
+                    }
+                    
+                    /* Ensure text is black */
+                    .text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900 {
+                        color: #1e293b !important;
+                    }
+                    
+                    /* Add print header */
+                    .print-header {
+                        display: block !important;
+                        text-align: center;
+                        margin-bottom: 20px;
+                        padding-bottom: 10px;
+                        border-bottom: 2px solid #e2e8f0;
+                    }
+                    
+                    /* Results cards */
+                    .rounded-2xl {
+                        border: 1px solid #e2e8f0 !important;
+                        box-shadow: none !important;
+                    }
+                }
+            `}</style>
+            
+            <div className="max-w-5xl mx-auto px-4 py-6">
+                {/* Print Header - Only visible when printing */}
+                <div className="hidden print:block print-header mb-6">
+                    <h1 className="text-2xl font-bold text-slate-800">{poll.title}</h1>
+                    <p className="text-slate-500 text-sm mt-1">
+                        {isSurvey ? 'Survey' : 'Poll'} Results • Generated {new Date().toLocaleDateString()}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-1">
+                        {voteCount} total {isSurvey ? 'responses' : 'votes'}
+                    </p>
+                </div>
+                
+                {/* ================================================================ */}
+                {/* HEADER - Redesigned with prominent status & quick actions */}
+                {/* ================================================================ */}
+                <div className="mb-6 print:hidden">
                 {/* Top row: Status banner */}
                 <div className={`rounded-t-2xl px-4 py-3 flex items-center justify-between ${
                     pollStatus === 'live' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' :

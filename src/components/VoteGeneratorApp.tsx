@@ -33,7 +33,7 @@ import PublicResults from './PublicResults';
 import BlogIndex from './blog/BlogIndex';
 import BlogPostAnonymousSurvey from './blog/BlogPostAnonymousSurvey';
 import BlogPost50Questions from './blog/BlogPost50Questions';
-import { getPoll, getPollAsAdmin, getResults, hasVoted } from '../services/voteGeneratorService';
+import { getPoll, getPollAsAdmin, getResults, hasVoted, PollStatusError } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
 
 type ViewState = 
@@ -50,6 +50,7 @@ type ViewState =
     | { type: 'survey-ad-wall-before'; poll: Poll }
     | { type: 'survey-ad-wall-after'; poll: Poll }
     | { type: 'survey-results'; poll: Poll; responses: any[]; isAdmin?: boolean }
+    | { type: 'poll-closed'; status: 'expired' | 'closed' | 'paused' | 'draft'; pollId?: string }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -209,6 +210,17 @@ const VoteGeneratorApp: React.FC = () => {
                 }
             } catch (error) {
                 console.error('Failed to load survey:', error);
+                
+                // Handle specific poll status errors
+                if (error instanceof PollStatusError) {
+                    setViewState({ 
+                        type: 'poll-closed', 
+                        status: error.status,
+                        pollId: surveyId || undefined
+                    });
+                    return;
+                }
+                
                 setViewState({ 
                     type: 'error', 
                     message: "Survey not found. It might have expired or the link is incorrect."
@@ -260,6 +272,17 @@ const VoteGeneratorApp: React.FC = () => {
 
         } catch (error) {
             console.error('Failed to load poll:', error);
+            
+            // Handle specific poll status errors
+            if (error instanceof PollStatusError) {
+                setViewState({ 
+                    type: 'poll-closed', 
+                    status: error.status,
+                    pollId: pollId || undefined
+                });
+                return;
+            }
+            
             setViewState({ 
                 type: 'error', 
                 message: "Poll not found. It might have expired or the link is incorrect."
@@ -991,6 +1014,90 @@ const VoteGeneratorApp: React.FC = () => {
                                     })()}
                                 </div>
                             )}
+                        </motion.div>
+                    )}
+
+                    {viewState.type === 'poll-closed' && (
+                        <motion.div
+                            key="poll-closed"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="max-w-md mx-auto text-center pt-20 px-4"
+                        >
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                                {/* Header */}
+                                <div className={`p-8 ${
+                                    viewState.status === 'expired' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
+                                    viewState.status === 'paused' ? 'bg-gradient-to-br from-slate-500 to-slate-600' :
+                                    viewState.status === 'draft' ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
+                                    'bg-gradient-to-br from-red-500 to-rose-500'
+                                }`}>
+                                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        {viewState.status === 'expired' && (
+                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        )}
+                                        {viewState.status === 'closed' && (
+                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                        )}
+                                        {viewState.status === 'paused' && (
+                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        )}
+                                        {viewState.status === 'draft' && (
+                                            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">
+                                        {viewState.status === 'expired' && 'Poll Has Ended'}
+                                        {viewState.status === 'closed' && 'Poll Closed'}
+                                        {viewState.status === 'paused' && 'Poll Paused'}
+                                        {viewState.status === 'draft' && 'Poll Not Available'}
+                                    </h2>
+                                    <p className="text-white/80">
+                                        {viewState.status === 'expired' && 'This poll has reached its end date.'}
+                                        {viewState.status === 'closed' && 'The organizer has closed this poll.'}
+                                        {viewState.status === 'paused' && 'This poll is temporarily paused.'}
+                                        {viewState.status === 'draft' && 'This poll is not yet published.'}
+                                    </p>
+                                </div>
+                                
+                                {/* Body */}
+                                <div className="p-8">
+                                    <p className="text-slate-600 mb-6">
+                                        {viewState.status === 'expired' && 'Voting is no longer available. The poll closed automatically after reaching its deadline.'}
+                                        {viewState.status === 'closed' && 'Voting is no longer available. Contact the organizer if you believe this is an error.'}
+                                        {viewState.status === 'paused' && 'Check back later or contact the organizer for more information.'}
+                                        {viewState.status === 'draft' && 'The poll creator hasn\'t published this poll yet. Please check back later.'}
+                                    </p>
+                                    
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={goHome}
+                                            className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors"
+                                        >
+                                            Create Your Own Poll
+                                        </button>
+                                        <a
+                                            href="/"
+                                            className="block w-full px-6 py-3 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors"
+                                        >
+                                            Go to Homepage
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p className="text-slate-400 text-sm mt-6">
+                                Powered by VoteGenerator
+                            </p>
                         </motion.div>
                     )}
 

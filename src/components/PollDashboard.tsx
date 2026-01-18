@@ -601,11 +601,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     const lastVoteDate = useMemo(() => {
         if (votes.length === 0) return null;
-        const vote = votes[votes.length - 1];
-        const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
-        if (!dateStr) return null;
-        const date = new Date(dateStr);
-        return isNaN(date.getTime()) ? null : date;
+        
+        // Find the most recent vote by comparing all timestamps
+        let latestDate: Date | null = null;
+        
+        votes.forEach((vote: any) => {
+            const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
+            if (!dateStr) return;
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return;
+            if (!latestDate || date > latestDate) {
+                latestDate = date;
+            }
+        });
+        
+        return latestDate;
     }, [votes]);
 
     // Tabs - Analytics locked for free users
@@ -1401,7 +1411,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             Recent Activity
                                         </h3>
                                         <div className="space-y-2 max-h-40 overflow-y-auto">
-                                            {votes.slice(-5).reverse().map((vote: any, idx: number) => {
+                                            {/* Sort votes by date descending, show 5 most recent */}
+                                            {[...votes]
+                                                .sort((a: any, b: any) => {
+                                                    const dateA = new Date(a.timestamp || a.votedAt || a.submittedAt || 0);
+                                                    const dateB = new Date(b.timestamp || b.votedAt || b.submittedAt || 0);
+                                                    return dateB.getTime() - dateA.getTime();
+                                                })
+                                                .slice(0, 5)
+                                                .map((vote: any, idx: number) => {
                                                 const voteTime = new Date(vote.timestamp || vote.votedAt || vote.submittedAt);
                                                 const now = new Date();
                                                 const diffMs = now.getTime() - voteTime.getTime();

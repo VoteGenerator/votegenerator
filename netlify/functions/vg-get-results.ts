@@ -65,6 +65,15 @@ export const handler: Handler = async (event) => {
         // Build results response
         const votes = poll.votes || [];
         const voteCount = votes.length;
+        
+        console.log(`vg-get-results: Poll ${pollId} has ${voteCount} votes`);
+        console.log(`vg-get-results: isSurvey=${poll.isSurvey}, pollType=${poll.pollType}`);
+        console.log(`vg-get-results: isAdmin=${isAdmin}, hideResults=${poll.settings?.hideResults}`);
+        
+        if (votes[0]) {
+            console.log('vg-get-results: First vote has surveyAnswers:', !!votes[0].surveyAnswers);
+            console.log('vg-get-results: First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers || {}));
+        }
 
         // For regular polls - calculate option tallies
         let optionResults: any[] = [];
@@ -89,10 +98,20 @@ export const handler: Handler = async (event) => {
         if (poll.isSurvey || poll.pollType === 'survey') {
             surveyResponses = votes.map((v: any, idx: number) => ({
                 id: v.id || `response_${idx}`,
-                timestamp: v.timestamp,
+                pollId: poll.id,
+                submittedAt: v.timestamp,
+                startedAt: v.startedAt,
+                completedAt: v.timestamp,
+                completionTime: v.completionTime,
                 answers: v.surveyAnswers || {},
                 voterName: isAdmin ? v.voterName : undefined,
+                isComplete: true,
             }));
+            
+            console.log(`vg-get-results: Mapped ${surveyResponses.length} survey responses`);
+            if (surveyResponses[0]) {
+                console.log('vg-get-results: First response answers keys:', Object.keys(surveyResponses[0].answers || {}));
+            }
         }
 
         const response: any = {
@@ -108,10 +127,15 @@ export const handler: Handler = async (event) => {
             createdAt: poll.createdAt,
         };
 
+        // For surveys, ALWAYS include surveyResponses (we already checked access above)
+        if (poll.isSurvey || poll.pollType === 'survey') {
+            response.surveyResponses = surveyResponses;
+            console.log(`vg-get-results: Including ${surveyResponses.length} surveyResponses in response`);
+        }
+
         // Add full data for admin
         if (isAdmin) {
             response.votes = votes;
-            response.surveyResponses = surveyResponses;
             response.adminKey = poll.adminKey;
             response.settings = poll.settings;
             response.tier = poll.tier;

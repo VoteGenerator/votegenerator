@@ -632,7 +632,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             {isSurvey || poll.type === 'survey' ? (
                                 <SurveyResults 
                                     poll={poll} 
-                                    responses={surveyResponses.length > 0 ? surveyResponses : results.votes || []}
+                                    responses={surveyResponses.length > 0 ? surveyResponses : (results.votes || []).map((v: any, idx: number) => ({
+                                        id: v.id || `response_${idx}`,
+                                        pollId: poll.id,
+                                        submittedAt: v.timestamp || v.votedAt,
+                                        startedAt: v.startedAt,
+                                        completionTime: v.completionTime,
+                                        answers: v.surveyAnswers || v.answers || {},
+                                        isComplete: true,
+                                    }))}
                                     isAdmin={true}
                                 />
                             ) : (

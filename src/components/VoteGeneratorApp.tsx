@@ -149,7 +149,44 @@ const VoteGeneratorApp: React.FC = () => {
                     // Fetch survey responses
                     const resultsResponse = await fetch(`/.netlify/functions/vg-get-results?id=${surveyId}${adminKey ? `&admin=${adminKey}` : ''}`);
                     const resultsData = await resultsResponse.json();
-                    const responses = resultsData.votes || [];
+                    
+                    // Debug logging
+                    console.log('=== VoteGeneratorApp Survey Results Debug ===');
+                    console.log('Survey ID:', surveyId);
+                    console.log('isAdmin:', isAdmin);
+                    console.log('resultsData:', resultsData);
+                    console.log('resultsData keys:', Object.keys(resultsData));
+                    console.log('voteCount:', resultsData.voteCount);
+                    console.log('surveyResponses:', resultsData.surveyResponses);
+                    console.log('surveyResponses count:', resultsData.surveyResponses?.length);
+                    console.log('votes count:', resultsData.votes?.length);
+                    if (resultsData.surveyResponses?.[0]) {
+                        console.log('First surveyResponse:', resultsData.surveyResponses[0]);
+                        console.log('First surveyResponse.answers:', resultsData.surveyResponses[0].answers);
+                    }
+                    console.log('=== End Debug ===');
+                    
+                    // Use surveyResponses if available (already mapped with 'answers'), otherwise map votes
+                    let responses = resultsData.surveyResponses || [];
+                    if (responses.length === 0 && resultsData.votes?.length > 0) {
+                        console.log('VoteGeneratorApp: surveyResponses empty, falling back to mapping votes');
+                        // Fallback: map raw votes to the expected format
+                        responses = resultsData.votes.map((v: any, idx: number) => ({
+                            id: v.id || `response_${idx}`,
+                            pollId: surveyId,
+                            submittedAt: v.timestamp || v.votedAt,
+                            startedAt: v.startedAt,
+                            completionTime: v.completionTime,
+                            answers: v.surveyAnswers || v.answers || {},
+                            isComplete: true,
+                        }));
+                    }
+                    
+                    console.log('VoteGeneratorApp: Final responses count:', responses.length);
+                    if (responses[0]) {
+                        console.log('VoteGeneratorApp: First final response:', responses[0]);
+                    }
+                    
                     setViewState({ type: 'survey-results', poll: survey, responses, isAdmin });
                 } else if (hasCompletedSurvey && survey.settings?.hideResults) {
                     setViewState({ type: 'error', message: "Thanks for completing the survey! Results are hidden by the organizer." });
@@ -626,7 +663,13 @@ const VoteGeneratorApp: React.FC = () => {
 
                     {/* Survey Vote View */}
                     {viewState.type === 'survey-vote' && (
-                        <motion.div key="survey-vote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div 
+                            key="survey-vote" 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                            className="bg-white min-h-[calc(100vh-64px)]"
+                        >
                             <SurveyVote 
                                 poll={viewState.poll} 
                                 onSubmit={async (response: any) => {

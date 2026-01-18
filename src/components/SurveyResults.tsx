@@ -1408,6 +1408,27 @@ interface SurveyResultsProps {
 }
 
 const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawResponses, isAdmin = false, onUpgrade }) => {
+    // DEBUG LOGGING - Remove after debugging
+    useEffect(() => {
+        console.log('=== SurveyResults Debug ===');
+        console.log('Poll ID:', poll?.id);
+        console.log('Poll sections:', poll?.sections?.length || 0);
+        console.log('Raw responses count:', rawResponses?.length || 0);
+        if (rawResponses?.[0]) {
+            console.log('First raw response:', rawResponses[0]);
+            console.log('First response answers:', rawResponses[0].answers);
+            console.log('First response answers keys:', Object.keys(rawResponses[0].answers || {}));
+        }
+        if (poll?.sections?.[0]) {
+            console.log('First section:', poll.sections[0].title);
+            console.log('First section questions:', poll.sections[0].questions?.length || 0);
+            if (poll.sections[0].questions?.[0]) {
+                console.log('First question:', poll.sections[0].questions[0]);
+            }
+        }
+        console.log('=== End Debug ===');
+    }, [poll, rawResponses]);
+    
     // Ensure responses is always a valid array with valid entries
     const allResponses = useMemo(() => {
         if (!rawResponses || !Array.isArray(rawResponses)) return [];

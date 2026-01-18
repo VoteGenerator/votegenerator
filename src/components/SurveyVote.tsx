@@ -558,13 +558,9 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
     // Render Welcome Screen
     if (showWelcome) {
         const themeColor = settings.themeColor || '#6366f1';
-        const bgColor = settings.backgroundColor || '#f8fafc';
         
         return (
-            <div 
-                className="min-h-[60vh] flex items-center justify-center p-4"
-                style={{ backgroundColor: bgColor }}
-            >
+            <div className="min-h-[60vh] flex items-center justify-center p-4">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

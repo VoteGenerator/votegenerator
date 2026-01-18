@@ -1858,9 +1858,9 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                                 .flatMap(s => s.questions.map(q => ({ ...q, sectionTitle: s.sectionTitle })))
                                 .filter(q => ['rating', 'scale'].includes(q.questionType) && q.distribution && Object.keys(q.distribution).length > 0);
                             
-                            // Combine and limit
+                            // Combine - show ALL visualizable questions (no artificial limit)
                             const allChartQuestions = [...choiceQuestions, ...ratingQuestions];
-                            const chartQuestions = allChartQuestions.slice(0, isPaidUser ? 6 : 3);
+                            const chartQuestions = allChartQuestions; // Show all
                             
                             if (chartQuestions.length === 0) {
                                 // Debug: Show why there are no charts

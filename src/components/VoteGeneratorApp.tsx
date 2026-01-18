@@ -360,8 +360,10 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     const handleEditPoll = () => {
-        if(viewState.type === 'results' && viewState.isAdmin) {
-             setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
+        if (viewState.type === 'results' && viewState.isAdmin) {
+            setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
+        } else if (viewState.type === 'survey-results' && viewState.isAdmin) {
+            setViewState({ type: 'edit', poll: viewState.poll, isAdmin: true });
         }
     };
 

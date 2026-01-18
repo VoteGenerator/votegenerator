@@ -510,16 +510,12 @@ export const handler: Handler = async (event) => {
             };
         }
         
-        // Check if poll is paused (free user over limit)
-        if (poll.status === 'paused') {
+        // Check if poll has expired (close date passed)
+        if (poll.expiresAt && new Date(poll.expiresAt) < new Date()) {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ 
-                    error: 'This poll is currently paused. The poll creator needs to upgrade their plan or reactivate this poll.',
-                    code: 'POLL_PAUSED',
-                    isPaused: true
-                })
+                body: JSON.stringify({ error: 'This poll has closed. Voting is no longer available.' })
             };
         }
         

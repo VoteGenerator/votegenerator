@@ -179,8 +179,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     isSurvey = false,
     surveyResponses = []
 }) => {
-    // State
-    const [activeTab, setActiveTab] = useState<TabType>('results');
+    // Calculate initial vote count to determine default tab
+    const initialVoteCount = results.totalVotes || results.votes?.length || 0;
+    
+    // State - default to 'share' tab when no votes yet
+    const [activeTab, setActiveTab] = useState<TabType>(initialVoteCount === 0 ? 'share' : 'results');
     const [copiedShare, setCopiedShare] = useState(false);
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
@@ -353,12 +356,20 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     const firstVoteDate = useMemo(() => {
         if (votes.length === 0) return null;
-        return new Date(votes[0]?.timestamp);
+        const vote = votes[0];
+        const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? null : date;
     }, [votes]);
 
     const lastVoteDate = useMemo(() => {
         if (votes.length === 0) return null;
-        return new Date(votes[votes.length - 1]?.timestamp);
+        const vote = votes[votes.length - 1];
+        const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? null : date;
     }, [votes]);
 
     // Tabs - Analytics locked for free users
@@ -748,6 +759,38 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
+                        {/* Getting Started Banner - Show when no votes */}
+                        {voteCount === 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl p-6 text-white"
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Sparkles size={24} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold mb-2">🎉 Your {isSurvey ? 'survey' : 'poll'} is ready!</h3>
+                                        <p className="text-white/90 text-sm mb-4">
+                                            Share the link below with your audience. Responses will appear on the Results tab in real-time.
+                                        </p>
+                                        <div className="flex flex-wrap gap-3">
+                                            <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1.5 rounded-full">
+                                                <Check size={14} /> Link ready to share
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1.5 rounded-full">
+                                                <Check size={14} /> Dashboard auto-refreshes
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm bg-white/20 px-3 py-1.5 rounded-full">
+                                                <Check size={14} /> Works on all devices
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* Share Link - FREE */}
                         <CollapsibleSection
                             title="Share Link"

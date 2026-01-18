@@ -170,6 +170,10 @@ const AdminDashboard: React.FC = () => {
     const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isBulkExporting, setIsBulkExporting] = useState(false);
+    
+    // Individual poll actions
+    const [duplicatingPollId, setDuplicatingPollId] = useState<string | null>(null);
+    const [pausingPollId, setPausingPollId] = useState<string | null>(null);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -997,6 +1001,91 @@ const AdminDashboard: React.FC = () => {
         setIsBulkExporting(false);
     };
 
+    // Individual poll actions
+    const handleDuplicatePoll = async (poll: UserPoll) => {
+        if (!session) return;
+        setDuplicatingPollId(poll.id);
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-duplicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey
+                })
+            });
+            
+            if (response.ok) {
+                const { newPollId, newAdminKey } = await response.json();
+                
+                // Add to local state
+                const newPoll: UserPoll = {
+                    id: newPollId,
+                    adminKey: newAdminKey,
+                    title: `${poll.title} (Copy)`,
+                    type: poll.type,
+                    createdAt: new Date().toISOString(),
+                    responseCount: 0,
+                    status: 'draft'
+                };
+                
+                const updated = { ...session, polls: [newPoll, ...session.polls] };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+                
+                // Highlight the new poll
+                setJustCreatedPollId(newPollId);
+                setTimeout(() => setJustCreatedPollId(null), 5000);
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Failed to duplicate poll');
+            }
+        } catch (error) {
+            console.error('Duplicate error:', error);
+            alert('Failed to duplicate poll. Please try again.');
+        }
+        
+        setDuplicatingPollId(null);
+    };
+    
+    const handleTogglePause = async (poll: UserPoll) => {
+        if (!session) return;
+        setPausingPollId(poll.id);
+        
+        const newStatus = poll.status === 'paused' ? 'live' : 'paused';
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey,
+                    status: newStatus
+                })
+            });
+            
+            if (response.ok) {
+                // Update local state
+                const updatedPolls = session.polls.map(p => 
+                    p.id === poll.id ? { ...p, status: newStatus as 'live' | 'paused' } : p
+                );
+                const updated = { ...session, polls: updatedPolls };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Failed to update poll status');
+            }
+        } catch (error) {
+            console.error('Toggle pause error:', error);
+            alert('Failed to update poll status. Please try again.');
+        }
+        
+        setPausingPollId(null);
+    };
+
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
             {/* Header with Paid Nav */}
@@ -1572,16 +1661,7 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         {/* Hide Invite button for just-created polls - it's in Manage section */}
                                                         {!isJustCreated && (
-                                                            <button
-                                                                onClick={() => setShowShareCards(poll.id)}
-                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
-                                                                title="Create beautiful invite cards with QR codes"
-                                                            >
-                                                                <Palette size={18} />
-                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
-                                                            </button>
-                                                        )}
-                                                        <a
+<a
                                                             href={poll.type === 'survey' 
                                                                 ? `/#survey=${poll.id}&admin=${poll.adminKey}`
                                                                 : `/#id=${poll.id}&admin=${poll.adminKey}`

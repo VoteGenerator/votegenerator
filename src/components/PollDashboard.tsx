@@ -590,7 +590,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         ).length;
     }, [votes]);
 
-    const firstVoteDate = useMemo(() => {
+    const firstVoteDate: Date | null = useMemo(() => {
         if (votes.length === 0) return null;
         const vote = votes[0];
         const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
@@ -599,7 +599,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         return isNaN(date.getTime()) ? null : date;
     }, [votes]);
 
-    const lastVoteDate = useMemo(() => {
+    const lastVoteDate: Date | null = useMemo(() => {
         if (votes.length === 0) return null;
         
         // Find the most recent vote by comparing all timestamps

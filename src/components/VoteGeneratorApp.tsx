@@ -50,7 +50,7 @@ type ViewState =
     | { type: 'survey-ad-wall-before'; poll: Poll }
     | { type: 'survey-ad-wall-after'; poll: Poll }
     | { type: 'survey-results'; poll: Poll; responses: any[]; isAdmin?: boolean }
-    | { type: 'poll-closed'; status: 'expired' | 'closed' | 'paused' | 'draft'; pollId?: string }
+    | { type: 'poll-closed'; status: 'expired' | 'closed' | 'paused' | 'draft' | 'not_found'; pollId?: string }
     | { type: 'error'; message: string };
 
 const VoteGeneratorApp: React.FC = () => {
@@ -1030,6 +1030,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     viewState.status === 'expired' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
                                     viewState.status === 'paused' ? 'bg-gradient-to-br from-slate-500 to-slate-600' :
                                     viewState.status === 'draft' ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
+                                    viewState.status === 'not_found' ? 'bg-gradient-to-br from-slate-600 to-slate-700' :
                                     'bg-gradient-to-br from-red-500 to-rose-500'
                                 }`}>
                                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1038,7 +1039,7 @@ const VoteGeneratorApp: React.FC = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         )}
-                                        {viewState.status === 'closed' && (
+                                        {(viewState.status === 'closed' || viewState.status === 'not_found') && (
                                             <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                             </svg>
@@ -1060,12 +1061,14 @@ const VoteGeneratorApp: React.FC = () => {
                                         {viewState.status === 'closed' && 'Poll Closed'}
                                         {viewState.status === 'paused' && 'Poll Paused'}
                                         {viewState.status === 'draft' && 'Poll Not Available'}
+                                        {viewState.status === 'not_found' && 'Poll Not Found'}
                                     </h2>
                                     <p className="text-white/80">
                                         {viewState.status === 'expired' && 'This poll has reached its end date.'}
                                         {viewState.status === 'closed' && 'The organizer has closed this poll.'}
                                         {viewState.status === 'paused' && 'This poll is temporarily paused.'}
                                         {viewState.status === 'draft' && 'This poll is not yet published.'}
+                                        {viewState.status === 'not_found' && 'The link may be incorrect or the poll was deleted.'}
                                     </p>
                                 </div>
                                 
@@ -1076,6 +1079,7 @@ const VoteGeneratorApp: React.FC = () => {
                                         {viewState.status === 'closed' && 'Voting is no longer available. Contact the organizer if you believe this is an error.'}
                                         {viewState.status === 'paused' && 'Check back later or contact the organizer for more information.'}
                                         {viewState.status === 'draft' && 'The poll creator hasn\'t published this poll yet. Please check back later.'}
+                                        {viewState.status === 'not_found' && 'Please check the link and try again, or contact the person who shared it with you.'}
                                     </p>
                                     
                                     <div className="space-y-3">

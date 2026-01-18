@@ -12,7 +12,8 @@ import {
     Clock, TrendingUp, LayoutDashboard, Key, Users, Zap,
     RefreshCw, Loader2, Eye, EyeOff, ArrowRight, Activity,
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
-    PieChart, Calendar, Filter, MessageSquare, Crown
+    PieChart, Calendar, Filter, MessageSquare, Crown,
+    MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import SurveyResults from './SurveyResults';
@@ -201,6 +202,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [crossTabFilteredVotes, setCrossTabFilteredVotes] = useState<any[]>([]);
     const [isExporting, setIsExporting] = useState(false);
     
+    // Quick Actions state
+    const [showQuickActions, setShowQuickActions] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState(false);
+    
     // Local state for settings toggles (for immediate UI feedback)
     const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
@@ -350,6 +357,70 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         setShowUpgradeModal(true);
     };
 
+    // Quick Action Handlers
+    const handleTestAsVoter = () => {
+        const voterUrl = `${window.location.origin}/#${isSurvey ? 'survey' : 'poll'}=${poll.id}`;
+        window.open(voterUrl, '_blank');
+        setShowQuickActions(false);
+    };
+
+    const handleDuplicate = async () => {
+        setIsDuplicating(true);
+        try {
+            const response = await fetch('/.netlify/functions/vg-duplicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pollId: poll.id, adminKey })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Redirect to new poll's admin dashboard
+                window.location.href = `/#${isSurvey ? 'survey' : 'poll'}=${data.newPollId}&admin=${data.newAdminKey}`;
+            } else {
+                alert('Failed to duplicate. Please try again.');
+            }
+        } catch (error) {
+            console.error('Duplicate error:', error);
+            alert('Failed to duplicate. Please try again.');
+        }
+        setIsDuplicating(false);
+        setShowQuickActions(false);
+    };
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const response = await fetch('/.netlify/functions/vg-delete-poll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pollId: poll.id, adminKey })
+            });
+            
+            if (response.ok) {
+                // Clear from localStorage
+                const saved = localStorage.getItem('vg_polls');
+                if (saved) {
+                    const polls = JSON.parse(saved);
+                    const filtered = polls.filter((p: any) => p.id !== poll.id);
+                    localStorage.setItem('vg_polls', JSON.stringify(filtered));
+                }
+                // Redirect to home
+                window.location.href = '/';
+            } else {
+                alert('Failed to delete. Please try again.');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete. Please try again.');
+        }
+        setIsDeleting(false);
+        setShowDeleteModal(false);
+    };
+
+    // Get current poll status
+    const pollStatus = (poll as any).status || 'live';
+
     // Stats calculations
     const velocity = useMemo(() => {
         if (votes.length === 0) return 0;
@@ -390,47 +461,255 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     return (
         <div className="max-w-5xl mx-auto px-4 py-6">
             {/* ================================================================ */}
-            {/* HEADER */}
+            {/* HEADER - Redesigned with prominent status & quick actions */}
             {/* ================================================================ */}
             <div className="mb-6">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <h1 className="text-2xl font-black text-slate-900 truncate">
-                                {poll.title}
-                            </h1>
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                tier === 'business' ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700' :
-                                tier === 'pro' ? 'bg-purple-100 text-purple-700' :
-                                'bg-slate-100 text-slate-600'
-                            }`}>
-                                {tier.charAt(0).toUpperCase() + tier.slice(1)}
-                            </span>
+                {/* Top row: Status banner */}
+                <div className={`rounded-t-2xl px-4 py-3 flex items-center justify-between ${
+                    pollStatus === 'live' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' :
+                    pollStatus === 'draft' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                    pollStatus === 'paused' ? 'bg-gradient-to-r from-slate-500 to-slate-600' :
+                    'bg-gradient-to-r from-red-500 to-rose-500'
+                }`}>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            {pollStatus === 'live' && (
+                                <>
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                                    </span>
+                                    <span className="font-bold text-white">LIVE</span>
+                                </>
+                            )}
+                            {pollStatus === 'draft' && (
+                                <>
+                                    <Eye size={16} className="text-white" />
+                                    <span className="font-bold text-white">DRAFT</span>
+                                </>
+                            )}
+                            {pollStatus === 'paused' && (
+                                <>
+                                    <Pause size={16} className="text-white" />
+                                    <span className="font-bold text-white">PAUSED</span>
+                                </>
+                            )}
+                            {pollStatus === 'closed' && (
+                                <>
+                                    <XCircle size={16} className="text-white" />
+                                    <span className="font-bold text-white">CLOSED</span>
+                                </>
+                            )}
                         </div>
-                        {poll.description && (
-                            <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
-                        )}
+                        <span className="text-white/80 text-sm hidden sm:inline">
+                            {pollStatus === 'live' && 'Accepting responses'}
+                            {pollStatus === 'draft' && 'Not visible to voters yet'}
+                            {pollStatus === 'paused' && 'Temporarily not accepting responses'}
+                            {pollStatus === 'closed' && 'No longer accepting responses'}
+                        </span>
                     </div>
-                    <button
-                        onClick={onRefresh}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                    >
-                        <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-                    </button>
+                    
+                    <div className="flex items-center gap-2">
+                        {/* Test as Voter button */}
+                        <button
+                            onClick={handleTestAsVoter}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition"
+                        >
+                            <ExternalLink size={14} />
+                            <span className="hidden sm:inline">Preview</span>
+                        </button>
+                        
+                        {/* Quick Actions Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowQuickActions(!showQuickActions)}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition"
+                            >
+                                <MoreHorizontal size={16} />
+                            </button>
+                            
+                            <AnimatePresence>
+                                {showQuickActions && (
+                                    <>
+                                        {/* Backdrop */}
+                                        <div 
+                                            className="fixed inset-0 z-40" 
+                                            onClick={() => setShowQuickActions(false)}
+                                        />
+                                        
+                                        {/* Dropdown */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50"
+                                        >
+                                            <div className="py-1">
+                                                <button
+                                                    onClick={handleTestAsVoter}
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <ExternalLink size={16} className="text-slate-400" />
+                                                    Preview as Voter
+                                                </button>
+                                                <button
+                                                    onClick={handleDuplicate}
+                                                    disabled={isDuplicating}
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3 disabled:opacity-50"
+                                                >
+                                                    {isDuplicating ? (
+                                                        <Loader2 size={16} className="text-slate-400 animate-spin" />
+                                                    ) : (
+                                                        <CopyPlus size={16} className="text-slate-400" />
+                                                    )}
+                                                    Duplicate {isSurvey ? 'Survey' : 'Poll'}
+                                                </button>
+                                                <div className="border-t border-slate-100 my-1" />
+                                                <button
+                                                    onClick={() => {
+                                                        setShowQuickActions(false);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-3"
+                                                >
+                                                    <Trash2 size={16} />
+                                                    Delete {isSurvey ? 'Survey' : 'Poll'}
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
                 </div>
                 
-                {/* Poll Status Toggle */}
-                <div className="mt-4">
-                    <DraftLiveToggle
-                        pollId={poll.id}
-                        adminKey={adminKey}
-                        status={(poll as any).status || 'live'}
-                        voteCount={voteCount}
-                        onStatusChange={onRefresh}
-                    />
+                {/* Main header content */}
+                <div className="bg-white rounded-b-2xl border-x border-b border-slate-200 p-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
+                                <h1 className="text-2xl font-black text-slate-900 truncate">
+                                    {poll.title}
+                                </h1>
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                    tier === 'business' ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700' :
+                                    tier === 'pro' ? 'bg-purple-100 text-purple-700' :
+                                    'bg-slate-100 text-slate-600'
+                                }`}>
+                                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                                </span>
+                                {isSurvey && (
+                                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
+                                        Survey
+                                    </span>
+                                )}
+                            </div>
+                            {poll.description && (
+                                <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
+                            )}
+                        </div>
+                        <button
+                            onClick={onRefresh}
+                            disabled={isRefreshing}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                        >
+                            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
+                    
+                    {/* Poll Status Toggle - Compact version */}
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                        <DraftLiveToggle
+                            pollId={poll.id}
+                            adminKey={adminKey}
+                            status={(poll as any).status || 'live'}
+                            voteCount={voteCount}
+                            onStatusChange={onRefresh}
+                        />
+                    </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowDeleteModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <Trash2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">Delete {isSurvey ? 'Survey' : 'Poll'}?</h3>
+                                        <p className="text-white/80 text-sm">This cannot be undone</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="p-6">
+                                <p className="text-slate-600 mb-2">
+                                    You're about to permanently delete:
+                                </p>
+                                <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                                    <p className="font-bold text-slate-800">{poll.title}</p>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        {voteCount} response{voteCount !== 1 ? 's' : ''} will be lost
+                                    </p>
+                                </div>
+                                
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle size={18} className="text-amber-600 mt-0.5" />
+                                        <p className="text-sm text-amber-800">
+                                            All responses, analytics, and settings will be permanently deleted.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowDeleteModal(false)}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isDeleting ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Deleting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 size={18} />
+                                                Delete Forever
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ================================================================ */}
             {/* QUICK STATS */}

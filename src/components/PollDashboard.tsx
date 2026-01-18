@@ -590,50 +590,54 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         ).length;
     }, [votes]);
 
-    const firstVoteDate: Date | null = useMemo(() => {
-        if (votes.length === 0) return null;
-        const vote = votes[0];
-        const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
-        if (!dateStr) return null;
-        const date = new Date(dateStr);
-        return isNaN(date.getTime()) ? null : date;
-    }, [votes]);
-
-    // Format first vote date for display
-    const firstVoteDateDisplay = useMemo((): string => {
-        if (!firstVoteDate) return '—';
-        return firstVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }, [firstVoteDate]);
-
-    const lastVoteDate: Date | null = useMemo(() => {
-        if (votes.length === 0) return null;
-        
-        // Find the most recent vote by comparing all timestamps
-        let latestDate: Date | null = null;
-        
-        votes.forEach((vote: any) => {
+    // Compute first and last vote dates - direct computation to avoid TypeScript inference issues
+    const { firstVoteDateDisplay, lastVoteDateDisplay } = useMemo(() => {
+        // First vote date
+        let firstDisplay = '—';
+        if (votes.length > 0) {
+            const vote = votes[0];
             const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
-            if (!dateStr) return;
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return;
-            if (!latestDate || date > latestDate) {
-                latestDate = date;
+            if (dateStr) {
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    firstDisplay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
             }
-        });
+        }
         
-        return latestDate;
+        // Last vote date - find most recent
+        let lastDisplay = '—';
+        if (votes.length > 0) {
+            let latestDate: Date | null = null;
+            
+            votes.forEach((vote: any) => {
+                const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
+                if (!dateStr) return;
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return;
+                if (!latestDate || date > latestDate) {
+                    latestDate = date;
+                }
+            });
+            
+            if (latestDate) {
+                const diffMs = Date.now() - latestDate.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins < 60) {
+                    lastDisplay = `${diffMins}m ago`;
+                } else {
+                    const diffHours = Math.floor(diffMins / 60);
+                    if (diffHours < 24) {
+                        lastDisplay = `${diffHours}h ago`;
+                    } else {
+                        lastDisplay = latestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                }
+            }
+        }
+        
+        return { firstVoteDateDisplay: firstDisplay, lastVoteDateDisplay: lastDisplay };
     }, [votes]);
-
-    // Format last vote date for display
-    const lastVoteDateDisplay = useMemo((): string => {
-        if (!lastVoteDate) return '—';
-        const diffMs = Date.now() - lastVoteDate.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        if (diffMins < 60) return `${diffMins}m ago`;
-        const diffHours = Math.floor(diffMins / 60);
-        if (diffHours < 24) return `${diffHours}h ago`;
-        return lastVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }, [lastVoteDate]);
 
     // Tabs - Analytics locked for free users
     const tabs = [

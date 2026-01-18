@@ -5,37 +5,33 @@
 import React, { useState } from 'react';
 import { 
     Star, Crown, Zap, 
-    LayoutDashboard, HelpCircle, PlusCircle,
-    Menu, X, Sparkles
+    LayoutDashboard, PlusCircle,
+    Menu, X, Sparkles, AlertTriangle
 } from 'lucide-react';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
 type UserTier = 'free' | 'pro' | 'business';
 
-// Tier configuration
+// Tier configuration - matching AdminDashboard
 const TIER_CONFIG: Record<UserTier, {
     label: string;
     icon: typeof Star;
     gradient: string;
-    showBadge: boolean;
 }> = {
     free: {
         label: 'Free',
         icon: Sparkles,
         gradient: 'from-slate-500 to-slate-600',
-        showBadge: false,
     },
     pro: {
         label: 'Pro',
         icon: Crown,
-        gradient: 'from-purple-500 to-pink-600',
-        showBadge: true,
+        gradient: 'from-purple-500 to-indigo-500',
     },
     business: {
         label: 'Business',
         icon: Star,
         gradient: 'from-amber-500 to-orange-500',
-        showBadge: true,
     },
 };
 
@@ -57,98 +53,74 @@ const CreatePage: React.FC = () => {
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
         : 365;
     
+    // Check if plan is expired
+    const isPlanExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+    
     // Check if user has existing polls
     const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
     const hasPolls = userPolls.length > 0;
 
-    // Nav items - different for free vs paid, and free with polls
-    const navItems = isPaid ? [
-        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
-        { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
-        { label: 'Help', href: '/help', icon: HelpCircle },
-    ] : hasPolls ? [
-        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
-        { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
-        { label: 'Templates', href: '/templates', icon: Sparkles },
-        { label: 'Pricing', href: '/pricing', icon: Zap },
-    ] : [
-        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
-        { label: 'Templates', href: '/templates', icon: Sparkles },
-        { label: 'Pricing', href: '/pricing', icon: Zap },
-    ];
-
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Nav Header */}
+            {/* Nav Header - Matching AdminDashboard exactly */}
             <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <a href="/" className="flex items-center gap-2 group">
-                            <img 
-                                src="/logo.svg" 
-                                alt="VoteGenerator" 
-                                className="h-9 w-9"
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                            <span className="font-bold text-xl text-slate-900">
-                                Vote<span className="text-indigo-600">Generator</span>
-                            </span>
+                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                    {/* Logo - same as AdminDashboard */}
+                    <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className="w-9 h-9"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        <span className="font-bold text-xl text-slate-800">
+                            Vote<span className="text-indigo-600">Generator</span>
+                        </span>
+                    </a>
+
+                    {/* Desktop Nav - same structure as AdminDashboard */}
+                    <nav className="hidden md:flex items-center gap-1">
+                        <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
+                            <PlusCircle size={16} /> Create Poll
                         </a>
+                        {hasPolls && (
+                            <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                <LayoutDashboard size={16} /> My Dashboard
+                            </a>
+                        )}
+                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                            <Zap size={16} /> Templates
+                        </a>
+                    </nav>
 
-                        {/* Desktop Nav */}
-                        <nav className="hidden md:flex items-center gap-1">
-                            {navItems.map((item) => (
-                                <a
-                                    key={item.label}
-                                    href={item.href}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-medium ${
-                                        item.active 
-                                            ? 'text-indigo-600 bg-indigo-50' 
-                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                                    }`}
-                                >
-                                    <item.icon size={18} />
-                                    {item.label}
-                                </a>
-                            ))}
-                        </nav>
-
-                        {/* Right side - Tier Badge or Upgrade CTA */}
-                        <div className="hidden md:flex items-center gap-3">
-                            {isPaid ? (
-                                // Paid user badge
-                                <div className={`flex items-center gap-3 px-4 py-2 bg-gradient-to-r ${config.gradient} rounded-xl text-white`}>
-                                    <div className="flex items-center gap-2">
-                                        <TierIcon size={18} />
-                                        <span className="font-bold">{config.label}</span>
-                                    </div>
-                                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                                        {daysRemaining}d left
-                                    </span>
-                                </div>
-                            ) : (
-                                // Free user upgrade CTA
-                                <a
-                                    href="/pricing"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl text-white font-bold hover:shadow-lg transition"
-                                >
-                                    <Zap size={18} />
-                                    Go Pro
-                                </a>
-                            )}
-                        </div>
-
-                        {/* Mobile menu button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-                        >
-                            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
+                    {/* Right side - Upgrade or Tier Badge (same as AdminDashboard) */}
+                    <div className="hidden md:flex items-center gap-3">
+                        {tier === 'free' ? (
+                            // Free user - Upgrade button
+                            <a
+                                href="/pricing"
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                            >
+                                <Crown size={16} /> Upgrade
+                            </a>
+                        ) : (
+                            // Paid user - Tier badge
+                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                                {isPlanExpired ? <AlertTriangle size={16} /> : <TierIcon size={16} />} {config.label}
+                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                    {isPlanExpired ? 'Expired' : `${daysRemaining}d`}
+                                </span>
+                            </div>
+                        )}
                     </div>
+
+                    {/* Mobile menu button */}
+                    <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                    >
+                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
 
                 {/* Mobile Menu */}
@@ -161,31 +133,28 @@ const CreatePage: React.FC = () => {
                                     <span className="font-bold">{config.label} Plan</span>
                                 </div>
                                 <span className="text-sm bg-white/20 px-2 py-0.5 rounded-full">
-                                    {daysRemaining} days left
+                                    {isPlanExpired ? 'Expired' : `${daysRemaining}d left`}
                                 </span>
                             </div>
                         )}
-                        {navItems.map((item) => (
-                            <a
-                                key={item.label}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
-                                    item.active 
-                                        ? 'text-indigo-600 bg-indigo-50' 
-                                        : 'text-slate-700 hover:bg-slate-50'
-                                }`}
-                            >
-                                <item.icon size={20} />
-                                {item.label}
+                        <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-600 bg-indigo-50">
+                            <PlusCircle size={20} /> Create Poll
+                        </a>
+                        {hasPolls && (
+                            <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">
+                                <LayoutDashboard size={20} /> My Dashboard
                             </a>
-                        ))}
+                        )}
+                        <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">
+                            <Zap size={20} /> Templates
+                        </a>
                         {!isPaid && (
                             <a
                                 href="/pricing"
-                                className="flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl text-white font-bold"
+                                className="flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-bold"
                             >
-                                <Zap size={18} />
-                                Upgrade to Pro
+                                <Crown size={18} />
+                                Upgrade
                             </a>
                         )}
                     </div>

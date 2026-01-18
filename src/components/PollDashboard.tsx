@@ -1280,14 +1280,16 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             </motion.div>
 
             {/* ================================================================ */}
-            {/* TAB NAVIGATION - Mobile optimized with scroll */}
+            {/* TAB NAVIGATION - Prominent and visually distinct */}
             {/* ================================================================ */}
             <div className="mb-6 relative">
                 {/* Scroll hint gradients for mobile */}
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
                 
-                <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-white border-2 border-slate-200 rounded-2xl overflow-x-auto scrollbar-hide shadow-sm">
+                {/* Gradient border wrapper */}
+                <div className="p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg">
+                    <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-white rounded-[14px] overflow-x-auto scrollbar-hide">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -1330,6 +1332,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </button>
                         );
                     })}
+                    </div>
                 </div>
                 
                 {/* Mobile scroll hint text */}

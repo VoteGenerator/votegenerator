@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
+import PollComparison from './PollComparison';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -42,9 +43,12 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
-    status?: 'draft' | 'live' | 'paused';  // For Pro/Pro polls, paused for over-limit
+    voteCount?: number;  // Added for comparison
+    status?: 'draft' | 'live' | 'paused' | 'closed';
     expiresAt?: string;
     customSlug?: string;
+    tier?: string;
+    options?: { id?: string; text: string; votes?: number; imageUrl?: string }[];
 }
 
 interface UserSession {
@@ -161,6 +165,7 @@ const AdminDashboard: React.FC = () => {
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
+    const [showComparison, setShowComparison] = useState(false);
     const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
     const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
     
@@ -1395,6 +1400,23 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </div>
                                 )}
+                                {/* Compare Polls Button - Pro feature */}
+                                {polls.length >= 2 && (
+                                    <button 
+                                        onClick={() => {
+                                            if (tier === 'free') {
+                                                setShowUpgradeModal(true);
+                                            } else {
+                                                setShowComparison(true);
+                                            }
+                                        }}
+                                        className="px-4 py-2.5 bg-white border-2 border-purple-200 hover:border-purple-300 text-purple-700 rounded-xl font-medium flex items-center gap-2 hover:bg-purple-50 transition"
+                                    >
+                                        <ArrowLeftRight size={18} />
+                                        <span className="hidden sm:inline">Compare</span>
+                                        {tier === 'free' && <Crown size={14} className="text-amber-500" />}
+                                    </button>
+                                )}
                                 {polls.length > 0 && canCreateMorePolls() && (
                                     <button onClick={goToCreate} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
                                         <Plus size={18} /> New Poll
@@ -2249,6 +2271,37 @@ const AdminDashboard: React.FC = () => {
                 currentTier={tier}
                 source="admin_dashboard"
             />
+
+            {/* Poll Comparison Modal */}
+            <AnimatePresence>
+                {showComparison && (
+                    <PollComparison
+                        availablePolls={polls.map(p => {
+                            const totalVotes = p.voteCount || p.responseCount || 0;
+                            return {
+                                id: p.id,
+                                title: p.title,
+                                description: p.description,
+                                type: p.type,
+                                createdAt: p.createdAt,
+                                expiresAt: p.expiresAt,
+                                status: (p.status || 'live') as 'live' | 'closed' | 'draft' | 'paused',
+                                totalVotes,
+                                options: p.options?.map(opt => ({
+                                    id: opt.id || opt.text,
+                                    text: opt.text,
+                                    votes: opt.votes || 0,
+                                    percentage: totalVotes > 0 ? Math.round(((opt.votes || 0) / totalVotes) * 100) : 0,
+                                    imageUrl: opt.imageUrl
+                                })) || [],
+                                tier: p.tier
+                            };
+                        })}
+                        onClose={() => setShowComparison(false)}
+                        tier={tier}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Delete Confirmation Modal */}
             <AnimatePresence>

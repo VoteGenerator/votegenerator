@@ -12,7 +12,7 @@ import {
     Clock, TrendingUp, LayoutDashboard, Key, Users, Zap,
     RefreshCw, Loader2, Eye, EyeOff, ArrowRight, Activity,
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
-    PieChart, Calendar, Filter, MessageSquare, Crown,
+    PieChart, Calendar, Filter, MessageSquare, Crown, Star,
     MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
@@ -420,6 +420,59 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     // Get current poll status
     const pollStatus = (poll as any).status || 'live';
+    
+    // Milestone celebrations
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationMilestone, setCelebrationMilestone] = useState<number | null>(null);
+    const milestones = [10, 25, 50, 100, 250, 500, 1000];
+    
+    // Check for milestone on mount and vote changes
+    React.useEffect(() => {
+        const lastSeenCount = parseInt(localStorage.getItem(`milestone_${poll.id}`) || '0', 10);
+        const hitMilestone = milestones.find(m => voteCount >= m && lastSeenCount < m);
+        
+        if (hitMilestone) {
+            setCelebrationMilestone(hitMilestone);
+            setShowCelebration(true);
+            localStorage.setItem(`milestone_${poll.id}`, hitMilestone.toString());
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => setShowCelebration(false), 5000);
+        }
+    }, [voteCount, poll.id]);
+    
+    // Expiration countdown
+    const expirationInfo = useMemo(() => {
+        const expiresAt = (poll as any).expiresAt;
+        if (!expiresAt) return null;
+        
+        const expiryDate = new Date(expiresAt);
+        const now = new Date();
+        const diffMs = expiryDate.getTime() - now.getTime();
+        
+        if (diffMs <= 0) {
+            return { expired: true, text: 'Expired', color: 'text-red-600 bg-red-50' };
+        }
+        
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        if (diffDays > 7) {
+            return { 
+                expired: false, 
+                text: `Closes ${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+                color: 'text-slate-600 bg-slate-50'
+            };
+        } else if (diffDays > 1) {
+            return { expired: false, text: `${diffDays} days left`, color: 'text-amber-600 bg-amber-50' };
+        } else if (diffDays === 1) {
+            return { expired: false, text: '1 day left', color: 'text-orange-600 bg-orange-50' };
+        } else if (diffHours > 1) {
+            return { expired: false, text: `${diffHours} hours left`, color: 'text-red-600 bg-red-50' };
+        } else {
+            return { expired: false, text: 'Closing soon!', color: 'text-red-600 bg-red-50 animate-pulse' };
+        }
+    }, [(poll as any).expiresAt]);
 
     // Stats calculations
     const velocity = useMemo(() => {
@@ -604,6 +657,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         Survey
                                     </span>
                                 )}
+                                {expirationInfo && (
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${expirationInfo.color}`}>
+                                        <Clock size={12} />
+                                        {expirationInfo.text}
+                                    </span>
+                                )}
                             </div>
                             {poll.description && (
                                 <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
@@ -703,6 +762,102 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 Delete Forever
                                             </>
                                         )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Milestone Celebration Modal */}
+            <AnimatePresence>
+                {showCelebration && celebrationMilestone && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowCelebration(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+                            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 15 }}
+                            className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl text-center"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Confetti background */}
+                            <div className="relative bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 p-8">
+                                {/* Animated confetti pieces */}
+                                {[...Array(20)].map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        className={`absolute w-3 h-3 rounded-full ${
+                                            ['bg-yellow-300', 'bg-pink-300', 'bg-blue-300', 'bg-green-300', 'bg-purple-300'][i % 5]
+                                        }`}
+                                        initial={{ 
+                                            x: '50%', 
+                                            y: '50%', 
+                                            scale: 0 
+                                        }}
+                                        animate={{ 
+                                            x: `${Math.random() * 100}%`, 
+                                            y: `${Math.random() * 100}%`, 
+                                            scale: [0, 1, 0.5],
+                                            rotate: Math.random() * 360
+                                        }}
+                                        transition={{ 
+                                            duration: 2, 
+                                            delay: i * 0.1,
+                                            repeat: Infinity,
+                                            repeatDelay: 1
+                                        }}
+                                    />
+                                ))}
+                                
+                                <motion.div
+                                    animate={{ scale: [1, 1.1, 1] }}
+                                    transition={{ duration: 0.5, repeat: Infinity }}
+                                    className="text-7xl mb-4"
+                                >
+                                    🎉
+                                </motion.div>
+                                <h2 className="text-3xl font-black text-white mb-2">
+                                    {celebrationMilestone} Responses!
+                                </h2>
+                                <p className="text-white/90">
+                                    You hit a milestone!
+                                </p>
+                            </div>
+                            
+                            <div className="p-6">
+                                <p className="text-slate-600 mb-4">
+                                    {celebrationMilestone >= 100 
+                                        ? "Amazing! Your poll is really taking off! 🚀"
+                                        : celebrationMilestone >= 50
+                                        ? "Great progress! Keep sharing to reach more people."
+                                        : "You're off to a great start! Share your poll to get even more responses."
+                                    }
+                                </p>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowCelebration(false)}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowCelebration(false);
+                                            setActiveTab('share');
+                                        }}
+                                        className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
+                                    >
+                                        <Share2 size={18} />
+                                        Share More
                                     </button>
                                 </div>
                             </div>
@@ -897,10 +1052,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             </motion.div>
 
             {/* ================================================================ */}
-            {/* TAB NAVIGATION - Enhanced with pulse on Share */}
+            {/* TAB NAVIGATION - Mobile optimized with scroll */}
             {/* ================================================================ */}
-            <div className="mb-6">
-                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl overflow-x-auto">
+            <div className="mb-6 relative">
+                {/* Scroll hint gradients for mobile */}
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none sm:hidden" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none sm:hidden" />
+                
+                <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-slate-100 rounded-2xl overflow-x-auto scrollbar-hide">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -918,7 +1077,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         setActiveTab(tab.id);
                                     }
                                 }}
-                                className={`relative flex-1 min-w-[90px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                                className={`relative flex-shrink-0 sm:flex-1 min-w-[70px] sm:min-w-[90px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                                     isActive 
                                         ? colors.active
                                         : isLocked
@@ -934,16 +1093,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         transition={{ duration: 2, repeat: Infinity }}
                                     />
                                 )}
-                                <Icon size={18} className={isActive ? '' : colors.icon} />
-                                <span className="hidden sm:inline">{tab.label}</span>
-                                {isLocked && <Lock size={14} className="text-amber-500" />}
+                                <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isActive ? '' : colors.icon}`} />
+                                <span className="truncate">{tab.label}</span>
+                                {isLocked && <Lock size={12} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />}
                                 {shouldPulse && (
-                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 rounded-full animate-pulse" />
                                 )}
                             </button>
                         );
                     })}
                 </div>
+                
+                {/* Mobile scroll hint text */}
+                <p className="text-center text-xs text-slate-400 mt-2 sm:hidden">
+                    ← Swipe to see more tabs →
+                </p>
             </div>
 
             {/* ================================================================ */}
@@ -961,9 +1125,133 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
-                        {/* Poll Results - Available to ALL */}
-                        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                            {isSurvey || poll.type === 'survey' ? (
+                        {/* Empty State - When no responses yet */}
+                        {voteCount === 0 ? (
+                            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+                                <div className="text-center max-w-md mx-auto">
+                                    {/* Illustration */}
+                                    <div className="relative w-48 h-48 mx-auto mb-6">
+                                        {/* Background circles */}
+                                        <motion.div 
+                                            className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full"
+                                            animate={{ scale: [1, 1.05, 1] }}
+                                            transition={{ duration: 3, repeat: Infinity }}
+                                        />
+                                        <motion.div 
+                                            className="absolute inset-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full"
+                                            animate={{ scale: [1, 0.95, 1] }}
+                                            transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                                        />
+                                        {/* Icon */}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <motion.div
+                                                animate={{ y: [0, -8, 0] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                            >
+                                                <BarChart3 size={64} className="text-indigo-400" />
+                                            </motion.div>
+                                        </div>
+                                        {/* Floating elements */}
+                                        <motion.div 
+                                            className="absolute top-4 right-4 w-8 h-8 bg-amber-200 rounded-lg flex items-center justify-center"
+                                            animate={{ rotate: [0, 10, -10, 0], y: [0, -4, 0] }}
+                                            transition={{ duration: 4, repeat: Infinity }}
+                                        >
+                                            <Star size={16} className="text-amber-600" />
+                                        </motion.div>
+                                        <motion.div 
+                                            className="absolute bottom-8 left-4 w-6 h-6 bg-emerald-200 rounded-full flex items-center justify-center"
+                                            animate={{ scale: [1, 1.2, 1], y: [0, -6, 0] }}
+                                            transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                                        >
+                                            <Check size={12} className="text-emerald-600" />
+                                        </motion.div>
+                                    </div>
+                                    
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                        No responses yet
+                                    </h3>
+                                    <p className="text-slate-500 mb-6">
+                                        Share your {isSurvey ? 'survey' : 'poll'} to start collecting responses. 
+                                        Results will appear here in real-time!
+                                    </p>
+                                    
+                                    <motion.button
+                                        onClick={() => setActiveTab('share')}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 flex items-center gap-2 mx-auto"
+                                    >
+                                        <Share2 size={18} />
+                                        Share Your {isSurvey ? 'Survey' : 'Poll'}
+                                    </motion.button>
+                                    
+                                    <p className="text-xs text-slate-400 mt-4">
+                                        💡 Tip: Use QR codes for in-person events or embed on your website
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Activity Timeline - Recent responses */}
+                                {votes.length > 0 && (
+                                    <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                            <Activity size={18} className="text-indigo-500" />
+                                            Recent Activity
+                                        </h3>
+                                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                                            {votes.slice(-5).reverse().map((vote: any, idx: number) => {
+                                                const voteTime = new Date(vote.timestamp || vote.votedAt || vote.submittedAt);
+                                                const now = new Date();
+                                                const diffMs = now.getTime() - voteTime.getTime();
+                                                const diffMins = Math.floor(diffMs / 60000);
+                                                const diffHours = Math.floor(diffMins / 60);
+                                                const diffDays = Math.floor(diffHours / 24);
+                                                
+                                                let timeAgo = '';
+                                                if (diffMins < 1) timeAgo = 'Just now';
+                                                else if (diffMins < 60) timeAgo = `${diffMins}m ago`;
+                                                else if (diffHours < 24) timeAgo = `${diffHours}h ago`;
+                                                else if (diffDays === 1) timeAgo = 'Yesterday';
+                                                else timeAgo = `${diffDays}d ago`;
+                                                
+                                                return (
+                                                    <motion.div
+                                                        key={vote.id || idx}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.1 }}
+                                                        className="flex items-center gap-3 py-2 px-3 bg-slate-50 rounded-lg"
+                                                    >
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                                            idx === 0 ? 'bg-emerald-100' : 'bg-slate-100'
+                                                        }`}>
+                                                            <Check size={14} className={idx === 0 ? 'text-emerald-600' : 'text-slate-400'} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-slate-700 truncate">
+                                                                {vote.voterName || 'Anonymous'} responded
+                                                            </p>
+                                                        </div>
+                                                        <span className={`text-xs font-medium ${idx === 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                            {timeAgo}
+                                                        </span>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </div>
+                                        {votes.length > 5 && (
+                                            <p className="text-xs text-slate-400 text-center mt-2">
+                                                Showing last 5 of {votes.length} responses
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {/* Poll Results - Available to ALL */}
+                                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                                    {isSurvey || poll.type === 'survey' ? (
                                 <SurveyResults 
                                     poll={poll} 
                                     responses={surveyResponses.length > 0 ? surveyResponses : (results.votes || []).map((v: any, idx: number) => ({
@@ -1068,6 +1356,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 Edit Poll
                             </button>
                         </div>
+                            </>
+                        )}
                     </motion.div>
                 )}
 

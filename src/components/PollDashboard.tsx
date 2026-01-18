@@ -591,7 +591,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     }, [votes]);
 
     // Compute first and last vote dates - direct computation to avoid TypeScript inference issues
-    const { firstVoteDateDisplay, lastVoteDateDisplay } = useMemo(() => {
+    const { firstVoteDateDisplay, lastVoteDateDisplay } = useMemo((): { firstVoteDateDisplay: string; lastVoteDateDisplay: string } => {
         // First vote date
         let firstDisplay = '—';
         if (votes.length > 0) {
@@ -605,23 +605,27 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             }
         }
         
-        // Last vote date - find most recent
+        // Last vote date - find most recent using for loop for better type inference
         let lastDisplay = '—';
         if (votes.length > 0) {
-            let latestDate: Date | null = null;
+            let latestTime = 0;
+            let latestDateObj: Date | null = null;
             
-            votes.forEach((vote: any) => {
+            for (let i = 0; i < votes.length; i++) {
+                const vote = votes[i] as any;
                 const dateStr = vote?.timestamp || vote?.votedAt || vote?.submittedAt || vote?.completedAt;
-                if (!dateStr) return;
+                if (!dateStr) continue;
                 const date = new Date(dateStr);
-                if (isNaN(date.getTime())) return;
-                if (!latestDate || date > latestDate) {
-                    latestDate = date;
+                const time = date.getTime();
+                if (isNaN(time)) continue;
+                if (time > latestTime) {
+                    latestTime = time;
+                    latestDateObj = date;
                 }
-            });
+            }
             
-            if (latestDate) {
-                const diffMs = Date.now() - latestDate.getTime();
+            if (latestDateObj !== null && latestTime > 0) {
+                const diffMs = Date.now() - latestTime;
                 const diffMins = Math.floor(diffMs / 60000);
                 if (diffMins < 60) {
                     lastDisplay = `${diffMins}m ago`;
@@ -630,7 +634,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     if (diffHours < 24) {
                         lastDisplay = `${diffHours}h ago`;
                     } else {
-                        lastDisplay = latestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        lastDisplay = latestDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     }
                 }
             }

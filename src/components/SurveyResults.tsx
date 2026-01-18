@@ -8,7 +8,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    BarChart3, Users, Clock, Star, ChevronDown, ChevronRight,
+    BarChart3, Users, Clock, Star, ChevronDown, ChevronRight, ChevronLeft,
     Download, Eye, FileText, TrendingUp, TrendingDown,
     Shield, Lock, EyeOff, Info, Minus, Crown, FileSpreadsheet,
     Table, Calendar, Cloud, FileDown, Filter
@@ -1475,10 +1475,12 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
     const isPaidUser = tier !== 'free';
     
     const [expandedSections, setExpandedSections] = useState<Set<string>>(
-        new Set(poll.sections?.map(s => s.id) || [])
+        new Set() // Start collapsed by default
     );
     const [viewMode, setViewMode] = useState<'summary' | 'individual'>('summary');
     const [exportLoading, setExportLoading] = useState<string | null>(null);
+    const [visualOverviewPage, setVisualOverviewPage] = useState(0);
+    const CHARTS_PER_PAGE = 3;
     
     useEffect(() => {
         if (isAnonymous && viewMode === 'individual') {
@@ -1902,9 +1904,64 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                                 );
                             }
                             
+                            // Pagination
+                            const totalPages = Math.ceil(chartQuestions.length / CHARTS_PER_PAGE);
+                            const startIdx = visualOverviewPage * CHARTS_PER_PAGE;
+                            const endIdx = startIdx + CHARTS_PER_PAGE;
+                            const paginatedQuestions = chartQuestions.slice(startIdx, endIdx);
+                            
                             return (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {chartQuestions.map((q, idx) => {
+                                <div>
+                                    {/* Pagination info */}
+                                    {totalPages > 1 && (
+                                        <div className="flex items-center justify-between mb-4">
+                                            <p className="text-sm text-slate-500">
+                                                Showing {startIdx + 1}-{Math.min(endIdx, chartQuestions.length)} of {chartQuestions.length} questions
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setVisualOverviewPage(p => Math.max(0, p - 1))}
+                                                    disabled={visualOverviewPage === 0}
+                                                    className={`p-2 rounded-lg transition ${
+                                                        visualOverviewPage === 0 
+                                                            ? 'text-slate-300 cursor-not-allowed' 
+                                                            : 'text-slate-600 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                </button>
+                                                <div className="flex gap-1">
+                                                    {Array.from({ length: totalPages }, (_, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => setVisualOverviewPage(i)}
+                                                            className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                                                                visualOverviewPage === i
+                                                                    ? 'bg-indigo-600 text-white'
+                                                                    : 'text-slate-600 hover:bg-slate-100'
+                                                            }`}
+                                                        >
+                                                            {i + 1}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <button
+                                                    onClick={() => setVisualOverviewPage(p => Math.min(totalPages - 1, p + 1))}
+                                                    disabled={visualOverviewPage >= totalPages - 1}
+                                                    className={`p-2 rounded-lg transition ${
+                                                        visualOverviewPage >= totalPages - 1
+                                                            ? 'text-slate-300 cursor-not-allowed' 
+                                                            : 'text-slate-600 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    <ChevronRight size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {paginatedQuestions.map((q, idx) => {
                                         // Find the question to get option text
                                         const questionData = poll.sections
                                             ?.flatMap(s => s.questions || [])
@@ -2000,6 +2057,7 @@ const SurveyResults: React.FC<SurveyResultsProps> = ({ poll, responses: rawRespo
                                             </div>
                                         );
                                     })}
+                                </div>
                                 </div>
                             );
                         })()}

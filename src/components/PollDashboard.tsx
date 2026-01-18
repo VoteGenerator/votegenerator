@@ -44,7 +44,7 @@ interface PollDashboardProps {
     surveyResponses?: any[];
 }
 
-type TabType = 'results' | 'share' | 'settings' | 'downloads' | 'analytics';
+type TabType = 'results' | 'share' | 'notify' | 'settings' | 'downloads' | 'analytics';
 
 // Tab color configurations
 const tabColors: Record<TabType, { active: string; hover: string; icon: string }> = {
@@ -57,6 +57,11 @@ const tabColors: Record<TabType, { active: string; hover: string; icon: string }
         active: 'bg-emerald-600 text-white shadow-lg shadow-emerald-200', 
         hover: 'hover:bg-emerald-50 text-slate-600',
         icon: 'text-emerald-500'
+    },
+    notify: { 
+        active: 'bg-rose-600 text-white shadow-lg shadow-rose-200', 
+        hover: 'hover:bg-rose-50 text-slate-600',
+        icon: 'text-rose-500'
     },
     settings: { 
         active: 'bg-slate-700 text-white shadow-lg shadow-slate-200', 
@@ -376,6 +381,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const tabs = [
         { id: 'results' as TabType, label: 'Results', icon: BarChart3 },
         { id: 'share' as TabType, label: 'Share', icon: Share2 },
+        { id: 'notify' as TabType, label: 'Notify', icon: Bell },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings },
         { id: 'downloads' as TabType, label: 'Downloads', icon: FileDown },
         { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: isFree },
@@ -558,17 +564,55 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         </div>
                     </div>
                     
-                    {/* Quick action button */}
+                    {/* Quick action button - contextual based on state */}
+                    <div className="flex gap-2">
+                        {voteCount === 0 && (
+                            <motion.button
+                                onClick={() => setActiveTab('share')}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200"
+                            >
+                                <Share2 size={16} />
+                                Share Now
+                            </motion.button>
+                        )}
+                        {voteCount > 0 && voteCount < 5 && (
+                            <motion.button
+                                onClick={() => setActiveTab('share')}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl flex items-center gap-2"
+                            >
+                                <Share2 size={16} />
+                                Get More Votes
+                            </motion.button>
+                        )}
+                        {voteCount >= 5 && (
+                            <motion.button
+                                onClick={() => setActiveTab('results')}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl flex items-center gap-2"
+                            >
+                                <BarChart3 size={16} />
+                                View Results
+                            </motion.button>
+                        )}
+                    </div>
+                </div>
+                
+                {/* Contextual tip based on current state */}
+                <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                    <Sparkles size={12} className="text-amber-500" />
                     {voteCount === 0 && (
-                        <motion.button
-                            onClick={() => setActiveTab('share')}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200"
-                        >
-                            <Share2 size={16} />
-                            Share Now
-                        </motion.button>
+                        <span>Tip: Copy the link above and share it via email, text, or social media</span>
+                    )}
+                    {voteCount > 0 && voteCount < 10 && (
+                        <span>Tip: Results update automatically every 8 seconds. Set up email notifications in the Notify tab!</span>
+                    )}
+                    {voteCount >= 10 && (
+                        <span>Tip: Export your data in Downloads tab, or view detailed analytics (Pro feature)</span>
                     )}
                 </div>
             </motion.div>
@@ -1160,6 +1204,60 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 />
                             </div>
                         </CollapsibleSection>
+                    </motion.div>
+                )}
+
+                {/* ============================================================ */}
+                {/* NOTIFY TAB */}
+                {/* ============================================================ */}
+                {activeTab === 'notify' && (
+                    <motion.div
+                        key="notify"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-6"
+                    >
+                        {/* Email Notifications Header */}
+                        <div className="bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl p-6 text-white">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                    <Bell size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold">Email Notifications</h2>
+                                    <p className="text-white/80 text-sm">
+                                        Get notified about new responses, milestones, and important events
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Free tier info */}
+                        {isFree && (
+                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <p className="text-sm text-slate-600">
+                                    <strong>Free plan:</strong> Get notified when your {isSurvey ? 'survey' : 'poll'} closes.{' '}
+                                    <button
+                                        onClick={() => openUpgradeModal('notifications')}
+                                        className="text-indigo-600 hover:underline font-medium"
+                                    >
+                                        Upgrade
+                                    </button>
+                                    {' '}for real-time alerts, milestone notifications, and more.
+                                </p>
+                            </div>
+                        )}
+                        
+                        {/* Notification Settings Component */}
+                        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                            <NotificationSettings 
+                                pollId={poll.id}
+                                adminKey={adminKey}
+                                pollTitle={poll.title}
+                                tier={tier}
+                            />
+                        </div>
                     </motion.div>
                 )}
 

@@ -599,6 +599,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         return isNaN(date.getTime()) ? null : date;
     }, [votes]);
 
+    // Format first vote date for display
+    const firstVoteDateDisplay = useMemo((): string => {
+        if (!firstVoteDate) return '—';
+        return firstVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }, [firstVoteDate]);
+
     const lastVoteDate: Date | null = useMemo(() => {
         if (votes.length === 0) return null;
         
@@ -617,6 +623,17 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         
         return latestDate;
     }, [votes]);
+
+    // Format last vote date for display
+    const lastVoteDateDisplay = useMemo((): string => {
+        if (!lastVoteDate) return '—';
+        const diffMs = Date.now() - lastVoteDate.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 60) return `${diffMins}m ago`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return lastVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }, [lastVoteDate]);
 
     // Tabs - Analytics locked for free users
     const tabs = [
@@ -1095,20 +1112,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
                     <div className="text-lg font-bold text-slate-700">
-                        {firstVoteDate ? firstVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                        {firstVoteDateDisplay}
                     </div>
                     <div className="text-xs text-slate-500 font-medium mt-1">First Vote</div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
                     <div className="text-lg font-bold text-slate-700">
-                        {lastVoteDate ? (() => {
-                            const diffMs = Date.now() - lastVoteDate.getTime();
-                            const diffMins = Math.floor(diffMs / 60000);
-                            if (diffMins < 60) return `${diffMins}m ago`;
-                            const diffHours = Math.floor(diffMins / 60);
-                            if (diffHours < 24) return `${diffHours}h ago`;
-                            return lastVoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        })() : '—'}
+                        {lastVoteDateDisplay}
                     </div>
                     <div className="text-xs text-slate-500 font-medium mt-1">Last Vote</div>
                 </div>

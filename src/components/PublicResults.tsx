@@ -314,7 +314,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         options = [{ id: 'yes', text: 'Yes' }, { id: 'no', text: 'No' }];
                     }
                     
-                    const totalSelections = Object.values(counts).reduce((a, b) => a + b, 0);
+                    const totalSelections = (Object.values(counts) as number[]).reduce((a: number, b: number) => a + b, 0);
                     const sortedResults = options.map((opt: any) => {
                         const optId = opt.id || opt;
                         const optText = opt.text || opt;
@@ -439,7 +439,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         average: avg,
                         min: minVal,
                         max: maxVal,
-                        sum: numericAnswers.reduce((a, b) => a + b, 0)
+                        sum: numericAnswers.reduce((a: number, b: number) => a + b, 0)
                     });
                 }
                 // RANKING QUESTIONS
@@ -464,7 +464,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         const optId = opt.id || opt;
                         const scores = rankScores[optId] || [];
                         const avgRank = scores.length > 0 
-                            ? scores.reduce((a, b) => a + b, 0) / scores.length 
+                            ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length 
                             : options.length;
                         return {
                             id: optId,

@@ -269,6 +269,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         }
         if (sections[0]?.questions?.[0]) {
             console.log('First question id:', sections[0].questions[0].id);
+            console.log('First question type:', sections[0].questions[0].type);
         }
         
         // Calculate stats for each question
@@ -279,7 +280,6 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             section.questions?.forEach((question: any) => {
                 // Skip if already processed (prevent duplicates)
                 if (processedIds.has(question.id)) {
-                    console.log('Skipping duplicate question:', question.id);
                     return;
                 }
                 processedIds.add(question.id);
@@ -291,56 +291,115 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         // Try question.id directly, or without prefix
                         return ans[question.id] || ans[question.id.replace(/^q_/, '')] || null;
                     })
-                    .filter(Boolean);
+                    .filter((a: any) => a !== null && a !== undefined && a !== '');
                 
-                console.log(`Question "${question.text}" (${question.id}): ${answers.length} answers`);
+                console.log(`Question "${question.text}" (${question.id}, type: ${question.type}): ${answers.length} answers`);
+                if (answers[0]) console.log('Sample answer:', answers[0]);
                 
-                if (question.type === 'multiple_choice' || question.type === 'dropdown' || question.type === 'yes_no') {
-                    // Count option selections
+                const qType = question.type;
+                
+                // CHOICE QUESTIONS: multiple_choice, dropdown, yes_no, checkbox
+                if (['multiple_choice', 'dropdown', 'yes_no', 'checkbox'].includes(qType)) {
                     const counts: Record<string, number> = {};
                     answers.forEach((answer: any) => {
-                        const value = Array.isArray(answer) ? answer[0] : answer;
-                        counts[value] = (counts[value] || 0) + 1;
+                        // Handle both single value and array of values
+                        const values = Array.isArray(answer) ? answer : [answer];
+                        values.forEach((val: string) => {
+                            counts[val] = (counts[val] || 0) + 1;
+                        });
                     });
                     
-                    const options = question.type === 'yes_no' 
-                        ? [{ id: 'yes', text: 'Yes' }, { id: 'no', text: 'No' }]
-                        : question.options || [];
+                    let options = question.options || [];
+                    if (qType === 'yes_no') {
+                        options = [{ id: 'yes', text: 'Yes' }, { id: 'no', text: 'No' }];
+                    }
                     
-                    const sortedResults = options.map((opt: any) => ({
-                        text: opt.text || opt,
-                        count: counts[opt.id || opt] || 0,
-                        percentage: answers.length > 0 ? ((counts[opt.id || opt] || 0) / answers.length) * 100 : 0
-                    })).sort((a: any, b: any) => b.count - a.count);
+                    const totalSelections = Object.values(counts).reduce((a, b) => a + b, 0);
+                    const sortedResults = options.map((opt: any) => {
+                        const optId = opt.id || opt;
+                        const optText = opt.text || opt;
+                        return {
+                            id: optId,
+                            text: optText,
+                            count: counts[optId] || 0,
+                            percentage: totalSelections > 0 ? ((counts[optId] || 0) / totalSelections) * 100 : 0
+                        };
+                    }).sort((a: any, b: any) => b.count - a.count);
                     
                     questionStats.push({
                         id: question.id,
                         text: question.text,
                         type: 'choice',
+                        questionType: qType,
                         sectionTitle: section.title,
                         totalResponses: answers.length,
-                        results: sortedResults
+                        results: sortedResults,
+                        isMultiSelect: qType === 'checkbox'
                     });
-                } else if (question.type === 'rating' || question.type === 'scale') {
-                    // Calculate average rating
-                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                }
+                // RATING QUESTIONS: rating (stars)
+                else if (qType === 'rating') {
+                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n) && n > 0);
+                    const max = question.maxRating || question.max || 5;
                     const avg = numericAnswers.length > 0 
                         ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
                         : 0;
+                    
+                    // Distribution of ratings
+                    const distribution: Record<number, number> = {};
+                    for (let i = 1; i <= max; i++) distribution[i] = 0;
+                    numericAnswers.forEach((n: number) => {
+                        if (distribution[n] !== undefined) distribution[n]++;
+                    });
                     
                     questionStats.push({
                         id: question.id,
                         text: question.text,
                         type: 'rating',
+                        questionType: qType,
                         sectionTitle: section.title,
                         totalResponses: numericAnswers.length,
                         average: avg,
-                        max: question.maxRating || question.max || 5
+                        max,
+                        distribution
                     });
-                } else if (question.type === 'nps') {
-                    // Calculate NPS
+                }
+                // SCALE QUESTIONS: scale (1-10 or custom)
+                else if (qType === 'scale') {
+                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const min = question.minScale || question.min || 1;
+                    const max = question.maxScale || question.max || 10;
+                    const avg = numericAnswers.length > 0 
+                        ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
+                        : 0;
+                    
+                    // Distribution
+                    const distribution: Record<number, number> = {};
+                    for (let i = min; i <= max; i++) distribution[i] = 0;
+                    numericAnswers.forEach((n: number) => {
+                        if (distribution[n] !== undefined) distribution[n]++;
+                    });
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'scale',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: numericAnswers.length,
+                        average: avg,
+                        min,
+                        max,
+                        distribution,
+                        minLabel: question.minLabel,
+                        maxLabel: question.maxLabel
+                    });
+                }
+                // NPS QUESTIONS
+                else if (qType === 'nps') {
                     const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
                     const promoters = numericAnswers.filter((n: number) => n >= 9).length;
+                    const passives = numericAnswers.filter((n: number) => n >= 7 && n <= 8).length;
                     const detractors = numericAnswers.filter((n: number) => n <= 6).length;
                     const total = numericAnswers.length;
                     const npsScore = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : 0;
@@ -349,18 +408,134 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         id: question.id,
                         text: question.text,
                         type: 'nps',
+                        questionType: qType,
                         sectionTitle: section.title,
                         totalResponses: total,
                         npsScore,
-                        promoters: Math.round((promoters / total) * 100) || 0,
-                        passives: Math.round(((total - promoters - detractors) / total) * 100) || 0,
-                        detractors: Math.round((detractors / total) * 100) || 0
+                        promoters: total > 0 ? Math.round((promoters / total) * 100) : 0,
+                        passives: total > 0 ? Math.round((passives / total) * 100) : 0,
+                        detractors: total > 0 ? Math.round((detractors / total) * 100) : 0,
+                        promoterCount: promoters,
+                        passiveCount: passives,
+                        detractorCount: detractors
+                    });
+                }
+                // NUMBER QUESTIONS
+                else if (qType === 'number') {
+                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const avg = numericAnswers.length > 0 
+                        ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
+                        : 0;
+                    const minVal = numericAnswers.length > 0 ? Math.min(...numericAnswers) : 0;
+                    const maxVal = numericAnswers.length > 0 ? Math.max(...numericAnswers) : 0;
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'number',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: numericAnswers.length,
+                        average: avg,
+                        min: minVal,
+                        max: maxVal,
+                        sum: numericAnswers.reduce((a, b) => a + b, 0)
+                    });
+                }
+                // RANKING QUESTIONS
+                else if (qType === 'ranking') {
+                    const options = question.options || [];
+                    const rankScores: Record<string, number[]> = {};
+                    options.forEach((opt: any) => {
+                        rankScores[opt.id || opt] = [];
+                    });
+                    
+                    answers.forEach((ranking: any) => {
+                        if (Array.isArray(ranking)) {
+                            ranking.forEach((optId: string, idx: number) => {
+                                if (rankScores[optId]) {
+                                    rankScores[optId].push(idx + 1);
+                                }
+                            });
+                        }
+                    });
+                    
+                    const rankedResults = options.map((opt: any) => {
+                        const optId = opt.id || opt;
+                        const scores = rankScores[optId] || [];
+                        const avgRank = scores.length > 0 
+                            ? scores.reduce((a, b) => a + b, 0) / scores.length 
+                            : options.length;
+                        return {
+                            id: optId,
+                            text: opt.text || opt,
+                            avgRank,
+                            responses: scores.length
+                        };
+                    }).sort((a: any, b: any) => a.avgRank - b.avgRank);
+                    
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'ranking',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: answers.length,
+                        results: rankedResults
+                    });
+                }
+                // TEXT QUESTIONS: text, textarea, email, phone - Skip showing content for privacy
+                else if (['text', 'textarea', 'email', 'phone'].includes(qType)) {
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'text',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: answers.length,
+                        // Don't include actual text for privacy
+                        hasResponses: answers.length > 0
+                    });
+                }
+                // DATE/TIME QUESTIONS
+                else if (['date', 'time', 'datetime'].includes(qType)) {
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'datetime',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: answers.length
+                    });
+                }
+                // MATRIX QUESTIONS - Complex, show as summary
+                else if (qType === 'matrix') {
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'matrix',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: answers.length,
+                        rows: question.rows || [],
+                        columns: question.columns || []
+                    });
+                }
+                // FALLBACK: Unknown type
+                else {
+                    questionStats.push({
+                        id: question.id,
+                        text: question.text,
+                        type: 'unknown',
+                        questionType: qType,
+                        sectionTitle: section.title,
+                        totalResponses: answers.length
                     });
                 }
             });
         });
         
-        console.log('Final questionStats count:', questionStats.length);
+        console.log('Final questionStats:', questionStats);
         console.log('=== End Survey Debug ===');
         
         return {
@@ -968,118 +1143,505 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 </motion.div>
                     </>
                 ) : (
-                    /* Survey Results Section */
+                    /* Survey Results Section - Typeform Style */
                     <div className="space-y-6 mb-8">
                         {/* Survey Stats Cards */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <StatCard
-                                icon={<Users size={20} />}
-                                value={surveyStats?.totalResponses || 0}
-                                label="Responses"
-                                gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
-                                delay={0.1}
-                            />
-                            <StatCard
-                                icon={<Vote size={20} />}
-                                value={surveyStats?.questionStats?.length || 0}
-                                label="Questions"
-                                gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
-                                delay={0.2}
-                            />
-                            <StatCard
-                                icon={<Sparkles size={20} />}
-                                value="Live"
-                                label="Status"
-                                gradient="bg-gradient-to-br from-pink-500 to-rose-600"
-                                delay={0.3}
-                            />
-                        </div>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+                        >
+                            <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-xl rounded-2xl p-4 border border-indigo-500/30 text-center">
+                                <Users size={24} className="mx-auto mb-2 text-indigo-400" />
+                                <div className="text-3xl font-black text-white">{surveyStats?.totalResponses || 0}</div>
+                                <div className="text-white/50 text-xs">Responses</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-xl rounded-2xl p-4 border border-emerald-500/30 text-center">
+                                <Vote size={24} className="mx-auto mb-2 text-emerald-400" />
+                                <div className="text-3xl font-black text-white">{surveyStats?.questionStats?.length || 0}</div>
+                                <div className="text-white/50 text-xs">Questions</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 backdrop-blur-xl rounded-2xl p-4 border border-pink-500/30 text-center col-span-2 sm:col-span-1">
+                                <Sparkles size={24} className="mx-auto mb-2 text-pink-400" />
+                                <div className="text-3xl font-black text-white">Live</div>
+                                <div className="text-white/50 text-xs">Status</div>
+                            </div>
+                        </motion.div>
                         
-                        {/* Question Results */}
+                        {/* Question Results - Typeform Style */}
                         {surveyStats?.questionStats?.map((question: any, qIdx: number) => (
                             <motion.div
                                 key={question.id}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 + qIdx * 0.1 }}
-                                className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/20"
+                                transition={{ delay: 0.2 + qIdx * 0.1 }}
+                                className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/10 overflow-hidden relative"
                             >
-                                {question.sectionTitle && (
-                                    <div className="text-xs uppercase tracking-wider text-indigo-300 font-semibold mb-2">
-                                        {question.sectionTitle}
+                                {/* Question Header */}
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                        question.type === 'choice' ? 'bg-gradient-to-br from-indigo-500 to-purple-500' :
+                                        question.type === 'rating' ? 'bg-gradient-to-br from-amber-500 to-orange-500' :
+                                        question.type === 'scale' ? 'bg-gradient-to-br from-cyan-500 to-blue-500' :
+                                        question.type === 'nps' ? 'bg-gradient-to-br from-emerald-500 to-teal-500' :
+                                        question.type === 'number' ? 'bg-gradient-to-br from-pink-500 to-rose-500' :
+                                        question.type === 'ranking' ? 'bg-gradient-to-br from-violet-500 to-purple-500' :
+                                        question.type === 'text' ? 'bg-gradient-to-br from-slate-500 to-slate-600' :
+                                        'bg-gradient-to-br from-slate-500 to-slate-600'
+                                    }`}>
+                                        <span className="text-white font-bold text-sm">{qIdx + 1}</span>
                                     </div>
-                                )}
-                                <h3 className="text-lg font-bold text-white mb-4">{question.text}</h3>
-                                <div className="text-xs text-white/40 mb-4">{question.totalResponses} responses</div>
+                                    <div className="flex-1 min-w-0">
+                                        {question.sectionTitle && (
+                                            <div className="text-xs uppercase tracking-wider text-indigo-400 font-semibold mb-1">
+                                                {question.sectionTitle}
+                                            </div>
+                                        )}
+                                        <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">{question.text}</h3>
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
+                                            <span>{question.totalResponses} responses</span>
+                                            <span className="w-1 h-1 bg-white/20 rounded-full" />
+                                            <span className="capitalize">{question.questionType?.replace('_', ' ') || question.type}</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 
+                                {/* CHOICE TYPE - Multiple Choice, Dropdown, Yes/No */}
                                 {question.type === 'choice' && (
                                     <div className="space-y-3">
-                                        {question.results?.slice(0, 6).map((result: any, idx: number) => (
-                                            <div key={idx}>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className="text-sm text-white/80 truncate flex-1 mr-4">{result.text}</span>
-                                                    <span className="text-sm font-bold text-white">{Math.round(result.percentage)}%</span>
+                                        {question.results?.map((result: any, idx: number) => (
+                                            <motion.div 
+                                                key={result.id || idx}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.4 + idx * 0.08 }}
+                                            >
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                        {idx === 0 && result.count > 0 && (
+                                                            <Trophy size={14} className="text-amber-400 flex-shrink-0" />
+                                                        )}
+                                                        <span className="text-white/90 text-sm truncate">{result.text}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                                                        <span className="text-white/40 text-xs">{result.count}</span>
+                                                        <span className="font-bold text-white min-w-[50px] text-right">
+                                                            {Math.round(result.percentage)}%
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                                <div className="h-8 bg-white/5 rounded-xl overflow-hidden relative">
                                                     <motion.div
-                                                        className={`h-full bg-gradient-to-r ${barGradients[idx % barGradients.length]}`}
+                                                        className={`absolute inset-y-0 left-0 bg-gradient-to-r ${barGradients[idx % barGradients.length]} rounded-xl`}
                                                         initial={{ width: 0 }}
-                                                        animate={{ width: `${result.percentage}%` }}
-                                                        transition={{ delay: 0.5 + idx * 0.1, duration: 0.8 }}
+                                                        animate={{ width: `${Math.max(result.percentage, result.count > 0 ? 3 : 0)}%` }}
+                                                        transition={{ duration: 1, delay: 0.5 + idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                                                    />
+                                                    <motion.div
+                                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                                        initial={{ x: '-100%' }}
+                                                        animate={{ x: '200%' }}
+                                                        transition={{ duration: 1.2, delay: 0.8 + idx * 0.08 }}
                                                     />
                                                 </div>
+                                            </motion.div>
+                                        ))}
+                                        {question.results?.length === 0 && (
+                                            <div className="text-center py-6 text-white/40">
+                                                <div className="text-sm">No responses yet</div>
                                             </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {/* RATING TYPE - Star Rating (1-5 or custom) */}
+                                {question.type === 'rating' && (
+                                    <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-12">
+                                        {/* Big Score */}
+                                        <motion.div 
+                                            className="text-center"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.4, type: "spring" }}
+                                        >
+                                            <div className="text-6xl sm:text-7xl font-black bg-gradient-to-br from-amber-300 via-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                                                {question.totalResponses > 0 ? question.average.toFixed(1) : '—'}
+                                            </div>
+                                            <div className="text-white/50 text-sm mt-1">out of {question.max}</div>
+                                            {/* Star visualization */}
+                                            <div className="flex items-center justify-center gap-1.5 mt-3">
+                                                {Array.from({ length: question.max }, (_, i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        initial={{ scale: 0, rotate: -180 }}
+                                                        animate={{ scale: 1, rotate: 0 }}
+                                                        transition={{ delay: 0.6 + i * 0.1, type: "spring" }}
+                                                        className={`text-2xl ${
+                                                            i < Math.round(question.average) 
+                                                                ? 'text-amber-400' 
+                                                                : 'text-white/20'
+                                                        }`}
+                                                    >
+                                                        ★
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                        
+                                        {/* Distribution */}
+                                        {question.distribution && (
+                                            <div className="flex-1 w-full sm:w-auto">
+                                                <div className="text-xs text-white/40 mb-3">Rating Distribution</div>
+                                                <div className="space-y-2">
+                                                    {Array.from({ length: question.max }, (_, i) => {
+                                                        const rating = question.max - i;
+                                                        const count = question.distribution[rating] || 0;
+                                                        const pct = question.totalResponses > 0 ? (count / question.totalResponses) * 100 : 0;
+                                                        return (
+                                                            <div key={rating} className="flex items-center gap-2">
+                                                                <span className="text-amber-400 w-4 text-right text-sm">{rating}</span>
+                                                                <div className="flex-1 h-4 bg-white/5 rounded-full overflow-hidden">
+                                                                    <motion.div
+                                                                        className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"
+                                                                        initial={{ width: 0 }}
+                                                                        animate={{ width: `${pct}%` }}
+                                                                        transition={{ delay: 0.6 + i * 0.05, duration: 0.8 }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-white/40 text-xs w-8">{count}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {/* SCALE TYPE - 1-10 Scale */}
+                                {question.type === 'scale' && (
+                                    <div className="space-y-6">
+                                        {/* Big Score with Gauge */}
+                                        <div className="flex flex-col items-center">
+                                            <motion.div 
+                                                className="relative w-48 h-24 overflow-hidden"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.4 }}
+                                            >
+                                                {/* Semi-circle gauge */}
+                                                <svg viewBox="0 0 100 50" className="w-full h-full">
+                                                    <defs>
+                                                        <linearGradient id={`gauge-${question.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                                            <stop offset="0%" stopColor="#ef4444" />
+                                                            <stop offset="50%" stopColor="#f59e0b" />
+                                                            <stop offset="100%" stopColor="#10b981" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    {/* Background arc */}
+                                                    <path
+                                                        d="M 10 50 A 40 40 0 0 1 90 50"
+                                                        fill="none"
+                                                        stroke="rgba(255,255,255,0.1)"
+                                                        strokeWidth="8"
+                                                        strokeLinecap="round"
+                                                    />
+                                                    {/* Filled arc */}
+                                                    <motion.path
+                                                        d="M 10 50 A 40 40 0 0 1 90 50"
+                                                        fill="none"
+                                                        stroke={`url(#gauge-${question.id})`}
+                                                        strokeWidth="8"
+                                                        strokeLinecap="round"
+                                                        initial={{ pathLength: 0 }}
+                                                        animate={{ pathLength: question.totalResponses > 0 ? (question.average - question.min) / (question.max - question.min) : 0 }}
+                                                        transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
+                                                    />
+                                                </svg>
+                                                {/* Score in center */}
+                                                <div className="absolute inset-0 flex items-end justify-center pb-0">
+                                                    <div className="text-4xl font-black text-white">
+                                                        {question.totalResponses > 0 ? question.average.toFixed(1) : '—'}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                            <div className="flex justify-between w-48 text-xs text-white/40 mt-1">
+                                                <span>{question.minLabel || question.min}</span>
+                                                <span>{question.maxLabel || question.max}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Distribution bar */}
+                                        {question.distribution && (
+                                            <div>
+                                                <div className="text-xs text-white/40 mb-2 text-center">Response Distribution</div>
+                                                <div className="flex items-end justify-center gap-1 h-20">
+                                                    {Array.from({ length: question.max - question.min + 1 }, (_, i) => {
+                                                        const val = question.min + i;
+                                                        const count = question.distribution[val] || 0;
+                                                        const maxCount = Math.max(...Object.values(question.distribution as Record<number, number>), 1);
+                                                        const height = (count / maxCount) * 100;
+                                                        return (
+                                                            <motion.div 
+                                                                key={val}
+                                                                className="flex flex-col items-center gap-1 flex-1"
+                                                                initial={{ opacity: 0, scaleY: 0 }}
+                                                                animate={{ opacity: 1, scaleY: 1 }}
+                                                                transition={{ delay: 0.6 + i * 0.05 }}
+                                                                style={{ originY: 1 }}
+                                                            >
+                                                                <div 
+                                                                    className="w-full bg-gradient-to-t from-cyan-500 to-blue-500 rounded-t"
+                                                                    style={{ height: `${Math.max(height, count > 0 ? 10 : 2)}%` }}
+                                                                />
+                                                                <span className="text-[10px] text-white/40">{val}</span>
+                                                            </motion.div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {/* NPS TYPE - Net Promoter Score */}
+                                {question.type === 'nps' && (
+                                    <div className="space-y-6">
+                                        {/* Big NPS Score */}
+                                        <motion.div 
+                                            className="text-center"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.4, type: "spring" }}
+                                        >
+                                            <div className={`text-7xl font-black ${
+                                                question.npsScore >= 50 ? 'text-emerald-400' :
+                                                question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
+                                            }`}>
+                                                {question.totalResponses > 0 ? (question.npsScore > 0 ? '+' : '') + question.npsScore : '—'}
+                                            </div>
+                                            <div className="text-white/50 text-sm">Net Promoter Score</div>
+                                            <div className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
+                                                question.npsScore >= 50 ? 'bg-emerald-500/20 text-emerald-300' :
+                                                question.npsScore >= 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
+                                            }`}>
+                                                {question.npsScore >= 70 ? 'Excellent' :
+                                                 question.npsScore >= 50 ? 'Great' :
+                                                 question.npsScore >= 30 ? 'Good' :
+                                                 question.npsScore >= 0 ? 'Needs Improvement' : 'Critical'}
+                                            </div>
+                                        </motion.div>
+                                        
+                                        {/* Segmented bar */}
+                                        <div>
+                                            <div className="h-6 flex rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    className="bg-gradient-to-r from-red-500 to-red-400 flex items-center justify-center"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${question.detractors}%` }}
+                                                    transition={{ delay: 0.5, duration: 0.8 }}
+                                                >
+                                                    {question.detractors > 10 && (
+                                                        <span className="text-white text-xs font-bold">{question.detractors}%</span>
+                                                    )}
+                                                </motion.div>
+                                                <motion.div 
+                                                    className="bg-gradient-to-r from-amber-500 to-amber-400 flex items-center justify-center"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${question.passives}%` }}
+                                                    transition={{ delay: 0.6, duration: 0.8 }}
+                                                >
+                                                    {question.passives > 10 && (
+                                                        <span className="text-white text-xs font-bold">{question.passives}%</span>
+                                                    )}
+                                                </motion.div>
+                                                <motion.div 
+                                                    className="bg-gradient-to-r from-emerald-500 to-emerald-400 flex items-center justify-center"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${question.promoters}%` }}
+                                                    transition={{ delay: 0.7, duration: 0.8 }}
+                                                >
+                                                    {question.promoters > 10 && (
+                                                        <span className="text-white text-xs font-bold">{question.promoters}%</span>
+                                                    )}
+                                                </motion.div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Legend */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <motion.div 
+                                                className="bg-red-500/10 rounded-xl p-3 text-center border border-red-500/20"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.8 }}
+                                            >
+                                                <div className="text-2xl font-black text-red-400">{question.detractorCount || 0}</div>
+                                                <div className="text-xs text-red-300/60">Detractors</div>
+                                                <div className="text-[10px] text-white/30 mt-1">Score 0-6</div>
+                                            </motion.div>
+                                            <motion.div 
+                                                className="bg-amber-500/10 rounded-xl p-3 text-center border border-amber-500/20"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.9 }}
+                                            >
+                                                <div className="text-2xl font-black text-amber-400">{question.passiveCount || 0}</div>
+                                                <div className="text-xs text-amber-300/60">Passives</div>
+                                                <div className="text-[10px] text-white/30 mt-1">Score 7-8</div>
+                                            </motion.div>
+                                            <motion.div 
+                                                className="bg-emerald-500/10 rounded-xl p-3 text-center border border-emerald-500/20"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 1 }}
+                                            >
+                                                <div className="text-2xl font-black text-emerald-400">{question.promoterCount || 0}</div>
+                                                <div className="text-xs text-emerald-300/60">Promoters</div>
+                                                <div className="text-[10px] text-white/30 mt-1">Score 9-10</div>
+                                            </motion.div>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* NUMBER TYPE - Numeric Input */}
+                                {question.type === 'number' && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 rounded-xl p-4 text-center border border-pink-500/20"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.4 }}
+                                        >
+                                            <div className="text-3xl font-black text-pink-400">
+                                                {question.totalResponses > 0 ? question.average.toFixed(1) : '—'}
+                                            </div>
+                                            <div className="text-xs text-white/40">Average</div>
+                                        </motion.div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl p-4 text-center border border-cyan-500/20"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.5 }}
+                                        >
+                                            <div className="text-3xl font-black text-cyan-400">
+                                                {question.totalResponses > 0 ? question.min : '—'}
+                                            </div>
+                                            <div className="text-xs text-white/40">Minimum</div>
+                                        </motion.div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl p-4 text-center border border-emerald-500/20"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.6 }}
+                                        >
+                                            <div className="text-3xl font-black text-emerald-400">
+                                                {question.totalResponses > 0 ? question.max : '—'}
+                                            </div>
+                                            <div className="text-xs text-white/40">Maximum</div>
+                                        </motion.div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl p-4 text-center border border-amber-500/20"
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ delay: 0.7 }}
+                                        >
+                                            <div className="text-3xl font-black text-amber-400">
+                                                {question.totalResponses > 0 ? question.sum?.toLocaleString() : '—'}
+                                            </div>
+                                            <div className="text-xs text-white/40">Total Sum</div>
+                                        </motion.div>
+                                    </div>
+                                )}
+                                
+                                {/* RANKING TYPE - Ranked Options */}
+                                {question.type === 'ranking' && (
+                                    <div className="space-y-3">
+                                        {question.results?.map((result: any, idx: number) => (
+                                            <motion.div 
+                                                key={result.id || idx}
+                                                className="flex items-center gap-4 bg-white/5 rounded-xl p-3"
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.4 + idx * 0.1 }}
+                                            >
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${
+                                                    idx === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white' :
+                                                    idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700' :
+                                                    idx === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white' :
+                                                    'bg-white/10 text-white/60'
+                                                }`}>
+                                                    {idx + 1}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-white font-medium">{result.text}</div>
+                                                    <div className="text-white/40 text-xs">Avg rank: {result.avgRank.toFixed(1)}</div>
+                                                </div>
+                                                {idx === 0 && <Trophy size={20} className="text-amber-400" />}
+                                            </motion.div>
                                         ))}
                                     </div>
                                 )}
                                 
-                                {question.type === 'rating' && (
-                                    <div className="text-center">
-                                        <div className="text-5xl font-black bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent mb-2">
-                                            {question.average.toFixed(1)}
+                                {/* TEXT TYPE - Show response count only (privacy) */}
+                                {question.type === 'text' && (
+                                    <motion.div 
+                                        className="bg-white/5 rounded-xl p-6 text-center"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                    >
+                                        <div className="w-16 h-16 bg-gradient-to-br from-slate-500/20 to-slate-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                            <Crown size={28} className="text-slate-400" />
                                         </div>
-                                        <div className="text-white/40 text-sm">out of {question.max}</div>
-                                        <div className="flex items-center justify-center gap-1 mt-3">
-                                            {Array.from({ length: question.max }, (_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`w-3 h-3 rounded-full ${
-                                                        i < Math.round(question.average) 
-                                                            ? 'bg-gradient-to-r from-amber-400 to-yellow-400' 
-                                                            : 'bg-white/20'
-                                                    }`}
-                                                />
-                                            ))}
+                                        <div className="text-4xl font-black text-white mb-1">{question.totalResponses}</div>
+                                        <div className="text-white/50 text-sm mb-4">text responses collected</div>
+                                        <div className="inline-block px-3 py-1.5 bg-white/10 rounded-full text-xs text-white/60">
+                                            🔒 Text responses are private
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 )}
                                 
-                                {question.type === 'nps' && (
-                                    <div>
-                                        <div className="text-center mb-4">
-                                            <div className={`text-5xl font-black ${
-                                                question.npsScore >= 50 ? 'text-emerald-400' :
-                                                question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
-                                            }`}>
-                                                {question.npsScore > 0 ? '+' : ''}{question.npsScore}
-                                            </div>
-                                            <div className="text-white/40 text-sm">NPS Score</div>
+                                {/* DATETIME TYPE */}
+                                {question.type === 'datetime' && (
+                                    <motion.div 
+                                        className="bg-white/5 rounded-xl p-6 text-center"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                    >
+                                        <div className="text-4xl font-black text-white mb-1">{question.totalResponses}</div>
+                                        <div className="text-white/50 text-sm">date/time responses</div>
+                                    </motion.div>
+                                )}
+                                
+                                {/* MATRIX TYPE - Show summary */}
+                                {question.type === 'matrix' && (
+                                    <motion.div 
+                                        className="bg-white/5 rounded-xl p-6 text-center"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                    >
+                                        <div className="text-4xl font-black text-white mb-1">{question.totalResponses}</div>
+                                        <div className="text-white/50 text-sm mb-2">matrix responses</div>
+                                        <div className="text-xs text-white/30">
+                                            {question.rows?.length || 0} rows × {question.columns?.length || 0} columns
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                                            <div className="bg-emerald-500/20 rounded-lg p-2">
-                                                <div className="text-emerald-400 font-bold">{question.promoters}%</div>
-                                                <div className="text-white/40">Promoters</div>
-                                            </div>
-                                            <div className="bg-amber-500/20 rounded-lg p-2">
-                                                <div className="text-amber-400 font-bold">{question.passives}%</div>
-                                                <div className="text-white/40">Passives</div>
-                                            </div>
-                                            <div className="bg-red-500/20 rounded-lg p-2">
-                                                <div className="text-red-400 font-bold">{question.detractors}%</div>
-                                                <div className="text-white/40">Detractors</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </motion.div>
+                                )}
+                                
+                                {/* UNKNOWN/OTHER TYPE */}
+                                {question.type === 'unknown' && (
+                                    <motion.div 
+                                        className="bg-white/5 rounded-xl p-6 text-center"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                    >
+                                        <div className="text-4xl font-black text-white mb-1">{question.totalResponses}</div>
+                                        <div className="text-white/50 text-sm">responses</div>
+                                    </motion.div>
                                 )}
                             </motion.div>
                         ))}
@@ -1087,14 +1649,20 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         {/* Empty State for Surveys */}
                         {(!surveyStats?.questionStats || surveyStats.questionStats.length === 0) && (
                             <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20 text-center"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10 text-center"
                             >
-                                <Vote size={48} className="mx-auto mb-4 text-white/30" />
-                                <h3 className="text-lg font-bold text-white mb-2">No Responses Yet</h3>
-                                <p className="text-white/50 text-sm">
-                                    Be the first to respond to this survey!
+                                <motion.div 
+                                    className="w-20 h-20 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6"
+                                    animate={{ scale: [1, 1.05, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <Vote size={36} className="text-indigo-400" />
+                                </motion.div>
+                                <h3 className="text-xl font-bold text-white mb-2">Waiting for Responses</h3>
+                                <p className="text-white/50 text-sm max-w-sm mx-auto">
+                                    Survey results will appear here once people start responding. Share the link to get started!
                                 </p>
                             </motion.div>
                         )}

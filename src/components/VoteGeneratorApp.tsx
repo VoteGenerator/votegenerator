@@ -146,41 +146,89 @@ const VoteGeneratorApp: React.FC = () => {
                 
                 // Check if user has completed this survey
                 const hasCompletedSurvey = localStorage.getItem(`vg_survey_completed_${surveyId}`);
-                const showSurveyResults = isAdmin || (hasCompletedSurvey && !survey.settings?.hideResults);
+                const allowMultiple = survey.settings?.allowMultiple || survey.settings?.security === 'none';
+                const hideResults = survey.settings?.hideResults;
                 
-                if (showSurveyResults) {
-                    // Fetch survey responses
+                // Option B: Smart redirect based on survey settings
+                if (hasCompletedSurvey) {
+                    if (allowMultiple) {
+                        // Allow multiple responses - go directly to survey form
+                        const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
+                        if (shouldShowVoterAdWall(survey, isAdmin) && !adWallShown) {
+                            setViewState({ type: 'survey-ad-wall-before', poll: survey });
+                        } else {
+                            setViewState({ type: 'survey-vote', poll: survey });
+                        }
+                    } else if (hideResults) {
+                        // Results hidden - show thank you page
+                        setViewState({ 
+                            type: 'thank-you', 
+                            pollType: 'survey',
+                            customMessage: survey.settings?.thankYouMessage,
+                            title: survey.settings?.thankYouTitle
+                        });
+                    } else if (isAdmin || !hideResults) {
+                        // Show survey results
+                        const resultsResponse = await fetch(`/.netlify/functions/vg-get-results?id=${surveyId}${adminKey ? `&admin=${adminKey}` : ''}`);
+                        const resultsData = await resultsResponse.json();
+                        
+                        // Debug logging
+                        console.log('=== VoteGeneratorApp Survey Results Debug ===');
+                        console.log('Survey ID:', surveyId);
+                        console.log('isAdmin:', isAdmin);
+                        console.log('Survey from vg-get sections:', survey.sections?.length || 0);
+                        console.log('ResultsData sections:', resultsData.sections?.length || 0);
+                        console.log('voteCount:', resultsData.voteCount);
+                        console.log('surveyResponses count:', resultsData.surveyResponses?.length);
+                        if (resultsData.surveyResponses?.[0]) {
+                            console.log('First surveyResponse:', resultsData.surveyResponses[0]);
+                            console.log('First surveyResponse.answers keys:', Object.keys(resultsData.surveyResponses[0].answers || {}));
+                        }
+                        if (survey.sections?.[0]?.questions?.[0]) {
+                            console.log('First question ID:', survey.sections[0].questions[0].id);
+                        }
+                        console.log('=== End Debug ===');
+                        
+                        // IMPORTANT: Merge sections from resultsData if survey doesn't have them
+                        if ((!survey.sections || survey.sections.length === 0) && resultsData.sections?.length > 0) {
+                            console.log('VoteGeneratorApp: Using sections from resultsData');
+                            survey.sections = resultsData.sections;
+                        }
+                        
+                        // Use surveyResponses if available (already mapped with 'answers'), otherwise map votes
+                        let responses = resultsData.surveyResponses || [];
+                        if (responses.length === 0 && resultsData.votes?.length > 0) {
+                            console.log('VoteGeneratorApp: surveyResponses empty, falling back to mapping votes');
+                            // Fallback: map raw votes to the expected format
+                            responses = resultsData.votes.map((v: any, idx: number) => ({
+                                id: v.id || `response_${idx}`,
+                                pollId: surveyId,
+                                submittedAt: v.timestamp || v.votedAt,
+                                startedAt: v.startedAt,
+                                completionTime: v.completionTime,
+                                answers: v.surveyAnswers || v.answers || {},
+                                isComplete: true,
+                            }));
+                        }
+                        
+                        console.log('VoteGeneratorApp: Final responses count:', responses.length);
+                        if (responses[0]) {
+                            console.log('VoteGeneratorApp: First final response:', responses[0]);
+                        }
+                        
+                        setViewState({ type: 'survey-results', poll: survey, responses, isAdmin });
+                    }
+                } else if (isAdmin) {
+                    // Admin viewing survey - show results
                     const resultsResponse = await fetch(`/.netlify/functions/vg-get-results?id=${surveyId}${adminKey ? `&admin=${adminKey}` : ''}`);
                     const resultsData = await resultsResponse.json();
                     
-                    // Debug logging
-                    console.log('=== VoteGeneratorApp Survey Results Debug ===');
-                    console.log('Survey ID:', surveyId);
-                    console.log('isAdmin:', isAdmin);
-                    console.log('Survey from vg-get sections:', survey.sections?.length || 0);
-                    console.log('ResultsData sections:', resultsData.sections?.length || 0);
-                    console.log('voteCount:', resultsData.voteCount);
-                    console.log('surveyResponses count:', resultsData.surveyResponses?.length);
-                    if (resultsData.surveyResponses?.[0]) {
-                        console.log('First surveyResponse:', resultsData.surveyResponses[0]);
-                        console.log('First surveyResponse.answers keys:', Object.keys(resultsData.surveyResponses[0].answers || {}));
-                    }
-                    if (survey.sections?.[0]?.questions?.[0]) {
-                        console.log('First question ID:', survey.sections[0].questions[0].id);
-                    }
-                    console.log('=== End Debug ===');
-                    
-                    // IMPORTANT: Merge sections from resultsData if survey doesn't have them
                     if ((!survey.sections || survey.sections.length === 0) && resultsData.sections?.length > 0) {
-                        console.log('VoteGeneratorApp: Using sections from resultsData');
                         survey.sections = resultsData.sections;
                     }
                     
-                    // Use surveyResponses if available (already mapped with 'answers'), otherwise map votes
                     let responses = resultsData.surveyResponses || [];
                     if (responses.length === 0 && resultsData.votes?.length > 0) {
-                        console.log('VoteGeneratorApp: surveyResponses empty, falling back to mapping votes');
-                        // Fallback: map raw votes to the expected format
                         responses = resultsData.votes.map((v: any, idx: number) => ({
                             id: v.id || `response_${idx}`,
                             pollId: surveyId,
@@ -192,19 +240,7 @@ const VoteGeneratorApp: React.FC = () => {
                         }));
                     }
                     
-                    console.log('VoteGeneratorApp: Final responses count:', responses.length);
-                    if (responses[0]) {
-                        console.log('VoteGeneratorApp: First final response:', responses[0]);
-                    }
-                    
                     setViewState({ type: 'survey-results', poll: survey, responses, isAdmin });
-                } else if (hasCompletedSurvey && survey.settings?.hideResults) {
-                    setViewState({ 
-                        type: 'thank-you', 
-                        pollType: 'survey',
-                        customMessage: survey.settings?.thankYouMessage,
-                        title: survey.settings?.thankYouTitle
-                    });
                 } else {
                     // Show survey - check for ad-wall
                     const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
@@ -257,19 +293,36 @@ const VoteGeneratorApp: React.FC = () => {
 
             // Logic to determine what to show (Vote vs Results)
             const userVoted = hasVoted(pollId);
-            const showResults = isAdmin || (userVoted && !poll.settings.hideResults);
-
-            if (showResults) {
-                const results = await getResults(pollId, adminKey || undefined);
-                setViewState({ type: 'results', poll, results, isAdmin });
-            } else if (userVoted && poll.settings.hideResults) {
-                 // Voted but results are hidden - show thank you page
-                 setViewState({ 
-                     type: 'thank-you', 
-                     pollType: 'poll',
-                     customMessage: poll.settings?.thankYouMessage,
-                     title: poll.settings?.thankYouTitle
-                 });
+            const allowMultiple = poll.settings?.allowMultiple || poll.settings?.security === 'none';
+            const hideResults = poll.settings?.hideResults;
+            
+            // Option B: Smart redirect based on poll settings
+            if (userVoted) {
+                if (allowMultiple) {
+                    // Allow multiple votes - go directly to voting form
+                    const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
+                    if (shouldShowVoterAdWall(poll, isAdmin) && !adWallShown) {
+                        setViewState({ type: 'ad-wall-before', poll });
+                    } else {
+                        setViewState({ type: 'vote', poll });
+                    }
+                } else if (hideResults) {
+                    // Results hidden - show thank you page
+                    setViewState({ 
+                        type: 'thank-you', 
+                        pollType: poll.type === 'survey' ? 'survey' : 'poll',
+                        customMessage: poll.settings?.thankYouMessage,
+                        title: poll.settings?.thankYouTitle
+                    });
+                } else if (isAdmin) {
+                    // Admin - show results
+                    const results = await getResults(pollId, adminKey || undefined);
+                    setViewState({ type: 'results', poll, results, isAdmin });
+                } else {
+                    // Show results with ability to vote again if security is 'none'
+                    const results = await getResults(pollId, adminKey || undefined);
+                    setViewState({ type: 'results', poll, results, isAdmin });
+                }
             } else {
                 // User hasn't voted yet - check if we need to show ad-wall first
                 const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
@@ -408,7 +461,9 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     const handleVoteAgain = () => {
-        if(viewState.type === 'results') {
+        if (viewState.type === 'results') {
+            setViewState({ type: 'vote', poll: viewState.poll });
+        } else if (viewState.type === 'survey-results') {
             setViewState({ type: 'vote', poll: viewState.poll });
         }
     };
@@ -907,14 +962,32 @@ const VoteGeneratorApp: React.FC = () => {
                                             isAdmin={false}
                                         />
                                         
-                                        <div className="mt-10 text-center print:hidden">
-                                            <a 
-                                                href="/create"
-                                                className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
-                                            >
-                                                Create your own survey <ArrowRight size={14}/>
-                                            </a>
-                                        </div>
+                                        {/* Vote Again Button when multiple votes allowed */}
+                                        {(viewState.poll.settings?.allowMultiple || viewState.poll.settings?.security === 'none') && (
+                                            <div className="mt-8 flex flex-col items-center justify-center print:hidden">
+                                                <button
+                                                    onClick={handleVoteAgain}
+                                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                                >
+                                                    <RotateCcw size={18} />
+                                                    Submit Another Response
+                                                </button>
+                                                <p className="text-slate-400 text-xs mt-2">
+                                                    Multiple responses are allowed for this survey.
+                                                </p>
+                                            </div>
+                                        )}
+                                        
+                                        {!(viewState.poll.settings?.allowMultiple || viewState.poll.settings?.security === 'none') && (
+                                            <div className="mt-10 text-center print:hidden">
+                                                <a 
+                                                    href="/create"
+                                                    className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
+                                                >
+                                                    Create your own survey <ArrowRight size={14}/>
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
                                     
                                     {/* Powered by VoteGenerator Badge - FREE tier only */}
@@ -1003,8 +1076,8 @@ const VoteGeneratorApp: React.FC = () => {
                                             isAdmin={false}
                                         />
                                         
-                                        {/* Vote Again Button for Non-Admin with Security 'none' */}
-                                        {viewState.poll.settings.security === 'none' && (
+                                        {/* Vote Again Button for Non-Admin when multiple votes allowed */}
+                                        {(viewState.poll.settings?.allowMultiple || viewState.poll.settings?.security === 'none') && (
                                             <div className="mt-8 flex flex-col items-center justify-center print:hidden">
                                                 <button
                                                     onClick={handleVoteAgain}
@@ -1014,12 +1087,12 @@ const VoteGeneratorApp: React.FC = () => {
                                                     Vote Again
                                                 </button>
                                                 <p className="text-slate-400 text-xs mt-2">
-                                                    Multiple votes are allowed for this poll.
+                                                    Multiple votes are allowed for this {viewState.poll.type === 'survey' ? 'survey' : 'poll'}.
                                                 </p>
                                             </div>
                                         )}
                                         
-                                        {viewState.poll.settings.security !== 'none' && (
+                                        {!(viewState.poll.settings?.allowMultiple || viewState.poll.settings?.security === 'none') && (
                                             <div className="mt-10 text-center print:hidden">
                                                 <a 
                                                     href="/create"

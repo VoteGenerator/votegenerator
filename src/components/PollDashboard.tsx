@@ -2414,10 +2414,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             Security
                                             <HelpTooltip 
                                                 content={
-                                                    poll.settings.security === 'ip' ? "IP Address tracking prevents the same device from voting multiple times." :
-                                                    poll.settings.security === 'cookie' ? "Browser cookies prevent repeat votes from the same browser session." :
-                                                    poll.settings.security === 'captcha' ? "CAPTCHA verification helps prevent automated bot submissions." :
-                                                    poll.settings.security === 'ip+captcha' ? "Combined IP tracking and CAPTCHA for maximum vote integrity." :
+                                                    String(poll.settings.security) === 'ip' ? "IP Address tracking prevents the same device from voting multiple times." :
+                                                    String(poll.settings.security) === 'cookie' ? "Browser cookies prevent repeat votes from the same browser session." :
+                                                    String(poll.settings.security) === 'captcha' ? "CAPTCHA verification helps prevent automated bot submissions." :
+                                                    String(poll.settings.security) === 'ip+captcha' ? "Combined IP tracking and CAPTCHA for maximum vote integrity." :
                                                     "No vote protection enabled. Anyone can vote multiple times."
                                                 }
                                                 position="bottom"

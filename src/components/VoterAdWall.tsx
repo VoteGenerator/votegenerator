@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Clock, Zap, Check, Sparkles, ArrowRight,
-    BarChart3, Users, Vote, Heart, Coffee
+    BarChart3, Users, Vote, Star, Crown
 } from 'lucide-react';
 
 interface VoterAdWallProps {
@@ -21,7 +21,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
     variant, 
     pollTitle,
     onComplete,
-    countdownSeconds = 10
+    countdownSeconds = 5
 }) => {
     const [countdown, setCountdown] = useState(countdownSeconds);
     const [canSkip, setCanSkip] = useState(false);
@@ -68,7 +68,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                                 Loading Your Poll 📊
                             </h1>
                             <p className="text-white/60">
-                                Free polls are supported by a short wait
+                                Just a moment while we prepare everything
                             </p>
                         </>
                     ) : (
@@ -83,7 +83,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                     )}
                 </motion.div>
                 
-                {/* Ad Content - Business Plan Promo */}
+                {/* Ad Content - Pro/Business Plan Promo */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -101,7 +101,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                                     Want Ad-Free Polls?
                                 </h2>
                                 <p className="text-white/70 text-sm mb-4">
-                                    Create unlimited polls with instant access for your voters. No waiting, no ads.
+                                    Create unlimited polls with instant access for your voters. No waiting, no interruptions.
                                 </p>
                             </>
                         ) : (
@@ -130,7 +130,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                             </div>
                             <div className="flex items-center gap-2 text-white/80 text-sm">
                                 <Check size={14} className="text-emerald-400" />
-                                <span>Up to 100K responses</span>
+                                <span>Advanced analytics</span>
                             </div>
                             <div className="flex items-center gap-2 text-white/80 text-sm">
                                 <Check size={14} className="text-emerald-400" />
@@ -144,12 +144,11 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                             rel="noopener noreferrer"
                             className="block w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-xl transition-all text-center"
                         >
-                            Create Your Own Polls →
+                            <span className="flex items-center justify-center gap-2">
+                                <Crown size={18} />
+                                Upgrade to Pro
+                            </span>
                         </a>
-                        
-                        <p className="text-white/40 text-xs mt-3">
-                            Pro $19/mo or $190/year • Business $490/year
-                        </p>
                     </div>
                 </motion.div>
                 
@@ -216,12 +215,6 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                             </>
                         )}
                     </button>
-                    
-                    {/* Friendly message */}
-                    <p className="text-white/40 text-xs mt-4 flex items-center justify-center gap-1">
-                        <Heart size={12} className="text-pink-400" />
-                        Thanks for supporting free polls
-                    </p>
                 </motion.div>
             </div>
         </div>

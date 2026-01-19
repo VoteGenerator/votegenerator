@@ -118,6 +118,19 @@ const handler: Handler = async (event) => {
         // Votes are stored directly in the poll object
         const votes = (pollData as any).votes || [];
         console.log('Found votes:', votes.length);
+        
+        // Debug survey data
+        const isSurvey = pollData.type === 'survey' || (pollData as any).sections?.length > 0;
+        if (isSurvey) {
+            console.log('Survey detected');
+            console.log('surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
+            console.log('sections:', (pollData as any).sections?.length || 0);
+            if (votes.length > 0) {
+                console.log('First vote has surveyAnswers:', !!votes[0].surveyAnswers);
+                console.log('First vote has answers:', !!votes[0].answers);
+                console.log('First vote keys:', Object.keys(votes[0]));
+            }
+        }
 
         // Prepare public poll data (strip sensitive info)
         const publicPoll = {
@@ -199,11 +212,29 @@ const handler: Handler = async (event) => {
                     winnerId,
                     totalVotes: votes.length,
                     // Include survey responses for survey types
-                    surveyResponses: (pollData as any).surveyResponses?.map((r: any) => ({
-                        id: r.id,
-                        answers: r.answers,
-                        submittedAt: r.submittedAt
-                    })) || []
+                    // Check both surveyResponses array AND votes with surveyAnswers
+                    surveyResponses: (() => {
+                        // First check dedicated surveyResponses array
+                        const dedicated = (pollData as any).surveyResponses || [];
+                        if (dedicated.length > 0) {
+                            return dedicated.map((r: any) => ({
+                                id: r.id,
+                                answers: r.answers || r.surveyAnswers || {},
+                                submittedAt: r.submittedAt
+                            }));
+                        }
+                        
+                        // Fallback: check votes for surveyAnswers
+                        const fromVotes = votes
+                            .filter((v: any) => v.surveyAnswers || v.answers)
+                            .map((v: any) => ({
+                                id: v.id,
+                                answers: v.surveyAnswers || v.answers || {},
+                                submittedAt: v.votedAt || v.timestamp
+                            }));
+                        
+                        return fromVotes;
+                    })()
                 }
             })
         };

@@ -253,17 +253,47 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     
     // Process survey results - must be before any early returns to maintain hooks order
     const surveyStats = useMemo(() => {
-        if (!isSurvey || !poll?.sections || !results?.surveyResponses) return null;
+        if (!isSurvey || !poll?.sections) return null;
         
-        const responses = results.surveyResponses || [];
+        const responses = results?.surveyResponses || [];
         const sections = poll.sections || [];
+        
+        // Debug logging
+        console.log('=== PublicResults Survey Debug ===');
+        console.log('isSurvey:', isSurvey);
+        console.log('sections count:', sections.length);
+        console.log('responses count:', responses.length);
+        if (responses[0]) {
+            console.log('First response answers:', responses[0].answers);
+            console.log('First response answer keys:', Object.keys(responses[0].answers || {}));
+        }
+        if (sections[0]?.questions?.[0]) {
+            console.log('First question id:', sections[0].questions[0].id);
+        }
         
         // Calculate stats for each question
         const questionStats: any[] = [];
+        const processedIds = new Set<string>(); // Prevent duplicates
         
         sections.forEach((section: any) => {
             section.questions?.forEach((question: any) => {
-                const answers = responses.map((r: any) => r.answers?.[question.id]).filter(Boolean);
+                // Skip if already processed (prevent duplicates)
+                if (processedIds.has(question.id)) {
+                    console.log('Skipping duplicate question:', question.id);
+                    return;
+                }
+                processedIds.add(question.id);
+                
+                // Try multiple ways to find answers for this question
+                const answers = responses
+                    .map((r: any) => {
+                        const ans = r.answers || {};
+                        // Try question.id directly, or without prefix
+                        return ans[question.id] || ans[question.id.replace(/^q_/, '')] || null;
+                    })
+                    .filter(Boolean);
+                
+                console.log(`Question "${question.text}" (${question.id}): ${answers.length} answers`);
                 
                 if (question.type === 'multiple_choice' || question.type === 'dropdown' || question.type === 'yes_no') {
                     // Count option selections
@@ -329,6 +359,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
             });
         });
+        
+        console.log('Final questionStats count:', questionStats.length);
+        console.log('=== End Survey Debug ===');
         
         return {
             totalResponses: responses.length,

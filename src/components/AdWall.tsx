@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const AdWall: React.FC = () => {
-    const [countdown, setCountdown] = useState(10);
+    const [countdown, setCountdown] = useState(5);
     const [canSkip, setCanSkip] = useState(false);
     
     // Get redirect URL from query params
@@ -57,11 +57,11 @@ const AdWall: React.FC = () => {
                         Your Poll is Ready! 🎉
                     </h1>
                     <p className="text-white/60">
-                        While you wait, check out what you're missing...
+                        While you wait, see what Pro offers...
                     </p>
                 </motion.div>
                 
-                {/* Main Content - Business Plan Promo */}
+                {/* Main Content - Pro/Business Plan Promo */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -73,26 +73,26 @@ const AdWall: React.FC = () => {
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-                                    <Sparkles size={28} className="text-white" />
+                                    <Crown size={28} className="text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Business Plan</h2>
-                                    <p className="text-amber-300 font-medium">Best for teams & organizations</p>
+                                    <h2 className="text-2xl font-black text-white">Upgrade to Pro</h2>
+                                    <p className="text-amber-300 font-medium">Unlock premium features</p>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                                 <div className="flex items-center gap-2 text-white/90">
                                     <Check size={18} className="text-emerald-400" />
-                                    <span>Unlimited polls</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-white/90">
-                                    <Check size={18} className="text-emerald-400" />
-                                    <span>100,000 responses/month</span>
+                                    <span>Unlimited polls & surveys</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-white/90">
                                     <Check size={18} className="text-emerald-400" />
                                     <span>No ads or waiting</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/90">
+                                    <Check size={18} className="text-emerald-400" />
+                                    <span>Advanced analytics</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-white/90">
                                     <Check size={18} className="text-emerald-400" />
@@ -107,14 +107,6 @@ const AdWall: React.FC = () => {
                                     <span>Priority support</span>
                                 </div>
                             </div>
-                            
-                            <div className="flex items-baseline gap-2 mb-4">
-                                <span className="text-4xl font-black text-white">$490</span>
-                                <span className="text-white/60">/year</span>
-                                <span className="ml-2 px-2 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded-full">
-                                    ~$41/mo
-                                </span>
-                            </div>
                         </div>
                         
                         {/* Right - CTA */}
@@ -124,25 +116,27 @@ const AdWall: React.FC = () => {
                                 className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-amber-500/30 hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
                             >
                                 <Zap size={20} />
-                                Upgrade Now
+                                View Plans
                             </button>
                             <p className="text-center text-white/40 text-xs mt-3">
-                                Annual subscription • Cancel anytime
+                                Cancel anytime
                             </p>
                             
-                            {/* Comparison */}
+                            {/* Benefits */}
                             <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
                                 <p className="text-white/60 text-sm mb-3 font-medium">Why upgrade?</p>
                                 <div className="space-y-2 text-sm">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-white/50">Free</span>
-                                        <span className="text-white/50">3 polls, 100 responses</span>
+                                    <div className="flex items-center gap-2 text-white/70">
+                                        <Sparkles size={14} className="text-amber-400" />
+                                        <span>Skip all wait times</span>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-amber-300 font-bold">Business</span>
-                                        <span className="text-amber-300 font-bold flex items-center gap-1">
-                                            <Infinity size={14} /> Unlimited
-                                        </span>
+                                    <div className="flex items-center gap-2 text-white/70">
+                                        <Infinity size={14} className="text-amber-400" />
+                                        <span>Unlimited everything</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-white/70">
+                                        <Download size={14} className="text-amber-400" />
+                                        <span>Export your data</span>
                                     </div>
                                 </div>
                             </div>
@@ -167,9 +161,9 @@ const AdWall: React.FC = () => {
                                     onClick={handleUpgrade}
                                     className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
                                 >
-                                    Upgrade to Business
+                                    Upgrade to Pro
                                 </button>
-                                <span>for instant access and no ads.</span>
+                                <span>for instant access.</span>
                             </p>
                         </div>
                     )}

@@ -1969,11 +1969,28 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             title="Share Link"
                             icon={<Link2 size={20} />}
                             defaultOpen={true}
+                            badge={
+                                <HelpTooltip 
+                                    content="Share this link with your audience to collect votes. Works on all devices and browsers."
+                                    position="left"
+                                />
+                            }
                         >
                             <div className="pt-4 space-y-4">
+                                {/* Explanation */}
+                                <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                    <p className="text-sm text-blue-700">
+                                        <strong>How it works:</strong> Anyone with this link can vote on your {isSurvey ? 'survey' : 'poll'}. Share it via social media, email, messaging apps, or embed it on your website.
+                                    </p>
+                                </div>
+                                
                                 <div>
-                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1">
                                         Voter Link
+                                        <HelpTooltip 
+                                            content="This is the direct link voters will use. Copy and share it anywhere - WhatsApp, Slack, email, social media, etc."
+                                            position="right"
+                                        />
                                     </label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
@@ -1999,43 +2016,53 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Share Buttons - FREE */}
-                                <div className="grid grid-cols-5 gap-2">
-                                    <button 
-                                        onClick={shareToWhatsapp}
-                                        className="flex flex-col items-center gap-2 p-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-colors"
-                                    >
-                                        <MessageCircle size={20} />
-                                        <span className="text-xs font-medium">WhatsApp</span>
-                                    </button>
-                                    <button 
-                                        onClick={shareToSms}
-                                        className="flex flex-col items-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-colors"
-                                    >
-                                        <Smartphone size={20} />
-                                        <span className="text-xs font-medium">SMS</span>
-                                    </button>
-                                    <button 
-                                        onClick={shareToEmail}
-                                        className="flex flex-col items-center gap-2 p-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-colors"
-                                    >
-                                        <Mail size={20} />
-                                        <span className="text-xs font-medium">Email</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => setShowQrModal(true)}
-                                        className="flex flex-col items-center gap-2 p-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors"
-                                    >
-                                        <QrCode size={20} />
-                                        <span className="text-xs font-medium">QR Code</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => setShowShareCards(true)}
-                                        className="flex flex-col items-center gap-2 p-3 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-xl transition-colors"
-                                    >
-                                        <Palette size={20} />
-                                        <span className="text-xs font-medium">Cards</span>
-                                    </button>
+                                {/* Quick Share Label */}
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1">
+                                        Quick Share
+                                        <HelpTooltip 
+                                            content="One-tap sharing to popular platforms. Opens the app with your poll link pre-filled."
+                                            position="right"
+                                        />
+                                    </label>
+                                    {/* Share Buttons - FREE */}
+                                    <div className="grid grid-cols-5 gap-2">
+                                        <button 
+                                            onClick={shareToWhatsapp}
+                                            className="flex flex-col items-center gap-2 p-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-colors"
+                                        >
+                                            <MessageCircle size={20} />
+                                            <span className="text-xs font-medium">WhatsApp</span>
+                                        </button>
+                                        <button 
+                                            onClick={shareToSms}
+                                            className="flex flex-col items-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-colors"
+                                        >
+                                            <Smartphone size={20} />
+                                            <span className="text-xs font-medium">SMS</span>
+                                        </button>
+                                        <button 
+                                            onClick={shareToEmail}
+                                            className="flex flex-col items-center gap-2 p-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-colors"
+                                        >
+                                            <Mail size={20} />
+                                            <span className="text-xs font-medium">Email</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowQrModal(true)}
+                                            className="flex flex-col items-center gap-2 p-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors"
+                                        >
+                                            <QrCode size={20} />
+                                            <span className="text-xs font-medium">QR Code</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowShareCards(true)}
+                                            className="flex flex-col items-center gap-2 p-3 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-xl transition-colors"
+                                        >
+                                            <Palette size={20} />
+                                            <span className="text-xs font-medium">Cards</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </CollapsibleSection>
@@ -2045,8 +2072,21 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             title="Share Results"
                             icon={<BarChart3 size={20} />}
                             defaultOpen={false}
+                            badge={
+                                <HelpTooltip 
+                                    content="Create a beautiful public results page that anyone can view without voting. Great for sharing outcomes with stakeholders."
+                                    position="left"
+                                />
+                            }
                         >
                             <div className="pt-4 space-y-4">
+                                {/* Explanation */}
+                                <div className="p-3 bg-purple-50 rounded-xl border border-purple-100">
+                                    <p className="text-sm text-purple-700">
+                                        <strong>Public Results Page:</strong> Enable this to create a shareable link where anyone can view your poll results - perfect for announcements, reports, and transparency.
+                                    </p>
+                                </div>
+                                
                                 {/* Enable Public Results Toggle */}
                                 <div className="flex items-center justify-between p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
                                     <div className="flex items-center gap-3">
@@ -2054,7 +2094,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <Globe size={20} className="text-indigo-600" />
                                         </div>
                                         <div>
-                                            <div className="font-semibold text-slate-800">Public Results Page</div>
+                                            <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                                Public Results Page
+                                                <HelpTooltip 
+                                                    content="When enabled, results are visible to anyone with the link. They can see charts and vote counts but cannot vote from this page."
+                                                    position="right"
+                                                />
+                                            </div>
                                             <div className="text-xs text-slate-500">Let anyone view results with a shareable link</div>
                                         </div>
                                     </div>
@@ -2083,8 +2129,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     >
                                         {/* Results Link */}
                                         <div>
-                                            <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1">
                                                 Results Link
+                                                <HelpTooltip 
+                                                    content="Share this link with anyone who wants to see the results. They won't be able to vote from this page."
+                                                    position="right"
+                                                />
                                             </label>
                                             <div className="flex gap-2">
                                                 <div className="relative flex-1">
@@ -2113,6 +2163,17 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 </motion.button>
                                             </div>
                                         </div>
+                                        
+                                        {/* Preview button */}
+                                        <a
+                                            href={`/#results=${poll.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg transition"
+                                        >
+                                            <Eye size={18} />
+                                            Preview Public Results Page
+                                        </a>
                                         
                                         {/* What viewers will see */}
                                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">

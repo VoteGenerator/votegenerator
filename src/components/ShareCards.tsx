@@ -14,6 +14,7 @@ interface ShareCardsProps {
     pollId: string;
     pollTitle: string;
     pollDescription?: string;
+    pollUrl?: string;
     theme?: string;
     onClose: () => void;
 }
@@ -130,7 +131,7 @@ const CARD_FORMATS: { id: CardFormat; name: string; ratio: string; width: number
     { id: 'landscape', name: 'Landscape', ratio: '16:9', width: 1920, height: 1080 }
 ];
 
-const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescription, theme = 'default', onClose }) => {
+const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescription, pollUrl, theme = 'default', onClose }) => {
     const [selectedDesign, setSelectedDesign] = useState<CardDesign>('modern');
     const [selectedFormat, setSelectedFormat] = useState<CardFormat>('square');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -138,7 +139,7 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescript
     const [previewUrl, setPreviewUrl] = useState<string>('');
     
     const colors = THEME_COLORS[theme] || THEME_COLORS.default;
-    const shareUrl = `${window.location.origin}/#id=${pollId}`;
+    const shareUrl = pollUrl || `${window.location.origin}/#id=${pollId}`;
     const formatConfig = CARD_FORMATS.find(f => f.id === selectedFormat) || CARD_FORMATS[0];
     
     // Generate QR code using a free API

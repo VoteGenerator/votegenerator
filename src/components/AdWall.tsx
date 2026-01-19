@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import {
     Clock, Zap, Crown, Check, ArrowRight,
     BarChart3, TrendingUp, Shield, Palette, 
-    Download, Users, Infinity, Eye, Sparkles,
+    Download, Users, Infinity as InfinityIcon, Eye, Sparkles,
     LineChart, PieChart
 } from 'lucide-react';
 
@@ -401,7 +401,7 @@ const AdWall: React.FC = () => {
                             </div>
                             <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
                                 <div className="text-xl font-black text-white flex items-center justify-center gap-1">
-                                    <Infinity size={20} />
+                                    <InfinityIcon size={20} />
                                 </div>
                                 <div className="text-white/40 text-xs">Polls</div>
                             </div>

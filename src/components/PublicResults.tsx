@@ -234,80 +234,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         return { totalVotes, sortedOptions, winner: sortedOptions[0] };
     }, [poll, results]);
     
-    // Share functions
-    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/#results=${pollId}` : '';
-    
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-    
-    const shareToTwitter = () => {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out: "${poll?.title}"`)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
-    };
-    
-    const shareToLinkedIn = () => {
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
-    };
-    
-    const shareToFacebook = () => {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
-    };
-    
-    // Loading
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
-                <motion.div className="text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <motion.div 
-                        className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-white/20 border-t-white rounded-full mx-auto mb-6"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <motion.p 
-                        className="text-white/70 font-medium text-lg"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                        Loading results...
-                    </motion.p>
-                </motion.div>
-            </div>
-        );
-    }
-    
-    // Error
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-                <motion.div 
-                    className="text-center max-w-md"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Eye size={40} className="text-white/50" />
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white mb-3">{error}</h1>
-                    <p className="text-white/50 mb-8">The poll owner hasn't enabled public results sharing.</p>
-                    <a 
-                        href="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
-                    >
-                        <Sparkles size={18} />
-                        Create Your Own Poll
-                    </a>
-                </motion.div>
-            </div>
-        );
-    }
-    
-    if (!poll || !resultsData) return null;
-    
-    const { totalVotes, sortedOptions, winner } = resultsData;
-    
-    // Process survey results
+    // Process survey results - must be before any early returns to maintain hooks order
     const surveyStats = useMemo(() => {
         if (!isSurvey || !poll?.sections || !results?.surveyResponses) return null;
         
@@ -392,6 +319,79 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             questionStats
         };
     }, [isSurvey, poll, results]);
+    
+    // Share functions
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/#results=${pollId}` : '';
+    
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+    
+    const shareToTwitter = () => {
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out: "${poll?.title}"`)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+    };
+    
+    const shareToLinkedIn = () => {
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
+    };
+    
+    const shareToFacebook = () => {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+    };
+    
+    // Loading
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
+                <motion.div className="text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <motion.div 
+                        className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-white/20 border-t-white rounded-full mx-auto mb-6"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <motion.p 
+                        className="text-white/70 font-medium text-lg"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                        Loading results...
+                    </motion.p>
+                </motion.div>
+            </div>
+        );
+    }
+    
+    // Error
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <motion.div 
+                    className="text-center max-w-md"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Eye size={40} className="text-white/50" />
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white mb-3">{error}</h1>
+                    <p className="text-white/50 mb-8">The poll owner hasn't enabled public results sharing.</p>
+                    <a 
+                        href="/"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
+                    >
+                        <Sparkles size={18} />
+                        Create Your Own Poll
+                    </a>
+                </motion.div>
+            </div>
+        );
+    }
+    
+    if (!poll || !resultsData) return null;
+    
+    const { totalVotes, sortedOptions, winner } = resultsData;
     
     // Color palettes
     const barGradients = [

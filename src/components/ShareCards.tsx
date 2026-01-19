@@ -3,17 +3,17 @@
 // Theme-aware designs with elegant QR code placement
 // Location: src/components/ShareCards.tsx
 // ============================================================================
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    X, Download, Check, Sparkles, QrCode, 
-    Image as ImageIcon, Share2, ChevronLeft, ChevronRight
+    X, Download, Check, Sparkles, 
+    Image as ImageIcon
 } from 'lucide-react';
-import QRCodeStyling from 'qr-code-styling';
 
 interface ShareCardsProps {
     pollId: string;
     pollTitle: string;
+    pollDescription?: string;
     theme?: string;
     onClose: () => void;
 }
@@ -25,8 +25,7 @@ const THEME_COLORS: Record<string, {
     accent: string;
     gradient: string;
     text: string;
-    qrDots: string;
-    qrCorners: string;
+    qrColor: string;
 }> = {
     default: {
         primary: '#6366f1',
@@ -34,8 +33,7 @@ const THEME_COLORS: Record<string, {
         accent: '#ec4899',
         gradient: 'from-indigo-600 via-purple-600 to-pink-500',
         text: '#ffffff',
-        qrDots: '#6366f1',
-        qrCorners: '#4f46e5'
+        qrColor: '6366f1'
     },
     ocean: {
         primary: '#0891b2',
@@ -43,8 +41,7 @@ const THEME_COLORS: Record<string, {
         accent: '#22d3ee',
         gradient: 'from-cyan-600 via-teal-500 to-emerald-500',
         text: '#ffffff',
-        qrDots: '#0891b2',
-        qrCorners: '#0e7490'
+        qrColor: '0891b2'
     },
     sunset: {
         primary: '#f97316',
@@ -52,8 +49,7 @@ const THEME_COLORS: Record<string, {
         accent: '#fbbf24',
         gradient: 'from-orange-500 via-amber-500 to-yellow-500',
         text: '#ffffff',
-        qrDots: '#f97316',
-        qrCorners: '#ea580c'
+        qrColor: 'f97316'
     },
     forest: {
         primary: '#16a34a',
@@ -61,8 +57,7 @@ const THEME_COLORS: Record<string, {
         accent: '#4ade80',
         gradient: 'from-green-600 via-emerald-500 to-teal-500',
         text: '#ffffff',
-        qrDots: '#16a34a',
-        qrCorners: '#15803d'
+        qrColor: '16a34a'
     },
     berry: {
         primary: '#db2777',
@@ -70,8 +65,7 @@ const THEME_COLORS: Record<string, {
         accent: '#f472b6',
         gradient: 'from-pink-600 via-rose-500 to-red-500',
         text: '#ffffff',
-        qrDots: '#db2777',
-        qrCorners: '#be185d'
+        qrColor: 'db2777'
     },
     midnight: {
         primary: '#3b82f6',
@@ -79,8 +73,7 @@ const THEME_COLORS: Record<string, {
         accent: '#8b5cf6',
         gradient: 'from-blue-600 via-indigo-600 to-purple-600',
         text: '#ffffff',
-        qrDots: '#3b82f6',
-        qrCorners: '#2563eb'
+        qrColor: '3b82f6'
     },
     coral: {
         primary: '#f43f5e',
@@ -88,8 +81,7 @@ const THEME_COLORS: Record<string, {
         accent: '#fda4af',
         gradient: 'from-rose-500 via-pink-500 to-red-400',
         text: '#ffffff',
-        qrDots: '#f43f5e',
-        qrCorners: '#e11d48'
+        qrColor: 'f43f5e'
     },
     lavender: {
         primary: '#8b5cf6',
@@ -97,8 +89,7 @@ const THEME_COLORS: Record<string, {
         accent: '#c4b5fd',
         gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
         text: '#ffffff',
-        qrDots: '#8b5cf6',
-        qrCorners: '#7c3aed'
+        qrColor: '8b5cf6'
     },
     monochrome: {
         primary: '#374151',
@@ -106,8 +97,7 @@ const THEME_COLORS: Record<string, {
         accent: '#9ca3af',
         gradient: 'from-slate-700 via-gray-600 to-slate-800',
         text: '#ffffff',
-        qrDots: '#374151',
-        qrCorners: '#1f2937'
+        qrColor: '374151'
     },
     gold: {
         primary: '#d97706',
@@ -115,8 +105,7 @@ const THEME_COLORS: Record<string, {
         accent: '#fbbf24',
         gradient: 'from-amber-600 via-yellow-500 to-orange-500',
         text: '#ffffff',
-        qrDots: '#d97706',
-        qrCorners: '#b45309'
+        qrColor: 'd97706'
     }
 };
 
@@ -141,52 +130,69 @@ const CARD_FORMATS: { id: CardFormat; name: string; ratio: string; width: number
     { id: 'landscape', name: 'Landscape', ratio: '16:9', width: 1920, height: 1080 }
 ];
 
-const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'default', onClose }) => {
+const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescription, theme = 'default', onClose }) => {
     const [selectedDesign, setSelectedDesign] = useState<CardDesign>('modern');
     const [selectedFormat, setSelectedFormat] = useState<CardFormat>('square');
     const [isGenerating, setIsGenerating] = useState(false);
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [previewUrl, setPreviewUrl] = useState<string>('');
     
     const colors = THEME_COLORS[theme] || THEME_COLORS.default;
     const shareUrl = `${window.location.origin}/#id=${pollId}`;
     const formatConfig = CARD_FORMATS.find(f => f.id === selectedFormat) || CARD_FORMATS[0];
     
-    // Generate QR code on mount
+    // Generate QR code using a free API
     useEffect(() => {
-        const qrCode = new QRCodeStyling({
-            width: 300,
-            height: 300,
-            type: 'svg',
-            data: shareUrl,
-            dotsOptions: {
-                color: colors.qrDots,
-                type: 'rounded'
-            },
-            cornersSquareOptions: {
-                color: colors.qrCorners,
-                type: 'extra-rounded'
-            },
-            cornersDotOptions: {
-                color: colors.qrCorners,
-                type: 'dot'
-            },
-            backgroundOptions: {
-                color: 'transparent'
-            }
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&color=${colors.qrColor}&bgcolor=ffffff`;
+        setQrDataUrl(qrApiUrl);
+    }, [shareUrl, colors.qrColor]);
+    
+    // Helper: load image
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
         });
+    };
+    
+    // Helper: rounded rectangle
+    const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    };
+    
+    // Helper: wrap text
+    const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
         
-        qrCode.getRawData('png').then((data) => {
-            if (data) {
-                const url = URL.createObjectURL(data);
-                setQrDataUrl(url);
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            
+            if (metrics.width > maxWidth && i > 0) {
+                ctx.fillText(line.trim(), x, currentY);
+                line = words[i] + ' ';
+                currentY += lineHeight;
+            } else {
+                line = testLine;
             }
-        });
-        
-        return () => {
-            if (qrDataUrl) URL.revokeObjectURL(qrDataUrl);
-        };
-    }, [shareUrl, colors]);
+        }
+        ctx.fillText(line.trim(), x, currentY);
+    };
     
     // Draw card on canvas
     const generateCard = async (): Promise<string> => {
@@ -194,28 +200,30 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Canvas not supported');
         
-        canvas.width = formatConfig.width;
-        canvas.height = formatConfig.height;
+        const w = formatConfig.width;
+        const h = formatConfig.height;
+        canvas.width = w;
+        canvas.height = h;
         
-        // Draw background based on design
+        // Draw based on design
         switch (selectedDesign) {
             case 'modern':
-                await drawModernCard(ctx, canvas.width, canvas.height);
+                await drawModernCard(ctx, w, h);
                 break;
             case 'minimal':
-                await drawMinimalCard(ctx, canvas.width, canvas.height);
+                await drawMinimalCard(ctx, w, h);
                 break;
             case 'bold':
-                await drawBoldCard(ctx, canvas.width, canvas.height);
+                await drawBoldCard(ctx, w, h);
                 break;
             case 'elegant':
-                await drawElegantCard(ctx, canvas.width, canvas.height);
+                await drawElegantCard(ctx, w, h);
                 break;
             case 'playful':
-                await drawPlayfulCard(ctx, canvas.width, canvas.height);
+                await drawPlayfulCard(ctx, w, h);
                 break;
             case 'corporate':
-                await drawCorporateCard(ctx, canvas.width, canvas.height);
+                await drawCorporateCard(ctx, w, h);
                 break;
         }
         
@@ -265,11 +273,15 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         
         // QR Code
         if (qrDataUrl) {
-            const qrSize = Math.min(cardW, cardH) * 0.45;
-            const qrX = (w - qrSize) / 2;
-            const qrY = cardY + cardH * 0.35;
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            try {
+                const qrSize = Math.min(cardW, cardH) * 0.45;
+                const qrX = (w - qrSize) / 2;
+                const qrY = cardY + cardH * 0.35;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
         // Scan to vote text
@@ -301,14 +313,18 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         
         // QR Code
         if (qrDataUrl) {
-            const qrSize = Math.min(w, h) * 0.4;
-            const qrX = (w - qrSize) / 2;
-            const qrY = h * 0.35;
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.35;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
-        // Scan text with icon
+        // Scan text
         ctx.fillStyle = colors.primary;
         ctx.font = `600 ${Math.floor(w * 0.028)}px Inter, system-ui, sans-serif`;
         ctx.fillText('📱 Scan to vote', w / 2, h * 0.82);
@@ -316,7 +332,7 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         // URL
         ctx.fillStyle = '#94a3b8';
         ctx.font = `${Math.floor(w * 0.022)}px Inter, system-ui, sans-serif`;
-        ctx.fillText(shareUrl, w / 2, h * 0.9);
+        ctx.fillText(shareUrl.replace('https://', '').replace('http://', ''), w / 2, h * 0.9);
     };
     
     // Bold card design
@@ -351,9 +367,13 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         ctx.fill();
         
         if (qrDataUrl) {
-            const qrSize = qrContainerSize * 0.9;
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, (w - qrSize) / 2, h * 0.55 - qrSize / 2, qrSize, qrSize);
+            try {
+                const qrSize = qrContainerSize * 0.9;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, (w - qrSize) / 2, h * 0.55 - qrSize / 2, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
         // CTA
@@ -387,31 +407,33 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         ctx.lineTo(w * 0.9, h * 0.85);
         ctx.stroke();
         
-        // Title
+        // Header
         ctx.fillStyle = '#ffffff';
         ctx.font = `300 ${Math.floor(w * 0.02)}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.fillText('CAST YOUR VOTE', w / 2, h * 0.12);
         
+        // Title
         ctx.font = `bold ${Math.floor(w * 0.04)}px Inter, system-ui, sans-serif`;
         wrapText(ctx, pollTitle, w / 2, h * 0.25, w * 0.75, w * 0.05);
         
-        // QR Code with glow
-        ctx.shadowColor = colors.primary;
-        ctx.shadowBlur = 30;
+        // QR Code with background
         if (qrDataUrl) {
-            const qrSize = Math.min(w, h) * 0.38;
-            const qrX = (w - qrSize) / 2;
-            const qrY = h * 0.4;
-            
-            // White background for QR
-            ctx.fillStyle = '#ffffff';
-            roundRect(ctx, qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 12);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            try {
+                const qrSize = Math.min(w, h) * 0.38;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.4;
+                
+                // White background for QR
+                ctx.fillStyle = '#ffffff';
+                roundRect(ctx, qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 12);
+                ctx.fill();
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
         // Bottom text
@@ -429,19 +451,18 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, w, h);
         
-        // Floating circles
+        // Floating circles (deterministic positions)
+        const circlePositions = [
+            { x: 0.1, y: 0.2 }, { x: 0.8, y: 0.1 }, { x: 0.2, y: 0.7 },
+            { x: 0.9, y: 0.6 }, { x: 0.5, y: 0.9 }, { x: 0.15, y: 0.4 }
+        ];
         const circleColors = [colors.primary, colors.secondary, colors.accent];
-        for (let i = 0; i < 12; i++) {
+        circlePositions.forEach((pos, i) => {
             ctx.fillStyle = `${circleColors[i % 3]}20`;
             ctx.beginPath();
-            ctx.arc(
-                Math.random() * w,
-                Math.random() * h,
-                20 + Math.random() * 60,
-                0, Math.PI * 2
-            );
+            ctx.arc(pos.x * w, pos.y * h, 30 + (i * 15), 0, Math.PI * 2);
             ctx.fill();
-        }
+        });
         
         // Fun emoji header
         ctx.font = `${Math.floor(w * 0.08)}px Arial`;
@@ -455,19 +476,23 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         
         // QR in rounded square
         if (qrDataUrl) {
-            const qrSize = Math.min(w, h) * 0.4;
-            const qrX = (w - qrSize) / 2;
-            const qrY = h * 0.38;
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(0,0,0,0.1)';
-            ctx.shadowBlur = 20;
-            roundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.38;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 20;
+                roundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
         // Fun CTA
@@ -490,7 +515,7 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(0, h * 0.88, w, h * 0.12);
         
-        // Logo placeholder
+        // Logo text
         ctx.fillStyle = '#ffffff';
         ctx.font = `bold ${Math.floor(w * 0.022)}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'left';
@@ -504,16 +529,20 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         
         // QR Code
         if (qrDataUrl) {
-            const qrSize = Math.min(w, h) * 0.4;
-            const qrX = (w - qrSize) / 2;
-            const qrY = h * 0.38;
-            
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30);
-            
-            const img = await loadImage(qrDataUrl);
-            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.38;
+                
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30);
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
         }
         
         // Instructions
@@ -525,52 +554,6 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         ctx.fillStyle = '#ffffff';
         ctx.font = `${Math.floor(w * 0.018)}px Inter, system-ui, sans-serif`;
         ctx.fillText('votegenerator.com', w / 2, h * 0.94);
-    };
-    
-    // Helper: rounded rectangle
-    const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + w - r, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        ctx.lineTo(x + w, y + h - r);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        ctx.lineTo(x + r, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.closePath();
-    };
-    
-    // Helper: wrap text
-    const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        let currentY = y;
-        
-        for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i] + ' ';
-            const metrics = ctx.measureText(testLine);
-            
-            if (metrics.width > maxWidth && i > 0) {
-                ctx.fillText(line.trim(), x, currentY);
-                line = words[i] + ' ';
-                currentY += lineHeight;
-            } else {
-                line = testLine;
-            }
-        }
-        ctx.fillText(line.trim(), x, currentY);
-    };
-    
-    // Helper: load image
-    const loadImage = (src: string): Promise<HTMLImageElement> => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = src;
-        });
     };
     
     // Handle download - only when button clicked
@@ -591,9 +574,7 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
         }
     };
     
-    // Generate preview
-    const [previewUrl, setPreviewUrl] = useState<string>('');
-    
+    // Generate preview when design/format changes
     useEffect(() => {
         if (qrDataUrl) {
             generateCard().then(setPreviewUrl).catch(console.error);
@@ -614,7 +595,7 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, theme = 'def
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
                     className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-                    onClick={e => e.stopPropagation()}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 >
                     {/* Header */}
                     <div className={`bg-gradient-to-r ${colors.gradient} p-6`}>

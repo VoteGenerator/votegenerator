@@ -13,7 +13,8 @@ import {
     RefreshCw, Loader2, Eye, EyeOff, ArrowRight, Activity,
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
     PieChart, Calendar, Filter, MessageSquare, Crown, Star,
-    MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus
+    MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus,
+    HelpCircle, Info
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import SurveyResults from './SurveyResults';
@@ -79,6 +80,64 @@ const tabColors: Record<TabType, { active: string; hover: string; icon: string }
         hover: 'hover:bg-purple-50 text-slate-600',
         icon: 'text-purple-500'
     },
+};
+
+// ============================================================================
+// HelpTooltip Component - Industry-standard contextual help
+// ============================================================================
+const HelpTooltip: React.FC<{
+    content: string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    maxWidth?: string;
+    children?: React.ReactNode;
+}> = ({ content, position = 'top', maxWidth = '250px', children }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    
+    const positionClasses = {
+        top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+        bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+        left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+        right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+    };
+    
+    const arrowClasses = {
+        top: 'top-full left-1/2 -translate-x-1/2 border-t-slate-800 border-x-transparent border-b-transparent',
+        bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-800 border-x-transparent border-t-transparent',
+        left: 'left-full top-1/2 -translate-y-1/2 border-l-slate-800 border-y-transparent border-r-transparent',
+        right: 'right-full top-1/2 -translate-y-1/2 border-r-slate-800 border-y-transparent border-l-transparent',
+    };
+    
+    return (
+        <span 
+            className="relative inline-flex items-center"
+            onMouseEnter={() => setIsVisible(true)}
+            onMouseLeave={() => setIsVisible(false)}
+        >
+            {children || (
+                <HelpCircle 
+                    size={14} 
+                    className="text-slate-400 hover:text-slate-600 cursor-help transition-colors" 
+                />
+            )}
+            <AnimatePresence>
+                {isVisible && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className={`absolute z-50 ${positionClasses[position]}`}
+                        style={{ maxWidth }}
+                    >
+                        <div className="bg-slate-800 text-white text-xs px-3 py-2 rounded-lg shadow-xl">
+                            {content}
+                        </div>
+                        <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </span>
+    );
 };
 
 // Collapsible Section Component
@@ -645,12 +704,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     // Tabs - Analytics locked for free users
     const tabs = [
-        { id: 'results' as TabType, label: 'Results', icon: BarChart3 },
-        { id: 'share' as TabType, label: 'Share', icon: Share2 },
-        { id: 'notify' as TabType, label: 'Notify', icon: Bell },
-        { id: 'settings' as TabType, label: 'Settings', icon: Settings },
-        { id: 'downloads' as TabType, label: 'Downloads', icon: FileDown },
-        { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: isFree },
+        { id: 'results' as TabType, label: 'Results', icon: BarChart3, tooltip: 'View real-time voting results with charts, percentages, and winner analysis.' },
+        { id: 'share' as TabType, label: 'Share', icon: Share2, tooltip: 'Get shareable links, QR codes, embed codes, and social sharing options.' },
+        { id: 'notify' as TabType, label: 'Notify', icon: Bell, tooltip: 'Set up email notifications for milestones, new responses, and poll closure.' },
+        { id: 'settings' as TabType, label: 'Settings', icon: Settings, tooltip: 'Configure vote protection, result visibility, expiration, and custom branding.' },
+        { id: 'downloads' as TabType, label: 'Downloads', icon: FileDown, tooltip: 'Export your data as CSV, Excel, or PDF reports for further analysis.' },
+        { id: 'analytics' as TabType, label: 'Analytics', icon: TrendingUp, premium: isFree, tooltip: 'Advanced insights: response timeline, geographic data, hourly patterns, and more.' },
     ];
 
     return (
@@ -752,24 +811,48 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
                                     </span>
                                     <span className="font-bold text-white">LIVE</span>
+                                    <HelpTooltip 
+                                        content="Your poll is publicly accessible and accepting responses. Share the link to start collecting votes."
+                                        position="bottom"
+                                    >
+                                        <HelpCircle size={14} className="text-white/60 hover:text-white cursor-help" />
+                                    </HelpTooltip>
                                 </>
                             )}
                             {pollStatus === 'draft' && (
                                 <>
                                     <Eye size={16} className="text-white" />
                                     <span className="font-bold text-white">DRAFT</span>
+                                    <HelpTooltip 
+                                        content="Draft polls are only visible to you. Toggle to 'Live' when ready to start collecting responses."
+                                        position="bottom"
+                                    >
+                                        <HelpCircle size={14} className="text-white/60 hover:text-white cursor-help" />
+                                    </HelpTooltip>
                                 </>
                             )}
                             {pollStatus === 'paused' && (
                                 <>
                                     <Pause size={16} className="text-white" />
                                     <span className="font-bold text-white">PAUSED</span>
+                                    <HelpTooltip 
+                                        content="Your poll is temporarily paused. Existing responses are preserved. Resume anytime to continue collecting votes."
+                                        position="bottom"
+                                    >
+                                        <HelpCircle size={14} className="text-white/60 hover:text-white cursor-help" />
+                                    </HelpTooltip>
                                 </>
                             )}
                             {pollStatus === 'closed' && (
                                 <>
                                     <XCircle size={16} className="text-white" />
                                     <span className="font-bold text-white">CLOSED</span>
+                                    <HelpTooltip 
+                                        content="This poll has ended and is no longer accepting responses. Results are final and can still be viewed and exported."
+                                        position="bottom"
+                                    >
+                                        <HelpCircle size={14} className="text-white/60 hover:text-white cursor-help" />
+                                    </HelpTooltip>
                                 </>
                             )}
                         </div>
@@ -1186,26 +1269,38 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     <div className="text-3xl font-black text-indigo-600">
                         <AnimatedCounter value={voteCount} />
                     </div>
-                    <div className="text-xs text-indigo-600/70 font-medium mt-1">Total Votes</div>
+                    <div className="text-xs text-indigo-600/70 font-medium mt-1 flex items-center gap-1">
+                        Total {isSurvey ? 'Responses' : 'Votes'}
+                        <HelpTooltip content={isSurvey ? "Total number of completed survey submissions received." : "Total number of votes cast on your poll. Each voter counts once per allowed submission."} position="bottom" />
+                    </div>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100">
                     <div className="text-3xl font-black text-emerald-600">
                         <AnimatedCounter value={velocity} />
                         <span className="text-lg font-semibold text-emerald-400">/day</span>
                     </div>
-                    <div className="text-xs text-emerald-600/70 font-medium mt-1">Velocity</div>
+                    <div className="text-xs text-emerald-600/70 font-medium mt-1 flex items-center gap-1">
+                        Velocity
+                        <HelpTooltip content="Average responses received per day since your poll was created. Higher velocity indicates stronger engagement." position="bottom" />
+                    </div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
                     <div className="text-lg font-bold text-slate-700">
                         {firstVoteDateDisplay}
                     </div>
-                    <div className="text-xs text-slate-500 font-medium mt-1">First Vote</div>
+                    <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                        First {isSurvey ? 'Response' : 'Vote'}
+                        <HelpTooltip content="When the first response was recorded. Helps you track how quickly participation began after sharing." position="bottom" />
+                    </div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
                     <div className="text-lg font-bold text-slate-700">
                         {lastVoteDateDisplay}
                     </div>
-                    <div className="text-xs text-slate-500 font-medium mt-1">Last Vote</div>
+                    <div className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                        Last {isSurvey ? 'Response' : 'Vote'}
+                        <HelpTooltip content="Most recent activity on your poll. If this is stale, consider re-sharing or promoting your poll." position="bottom" />
+                    </div>
                 </div>
             </div>
 
@@ -1220,7 +1315,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 }`}>
                     <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                         <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-500 uppercase">Free Plan</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                                Free Plan
+                                <HelpTooltip 
+                                    content={`Free plans include up to ${maxVotes} responses per poll. Upgrade to Pro for 10,000+ responses and unlimited polls.`}
+                                    position="right"
+                                />
+                            </span>
                             <span className="text-sm font-semibold text-slate-700">
                                 {voteCount} / {maxVotes} responses
                             </span>
@@ -1375,38 +1476,44 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         const shouldPulse = tab.id === 'share' && voteCount === 0 && !isActive;
                         
                         return (
-                            <button
+                            <HelpTooltip 
                                 key={tab.id}
-                                onClick={() => {
-                                    if (isLocked) {
-                                        openUpgradeModal('analytics');
-                                    } else {
-                                        setActiveTab(tab.id);
-                                    }
-                                }}
-                                className={`relative flex-shrink-0 sm:flex-1 min-w-[70px] sm:min-w-[90px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                                    isActive 
-                                        ? colors.active
-                                        : isLocked
-                                            ? 'text-slate-400 hover:text-slate-500'
-                                            : colors.hover
-                                }`}
+                                content={isLocked ? `${tab.tooltip} (Pro feature)` : tab.tooltip}
+                                position="bottom"
+                                maxWidth="220px"
                             >
-                                {/* Pulse effect for Share tab when no votes */}
-                                {shouldPulse && (
-                                    <motion.div
-                                        className="absolute inset-0 bg-emerald-400/30 rounded-xl"
-                                        animate={{ opacity: [0.3, 0.6, 0.3] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                    />
-                                )}
-                                <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isActive ? '' : colors.icon}`} />
-                                <span className="truncate">{tab.label}</span>
-                                {isLocked && <Lock size={12} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />}
-                                {shouldPulse && (
-                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 rounded-full animate-pulse" />
-                                )}
-                            </button>
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) {
+                                            openUpgradeModal('analytics');
+                                        } else {
+                                            setActiveTab(tab.id);
+                                        }
+                                    }}
+                                    className={`relative flex-shrink-0 sm:flex-1 min-w-[70px] sm:min-w-[90px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                                        isActive 
+                                            ? colors.active
+                                            : isLocked
+                                                ? 'text-slate-400 hover:text-slate-500'
+                                                : colors.hover
+                                    }`}
+                                >
+                                    {/* Pulse effect for Share tab when no votes */}
+                                    {shouldPulse && (
+                                        <motion.div
+                                            className="absolute inset-0 bg-emerald-400/30 rounded-xl"
+                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                        />
+                                    )}
+                                    <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isActive ? '' : colors.icon}`} />
+                                    <span className="truncate">{tab.label}</span>
+                                    {isLocked && <Lock size={12} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />}
+                                    {shouldPulse && (
+                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 rounded-full animate-pulse" />
+                                    )}
+                                </button>
+                            </HelpTooltip>
                         );
                     })}
                     </div>
@@ -2303,13 +2410,34 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <div className="pt-4 space-y-4">
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="p-3 bg-slate-50 rounded-xl">
-                                        <div className="text-xs text-slate-500 font-medium mb-1">Security</div>
+                                        <div className="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1">
+                                            Security
+                                            <HelpTooltip 
+                                                content={
+                                                    poll.settings.security === 'ip' ? "IP Address tracking prevents the same device from voting multiple times." :
+                                                    poll.settings.security === 'cookie' ? "Browser cookies prevent repeat votes from the same browser session." :
+                                                    poll.settings.security === 'captcha' ? "CAPTCHA verification helps prevent automated bot submissions." :
+                                                    poll.settings.security === 'ip+captcha' ? "Combined IP tracking and CAPTCHA for maximum vote integrity." :
+                                                    "No vote protection enabled. Anyone can vote multiple times."
+                                                }
+                                                position="bottom"
+                                            />
+                                        </div>
                                         <div className="font-semibold text-slate-800 capitalize">
                                             {poll.settings.security || 'None'}
                                         </div>
                                     </div>
                                     <div className="p-3 bg-slate-50 rounded-xl">
-                                        <div className="text-xs text-slate-500 font-medium mb-1">Results</div>
+                                        <div className="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1">
+                                            Results
+                                            <HelpTooltip 
+                                                content={poll.settings.hideResults 
+                                                    ? "Results are hidden from voters until you choose to reveal them. Only you can see the current standings."
+                                                    : "Results are visible to everyone after they vote. Voters can see current standings."
+                                                }
+                                                position="bottom"
+                                            />
+                                        </div>
                                         <div className="font-semibold text-slate-800 flex items-center gap-1">
                                             {poll.settings.hideResults ? (
                                                 <><EyeOff size={14} /> Hidden</>
@@ -2320,7 +2448,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                     {poll.settings.deadline && (
                                         <div className="p-3 bg-slate-50 rounded-xl col-span-2">
-                                            <div className="text-xs text-slate-500 font-medium mb-1">Deadline</div>
+                                            <div className="text-xs text-slate-500 font-medium mb-1 flex items-center gap-1">
+                                                Deadline
+                                                <HelpTooltip 
+                                                    content="When this deadline passes, the poll will automatically close and stop accepting new responses."
+                                                    position="bottom"
+                                                />
+                                            </div>
                                             <div className="font-semibold text-slate-800 flex items-center gap-1">
                                                 <Clock size={14} />
                                                 {new Date(poll.settings.deadline).toLocaleString()}
@@ -2337,7 +2471,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 <Share2 size={20} className="text-blue-600" />
                                             </div>
                                             <div>
-                                                <div className="font-semibold text-slate-800">Share Poll Button</div>
+                                                <div className="font-semibold text-slate-800 flex items-center gap-1">
+                                                    Share Poll Button
+                                                    <HelpTooltip 
+                                                        content="Enable viral sharing by letting voters share your poll with their networks directly from the voting page."
+                                                        position="right"
+                                                    />
+                                                </div>
                                                 <div className="text-xs text-slate-500">Show "Share this poll" link to voters</div>
                                             </div>
                                         </div>
@@ -2539,6 +2679,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <FileDown size={20} className="text-amber-500" />
                                 Download Options
+                                <HelpTooltip 
+                                    content="Export your poll data in various formats for reporting, presentations, or further analysis in other tools."
+                                    position="right"
+                                />
                             </h3>
                             <p className="text-sm text-slate-500 mb-6">
                                 Export your poll data in different formats. QR code and share cards are free for all users.
@@ -2555,7 +2699,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <QrCode size={24} className="text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-semibold text-slate-700">QR Code</div>
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                QR Code
+                                                <HelpTooltip 
+                                                    content="Perfect for printed materials, posters, presentations, or events. People can scan to vote instantly."
+                                                    position="right"
+                                                />
+                                            </div>
                                             <div className="text-xs text-slate-500">Download PNG image for printing or sharing</div>
                                         </div>
                                     </div>
@@ -2575,7 +2725,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <ImageIcon size={24} className="text-purple-600" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-semibold text-slate-700">Share Cards</div>
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                Share Cards
+                                                <HelpTooltip 
+                                                    content="Eye-catching social media images optimized for Instagram, Twitter, and Facebook. Includes QR code and poll title."
+                                                    position="right"
+                                                />
+                                            </div>
                                             <div className="text-xs text-slate-500">Beautiful social media cards with QR code</div>
                                         </div>
                                     </div>
@@ -2596,7 +2752,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <FileSpreadsheet size={24} className="text-emerald-600" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-semibold text-slate-700">Export to CSV</div>
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                Export to CSV
+                                                <HelpTooltip 
+                                                    content="Raw data export with all votes, timestamps, and metadata. Import into Excel, Google Sheets, or any data analysis tool."
+                                                    position="right"
+                                                />
+                                            </div>
                                             <div className="text-xs text-slate-500">Spreadsheet format for Excel, Google Sheets, etc.</div>
                                         </div>
                                     </div>
@@ -2626,7 +2788,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             <FileDown size={24} className="text-red-500" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-semibold text-slate-700">PDF Report</div>
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                PDF Report
+                                                <HelpTooltip 
+                                                    content="Professional print-ready report with charts, results summary, and poll details. Great for presentations and stakeholder updates."
+                                                    position="right"
+                                                />
+                                            </div>
                                             <div className="text-xs text-slate-500">Print-ready report with results and charts</div>
                                         </div>
                                     </div>
@@ -2677,6 +2845,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <div className="flex items-center gap-2">
                                 <LayoutDashboard size={20} className="text-purple-500" />
                                 <h3 className="font-bold text-slate-800">Analytics Dashboard</h3>
+                                <HelpTooltip 
+                                    content="Advanced analytics show voting patterns, geographic distribution, and engagement trends. Use date filters to analyze specific time periods."
+                                    position="right"
+                                    maxWidth="280px"
+                                />
                             </div>
                             <DateRangeFilter 
                                 onRangeChange={(start, end) => setAnalyticsDateRange({ start, end })}
@@ -2687,6 +2860,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         {/* Cross-Tab Filters */}
                         {votes.length >= 5 && (
                             <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Filter size={16} className="text-slate-500" />
+                                    <span className="text-sm font-semibold text-slate-700">Cross-Tab Filters</span>
+                                    <HelpTooltip 
+                                        content="Segment your data by specific answer choices to discover how different voter groups responded. Great for identifying patterns and correlations."
+                                        position="right"
+                                    />
+                                </div>
                                 <CrossTabFilter 
                                     votes={votes}
                                     onFilteredVotesChange={setCrossTabFilteredVotes}
@@ -2700,6 +2881,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 title="Response Timeline"
                                 icon={<Activity size={20} />}
                                 defaultOpen={true}
+                                badge={
+                                    <HelpTooltip 
+                                        content="Visualize when votes came in over time. Identify peak engagement periods and measure the impact of your promotion efforts."
+                                        position="left"
+                                    />
+                                }
                             >
                                 <div className="pt-4">
                                     <ResponseTimelineChart
@@ -2715,13 +2902,43 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         {votes.length >= 5 ? (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                                            <Clock size={16} className="text-slate-500" />
+                                            Hourly Activity
+                                        </h4>
+                                        <HelpTooltip 
+                                            content="Shows which hours of the day see the most engagement. Use this to optimize when you share polls for maximum participation."
+                                            position="left"
+                                        />
+                                    </div>
                                     <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                                            <MapPin size={16} className="text-slate-500" />
+                                            Geographic Distribution
+                                        </h4>
+                                        <HelpTooltip 
+                                            content="See where your voters are located. Based on IP address geolocation. Useful for understanding audience reach and regional preferences."
+                                            position="left"
+                                        />
+                                    </div>
                                     <GeoChart votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} maxCountries={5} />
                                 </div>
                                 {results.comments && results.comments.length >= 3 && (
                                     <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="font-semibold text-slate-700 flex items-center gap-2">
+                                                <MessageSquare size={16} className="text-slate-500" />
+                                                Comment Word Cloud
+                                            </h4>
+                                            <HelpTooltip 
+                                                content="Visual representation of the most frequently used words in voter comments. Larger words appear more often. Great for spotting common themes."
+                                                position="left"
+                                            />
+                                        </div>
                                         <CommentWordCloud comments={results.comments} maxWords={15} />
                                     </div>
                                 )}
@@ -2743,8 +2960,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                                         <ShieldAlert size={24} className="text-amber-600" />
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-amber-800">Bot Protection Active</h4>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-amber-800 flex items-center gap-1">
+                                            Bot Protection Active
+                                            <HelpTooltip 
+                                                content="Our system automatically detects and blocks suspicious voting patterns, VPNs, and known bot networks to ensure vote integrity."
+                                                position="right"
+                                            />
+                                        </h4>
                                         <p className="text-sm text-amber-700">
                                             Blocked <span className="font-bold">{(poll as any).blockedVotes.total}</span> suspicious attempts
                                         </p>

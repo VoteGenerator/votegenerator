@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Trophy, Users, BarChart3, PieChart,
     Share2, Copy, Check, Twitter, Linkedin, Facebook,
-    Sparkles, Vote, Crown, ArrowRight, Eye
+    Sparkles, Vote, Crown, ArrowRight, Eye, Clock, Zap, Star
 } from 'lucide-react';
 
 interface PublicResultsProps {
@@ -176,6 +176,13 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     const [showConfetti, setShowConfetti] = useState(false);
     const [activeView, setActiveView] = useState<'bar' | 'pie'>('bar');
     
+    // Ad wall state for free tier
+    const [adWallPassed, setAdWallPassed] = useState(false);
+    const [countdown, setCountdown] = useState(5);
+    
+    // Check if this is a free tier poll
+    const isFreeTier = poll?.tier === 'free' || !poll?.tier;
+    
     // Detect if this is a survey
     const isSurvey = poll?.type === 'survey' || poll?.sections?.length > 0;
     
@@ -215,6 +222,14 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         fetchResults();
     }, [pollId, shareKey]);
     
+    // Countdown timer for ad wall (free tier only)
+    useEffect(() => {
+        if (!loading && isFreeTier && !adWallPassed && countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, isFreeTier, adWallPassed, countdown]);
+    
     // Process results
     const resultsData = useMemo(() => {
         if (!poll || !results) return null;
@@ -222,7 +237,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         const simpleCounts = results.simpleCounts || {};
         const totalVotes = results.totalVotes || 0;
         
-        const sortedOptions = poll.options
+        // For surveys, options might be empty - return minimal data
+        const options = poll.options || [];
+        const sortedOptions = options
             .map((opt: any) => ({
                 id: opt.id,
                 text: opt.text,
@@ -231,7 +248,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             }))
             .sort((a: any, b: any) => b.count - a.count);
         
-        return { totalVotes, sortedOptions, winner: sortedOptions[0] };
+        return { totalVotes, sortedOptions, winner: sortedOptions[0] || null };
     }, [poll, results]);
     
     // Process survey results - must be before any early returns to maintain hooks order
@@ -392,6 +409,121 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     if (!poll || !resultsData) return null;
     
     const { totalVotes, sortedOptions, winner } = resultsData;
+    
+    // Show ad wall for free tier
+    if (isFreeTier && !adWallPassed) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full"
+                >
+                    <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
+                        {/* Header */}
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2, type: "spring" }}
+                            className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+                        >
+                            <BarChart3 size={36} className="text-white" />
+                        </motion.div>
+                        
+                        <h2 className="text-2xl font-bold text-white mb-3">
+                            Results Loading...
+                        </h2>
+                        
+                        <p className="text-white/60 mb-8">
+                            The results will be available in just a moment.
+                        </p>
+                        
+                        {/* Countdown Circle */}
+                        <div className="relative w-24 h-24 mx-auto mb-8">
+                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="45"
+                                    fill="none"
+                                    stroke="rgba(255,255,255,0.1)"
+                                    strokeWidth="8"
+                                />
+                                <motion.circle
+                                    cx="50"
+                                    cy="50"
+                                    r="45"
+                                    fill="none"
+                                    stroke="url(#gradient)"
+                                    strokeWidth="8"
+                                    strokeLinecap="round"
+                                    initial={{ strokeDasharray: "283 283", strokeDashoffset: 0 }}
+                                    animate={{ strokeDashoffset: (283 * countdown) / 5 }}
+                                    transition={{ duration: 1, ease: "linear" }}
+                                />
+                                <defs>
+                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#6366f1" />
+                                        <stop offset="100%" stopColor="#ec4899" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-3xl font-black text-white">{countdown}</span>
+                            </div>
+                        </div>
+                        
+                        {/* View Results Button */}
+                        <motion.button
+                            onClick={() => setAdWallPassed(true)}
+                            disabled={countdown > 0}
+                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
+                                countdown > 0
+                                    ? 'bg-white/10 text-white/40 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-xl hover:scale-[1.02]'
+                            }`}
+                            whileTap={countdown === 0 ? { scale: 0.98 } : {}}
+                        >
+                            {countdown > 0 ? (
+                                <>
+                                    <Clock size={20} />
+                                    Please wait...
+                                </>
+                            ) : (
+                                <>
+                                    <Eye size={20} />
+                                    View Results
+                                </>
+                            )}
+                        </motion.button>
+                        
+                        {/* Upgrade CTA */}
+                        <div className="mt-6 pt-6 border-t border-white/10">
+                            <p className="text-white/40 text-sm mb-3">Want instant access?</p>
+                            <a
+                                href="/#pricing"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-lg text-sm hover:shadow-lg transition-all"
+                            >
+                                <Zap size={16} />
+                                Upgrade to Pro
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {/* Ad Space Placeholder */}
+                    <div className="mt-6 bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
+                        <p className="text-white/30 text-xs mb-2">ADVERTISEMENT</p>
+                        <div className="h-[250px] bg-white/5 rounded-xl flex items-center justify-center">
+                            <div className="text-white/20 text-sm">
+                                <Star size={24} className="mx-auto mb-2 opacity-50" />
+                                Ad Space
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
     
     // Color palettes
     const barGradients = [
@@ -818,6 +950,21 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                 )}
                             </motion.div>
                         ))}
+                        
+                        {/* Empty State for Surveys */}
+                        {(!surveyStats?.questionStats || surveyStats.questionStats.length === 0) && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20 text-center"
+                            >
+                                <Vote size={48} className="mx-auto mb-4 text-white/30" />
+                                <h3 className="text-lg font-bold text-white mb-2">No Responses Yet</h3>
+                                <p className="text-white/50 text-sm">
+                                    Be the first to respond to this survey!
+                                </p>
+                            </motion.div>
+                        )}
                     </div>
                 )}
                 

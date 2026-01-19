@@ -124,16 +124,31 @@ const handler: Handler = async (event) => {
             id: pollData.id,
             title: pollData.title,
             description: pollData.description,
-            options: pollData.options.map(o => ({
+            options: pollData.options?.map(o => ({
                 id: o.id,
                 text: o.text,
                 imageUrl: o.imageUrl
-            })),
+            })) || [],
             type: pollData.type,
             theme: pollData.theme,
             createdAt: pollData.createdAt,
             allowedViews: settings.allowedViews || ['bar', 'pie'],
-            showSocialShare: settings.showSocialShare !== false // Default true
+            showSocialShare: settings.showSocialShare !== false, // Default true
+            // Include survey sections if it's a survey
+            sections: (pollData as any).sections?.map((s: any) => ({
+                id: s.id,
+                title: s.title,
+                questions: s.questions?.map((q: any) => ({
+                    id: q.id,
+                    type: q.type,
+                    text: q.text,
+                    options: q.options,
+                    maxRating: q.maxRating,
+                    max: q.max
+                }))
+            })),
+            // Include tier for ad wall decision
+            tier: (pollData as any).tier || 'free'
         };
 
         // Prepare public votes (strip sensitive data like IPs)
@@ -182,7 +197,13 @@ const handler: Handler = async (event) => {
                     votes: publicVotes,
                     simpleCounts,
                     winnerId,
-                    totalVotes: votes.length
+                    totalVotes: votes.length,
+                    // Include survey responses for survey types
+                    surveyResponses: (pollData as any).surveyResponses?.map((r: any) => ({
+                        id: r.id,
+                        answers: r.answers,
+                        submittedAt: r.submittedAt
+                    })) || []
                 }
             })
         };

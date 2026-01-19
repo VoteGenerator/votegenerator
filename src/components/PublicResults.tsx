@@ -445,77 +445,144 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     
     // Show ad wall for free tier
     if (isFreeTier && !adWallPassed) {
+        // Mini animated bar chart for ad wall
+        const miniBarData = [45, 72, 58, 89, 95];
+        
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 flex items-center justify-center p-4 relative overflow-hidden">
+                {/* Animated background */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <motion.div 
+                        className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/20 rounded-full blur-[120px]"
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+                        transition={{ duration: 8, repeat: Infinity }}
+                    />
+                    <motion.div 
+                        className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-500/20 rounded-full blur-[120px]"
+                        animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.3, 0.2] }}
+                        transition={{ duration: 8, repeat: Infinity, delay: 1 }}
+                    />
+                </div>
+                
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-md w-full"
+                    className="max-w-lg w-full relative z-10"
                 >
-                    <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
+                    <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10 overflow-hidden">
                         {/* Header */}
+                        <div className="text-center mb-6">
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                                className="relative w-16 h-16 mx-auto mb-4"
+                            >
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                                    <motion.circle
+                                        cx="50" cy="50" r="45"
+                                        fill="none"
+                                        stroke="url(#publicGradient)"
+                                        strokeWidth="6"
+                                        strokeLinecap="round"
+                                        strokeDasharray="283"
+                                        initial={{ strokeDashoffset: 0 }}
+                                        animate={{ strokeDashoffset: 283 - (283 * (5 - countdown) / 5) }}
+                                        transition={{ duration: 0.5 }}
+                                    />
+                                    <defs>
+                                        <linearGradient id="publicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#6366f1" />
+                                            <stop offset="50%" stopColor="#ec4899" />
+                                            <stop offset="100%" stopColor="#f59e0b" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-xl font-black text-white">
+                                        {countdown > 0 ? countdown : <Check size={24} />}
+                                    </span>
+                                </div>
+                            </motion.div>
+                            
+                            <h2 className="text-2xl font-bold text-white mb-2">
+                                Results Loading...
+                            </h2>
+                            <p className="text-white/50 text-sm">
+                                Preparing your live results
+                            </p>
+                        </div>
+                        
+                        {/* Animated Mini Chart Preview */}
                         <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.2, type: "spring" }}
-                            className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="bg-white/5 rounded-2xl p-4 mb-6 border border-white/10"
                         >
-                            <BarChart3 size={36} className="text-white" />
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                    <BarChart3 size={12} className="text-white" />
+                                </div>
+                                <span className="text-white/60 text-xs font-medium">Live Analytics Preview</span>
+                            </div>
+                            <div className="flex items-end justify-between gap-2 h-20">
+                                {miniBarData.map((value, idx) => (
+                                    <motion.div
+                                        key={idx}
+                                        className="flex-1 bg-gradient-to-t from-indigo-500 to-purple-500 rounded-t relative overflow-hidden"
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${value}%` }}
+                                        transition={{ delay: 0.5 + idx * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                            initial={{ x: '-100%' }}
+                                            animate={{ x: '200%' }}
+                                            transition={{ delay: 1.2 + idx * 0.1, duration: 0.8 }}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
                         </motion.div>
                         
-                        <h2 className="text-2xl font-bold text-white mb-3">
-                            Results Loading...
-                        </h2>
-                        
-                        <p className="text-white/60 mb-8">
-                            The results will be available in just a moment.
-                        </p>
-                        
-                        {/* Countdown Circle */}
-                        <div className="relative w-24 h-24 mx-auto mb-8">
-                            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                                <circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="rgba(255,255,255,0.1)"
-                                    strokeWidth="8"
-                                />
-                                <motion.circle
-                                    cx="50"
-                                    cy="50"
-                                    r="45"
-                                    fill="none"
-                                    stroke="url(#gradient)"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    initial={{ strokeDasharray: "283 283", strokeDashoffset: 0 }}
-                                    animate={{ strokeDashoffset: (283 * countdown) / 5 }}
-                                    transition={{ duration: 1, ease: "linear" }}
-                                />
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#6366f1" />
-                                        <stop offset="100%" stopColor="#ec4899" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-3xl font-black text-white">{countdown}</span>
-                            </div>
-                        </div>
+                        {/* Feature Pills */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.8 }}
+                            className="flex flex-wrap gap-2 justify-center mb-6"
+                        >
+                            {[
+                                { icon: <Trophy size={12} />, text: 'Live Results' },
+                                { icon: <Users size={12} />, text: 'Vote Count' },
+                                { icon: <PieChart size={12} />, text: 'Charts' },
+                            ].map((feature, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 1 + idx * 0.1 }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/10"
+                                >
+                                    <span className="text-indigo-400">{feature.icon}</span>
+                                    <span className="text-white/70 text-xs">{feature.text}</span>
+                                </motion.div>
+                            ))}
+                        </motion.div>
                         
                         {/* View Results Button */}
                         <motion.button
                             onClick={() => setAdWallPassed(true)}
                             disabled={countdown > 0}
+                            whileHover={countdown === 0 ? { scale: 1.02 } : {}}
+                            whileTap={countdown === 0 ? { scale: 0.98 } : {}}
                             className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
                                 countdown > 0
-                                    ? 'bg-white/10 text-white/40 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-xl hover:scale-[1.02]'
+                                    ? 'bg-white/10 text-white/40 cursor-not-allowed border border-white/10'
+                                    : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 hover:shadow-xl'
                             }`}
-                            whileTap={countdown === 0 ? { scale: 0.98 } : {}}
                         >
                             {countdown > 0 ? (
                                 <>
@@ -526,33 +593,66 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                 <>
                                     <Eye size={20} />
                                     View Results
+                                    <ArrowRight size={20} />
                                 </>
                             )}
                         </motion.button>
-                        
-                        {/* Upgrade CTA */}
-                        <div className="mt-6 pt-6 border-t border-white/10">
-                            <p className="text-white/40 text-sm mb-3">Want instant access?</p>
-                            <a
-                                href="/#pricing"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-lg text-sm hover:shadow-lg transition-all"
-                            >
-                                <Zap size={16} />
-                                Upgrade to Pro
-                            </a>
-                        </div>
                     </div>
                     
-                    {/* Ad Space Placeholder */}
-                    <div className="mt-6 bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
-                        <p className="text-white/30 text-xs mb-2">ADVERTISEMENT</p>
+                    {/* Upgrade CTA Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.5 }}
+                        className="mt-4 bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-4 border border-amber-500/20"
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+                                <Crown size={18} className="text-white" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-bold text-sm">Want Instant Access?</h4>
+                                <p className="text-white/50 text-xs">Skip the wait with Pro</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {['No Ads', 'Instant Results', 'Analytics'].map((feat, idx) => (
+                                <motion.span 
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 1.7 + idx * 0.1 }}
+                                    className="px-2 py-1 bg-white/10 rounded-full text-white/70 text-xs flex items-center gap-1"
+                                >
+                                    <Check size={10} className="text-emerald-400" />
+                                    {feat}
+                                </motion.span>
+                            ))}
+                        </div>
+                        <a
+                            href="/pricing"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl text-sm hover:shadow-lg transition-all"
+                        >
+                            <Zap size={14} />
+                            Upgrade to Pro
+                        </a>
+                    </motion.div>
+                    
+                    {/* Ad Space */}
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 2 }}
+                        className="mt-4 bg-white/5 rounded-2xl p-3 border border-white/10 text-center"
+                    >
+                        <p className="text-white/20 text-[10px] mb-2">ADVERTISEMENT</p>
                         <div className="h-[250px] bg-white/5 rounded-xl flex items-center justify-center">
-                            <div className="text-white/20 text-sm">
-                                <Star size={24} className="mx-auto mb-2 opacity-50" />
+                            <div className="text-white/10 text-sm">
+                                <Star size={24} className="mx-auto mb-2 opacity-30" />
                                 Ad Space
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </motion.div>
             </div>
         );

@@ -420,7 +420,7 @@ const VoteGeneratorApp: React.FC = () => {
     };
 
     const goHome = () => {
-        window.location.hash = '';
+        window.location.href = '/create';
     };
 
     const getShareUrl = () => {
@@ -489,7 +489,7 @@ const VoteGeneratorApp: React.FC = () => {
                             return (
                                 <>
                                     <nav className="hidden md:flex items-center gap-1">
-                                        <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                                             <PlusCircle size={16} /> Create Poll
                                         </a>
                                         {hasPolls && (
@@ -909,7 +909,7 @@ const VoteGeneratorApp: React.FC = () => {
                                         
                                         <div className="mt-10 text-center print:hidden">
                                             <a 
-                                                href="/"
+                                                href="/create"
                                                 className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
                                             >
                                                 Create your own survey <ArrowRight size={14}/>
@@ -1022,7 +1022,7 @@ const VoteGeneratorApp: React.FC = () => {
                                         {viewState.poll.settings.security !== 'none' && (
                                             <div className="mt-10 text-center print:hidden">
                                                 <a 
-                                                    href="/"
+                                                    href="/create"
                                                     className="text-slate-400 hover:text-indigo-600 font-medium transition-colors inline-flex items-center gap-1"
                                                 >
                                                     Create your own poll <ArrowRight size={14}/>

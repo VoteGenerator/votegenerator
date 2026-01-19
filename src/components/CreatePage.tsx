@@ -80,7 +80,7 @@ const CreatePage: React.FC = () => {
 
                     {/* Desktop Nav - same structure as AdminDashboard */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
+                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
                             <PlusCircle size={16} /> Create Poll
                         </a>
                         {hasPolls && (
@@ -137,7 +137,7 @@ const CreatePage: React.FC = () => {
                                 </span>
                             </div>
                         )}
-                        <a href="/" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-600 bg-indigo-50">
+                        <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-600 bg-indigo-50">
                             <PlusCircle size={20} /> Create Poll
                         </a>
                         {hasPolls && (

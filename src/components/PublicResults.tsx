@@ -278,6 +278,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         
         sections.forEach((section: any) => {
             section.questions?.forEach((question: any) => {
+                // Skip if question or question.id is missing
+                if (!question || !question.id) {
+                    console.log('Skipping invalid question:', question);
+                    return;
+                }
+                
                 // Skip if already processed (prevent duplicates)
                 if (processedIds.has(question.id)) {
                     return;
@@ -320,14 +326,14 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 
                 // Enhanced debug logging
                 if (responses.length > 0 && answers.length === 0) {
-                    console.log(`⚠️ No answers found for "${question.text}" (${question.id})`);
+                    console.log(`⚠️ No answers found for "${question.text || 'Untitled'}" (${question.id})`);
                     console.log('   Available answer keys in first response:', Object.keys(responses[0]?.answers || {}));
                 } else {
-                    console.log(`✓ Question "${question.text.substring(0, 30)}..." (${question.id}): ${answers.length} answers`);
+                    console.log(`✓ Question "${(question.text || 'Untitled').substring(0, 30)}..." (${question.id}): ${answers.length} answers`);
                 }
                 if (answers[0]) console.log('   Sample answer:', answers[0]);
                 
-                const qType = question.type;
+                const qType = question.type || 'unknown';
                 
                 // CHOICE QUESTIONS: multiple_choice, dropdown, yes_no, checkbox
                 if (['multiple_choice', 'dropdown', 'yes_no', 'checkbox'].includes(qType)) {
@@ -359,10 +365,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'choice',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length,
                         results: sortedResults,
                         isMultiSelect: qType === 'checkbox'
@@ -385,10 +391,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'rating',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: numericAnswers.length,
                         average: avg,
                         max,
@@ -413,10 +419,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'scale',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: numericAnswers.length,
                         average: avg,
                         min,
@@ -437,10 +443,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'nps',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: total,
                         npsScore,
                         promoters: total > 0 ? Math.round((promoters / total) * 100) : 0,
@@ -462,10 +468,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'number',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: numericAnswers.length,
                         average: avg,
                         min: minVal,
@@ -507,10 +513,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'ranking',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length,
                         results: rankedResults
                     });
@@ -519,10 +525,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 else if (['text', 'textarea', 'email', 'phone'].includes(qType)) {
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'text',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length,
                         // Don't include actual text for privacy
                         hasResponses: answers.length > 0
@@ -532,10 +538,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 else if (['date', 'time', 'datetime'].includes(qType)) {
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'datetime',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length
                     });
                 }
@@ -543,10 +549,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 else if (qType === 'matrix') {
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'matrix',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length,
                         rows: question.rows || [],
                         columns: question.columns || []
@@ -556,10 +562,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 else {
                     questionStats.push({
                         id: question.id,
-                        text: question.text,
+                        text: question.text || 'Untitled Question',
                         type: 'unknown',
                         questionType: qType,
-                        sectionTitle: section.title,
+                        sectionTitle: section.title || '',
                         totalResponses: answers.length
                     });
                 }
@@ -1212,7 +1218,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                 {question.sectionTitle}
                                             </div>
                                         )}
-                                        <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">{question.text}</h3>
+                                        <h3 className="text-lg sm:text-xl font-bold text-white leading-tight">{question.text || 'Untitled Question'}</h3>
                                         <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
                                             <span>{question.totalResponses} responses</span>
                                             <span className="w-1 h-1 bg-white/20 rounded-full" />

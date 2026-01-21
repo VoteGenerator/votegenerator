@@ -1316,27 +1316,30 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             {/* Star visualization */}
                                             <div className="flex items-center justify-center gap-1.5 mt-3">
                                                 {Array.from({ length: question.max || 5 }, (_, i) => (
-                                                    <motion.div
-                                                        key={i}
-                                                        initial={{ scale: 0, rotate: -180 }}
-                                                        animate={{ 
-                                                            scale: 1, 
-                                                            rotate: 0,
-                                                            opacity: question.totalResponses > 0 ? 1 : [0.3, 0.6, 0.3]
-                                                        }}
-                                                        transition={{ 
-                                                            delay: 0.6 + i * 0.1, 
-                                                            type: "spring",
-                                                            opacity: question.totalResponses > 0 ? {} : { duration: 2, repeat: Infinity, delay: i * 0.2 }
-                                                        }}
-                                                        className={`text-2xl ${
-                                                            question.totalResponses > 0 && i < Math.round(question.average) 
-                                                                ? 'text-amber-400' 
-                                                                : 'text-white/20'
-                                                        }`}
-                                                    >
-                                                        ★
-                                                    </motion.div>
+                                                    question.totalResponses > 0 ? (
+                                                        <motion.div
+                                                            key={i}
+                                                            initial={{ scale: 0, rotate: -180 }}
+                                                            animate={{ scale: 1, rotate: 0 }}
+                                                            transition={{ delay: 0.6 + i * 0.1, type: "spring" }}
+                                                            className={`text-2xl ${
+                                                                i < Math.round(question.average) 
+                                                                    ? 'text-amber-400' 
+                                                                    : 'text-white/20'
+                                                            }`}
+                                                        >
+                                                            ★
+                                                        </motion.div>
+                                                    ) : (
+                                                        <motion.div
+                                                            key={i}
+                                                            animate={{ opacity: [0.2, 0.5, 0.2] }}
+                                                            transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }}
+                                                            className="text-2xl text-white/20"
+                                                        >
+                                                            ★
+                                                        </motion.div>
+                                                    )
                                                 ))}
                                             </div>
                                         </motion.div>

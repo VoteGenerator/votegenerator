@@ -157,7 +157,14 @@ const handler: Handler = async (event) => {
                     text: q.text,
                     options: q.options,
                     maxRating: q.maxRating,
-                    max: q.max
+                    max: q.max,
+                    min: q.min,
+                    minScale: q.minScale,
+                    maxScale: q.maxScale,
+                    minLabel: q.minLabel,
+                    maxLabel: q.maxLabel,
+                    rows: q.rows,
+                    columns: q.columns
                 }))
             })),
             // Include tier for ad wall decision
@@ -214,9 +221,20 @@ const handler: Handler = async (event) => {
                     // Include survey responses for survey types
                     // Check both surveyResponses array AND votes with surveyAnswers
                     surveyResponses: (() => {
+                        const isSurveyType = pollData.type === 'survey' || (pollData as any).sections?.length > 0;
+                        
+                        if (isSurveyType) {
+                            console.log('=== Survey Response Debug ===');
+                        }
+                        
                         // First check dedicated surveyResponses array
                         const dedicated = (pollData as any).surveyResponses || [];
                         if (dedicated.length > 0) {
+                            console.log('Found dedicated surveyResponses:', dedicated.length);
+                            if (dedicated[0]) {
+                                console.log('First response keys:', Object.keys(dedicated[0]));
+                                console.log('First response answers keys:', Object.keys(dedicated[0].answers || dedicated[0].surveyAnswers || {}));
+                            }
                             return dedicated.map((r: any) => ({
                                 id: r.id,
                                 answers: r.answers || r.surveyAnswers || {},
@@ -232,6 +250,20 @@ const handler: Handler = async (event) => {
                                 answers: v.surveyAnswers || v.answers || {},
                                 submittedAt: v.votedAt || v.timestamp
                             }));
+                        
+                        if (isSurveyType) {
+                            console.log('Found votes with surveyAnswers:', fromVotes.length);
+                            if (fromVotes[0]) {
+                                console.log('First vote answer keys:', Object.keys(fromVotes[0].answers || {}));
+                            }
+                            
+                            // Also check sections for question IDs
+                            const sections = (pollData as any).sections || [];
+                            if (sections[0]?.questions?.[0]) {
+                                console.log('First question ID format:', sections[0].questions[0].id);
+                            }
+                            console.log('=== End Survey Response Debug ===');
+                        }
                         
                         return fromVotes;
                     })()

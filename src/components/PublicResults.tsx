@@ -288,13 +288,44 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 const answers = responses
                     .map((r: any) => {
                         const ans = r.answers || {};
-                        // Try question.id directly, or without prefix
-                        return ans[question.id] || ans[question.id.replace(/^q_/, '')] || null;
+                        const qId = question.id;
+                        
+                        // Try various key formats
+                        // 1. Direct match
+                        if (ans[qId] !== undefined) return ans[qId];
+                        // 2. Without q_ prefix
+                        if (ans[qId.replace(/^q_/, '')] !== undefined) return ans[qId.replace(/^q_/, '')];
+                        // 3. With q_ prefix added
+                        if (ans[`q_${qId}`] !== undefined) return ans[`q_${qId}`];
+                        // 4. Match by numeric suffix (q_1234 -> 1234)
+                        const numericPart = qId.match(/\d+$/)?.[0];
+                        if (numericPart) {
+                            // Check all answer keys for matching numeric suffix
+                            for (const key of Object.keys(ans)) {
+                                if (key.endsWith(numericPart) || key === numericPart) {
+                                    return ans[key];
+                                }
+                            }
+                        }
+                        // 5. Fuzzy match - find key that contains the question id
+                        for (const key of Object.keys(ans)) {
+                            if (key.includes(qId) || qId.includes(key)) {
+                                return ans[key];
+                            }
+                        }
+                        
+                        return null;
                     })
                     .filter((a: any) => a !== null && a !== undefined && a !== '');
                 
-                console.log(`Question "${question.text}" (${question.id}, type: ${question.type}): ${answers.length} answers`);
-                if (answers[0]) console.log('Sample answer:', answers[0]);
+                // Enhanced debug logging
+                if (responses.length > 0 && answers.length === 0) {
+                    console.log(`⚠️ No answers found for "${question.text}" (${question.id})`);
+                    console.log('   Available answer keys in first response:', Object.keys(responses[0]?.answers || {}));
+                } else {
+                    console.log(`✓ Question "${question.text.substring(0, 30)}..." (${question.id}): ${answers.length} answers`);
+                }
+                if (answers[0]) console.log('   Sample answer:', answers[0]);
                 
                 const qType = question.type;
                 
@@ -812,22 +843,6 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                             Upgrade to Pro
                         </a>
                     </motion.div>
-                    
-                    {/* Ad Space */}
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 2 }}
-                        className="mt-4 bg-white/5 rounded-2xl p-3 border border-white/10 text-center"
-                    >
-                        <p className="text-white/20 text-[10px] mb-2">ADVERTISEMENT</p>
-                        <div className="h-[250px] bg-white/5 rounded-xl flex items-center justify-center">
-                            <div className="text-white/10 text-sm">
-                                <Star size={24} className="mx-auto mb-2 opacity-30" />
-                                Ad Space
-                            </div>
-                        </div>
-                    </motion.div>
                 </motion.div>
             </div>
         );
@@ -1246,10 +1261,27 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                 </div>
                                             </motion.div>
                                         ))}
-                                        {question.results?.length === 0 && (
-                                            <div className="text-center py-6 text-white/40">
-                                                <div className="text-sm">No responses yet</div>
-                                            </div>
+                                        {(question.results?.length === 0 || question.totalResponses === 0) && (
+                                            <motion.div 
+                                                className="text-center py-8"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                            >
+                                                <motion.div
+                                                    className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                                                    animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    <BarChart3 size={24} className="text-indigo-400" />
+                                                </motion.div>
+                                                <motion.div 
+                                                    className="text-white/40 text-sm"
+                                                    animate={{ opacity: [0.4, 0.7, 0.4] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    Awaiting responses...
+                                                </motion.div>
+                                            </motion.div>
                                         )}
                                     </div>
                                 )}
@@ -1264,20 +1296,41 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             animate={{ scale: 1 }}
                                             transition={{ delay: 0.4, type: "spring" }}
                                         >
-                                            <div className="text-6xl sm:text-7xl font-black bg-gradient-to-br from-amber-300 via-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                                                {question.totalResponses > 0 ? question.average.toFixed(1) : '—'}
-                                            </div>
-                                            <div className="text-white/50 text-sm mt-1">out of {question.max}</div>
+                                            {question.totalResponses > 0 ? (
+                                                <>
+                                                    <div className="text-6xl sm:text-7xl font-black bg-gradient-to-br from-amber-300 via-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                                                        {question.average.toFixed(1)}
+                                                    </div>
+                                                    <div className="text-white/50 text-sm mt-1">out of {question.max}</div>
+                                                </>
+                                            ) : (
+                                                <motion.div 
+                                                    className="text-center py-4"
+                                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    <div className="text-4xl mb-2">⭐</div>
+                                                    <div className="text-white/40 text-sm">Awaiting ratings</div>
+                                                </motion.div>
+                                            )}
                                             {/* Star visualization */}
                                             <div className="flex items-center justify-center gap-1.5 mt-3">
-                                                {Array.from({ length: question.max }, (_, i) => (
+                                                {Array.from({ length: question.max || 5 }, (_, i) => (
                                                     <motion.div
                                                         key={i}
                                                         initial={{ scale: 0, rotate: -180 }}
-                                                        animate={{ scale: 1, rotate: 0 }}
-                                                        transition={{ delay: 0.6 + i * 0.1, type: "spring" }}
+                                                        animate={{ 
+                                                            scale: 1, 
+                                                            rotate: 0,
+                                                            opacity: question.totalResponses > 0 ? 1 : [0.3, 0.6, 0.3]
+                                                        }}
+                                                        transition={{ 
+                                                            delay: 0.6 + i * 0.1, 
+                                                            type: "spring",
+                                                            opacity: question.totalResponses > 0 ? {} : { duration: 2, repeat: Infinity, delay: i * 0.2 }
+                                                        }}
                                                         className={`text-2xl ${
-                                                            i < Math.round(question.average) 
+                                                            question.totalResponses > 0 && i < Math.round(question.average) 
                                                                 ? 'text-amber-400' 
                                                                 : 'text-white/20'
                                                         }`}
@@ -1288,13 +1341,13 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             </div>
                                         </motion.div>
                                         
-                                        {/* Distribution */}
-                                        {question.distribution && (
+                                        {/* Distribution - only show if has responses */}
+                                        {question.totalResponses > 0 && question.distribution && (
                                             <div className="flex-1 w-full sm:w-auto">
                                                 <div className="text-xs text-white/40 mb-3">Rating Distribution</div>
                                                 <div className="space-y-2">
-                                                    {Array.from({ length: question.max }, (_, i) => {
-                                                        const rating = question.max - i;
+                                                    {Array.from({ length: question.max || 5 }, (_, i) => {
+                                                        const rating = (question.max || 5) - i;
                                                         const count = question.distribution[rating] || 0;
                                                         const pct = question.totalResponses > 0 ? (count / question.totalResponses) * 100 : 0;
                                                         return (
@@ -1346,38 +1399,69 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                         strokeWidth="8"
                                                         strokeLinecap="round"
                                                     />
-                                                    {/* Filled arc */}
-                                                    <motion.path
-                                                        d="M 10 50 A 40 40 0 0 1 90 50"
-                                                        fill="none"
-                                                        stroke={`url(#gauge-${question.id})`}
-                                                        strokeWidth="8"
-                                                        strokeLinecap="round"
-                                                        initial={{ pathLength: 0 }}
-                                                        animate={{ pathLength: question.totalResponses > 0 ? (question.average - question.min) / (question.max - question.min) : 0 }}
-                                                        transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
-                                                    />
+                                                    {/* Filled arc - animate pulsing if no data */}
+                                                    {question.totalResponses > 0 ? (
+                                                        <motion.path
+                                                            d="M 10 50 A 40 40 0 0 1 90 50"
+                                                            fill="none"
+                                                            stroke={`url(#gauge-${question.id})`}
+                                                            strokeWidth="8"
+                                                            strokeLinecap="round"
+                                                            initial={{ pathLength: 0 }}
+                                                            animate={{ pathLength: ((question.average || 0) - (question.min || 1)) / ((question.max || 10) - (question.min || 1)) }}
+                                                            transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
+                                                        />
+                                                    ) : (
+                                                        <motion.path
+                                                            d="M 10 50 A 40 40 0 0 1 90 50"
+                                                            fill="none"
+                                                            stroke="rgba(255,255,255,0.2)"
+                                                            strokeWidth="8"
+                                                            strokeLinecap="round"
+                                                            animate={{ opacity: [0.1, 0.3, 0.1] }}
+                                                            transition={{ duration: 2, repeat: Infinity }}
+                                                        />
+                                                    )}
                                                 </svg>
                                                 {/* Score in center */}
                                                 <div className="absolute inset-0 flex items-end justify-center pb-0">
-                                                    <div className="text-4xl font-black text-white">
-                                                        {question.totalResponses > 0 ? question.average.toFixed(1) : '—'}
-                                                    </div>
+                                                    {question.totalResponses > 0 ? (
+                                                        <div className="text-4xl font-black text-white">
+                                                            {question.average.toFixed(1)}
+                                                        </div>
+                                                    ) : (
+                                                        <motion.div 
+                                                            className="text-2xl text-white/30"
+                                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                                            transition={{ duration: 2, repeat: Infinity }}
+                                                        >
+                                                            —
+                                                        </motion.div>
+                                                    )}
                                                 </div>
                                             </motion.div>
                                             <div className="flex justify-between w-48 text-xs text-white/40 mt-1">
-                                                <span>{question.minLabel || question.min}</span>
-                                                <span>{question.maxLabel || question.max}</span>
+                                                <span>{question.minLabel || question.min || 1}</span>
+                                                <span>{question.maxLabel || question.max || 10}</span>
                                             </div>
+                                            {question.totalResponses === 0 && (
+                                                <motion.div 
+                                                    className="text-white/40 text-sm mt-2"
+                                                    animate={{ opacity: [0.4, 0.7, 0.4] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    Awaiting responses...
+                                                </motion.div>
+                                            )}
                                         </div>
                                         
-                                        {/* Distribution bar */}
-                                        {question.distribution && (
+                                        {/* Distribution bar - only show if has responses */}
+                                        {question.totalResponses > 0 && question.distribution && (
                                             <div>
                                                 <div className="text-xs text-white/40 mb-2 text-center">Response Distribution</div>
                                                 <div className="flex items-end justify-center gap-1 h-20">
-                                                    {Array.from({ length: question.max - question.min + 1 }, (_, i) => {
-                                                        const val = question.min + i;
+                                                    {Array.from({ length: (question.max || 10) - (question.min || 1) + 1 }, (_, i) => {
+                                                        const val = (question.min || 1) + i;
                                                         const count = question.distribution[val] || 0;
                                                         const maxCount = Math.max(...Object.values(question.distribution as Record<number, number>), 1);
                                                         const height = (count / maxCount) * 100;
@@ -1414,59 +1498,79 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             animate={{ scale: 1 }}
                                             transition={{ delay: 0.4, type: "spring" }}
                                         >
-                                            <div className={`text-7xl font-black ${
-                                                question.npsScore >= 50 ? 'text-emerald-400' :
-                                                question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
-                                            }`}>
-                                                {question.totalResponses > 0 ? (question.npsScore > 0 ? '+' : '') + question.npsScore : '—'}
-                                            </div>
-                                            <div className="text-white/50 text-sm">Net Promoter Score</div>
-                                            <div className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
-                                                question.npsScore >= 50 ? 'bg-emerald-500/20 text-emerald-300' :
-                                                question.npsScore >= 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
-                                            }`}>
-                                                {question.npsScore >= 70 ? 'Excellent' :
-                                                 question.npsScore >= 50 ? 'Great' :
-                                                 question.npsScore >= 30 ? 'Good' :
-                                                 question.npsScore >= 0 ? 'Needs Improvement' : 'Critical'}
-                                            </div>
+                                            {question.totalResponses > 0 ? (
+                                                <>
+                                                    <div className={`text-7xl font-black ${
+                                                        question.npsScore >= 50 ? 'text-emerald-400' :
+                                                        question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
+                                                    }`}>
+                                                        {question.npsScore > 0 ? '+' : ''}{question.npsScore}
+                                                    </div>
+                                                    <div className="text-white/50 text-sm">Net Promoter Score</div>
+                                                    <div className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
+                                                        question.npsScore >= 50 ? 'bg-emerald-500/20 text-emerald-300' :
+                                                        question.npsScore >= 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
+                                                    }`}>
+                                                        {question.npsScore >= 70 ? 'Excellent' :
+                                                         question.npsScore >= 50 ? 'Great' :
+                                                         question.npsScore >= 30 ? 'Good' :
+                                                         question.npsScore >= 0 ? 'Needs Improvement' : 'Critical'}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <motion.div
+                                                    animate={{ opacity: [0.4, 0.8, 0.4] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    <div className="text-5xl font-black text-white/20">—</div>
+                                                    <div className="text-white/40 text-sm mt-2">Awaiting NPS responses</div>
+                                                </motion.div>
+                                            )}
                                         </motion.div>
                                         
-                                        {/* Segmented bar */}
-                                        <div>
-                                            <div className="h-6 flex rounded-full overflow-hidden">
-                                                <motion.div 
-                                                    className="bg-gradient-to-r from-red-500 to-red-400 flex items-center justify-center"
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${question.detractors}%` }}
-                                                    transition={{ delay: 0.5, duration: 0.8 }}
-                                                >
-                                                    {question.detractors > 10 && (
-                                                        <span className="text-white text-xs font-bold">{question.detractors}%</span>
-                                                    )}
-                                                </motion.div>
-                                                <motion.div 
-                                                    className="bg-gradient-to-r from-amber-500 to-amber-400 flex items-center justify-center"
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${question.passives}%` }}
-                                                    transition={{ delay: 0.6, duration: 0.8 }}
-                                                >
-                                                    {question.passives > 10 && (
-                                                        <span className="text-white text-xs font-bold">{question.passives}%</span>
-                                                    )}
-                                                </motion.div>
-                                                <motion.div 
-                                                    className="bg-gradient-to-r from-emerald-500 to-emerald-400 flex items-center justify-center"
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${question.promoters}%` }}
-                                                    transition={{ delay: 0.7, duration: 0.8 }}
-                                                >
-                                                    {question.promoters > 10 && (
-                                                        <span className="text-white text-xs font-bold">{question.promoters}%</span>
-                                                    )}
-                                                </motion.div>
+                                        {/* Segmented bar - only show if has data */}
+                                        {question.totalResponses > 0 ? (
+                                            <div>
+                                                <div className="h-6 flex rounded-full overflow-hidden">
+                                                    <motion.div 
+                                                        className="bg-gradient-to-r from-red-500 to-red-400 flex items-center justify-center"
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${question.detractors}%` }}
+                                                        transition={{ delay: 0.5, duration: 0.8 }}
+                                                    >
+                                                        {question.detractors > 10 && (
+                                                            <span className="text-white text-xs font-bold">{question.detractors}%</span>
+                                                        )}
+                                                    </motion.div>
+                                                    <motion.div 
+                                                        className="bg-gradient-to-r from-amber-500 to-amber-400 flex items-center justify-center"
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${question.passives}%` }}
+                                                        transition={{ delay: 0.6, duration: 0.8 }}
+                                                    >
+                                                        {question.passives > 10 && (
+                                                            <span className="text-white text-xs font-bold">{question.passives}%</span>
+                                                        )}
+                                                    </motion.div>
+                                                    <motion.div 
+                                                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 flex items-center justify-center"
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${question.promoters}%` }}
+                                                        transition={{ delay: 0.7, duration: 0.8 }}
+                                                    >
+                                                        {question.promoters > 10 && (
+                                                            <span className="text-white text-xs font-bold">{question.promoters}%</span>
+                                                        )}
+                                                    </motion.div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <motion.div 
+                                                className="h-6 bg-white/5 rounded-full overflow-hidden"
+                                                animate={{ opacity: [0.3, 0.5, 0.3] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                            />
+                                        )}
                                         
                                         {/* Legend */}
                                         <div className="grid grid-cols-3 gap-3">

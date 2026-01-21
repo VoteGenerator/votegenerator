@@ -119,16 +119,22 @@ const handler: Handler = async (event) => {
         const votes = (pollData as any).votes || [];
         console.log('Found votes:', votes.length);
         
-        // Debug survey data
-        const isSurvey = pollData.type === 'survey' || (pollData as any).sections?.length > 0;
+        // Debug survey data - use same detection as vg-vote
+        const isSurvey = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
         if (isSurvey) {
             console.log('Survey detected');
+            console.log('pollData.isSurvey:', (pollData as any).isSurvey);
+            console.log('pollData.type:', pollData.type);
+            console.log('pollData.pollType:', (pollData as any).pollType);
             console.log('surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
             console.log('sections:', (pollData as any).sections?.length || 0);
             if (votes.length > 0) {
                 console.log('First vote has surveyAnswers:', !!votes[0].surveyAnswers);
                 console.log('First vote has answers:', !!votes[0].answers);
                 console.log('First vote keys:', Object.keys(votes[0]));
+                if (votes[0].surveyAnswers) {
+                    console.log('First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers));
+                }
             }
         }
 
@@ -143,6 +149,8 @@ const handler: Handler = async (event) => {
                 imageUrl: o.imageUrl
             })) || [],
             type: pollData.type,
+            pollType: (pollData as any).pollType,
+            isSurvey: (pollData as any).isSurvey,
             theme: pollData.theme,
             createdAt: pollData.createdAt,
             allowedViews: settings.allowedViews || ['bar', 'pie'],
@@ -221,7 +229,7 @@ const handler: Handler = async (event) => {
                     // Include survey responses for survey types
                     // Check both surveyResponses array AND votes with surveyAnswers
                     surveyResponses: (() => {
-                        const isSurveyType = pollData.type === 'survey' || (pollData as any).sections?.length > 0;
+                        const isSurveyType = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
                         
                         if (isSurveyType) {
                             console.log('=== Survey Response Debug ===');
@@ -261,6 +269,35 @@ const handler: Handler = async (event) => {
                             const sections = (pollData as any).sections || [];
                             if (sections[0]?.questions?.[0]) {
                                 console.log('First question ID format:', sections[0].questions[0].id);
+                            }
+                            
+                            // If no survey responses found but we have votes, 
+                            // the votes might be stored differently - log all vote keys
+                            if (fromVotes.length === 0 && votes.length > 0) {
+                                console.log('WARNING: Survey has votes but no surveyAnswers found!');
+                                console.log('All vote[0] keys:', Object.keys(votes[0]));
+                                // Check if answers might be stored at top level of vote
+                                const altAnswers: any[] = [];
+                                for (const vote of votes) {
+                                    // Try to find answer-like properties
+                                    for (const key of Object.keys(vote)) {
+                                        if (key.startsWith('q_') || key.match(/^[a-f0-9-]{36}$/)) {
+                                            // This looks like a question ID
+                                            if (!altAnswers.find(a => a.id === vote.id)) {
+                                                altAnswers.push({
+                                                    id: vote.id,
+                                                    answers: vote,
+                                                    submittedAt: vote.votedAt || vote.timestamp
+                                                });
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (altAnswers.length > 0) {
+                                    console.log('Found alternative answer format:', altAnswers.length);
+                                    return altAnswers;
+                                }
                             }
                             console.log('=== End Survey Response Debug ===');
                         }

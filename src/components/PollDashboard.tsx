@@ -309,15 +309,20 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 throw new Error('Failed to update setting');
             }
             
-            // Success - don't call onRefresh immediately to avoid race condition
-            // The local state is already updated, refresh will happen on next user action
             console.log(`Setting ${settingKey} updated to:`, value);
+            
+            // Refresh poll data to sync with backend
+            // Small delay to ensure backend has saved
+            setTimeout(() => {
+                onRefresh();
+            }, 300);
         } catch (err) {
             console.error('Failed to update setting:', err);
             // Revert local state on error
             if (settingKey === 'publicResults') setLocalPublicResults(poll.settings?.publicResults || false);
             if (settingKey === 'showShareButton') setLocalShowShareButton(poll.settings?.showShareButton || false);
             if (settingKey === 'allowedViews') setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+            if (settingKey === 'showSocialShare') setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
         } finally {
             setSettingsUpdating(false);
         }

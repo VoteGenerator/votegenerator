@@ -184,7 +184,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     const isFreeTier = poll?.tier === 'free' || !poll?.tier;
     
     // Detect if this is a survey
-    const isSurvey = poll?.type === 'survey' || poll?.sections?.length > 0;
+    const isSurvey = poll?.isSurvey || poll?.type === 'survey' || poll?.pollType === 'survey' || poll?.sections?.length > 0;
     
     // Fetch results
     useEffect(() => {

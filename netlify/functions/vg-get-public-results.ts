@@ -184,6 +184,9 @@ const handler: Handler = async (event) => {
             id: v.id,
             choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
             votedAt: v.votedAt,
+            // Include surveyAnswers for survey types
+            surveyAnswers: v.surveyAnswers,
+            answers: v.answers,
             // Only include basic analytics, no IP
             analytics: v.analytics ? {
                 country: v.analytics.country,
@@ -227,82 +230,81 @@ const handler: Handler = async (event) => {
                     winnerId,
                     totalVotes: votes.length,
                     // Include survey responses for survey types
-                    // Check both surveyResponses array AND votes with surveyAnswers
+                    // Check ALL possible locations for survey answers
                     surveyResponses: (() => {
                         const isSurveyType = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
                         
-                        if (isSurveyType) {
-                            console.log('=== Survey Response Debug ===');
+                        if (!isSurveyType) {
+                            return [];
                         }
                         
-                        // First check dedicated surveyResponses array
-                        const dedicated = (pollData as any).surveyResponses || [];
-                        if (dedicated.length > 0) {
-                            console.log('Found dedicated surveyResponses:', dedicated.length);
-                            if (dedicated[0]) {
-                                console.log('First response keys:', Object.keys(dedicated[0]));
-                                console.log('First response answers keys:', Object.keys(dedicated[0].answers || dedicated[0].surveyAnswers || {}));
-                            }
-                            return dedicated.map((r: any) => ({
-                                id: r.id,
-                                answers: r.answers || r.surveyAnswers || {},
-                                submittedAt: r.submittedAt
-                            }));
-                        }
+                        console.log('=== Building surveyResponses ===');
+                        console.log('Total votes to check:', votes.length);
                         
-                        // Fallback: check votes for surveyAnswers
-                        const fromVotes = votes
-                            .filter((v: any) => v.surveyAnswers || v.answers)
-                            .map((v: any) => ({
-                                id: v.id,
-                                answers: v.surveyAnswers || v.answers || {},
-                                submittedAt: v.votedAt || v.timestamp
-                            }));
+                        const surveyResponses: any[] = [];
                         
-                        if (isSurveyType) {
-                            console.log('Found votes with surveyAnswers:', fromVotes.length);
-                            if (fromVotes[0]) {
-                                console.log('First vote answer keys:', Object.keys(fromVotes[0].answers || {}));
-                            }
+                        // Check each vote for survey answers
+                        for (const vote of votes) {
+                            const voteKeys = Object.keys(vote);
+                            console.log(`Vote ${vote.id} keys:`, voteKeys);
                             
-                            // Also check sections for question IDs
-                            const sections = (pollData as any).sections || [];
-                            if (sections[0]?.questions?.[0]) {
-                                console.log('First question ID format:', sections[0].questions[0].id);
-                            }
+                            let answers: Record<string, any> = {};
                             
-                            // If no survey responses found but we have votes, 
-                            // the votes might be stored differently - log all vote keys
-                            if (fromVotes.length === 0 && votes.length > 0) {
-                                console.log('WARNING: Survey has votes but no surveyAnswers found!');
-                                console.log('All vote[0] keys:', Object.keys(votes[0]));
-                                // Check if answers might be stored at top level of vote
-                                const altAnswers: any[] = [];
-                                for (const vote of votes) {
-                                    // Try to find answer-like properties
-                                    for (const key of Object.keys(vote)) {
-                                        if (key.startsWith('q_') || key.match(/^[a-f0-9-]{36}$/)) {
-                                            // This looks like a question ID
-                                            if (!altAnswers.find(a => a.id === vote.id)) {
-                                                altAnswers.push({
-                                                    id: vote.id,
-                                                    answers: vote,
-                                                    submittedAt: vote.votedAt || vote.timestamp
-                                                });
-                                            }
-                                            break;
-                                        }
+                            // Method 1: vote.surveyAnswers
+                            if (vote.surveyAnswers && typeof vote.surveyAnswers === 'object') {
+                                answers = vote.surveyAnswers;
+                                console.log('Found surveyAnswers:', Object.keys(answers));
+                            }
+                            // Method 2: vote.answers
+                            else if (vote.answers && typeof vote.answers === 'object') {
+                                answers = vote.answers;
+                                console.log('Found answers:', Object.keys(answers));
+                            }
+                            // Method 3: Look for q_ prefixed keys directly on vote
+                            else {
+                                for (const key of voteKeys) {
+                                    if (key.startsWith('q_') || key.match(/^[a-f0-9]{8,}/i)) {
+                                        answers[key] = vote[key];
                                     }
                                 }
-                                if (altAnswers.length > 0) {
-                                    console.log('Found alternative answer format:', altAnswers.length);
-                                    return altAnswers;
+                                if (Object.keys(answers).length > 0) {
+                                    console.log('Found answers in vote root:', Object.keys(answers));
                                 }
                             }
-                            console.log('=== End Survey Response Debug ===');
+                            
+                            // If we found any answers, add to surveyResponses
+                            if (Object.keys(answers).length > 0) {
+                                surveyResponses.push({
+                                    id: vote.id,
+                                    answers: answers,
+                                    submittedAt: vote.votedAt || vote.timestamp || vote.createdAt
+                                });
+                            }
                         }
                         
-                        return fromVotes;
+                        // Also check dedicated surveyResponses array on pollData
+                        const dedicated = (pollData as any).surveyResponses || [];
+                        if (dedicated.length > 0) {
+                            console.log('Found dedicated surveyResponses array:', dedicated.length);
+                            for (const r of dedicated) {
+                                const ans = r.answers || r.surveyAnswers || {};
+                                if (Object.keys(ans).length > 0 && !surveyResponses.find(sr => sr.id === r.id)) {
+                                    surveyResponses.push({
+                                        id: r.id,
+                                        answers: ans,
+                                        submittedAt: r.submittedAt
+                                    });
+                                }
+                            }
+                        }
+                        
+                        console.log('Final surveyResponses count:', surveyResponses.length);
+                        if (surveyResponses[0]) {
+                            console.log('First response answer keys:', Object.keys(surveyResponses[0].answers));
+                        }
+                        console.log('=== End surveyResponses build ===');
+                        
+                        return surveyResponses;
                     })()
                 }
             })

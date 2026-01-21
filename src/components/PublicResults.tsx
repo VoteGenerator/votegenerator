@@ -253,17 +253,79 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     
     // Process survey results - must be before any early returns to maintain hooks order
     const surveyStats = useMemo(() => {
-        if (!isSurvey || !poll?.sections) return null;
+        if (!isSurvey || !poll?.sections) {
+            console.log('surveyStats: Not a survey or no sections', { isSurvey, hasSections: !!poll?.sections });
+            return null;
+        }
         
-        const responses = results?.surveyResponses || [];
+        let responses = results?.surveyResponses || [];
         const sections = poll.sections || [];
         
         // Debug logging
         console.log('=== PublicResults Survey Debug ===');
         console.log('isSurvey:', isSurvey);
+        console.log('poll.isSurvey:', poll?.isSurvey);
+        console.log('poll.type:', poll?.type);
+        console.log('poll.pollType:', poll?.pollType);
         console.log('sections count:', sections.length);
-        console.log('responses count:', responses.length);
+        console.log('responses count (from surveyResponses):', responses.length);
+        console.log('results.totalVotes:', results?.totalVotes);
+        console.log('results.votes count:', results?.votes?.length);
+        console.log('Full results object keys:', Object.keys(results || {}));
+        
+        // FRONTEND FALLBACK: If no surveyResponses but we have votes, try to extract from votes
+        if (responses.length === 0 && results?.votes?.length > 0) {
+            console.log('⚠️ No surveyResponses, attempting to extract from votes...');
+            const extractedResponses: any[] = [];
+            
+            for (const vote of results.votes) {
+                console.log('Checking vote:', Object.keys(vote));
+                
+                // Check if vote has surveyAnswers
+                if (vote.surveyAnswers && Object.keys(vote.surveyAnswers).length > 0) {
+                    console.log('Found vote.surveyAnswers:', Object.keys(vote.surveyAnswers));
+                    extractedResponses.push({
+                        id: vote.id,
+                        answers: vote.surveyAnswers,
+                        submittedAt: vote.votedAt
+                    });
+                }
+                // Check if vote has answers
+                else if (vote.answers && Object.keys(vote.answers).length > 0) {
+                    console.log('Found vote.answers:', Object.keys(vote.answers));
+                    extractedResponses.push({
+                        id: vote.id,
+                        answers: vote.answers,
+                        submittedAt: vote.votedAt
+                    });
+                }
+                // Check if vote itself contains question IDs (q_xxx format)
+                else {
+                    const questionAnswers: Record<string, any> = {};
+                    for (const key of Object.keys(vote)) {
+                        if (key.startsWith('q_') || key.match(/^[a-f0-9]{8,}/)) {
+                            questionAnswers[key] = vote[key];
+                        }
+                    }
+                    if (Object.keys(questionAnswers).length > 0) {
+                        console.log('Found answers in vote root:', Object.keys(questionAnswers));
+                        extractedResponses.push({
+                            id: vote.id,
+                            answers: questionAnswers,
+                            submittedAt: vote.votedAt
+                        });
+                    }
+                }
+            }
+            
+            if (extractedResponses.length > 0) {
+                console.log(`✓ Extracted ${extractedResponses.length} responses from votes`);
+                responses = extractedResponses;
+            }
+        }
+        
         if (responses[0]) {
+            console.log('First response:', responses[0]);
             console.log('First response answers:', responses[0].answers);
             console.log('First response answer keys:', Object.keys(responses[0].answers || {}));
         }

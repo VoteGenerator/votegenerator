@@ -284,12 +284,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
     // Sync local state when poll props change (e.g., after external refresh)
+    // BUT don't sync while we're updating (to prevent race conditions)
     React.useEffect(() => {
-        setLocalPublicResults(poll.settings?.publicResults || false);
-        setLocalShowShareButton(poll.settings?.showShareButton || false);
-        setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
-        setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
-    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare]);
+        if (!settingsUpdating) {
+            setLocalPublicResults(poll.settings?.publicResults || false);
+            setLocalShowShareButton(poll.settings?.showShareButton || false);
+            setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+            setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
+        }
+    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare, settingsUpdating]);
     
     // Helper to update poll settings
     const updatePollSetting = async (settingKey: string, value: any) => {

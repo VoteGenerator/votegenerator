@@ -253,15 +253,21 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     
     // Process survey results - must be before any early returns to maintain hooks order
     const surveyStats = useMemo(() => {
+        console.log('=== surveyStats ENTRY ===');
+        console.log('isSurvey:', isSurvey);
+        console.log('poll:', poll);
+        console.log('poll?.sections:', poll?.sections);
+        console.log('results:', results);
+        console.log('results?.surveyResponses:', results?.surveyResponses);
+        
         if (!isSurvey || !poll?.sections) {
-            console.log('surveyStats: Not a survey or no sections', { isSurvey, hasSections: !!poll?.sections });
+            console.log('surveyStats: EXITING EARLY - Not a survey or no sections', { isSurvey, hasSections: !!poll?.sections });
             return null;
         }
         
         let responses = results?.surveyResponses || [];
         const sections = poll.sections || [];
         
-        // Debug logging
         console.log('=== PublicResults Survey Debug ===');
         console.log('isSurvey:', isSurvey);
         console.log('poll.isSurvey:', poll?.isSurvey);
@@ -272,6 +278,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         console.log('results.totalVotes:', results?.totalVotes);
         console.log('results.votes count:', results?.votes?.length);
         console.log('Full results object keys:', Object.keys(results || {}));
+        console.log('Full results object:', results);
         
         // FRONTEND FALLBACK: If no surveyResponses but we have votes, try to extract from votes
         if (responses.length === 0 && results?.votes?.length > 0) {
@@ -279,7 +286,8 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             const extractedResponses: any[] = [];
             
             for (const vote of results.votes) {
-                console.log('Checking vote:', Object.keys(vote));
+                console.log('Checking vote:', vote);
+                console.log('vote keys:', Object.keys(vote));
                 
                 // Check if vote has surveyAnswers
                 if (vote.surveyAnswers && Object.keys(vote.surveyAnswers).length > 0) {
@@ -324,17 +332,20 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             }
         }
         
+        console.log('FINAL responses to process:', responses.length);
+        console.log('FINAL responses[0]:', responses[0]);
+        
         if (responses[0]) {
             console.log('First response:', responses[0]);
             console.log('First response answers:', responses[0].answers);
             console.log('First response answer keys:', Object.keys(responses[0].answers || {}));
         }
         if (sections[0]?.questions?.[0]) {
+            console.log('First question:', sections[0].questions[0]);
             console.log('First question id:', sections[0].questions[0].id);
-            console.log('First question type:', sections[0].questions[0].type);
             console.log('First question key:', sections[0].questions[0].key);
+            console.log('First question type:', sections[0].questions[0].type);
             console.log('First question name:', sections[0].questions[0].name);
-            console.log('First question full:', sections[0].questions[0]);
         }
         
         // Log ALL question IDs vs answer keys for debugging
@@ -355,6 +366,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             allQuestionIds.forEach(qId => {
                 const hasMatch = responses[0].answers[qId] !== undefined;
                 console.log(`  Question ID "${qId}" has answer: ${hasMatch}`);
+            });
+            allQuestionKeys.forEach(qKey => {
+                const hasMatch = responses[0].answers[qKey] !== undefined;
+                console.log(`  Question KEY "${qKey}" has answer: ${hasMatch}`);
             });
         }
         
@@ -432,16 +447,48 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
                 if (answers[0]) console.log('   Sample answer:', answers[0]);
                 
+                // Helper to extract actual value from answer object
+                // Answers can be: { number: 8 }, { selectedIds: ['a'] }, { text: '...' }, or flat values
+                const extractValue = (ans: any, type: string) => {
+                    if (ans === null || ans === undefined) return null;
+                    
+                    // If it's already a primitive value, return it
+                    if (typeof ans !== 'object') return ans;
+                    
+                    // Extract based on expected type
+                    if (['rating', 'scale', 'nps'].includes(type)) {
+                        return ans.number ?? ans.rating ?? ans.scaleValue ?? ans.value ?? null;
+                    }
+                    if (['multiple_choice', 'dropdown', 'yes_no', 'checkbox'].includes(type)) {
+                        return ans.selectedIds ?? ans.selected ?? (ans.value ? [ans.value] : null);
+                    }
+                    if (['text', 'textarea', 'email', 'phone'].includes(type)) {
+                        return ans.text ?? ans.value ?? null;
+                    }
+                    if (type === 'ranking') {
+                        return ans.ranking ?? ans.order ?? null;
+                    }
+                    if (type === 'matrix') {
+                        return ans.matrix ?? null;
+                    }
+                    
+                    // Fallback: try common properties
+                    return ans.value ?? ans.number ?? ans.text ?? ans.selectedIds ?? ans;
+                };
+                
                 const qType = question.type || 'unknown';
                 
                 // CHOICE QUESTIONS: multiple_choice, dropdown, yes_no, checkbox
                 if (['multiple_choice', 'dropdown', 'yes_no', 'checkbox'].includes(qType)) {
                     const counts: Record<string, number> = {};
                     answers.forEach((answer: any) => {
+                        // Extract the actual value
+                        const extracted = extractValue(answer, qType);
+                        
                         // Handle both single value and array of values
-                        const values = Array.isArray(answer) ? answer : [answer];
+                        const values = Array.isArray(extracted) ? extracted : (extracted ? [extracted] : []);
                         values.forEach((val: string) => {
-                            counts[val] = (counts[val] || 0) + 1;
+                            if (val) counts[val] = (counts[val] || 0) + 1;
                         });
                     });
                     
@@ -475,7 +522,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
                 // RATING QUESTIONS: rating (stars)
                 else if (qType === 'rating') {
-                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n) && n > 0);
+                    const numericAnswers = answers
+                        .map((a: any) => {
+                            const val = extractValue(a, 'rating');
+                            return Number(val);
+                        })
+                        .filter((n: number) => !isNaN(n) && n > 0);
                     const max = question.maxRating || question.max || 5;
                     const avg = numericAnswers.length > 0 
                         ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
@@ -502,7 +554,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
                 // SCALE QUESTIONS: scale (1-10 or custom)
                 else if (qType === 'scale') {
-                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const numericAnswers = answers
+                        .map((a: any) => {
+                            const val = extractValue(a, 'scale');
+                            return Number(val);
+                        })
+                        .filter((n: number) => !isNaN(n));
                     const min = question.minScale || question.min || 1;
                     const max = question.maxScale || question.max || 10;
                     const avg = numericAnswers.length > 0 
@@ -533,7 +590,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
                 // NPS QUESTIONS
                 else if (qType === 'nps') {
-                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const numericAnswers = answers
+                        .map((a: any) => {
+                            const val = extractValue(a, 'nps');
+                            return Number(val);
+                        })
+                        .filter((n: number) => !isNaN(n));
                     const promoters = numericAnswers.filter((n: number) => n >= 9).length;
                     const passives = numericAnswers.filter((n: number) => n >= 7 && n <= 8).length;
                     const detractors = numericAnswers.filter((n: number) => n <= 6).length;
@@ -558,7 +620,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 }
                 // NUMBER QUESTIONS
                 else if (qType === 'number') {
-                    const numericAnswers = answers.map((a: any) => Number(a)).filter((n: number) => !isNaN(n));
+                    const numericAnswers = answers
+                        .map((a: any) => {
+                            const val = extractValue(a, 'number');
+                            return Number(val);
+                        })
+                        .filter((n: number) => !isNaN(n));
                     const avg = numericAnswers.length > 0 
                         ? numericAnswers.reduce((sum: number, n: number) => sum + n, 0) / numericAnswers.length 
                         : 0;
@@ -586,7 +653,8 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         rankScores[opt.id || opt] = [];
                     });
                     
-                    answers.forEach((ranking: any) => {
+                    answers.forEach((answer: any) => {
+                        const ranking = extractValue(answer, 'ranking');
                         if (Array.isArray(ranking)) {
                             ranking.forEach((optId: string, idx: number) => {
                                 if (rankScores[optId]) {

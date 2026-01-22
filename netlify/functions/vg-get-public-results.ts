@@ -171,14 +171,14 @@ const handler: Handler = async (event) => {
                 title: s.title,
                 questions: s.questions?.map((q: any) => ({
                     id: q.id,
-                    key: q.key,       // Answer key used in surveyAnswers
-                    name: q.name,     // Alternative key
+                    key: q.key || q.id,  // Answer key - default to ID since that's what surveys use
+                    name: q.name,
                     type: q.type,
-                    text: q.text,
+                    text: q.text || q.question,  // Support both 'text' and 'question' properties
                     options: q.options,
                     maxRating: q.maxRating,
-                    max: q.max,
-                    min: q.min,
+                    max: q.max || q.maxValue,
+                    min: q.min || q.minValue,
                     minScale: q.minScale,
                     maxScale: q.maxScale,
                     minLabel: q.minLabel,

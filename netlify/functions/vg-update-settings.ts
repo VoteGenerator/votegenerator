@@ -104,6 +104,11 @@ const handler: Handler = async (event) => {
             ...settings
         };
 
+        console.log('Updating settings for poll:', pollId);
+        console.log('Previous settings:', pollData.settings);
+        console.log('New settings to merge:', settings);
+        console.log('Updated settings:', updatedSettings);
+
         // Update poll with new settings
         const updatedPoll: Poll = {
             ...pollData,
@@ -113,6 +118,7 @@ const handler: Handler = async (event) => {
 
         // Save to store
         await pollStore.setJSON(pollId, updatedPoll);
+        console.log('Settings saved successfully');
 
         return {
             statusCode: 200,

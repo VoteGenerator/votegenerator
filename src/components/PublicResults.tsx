@@ -351,6 +351,11 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         console.log('All question keys/names:', allQuestionKeys);
         if (responses[0]?.answers) {
             console.log('All answer keys:', Object.keys(responses[0].answers));
+            // Check for direct matches
+            allQuestionIds.forEach(qId => {
+                const hasMatch = responses[0].answers[qId] !== undefined;
+                console.log(`  Question ID "${qId}" has answer: ${hasMatch}`);
+            });
         }
         
         // Calculate stats for each question

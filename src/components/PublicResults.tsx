@@ -161,28 +161,6 @@ const ConfettiExplosion: React.FC<{ show: boolean }> = ({ show }) => {
     );
 };
 
-// Animated counter with easing
-const AnimatedNumber: React.FC<{ value: number; suffix?: string; duration?: number }> = ({ 
-    value, suffix = '', duration = 2 
-}) => {
-    const [displayValue, setDisplayValue] = useState(0);
-    
-    useEffect(() => {
-        let startTime: number;
-        const animate = (timestamp: number) => {
-            if (!startTime) startTime = timestamp;
-            const elapsed = timestamp - startTime;
-            const progress = Math.min(elapsed / (duration * 1000), 1);
-            const eased = 1 - Math.pow(1 - progress, 4); // easeOutQuart
-            setDisplayValue(Math.round(value * eased));
-            if (progress < 1) requestAnimationFrame(animate);
-        };
-        requestAnimationFrame(animate);
-    }, [value, duration]);
-    
-    return <>{displayValue.toLocaleString()}{suffix}</>;
-};
-
 // Glowing stat card with hover effects
 const StatCard: React.FC<{
     icon: React.ReactNode;

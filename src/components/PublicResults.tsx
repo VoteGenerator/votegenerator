@@ -332,6 +332,25 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
         if (sections[0]?.questions?.[0]) {
             console.log('First question id:', sections[0].questions[0].id);
             console.log('First question type:', sections[0].questions[0].type);
+            console.log('First question key:', sections[0].questions[0].key);
+            console.log('First question name:', sections[0].questions[0].name);
+            console.log('First question full:', sections[0].questions[0]);
+        }
+        
+        // Log ALL question IDs vs answer keys for debugging
+        const allQuestionIds: string[] = [];
+        const allQuestionKeys: string[] = [];
+        sections.forEach((s: any) => {
+            s.questions?.forEach((q: any) => {
+                allQuestionIds.push(q.id);
+                if (q.key) allQuestionKeys.push(q.key);
+                if (q.name) allQuestionKeys.push(q.name);
+            });
+        });
+        console.log('All question IDs:', allQuestionIds);
+        console.log('All question keys/names:', allQuestionKeys);
+        if (responses[0]?.answers) {
+            console.log('All answer keys:', Object.keys(responses[0].answers));
         }
         
         // Calculate stats for each question
@@ -357,15 +376,21 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     .map((r: any) => {
                         const ans = r.answers || {};
                         const qId = question.id;
+                        const qKey = question.key;
+                        const qName = question.name;
                         
                         // Try various key formats
-                        // 1. Direct match
+                        // 1. Direct match by ID
                         if (ans[qId] !== undefined) return ans[qId];
-                        // 2. Without q_ prefix
+                        // 2. Match by question.key (most likely for surveys!)
+                        if (qKey && ans[qKey] !== undefined) return ans[qKey];
+                        // 3. Match by question.name
+                        if (qName && ans[qName] !== undefined) return ans[qName];
+                        // 4. Without q_ prefix
                         if (ans[qId.replace(/^q_/, '')] !== undefined) return ans[qId.replace(/^q_/, '')];
-                        // 3. With q_ prefix added
+                        // 5. With q_ prefix added
                         if (ans[`q_${qId}`] !== undefined) return ans[`q_${qId}`];
-                        // 4. Match by numeric suffix (q_1234 -> 1234)
+                        // 6. Match by numeric suffix (q_1234 -> 1234)
                         const numericPart = qId.match(/\d+$/)?.[0];
                         if (numericPart) {
                             // Check all answer keys for matching numeric suffix
@@ -375,12 +400,19 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                 }
                             }
                         }
-                        // 5. Fuzzy match - find key that contains the question id
+                        // 7. Fuzzy match - find key that contains the question id
                         for (const key of Object.keys(ans)) {
                             if (key.includes(qId) || qId.includes(key)) {
                                 return ans[key];
                             }
                         }
+                        // 8. Try lowercase matching
+                        const ansLower: Record<string, any> = {};
+                        for (const key of Object.keys(ans)) {
+                            ansLower[key.toLowerCase()] = ans[key];
+                        }
+                        if (qKey && ansLower[qKey.toLowerCase()] !== undefined) return ansLower[qKey.toLowerCase()];
+                        if (qName && ansLower[qName.toLowerCase()] !== undefined) return ansLower[qName.toLowerCase()];
                         
                         return null;
                     })
@@ -388,10 +420,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 
                 // Enhanced debug logging
                 if (responses.length > 0 && answers.length === 0) {
-                    console.log(`⚠️ No answers found for "${question.text || 'Untitled'}" (${question.id})`);
+                    console.log(`⚠️ No answers found for "${question.text || 'Untitled'}" (id=${question.id}, key=${question.key}, name=${question.name})`);
                     console.log('   Available answer keys in first response:', Object.keys(responses[0]?.answers || {}));
                 } else {
-                    console.log(`✓ Question "${(question.text || 'Untitled').substring(0, 30)}..." (${question.id}): ${answers.length} answers`);
+                    console.log(`✓ Question "${(question.text || 'Untitled').substring(0, 30)}..." (key=${question.key || question.id}): ${answers.length} answers`);
                 }
                 if (answers[0]) console.log('   Sample answer:', answers[0]);
                 

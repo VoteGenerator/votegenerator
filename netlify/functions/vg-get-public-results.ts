@@ -128,6 +128,16 @@ const handler: Handler = async (event) => {
             console.log('pollData.pollType:', (pollData as any).pollType);
             console.log('surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
             console.log('sections:', (pollData as any).sections?.length || 0);
+            
+            // Log question keys from sections
+            const questionKeys: string[] = [];
+            (pollData as any).sections?.forEach((s: any) => {
+                s.questions?.forEach((q: any) => {
+                    questionKeys.push(`${q.key || q.name || q.id} (type: ${q.type})`);
+                });
+            });
+            console.log('Section question keys:', questionKeys);
+            
             if (votes.length > 0) {
                 console.log('First vote has surveyAnswers:', !!votes[0].surveyAnswers);
                 console.log('First vote has answers:', !!votes[0].answers);
@@ -161,6 +171,8 @@ const handler: Handler = async (event) => {
                 title: s.title,
                 questions: s.questions?.map((q: any) => ({
                     id: q.id,
+                    key: q.key,       // Answer key used in surveyAnswers
+                    name: q.name,     // Alternative key
                     type: q.type,
                     text: q.text,
                     options: q.options,

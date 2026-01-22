@@ -283,20 +283,41 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
+    // Track recently updated settings to prevent useEffect from reverting them
+    const recentlyUpdated = React.useRef<Set<string>>(new Set());
+    
     // Sync local state when poll props change (e.g., after external refresh)
-    // BUT don't sync while we're updating (to prevent race conditions)
+    // BUT don't sync settings we recently updated ourselves
     React.useEffect(() => {
-        if (!settingsUpdating) {
+        console.log('PollDashboard useEffect - syncing settings from props');
+        console.log('  poll.settings.publicResults:', poll.settings?.publicResults);
+        console.log('  recentlyUpdated:', Array.from(recentlyUpdated.current));
+        
+        if (!recentlyUpdated.current.has('publicResults')) {
+            console.log('  Setting localPublicResults to:', poll.settings?.publicResults || false);
             setLocalPublicResults(poll.settings?.publicResults || false);
+        } else {
+            console.log('  SKIPPING publicResults sync (recently updated)');
+        }
+        if (!recentlyUpdated.current.has('showShareButton')) {
             setLocalShowShareButton(poll.settings?.showShareButton || false);
+        }
+        if (!recentlyUpdated.current.has('allowedViews')) {
             setLocalAllowedViews(poll.settings?.allowedViews || ['bar', 'pie']);
+        }
+        if (!recentlyUpdated.current.has('showSocialShare')) {
             setLocalShowSocialShare(poll.settings?.showSocialShare !== false);
         }
-    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare, settingsUpdating]);
+    }, [poll.settings?.publicResults, poll.settings?.showShareButton, poll.settings?.allowedViews, poll.settings?.showSocialShare]);
     
     // Helper to update poll settings
     const updatePollSetting = async (settingKey: string, value: any) => {
+        console.log(`updatePollSetting called: ${settingKey} = ${value}`);
         setSettingsUpdating(true);
+        // Mark this setting as recently updated to prevent useEffect from reverting it
+        recentlyUpdated.current.add(settingKey);
+        console.log('Added to recentlyUpdated:', settingKey);
+        
         try {
             const response = await fetch('/.netlify/functions/vg-update-settings', {
                 method: 'POST',
@@ -313,14 +334,16 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             }
             
             console.log(`Setting ${settingKey} updated to:`, value);
-            
-            // Refresh poll data to sync with backend
-            // Small delay to ensure backend has saved
+            // Success - local state is already updated
+            // Clear the recently updated flag after a delay (longer than auto-refresh interval)
             setTimeout(() => {
-                onRefresh();
-            }, 300);
+                recentlyUpdated.current.delete(settingKey);
+                console.log(`Cleared recentlyUpdated for ${settingKey}`);
+            }, 5000);
         } catch (err) {
             console.error('Failed to update setting:', err);
+            // Clear the flag immediately on error
+            recentlyUpdated.current.delete(settingKey);
             // Revert local state on error
             if (settingKey === 'publicResults') setLocalPublicResults(poll.settings?.publicResults || false);
             if (settingKey === 'showShareButton') setLocalShowShareButton(poll.settings?.showShareButton || false);
@@ -2119,6 +2142,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             disabled={settingsUpdating}
                                             onChange={(e) => {
                                                 const enabled = e.target.checked;
+                                                console.log('Toggle clicked! Setting to:', enabled);
+                                                console.log('Current localPublicResults:', localPublicResults);
                                                 setLocalPublicResults(enabled);
                                                 updatePollSetting('publicResults', enabled);
                                             }}

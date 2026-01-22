@@ -3,13 +3,67 @@
 // Mobile-first, animated, conversion-optimized showcase
 // Location: src/components/PublicResults.tsx
 // ============================================================================
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
     Trophy, Users, BarChart3, PieChart,
     Share2, Copy, Check, Twitter, Linkedin, Facebook,
     Sparkles, Vote, Crown, ArrowRight, Eye, Clock, Zap, Star
 } from 'lucide-react';
+
+// Animated Counter Hook - counts up from 0 to target
+const useCountUp = (end: number, duration: number = 2000, startOnView: boolean = true) => {
+    const [count, setCount] = useState(0);
+    const ref = useRef<HTMLSpanElement>(null);
+    const inView = useInView(ref, { once: true });
+    const hasStarted = useRef(false);
+    
+    useEffect(() => {
+        if (startOnView && !inView) return;
+        if (hasStarted.current) return;
+        hasStarted.current = true;
+        
+        const startTime = Date.now();
+        const startValue = 0;
+        
+        const animate = () => {
+            const now = Date.now();
+            const progress = Math.min((now - startTime) / duration, 1);
+            // Easing function (ease-out cubic)
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(startValue + (end - startValue) * eased);
+            
+            setCount(current);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }, [end, duration, inView, startOnView]);
+    
+    return { count, ref };
+};
+
+// Animated Number Component
+const AnimatedNumber: React.FC<{ value: number; duration?: number; decimals?: number; suffix?: string; prefix?: string; className?: string }> = ({ 
+    value, 
+    duration = 2000, 
+    decimals = 0,
+    suffix = '',
+    prefix = '',
+    className = ''
+}) => {
+    const { count, ref } = useCountUp(value * Math.pow(10, decimals), duration);
+    const displayValue = decimals > 0 ? (count / Math.pow(10, decimals)).toFixed(decimals) : count;
+    
+    return (
+        <span ref={ref} className={className}>
+            {prefix}{displayValue}{suffix}
+        </span>
+    );
+};
 
 interface PublicResultsProps {
     pollId: string;
@@ -1339,21 +1393,63 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                             animate={{ opacity: 1, y: 0 }}
                             className="grid grid-cols-2 sm:grid-cols-3 gap-3"
                         >
-                            <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-xl rounded-2xl p-4 border border-indigo-500/30 text-center">
-                                <Users size={24} className="mx-auto mb-2 text-indigo-400" />
-                                <div className="text-3xl font-black text-white">{surveyStats?.totalResponses || 0}</div>
+                            <motion.div 
+                                className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 backdrop-blur-xl rounded-2xl p-4 border border-indigo-500/30 text-center"
+                                whileHover={{ scale: 1.02, borderColor: 'rgba(99, 102, 241, 0.5)' }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                            >
+                                <motion.div
+                                    initial={{ rotate: 0 }}
+                                    animate={{ rotate: [0, -10, 10, 0] }}
+                                    transition={{ delay: 0.5, duration: 0.5 }}
+                                >
+                                    <Users size={24} className="mx-auto mb-2 text-indigo-400" />
+                                </motion.div>
+                                <div className="text-3xl font-black text-white">
+                                    <AnimatedNumber value={surveyStats?.totalResponses || 0} duration={1500} />
+                                </div>
                                 <div className="text-white/50 text-xs">Responses</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-xl rounded-2xl p-4 border border-emerald-500/30 text-center">
-                                <Vote size={24} className="mx-auto mb-2 text-emerald-400" />
-                                <div className="text-3xl font-black text-white">{surveyStats?.questionStats?.length || 0}</div>
+                            </motion.div>
+                            <motion.div 
+                                className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-xl rounded-2xl p-4 border border-emerald-500/30 text-center"
+                                whileHover={{ scale: 1.02, borderColor: 'rgba(16, 185, 129, 0.5)' }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                            >
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.3, type: "spring" }}
+                                >
+                                    <Vote size={24} className="mx-auto mb-2 text-emerald-400" />
+                                </motion.div>
+                                <div className="text-3xl font-black text-white">
+                                    <AnimatedNumber value={surveyStats?.questionStats?.length || 0} duration={1200} />
+                                </div>
                                 <div className="text-white/50 text-xs">Questions</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 backdrop-blur-xl rounded-2xl p-4 border border-pink-500/30 text-center col-span-2 sm:col-span-1">
-                                <Sparkles size={24} className="mx-auto mb-2 text-pink-400" />
-                                <div className="text-3xl font-black text-white">Live</div>
+                            </motion.div>
+                            <motion.div 
+                                className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 backdrop-blur-xl rounded-2xl p-4 border border-pink-500/30 text-center col-span-2 sm:col-span-1"
+                                whileHover={{ scale: 1.02, borderColor: 'rgba(236, 72, 153, 0.5)' }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                            >
+                                <motion.div
+                                    animate={{ 
+                                        scale: [1, 1.2, 1],
+                                        rotate: [0, 5, -5, 0]
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                >
+                                    <Sparkles size={24} className="mx-auto mb-2 text-pink-400" />
+                                </motion.div>
+                                <motion.div 
+                                    className="text-3xl font-black text-white"
+                                    animate={{ opacity: [1, 0.7, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    Live
+                                </motion.div>
                                 <div className="text-white/50 text-xs">Status</div>
-                            </div>
+                            </motion.div>
                         </motion.div>
                         
                         {/* Question Results - Typeform Style */}
@@ -1472,7 +1568,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             {question.totalResponses > 0 ? (
                                                 <>
                                                     <div className="text-6xl sm:text-7xl font-black bg-gradient-to-br from-amber-300 via-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                                                        {question.average.toFixed(1)}
+                                                        <AnimatedNumber value={question.average} duration={1500} decimals={1} />
                                                     </div>
                                                     <div className="text-white/50 text-sm mt-1">out of {question.max}</div>
                                                 </>
@@ -1603,7 +1699,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                 <div className="absolute inset-0 flex items-end justify-center pb-0">
                                                     {question.totalResponses > 0 ? (
                                                         <div className="text-4xl font-black text-white">
-                                                            {question.average.toFixed(1)}
+                                                            <AnimatedNumber value={question.average} duration={1500} decimals={1} />
                                                         </div>
                                                     ) : (
                                                         <motion.div 
@@ -1680,18 +1776,27 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                         question.npsScore >= 50 ? 'text-emerald-400' :
                                                         question.npsScore >= 0 ? 'text-amber-400' : 'text-red-400'
                                                     }`}>
-                                                        {question.npsScore > 0 ? '+' : ''}{question.npsScore}
+                                                        <AnimatedNumber 
+                                                            value={Math.abs(question.npsScore)} 
+                                                            duration={1500} 
+                                                            prefix={question.npsScore > 0 ? '+' : question.npsScore < 0 ? '-' : ''} 
+                                                        />
                                                     </div>
                                                     <div className="text-white/50 text-sm">Net Promoter Score</div>
-                                                    <div className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
-                                                        question.npsScore >= 50 ? 'bg-emerald-500/20 text-emerald-300' :
-                                                        question.npsScore >= 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
-                                                    }`}>
+                                                    <motion.div 
+                                                        initial={{ scale: 0, opacity: 0 }}
+                                                        animate={{ scale: 1, opacity: 1 }}
+                                                        transition={{ delay: 1.5, type: "spring" }}
+                                                        className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold ${
+                                                            question.npsScore >= 50 ? 'bg-emerald-500/20 text-emerald-300' :
+                                                            question.npsScore >= 0 ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
+                                                        }`}
+                                                    >
                                                         {question.npsScore >= 70 ? 'Excellent' :
                                                          question.npsScore >= 50 ? 'Great' :
                                                          question.npsScore >= 30 ? 'Good' :
                                                          question.npsScore >= 0 ? 'Needs Improvement' : 'Critical'}
-                                                    </div>
+                                                    </motion.div>
                                                 </>
                                             ) : (
                                                 <motion.div

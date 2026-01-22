@@ -623,14 +623,19 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     <span className="text-xs font-medium text-slate-600">{typeConfig?.name}</span>
                 </div>
                 
-                <div className="flex-1">
+                <div className="flex-1 relative group">
                     <input
                         type="text"
                         value={question.question}
                         onChange={(e) => updateQuestion({ question: e.target.value })}
-                        placeholder="Enter your question..."
-                        className="w-full bg-transparent font-medium text-slate-800 focus:outline-none"
+                        placeholder="✏️ Type your question here..."
+                        className="w-full px-3 py-2 bg-white font-medium text-slate-800 border-2 border-dashed border-slate-300 rounded-lg focus:border-indigo-500 focus:border-solid focus:outline-none focus:ring-2 focus:ring-indigo-100 placeholder:text-slate-400 placeholder:font-normal transition-all"
                     />
+                    {!question.question && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none group-focus-within:hidden">
+                            Click to edit
+                        </div>
+                    )}
                 </div>
                 
                 <label className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-slate-100 cursor-pointer">
@@ -678,15 +683,15 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     >
                         {/* Description */}
                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">
-                                Helper text (optional)
+                            <label className="block text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
+                                <span>💡</span> Helper text (optional)
                             </label>
                             <input
                                 type="text"
                                 value={question.description || ''}
                                 onChange={(e) => updateQuestion({ description: e.target.value })}
-                                placeholder="Add helper text to guide respondents..."
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
+                                placeholder="Add instructions or context to help respondents..."
+                                className="w-full px-3 py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:border-solid focus:outline-none focus:ring-2 focus:ring-indigo-100 placeholder:text-slate-400 transition-all"
                             />
                         </div>
                         
@@ -709,20 +714,21 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                                 </div>
                                 <div className="space-y-2">
                                     {(question.options || []).map((option, idx) => (
-                                        <div key={option.id} className="flex items-center gap-2">
-                                            <span className="w-6 h-6 flex items-center justify-center text-xs text-slate-400 bg-slate-100 rounded">
+                                        <div key={option.id} className="flex items-center gap-2 group">
+                                            <span className="w-6 h-6 flex items-center justify-center text-xs text-indigo-600 bg-indigo-100 rounded font-semibold">
                                                 {idx + 1}
                                             </span>
                                             <input
                                                 type="text"
                                                 value={option.text}
                                                 onChange={(e) => updateOption(option.id, e.target.value)}
-                                                className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:outline-none"
+                                                placeholder={`Option ${idx + 1}...`}
+                                                className="flex-1 px-3 py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm focus:border-indigo-500 focus:border-solid focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
                                             />
                                             <button
                                                 onClick={() => removeOption(option.id)}
                                                 disabled={(question.options?.length || 0) <= 2}
-                                                className="p-1.5 hover:bg-red-100 rounded text-slate-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                className="p-1.5 hover:bg-red-100 rounded text-slate-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100 transition"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -934,15 +940,15 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
                         type="text"
                         value={section.title}
                         onChange={(e) => updateSection({ title: e.target.value })}
-                        placeholder="Section title..."
-                        className="w-full bg-transparent font-bold text-lg focus:outline-none placeholder-white/50"
+                        placeholder="✏️ Enter section title..."
+                        className="w-full bg-white/10 px-3 py-1.5 rounded-lg font-bold text-lg focus:outline-none focus:bg-white/20 placeholder-white/60 border-2 border-dashed border-white/30 focus:border-white/50 transition-all"
                     />
                     <input
                         type="text"
                         value={section.description || ''}
                         onChange={(e) => updateSection({ description: e.target.value })}
-                        placeholder="Add a description (optional)..."
-                        className="w-full bg-transparent text-sm text-white/80 focus:outline-none placeholder-white/40 mt-1"
+                        placeholder="Add a description for this section (optional)..."
+                        className="w-full bg-transparent px-3 text-sm text-white/80 focus:outline-none placeholder-white/40 mt-2"
                     />
                 </div>
                 

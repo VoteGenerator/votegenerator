@@ -1,17 +1,16 @@
 // ============================================================================
-// vg-delete-poll.ts - Delete a poll with tier-based restrictions
+// vg-delete-poll.ts - Delete a poll from Netlify Blobs
 // Location: netlify/functions/vg-delete-poll.ts
-// 
-// Restrictions:
-// - free/starter: Can only delete if poll has 0 responses (prevents gaming)
-// - pro_event+: Can delete anytime
 // ============================================================================
 
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Tiers that can only delete polls with 0 responses
-const RESTRICTED_TIERS = ['free', 'pro'];
+interface DeletePollPayload {
+    pollId: string;
+    adminKey: string;
+    dashboardToken?: string;
+}
 
 export const handler: Handler = async (event) => {
     const headers = {
@@ -25,142 +24,90 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
+    // Accept both DELETE and POST
     if (event.httpMethod !== 'DELETE' && event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: 'Method not allowed' }),
-        };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
-        const body = JSON.parse(event.body || '{}');
-        const { pollId, adminKey, dashboardToken } = body;
+        const payload: DeletePollPayload = JSON.parse(event.body || '{}');
+        const { pollId, adminKey, dashboardToken } = payload;
 
-        if (!pollId) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Poll ID is required' }),
+        // Validate
+        if (!pollId || !adminKey) {
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ error: 'Missing required fields: pollId and adminKey' }) 
             };
         }
 
-        if (!adminKey) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Admin key is required' }),
-            };
-        }
+        const siteID = process.env.VG_SITE_ID || '';
+        const token = process.env.NETLIFY_AUTH_TOKEN || '';
 
-        const siteId = process.env.VG_SITE_ID;
-        if (!siteId) {
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Server configuration error' }),
-            };
-        }
+        const pollStore = getStore({ name: 'polls', siteID, token });
+        let pollDeleted = false;
+        let customerUpdated = false;
 
-        // Get poll store
-        const pollStore = getStore({
-            name: 'vg-polls',
-            siteID: siteId,
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
-        });
-
-        // Fetch the poll
-        const pollData = await pollStore.get(pollId, { type: 'json' }) as any;
-
-        if (!pollData) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ error: 'Poll not found' }),
-            };
-        }
-
-        // Verify admin access
-        if (pollData.adminKey !== adminKey) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ error: 'Invalid admin key' }),
-            };
-        }
-
-        const pollTier = pollData.tier || 'free';
-        const voteCount = pollData.voteCount || 0;
-
-        // ====================================================================
-        // TIER-BASED DELETE RESTRICTIONS
-        // ====================================================================
-        if (RESTRICTED_TIERS.includes(pollTier)) {
-            if (voteCount > 0) {
-                return {
-                    statusCode: 403,
-                    headers,
-                    body: JSON.stringify({ 
-                        error: `Polls with responses cannot be deleted on the ${pollTier === 'free' ? 'Free' : 'Starter'} plan. Upgrade to Pro Event or higher to delete polls with responses.`,
-                        voteCount,
-                        tier: pollTier,
-                        upgradeRequired: true
-                    }),
-                };
-            }
-        }
-        // ====================================================================
-
-        // Delete the poll
-        await pollStore.delete(pollId);
-        console.log(`Poll deleted: ${pollId} (tier: ${pollTier}, votes: ${voteCount})`);
-
-        // If poll had a custom slug, delete the slug mapping
-        if (pollData.customSlug) {
-            const slugStore = getStore({
-                name: 'vg-slugs',
-                siteID: siteId,
-                token: process.env.NETLIFY_AUTH_TOKEN || '',
-            });
-            await slugStore.delete(pollData.customSlug);
-            console.log(`Custom slug deleted: ${pollData.customSlug}`);
-        }
-
-        // Update customer record to remove this poll
-        if (dashboardToken) {
-            const customerStore = getStore({
-                name: 'vg-customers',
-                siteID: siteId,
-                token: process.env.NETLIFY_AUTH_TOKEN || '',
-            });
-
-            const customerData = await customerStore.get(`token_${dashboardToken}`, { type: 'json' }) as any;
+        // Try to get and delete from polls store
+        try {
+            const poll = await pollStore.get(pollId, { type: 'json' }) as any;
             
-            if (customerData && customerData.polls) {
-                // Remove poll from customer's list
-                customerData.polls = customerData.polls.filter((p: string) => p !== pollId);
-                customerData.updatedAt = new Date().toISOString();
-                
-                // Save updated customer
-                await customerStore.setJSON(`token_${dashboardToken}`, customerData);
-                
-                // Also update by email if exists
-                if (customerData.email) {
-                    await customerStore.setJSON(customerData.email, customerData);
+            if (poll) {
+                // Verify admin key
+                if (poll.adminKey !== adminKey) {
+                    return { 
+                        statusCode: 403, 
+                        headers, 
+                        body: JSON.stringify({ error: 'Invalid admin key - unauthorized to delete this poll' }) 
+                    };
                 }
+
+                // Delete from polls store
+                await pollStore.delete(pollId);
+                pollDeleted = true;
+                console.log(`Poll ${pollId} deleted from polls store`);
+            } else {
+                console.log(`Poll ${pollId} not found in polls store - may have been deleted already`);
+            }
+        } catch (pollErr) {
+            console.log(`Error accessing poll ${pollId}:`, pollErr);
+        }
+
+        // ALWAYS try to clean up customer record if dashboardToken provided
+        if (dashboardToken && dashboardToken !== 'free_user') {
+            try {
+                const customerStore = getStore({ name: 'vg-customers', siteID, token });
+                const customer = await customerStore.get(`token_${dashboardToken}`, { type: 'json' }) as any;
                 
-                console.log(`Customer record updated, poll removed: ${pollId}`);
+                if (customer && customer.polls) {
+                    const originalLength = customer.polls.length;
+                    // Remove poll from customer's polls array
+                    customer.polls = customer.polls.filter((p: any) => p.id !== pollId);
+                    
+                    if (customer.polls.length < originalLength) {
+                        await customerStore.setJSON(`token_${dashboardToken}`, customer);
+                        customerUpdated = true;
+                        console.log(`Poll ${pollId} removed from customer ${dashboardToken} record`);
+                    }
+                }
+            } catch (customerErr) {
+                console.error('Failed to update customer record:', customerErr);
             }
         }
 
+        // Return success regardless - allow frontend to clean up
+        // Even if nothing was deleted, we want the UI to update
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 success: true,
-                message: 'Poll deleted successfully',
-                pollId
-            }),
+                pollId,
+                pollDeleted,
+                customerUpdated,
+                message: pollDeleted || customerUpdated ? 'Poll deleted successfully' : 'Poll already deleted or not found'
+            })
         };
 
     } catch (error) {
@@ -168,7 +115,7 @@ export const handler: Handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Internal server error' }),
+            body: JSON.stringify({ error: 'Internal server error' })
         };
     }
 };

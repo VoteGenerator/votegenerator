@@ -107,15 +107,46 @@ export const updatePoll = async (id: string, adminKey: string, updates: Partial<
     }
 };
 
+// Custom error class for poll status issues
+export class PollStatusError extends Error {
+    status: 'expired' | 'closed' | 'paused' | 'draft' | 'not_found';
+    
+    constructor(message: string, status: 'expired' | 'closed' | 'paused' | 'draft' | 'not_found') {
+        super(message);
+        this.status = status;
+        this.name = 'PollStatusError';
+    }
+}
+
 export const getPoll = async (id: string): Promise<Poll> => {
     try {
         const response = await fetch(`/.netlify/functions/vg-get?id=${id}`);
+        
         if (response.ok) return await response.json();
+        
+        // Handle specific error statuses
+        if (response.status === 410) {
+            throw new PollStatusError('This poll has expired and is no longer accepting responses.', 'expired');
+        }
+        if (response.status === 403) {
+            const data = await response.json().catch(() => ({}));
+            if (data.error?.includes('draft')) {
+                throw new PollStatusError('This poll is not yet published.', 'draft');
+            }
+            throw new PollStatusError('This poll is not available.', 'closed');
+        }
+        if (response.status === 404) {
+            throw new PollStatusError('Poll not found. The link may be incorrect.', 'not_found');
+        }
+        
         throw new Error('API_UNAVAILABLE');
     } catch (error) {
+        // Re-throw PollStatusError
+        if (error instanceof PollStatusError) throw error;
+        
         const polls = getLocalPolls();
         const poll = polls[id];
-        if (!poll) throw new Error('Poll not found');
+        if (!poll) throw new PollStatusError('Poll not found', 'not_found');
         const { adminKey, votes, allowedCodes, ...publicPoll } = poll;
         return { ...publicPoll, isAdmin: false };
     }
@@ -145,7 +176,8 @@ export const submitVote = async (
     pairwiseVotes?: { winnerId: string; loserId: string }[],
     ratingVotes?: Record<string, number>,
     surveyAnswers?: Record<string, any>,
-    antiBotFields?: AntiBotFields
+    antiBotFields?: AntiBotFields,
+    surveyMeta?: { startedAt?: string; completionTime?: number }
 ): Promise<void> => {
     const votePayload = {
         pollId,
@@ -158,6 +190,11 @@ export const submitVote = async (
         pairwiseVotes,
         ratingVotes,
         surveyAnswers,
+        // Survey timing metadata
+        ...(surveyMeta && {
+            startedAt: surveyMeta.startedAt,
+            completionTime: surveyMeta.completionTime
+        }),
         // Anti-bot protection fields
         ...(antiBotFields && {
             _hp: antiBotFields._hp,

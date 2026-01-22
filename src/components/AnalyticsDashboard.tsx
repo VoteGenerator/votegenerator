@@ -616,29 +616,24 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 </div>
             )}
 
-            {/* What's Included */}
-            {analytics.includedFeatures && (
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                        Your Plan Includes
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {analytics.includedFeatures.included.map((feature, i) => (
-                            <span 
-                                key={i}
-                                className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600"
+            {/* Upgrade CTA if features are locked */}
+            {analytics.includedFeatures && analytics.includedFeatures.notIncluded.length > 0 && (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                    <div className="flex items-start gap-3">
+                        <Crown size={20} className="text-amber-500 mt-0.5" />
+                        <div>
+                            <p className="font-semibold text-amber-800 text-sm">Unlock More Features</p>
+                            <p className="text-xs text-amber-700 mt-1">
+                                {analytics.includedFeatures.notIncluded.join(', ')}
+                            </p>
+                            <a 
+                                href="#pricing" 
+                                className="inline-block mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline"
                             >
-                                ✓ {feature}
-                            </span>
-                        ))}
-                    </div>
-                    {analytics.includedFeatures.notIncluded.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-200">
-                            <a href="#pricing" className="text-xs text-indigo-600 hover:text-indigo-700">
-                                Upgrade to unlock: {analytics.includedFeatures.notIncluded.join(', ')} →
+                                Upgrade now →
                             </a>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
             </div>

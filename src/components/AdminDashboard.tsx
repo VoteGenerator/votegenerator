@@ -12,10 +12,12 @@ import {
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
-    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight
+    ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
+    Pause, Play, CreditCard
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
+import PollComparison from './PollComparison';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -26,6 +28,7 @@ const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string
     rating: { label: 'Rating', icon: SlidersHorizontal, color: 'text-cyan-600', bg: 'bg-cyan-50' },
     rsvp: { label: 'RSVP', icon: Users, color: 'text-sky-600', bg: 'bg-sky-50' },
     image: { label: 'Visual', icon: ImageIcon, color: 'text-pink-600', bg: 'bg-pink-50' },
+    survey: { label: 'Survey', icon: FileEdit, color: 'text-emerald-600', bg: 'bg-emerald-50' },
 };
 
 // ============================================================================
@@ -40,9 +43,12 @@ interface UserPoll {
     type: string;
     createdAt: string;
     responseCount?: number;
-    status?: 'draft' | 'live';  // For Pro/Pro polls
+    voteCount?: number;  // Added for comparison
+    status?: 'draft' | 'live' | 'paused' | 'closed';
     expiresAt?: string;
     customSlug?: string;
+    tier?: string;
+    options?: { id?: string; text: string; votes?: number; imageUrl?: string }[];
 }
 
 interface UserSession {
@@ -100,12 +106,12 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-purple-50',
         icon: <Crown size={16} />,
         maxPolls: Infinity,
-        maxResponses: 5000,
+        maxResponses: 10000,
         activeDays: 365,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '5,000 responses/month', included: true },
+            { name: '10,000 responses/month', included: true },
             { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'Custom branding', included: true },
@@ -118,12 +124,12 @@ const TIER_CONFIG: Record<string, {
         headerBg: 'bg-amber-50',
         icon: <Sparkles size={16} />,
         maxPolls: Infinity,
-        maxResponses: 50000,
+        maxResponses: 100000,
         activeDays: 365,
         requiresActivation: false,
         features: [
             { name: 'All poll types', included: true },
-            { name: '50,000 responses/month', included: true },
+            { name: '100,000 responses/month', included: true },
             { name: 'Business polls', included: true },
             { name: 'Export CSV/PDF/PNG', included: true },
             { name: 'PIN protection', included: true },
@@ -158,6 +164,21 @@ const AdminDashboard: React.FC = () => {
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
+    const [showComparison, setShowComparison] = useState(false);
+    const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
+    const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
+    
+    // Bulk Actions State
+    const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
+    const [selectedPolls, setSelectedPolls] = useState<Set<string>>(new Set());
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isBulkExporting, setIsBulkExporting] = useState(false);
+    
+    // Individual poll actions
+    const [duplicatingPollId, setDuplicatingPollId] = useState<string | null>(null);
+    const [pausingPollId, setPausingPollId] = useState<string | null>(null);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -166,6 +187,12 @@ const AdminDashboard: React.FC = () => {
     const urlSessionId = urlParams.get('session_id') || urlParams.get('s'); // Legacy: session ID format
     const urlTier = urlParams.get('tier') as 'pro' | 'business' | null;
     const highlightPollId = urlParams.get('highlight'); // Highlight newly created poll
+    
+    // Fallback poll data from URL (in case localStorage doesn't persist through ad-wall)
+    const urlPollId = urlParams.get('pid');
+    const urlPollKey = urlParams.get('key');
+    const urlPollTitle = urlParams.get('title') ? decodeURIComponent(urlParams.get('title')!) : null;
+    const urlPollType = urlParams.get('pt');
     
     // State for highlight animation
     const [justCreatedPollId, setJustCreatedPollId] = useState<string | null>(highlightPollId);
@@ -191,11 +218,20 @@ const AdminDashboard: React.FC = () => {
         return null;
     };
     
-    // Fetch customer data by session ID (legacy support)
+    // Fetch customer data by session ID (legacy support) with timeout
     const fetchCustomerBySessionId = async (sessionId: string): Promise<UserSession | null> => {
         console.log(`AdminDashboard: Fetching customer by session ID: ${sessionId.substring(0, 20)}...`);
+        
+        // Add timeout to prevent infinite spinning
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
         try {
-            const response = await fetch(`/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`);
+            const response = await fetch(
+                `/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`,
+                { signal: controller.signal }
+            );
+            clearTimeout(timeoutId);
             console.log(`AdminDashboard: vg-get-customer response status: ${response.status}`);
             
             if (response.ok) {
@@ -218,8 +254,13 @@ const AdminDashboard: React.FC = () => {
                 const errorText = await response.text();
                 console.log(`AdminDashboard: vg-get-customer error: ${errorText}`);
             }
-        } catch (e) {
-            console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
+        } catch (e: any) {
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                console.log('AdminDashboard: Request timed out - webhook may still be processing');
+            } else {
+                console.error('AdminDashboard: Failed to fetch customer by session ID:', e);
+            }
         }
         return null;
     };
@@ -233,7 +274,7 @@ const AdminDashboard: React.FC = () => {
         if (!sessionData.polls || sessionData.polls.length === 0) return;
         
         try {
-            const updatedPolls = await Promise.all(
+            const refreshedPolls: (UserPoll | null)[] = await Promise.all(
                 sessionData.polls.map(async (poll) => {
                     try {
                         const response = await fetch(`/.netlify/functions/vg-get?id=${poll.id}&admin=${poll.adminKey}`);
@@ -244,6 +285,10 @@ const AdminDashboard: React.FC = () => {
                                 responseCount: freshData.voteCount || freshData.responseCount || 0,
                                 status: freshData.status || poll.status,
                             };
+                        } else if (response.status === 404) {
+                            // Poll was deleted from backend - remove from local list
+                            console.log(`Poll ${poll.id} not found on server - removing from local list`);
+                            return null; // Mark for removal
                         }
                     } catch (e) {
                         console.warn(`Failed to refresh poll ${poll.id}:`, e);
@@ -252,9 +297,31 @@ const AdminDashboard: React.FC = () => {
                 })
             );
             
-            const updatedSession = { ...sessionData, polls: updatedPolls };
-            setSession(updatedSession);
-            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+            // Filter out deleted polls (null values)
+            const updatedPolls = refreshedPolls.filter((p): p is UserPoll => p !== null);
+            
+            // Only update if something changed
+            if (updatedPolls.length !== sessionData.polls.length || 
+                JSON.stringify(updatedPolls) !== JSON.stringify(sessionData.polls)) {
+                const updatedSession = { ...sessionData, polls: updatedPolls };
+                setSession(updatedSession);
+                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                
+                // Also clean up vg_polls
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls) {
+                    try {
+                        const vgPolls = JSON.parse(savedPolls);
+                        const validPollIds = new Set(updatedPolls.map(p => p.id));
+                        const cleanedPolls = vgPolls.filter((p: any) => validPollIds.has(p.id));
+                        if (cleanedPolls.length !== vgPolls.length) {
+                            localStorage.setItem('vg_polls', JSON.stringify(cleanedPolls));
+                        }
+                    } catch (e) {
+                        console.error('Failed to clean vg_polls:', e);
+                    }
+                }
+            }
         } catch (e) {
             console.error('Failed to refresh poll data:', e);
         }
@@ -390,7 +457,15 @@ const AdminDashboard: React.FC = () => {
                     
                     if (customerData && customerData.dashboardToken) {
                         // Got it! Update localStorage and state
-                        const updatedSession = { ...sessionData, ...customerData };
+                        // IMPORTANT: Preserve local polls if they exist (in case delete happened)
+                        const updatedSession = { 
+                            ...sessionData, 
+                            ...customerData,
+                            // Keep local polls if we have them - they might be more up-to-date after deletes
+                            polls: sessionData.polls && sessionData.polls.length > 0 
+                                ? sessionData.polls 
+                                : customerData.polls || []
+                        };
                         localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
                         setSession(updatedSession);
                         
@@ -400,6 +475,70 @@ const AdminDashboard: React.FC = () => {
                     }
                 }
                 
+                // IMPORTANT: Check if there are new polls in vg_polls that aren't in session
+                // This happens when user creates a new poll and comes back
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls && sessionData.tier === 'free') {
+                    try {
+                        const pollsFromStorage = JSON.parse(savedPolls);
+                        const existingPollIds = new Set(sessionData.polls.map(p => p.id));
+                        
+                        // Find new polls not in session
+                        const newPolls = pollsFromStorage.filter((p: any) => !existingPollIds.has(p.id));
+                        
+                        if (newPolls.length > 0) {
+                            console.log('AdminDashboard: Merging new polls from vg_polls:', newPolls.length);
+                            const mergedPolls = [
+                                ...newPolls.map((p: any) => ({
+                                    id: p.id,
+                                    adminKey: p.adminKey,
+                                    title: p.title || 'Untitled Poll',
+                                    type: p.type || 'multiple',
+                                    createdAt: p.createdAt,
+                                    responseCount: 0,
+                                    status: 'live' as const,
+                                })),
+                                ...sessionData.polls
+                            ];
+                            sessionData.polls = mergedPolls;
+                            localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                        }
+                    } catch (e) {
+                        console.error('Failed to merge polls:', e);
+                    }
+                }
+                
+                // Also check URL params for a new poll (coming from create flow)
+                if (urlPollId && urlPollKey && !sessionData.polls.some(p => p.id === urlPollId)) {
+                    console.log('AdminDashboard: Adding new poll from URL params');
+                    const newPoll = {
+                        id: urlPollId,
+                        adminKey: urlPollKey,
+                        title: urlPollTitle || 'Untitled Poll',
+                        type: urlPollType || 'multiple',
+                        createdAt: new Date().toISOString(),
+                        responseCount: 0,
+                        status: 'live' as const,
+                    };
+                    sessionData.polls = [newPoll, ...sessionData.polls];
+                    localStorage.setItem('vg_user_session', JSON.stringify(sessionData));
+                    
+                    // Also update vg_polls
+                    const existingVgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                    if (!existingVgPolls.some((p: any) => p.id === urlPollId)) {
+                        existingVgPolls.unshift({ id: urlPollId, adminKey: urlPollKey, title: urlPollTitle, type: urlPollType, createdAt: new Date().toISOString() });
+                        localStorage.setItem('vg_polls', JSON.stringify(existingVgPolls));
+                    }
+                    
+                    // Clean up URL params
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('pid');
+                    cleanUrl.searchParams.delete('key');
+                    cleanUrl.searchParams.delete('title');
+                    cleanUrl.searchParams.delete('pt');
+                    window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+                }
+                
                 setSession(sessionData);
                 
                 setLoading(false);
@@ -407,11 +546,16 @@ const AdminDashboard: React.FC = () => {
             }
             
             // Case 4: No paid session - check for FREE user with polls in localStorage
-            const savedPolls = localStorage.getItem('vg_polls');
+            const savedPolls = localStorage.getItem('vg_polls') || localStorage.getItem('myPolls');
             if (savedPolls) {
                 try {
                     const polls = JSON.parse(savedPolls);
                     if (polls && polls.length > 0) {
+                        // Migrate myPolls to vg_polls if needed
+                        if (!localStorage.getItem('vg_polls') && localStorage.getItem('myPolls')) {
+                            localStorage.setItem('vg_polls', savedPolls);
+                            localStorage.removeItem('myPolls');
+                        }
                         // Create a FREE session with their polls
                         const freeSession: UserSession = {
                             dashboardToken: 'free_user',
@@ -419,7 +563,7 @@ const AdminDashboard: React.FC = () => {
                             polls: polls.map((p: any) => ({
                                 id: p.id,
                                 adminKey: p.adminKey,
-                                title: p.title,
+                                title: p.title || 'Untitled Poll',
                                 type: p.type || 'multiple',
                                 createdAt: p.createdAt,
                                 responseCount: 0,
@@ -434,6 +578,53 @@ const AdminDashboard: React.FC = () => {
                 } catch (e) {
                     console.error('Failed to parse vg_polls:', e);
                 }
+            }
+            
+            // Case 4.5: Fallback - poll data passed in URL params (localStorage didn't persist through ad-wall)
+            if (urlPollId && urlPollKey) {
+                console.log('AdminDashboard: Using URL params fallback for poll data');
+                const newPoll = {
+                    id: urlPollId,
+                    adminKey: urlPollKey,
+                    title: urlPollTitle || 'Untitled Poll',
+                    type: urlPollType || 'multiple',
+                    createdAt: new Date().toISOString(),
+                };
+                
+                // MERGE with existing polls instead of overwriting
+                const existingPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                const pollExists = existingPolls.some((p: any) => p.id === newPoll.id);
+                if (!pollExists) {
+                    existingPolls.unshift(newPoll);
+                }
+                localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
+                
+                // Create a FREE session with ALL polls
+                const freeSession: UserSession = {
+                    dashboardToken: 'free_user',
+                    tier: 'free',
+                    polls: existingPolls.map((p: any) => ({
+                        id: p.id,
+                        adminKey: p.adminKey,
+                        title: p.title || 'Untitled Poll',
+                        type: p.type || 'multiple',
+                        createdAt: p.createdAt,
+                        responseCount: 0,
+                        status: 'live',
+                    })),
+                    createdAt: existingPolls[0]?.createdAt || new Date().toISOString(),
+                };
+                setSession(freeSession);
+                setLoading(false);
+                
+                // Clean up URL params but keep highlight
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('pid');
+                cleanUrl.searchParams.delete('key');
+                cleanUrl.searchParams.delete('title');
+                cleanUrl.searchParams.delete('pt');
+                window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+                return;
             }
             
             // Case 5: Nothing found - no session, no polls
@@ -492,9 +683,13 @@ const AdminDashboard: React.FC = () => {
     }, [session]);
 
     const handleCopyLink = (poll: UserPoll, type: 'admin' | 'vote') => {
+        // Use different hash for surveys vs polls
+        const isSurvey = poll.type === 'survey';
+        const hashParam = isSurvey ? 'survey' : 'id';
+        
         const url = type === 'admin'
-            ? `${window.location.origin}/#id=${poll.id}&admin=${poll.adminKey}`
-            : `${window.location.origin}/#id=${poll.id}`;
+            ? `${window.location.origin}/#${hashParam}=${poll.id}&admin=${poll.adminKey}`
+            : `${window.location.origin}/#${hashParam}=${poll.id}`;
         navigator.clipboard.writeText(url);
         setCopiedId(`${poll.id}-${type}`);
         setTimeout(() => setCopiedId(null), 2000);
@@ -507,18 +702,23 @@ const AdminDashboard: React.FC = () => {
         const hasResponses = (poll.responseCount || 0) > 0;
         const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
         
-        // Different confirmation messages based on tier and responses
-        let confirmMessage = `Delete "${poll.title}"?`;
-        if (hasResponses) {
-            if (isRestrictedTier) {
-                alert(`Cannot delete "${poll.title}" - it has ${poll.responseCount} response(s). On the Free plan, you can only delete polls with 0 responses. Upgrade to Pro or higher to delete polls with responses.`);
-                return;
-            } else {
-                confirmMessage = `Delete "${poll.title}"? This poll has ${poll.responseCount} response(s) that will be permanently deleted.`;
-            }
+        // Check tier restriction
+        if (hasResponses && isRestrictedTier) {
+            // Show upgrade modal instead
+            setPollToDelete(null);
+            setShowUpgradeModal(true);
+            return;
         }
         
-        if (!confirm(confirmMessage)) return;
+        // Show custom delete confirmation modal
+        setPollToDelete(poll);
+    };
+    
+    const confirmDeletePoll = async () => {
+        if (!session || !pollToDelete) return;
+        
+        const poll = pollToDelete;
+        setPollToDelete(null); // Close modal immediately
         
         try {
             const response = await fetch('/.netlify/functions/vg-delete-poll', {
@@ -534,13 +734,25 @@ const AdminDashboard: React.FC = () => {
             const data = await response.json();
             
             if (response.ok) {
-                // Remove from local state
+                // Remove from local state (vg_user_session)
                 const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
                 localStorage.setItem('vg_user_session', JSON.stringify(updated));
                 setSession(updated);
+                
+                // ALSO remove from vg_polls (used by free users and merge logic)
+                const savedPolls = localStorage.getItem('vg_polls');
+                if (savedPolls) {
+                    try {
+                        const polls = JSON.parse(savedPolls);
+                        const updatedPolls = polls.filter((p: any) => p.id !== poll.id);
+                        localStorage.setItem('vg_polls', JSON.stringify(updatedPolls));
+                    } catch (e) {
+                        console.error('Failed to update vg_polls:', e);
+                    }
+                }
             } else if (data.upgradeRequired) {
                 // Tier restriction error
-                alert(data.error);
+                setShowUpgradeModal(true);
             } else {
                 alert(data.error || 'Failed to delete poll. Please try again.');
             }
@@ -550,6 +762,18 @@ const AdminDashboard: React.FC = () => {
             const updated = { ...session, polls: session.polls.filter(p => p.id !== poll.id) };
             localStorage.setItem('vg_user_session', JSON.stringify(updated));
             setSession(updated);
+            
+            // ALSO remove from vg_polls
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                try {
+                    const polls = JSON.parse(savedPolls);
+                    const updatedPolls = polls.filter((p: any) => p.id !== poll.id);
+                    localStorage.setItem('vg_polls', JSON.stringify(updatedPolls));
+                } catch (e) {
+                    console.error('Failed to update vg_polls:', e);
+                }
+            }
         }
     };
 
@@ -597,8 +821,8 @@ const AdminDashboard: React.FC = () => {
                 localStorage.setItem('vg_tier_expires', session.expiresAt);
             }
         }
-        // Navigate to home with #create anchor to scroll to create section
-        window.location.href = '/#create';
+        // Navigate to create section - use query param so app can hide hero
+        window.location.href = '/create';
     };
 
     const canCreateMorePolls = () => {
@@ -652,41 +876,268 @@ const AdminDashboard: React.FC = () => {
     const isBusiness = tier === 'business';
     const showSearch = isBusiness && polls.length > 5;
 
+    // ========================================================================
+    // BULK ACTION HANDLERS (must be after polls declaration)
+    // ========================================================================
+    
+    const togglePollSelection = (pollId: string) => {
+        setSelectedPolls(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(pollId)) {
+                newSet.delete(pollId);
+            } else {
+                newSet.add(pollId);
+            }
+            return newSet;
+        });
+    };
+    
+    const selectAllPolls = () => {
+        setSelectedPolls(new Set(polls.map(p => p.id)));
+    };
+    
+    const deselectAllPolls = () => {
+        setSelectedPolls(new Set());
+    };
+    
+    const exitBulkMode = () => {
+        setBulkSelectionMode(false);
+        setSelectedPolls(new Set());
+    };
+    
+    // Check if any selected polls have responses (for tier restriction)
+    const selectedPollsWithResponses = polls.filter(p => selectedPolls.has(p.id) && (p.responseCount || 0) > 0);
+    
+    const canBulkDelete = (() => {
+        if (!session) return false;
+        // Business tier can delete anything
+        if (session.tier === 'business') return true;
+        // Free/Pro can only delete polls without responses
+        return selectedPollsWithResponses.length === 0;
+    })();
+    
+    const handleBulkDelete = () => {
+        if (!canBulkDelete && selectedPollsWithResponses.length > 0) {
+            // Show upgrade modal
+            setShowUpgradeModal(true);
+            return;
+        }
+        setShowBulkDeleteModal(true);
+    };
+    
+    const confirmBulkDelete = async () => {
+        if (!session || selectedPolls.size === 0) return;
+        
+        setIsBulkDeleting(true);
+        const pollsToDelete = polls.filter(p => selectedPolls.has(p.id));
+        
+        try {
+            // Delete all selected polls
+            await Promise.all(pollsToDelete.map(poll =>
+                fetch('/.netlify/functions/vg-delete-poll', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pollId: poll.id,
+                        adminKey: poll.adminKey,
+                        dashboardToken: session.dashboardToken
+                    })
+                })
+            ));
+            
+            // Update local state
+            const remainingPolls = polls.filter(p => !selectedPolls.has(p.id));
+            const updated = { ...session, polls: remainingPolls };
+            localStorage.setItem('vg_user_session', JSON.stringify(updated));
+            setSession(updated);
+            
+            // Update vg_polls
+            const savedPolls = localStorage.getItem('vg_polls');
+            if (savedPolls) {
+                const vgPolls = JSON.parse(savedPolls);
+                const updatedVgPolls = vgPolls.filter((p: any) => !selectedPolls.has(p.id));
+                localStorage.setItem('vg_polls', JSON.stringify(updatedVgPolls));
+            }
+            
+            // Exit bulk mode
+            exitBulkMode();
+        } catch (err) {
+            console.error('Bulk delete error:', err);
+            alert('Some polls could not be deleted. Please try again.');
+        }
+        
+        setIsBulkDeleting(false);
+        setShowBulkDeleteModal(false);
+    };
+    
+    const handleBulkExport = async () => {
+        if (!session || selectedPolls.size === 0) return;
+        
+        // Pro+ feature
+        if (session.tier === 'free') {
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        setIsBulkExporting(true);
+        
+        try {
+            const pollsToExport = polls.filter(p => selectedPolls.has(p.id));
+            
+            // Create CSV content
+            let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
+            pollsToExport.forEach(p => {
+                csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
+            });
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Bulk export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsBulkExporting(false);
+    };
+
+    // Individual poll actions
+    const handleDuplicatePoll = async (poll: UserPoll) => {
+        if (!session) return;
+        setDuplicatingPollId(poll.id);
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-duplicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey
+                })
+            });
+            
+            if (response.ok) {
+                const { newPollId, newAdminKey } = await response.json();
+                
+                // Add to local state
+                const newPoll: UserPoll = {
+                    id: newPollId,
+                    adminKey: newAdminKey,
+                    title: `${poll.title} (Copy)`,
+                    type: poll.type,
+                    createdAt: new Date().toISOString(),
+                    responseCount: 0,
+                    status: 'draft'
+                };
+                
+                const updated = { ...session, polls: [newPoll, ...session.polls] };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+                
+                // Highlight the new poll
+                setJustCreatedPollId(newPollId);
+                setTimeout(() => setJustCreatedPollId(null), 5000);
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Failed to duplicate poll');
+            }
+        } catch (error) {
+            console.error('Duplicate error:', error);
+            alert('Failed to duplicate poll. Please try again.');
+        }
+        
+        setDuplicatingPollId(null);
+    };
+    
+    const handleTogglePause = async (poll: UserPoll) => {
+        if (!session) return;
+        setPausingPollId(poll.id);
+        
+        const newStatus = poll.status === 'paused' ? 'live' : 'paused';
+        
+        try {
+            const response = await fetch('/.netlify/functions/vg-update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId: poll.id,
+                    adminKey: poll.adminKey,
+                    status: newStatus
+                })
+            });
+            
+            if (response.ok) {
+                // Update local state
+                const updatedPolls = session.polls.map(p => 
+                    p.id === poll.id ? { ...p, status: newStatus as 'live' | 'paused' } : p
+                );
+                const updated = { ...session, polls: updatedPolls };
+                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                setSession(updated);
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Failed to update poll status');
+            }
+        } catch (error) {
+            console.error('Toggle pause error:', error);
+            alert('Failed to update poll status. Please try again.');
+        }
+        
+        setPausingPollId(null);
+    };
+
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
             {/* Header with Paid Nav */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-3 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+                    <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                     </a>
                     
                     {/* Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <PlusCircle size={18} /> Create Poll
+                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                            <PlusCircle size={16} /> Create Poll
                         </a>
-                        <a href="/admin" className="flex items-center gap-2 px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition">
-                            <LayoutDashboard size={18} /> My Dashboard
+                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
+                            <LayoutDashboard size={16} /> My Dashboard
                         </a>
-                        <a href="/help" className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition">
-                            <AlertCircle size={18} /> Help
+                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                            <Zap size={16} /> Templates
                         </a>
                     </nav>
                     
                     <div className="flex items-center gap-3">
-                        <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                            {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
-                            <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
-                                {isPlanExpired 
-                                    ? 'Expired' 
-                                    : session?.expiresAt 
-                                        ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
-                                        : ''
-                                }
-                            </span>
-                        </div>
+                        {/* Free users see Upgrade button */}
+                        {tier === 'free' && (
+                            <button
+                                onClick={() => setShowUpgradeModal(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                            >
+                                <Crown size={16} /> Upgrade
+                            </button>
+                        )}
+                        {/* Paid users see tier badge */}
+                        {tier !== 'free' && (
+                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                                {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
+                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                    {isPlanExpired 
+                                        ? 'Expired' 
+                                        : session?.expiresAt 
+                                            ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
+                                            : ''
+                                    }
+                                </span>
+                            </div>
+                        )}
                         {isBusiness && !isPlanExpired && (
                             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
                                 <Settings size={20} className="text-slate-500" />
@@ -772,6 +1223,91 @@ const AdminDashboard: React.FC = () => {
                                             <Sparkles size={16} />
                                             Renew Now
                                         </a>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Payment Processing Banner - for paid users whose webhook hasn't completed */}
+                        {!isPlanExpired && tier !== 'free' && !session?.dashboardToken && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Loader2 size={20} className="text-blue-600 animate-spin" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-blue-800">Setting Up Your Account...</p>
+                                                <p className="text-sm text-blue-600">
+                                                    Your payment was successful! We're just finishing setting up your account.
+                                                    This usually takes a few seconds. You can start creating polls now, or refresh to get your permanent dashboard link.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => window.location.reload()}
+                                            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
+                                        >
+                                            <RefreshCw size={16} />
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Over Poll Limit Banner - URGENT action required */}
+                        {!isPlanExpired && tier === 'free' && livePolls.length > config.maxPolls && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-lg">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <AlertTriangle size={24} className="text-red-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-red-800 text-lg mb-1">
+                                                ⚠️ {livePolls.length - config.maxPolls} Poll{livePolls.length - config.maxPolls > 1 ? 's' : ''} Will Be Paused
+                                            </p>
+                                            <p className="text-sm text-red-700 mb-4">
+                                                Free plan allows <strong>{config.maxPolls} active polls</strong>. You have <strong>{livePolls.length} live</strong>. 
+                                                Choose which {config.maxPolls} to keep active, or <strong>upgrade to keep all {livePolls.length} running</strong>.
+                                            </p>
+                                            
+                                            {/* Loss aversion: Show what they'll lose */}
+                                            <div className="p-3 bg-white/60 rounded-lg mb-4 border border-red-200">
+                                                <p className="text-xs font-semibold text-red-800 mb-2">If you don't take action:</p>
+                                                <ul className="text-xs text-red-700 space-y-1">
+                                                    <li>• {livePolls.length - config.maxPolls} poll{livePolls.length - config.maxPolls > 1 ? 's' : ''} will show "Poll Paused" to voters</li>
+                                                    <li>• Voters will be told to contact you to activate</li>
+                                                    <li>• You'll lose potential responses</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <div className="flex flex-wrap gap-3">
+                                                <button 
+                                                    onClick={() => setShowUpgradeModal(true)}
+                                                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition"
+                                                >
+                                                    <Sparkles size={16} />
+                                                    Keep All {livePolls.length} Active - Upgrade
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        // Pre-select the most recent live polls
+                                                        const sorted = [...livePolls].sort((a, b) => 
+                                                            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                                                        );
+                                                        const activeIds = new Set(sorted.slice(0, config.maxPolls).map(p => p.id));
+                                                        setSelectedActivePolls(activeIds);
+                                                        setShowChooseActiveModal(true);
+                                                    }}
+                                                    className="px-5 py-2.5 bg-white border-2 border-red-300 text-red-700 rounded-xl font-semibold flex items-center gap-2 hover:bg-red-50 transition"
+                                                >
+                                                    Choose Which {config.maxPolls} to Keep
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -864,6 +1400,23 @@ const AdminDashboard: React.FC = () => {
                                         />
                                     </div>
                                 )}
+                                {/* Compare Polls Button - Pro feature */}
+                                {polls.length >= 2 && (
+                                    <button 
+                                        onClick={() => {
+                                            if (tier === 'free') {
+                                                setShowUpgradeModal(true);
+                                            } else {
+                                                setShowComparison(true);
+                                            }
+                                        }}
+                                        className="px-4 py-2.5 bg-white border-2 border-purple-200 hover:border-purple-300 text-purple-700 rounded-xl font-medium flex items-center gap-2 hover:bg-purple-50 transition"
+                                    >
+                                        <ArrowLeftRight size={18} />
+                                        <span className="hidden sm:inline">Compare</span>
+                                        {tier === 'free' && <Crown size={14} className="text-amber-500" />}
+                                    </button>
+                                )}
                                 {polls.length > 0 && canCreateMorePolls() && (
                                     <button onClick={goToCreate} className={`px-5 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-xl font-medium flex items-center gap-2 hover:shadow-lg transition`}>
                                         <Plus size={18} /> New Poll
@@ -951,10 +1504,82 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         ) : (
                             <>
+                                {/* Bulk Actions Bar */}
+                                <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+                                    <div className="flex items-center gap-3">
+                                        {!bulkSelectionMode ? (
+                                            <button
+                                                onClick={() => setBulkSelectionMode(true)}
+                                                className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                            >
+                                                <CheckSquare size={16} />
+                                                Select Multiple
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={exitBulkMode}
+                                                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                                >
+                                                    <X size={16} />
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={selectedPolls.size === polls.length ? deselectAllPolls : selectAllPolls}
+                                                    className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                >
+                                                    {selectedPolls.size === polls.length ? 'Deselect All' : 'Select All'}
+                                                </button>
+                                                <span className="text-sm text-slate-500">
+                                                    {selectedPolls.size} selected
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Bulk Actions */}
+                                    {bulkSelectionMode && selectedPolls.size > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <button
+                                                onClick={handleBulkExport}
+                                                disabled={isBulkExporting}
+                                                className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                                            >
+                                                {isBulkExporting ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <ArrowRight size={16} />
+                                                )}
+                                                Export
+                                                {session?.tier === 'free' && (
+                                                    <Crown size={12} className="text-amber-500" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={handleBulkDelete}
+                                                className="px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition flex items-center gap-2"
+                                            >
+                                                <Trash2 size={16} />
+                                                Delete
+                                                {!canBulkDelete && (
+                                                    <Crown size={12} className="text-amber-500" />
+                                                )}
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                                
                                 <div className="space-y-4">
                                     {paginatedPolls.map((poll, index) => {
                                         const isDraft = config.requiresActivation && poll.status !== 'live';
+                                        const isPaused = poll.status === 'paused';
                                         const isJustCreated = poll.id === justCreatedPollId;
+                                        const isSelected = selectedPolls.has(poll.id);
+                                        
                                         return (
                                             <motion.div
                                                 key={poll.id}
@@ -962,12 +1587,17 @@ const AdminDashboard: React.FC = () => {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.03 }}
                                                 className={`bg-white rounded-xl border-2 p-5 hover:shadow-lg transition ${
-                                                    isJustCreated
-                                                        ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
-                                                        : isDraft 
-                                                            ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
-                                                            : 'border-slate-200 hover:border-indigo-200'
+                                                    isSelected
+                                                        ? 'border-indigo-400 bg-indigo-50/50 ring-2 ring-indigo-200'
+                                                        : isJustCreated
+                                                            ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-200 ring-offset-2'
+                                                            : isPaused
+                                                                ? 'border-red-200 bg-gradient-to-r from-red-50/50 to-white opacity-75'
+                                                                : isDraft 
+                                                                    ? 'border-amber-200 bg-gradient-to-r from-amber-50/50 to-white' 
+                                                                    : 'border-slate-200 hover:border-indigo-200'
                                                 }`}
+                                                onClick={() => bulkSelectionMode && togglePollSelection(poll.id)}
                                             >
                                                 {isJustCreated && (
                                                     <div className="flex items-center gap-2 mb-3 text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-medium">
@@ -975,10 +1605,29 @@ const AdminDashboard: React.FC = () => {
                                                         Poll created successfully! Share it to start collecting votes.
                                                     </div>
                                                 )}
+                                                {isPaused && (
+                                                    <div className="flex items-center gap-2 mb-3 text-red-700 bg-red-100 px-3 py-1.5 rounded-lg text-sm font-medium">
+                                                        <Pause size={16} className="text-red-600" />
+                                                        This poll is paused and not accepting votes. Upgrade or delete another poll to reactivate.
+                                                    </div>
+                                                )}
                                                 <div className="flex items-start justify-between gap-4">
+                                                    {/* Bulk selection checkbox */}
+                                                    {bulkSelectionMode && (
+                                                        <div 
+                                                            className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-1 cursor-pointer transition ${
+                                                                isSelected 
+                                                                    ? 'bg-indigo-600 text-white' 
+                                                                    : 'border-2 border-slate-300 hover:border-indigo-400'
+                                                            }`}
+                                                            onClick={(e) => { e.stopPropagation(); togglePollSelection(poll.id); }}
+                                                        >
+                                                            {isSelected && <Check size={16} />}
+                                                        </div>
+                                                    )}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                            <h3 className="font-bold text-slate-800 text-lg truncate">{poll.title}</h3>
+                                                            <h3 className={`font-bold text-lg truncate ${isPaused ? 'text-slate-500' : 'text-slate-800'}`}>{poll.title}</h3>
                                                             {/* Poll Type Badge */}
                                                             {poll.type && POLL_TYPE_CONFIG[poll.type] && (
                                                                 <span className={`px-2 py-0.5 ${POLL_TYPE_CONFIG[poll.type].bg} ${POLL_TYPE_CONFIG[poll.type].color} text-xs font-bold rounded-full flex items-center gap-1`}>
@@ -986,12 +1635,17 @@ const AdminDashboard: React.FC = () => {
                                                                     {POLL_TYPE_CONFIG[poll.type].label}
                                                                 </span>
                                                             )}
-                                                            {isDraft && (
+                                                            {isPaused && (
+                                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                    <Pause size={12} /> Paused
+                                                                </span>
+                                                            )}
+                                                            {isDraft && !isPaused && (
                                                                 <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
                                                                     <FileEdit size={12} /> Draft
                                                                 </span>
                                                             )}
-                                                            {!isDraft && config.requiresActivation && (
+                                                            {!isDraft && !isPaused && config.requiresActivation && (
                                                                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1 animate-pulse">
                                                                     <Rocket size={12} /> Live
                                                                 </span>
@@ -1006,7 +1660,7 @@ const AdminDashboard: React.FC = () => {
                                                                 <Users size={14} />
                                                                 {poll.responseCount || 0} votes
                                                             </span>
-                                                            {(poll.responseCount || 0) === 0 && !isDraft && (
+                                                            {(poll.responseCount || 0) === 0 && !isDraft && !isPaused && (
                                                                 <span className="text-amber-600 flex items-center gap-1">
                                                                     <Share2 size={12} />
                                                                     Share to get responses
@@ -1016,7 +1670,14 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
 
                                                     <div className="flex items-center gap-2">
-                                                        {isDraft ? (
+                                                        {isPaused ? (
+                                                            <button
+                                                                onClick={() => setShowUpgradeModal(true)}
+                                                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
+                                                            >
+                                                                <Play size={16} /> Reactivate
+                                                            </button>
+                                                        ) : isDraft ? (
                                                             <button
                                                                 onClick={() => setShowGoLiveModal(poll.id)}
                                                                 className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg hover:shadow-lg transition flex items-center gap-2 text-sm"
@@ -1032,21 +1693,61 @@ const AdminDashboard: React.FC = () => {
                                                                 {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
                                                             </button>
                                                         )}
+                                                        {/* Hide Invite button for just-created polls - it's in Manage section */}
+                                                        {!isJustCreated && (
+                                                            <button
+                                                                onClick={() => setShowShareCards(poll.id)}
+                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
+                                                                title="Create beautiful invite cards with QR codes"
+                                                            >
+                                                                <Palette size={18} />
+                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
+                                                            </button>
+                                                        )}
+                                                        {/* Duplicate button */}
                                                         <button
-                                                            onClick={() => setShowShareCards(poll.id)}
-                                                            className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
-                                                            title="Create beautiful invite cards with QR codes"
+                                                            onClick={() => handleDuplicatePoll(poll)}
+                                                            disabled={duplicatingPollId === poll.id}
+                                                            className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition"
+                                                            title="Duplicate poll"
                                                         >
-                                                            <Palette size={18} />
-                                                            <span className="hidden sm:inline text-sm font-medium">Invite</span>
+                                                            {duplicatingPollId === poll.id ? (
+                                                                <Loader2 size={18} className="animate-spin" />
+                                                            ) : (
+                                                                <Copy size={18} />
+                                                            )}
                                                         </button>
+                                                        {/* Pause/Resume button - only for live polls */}
+                                                        {!isDraft && (
+                                                            <button
+                                                                onClick={() => handleTogglePause(poll)}
+                                                                disabled={pausingPollId === poll.id}
+                                                                className={`p-2.5 rounded-lg transition ${
+                                                                    isPaused 
+                                                                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' 
+                                                                        : 'bg-amber-50 hover:bg-amber-100 text-amber-600'
+                                                                }`}
+                                                                title={isPaused ? 'Resume poll' : 'Pause poll'}
+                                                            >
+                                                                {pausingPollId === poll.id ? (
+                                                                    <Loader2 size={18} className="animate-spin" />
+                                                                ) : isPaused ? (
+                                                                    <Play size={18} />
+                                                                ) : (
+                                                                    <Pause size={18} />
+                                                                )}
+                                                            </button>
+                                                        )}
                                                         <a
-                                                            href={`/#id=${poll.id}&admin=${poll.adminKey}`}
+                                                            href={poll.type === 'survey' 
+                                                                ? `/#survey=${poll.id}&admin=${poll.adminKey}`
+                                                                : `/#id=${poll.id}&admin=${poll.adminKey}`
+                                                            }
                                                             className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
-                                                            title={isDraft ? "Preview & Edit" : "Manage Poll"}
+                                                            title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
                                                         >
                                                             <ExternalLink size={16} />
-                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage'}</span>
+                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage & Share'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
@@ -1269,44 +1970,123 @@ const AdminDashboard: React.FC = () => {
                         )}
                         </div>
 
-                        {/* Quick Stats - Collapsible */}
-                        <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl border-2 border-slate-200 overflow-hidden">
-                            <button 
-                                onClick={() => setShowStatsPanel(!showStatsPanel)}
-                                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                        {/* Usage Meter - Creates urgency for conversion */}
+                        <div className={`rounded-2xl border-2 overflow-hidden ${
+                            tier === 'free' 
+                                ? 'bg-gradient-to-br from-orange-50 via-white to-amber-50 border-orange-200' 
+                                : 'bg-gradient-to-br from-slate-50 via-white to-slate-50 border-slate-200'
+                        }`}>
+                            <div className="p-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                                        tier === 'free' 
+                                            ? 'bg-gradient-to-br from-orange-400 to-amber-500' 
+                                            : 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                                    } text-white`}>
                                         <BarChart3 size={18} />
                                     </div>
-                                    <div className="text-left">
-                                        <h3 className="font-bold text-slate-800">Quick Stats</h3>
-                                        <p className="text-xs text-slate-500">{polls.length} polls • {totalVotes} votes</p>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800">Usage This Month</h3>
+                                        <p className="text-xs text-slate-500">
+                                            {tier === 'free' ? 'Free plan limits' : `${config.label} plan`}
+                                        </p>
                                     </div>
                                 </div>
-                                {showStatsPanel ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                            </button>
-                            
-                            {showStatsPanel && (
-                                <div className="p-4 pt-0 border-t border-slate-100">
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                            <span className="text-slate-500 text-sm">Total Polls</span>
-                                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{polls.length}</span>
-                                        </div>
-                                        {config.requiresActivation && (
-                                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                                <span className="text-slate-500 text-sm">Live Polls</span>
-                                                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{livePolls.length}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                            <span className="text-slate-500 text-sm">Total Votes</span>
-                                            <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{totalVotes}</span>
+                                
+                                {/* Polls Usage */}
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="text-slate-600 font-medium">Polls Created</span>
+                                        <span className={`font-bold ${
+                                            tier === 'free' && polls.length >= config.maxPolls 
+                                                ? 'text-red-600' 
+                                                : tier === 'free' && polls.length >= config.maxPolls - 1
+                                                    ? 'text-orange-600'
+                                                    : 'text-slate-800'
+                                        }`}>
+                                            {polls.length} / {config.maxPolls === Infinity ? '∞' : config.maxPolls}
+                                        </span>
+                                    </div>
+                                    <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full transition-all ${
+                                                tier === 'free' && polls.length >= config.maxPolls 
+                                                    ? 'bg-red-500' 
+                                                    : tier === 'free' && polls.length >= config.maxPolls - 1
+                                                        ? 'bg-orange-500'
+                                                        : 'bg-indigo-500'
+                                            }`}
+                                            style={{ width: `${Math.min(100, (polls.length / (config.maxPolls === Infinity ? 100 : config.maxPolls)) * 100)}%` }}
+                                        />
+                                    </div>
+                                    {tier === 'free' && polls.length >= config.maxPolls && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">
+                                            ⚠️ Limit reached! Upgrade for unlimited polls
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Responses Usage */}
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="text-slate-600 font-medium">Responses Received</span>
+                                        <span className={`font-bold ${
+                                            totalVotes >= config.maxResponses 
+                                                ? 'text-red-600' 
+                                                : totalVotes >= config.maxResponses * 0.8
+                                                    ? 'text-orange-600'
+                                                    : 'text-slate-800'
+                                        }`}>
+                                            {totalVotes.toLocaleString()} / {config.maxResponses.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full transition-all ${
+                                                totalVotes >= config.maxResponses 
+                                                    ? 'bg-red-500' 
+                                                    : totalVotes >= config.maxResponses * 0.8
+                                                        ? 'bg-orange-500'
+                                                        : 'bg-emerald-500'
+                                            }`}
+                                            style={{ width: `${Math.min(100, (totalVotes / config.maxResponses) * 100)}%` }}
+                                        />
+                                    </div>
+                                    {totalVotes >= config.maxResponses * 0.8 && totalVotes < config.maxResponses && (
+                                        <p className="text-xs text-orange-600 mt-1 font-medium">
+                                            ⚡ {Math.round((1 - totalVotes / config.maxResponses) * 100)}% remaining
+                                        </p>
+                                    )}
+                                    {totalVotes >= config.maxResponses && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">
+                                            ⚠️ Limit reached! New votes won't be counted
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Upgrade CTA for Free users */}
+                                {tier === 'free' && (
+                                    <button 
+                                        onClick={() => setShowUpgradeModal(true)}
+                                        className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
+                                    >
+                                        <Zap size={16} />
+                                        Unlock Unlimited Usage
+                                    </button>
+                                )}
+                                
+                                {/* Stats summary for paid users */}
+                                {tier !== 'free' && (
+                                    <div className="pt-3 border-t border-slate-100 mt-3">
+                                        <div className="flex items-center justify-between text-xs text-slate-500">
+                                            <span>Resets monthly</span>
+                                            <span className="text-emerald-600 font-medium">
+                                                {config.maxResponses === 100000 ? '100K' : '10K'} responses included
+                                            </span>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1373,6 +2153,28 @@ const AdminDashboard: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Manage Subscription - Paid users only */}
+                                {session && session.tier !== 'free' && (
+                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <CreditCard size={20} className="text-indigo-600" />
+                                                <div>
+                                                    <p className="font-medium text-slate-800">Subscription</p>
+                                                    <p className="text-xs text-slate-500">Update payment, change plan, or cancel</p>
+                                                </div>
+                                            </div>
+                                            <a 
+                                                href="/#manage-subscription" 
+                                                onClick={() => setShowSettings(false)}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                                            >
+                                                Manage
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>
@@ -1430,9 +2232,10 @@ const AdminDashboard: React.FC = () => {
                 {showShareCards && (() => {
                     const poll = polls.find(p => p.id === showShareCards);
                     if (!poll) return null;
+                    const hashParam = poll.type === 'survey' ? 'survey' : 'id';
                     const pollUrl = poll.customSlug 
                         ? `${window.location.origin}/p/${poll.customSlug}`
-                        : `${window.location.origin}/#id=${poll.id}`;
+                        : `${window.location.origin}/#${hashParam}=${poll.id}`;
                     return (
                         <motion.div 
                             initial={{ opacity: 0 }} 
@@ -1468,6 +2271,276 @@ const AdminDashboard: React.FC = () => {
                 currentTier={tier}
                 source="admin_dashboard"
             />
+
+            {/* Poll Comparison Modal */}
+            <AnimatePresence>
+                {showComparison && (
+                    <PollComparison
+                        availablePolls={polls.map(p => {
+                            const totalVotes = p.voteCount || p.responseCount || 0;
+                            return {
+                                id: p.id,
+                                title: p.title,
+                                description: p.description,
+                                type: p.type,
+                                createdAt: p.createdAt,
+                                expiresAt: p.expiresAt,
+                                status: (p.status || 'live') as 'live' | 'closed' | 'draft' | 'paused',
+                                totalVotes,
+                                options: p.options?.map(opt => ({
+                                    id: opt.id || opt.text,
+                                    text: opt.text,
+                                    votes: opt.votes || 0,
+                                    percentage: totalVotes > 0 ? Math.round(((opt.votes || 0) / totalVotes) * 100) : 0,
+                                    imageUrl: opt.imageUrl
+                                })) || [],
+                                tier: p.tier
+                            };
+                        })}
+                        onClose={() => setShowComparison(false)}
+                        tier={tier}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {pollToDelete && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={() => setPollToDelete(null)}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                            animate={{ scale: 1, opacity: 1, y: 0 }} 
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", duration: 0.3 }}
+                            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header with warning icon */}
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Trash2 size={32} className="text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white">Delete {pollToDelete.type === 'survey' ? 'Survey' : 'Poll'}?</h3>
+                            </div>
+                            
+                            {/* Content */}
+                            <div className="p-6">
+                                <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                                    <p className="font-semibold text-slate-800 text-center mb-1">"{pollToDelete.title}"</p>
+                                    {(pollToDelete.responseCount || 0) > 0 && (
+                                        <p className="text-sm text-slate-500 text-center">
+                                            {pollToDelete.responseCount} response{pollToDelete.responseCount !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                {/* Warning */}
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800 text-sm">This action cannot be undone</p>
+                                            <p className="text-amber-700 text-sm mt-1">
+                                                {(pollToDelete.responseCount || 0) > 0 
+                                                    ? `All ${pollToDelete.responseCount} responses will be permanently deleted.`
+                                                    : 'This will permanently remove the poll and its settings.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Buttons */}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setPollToDelete(null)}
+                                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDeletePoll}
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={18} />
+                                        Delete Forever
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Bulk Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showBulkDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowBulkDeleteModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <Trash2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">Delete {selectedPolls.size} Poll{selectedPolls.size !== 1 ? 's' : ''}?</h3>
+                                        <p className="text-white/80 text-sm">This cannot be undone</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="p-6">
+                                <p className="text-slate-600 mb-4">
+                                    You're about to permanently delete {selectedPolls.size} poll{selectedPolls.size !== 1 ? 's' : ''}:
+                                </p>
+                                
+                                {/* List selected polls */}
+                                <div className="bg-slate-50 rounded-xl p-3 mb-4 max-h-40 overflow-y-auto">
+                                    {polls.filter(p => selectedPolls.has(p.id)).map(poll => (
+                                        <div key={poll.id} className="py-2 border-b border-slate-200 last:border-0">
+                                            <p className="font-medium text-slate-800 truncate">{poll.title}</p>
+                                            <p className="text-xs text-slate-500">{poll.responseCount || 0} responses</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Warning */}
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                        <p className="text-sm text-amber-800">
+                                            All responses, analytics, and settings will be permanently deleted.
+                                            {(() => {
+                                                const totalResponses = polls
+                                                    .filter(p => selectedPolls.has(p.id))
+                                                    .reduce((sum, p) => sum + (p.responseCount || 0), 0);
+                                                return totalResponses > 0 ? ` You will lose ${totalResponses} response${totalResponses !== 1 ? 's' : ''}.` : '';
+                                            })()}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowBulkDeleteModal(false)}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmBulkDelete}
+                                        disabled={isBulkDeleting}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isBulkDeleting ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Deleting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 size={18} />
+                                                Delete All
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Choose Active Polls Modal */}
+            <AnimatePresence>
+                {showChooseActiveModal && (
+                    <ChooseActivePollsModal
+                        isOpen={showChooseActiveModal}
+                        polls={polls}
+                        maxActive={config.maxPolls}
+                        selectedIds={selectedActivePolls}
+                        onToggle={(pollId) => {
+                            const newSelected = new Set(selectedActivePolls);
+                            if (newSelected.has(pollId)) {
+                                newSelected.delete(pollId);
+                            } else if (newSelected.size < config.maxPolls) {
+                                newSelected.add(pollId);
+                            }
+                            setSelectedActivePolls(newSelected);
+                        }}
+                        onConfirm={async () => {
+                            // Update poll statuses
+                            const updatedPolls = polls.map(p => ({
+                                ...p,
+                                status: selectedActivePolls.has(p.id) ? 'live' as const : 'paused' as const
+                            }));
+                            
+                            // Call backend to update poll statuses for each poll that changed
+                            const pollsToUpdate = updatedPolls.filter((p, i) => p.status !== polls[i].status);
+                            
+                            try {
+                                await Promise.all(pollsToUpdate.map(p => 
+                                    fetch('/.netlify/functions/vg-update-status', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            pollId: p.id,
+                                            adminKey: p.adminKey,
+                                            status: p.status
+                                        })
+                                    })
+                                ));
+                                
+                                // Save to session and localStorage after successful backend update
+                                if (session) {
+                                    const updatedSession = { ...session, polls: updatedPolls };
+                                    localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                                    setSession(updatedSession);
+                                    
+                                    // Also update vg_polls
+                                    const vgPolls = updatedPolls.map(p => ({
+                                        id: p.id,
+                                        adminKey: p.adminKey,
+                                        title: p.title,
+                                        type: p.type,
+                                        createdAt: p.createdAt,
+                                        status: p.status
+                                    }));
+                                    localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
+                                }
+                            } catch (error) {
+                                console.error('Failed to update poll statuses:', error);
+                                alert('Failed to update poll statuses. Please try again.');
+                                return; // Don't close modal on error
+                            }
+                            
+                            setShowChooseActiveModal(false);
+                        }}
+                        onClose={() => setShowChooseActiveModal(false)}
+                        onUpgrade={() => {
+                            setShowChooseActiveModal(false);
+                            setShowUpgradeModal(true);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -1640,6 +2713,166 @@ const GoLiveModalInline: React.FC<{
                         <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
                         <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
                             <Rocket size={18} /> Go Live
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Choose Active Polls Modal (self-contained)
+// Science-backed: Loss aversion, forced choice creates upgrade pressure
+// ============================================================================
+
+const ChooseActivePollsModal: React.FC<{
+    isOpen: boolean;
+    polls: UserPoll[];
+    maxActive: number;
+    selectedIds: Set<string>;
+    onToggle: (pollId: string) => void;
+    onConfirm: () => void;
+    onClose: () => void;
+    onUpgrade: () => void;
+}> = ({ isOpen, polls, maxActive, selectedIds, onToggle, onConfirm, onClose, onUpgrade }) => {
+    const pausedCount = polls.length - selectedIds.size;
+    const canConfirm = selectedIds.size === maxActive;
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" 
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header - Loss Aversion Framing */}
+                <div className="bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold text-lg">Choose Your {maxActive} Active Polls</h2>
+                            <p className="text-white/80 text-sm">
+                                {pausedCount > 0 
+                                    ? `${pausedCount} poll${pausedCount > 1 ? 's' : ''} will be paused and stop accepting votes`
+                                    : `Select ${maxActive} polls to keep active`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Upgrade CTA - Anchoring (show the easy path first) */}
+                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Sparkles size={20} className="text-emerald-600" />
+                            <div>
+                                <p className="font-semibold text-emerald-800">Keep all {polls.length} polls active</p>
+                                <p className="text-xs text-emerald-600">Upgrade and never worry about limits</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={onUpgrade}
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-lg hover:shadow-lg transition text-sm"
+                        >
+                            Upgrade →
+                        </button>
+                    </div>
+                </div>
+
+                {/* Poll Selection - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    <p className="text-sm text-slate-500 mb-3">
+                        Or choose {maxActive} polls to keep active ({selectedIds.size}/{maxActive} selected):
+                    </p>
+                    <div className="space-y-2">
+                        {polls.map((poll) => {
+                            const isSelected = selectedIds.has(poll.id);
+                            const canSelect = isSelected || selectedIds.size < maxActive;
+                            
+                            return (
+                                <button
+                                    key={poll.id}
+                                    onClick={() => canSelect && onToggle(poll.id)}
+                                    disabled={!canSelect}
+                                    className={`w-full p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
+                                        isSelected 
+                                            ? 'border-emerald-500 bg-emerald-50' 
+                                            : canSelect
+                                                ? 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                : 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {/* Checkbox */}
+                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                        isSelected 
+                                            ? 'bg-emerald-500 text-white' 
+                                            : 'border-2 border-slate-300'
+                                    }`}>
+                                        {isSelected && <Check size={16} />}
+                                    </div>
+                                    
+                                    {/* Poll Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold truncate ${isSelected ? 'text-emerald-800' : 'text-slate-700'}`}>
+                                            {poll.title}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {poll.responseCount || 0} votes • Created {new Date(poll.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Status indicator */}
+                                    {!isSelected && (
+                                        <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                                            Will pause
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer - Consequences reminder */}
+                <div className="p-4 border-t border-slate-200 bg-slate-50">
+                    {pausedCount > 0 && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
+                            <p className="text-xs text-red-700">
+                                <strong>Warning:</strong> {pausedCount} poll{pausedCount > 1 ? 's' : ''} will show "Poll Paused" to voters and stop collecting responses.
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={onConfirm} 
+                            disabled={!canConfirm}
+                            className={`flex-1 py-3 font-bold rounded-xl transition flex items-center justify-center gap-2 ${
+                                canConfirm
+                                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:shadow-lg'
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            }`}
+                        >
+                            {canConfirm ? `Pause ${pausedCount} Poll${pausedCount > 1 ? 's' : ''}` : `Select ${maxActive} polls`}
                         </button>
                     </div>
                 </div>

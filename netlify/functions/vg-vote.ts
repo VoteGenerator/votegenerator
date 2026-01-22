@@ -38,6 +38,8 @@ interface Vote {
     ratingVotes?: Record<string, number>;
     // Survey mode
     surveyAnswers?: Record<string, any>;
+    startedAt?: string;       // When survey was started
+    completionTime?: number;  // Seconds to complete
     timestamp: string;
     analytics?: VoteAnalytics;
 }
@@ -508,6 +510,15 @@ export const handler: Handler = async (event) => {
             };
         }
         
+        // Check if poll has expired (close date passed)
+        if (poll.expiresAt && new Date(poll.expiresAt) < new Date()) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'This poll has closed. Voting is no longer available.' })
+            };
+        }
+        
         // Check response limit (enforced for free tier polls)
         if (poll.maxResponses && poll.voteCount >= poll.maxResponses) {
             const isFreeLimit = poll.tier === 'free';
@@ -582,8 +593,11 @@ export const handler: Handler = async (event) => {
         
         if (isSurvey) {
             console.log('vg-vote: Survey mode - validating survey answers');
+            console.log('vg-vote: body.surveyAnswers type:', typeof body.surveyAnswers);
+            console.log('vg-vote: body.surveyAnswers:', JSON.stringify(body.surveyAnswers));
             
             if (!body.surveyAnswers || typeof body.surveyAnswers !== 'object') {
+                console.log('vg-vote: Survey answers validation FAILED');
                 return {
                     statusCode: 400,
                     headers,
@@ -594,6 +608,7 @@ export const handler: Handler = async (event) => {
             // For surveys, we don't validate against poll.options
             // The surveyAnswers contain question IDs from sections
             console.log('vg-vote: Survey answers count:', Object.keys(body.surveyAnswers).length);
+            console.log('vg-vote: Survey answers keys:', Object.keys(body.surveyAnswers));
         }
         // Check for ranked polls (ranked, ranked_choice)
         else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
@@ -693,9 +708,11 @@ export const handler: Handler = async (event) => {
         }
         // Add vote data based on poll type
         if (isSurvey) {
-            // Survey mode - store survey answers
+            // Survey mode - store survey answers and timing
             vote.surveyAnswers = body.surveyAnswers;
-            console.log('vg-vote: Storing survey answers');
+            if (body.startedAt) vote.startedAt = body.startedAt;
+            if (body.completionTime) vote.completionTime = body.completionTime;
+            console.log('vg-vote: Storing survey answers, completionTime:', body.completionTime);
         } else if (poll.pollType === 'ranked' || poll.pollType === 'ranked_choice') {
             vote.rankedOptionIds = body.rankedOptionIds;
         } else {

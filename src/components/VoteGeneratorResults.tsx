@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText, Crown, Lock } from 'lucide-react';
 import { RunoffResult, Poll, SurveyResponse } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SurveyResults from './SurveyResults';
@@ -236,6 +236,13 @@ interface Props {
 }
 
 const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey, isAdmin }) => {
+    // Get tier for feature gating
+    const tier = useMemo(() => {
+        return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    }, []);
+    const isPaidUser = tier === 'pro' || tier === 'business';
+    const isFreeUser = tier === 'free';
+    
     // Get theme configuration
     const theme = useMemo(() => getThemeConfig((poll as any).theme), [(poll as any).theme]);
     const isDarkTheme = theme.cardBg?.includes('slate-9') || theme.cardBg?.includes('slate-950');
@@ -298,6 +305,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     // === FREE ANALYTICS COMPUTATIONS ===
     const [showInsights, setShowInsights] = useState(false);
+    const [isExportingPng, setIsExportingPng] = useState(false);
     
     // Device breakdown (computed from user agent in votes)
     const deviceStats = useMemo(() => {
@@ -562,6 +570,14 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
     // SURVEY MODE - Multi-section form results
     // =========================================================================
     if (isSurvey && (poll as any).sections?.length > 0) {
+        // Debug: Log raw votes
+        console.log('VoteGeneratorResults: Raw votes count:', votes.length);
+        if (votes[0]) {
+            console.log('VoteGeneratorResults: First vote:', votes[0]);
+            console.log('VoteGeneratorResults: First vote surveyAnswers:', votes[0].surveyAnswers);
+            console.log('VoteGeneratorResults: First vote answers:', votes[0].answers);
+        }
+        
         // Extract survey responses from votes
         const surveyResponses: SurveyResponse[] = votes
             .filter((v: any) => v.surveyAnswers || v.answers)
@@ -571,10 +587,16 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 voterName: v.voterName,
                 submittedAt: v.votedAt || v.timestamp || new Date().toISOString(),
                 startedAt: v.startedAt,
+                completedAt: v.votedAt || v.timestamp,
                 completionTime: v.completionTime,
                 answers: v.surveyAnswers || v.answers || {},
                 isComplete: true,
             }));
+        
+        console.log('VoteGeneratorResults: Mapped surveyResponses count:', surveyResponses.length);
+        if (surveyResponses[0]) {
+            console.log('VoteGeneratorResults: First mapped response:', surveyResponses[0]);
+        }
         
         return (
             <div className="space-y-6">
@@ -611,6 +633,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 <SurveyResults 
                     poll={poll} 
                     responses={surveyResponses}
+                    isAdmin={isAdmin}
                 />
                 
                 {/* Edit Button */}
@@ -630,21 +653,95 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
 
     return (
         <>
-            {/* Print styles to preserve colors */}
+            {/* Comprehensive Print Styles */}
             <style>{`
                 @media print {
+                    /* Preserve colors */
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                         color-adjust: exact !important;
                     }
-                    .bg-indigo-500, .bg-blue-500, .bg-green-500, .bg-purple-500,
-                    .bg-pink-500, .bg-cyan-500, .bg-lime-500, .bg-orange-500,
-                    .bg-red-500, .bg-teal-500, .bg-yellow-500 {
-                        background-color: inherit !important;
+                    
+                    /* Page setup */
+                    @page {
+                        size: A4;
+                        margin: 1.5cm;
+                    }
+                    
+                    /* Hide non-print elements */
+                    .print\\:hidden, 
+                    button:not(.print-show),
+                    nav,
+                    .view-switcher,
+                    [class*="hover:"],
+                    .animate-spin {
+                        display: none !important;
+                    }
+                    
+                    /* Show print elements */
+                    .print\\:block {
+                        display: block !important;
+                    }
+                    
+                    /* Clean backgrounds */
+                    body {
+                        background: white !important;
+                    }
+                    
+                    /* Typography adjustments */
+                    .text-4xl { font-size: 24pt !important; }
+                    .text-3xl { font-size: 20pt !important; }
+                    .text-2xl { font-size: 16pt !important; }
+                    .text-xl { font-size: 14pt !important; }
+                    .text-lg { font-size: 12pt !important; }
+                    
+                    /* Card styling for print */
+                    .rounded-3xl, .rounded-2xl, .rounded-xl {
+                        border-radius: 8px !important;
+                        box-shadow: none !important;
+                        border: 1px solid #e2e8f0 !important;
+                    }
+                    
+                    /* Prevent breaks inside elements */
+                    .break-inside-avoid {
+                        break-inside: avoid;
+                    }
+                    
+                    /* Chart containers */
+                    #poll-results-chart {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+                    
+                    /* Bar chart bars - preserve gradient */
+                    [class*="bg-gradient"] {
+                        background: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)) !important;
+                    }
+                    
+                    /* SVG pie chart */
+                    svg path, svg circle {
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>
+            
+            {/* Print Header - Only visible when printing */}
+            <div className="hidden print:block mb-6 pb-4 border-b-2 border-slate-200">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800">{poll.title}</h1>
+                        {poll.description && (
+                            <p className="text-slate-500 mt-1">{poll.description}</p>
+                        )}
+                    </div>
+                    <div className="text-right text-sm text-slate-500">
+                        <div className="font-semibold">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</div>
+                        <div>Printed {new Date().toLocaleDateString()}</div>
+                    </div>
+                </div>
+            </div>
+            
             <div className="space-y-6 print:space-y-4">
             
             {/* Results Summary Cards - Admin Only */}
@@ -691,195 +788,284 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                 </div>
             )}
             
-            {/* Insights Panel - Admin Only */}
+            {/* Poll Insights Panel - Tier Gated */}
             {isAdmin && totalVotes >= 3 && votes.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
-                    <button 
-                        onClick={() => setShowInsights(!showInsights)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
-                    >
-                        <div className="flex items-center gap-2">
-                            <Activity size={18} className="text-indigo-500" />
-                            <span className="font-semibold text-slate-700">Poll Insights</span>
-                            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">Free Analytics</span>
-                        </div>
-                        {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
-                    </button>
-                    
-                    <AnimatePresence>
-                        {showInsights && (
-                            <motion.div 
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="border-t border-slate-100"
-                            >
-                                <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {/* Device Breakdown */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Smartphone size={14} className="text-blue-500" />
-                                            <span className="text-xs font-medium text-slate-600">Devices</span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
-                                                <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
-                                                <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
-                                            </div>
-                                            {deviceStats.tablet > 0 && (
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span>Tablet</span>
-                                                    <span className="font-semibold">{deviceStats.tablet}</span>
-                                                </div>
-                                            )}
-                                        </div>
+                <>
+                    {/* FREE USERS: Show locked preview */}
+                    {isFreeUser && (
+                        <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl border border-purple-200 p-5 print:hidden">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <Activity size={20} className="text-purple-600" />
                                     </div>
-                                    
-                                    {/* Peak Hour */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Clock size={14} className="text-purple-500" />
-                                            <span className="text-xs font-medium text-slate-600">Peak Time</span>
-                                        </div>
-                                        {peakHour ? (
-                                            <div>
-                                                <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
-                                                <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Not enough data</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Geographic */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Globe size={14} className="text-emerald-500" />
-                                            <span className="text-xs font-medium text-slate-600">Top Locations</span>
-                                        </div>
-                                        {geoStats.length > 0 ? (
-                                            <div className="space-y-1">
-                                                {geoStats.slice(0, 3).map(g => (
-                                                    <div key={g.country} className="flex items-center justify-between text-xs">
-                                                        <span className="flex items-center gap-1">
-                                                            {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
-                                                        </span>
-                                                        <span className="font-semibold">{g.percentage}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">No location data</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Momentum */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Zap size={14} className="text-amber-500" />
-                                            <span className="text-xs font-medium text-slate-600">24h Activity</span>
-                                        </div>
-                                        {momentum ? (
-                                            <div>
-                                                <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
-                                                <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                    {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Tracking activity...</p>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Traffic Sources */}
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <ExternalLink size={14} className="text-purple-500" />
-                                            <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
-                                        </div>
-                                        {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
-                                            <div className="space-y-1">
-                                                {referrerStats.slice(0, 3).map(r => (
-                                                    <div key={r.source} className="flex items-center justify-between text-xs">
-                                                        <span className="truncate max-w-[100px]" title={r.source}>
-                                                            {r.source === 'Direct' ? '🔗 Direct' : r.source}
-                                                        </span>
-                                                        <span className="font-semibold">{r.percentage}%</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-slate-400">Mostly direct traffic</p>
-                                        )}
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                            Poll Insights
+                                            <Lock size={14} className="text-amber-500" />
+                                        </h3>
+                                        <p className="text-sm text-slate-500">
+                                            <span className="font-semibold text-purple-600">{totalVotes} votes</span> with hidden insights
+                                        </p>
                                     </div>
                                 </div>
-                                
-                                {/* Response Timeline */}
-                                {timelineStats.length > 1 && (
-                                    <div className="px-4 pb-4">
-                                        <div className="bg-slate-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <TrendingUp size={14} className="text-indigo-500" />
-                                                <span className="text-xs font-medium text-slate-600">Response Timeline</span>
-                                            </div>
-                                            <div className="flex items-end gap-1 h-16">
-                                                {timelineStats.map((t, i) => {
-                                                    const maxCount = Math.max(...timelineStats.map(s => s.count));
-                                                    const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
-                                                    return (
-                                                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                                            <div 
-                                                                className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
-                                                                style={{ height: `${Math.max(height, 4)}%` }}
-                                                                title={`${t.day}: ${t.count} votes`}
-                                                            />
-                                                            <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
+                                <a
+                                    href="/pricing"
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center gap-2"
+                                >
+                                    <Crown size={16} /> Upgrade
+                                </a>
+                            </div>
+                            
+                            {/* Blurred preview cards */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Smartphone size={12} className="text-blue-500" />
+                                        <span className="text-xs font-medium text-slate-500">Device Breakdown</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {deviceStats.desktop > deviceStats.mobile ? 'Desktop 65%' : 'Mobile 70%'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Globe size={12} className="text-emerald-500" />
+                                        <span className="text-xs font-medium text-slate-500">Geographic</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {geoStats.length > 0 ? `${geoStats.length} countries` : '1 country'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Clock size={12} className="text-purple-500" />
+                                        <span className="text-xs font-medium text-slate-500">Hourly Heatmap</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        Peak: {peakHour ? formatHour(peakHour.hour) : '2 PM'}
+                                    </div>
+                                </div>
+                                <div className="relative p-3 bg-white/60 rounded-lg border border-purple-100 overflow-hidden">
+                                    <div className="absolute inset-0 backdrop-blur-[2px] z-10" />
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <TrendingUp size={12} className="text-indigo-500" />
+                                        <span className="text-xs font-medium text-slate-500">Response Timeline</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-slate-300 blur-[2px]">
+                                        {momentum ? `${momentum.last24h}/day` : 'View trends'}
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-xs text-center text-slate-500 mt-3">
+                                Plus: Cross-tabulation filters, Word cloud, Suspicious activity alerts, Export CSV/Excel/PDF
+                            </p>
+                        </div>
+                    )}
+                    
+                    {/* PAID USERS: Show full insights */}
+                    {isPaidUser && (
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden print:hidden">
+                            <button 
+                                onClick={() => setShowInsights(!showInsights)}
+                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Activity size={18} className="text-indigo-500" />
+                                    <span className="font-semibold text-slate-700">Poll Insights</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                        tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
+                                    }`}>
+                                        {tier === 'business' ? 'Business' : 'Pro'}
+                                    </span>
+                                </div>
+                                {showInsights ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                            </button>
+                            
+                            <AnimatePresence>
+                                {showInsights && (
+                                    <motion.div 
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t border-slate-100"
+                                    >
+                                        <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {/* Device Breakdown */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Smartphone size={14} className="text-blue-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Devices</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1"><Monitor size={12} /> Desktop</span>
+                                                        <span className="font-semibold">{deviceStats.desktop} ({Math.round((deviceStats.desktop / votes.length) * 100)}%)</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="flex items-center gap-1"><Smartphone size={12} /> Mobile</span>
+                                                        <span className="font-semibold">{deviceStats.mobile} ({Math.round((deviceStats.mobile / votes.length) * 100)}%)</span>
+                                                    </div>
+                                                    {deviceStats.tablet > 0 && (
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span>Tablet</span>
+                                                            <span className="font-semibold">{deviceStats.tablet}</span>
                                                         </div>
-                                                    );
-                                                })}
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Peak Hour */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Clock size={14} className="text-purple-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Peak Time</span>
+                                                </div>
+                                                {peakHour ? (
+                                                    <div>
+                                                        <p className="text-lg font-bold text-slate-800">{formatHour(peakHour.hour)}</p>
+                                                        <p className="text-xs text-slate-500">{peakHour.count} votes at peak</p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Not enough data</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Geographic */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Globe size={14} className="text-emerald-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Top Locations</span>
+                                                </div>
+                                                {geoStats.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {geoStats.slice(0, 3).map(g => (
+                                                            <div key={g.country} className="flex items-center justify-between text-xs">
+                                                                <span className="flex items-center gap-1">
+                                                                    {getCountryFlag(g.country)} {g.country.length > 12 ? g.country.slice(0, 12) + '...' : g.country}
+                                                                </span>
+                                                                <span className="font-semibold">{g.percentage}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">No location data</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Momentum */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Zap size={14} className="text-amber-500" />
+                                                    <span className="text-xs font-medium text-slate-600">24h Activity</span>
+                                                </div>
+                                                {momentum ? (
+                                                    <div>
+                                                        <p className="text-lg font-bold text-slate-800">{momentum.last24h} votes</p>
+                                                        <p className={`text-xs ${momentum.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                            {momentum.change >= 0 ? '↑' : '↓'} {Math.abs(momentum.change)}% vs prev 24h
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Tracking activity...</p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Traffic Sources */}
+                                            <div className="bg-slate-50 rounded-lg p-3">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <ExternalLink size={14} className="text-purple-500" />
+                                                    <span className="text-xs font-medium text-slate-600">Traffic Sources</span>
+                                                </div>
+                                                {referrerStats.length > 0 && referrerStats.some(r => r.source !== 'Direct') ? (
+                                                    <div className="space-y-1">
+                                                        {referrerStats.slice(0, 3).map(r => (
+                                                            <div key={r.source} className="flex items-center justify-between text-xs">
+                                                                <span className="truncate max-w-[100px]" title={r.source}>
+                                                                    {r.source === 'Direct' ? '🔗 Direct' : r.source}
+                                                                </span>
+                                                                <span className="font-semibold">{r.percentage}%</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400">Mostly direct traffic</p>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                        
+                                        {/* Response Timeline */}
+                                        {timelineStats.length > 1 && (
+                                            <div className="px-4 pb-4">
+                                                <div className="bg-slate-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <TrendingUp size={14} className="text-indigo-500" />
+                                                        <span className="text-xs font-medium text-slate-600">Response Timeline</span>
+                                                    </div>
+                                                    <div className="flex items-end gap-1 h-16">
+                                                        {timelineStats.map((t, i) => {
+                                                            const maxCount = Math.max(...timelineStats.map(s => s.count));
+                                                            const height = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
+                                                            return (
+                                                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                                                    <motion.div 
+                                                                        className="w-full bg-indigo-400 rounded-t transition-all hover:bg-indigo-500"
+                                                                        initial={{ height: 0 }}
+                                                                        animate={{ height: `${Math.max(height, 4)}%` }}
+                                                                        transition={{ delay: i * 0.05, duration: 0.4 }}
+                                                                        title={`${t.day}: ${t.count} votes`}
+                                                                    />
+                                                                    <span className="text-[9px] text-slate-400 truncate max-w-full">{t.day.split(' ')[1]}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
-                                {/* Hourly Distribution */}
-                                {hourlyStats.some(h => h.count > 0) && (
-                                    <div className="px-4 pb-4">
-                                        <div className="bg-slate-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Clock size={14} className="text-purple-500" />
-                                                <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
+                                        {/* Hourly Distribution */}
+                                        {hourlyStats.some(h => h.count > 0) && (
+                                            <div className="px-4 pb-4">
+                                                <div className="bg-slate-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <Clock size={14} className="text-purple-500" />
+                                                        <span className="text-xs font-medium text-slate-600">Voting by Hour</span>
+                                                    </div>
+                                                    <div className="flex items-end gap-px h-12">
+                                                        {hourlyStats.map((h, i) => {
+                                                            const maxCount = Math.max(...hourlyStats.map(s => s.count));
+                                                            const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
+                                                            return (
+                                                                <motion.div 
+                                                                    key={i} 
+                                                                    className="flex-1 bg-purple-300 rounded-t transition-colors hover:bg-purple-400 cursor-pointer"
+                                                                    initial={{ height: 0 }}
+                                                                    animate={{ height: `${Math.max(height, 2)}%` }}
+                                                                    transition={{ delay: i * 0.02, duration: 0.3 }}
+                                                                    style={{ opacity: height > 0 ? 1 : 0.3 }}
+                                                                    title={`${formatHour(h.hour)}: ${h.count} votes`}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="flex justify-between mt-1">
+                                                        <span className="text-[9px] text-slate-400">12 AM</span>
+                                                        <span className="text-[9px] text-slate-400">12 PM</span>
+                                                        <span className="text-[9px] text-slate-400">11 PM</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex items-end gap-px h-12">
-                                                {hourlyStats.map((h, i) => {
-                                                    const maxCount = Math.max(...hourlyStats.map(s => s.count));
-                                                    const height = maxCount > 0 ? (h.count / maxCount) * 100 : 0;
-                                                    return (
-                                                        <div 
-                                                            key={i} 
-                                                            className="flex-1 bg-purple-300 rounded-t transition-all hover:bg-purple-400 cursor-pointer"
-                                                            style={{ height: `${Math.max(height, 2)}%`, opacity: height > 0 ? 1 : 0.3 }}
-                                                            title={`${formatHour(h.hour)}: ${h.count} votes`}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                            <div className="flex justify-between mt-1">
-                                                <span className="text-[9px] text-slate-400">12 AM</span>
-                                                <span className="text-[9px] text-slate-400">12 PM</span>
-                                                <span className="text-[9px] text-slate-400">11 PM</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        )}
+                                    </motion.div>
                                 )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                            </AnimatePresence>
+                        </div>
+                    )}
+                </>
             )}
             
             <div className="flex flex-wrap justify-end gap-2 print:hidden">
@@ -930,16 +1116,114 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <Activity size={16} /> Velocity
                     </button>
                     
-                    <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <MapIcon size={16} /> Map
-                    </button>
+                    {/* Geography - Premium only */}
+                    {isPaidUser ? (
+                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <MapIcon size={16} /> Geography
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => setViewMode('map')}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
+                            title="Upgrade to Pro for Geography view"
+                        >
+                            <MapIcon size={16} /> Geography
+                            <Lock size={12} className="text-slate-400" />
+                        </button>
+                    )}
 
-                    <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-                        <LayoutGrid size={16} /> Grid
-                    </button>
+                    {/* Grid - Premium only */}
+                    {isPaidUser ? (
+                        <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            <LayoutGrid size={16} /> Grid
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-50 whitespace-nowrap"
+                            title="Upgrade to Pro for Grid view"
+                        >
+                            <LayoutGrid size={16} /> Grid
+                            <Lock size={12} className="text-slate-400" />
+                        </button>
+                    )}
                 </div>
+
+                {/* Download Chart as PNG */}
+                <button
+                    disabled={isExportingPng}
+                    onClick={async () => {
+                        setIsExportingPng(true);
+                        
+                        // Small delay to ensure any animations complete
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        const chartEl = document.getElementById('poll-results-chart');
+                        if (!chartEl) {
+                            alert('Chart not found. Please try again.');
+                            setIsExportingPng(false);
+                            return;
+                        }
+                        
+                        try {
+                            // Load html2canvas from CDN if not already loaded
+                            if (!(window as any).html2canvas) {
+                                await new Promise<void>((resolve, reject) => {
+                                    const script = document.createElement('script');
+                                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                                    script.onload = () => resolve();
+                                    script.onerror = () => reject(new Error('Failed to load library'));
+                                    document.head.appendChild(script);
+                                });
+                            }
+                            
+                            const html2canvas = (window as any).html2canvas;
+                            const canvas = await html2canvas(chartEl, {
+                                backgroundColor: '#ffffff',
+                                scale: 2,
+                                logging: false,
+                                useCORS: true,
+                                allowTaint: true
+                            });
+                            
+                            const link = document.createElement('a');
+                            link.download = `${poll.title.replace(/[^a-z0-9]/gi, '_')}_chart.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                        } catch (error) {
+                            console.error('Failed to export chart:', error);
+                            alert('Failed to export chart. Please try again.');
+                        } finally {
+                            setIsExportingPng(false);
+                        }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
+                        isExportingPng 
+                            ? 'bg-slate-100 text-slate-400 cursor-wait' 
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 hover:shadow-md'
+                    }`}
+                    title="Download chart as PNG image"
+                >
+                    {isExportingPng ? (
+                        <>
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            <Download size={16} />
+                            Save PNG
+                        </>
+                    )}
+                </button>
             </div>
 
+            {/* Chart Container - for PNG export */}
+            <div id="poll-results-chart" className="bg-white rounded-2xl p-4">
+            
             <AnimatePresence mode="wait">
                 {/* --- WINNER CARD --- */}
                 {/* Show TIE banner when there's a tie */}
@@ -1373,33 +1657,89 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
                     >
-                         <div className="relative w-64 h-64 shrink-0">
-                             <div 
-                                className="w-full h-full rounded-full border-4 border-slate-50 shadow-inner"
-                                style={{ background: `conic-gradient(${pieGradient})` }}
-                             />
-                             <div className="absolute inset-0 flex items-center justify-center">
+                         <motion.div 
+                            className="relative w-64 h-64 shrink-0"
+                            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
+                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                         >
+                             {/* SVG Pie Chart for better PNG export */}
+                             <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                                 {pieData.map((d, i) => {
+                                     const startAngle = d.startAngle * (Math.PI / 180);
+                                     const endAngle = (d.startAngle + d.angle) * (Math.PI / 180);
+                                     const largeArcFlag = d.angle > 180 ? 1 : 0;
+                                     const x1 = 50 + 48 * Math.cos(startAngle);
+                                     const y1 = 50 + 48 * Math.sin(startAngle);
+                                     const x2 = 50 + 48 * Math.cos(endAngle);
+                                     const y2 = 50 + 48 * Math.sin(endAngle);
+                                     
+                                     // Handle full circle case
+                                     if (d.angle >= 359.9) {
+                                         return (
+                                             <circle
+                                                 key={d.id}
+                                                 cx="50"
+                                                 cy="50"
+                                                 r="48"
+                                                 fill={d.color}
+                                                 stroke="#fff"
+                                                 strokeWidth="1"
+                                             />
+                                         );
+                                     }
+                                     
+                                     const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                                     return (
+                                         <path
+                                             key={d.id}
+                                             d={pathData}
+                                             fill={d.color}
+                                             stroke="#fff"
+                                             strokeWidth="1"
+                                         />
+                                     );
+                                 })}
+                             </svg>
+                             <motion.div 
+                                className="absolute inset-0 flex items-center justify-center"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                             >
                                  <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
                                      {isDot || isBudget ? <Coins size={24} /> : totalVotes}
                                  </div>
-                             </div>
-                         </div>
+                             </motion.div>
+                         </motion.div>
                          
                          <div className="flex-1 w-full max-w-sm">
                              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
                                  {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
                              </h3>
                              <div className="space-y-3">
-                                 {pieData.map(d => (
-                                     <div key={d.id} className="flex items-center justify-between group">
+                                 {pieData.map((d, i) => (
+                                     <motion.div 
+                                        key={d.id} 
+                                        className="flex items-center justify-between group"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.3 + (i * 0.1), duration: 0.3 }}
+                                     >
                                          <div className="flex items-center gap-3">
-                                             <div className="w-4 h-4 rounded-full" style={{ background: d.color }}></div>
+                                             <motion.div 
+                                                className="w-4 h-4 rounded-full" 
+                                                style={{ backgroundColor: d.color }}
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
+                                             />
                                              <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
                                          </div>
                                          <div className="text-sm font-bold text-slate-500">
                                              {d.percentage.toFixed(1)}%
                                          </div>
-                                     </div>
+                                     </motion.div>
                                  ))}
                              </div>
                          </div>
@@ -1433,15 +1773,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                     <div key={i} className="flex items-center gap-4">
                                         <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
                                         <div className="flex-1 h-0.5 bg-indigo-200"></div>
-                                        <div className="bg-indigo-50 px-3 py-2 rounded-lg">
-                                            <span className="text-sm font-medium text-indigo-700">
+                                        <div className="bg-indigo-50 px-4 py-2 rounded-lg text-center min-w-[140px]">
+                                            <span className="text-sm font-medium text-indigo-700 block">
                                                 {new Date(getVoteTime(vote)).toLocaleString([], { 
                                                     month: 'short', day: 'numeric', 
                                                     hour: '2-digit', minute: '2-digit' 
                                                 })}
                                             </span>
                                             {vote.analytics?.country && (
-                                                <span className="ml-2 text-xs text-slate-500">
+                                                <span className="text-xs text-slate-500">
                                                     {getCountryFlag(getCountryName(vote.analytics.country))}
                                                 </span>
                                             )}
@@ -1468,9 +1808,12 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         const height = Math.max((d.count / maxVal) * 100, d.count > 0 ? 10 : 0);
                                         return (
                                             <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
-                                                <div 
-                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-all cursor-pointer shadow-sm"
-                                                    style={{ height: `${height}%`, minHeight: d.count > 0 ? '8px' : '0' }}
+                                                <motion.div 
+                                                    className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 rounded-t-md transition-colors cursor-pointer shadow-sm"
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: `${height}%` }}
+                                                    transition={{ duration: 0.5, delay: i * 0.02, ease: "easeOut" }}
+                                                    style={{ minHeight: d.count > 0 ? '8px' : '0' }}
                                                 >
                                                     {d.count > 0 && (
                                                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none shadow-lg">
@@ -1478,7 +1821,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             {d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                         </div>
                                                     )}
-                                                </div>
+                                                </motion.div>
                                             </div>
                                         )
                                     })}
@@ -1501,6 +1844,36 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8"
                     >
+                        {/* Free user upgrade prompt */}
+                        {isFreeUser ? (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <MapIcon size={32} className="text-indigo-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Geographic Insights</h3>
+                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                                    See where your voters are located with detailed country breakdowns, flags, and percentage distribution.
+                                </p>
+                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 max-w-sm mx-auto border border-indigo-100">
+                                    <div className="flex items-center justify-center gap-3 text-slate-600 mb-4">
+                                        <span className="text-2xl">🇺🇸</span>
+                                        <span className="text-2xl">🇬🇧</span>
+                                        <span className="text-2xl">🇨🇦</span>
+                                        <span className="text-2xl">🇦🇺</span>
+                                        <span className="text-slate-400">...</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Unlock voter location data</p>
+                                    <a 
+                                        href="/#pricing" 
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg shadow-indigo-200"
+                                    >
+                                        <Crown size={18} />
+                                        Upgrade to Pro
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                        <>
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <MapIcon size={24} className="text-indigo-500"/> Voter Geography
@@ -1546,18 +1919,42 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 <>
                                     {/* Summary Stats */}
                                     <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center">
-                                            <div className="text-3xl font-black text-indigo-600">{countryCount}</div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 text-center"
+                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.4 }}
+                                        >
+                                            <motion.div 
+                                                className="text-3xl font-black text-indigo-600"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.3 }}
+                                            >
+                                                {countryCount}
+                                            </motion.div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
                                                 {countryCount === 1 ? 'Country' : 'Countries'} Represented
                                             </div>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
-                                            <div className="text-3xl font-black text-emerald-600">{votesWithLocation}</div>
+                                        </motion.div>
+                                        <motion.div 
+                                            className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center"
+                                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.4, delay: 0.1 }}
+                                        >
+                                            <motion.div 
+                                                className="text-3xl font-black text-emerald-600"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.4 }}
+                                            >
+                                                {votesWithLocation}
+                                            </motion.div>
                                             <div className="text-xs text-slate-500 uppercase tracking-wide mt-1">
                                                 Vote{votesWithLocation !== 1 ? 's' : ''} Tracked
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     </div>
                                     
                                     {/* Country list with flags */}
@@ -1566,8 +1963,21 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                             const percentage = Math.round((count / totalWithLocation) * 100);
                                             const flag = getCountryFlag(country);
                                             return (
-                                                <div key={country} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}>
-                                                    <span className="text-3xl">{flag}</span>
+                                                <motion.div 
+                                                    key={country} 
+                                                    className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${idx === 0 ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}
+                                                    initial={{ opacity: 0, x: -30 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.1, duration: 0.4 }}
+                                                >
+                                                    <motion.span 
+                                                        className="text-3xl"
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        transition={{ delay: idx * 0.1 + 0.2, type: "spring", stiffness: 200 }}
+                                                    >
+                                                        {flag}
+                                                    </motion.span>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className={`font-semibold ${idx === 0 ? 'text-indigo-700' : 'text-slate-700'}`}>
@@ -1579,13 +1989,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             </span>
                                                         </div>
                                                         <div className="bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                                                            <div 
-                                                                className={`h-full rounded-full transition-all ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
-                                                                style={{ width: `${percentage}%` }}
+                                                            <motion.div 
+                                                                className={`h-full rounded-full ${idx === 0 ? 'bg-indigo-500' : 'bg-slate-400'}`}
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${percentage}%` }}
+                                                                transition={{ delay: idx * 0.1 + 0.3, duration: 0.6, ease: "easeOut" }}
                                                             />
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             );
                                         })}
                                     </div>
@@ -1600,6 +2012,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 </>
                             );
                         })()}
+                        </>
+                        )}
                     </motion.div>
                 )}
 
@@ -1612,6 +2026,61 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-6"
                     >
+                        {/* Free user upgrade prompt */}
+                        {isFreeUser ? (
+                            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 text-center">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <LayoutGrid size={32} className="text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Detailed Vote Grid</h3>
+                                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                                    See every individual vote in a detailed table view with timestamps, locations, devices, and selected options.
+                                </p>
+                                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto border border-emerald-100">
+                                    {/* Preview table */}
+                                    <div className="overflow-hidden rounded-lg border border-slate-200 mb-4">
+                                        <table className="w-full text-xs">
+                                            <thead className="bg-slate-50">
+                                                <tr>
+                                                    <th className="p-2 text-left text-slate-500">#</th>
+                                                    <th className="p-2 text-center text-slate-500">🌍</th>
+                                                    <th className="p-2 text-center text-slate-500">📱</th>
+                                                    <th className="p-2 text-slate-500">Choice</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-slate-400">
+                                                <tr className="border-t border-slate-100">
+                                                    <td className="p-2">1</td>
+                                                    <td className="p-2 text-center">🇺🇸</td>
+                                                    <td className="p-2 text-center">💻</td>
+                                                    <td className="p-2">✓</td>
+                                                </tr>
+                                                <tr className="border-t border-slate-100 opacity-50">
+                                                    <td className="p-2">2</td>
+                                                    <td className="p-2 text-center">🇬🇧</td>
+                                                    <td className="p-2 text-center">📱</td>
+                                                    <td className="p-2">✓</td>
+                                                </tr>
+                                                <tr className="border-t border-slate-100 opacity-30">
+                                                    <td className="p-2">...</td>
+                                                    <td className="p-2 text-center">...</td>
+                                                    <td className="p-2 text-center">...</td>
+                                                    <td className="p-2">...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <a 
+                                        href="/#pricing" 
+                                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-200"
+                                    >
+                                        <Crown size={18} />
+                                        Upgrade to Pro
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                        <>
                         {/* Main Table */}
                         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
                             <div className="overflow-x-auto">
@@ -1631,13 +2100,19 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {votes.map((vote: any, i: number) => {
+                                        {votes.slice(0, 50).map((vote: any, i: number) => {
                                             const voteChoices = vote.choices || vote.selectedOptionIds || vote.rankedOptionIds || [];
                                             const countryCode = vote.analytics?.country;
                                             const device = vote.analytics?.device;
                                             
                                             return (
-                                                <tr key={i} className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                                                <motion.tr 
+                                                    key={i} 
+                                                    className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: i * 0.03, duration: 0.3 }}
+                                                >
                                                     <td className="p-3 font-medium text-slate-600 sticky left-0 bg-inherit border-r border-slate-100">
                                                         <span className="text-slate-400 text-xs">#{i + 1}</span>
                                                         <div className="text-xs text-slate-400">{new Date(getVoteTime(vote)).toLocaleDateString()}</div>
@@ -1684,13 +2159,13 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                             }
                                                         } else if (isMeeting) {
                                                             if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-xs">✓</span>;
                                                             } else if (vote.choicesMaybe?.includes(opt.id)) {
-                                                                cellContent = <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded text-xs">?</span>;
                                                             }
                                                         } else {
                                                             if (voteChoices.includes(opt.id)) {
-                                                                cellContent = <span className="font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
+                                                                cellContent = <span className="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded text-xs" style={{ backgroundColor: bgColor, color: textColor }}>✓</span>;
                                                             }
                                                         }
                                                         
@@ -1703,9 +2178,16 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                                     <td className="p-3 text-slate-500 border-l border-slate-100 text-xs max-w-[150px] truncate" title={vote.comment || ''}>
                                                         {vote.comment ? `"${vote.comment.substring(0, 30)}${vote.comment.length > 30 ? '...' : ''}"` : ''}
                                                     </td>
-                                                </tr>
+                                                </motion.tr>
                                             );
                                         })}
+                                        {votes.length > 50 && (
+                                            <tr>
+                                                <td colSpan={poll.options.length + 4} className="p-4 text-center text-slate-500 bg-slate-50">
+                                                    Showing first 50 of {votes.length} votes. Export CSV for full data.
+                                                </td>
+                                            </tr>
+                                        )}
                                         {votes.length === 0 && (
                                             <tr>
                                                 <td colSpan={poll.options.length + 4} className="p-8 text-center text-slate-400 italic">
@@ -1717,13 +2199,15 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 </table>
                             </div>
                         </div>
+                        </>
+                        )}
                     </motion.div>
                 )}
                 
                 {/* ============================================ */}
-                {/* POLL INSIGHTS SECTION - Shows for all views */}
+                {/* POLL INSIGHTS SECTION - PAID ONLY */}
                 {/* ============================================ */}
-                {votes.length > 0 && (
+                {votes.length > 0 && isPaidUser && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1732,6 +2216,11 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
                             <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <Activity size={18} className="text-indigo-500" /> Poll Insights
+                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                    tier === 'business' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                    {tier === 'business' ? 'Business' : 'Pro'}
+                                </span>
                             </h4>
                             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     
@@ -2291,8 +2780,8 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                     </motion.div>
                 )}
 
-                {/* --- ANALYTICS DASHBOARD (Admin Only) --- */}
-                {isAdmin && adminKey && (
+                {/* --- ANALYTICS DASHBOARD (Paid Users Only) --- */}
+                {isAdmin && adminKey && isPaidUser && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -2301,17 +2790,19 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         <AnalyticsDashboard 
                             pollId={poll.id}
                             adminKey={adminKey}
-                            currentTier={(() => {
-                                const tier = localStorage.getItem('vg_subscription_tier');
-                                if (tier === 'business') return 'business';
-                                if (tier === 'pro') return 'pro';
-                                return 'free';
-                            })()}
+                            currentTier={tier as 'free' | 'pro' | 'business'}
                         />
                     </motion.div>
                 )}
 
             </AnimatePresence>
+            
+            {/* Branding footer for PNG exports */}
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm print:mt-4 print:pt-2">
+                <img src="/logo.svg" alt="VoteGenerator" className="h-5 w-5" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                <span className="font-medium">VoteGenerator.com</span>
+            </div>
+            </div>
         </div>
         </>
     );

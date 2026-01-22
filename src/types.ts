@@ -95,27 +95,39 @@ export interface SurveySection {
 
 // Survey-specific settings
 export interface SurveySettings {
-    // Navigation
-    allowBack?: boolean;          // Allow going back to previous sections
-    showProgress?: boolean;       // Show progress bar
+    // === INTRO SCREEN ===
+    welcomeMessage?: string;        // Custom welcome text
+    estimatedTime?: number;         // Estimated minutes to complete
+    showAnonymousNotice?: boolean;  // Show "responses are anonymous" notice
+    startButtonText?: string;       // Custom start button text (default: "Start Survey")
+    
+    // === BRANDING (Pro/Business) ===
+    logoUrl?: string;               // Custom logo URL
+    themeColor?: string;            // Primary theme color (hex)
+    backgroundColor?: string;       // Background color
+    
+    // === NAVIGATION ===
+    allowBack?: boolean;            // Allow going back to previous sections
+    showProgress?: boolean;         // Show progress bar
     progressStyle?: 'bar' | 'steps' | 'percentage';
     
-    // Submission
-    showSummary?: boolean;        // Show summary before submit
-    confirmSubmit?: boolean;      // Require confirmation
+    // === SUBMISSION ===
+    showSummary?: boolean;          // Show summary before submit
+    confirmSubmit?: boolean;        // Require confirmation
     
-    // Display
-    oneQuestionPerPage?: boolean; // Show one question at a time
-    randomizeSections?: boolean;  // Randomize section order
+    // === DISPLAY ===
+    oneQuestionPerPage?: boolean;   // Show one question at a time
+    randomizeSections?: boolean;    // Randomize section order
+    shuffleQuestions?: boolean;     // Shuffle question order within sections
     
-    // Completion
-    redirectUrl?: string;         // Redirect after completion
-    completionMessage?: string;   // Custom thank you message
+    // === COMPLETION ===
+    redirectUrl?: string;           // Redirect after completion
+    completionMessage?: string;     // Custom thank you message
     
-    // =========================================
-    // ANONYMOUS MODE (Phase 2)
-    // =========================================
-    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
+    // === PRIVACY & RESULTS ===
+    anonymousMode?: boolean;        // Hide individual responses from admin view
+    hideResults?: boolean;          // Hide results from respondents (DEFAULT: true for surveys)
+    resultsVisibility?: 'admin_only' | 'after_vote' | 'always' | 'never';
 }
 
 // Individual response to a survey
@@ -124,9 +136,9 @@ export interface SurveyResponse {
     pollId: string;
     respondentId?: string;        // Anonymous ID for tracking
     voterName?: string;
-    submittedAt?: string;
-    completedAt?: string;         // When the survey was completed
+    submittedAt: string;
     startedAt?: string;
+    completedAt?: string;         // When survey was completed
     completionTime?: number;      // Seconds to complete
     
     // Answers keyed by question ID
@@ -183,10 +195,18 @@ export interface PollSettings {
     dotBudget?: number;
     // Budget voting
     budgetLimit?: number;
-    // =========================================
-    // ANONYMOUS MODE (Phase 2)
-    // =========================================
-    anonymousMode?: boolean;      // Hide individual responses, show only aggregates
+    // Public results sharing
+    publicResults?: boolean;
+    showShareButton?: boolean;
+    allowedViews?: string[];
+    showSocialShare?: boolean;
+    // Survey/Anonymous mode
+    anonymousMode?: boolean;
+    // Thank you page customization (after completion when results hidden)
+    thankYouMessage?: string;
+    thankYouTitle?: string;
+    // Business feature: Custom redirect URL after completion
+    redirectUrl?: string;
 }
 
 export interface EmailEntry {
@@ -216,6 +236,7 @@ export interface Poll {
     displayName?: string;  // Internal name for admin dashboard (shorter than title)
     description?: string;
     pollType: string;
+    type?: string;         // Poll type identifier: 'multiple' | 'ranked' | 'survey' | etc.
     options: PollOption[];
     settings: PollSettings;
     createdAt: string;
@@ -447,4 +468,31 @@ export interface StoredVote {
     ratingVotes?: Record<string, number>;
     surveyAnswers?: Record<string, SurveyAnswer>;
     isSurvey?: boolean;
+}
+
+// ============================================================================
+// COMPONENT PROPS INTERFACES
+// ============================================================================
+
+// SurveyBuilder component props
+export interface SurveyBuilderProps {
+    initialSections?: SurveySection[];
+    initialSettings?: SurveySettings;
+    onChange?: (sections: SurveySection[], settings: SurveySettings) => void;
+    tier?: string;
+}
+
+// SurveyVote component props
+export interface SurveyVoteProps {
+    poll: Poll;
+    onSubmit: (response: SurveyResponse) => Promise<void>;
+    voterName?: string;
+}
+
+// SurveyResults component props
+export interface SurveyResultsProps {
+    poll: Poll;
+    responses: SurveyResponse[];
+    isAdmin?: boolean;
+    onUpgrade?: () => void;
 }

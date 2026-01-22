@@ -8,7 +8,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft, ChevronRight, Check, Star, AlertCircle,
-    Calendar, Clock, Upload, Loader2, Send
+    Calendar, Clock, Upload, Loader2, Send, Shield, Play,
+    FileText, Users
 } from 'lucide-react';
 import {
     Poll, SurveySection, SurveyQuestion, SurveyAnswer,
@@ -138,26 +139,30 @@ const RatingQuestion: React.FC<QuestionProps> = ({ question, answer, onChange })
     const maxStars = question.maxValue || 5;
     
     return (
-        <div className="flex items-center justify-center gap-2">
-            {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
-                <button
-                    key={star}
-                    type="button"
-                    onClick={() => onChange({
-                        questionId: question.id,
-                        questionType: question.type,
-                        number: star,
-                    })}
-                    className="p-1 transition-transform hover:scale-110"
-                >
-                    <Star
-                        size={40}
-                        className={star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}
-                    />
-                </button>
-            ))}
+        <div className="flex flex-col items-center gap-3">
+            {/* Stars row - responsive sizing */}
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+                {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        onClick={() => onChange({
+                            questionId: question.id,
+                            questionType: question.type,
+                            number: star,
+                        })}
+                        className="p-0.5 sm:p-1 transition-transform hover:scale-110"
+                    >
+                        <Star
+                            size={32}
+                            className={`sm:w-10 sm:h-10 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                    </button>
+                ))}
+            </div>
+            {/* Rating display - below stars on all screens */}
             {rating > 0 && (
-                <span className="ml-4 text-2xl font-bold text-amber-600">{rating}/{maxStars}</span>
+                <span className="text-xl sm:text-2xl font-bold text-amber-600">{rating}/{maxStars}</span>
             )}
         </div>
     );
@@ -168,6 +173,7 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
     const value = answer?.number;
     const min = question.minValue || 1;
     const max = question.maxValue || 10;
+    const numButtons = max - min + 1;
     
     return (
         <div>
@@ -175,8 +181,9 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
                 <span>{question.minLabel || min}</span>
                 <span>{question.maxLabel || max}</span>
             </div>
-            <div className="flex gap-2">
-                {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((num) => {
+            {/* Grid layout for mobile - 5 columns for 10 buttons (2 rows) */}
+            <div className={`grid ${numButtons > 5 ? 'grid-cols-5 sm:grid-cols-10' : `grid-cols-${numButtons}`} gap-2`}>
+                {Array.from({ length: numButtons }, (_, i) => min + i).map((num) => {
                     const isSelected = value === num;
                     return (
                         <button
@@ -187,7 +194,7 @@ const ScaleQuestion: React.FC<QuestionProps> = ({ question, answer, onChange }) 
                                 questionType: question.type,
                                 number: num,
                             })}
-                            className={`flex-1 py-3 rounded-xl border-2 font-semibold transition ${
+                            className={`py-3 px-1 rounded-xl border-2 font-semibold text-sm transition ${
                                 isSelected
                                     ? 'border-indigo-500 bg-indigo-500 text-white'
                                     : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -371,12 +378,17 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
     const sections = poll.sections || [];
     const settings = poll.surveySettings || {};
     
+    // Welcome screen should ALWAYS show for surveys - it displays the title at minimum
+    // Only skip if explicitly disabled via a setting (which doesn't exist yet)
+    const showWelcomeDefault = true;
+    
+    const [showWelcome, setShowWelcome] = useState(showWelcomeDefault);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, SurveyAnswer>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
-    const [startTime] = useState(new Date().toISOString());
+    const [startTime, setStartTime] = useState<string | null>(null); // Track when survey actually starts
     
     const currentSection = sections[currentSectionIndex];
     const isFirstSection = currentSectionIndex === 0;
@@ -521,8 +533,8 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                 respondentId: localStorage.getItem('vg_respondent_id') || Math.random().toString(36).substring(2, 15),
                 voterName,
                 submittedAt: new Date().toISOString(),
-                startedAt: startTime,
-                completionTime: Math.round((Date.now() - new Date(startTime).getTime()) / 1000),
+                startedAt: startTime || new Date().toISOString(),
+                completionTime: startTime ? Math.round((Date.now() - new Date(startTime).getTime()) / 1000) : 0,
                 answers,
                 isComplete: true,
             };
@@ -542,6 +554,119 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
             setIsSubmitting(false);
         }
     };
+    
+    // Handler to start survey from welcome screen
+    const handleStartSurvey = () => {
+        setStartTime(new Date().toISOString()); // Start timing when they click start
+        setShowWelcome(false);
+    };
+    
+    // Render Welcome Screen
+    if (showWelcome) {
+        const themeColor = settings.themeColor || '#6366f1';
+        
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center p-4">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-lg w-full"
+                >
+                    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+                        {/* Logo - only show if URL exists, is not empty, and is a valid URL */}
+                        {settings.logoUrl && settings.logoUrl.trim() && settings.logoUrl.startsWith('http') && (
+                            <div 
+                                id="survey-logo-container"
+                                className="p-6 flex justify-center bg-slate-50 border-b border-slate-100"
+                            >
+                                <img 
+                                    src={settings.logoUrl} 
+                                    alt="Survey logo" 
+                                    className="max-h-16 max-w-[200px] object-contain"
+                                    onError={(e) => {
+                                        // Hide the entire logo container if image fails to load
+                                        const container = document.getElementById('survey-logo-container');
+                                        if (container) container.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
+                        
+                        {/* Header */}
+                        <div 
+                            className="p-8 text-center"
+                            style={{ 
+                                background: `linear-gradient(135deg, ${themeColor}, ${themeColor}dd)`,
+                            }}
+                        >
+                            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                {poll.title || 'Survey'}
+                            </h1>
+                            {poll.description && (
+                                <p className="text-white/80">{poll.description}</p>
+                            )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-8 space-y-6">
+                            {/* Welcome Message */}
+                            {settings.welcomeMessage && (
+                                <div className="text-center">
+                                    <p className="text-slate-600 text-lg leading-relaxed">
+                                        {settings.welcomeMessage}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* Info Cards */}
+                            <div className="flex flex-wrap gap-3 justify-center">
+                                {settings.estimatedTime && (
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                                        <Clock size={16} className="text-slate-500" />
+                                        <span className="text-sm text-slate-600">
+                                            ~{settings.estimatedTime} min
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                                    <FileText size={16} className="text-slate-500" />
+                                    <span className="text-sm text-slate-600">
+                                        {sections.reduce((sum, s) => sum + (s.questions?.length || 0), 0)} questions
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Privacy Notice */}
+                            {settings.showAnonymousNotice !== false && (
+                                <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                    <Shield size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-emerald-800">
+                                            Your responses are anonymous
+                                        </p>
+                                        <p className="text-xs text-emerald-600 mt-1">
+                                            We don't collect email addresses or track individual identities.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Start Button */}
+                            <button
+                                onClick={handleStartSurvey}
+                                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-3"
+                                style={{ backgroundColor: themeColor }}
+                            >
+                                <Play size={20} />
+                                {settings.startButtonText || 'Start Survey'}
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
     
     // Render Summary
     if (showSummary) {

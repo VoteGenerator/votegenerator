@@ -19,12 +19,14 @@ import {
 
 // Check if user has a paid subscription
 const getSubscriptionStatus = () => {
-    if (typeof window === 'undefined') return { isPaid: false, tier: null };
+    if (typeof window === 'undefined') return { isPaid: false, tier: null, hasPolls: false };
     
     const tier = localStorage.getItem('vg_subscription_tier');
     const isPaid = tier === 'pro' || tier === 'business';
+    const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+    const hasPolls = userPolls.length > 0;
     
-    return { isPaid, tier };
+    return { isPaid, tier, hasPolls };
 };
 
 // Type definitions for nav items
@@ -65,13 +67,13 @@ interface NavHeaderProps {
 
 const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [subscriptionStatus, setSubscriptionStatus] = useState({ isPaid: false, tier: null as string | null });
+    const [subscriptionStatus, setSubscriptionStatus] = useState({ isPaid: false, tier: null as string | null, hasPolls: false });
 
     useEffect(() => {
         setSubscriptionStatus(getSubscriptionStatus());
     }, []);
 
-    const { isPaid, tier } = subscriptionStatus;
+    const { isPaid, tier, hasPolls } = subscriptionStatus;
 
     const TierBadge = () => {
         if (!isPaid) return null;
@@ -91,7 +93,11 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
         );
     };
 
-    const navItems = isPaid ? PAID_NAV_ITEMS : FREE_NAV_ITEMS;
+    // Nav items - Free users with polls get Dashboard link too
+    const navItems = isPaid ? PAID_NAV_ITEMS : hasPolls ? [
+        { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+        ...FREE_NAV_ITEMS
+    ] : FREE_NAV_ITEMS;
 
     return (
         <header className={`
@@ -134,12 +140,24 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                         
                         {/* Primary CTA Button */}
                         {!isPaid ? (
-                            <a
-                                href="/#create"
-                                className="ml-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-                            >
-                                Get Started — It's Free
-                            </a>
+                            hasPolls ? (
+                                // User has polls but is free - show Upgrade
+                                <a
+                                    href="/pricing"
+                                    className="ml-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                                >
+                                    <Crown size={16} />
+                                    Upgrade
+                                </a>
+                            ) : (
+                                // New user - show Get Started
+                                <a
+                                    href="/#create"
+                                    className="ml-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-xl hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                                >
+                                    Get Started — It's Free
+                                </a>
+                            )
                         ) : (
                             <a
                                 href="/settings"
@@ -190,12 +208,24 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                 })}
                                 
                                 {!isPaid ? (
-                                    <a
-                                        href="/#create"
-                                        className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2"
-                                    >
-                                        Get Started — It's Free
-                                    </a>
+                                    hasPolls ? (
+                                        // User has polls but is free - show Upgrade
+                                        <a
+                                            href="/pricing"
+                                            className="mt-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2"
+                                        >
+                                            <Crown size={18} />
+                                            Upgrade
+                                        </a>
+                                    ) : (
+                                        // New user - show Get Started
+                                        <a
+                                            href="/#create"
+                                            className="mt-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2"
+                                        >
+                                            Get Started — It's Free
+                                        </a>
+                                    )
                                 ) : (
                                     <a
                                         href="/settings"

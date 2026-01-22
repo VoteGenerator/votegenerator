@@ -1,46 +1,44 @@
+// ============================================================================
+// vg-update-settings.ts - Update poll settings
+// Location: netlify/functions/vg-update-settings.ts
+// ============================================================================
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-interface EmailEntry {
-    email: string;
-    verified: boolean;
-    addedAt?: string;
-    verifiedAt?: string;
-    lastSentAt?: string;
+interface PollSettings {
+    hideResults?: boolean;
+    allowMultiple?: boolean;
+    requireNames?: boolean;
+    security?: string;
+    allowComments?: boolean;
+    publicComments?: boolean;
+    deadline?: string;
+    unlisted?: boolean;
+    maxVotes?: number;
+    timezone?: string;
+    blockVpn?: boolean;
+    dotBudget?: number;
+    budgetLimit?: number;
+    anonymousMode?: boolean;
+    publicResults?: boolean;
+    allowedViews?: string[];
+    showShareButton?: boolean;
+    shareKey?: string;
 }
 
-interface UpdateSettingsPayload {
-    pollId: string;
+interface Poll {
+    id: string;
     adminKey: string;
-    notificationSettings?: {
-        enabled: boolean;
-        emails: EmailEntry[];
-        skipFirstVotes: number;
-        notifyOn: {
-            milestones: boolean;
-            dailyDigest: boolean;
-            pollClosed: boolean;
-            limitReached: boolean;
-            newComment: boolean;
-        };
-    };
-    logoUrl?: string | null;
-    status?: 'draft' | 'live' | 'paused' | 'closed';
-    settings?: {
-        allowMultiple?: boolean;
-        hideResults?: boolean;
-        requireNames?: boolean;
-        unlisted?: boolean;
-        deadline?: string | null;
-    };
+    settings: PollSettings;
+    [key: string]: any;
 }
 
-export const handler: Handler = async (event) => {
+const handler: Handler = async (event) => {
     const headers = {
+        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Content-Type': 'application/json',
     };
 
     if (event.httpMethod === 'OPTIONS') {
@@ -48,108 +46,98 @@ export const handler: Handler = async (event) => {
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
     }
 
     try {
-        const payload: UpdateSettingsPayload = JSON.parse(event.body || '{}');
-        const { pollId, adminKey, notificationSettings, logoUrl, status, settings } = payload;
+        const body = JSON.parse(event.body || '{}');
+        const { pollId, adminKey, settings } = body;
 
-        // Validate
         if (!pollId || !adminKey) {
-            return { 
-                statusCode: 400, 
-                headers, 
-                body: JSON.stringify({ error: 'Missing pollId or adminKey' }) 
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Poll ID and admin key are required' })
+            };
+        }
+
+        if (!settings || typeof settings !== 'object') {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Settings object is required' })
             };
         }
 
         // Get poll from store
-        const store = getStore({
-            name: 'polls',
+        const pollStore = getStore({ 
+            name: 'polls', 
             siteID: process.env.VG_SITE_ID || '',
             token: process.env.NETLIFY_AUTH_TOKEN || ''
         });
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
 
-        const poll = await store.get(pollId, { type: 'json' }) as any;
-        
-        if (!poll) {
-            return { 
-                statusCode: 404, 
-                headers, 
-                body: JSON.stringify({ error: 'Poll not found' }) 
+        if (!pollData) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ error: 'Poll not found' })
             };
         }
 
-        if (poll.adminKey !== adminKey) {
-            return { 
-                statusCode: 403, 
-                headers, 
-                body: JSON.stringify({ error: 'Invalid admin key' }) 
+        // Verify admin key
+        if (pollData.adminKey !== adminKey) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Invalid admin key' })
             };
         }
 
-        // Track what was updated
-        const updatedFields: string[] = [];
+        // Merge new settings with existing settings
+        const updatedSettings: PollSettings = {
+            ...pollData.settings,
+            ...settings
+        };
 
-        // Update notification settings
-        if (notificationSettings !== undefined) {
-            poll.notificationSettings = notificationSettings;
-            updatedFields.push('notificationSettings');
-        }
+        console.log('Updating settings for poll:', pollId);
+        console.log('Previous settings:', pollData.settings);
+        console.log('New settings to merge:', settings);
+        console.log('Updated settings:', updatedSettings);
 
-        // Update logo
-        if (logoUrl !== undefined) {
-            poll.logoUrl = logoUrl;
-            updatedFields.push('logoUrl');
-        }
+        // Update poll with new settings
+        const updatedPoll: Poll = {
+            ...pollData,
+            settings: updatedSettings,
+            updatedAt: new Date().toISOString()
+        };
 
-        // Update status
-        if (status !== undefined) {
-            const previousStatus = poll.status;
-            poll.status = status;
-            poll.statusUpdatedAt = new Date().toISOString();
-            
-            if (status === 'live' && previousStatus === 'draft') {
-                poll.wentLiveAt = new Date().toISOString();
-            }
-            if (status === 'closed') {
-                poll.closedAt = new Date().toISOString();
-            }
-            updatedFields.push('status');
-        }
-
-        // Update poll settings
-        if (settings !== undefined) {
-            poll.settings = {
-                ...poll.settings,
-                ...settings
-            };
-            updatedFields.push('settings');
-        }
-
-        // Save updated poll
-        poll.updatedAt = new Date().toISOString();
-        await store.setJSON(pollId, poll);
-
-        console.log(`Poll ${pollId} updated: ${updatedFields.join(', ')}`);
+        // Save to store
+        await pollStore.setJSON(pollId, updatedPoll);
+        console.log('Settings saved successfully');
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-                success: true,
-                pollId,
-                updatedFields
+            body: JSON.stringify({ 
+                success: true, 
+                settings: updatedSettings,
+                message: 'Settings updated successfully'
             })
         };
 
     } catch (error) {
-        console.error('Update settings error:', error);
+        console.error('Error updating settings:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Internal server error' })
+            body: JSON.stringify({ error: 'Failed to update settings' })
         };
     }
 };
+
+export { handler };

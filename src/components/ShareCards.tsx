@@ -1,705 +1,738 @@
 // ============================================================================
-// ShareCards - Beautiful invitation & share card generator
+// ShareCards.tsx - Beautiful Social Media Share Cards
+// Theme-aware designs with elegant QR code placement
 // Location: src/components/ShareCards.tsx
-// Features: Multiple styles, QR codes, image cards, email templates, PDFs
 // ============================================================================
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Download, Mail, Image as ImageIcon, FileText, Share2, Copy, Check,
-    Sparkles, Heart, Briefcase, PartyPopper, Baby, MessageCircle,
-    QrCode, Instagram, X, ChevronRight, Palette, Eye
+import { 
+    X, Download, Check, Sparkles, 
+    Image as ImageIcon
 } from 'lucide-react';
-
-// ============================================================================
-// TEMPLATE CATEGORIES & STYLES
-// ============================================================================
-
-type TemplateCategory = 'wedding' | 'corporate' | 'party' | 'babyshower' | 'casual';
-
-interface TemplateStyle {
-    id: TemplateCategory;
-    name: string;
-    icon: typeof Heart;
-    description: string;
-    bestFor: string[];
-    colors: {
-        primary: string;
-        secondary: string;
-        accent: string;
-        background: string;
-        text: string;
-        gradient: string;
-    };
-    fonts: {
-        heading: string;
-        body: string;
-    };
-    decorations: string[];
-}
-
-const TEMPLATE_STYLES: TemplateStyle[] = [
-    {
-        id: 'wedding',
-        name: 'Wedding & Elegant',
-        icon: Heart,
-        description: 'Elegant florals, gold accents, script fonts',
-        bestFor: ['RSVPs', 'Menu choices', 'Song requests', 'Seating preferences'],
-        colors: {
-            primary: '#B8860B', // Gold
-            secondary: '#F5E6D3', // Cream
-            accent: '#8B4513', // Saddle brown
-            background: '#FDF8F0', // Warm white
-            text: '#2C1810', // Dark brown
-            gradient: 'linear-gradient(135deg, #F5E6D3 0%, #FDF8F0 50%, #F5E6D3 100%)',
-        },
-        fonts: {
-            heading: "'Playfair Display', serif",
-            body: "'Cormorant Garamond', serif",
-        },
-        decorations: ['✿', '❧', '❦', '⚜'],
-    },
-    {
-        id: 'corporate',
-        name: 'Corporate & Professional',
-        icon: Briefcase,
-        description: 'Clean, minimal, brand-focused',
-        bestFor: ['Team polls', 'Meeting scheduling', 'Feedback surveys', 'Event planning'],
-        colors: {
-            primary: '#1E40AF', // Blue
-            secondary: '#DBEAFE', // Light blue
-            accent: '#3B82F6', // Bright blue
-            background: '#F8FAFC', // Slate 50
-            text: '#1E293B', // Slate 800
-            gradient: 'linear-gradient(135deg, #DBEAFE 0%, #F8FAFC 50%, #DBEAFE 100%)',
-        },
-        fonts: {
-            heading: "'Inter', sans-serif",
-            body: "'Inter', sans-serif",
-        },
-        decorations: ['◆', '▸', '●', '○'],
-    },
-    {
-        id: 'party',
-        name: 'Party & Celebration',
-        icon: PartyPopper,
-        description: 'Fun, colorful, confetti vibes',
-        bestFor: ['Birthday parties', 'Holiday events', 'Game nights', 'Celebrations'],
-        colors: {
-            primary: '#EC4899', // Pink
-            secondary: '#FDF4FF', // Fuchsia 50
-            accent: '#F59E0B', // Amber
-            background: '#FFFBEB', // Amber 50
-            text: '#1F2937', // Gray 800
-            gradient: 'linear-gradient(135deg, #FDF4FF 0%, #FFFBEB 50%, #DBEAFE 100%)',
-        },
-        fonts: {
-            heading: "'Fredoka One', cursive",
-            body: "'Nunito', sans-serif",
-        },
-        decorations: ['🎉', '🎈', '🎊', '✨'],
-    },
-    {
-        id: 'babyshower',
-        name: 'Baby Shower',
-        icon: Baby,
-        description: 'Soft pastels, cute icons, gentle vibes',
-        bestFor: ['Gender reveals', 'Name voting', 'Gift polls', 'Shower planning'],
-        colors: {
-            primary: '#A78BFA', // Violet
-            secondary: '#F3E8FF', // Purple 100
-            accent: '#F9A8D4', // Pink 300
-            background: '#FDF2F8', // Pink 50
-            text: '#581C87', // Purple 900
-            gradient: 'linear-gradient(135deg, #F3E8FF 0%, #FDF2F8 50%, #DBEAFE 100%)',
-        },
-        fonts: {
-            heading: "'Quicksand', sans-serif",
-            body: "'Quicksand', sans-serif",
-        },
-        decorations: ['🍼', '👶', '🧸', '💕'],
-    },
-    {
-        id: 'casual',
-        name: 'Casual & Modern',
-        icon: MessageCircle,
-        description: 'Modern, friendly, emoji-ready',
-        bestFor: ['Friend groups', 'Quick decisions', 'Social plans', 'Fun polls'],
-        colors: {
-            primary: '#6366F1', // Indigo
-            secondary: '#E0E7FF', // Indigo 100
-            accent: '#10B981', // Emerald
-            background: '#F9FAFB', // Gray 50
-            text: '#111827', // Gray 900
-            gradient: 'linear-gradient(135deg, #E0E7FF 0%, #F9FAFB 50%, #D1FAE5 100%)',
-        },
-        fonts: {
-            heading: "'Poppins', sans-serif",
-            body: "'Poppins', sans-serif",
-        },
-        decorations: ['→', '•', '★', '◎'],
-    },
-];
-
-// ============================================================================
-// QR CODE GENERATOR (Using QR Server API for real QR codes)
-// ============================================================================
-
-// Generate QR code image URL using qrserver.com API
-const generateQRCodeUrl = (text: string, size: number = 200): string => {
-    // Use QR Server API - free, no auth needed
-    const encodedText = encodeURIComponent(text);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}&format=png&margin=10`;
-};
-
-// Generate QR code as a data URL by fetching from API
-const generateQRCodeDataUrl = async (text: string, size: number = 200): Promise<string> => {
-    try {
-        const response = await fetch(generateQRCodeUrl(text, size));
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (e) {
-        // Fallback to URL-based approach
-        return generateQRCodeUrl(text, size);
-    }
-};
-
-// ============================================================================
-// PROPS & TYPES
-// ============================================================================
 
 interface ShareCardsProps {
     pollId: string;
     pollTitle: string;
     pollDescription?: string;
-    pollUrl: string;
-    onClose?: () => void;
+    pollUrl?: string;
+    theme?: string;
+    onClose: () => void;
 }
 
-type OutputFormat = 'square' | 'story' | 'email' | 'pdf';
+// Theme color configurations
+const THEME_COLORS: Record<string, {
+    primary: string;
+    secondary: string;
+    accent: string;
+    gradient: string;
+    text: string;
+    qrColor: string;
+}> = {
+    default: {
+        primary: '#6366f1',
+        secondary: '#8b5cf6',
+        accent: '#ec4899',
+        gradient: 'from-indigo-600 via-purple-600 to-pink-500',
+        text: '#ffffff',
+        qrColor: '6366f1'
+    },
+    ocean: {
+        primary: '#0891b2',
+        secondary: '#06b6d4',
+        accent: '#22d3ee',
+        gradient: 'from-cyan-600 via-teal-500 to-emerald-500',
+        text: '#ffffff',
+        qrColor: '0891b2'
+    },
+    sunset: {
+        primary: '#f97316',
+        secondary: '#fb923c',
+        accent: '#fbbf24',
+        gradient: 'from-orange-500 via-amber-500 to-yellow-500',
+        text: '#ffffff',
+        qrColor: 'f97316'
+    },
+    forest: {
+        primary: '#16a34a',
+        secondary: '#22c55e',
+        accent: '#4ade80',
+        gradient: 'from-green-600 via-emerald-500 to-teal-500',
+        text: '#ffffff',
+        qrColor: '16a34a'
+    },
+    berry: {
+        primary: '#db2777',
+        secondary: '#ec4899',
+        accent: '#f472b6',
+        gradient: 'from-pink-600 via-rose-500 to-red-500',
+        text: '#ffffff',
+        qrColor: 'db2777'
+    },
+    midnight: {
+        primary: '#3b82f6',
+        secondary: '#6366f1',
+        accent: '#8b5cf6',
+        gradient: 'from-blue-600 via-indigo-600 to-purple-600',
+        text: '#ffffff',
+        qrColor: '3b82f6'
+    },
+    coral: {
+        primary: '#f43f5e',
+        secondary: '#fb7185',
+        accent: '#fda4af',
+        gradient: 'from-rose-500 via-pink-500 to-red-400',
+        text: '#ffffff',
+        qrColor: 'f43f5e'
+    },
+    lavender: {
+        primary: '#8b5cf6',
+        secondary: '#a78bfa',
+        accent: '#c4b5fd',
+        gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+        text: '#ffffff',
+        qrColor: '8b5cf6'
+    },
+    monochrome: {
+        primary: '#374151',
+        secondary: '#4b5563',
+        accent: '#9ca3af',
+        gradient: 'from-slate-700 via-gray-600 to-slate-800',
+        text: '#ffffff',
+        qrColor: '374151'
+    },
+    gold: {
+        primary: '#d97706',
+        secondary: '#f59e0b',
+        accent: '#fbbf24',
+        gradient: 'from-amber-600 via-yellow-500 to-orange-500',
+        text: '#ffffff',
+        qrColor: 'd97706'
+    }
+};
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
+// Card design templates
+type CardDesign = 'modern' | 'minimal' | 'bold' | 'elegant' | 'playful' | 'corporate';
 
-const ShareCards: React.FC<ShareCardsProps> = ({
-    pollId,
-    pollTitle,
-    pollDescription,
-    pollUrl,
-    onClose
-}) => {
-    const [selectedStyle, setSelectedStyle] = useState<TemplateCategory>('casual');
-    const [outputFormat, setOutputFormat] = useState<OutputFormat>('square');
-    const [customMessage, setCustomMessage] = useState('');
-    const [showPreview, setShowPreview] = useState(true);
-    const [copied, setCopied] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+const CARD_DESIGNS: { id: CardDesign; name: string; description: string }[] = [
+    { id: 'modern', name: 'Modern', description: 'Clean gradient with centered QR' },
+    { id: 'minimal', name: 'Minimal', description: 'Simple white card with accent' },
+    { id: 'bold', name: 'Bold', description: 'Full gradient background' },
+    { id: 'elegant', name: 'Elegant', description: 'Subtle pattern overlay' },
+    { id: 'playful', name: 'Playful', description: 'Rounded corners and shapes' },
+    { id: 'corporate', name: 'Corporate', description: 'Professional business look' }
+];
+
+// Card format options
+type CardFormat = 'square' | 'story' | 'landscape';
+
+const CARD_FORMATS: { id: CardFormat; name: string; ratio: string; width: number; height: number }[] = [
+    { id: 'square', name: 'Square', ratio: '1:1', width: 1080, height: 1080 },
+    { id: 'story', name: 'Story', ratio: '9:16', width: 1080, height: 1920 },
+    { id: 'landscape', name: 'Landscape', ratio: '16:9', width: 1920, height: 1080 }
+];
+
+const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescription, pollUrl, theme = 'default', onClose }) => {
+    const [selectedDesign, setSelectedDesign] = useState<CardDesign>('modern');
+    const [selectedFormat, setSelectedFormat] = useState<CardFormat>('square');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
+    const [previewUrl, setPreviewUrl] = useState<string>('');
     
-    const style = TEMPLATE_STYLES.find(s => s.id === selectedStyle)!;
+    const colors = THEME_COLORS[theme] || THEME_COLORS.default;
+    const shareUrl = pollUrl || `${window.location.origin}/#id=${pollId}`;
+    const formatConfig = CARD_FORMATS.find(f => f.id === selectedFormat) || CARD_FORMATS[0];
     
-    // ========================================================================
-    // GENERATE IMAGE CARD
-    // ========================================================================
+    // Generate QR code using a free API
+    useEffect(() => {
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&color=${colors.qrColor}&bgcolor=ffffff`;
+        setQrDataUrl(qrApiUrl);
+    }, [shareUrl, colors.qrColor]);
     
-    const generateImageCard = async (format: 'square' | 'story'): Promise<string> => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
+    // Helper: load image
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    };
+    
+    // Helper: rounded rectangle
+    const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    };
+    
+    // Helper: wrap text
+    const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
         
-        // Dimensions
-        const width = format === 'square' ? 1080 : 1080;
-        const height = format === 'square' ? 1080 : 1920;
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Background gradient
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, style.colors.secondary);
-        gradient.addColorStop(0.5, style.colors.background);
-        gradient.addColorStop(1, style.colors.secondary);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-        
-        // Decorative border
-        ctx.strokeStyle = style.colors.primary;
-        ctx.lineWidth = 8;
-        ctx.strokeRect(40, 40, width - 80, height - 80);
-        
-        // Inner decorative line
-        ctx.strokeStyle = style.colors.accent + '40';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(60, 60, width - 120, height - 120);
-        
-        // Title
-        ctx.fillStyle = style.colors.text;
-        ctx.font = `bold ${format === 'square' ? 72 : 84}px ${style.fonts.heading.split(',')[0].replace(/'/g, '')}`;
-        ctx.textAlign = 'center';
-        
-        // Word wrap title
-        const maxWidth = width - 160;
-        const words = pollTitle.split(' ');
-        let lines: string[] = [];
-        let currentLine = '';
-        
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
             const metrics = ctx.measureText(testLine);
-            if (metrics.width > maxWidth && currentLine) {
-                lines.push(currentLine);
-                currentLine = word;
+            
+            if (metrics.width > maxWidth && i > 0) {
+                ctx.fillText(line.trim(), x, currentY);
+                line = words[i] + ' ';
+                currentY += lineHeight;
             } else {
-                currentLine = testLine;
+                line = testLine;
             }
-        });
-        if (currentLine) lines.push(currentLine);
+        }
+        ctx.fillText(line.trim(), x, currentY);
+    };
+    
+    // Draw card on canvas
+    const generateCard = async (): Promise<string> => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas not supported');
         
-        const titleY = format === 'square' ? 300 : 500;
-        lines.forEach((line, i) => {
-            ctx.fillText(line, width / 2, titleY + i * 90);
-        });
+        const w = formatConfig.width;
+        const h = formatConfig.height;
+        canvas.width = w;
+        canvas.height = h;
         
-        // Decorative elements
-        ctx.fillStyle = style.colors.primary;
-        ctx.font = '48px serif';
-        const decoY = titleY - 100;
-        ctx.fillText(style.decorations[0], width / 2 - 60, decoY);
-        ctx.fillText(style.decorations[1] || style.decorations[0], width / 2 + 60, decoY);
-        
-        // Custom message or description
-        const message = customMessage || pollDescription || 'Your vote matters!';
-        ctx.fillStyle = style.colors.text + 'CC';
-        ctx.font = `${format === 'square' ? 36 : 42}px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
-        const messageY = titleY + lines.length * 90 + 60;
-        ctx.fillText(message, width / 2, messageY);
-        
-        // QR Code area
-        const qrSize = format === 'square' ? 200 : 250;
-        const qrX = (width - qrSize) / 2;
-        const qrY = format === 'square' ? height - 380 : height - 500;
-        
-        // QR background with rounded corners effect
-        ctx.fillStyle = 'white';
-        ctx.shadowColor = 'rgba(0,0,0,0.1)';
-        ctx.shadowBlur = 20;
-        ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = style.colors.primary;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-        
-        // Draw real QR code using API
-        const qrImg = new window.Image();
-        qrImg.crossOrigin = 'anonymous';
-        await new Promise<void>((resolve) => {
-            qrImg.onload = () => {
-                ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-                resolve();
-            };
-            qrImg.onerror = () => {
-                // Fallback: draw "QR Code" text if API fails
-                ctx.fillStyle = style.colors.text;
-                ctx.font = `bold 24px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
-                ctx.fillText('Scan QR Code', width / 2, qrY + qrSize / 2);
-                resolve();
-            };
-            qrImg.src = generateQRCodeUrl(pollUrl, qrSize);
-        });
-        
-        // "Scan to Vote" text
-        ctx.fillStyle = style.colors.text;
-        ctx.font = `bold 28px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
-        ctx.fillText('Scan to Vote', width / 2, qrY + qrSize + 60);
-        
-        // URL (shortened)
-        ctx.fillStyle = style.colors.primary;
-        ctx.font = `24px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
-        const shortUrl = pollUrl.replace(/^https?:\/\//, '').substring(0, 40);
-        ctx.fillText(shortUrl, width / 2, qrY + qrSize + 100);
-        
-        // Branding
-        ctx.fillStyle = style.colors.text + '80';
-        ctx.font = `18px ${style.fonts.body.split(',')[0].replace(/'/g, '')}`;
-        ctx.fillText('Created with VoteGenerator', width / 2, height - 60);
+        // Draw based on design
+        switch (selectedDesign) {
+            case 'modern':
+                await drawModernCard(ctx, w, h);
+                break;
+            case 'minimal':
+                await drawMinimalCard(ctx, w, h);
+                break;
+            case 'bold':
+                await drawBoldCard(ctx, w, h);
+                break;
+            case 'elegant':
+                await drawElegantCard(ctx, w, h);
+                break;
+            case 'playful':
+                await drawPlayfulCard(ctx, w, h);
+                break;
+            case 'corporate':
+                await drawCorporateCard(ctx, w, h);
+                break;
+        }
         
         return canvas.toDataURL('image/png');
     };
     
-    // ========================================================================
-    // GENERATE EMAIL HTML
-    // ========================================================================
-    
-    const generateEmailHTML = (): string => {
-        const message = customMessage || `You're invited to vote on: ${pollTitle}`;
+    // Modern card design
+    const drawModernCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // Gradient background
+        const gradient = ctx.createLinearGradient(0, 0, w, h);
+        gradient.addColorStop(0, colors.primary);
+        gradient.addColorStop(0.5, colors.secondary);
+        gradient.addColorStop(1, colors.accent);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
         
-        return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${pollTitle}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600&family=Poppins:wght@400;600&display=swap');
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: ${style.colors.background}; font-family: ${style.fonts.body};">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-        <tr>
-            <td align="center" style="padding: 40px 20px;">
-                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden;">
-                    <!-- Header -->
-                    <tr>
-                        <td style="background: ${style.colors.gradient}; padding: 40px; text-align: center; border-bottom: 4px solid ${style.colors.primary};">
-                            <div style="font-size: 32px; margin-bottom: 8px;">${style.decorations[0]}</div>
-                            <h1 style="margin: 0; color: ${style.colors.text}; font-family: ${style.fonts.heading}; font-size: 28px; font-weight: 700;">
-                                You're Invited to Vote!
-                            </h1>
-                        </td>
-                    </tr>
-                    
-                    <!-- Content -->
-                    <tr>
-                        <td style="padding: 40px;">
-                            <h2 style="margin: 0 0 16px; color: ${style.colors.text}; font-family: ${style.fonts.heading}; font-size: 24px;">
-                                ${pollTitle}
-                            </h2>
-                            <p style="margin: 0 0 24px; color: ${style.colors.text}; opacity: 0.8; font-size: 16px; line-height: 1.6;">
-                                ${message}
-                            </p>
-                            
-                            <!-- CTA Button -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
-                                <tr>
-                                    <td style="border-radius: 12px; background: ${style.colors.primary};">
-                                        <a href="${pollUrl}" target="_blank" style="display: inline-block; padding: 16px 48px; color: white; font-family: ${style.fonts.body}; font-size: 18px; font-weight: 600; text-decoration: none;">
-                                            Vote Now →
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <p style="margin: 32px 0 0; color: ${style.colors.text}; opacity: 0.6; font-size: 14px; text-align: center;">
-                                Or copy this link: <a href="${pollUrl}" style="color: ${style.colors.primary};">${pollUrl}</a>
-                            </p>
-                        </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                        <td style="background: ${style.colors.secondary}; padding: 24px; text-align: center; border-top: 1px solid ${style.colors.primary}20;">
-                            <p style="margin: 0; color: ${style.colors.text}; opacity: 0.6; font-size: 12px;">
-                                Created with VoteGenerator • Privacy-first polling
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
+        // Add subtle pattern
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        for (let i = 0; i < w; i += 40) {
+            for (let j = 0; j < h; j += 40) {
+                ctx.beginPath();
+                ctx.arc(i, j, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // White card in center
+        const cardW = w * 0.75;
+        const cardH = h * 0.65;
+        const cardX = (w - cardW) / 2;
+        const cardY = (h - cardH) / 2;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetY = 10;
+        roundRect(ctx, cardX, cardY, cardW, cardH, 24);
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        
+        // Title
+        ctx.fillStyle = '#1e293b';
+        ctx.font = `bold ${Math.floor(w * 0.04)}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        const maxTitleWidth = cardW * 0.85;
+        wrapText(ctx, pollTitle, w / 2, cardY + cardH * 0.18, maxTitleWidth, w * 0.05);
+        
+        // QR Code
+        if (qrDataUrl) {
+            try {
+                const qrSize = Math.min(cardW, cardH) * 0.45;
+                const qrX = (w - qrSize) / 2;
+                const qrY = cardY + cardH * 0.35;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
+        }
+        
+        // Scan to vote text
+        ctx.fillStyle = '#64748b';
+        ctx.font = `${Math.floor(w * 0.025)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('Scan to vote', w / 2, cardY + cardH * 0.88);
+        
+        // Branding
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = `bold ${Math.floor(w * 0.018)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('votegenerator.com', w / 2, h - w * 0.04);
     };
     
-    // ========================================================================
-    // HANDLERS
-    // ========================================================================
-    
-    const handleDownload = async (format: OutputFormat) => {
-        setGenerating(true);
+    // Minimal card design
+    const drawMinimalCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // White background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
         
-        try {
-            if (format === 'square' || format === 'story') {
-                const dataUrl = await generateImageCard(format);
-                const link = document.createElement('a');
-                link.download = `${pollTitle.replace(/[^a-z0-9]/gi, '-')}-${format}.png`;
-                link.href = dataUrl;
-                link.click();
-            } else if (format === 'email') {
-                const html = generateEmailHTML();
-                const blob = new Blob([html], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.download = `${pollTitle.replace(/[^a-z0-9]/gi, '-')}-email.html`;
-                link.href = url;
-                link.click();
-                URL.revokeObjectURL(url);
+        // Accent bar at top
+        ctx.fillStyle = colors.primary;
+        ctx.fillRect(0, 0, w, h * 0.02);
+        
+        // Title
+        ctx.fillStyle = '#0f172a';
+        ctx.font = `bold ${Math.floor(w * 0.045)}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        wrapText(ctx, pollTitle, w / 2, h * 0.2, w * 0.8, w * 0.055);
+        
+        // QR Code
+        if (qrDataUrl) {
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.35;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
             }
-        } catch (error) {
-            console.error('Error generating:', error);
+        }
+        
+        // Scan text
+        ctx.fillStyle = colors.primary;
+        ctx.font = `600 ${Math.floor(w * 0.028)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('📱 Scan to vote', w / 2, h * 0.82);
+        
+        // URL
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = `${Math.floor(w * 0.022)}px Inter, system-ui, sans-serif`;
+        ctx.fillText(shareUrl.replace('https://', '').replace('http://', ''), w / 2, h * 0.9);
+    };
+    
+    // Bold card design
+    const drawBoldCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // Full gradient
+        const gradient = ctx.createLinearGradient(0, 0, w, h);
+        gradient.addColorStop(0, colors.primary);
+        gradient.addColorStop(1, colors.secondary);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+        
+        // Large decorative shapes
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.beginPath();
+        ctx.arc(w * 0.1, h * 0.1, w * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(w * 0.9, h * 0.9, w * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(w * 0.055)}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        wrapText(ctx, pollTitle.toUpperCase(), w / 2, h * 0.22, w * 0.85, w * 0.07);
+        
+        // QR in white circle
+        const qrContainerSize = Math.min(w, h) * 0.42;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(w / 2, h * 0.55, qrContainerSize / 2 + 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        if (qrDataUrl) {
+            try {
+                const qrSize = qrContainerSize * 0.9;
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, (w - qrSize) / 2, h * 0.55 - qrSize / 2, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
+        }
+        
+        // CTA
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(w * 0.035)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('SCAN TO VOTE NOW', w / 2, h * 0.88);
+    };
+    
+    // Elegant card design
+    const drawElegantCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // Dark background
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Gradient overlay
+        const gradient = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w * 0.8);
+        gradient.addColorStop(0, `${colors.primary}30`);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+        
+        // Decorative lines
+        ctx.strokeStyle = `${colors.primary}40`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.1, h * 0.15);
+        ctx.lineTo(w * 0.9, h * 0.15);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(w * 0.1, h * 0.85);
+        ctx.lineTo(w * 0.9, h * 0.85);
+        ctx.stroke();
+        
+        // Header
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `300 ${Math.floor(w * 0.02)}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('CAST YOUR VOTE', w / 2, h * 0.12);
+        
+        // Title
+        ctx.font = `bold ${Math.floor(w * 0.04)}px Inter, system-ui, sans-serif`;
+        wrapText(ctx, pollTitle, w / 2, h * 0.25, w * 0.75, w * 0.05);
+        
+        // QR Code with background
+        if (qrDataUrl) {
+            try {
+                const qrSize = Math.min(w, h) * 0.38;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.4;
+                
+                // White background for QR
+                ctx.fillStyle = '#ffffff';
+                roundRect(ctx, qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 12);
+                ctx.fill();
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
+        }
+        
+        // Bottom text
+        ctx.fillStyle = colors.accent;
+        ctx.font = `600 ${Math.floor(w * 0.025)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('Scan • Vote • Share', w / 2, h * 0.92);
+    };
+    
+    // Playful card design
+    const drawPlayfulCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // Light gradient background
+        const gradient = ctx.createLinearGradient(0, 0, w, h);
+        gradient.addColorStop(0, '#fef3c7');
+        gradient.addColorStop(1, '#fce7f3');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+        
+        // Floating circles (deterministic positions)
+        const circlePositions = [
+            { x: 0.1, y: 0.2 }, { x: 0.8, y: 0.1 }, { x: 0.2, y: 0.7 },
+            { x: 0.9, y: 0.6 }, { x: 0.5, y: 0.9 }, { x: 0.15, y: 0.4 }
+        ];
+        const circleColors = [colors.primary, colors.secondary, colors.accent];
+        circlePositions.forEach((pos, i) => {
+            ctx.fillStyle = `${circleColors[i % 3]}20`;
+            ctx.beginPath();
+            ctx.arc(pos.x * w, pos.y * h, 30 + (i * 15), 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // Fun emoji header
+        ctx.font = `${Math.floor(w * 0.08)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('🗳️', w / 2, h * 0.12);
+        
+        // Title
+        ctx.fillStyle = colors.primary;
+        ctx.font = `bold ${Math.floor(w * 0.042)}px Inter, system-ui, sans-serif`;
+        wrapText(ctx, pollTitle, w / 2, h * 0.25, w * 0.8, w * 0.055);
+        
+        // QR in rounded square
+        if (qrDataUrl) {
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.38;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = 'rgba(0,0,0,0.1)';
+                ctx.shadowBlur = 20;
+                roundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
+        }
+        
+        // Fun CTA
+        ctx.fillStyle = colors.secondary;
+        ctx.font = `bold ${Math.floor(w * 0.03)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('📱 Scan me!', w / 2, h * 0.88);
+    };
+    
+    // Corporate card design
+    const drawCorporateCard = async (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+        // White background
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Header bar
+        ctx.fillStyle = colors.primary;
+        ctx.fillRect(0, 0, w, h * 0.12);
+        
+        // Footer bar
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, h * 0.88, w, h * 0.12);
+        
+        // Logo text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(w * 0.022)}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText('POLL', w * 0.05, h * 0.07);
+        
+        // Title
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.font = `bold ${Math.floor(w * 0.038)}px Inter, system-ui, sans-serif`;
+        wrapText(ctx, pollTitle, w / 2, h * 0.24, w * 0.8, w * 0.05);
+        
+        // QR Code
+        if (qrDataUrl) {
+            try {
+                const qrSize = Math.min(w, h) * 0.4;
+                const qrX = (w - qrSize) / 2;
+                const qrY = h * 0.38;
+                
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30);
+                
+                const img = await loadImage(qrDataUrl);
+                ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+            } catch (e) {
+                console.error('Failed to load QR:', e);
+            }
+        }
+        
+        // Instructions
+        ctx.fillStyle = '#64748b';
+        ctx.font = `${Math.floor(w * 0.022)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('Scan QR code to participate', w / 2, h * 0.82);
+        
+        // Footer URL
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.floor(w * 0.018)}px Inter, system-ui, sans-serif`;
+        ctx.fillText('votegenerator.com', w / 2, h * 0.94);
+    };
+    
+    // Handle download - only when button clicked
+    const handleDownload = async () => {
+        setIsGenerating(true);
+        try {
+            const dataUrl = await generateCard();
+            const link = document.createElement('a');
+            link.download = `poll-${selectedDesign}-${selectedFormat}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error('Failed to generate card:', err);
         } finally {
-            setGenerating(false);
+            setIsGenerating(false);
         }
     };
     
-    const copyEmailHTML = () => {
-        navigator.clipboard.writeText(generateEmailHTML());
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-    
-    // ========================================================================
-    // RENDER
-    // ========================================================================
+    // Generate preview when design/format changes
+    useEffect(() => {
+        if (qrDataUrl) {
+            generateCard().then(setPreviewUrl).catch(console.error);
+        }
+    }, [selectedDesign, selectedFormat, qrDataUrl, pollTitle]);
     
     return (
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                        <Share2 className="text-white" size={20} />
-                    </div>
-                    <div>
-                        <h2 className="text-white font-bold text-lg">Share Cards & Invitations</h2>
-                        <p className="text-indigo-200 text-sm">Create beautiful shareable content</p>
-                    </div>
-                </div>
-                {onClose && (
-                    <button onClick={onClose} className="text-white/80 hover:text-white p-2">
-                        <X size={20} />
-                    </button>
-                )}
-            </div>
-            
-            <div className="p-6">
-                {/* Style Selector */}
-                <div className="mb-6">
-                    <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                        <Palette size={16} /> Choose Style
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        {TEMPLATE_STYLES.map((template) => {
-                            const Icon = template.icon;
-                            const isSelected = selectedStyle === template.id;
-                            return (
-                                <button
-                                    key={template.id}
-                                    onClick={() => setSelectedStyle(template.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${
-                                        isSelected
-                                            ? 'border-indigo-500 bg-indigo-50 shadow-md'
-                                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <div 
-                                        className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
-                                        style={{ backgroundColor: template.colors.primary + '20' }}
-                                    >
-                                        <Icon size={18} style={{ color: template.colors.primary }} />
-                                    </div>
-                                    <p className="font-semibold text-slate-800 text-sm">{template.name.split(' ')[0]}</p>
-                                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{template.description}</p>
-                                </button>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Style Details */}
-                    <div className="mt-4 p-4 bg-slate-50 rounded-xl">
-                        <p className="text-sm text-slate-600 mb-2">
-                            <strong>Best for:</strong> {style.bestFor.join(', ')}
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-500">Colors:</span>
-                            {Object.entries(style.colors).slice(0, 4).map(([key, color]) => (
-                                <div
-                                    key={key}
-                                    className="w-6 h-6 rounded-full border-2 border-white shadow"
-                                    style={{ backgroundColor: color }}
-                                    title={key}
-                                />
-                            ))}
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={onClose}
+            >
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className={`bg-gradient-to-r ${colors.gradient} p-6`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                                    <Sparkles size={24} className="text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Share Cards</h2>
+                                    <p className="text-white/80 text-sm">Beautiful cards for social media</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                            >
+                                <X size={24} className="text-white" />
+                            </button>
                         </div>
                     </div>
-                </div>
-                
-                {/* Custom Message */}
-                <div className="mb-6">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Custom Message (optional)
-                    </label>
-                    <input
-                        type="text"
-                        value={customMessage}
-                        onChange={(e) => setCustomMessage(e.target.value)}
-                        placeholder="Your vote matters! Make your voice heard."
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
-                    />
-                </div>
-                
-                {/* Output Format Buttons */}
-                <div className="mb-6">
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                        📥 Choose Format & Download
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {[
-                            { id: 'square' as OutputFormat, icon: ImageIcon, name: 'Square Card', desc: 'Instagram, WhatsApp', size: '1080×1080', color: 'from-pink-500 to-rose-500' },
-                            { id: 'story' as OutputFormat, icon: Instagram, name: 'Story Format', desc: 'Instagram Stories, TikTok', size: '1080×1920', color: 'from-purple-500 to-indigo-500' },
-                            { id: 'email' as OutputFormat, icon: Mail, name: 'Email Template', desc: 'Copy & paste ready', size: 'HTML', color: 'from-blue-500 to-cyan-500' },
-                            { id: 'pdf' as OutputFormat, icon: FileText, name: 'PDF Invite', desc: 'Coming soon', size: 'PDF', disabled: true, color: 'from-slate-400 to-slate-500' },
-                        ].map((format) => {
-                            const Icon = format.icon;
-                            return (
-                                <button
-                                    key={format.id}
-                                    onClick={() => !format.disabled && handleDownload(format.id)}
-                                    disabled={format.disabled || generating}
-                                    className={`group relative p-5 rounded-2xl border-2 transition-all text-left overflow-hidden ${
-                                        format.disabled
-                                            ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
-                                            : 'border-slate-200 hover:border-transparent hover:shadow-xl cursor-pointer'
-                                    }`}
-                                >
-                                    {/* Hover gradient background */}
-                                    {!format.disabled && (
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${format.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-                                    )}
-                                    
-                                    <div className="relative z-10">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
-                                            format.disabled 
-                                                ? 'bg-slate-100' 
-                                                : `bg-gradient-to-br ${format.color} shadow-lg`
-                                        }`}>
-                                            <Icon size={24} className="text-white" />
-                                        </div>
-                                        <p className="font-bold text-slate-800 text-base">{format.name}</p>
-                                        <p className="text-sm text-slate-500 mt-1">{format.desc}</p>
-                                        <div className="flex items-center gap-2 mt-3">
-                                            <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded">{format.size}</span>
-                                            {!format.disabled && (
-                                                <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
-                                                    <Download size={12} /> Click to Download
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-                
-                {/* Preview */}
-                <div className="border-t border-slate-200 pt-6">
-                    <button 
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-4"
-                    >
-                        <Eye size={16} />
-                        {showPreview ? 'Hide' : 'Show'} Preview
-                        <ChevronRight size={16} className={`transform transition ${showPreview ? 'rotate-90' : ''}`} />
-                    </button>
                     
-                    <AnimatePresence>
-                        {showPreview && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                            >
-                                {/* Square Preview */}
-                                <div 
-                                    className="aspect-square max-w-sm mx-auto rounded-2xl border-4 p-8 flex flex-col items-center justify-center text-center relative overflow-hidden"
-                                    style={{ 
-                                        background: style.colors.gradient,
-                                        borderColor: style.colors.primary,
-                                    }}
-                                >
-                                    {/* Decorations */}
-                                    <div 
-                                        className="absolute top-4 left-1/2 -translate-x-1/2 text-2xl flex gap-4"
-                                        style={{ color: style.colors.primary }}
-                                    >
-                                        {style.decorations.slice(0, 2).map((d, i) => (
-                                            <span key={i}>{d}</span>
-                                        ))}
-                                    </div>
-                                    
-                                    <h3 
-                                        className="text-xl font-bold mb-3 mt-8"
-                                        style={{ color: style.colors.text, fontFamily: style.fonts.heading }}
-                                    >
-                                        {pollTitle}
-                                    </h3>
-                                    
-                                    <p 
-                                        className="text-sm mb-6 opacity-80"
-                                        style={{ color: style.colors.text, fontFamily: style.fonts.body }}
-                                    >
-                                        {customMessage || pollDescription || 'Your vote matters!'}
-                                    </p>
-                                    
-                                    {/* Real QR Code in Preview */}
-                                    <div 
-                                        className="w-24 h-24 bg-white rounded-lg border-2 flex items-center justify-center mb-3 overflow-hidden shadow-sm"
-                                        style={{ borderColor: style.colors.primary }}
-                                    >
-                                        <img 
-                                            src={generateQRCodeUrl(pollUrl, 96)}
-                                            alt="QR Code"
-                                            className="w-20 h-20"
-                                            onError={(e) => {
-                                                // Fallback to icon if API fails
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h3v2h-3v-2zm-3 0h2v2h-2v-2zm-2 3h2v2h-2v-2zm5 0h2v2h-2v-2zm-5 3h2v2h-2v-2zm5 0h3v2h-3v-2z"/></svg>';
-                                            }}
-                                        />
-                                    </div>
-                                    
-                                    <p 
-                                        className="text-xs font-semibold"
-                                        style={{ color: style.colors.text }}
-                                    >
-                                        Scan to Vote
-                                    </p>
-                                    
-                                    <p 
-                                        className="absolute bottom-3 text-[10px] opacity-50"
-                                        style={{ color: style.colors.text }}
-                                    >
-                                        Created with VoteGenerator
-                                    </p>
+                    <div className="flex flex-col lg:flex-row h-[calc(90vh-100px)]">
+                        {/* Left: Options */}
+                        <div className="lg:w-80 p-6 border-b lg:border-b-0 lg:border-r border-slate-200 overflow-y-auto">
+                            {/* Format Selection */}
+                            <div className="mb-6">
+                                <label className="text-sm font-bold text-slate-700 mb-3 block">Format</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {CARD_FORMATS.map(format => (
+                                        <button
+                                            key={format.id}
+                                            onClick={() => setSelectedFormat(format.id)}
+                                            className={`p-3 rounded-xl border-2 transition-all ${
+                                                selectedFormat === format.id
+                                                    ? 'border-indigo-500 bg-indigo-50'
+                                                    : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className={`mx-auto mb-2 bg-slate-200 ${
+                                                format.id === 'square' ? 'w-8 h-8' :
+                                                format.id === 'story' ? 'w-5 h-9' :
+                                                'w-10 h-6'
+                                            } rounded`} />
+                                            <div className="text-xs font-semibold text-slate-700">{format.name}</div>
+                                            <div className="text-[10px] text-slate-500">{format.ratio}</div>
+                                        </button>
+                                    ))}
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-                
-                {/* Quick Actions - Prominent Download */}
-                <div className="mt-6 pt-6 border-t border-slate-200">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                            onClick={() => handleDownload('square')}
-                            disabled={generating}
-                            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl text-white font-bold text-lg transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-50"
-                        >
-                            <Download size={22} />
-                            {generating ? 'Generating...' : '📥 Download Invitation Card'}
-                        </button>
+                            </div>
+                            
+                            {/* Design Selection */}
+                            <div>
+                                <label className="text-sm font-bold text-slate-700 mb-3 block">Style</label>
+                                <div className="space-y-2">
+                                    {CARD_DESIGNS.map(design => (
+                                        <button
+                                            key={design.id}
+                                            onClick={() => setSelectedDesign(design.id)}
+                                            className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${
+                                                selectedDesign === design.id
+                                                    ? 'border-indigo-500 bg-indigo-50'
+                                                    : 'border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                selectedDesign === design.id ? 'bg-indigo-500' : 'bg-slate-100'
+                                            }`}>
+                                                {selectedDesign === design.id ? (
+                                                    <Check size={18} className="text-white" />
+                                                ) : (
+                                                    <ImageIcon size={18} className="text-slate-400" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-slate-700 text-sm">{design.name}</div>
+                                                <div className="text-xs text-slate-500">{design.description}</div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                         
-                        <button
-                            onClick={copyEmailHTML}
-                            className="flex items-center justify-center gap-2 px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-semibold transition"
-                        >
-                            {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
-                            {copied ? 'Copied!' : 'Copy Email'}
-                        </button>
+                        {/* Right: Preview & Download */}
+                        <div className="flex-1 p-6 flex flex-col overflow-hidden">
+                            <div className="flex-1 flex items-center justify-center bg-slate-100 rounded-2xl overflow-hidden mb-4">
+                                {previewUrl ? (
+                                    <img 
+                                        src={previewUrl} 
+                                        alt="Card Preview" 
+                                        className="max-w-full max-h-full object-contain"
+                                        style={{
+                                            maxHeight: selectedFormat === 'story' ? '100%' : undefined,
+                                            width: selectedFormat === 'landscape' ? '100%' : undefined
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="text-slate-400 flex flex-col items-center gap-2">
+                                        <ImageIcon size={48} />
+                                        <span className="text-sm">Generating preview...</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Download Button */}
+                            <button
+                                onClick={handleDownload}
+                                disabled={isGenerating || !previewUrl}
+                                className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
+                                    isGenerating || !previewUrl
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : `bg-gradient-to-r ${colors.gradient} text-white hover:shadow-xl hover:scale-[1.02]`
+                                }`}
+                            >
+                                {isGenerating ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={20} />
+                                        Download {selectedFormat.charAt(0).toUpperCase() + selectedFormat.slice(1)} Card
+                                    </>
+                                )}
+                            </button>
+                            
+                            <p className="text-center text-xs text-slate-500 mt-3">
+                                High-resolution PNG • {formatConfig.width}×{formatConfig.height}px
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-xs text-slate-400 text-center mt-3">
-                        Download a beautiful share card or copy ready-to-send email HTML
-                    </p>
-                </div>
-            </div>
-        </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

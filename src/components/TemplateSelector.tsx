@@ -85,29 +85,29 @@ const CREATOR_PLATFORMS = [
     },
 ];
 
-// Featured survey types config
-const FEATURED_SURVEY_TYPES = [
+// Featured survey categories (multi-question surveys)
+const FEATURED_SURVEY_CATEGORIES = [
     {
-        id: 'csat',
-        name: 'Customer Satisfaction (CSAT)',
+        id: 'customer',
+        name: 'Customer Feedback Surveys',
         icon: '⭐',
         color: 'from-amber-500 to-yellow-500',
         borderColor: 'border-amber-200 hover:border-amber-300',
         textColor: 'text-amber-600',
         bgColor: 'bg-amber-50',
         keywords: ['csat', 'customer', 'satisfaction', 'nps', 'feedback'],
-        description: 'Measure customer happiness with CSAT, NPS, and feedback surveys'
+        description: 'Comprehensive multi-question surveys to measure customer satisfaction'
     },
     {
         id: 'employee',
-        name: 'Employee Surveys',
+        name: 'Employee Engagement Surveys',
         icon: '👥',
         color: 'from-emerald-500 to-teal-500',
         borderColor: 'border-emerald-200 hover:border-emerald-300',
         textColor: 'text-emerald-600',
         bgColor: 'bg-emerald-50',
         keywords: ['employee', 'engagement', 'workplace', 'hr', 'staff', 'team'],
-        description: 'Boost engagement with pulse checks, satisfaction, and culture surveys'
+        description: 'In-depth surveys for team engagement and workplace feedback'
     },
 ];
 
@@ -306,25 +306,25 @@ const CreatorPlatformCard: React.FC<{
 
 // Featured Survey Type Card Component
 const FeaturedSurveyCard: React.FC<{
-    surveyType: typeof FEATURED_SURVEY_TYPES[0];
+    surveyCategory: typeof FEATURED_SURVEY_CATEGORIES[0];
     templates: PollTemplate[];
     onSelectTemplate: (template: PollTemplate) => void;
     onViewAll: () => void;
-}> = ({ surveyType, templates, onSelectTemplate, onViewAll }) => {
+}> = ({ surveyCategory, templates, onSelectTemplate, onViewAll }) => {
     return (
-        <div className={`p-6 bg-white border-2 ${surveyType.borderColor} rounded-2xl hover:shadow-lg transition-all`}>
+        <div className={`p-6 bg-white border-2 ${surveyCategory.borderColor} rounded-2xl hover:shadow-lg transition-all`}>
             <div className="flex items-center gap-4 mb-4">
-                <div className={`w-14 h-14 bg-gradient-to-br ${surveyType.color} rounded-xl flex items-center justify-center text-2xl shadow-lg`}>
-                    {surveyType.icon}
+                <div className={`w-14 h-14 bg-gradient-to-br ${surveyCategory.color} rounded-xl flex items-center justify-center text-2xl shadow-lg`}>
+                    {surveyCategory.icon}
                 </div>
                 <div>
-                    <h3 className="font-bold text-slate-900 text-lg">{surveyType.name}</h3>
+                    <h3 className="font-bold text-slate-900 text-lg">{surveyCategory.name}</h3>
                     <p className="text-sm text-slate-500">{templates.length} templates</p>
                 </div>
             </div>
             
             <p className="text-sm text-slate-600 mb-4">
-                {surveyType.description}
+                {surveyCategory.description}
             </p>
             
             {/* Preview templates as clickable items */}
@@ -342,74 +342,24 @@ const FeaturedSurveyCard: React.FC<{
                 ))}
             </div>
             
-            {templates.length > 3 && (
-                <button
-                    onClick={onViewAll}
-                    className={`flex items-center gap-2 ${surveyType.textColor} font-semibold hover:gap-3 transition-all`}
+            <div className="flex items-center gap-3">
+                {templates.length > 3 && (
+                    <button
+                        onClick={onViewAll}
+                        className={`flex items-center gap-2 ${surveyCategory.textColor} font-semibold hover:gap-3 transition-all`}
+                    >
+                        View all {templates.length} <ArrowRight size={16} />
+                    </button>
+                )}
+                <a
+                    href="/survey"
+                    className="ml-auto px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-1"
                 >
-                    View all {templates.length} templates <ArrowRight size={16} />
-                </button>
-            )}
-        </div>
-    );
-};
-
-// Multi-Question Survey Card Component - Links to /survey
-const MultiQuestionSurveyCard: React.FC<{
-    template: PollTemplate;
-    index: number;
-}> = ({ template, index }) => {
-    return (
-        <motion.a
-            href={`/survey?template=${template.id}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.3 }}
-            className="group relative block"
-        >
-            <div className="relative overflow-hidden rounded-2xl border-2 border-slate-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300">
-                {/* Gradient Header */}
-                <div className={`relative h-28 bg-gradient-to-br ${template.gradient} p-4 overflow-hidden`}>
-                    {/* Question count badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 rounded-full text-xs font-bold text-slate-700">
-                        {template.questionCount} questions
-                    </div>
-                    
-                    <div className="relative z-10">
-                        <span className="text-3xl mb-2 block">{template.icon}</span>
-                        <h3 className="text-white font-bold text-lg leading-tight line-clamp-1">
-                            {template.name}
-                        </h3>
-                    </div>
-                </div>
-                
-                {/* Content */}
-                <div className="p-4 bg-white">
-                    <p className="text-sm text-slate-600 line-clamp-2 mb-3">
-                        {template.description}
-                    </p>
-                    
-                    {/* Best for tags */}
-                    {template.bestFor && template.bestFor.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                            {template.bestFor.slice(0, 2).map((tag, i) => (
-                                <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                    
-                    {/* CTA */}
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500">{template.estimatedTime}</span>
-                        <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700 flex items-center gap-1">
-                            Open in Survey Builder <ArrowRight size={14} />
-                        </span>
-                    </div>
-                </div>
+                    <Zap size={14} />
+                    Create Survey
+                </a>
             </div>
-        </motion.a>
+        </div>
     );
 };
 
@@ -421,7 +371,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 }) => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [typeFilter, setTypeFilter] = useState<'all' | 'polls' | 'quick-surveys' | 'creators' | 'multi-question'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'polls' | 'surveys' | 'creators'>('all');
     
     // Refs for scroll targets
     const pollsSectionRef = useRef<HTMLDivElement>(null);
@@ -440,9 +390,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 setTimeout(() => {
                     pollsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
-            } else if (hash === '#quick-surveys' || hash === '#surveys') {
-                // Support both old #surveys and new #quick-surveys
-                setTypeFilter('quick-surveys');
+            } else if (hash === '#surveys') {
+                setTypeFilter('surveys');
                 setTimeout(() => {
                     surveysSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
@@ -451,8 +400,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 setTimeout(() => {
                     creatorsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
-            } else if (hash === '#multi-question') {
-                setTypeFilter('multi-question');
             }
         };
         
@@ -466,25 +413,15 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     
     // Filter templates by category, search, and type
     const filteredTemplates = ALL_TEMPLATES.filter(template => {
-        // Type filter (polls vs quick-surveys vs creators vs multi-question)
-        if (typeFilter === 'polls') {
-            // Polls: exclude surveys, creators, and quick feedback templates
-            if (template.pollType === 'survey' || template.category === 'creators') return false;
-            if (template.badge === 'Quick' || template.id.startsWith('quick-')) return false;
+        // Type filter (polls vs surveys vs creators)
+        if (typeFilter === 'polls' && (template.pollType === 'survey' || template.category === 'creators')) {
+            return false;
         }
-        if (typeFilter === 'quick-surveys') {
-            // Quick Surveys: single-question feedback templates
-            // Include: templates with badge 'Quick' OR id starting with 'quick-'
-            const isQuickTemplate = template.badge === 'Quick' || template.id.startsWith('quick-');
-            if (!isQuickTemplate) return false;
+        if (typeFilter === 'surveys' && template.pollType !== 'survey') {
+            return false;
         }
         if (typeFilter === 'creators' && template.category !== 'creators') {
             return false;
-        }
-        if (typeFilter === 'multi-question') {
-            // Multi-question = survey type with 3+ questions
-            if (template.pollType !== 'survey') return false;
-            if (!template.questionCount || template.questionCount <= 2) return false;
         }
         
         // Category filter
@@ -504,24 +441,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     });
     
     // Separate templates by type for section display
-    // Single-question polls (excludes surveys, creators, and quick feedback)
-    const pollTemplates = filteredTemplates.filter(t => 
-        t.pollType !== 'survey' && 
-        t.category !== 'creators' && 
-        t.badge !== 'Quick' && 
-        !t.id.startsWith('quick-')
-    );
-    
-    // Quick feedback templates (badge 'Quick' or id starts with 'quick-')
-    const quickSurveyTemplates = filteredTemplates.filter(t => 
-        t.badge === 'Quick' || t.id.startsWith('quick-')
-    );
-    
-    // Multi-question surveys (survey type with 3+ questions) - these link to /survey builder
-    const multiQuestionSurveys = ALL_TEMPLATES.filter(t => 
-        t.pollType === 'survey' && t.questionCount && t.questionCount > 2
-    );
-    
+    const pollTemplates = filteredTemplates.filter(t => t.pollType !== 'survey' && t.category !== 'creators');
+    const surveyTemplates = filteredTemplates.filter(t => t.pollType === 'survey');
     const creatorTemplates = filteredTemplates.filter(t => t.category === 'creators');
     
     // Group creator templates by platform
@@ -529,39 +450,34 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     const twitchTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('twitch-'));
     const redditTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('reddit-'));
     
-    // Group survey templates by type (CSAT and Employee)
+    // Group MULTI-QUESTION survey templates for Featured section
+    // These are comprehensive surveys with multiple questions
     const csatTemplates = ALL_TEMPLATES.filter(t => 
-        t.pollType === 'survey' && 
+        t.pollType === 'survey' && // ONLY multi-question surveys
         (t.id.toLowerCase().includes('csat') || 
          t.id.toLowerCase().includes('nps') ||
          t.id.toLowerCase().includes('customer') ||
          t.name.toLowerCase().includes('customer') ||
          t.name.toLowerCase().includes('satisfaction') ||
-         t.name.toLowerCase().includes('csat'))
+         t.name.toLowerCase().includes('csat') ||
+         t.name.toLowerCase().includes('feedback'))
     );
     
     const employeeTemplates = ALL_TEMPLATES.filter(t => 
-        t.pollType === 'survey' && 
+        t.pollType === 'survey' && // ONLY multi-question surveys
         (t.id.toLowerCase().includes('employee') || 
          t.id.toLowerCase().includes('engagement') ||
          t.id.toLowerCase().includes('workplace') ||
          t.category === 'hr' ||
          t.name.toLowerCase().includes('employee') ||
          t.name.toLowerCase().includes('staff') ||
-         t.name.toLowerCase().includes('team pulse'))
+         t.name.toLowerCase().includes('team pulse') ||
+         t.name.toLowerCase().includes('morale'))
     );
     
     // Count totals
-    const totalPolls = ALL_TEMPLATES.filter(t => 
-        t.pollType !== 'survey' && 
-        t.category !== 'creators' && 
-        t.badge !== 'Quick' && 
-        !t.id.startsWith('quick-')
-    ).length;
-    const totalQuickSurveys = ALL_TEMPLATES.filter(t => 
-        t.badge === 'Quick' || t.id.startsWith('quick-')
-    ).length;
-    const totalMultiQuestion = ALL_TEMPLATES.filter(t => t.pollType === 'survey' && t.questionCount && t.questionCount > 2).length;
+    const totalPolls = ALL_TEMPLATES.filter(t => t.pollType !== 'survey' && t.category !== 'creators').length;
+    const totalSurveys = ALL_TEMPLATES.filter(t => t.pollType === 'survey').length;
     const totalCreators = CREATOR_TEMPLATES.length;
     
     const content = (
@@ -615,11 +531,30 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </button>
                             )}
                         </div>
+                        
+                        {/* Quick Create Buttons */}
+                        <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+                            <span className="text-sm text-slate-500">or start from scratch:</span>
+                            <a
+                                href="/create"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 hover:border-indigo-300 transition"
+                            >
+                                <CheckCircle size={16} />
+                                Create Poll
+                            </a>
+                            <a
+                                href="/survey"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+                            >
+                                <ClipboardList size={16} />
+                                Create Survey
+                            </a>
+                        </div>
                     </motion.div>
                 </div>
             </div>
             
-            {/* Type Filter Toggle (Polls vs Quick Feedback vs Creators vs Multi-Question) */}
+            {/* Type Filter Toggle (Polls vs Surveys vs Creators) */}
             {!isModal && (
                 <div className="px-4 pb-4">
                     <div className="max-w-5xl mx-auto">
@@ -628,14 +563,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 {[
                                     { id: 'all', label: 'All Templates', count: ALL_TEMPLATES.length },
                                     { id: 'polls', label: 'Polls', count: totalPolls },
-                                    { id: 'quick-surveys', label: 'Quick Surveys', count: totalQuickSurveys },
+                                    { id: 'surveys', label: 'Surveys', count: totalSurveys },
                                     { id: 'creators', label: '🎬 Creators', count: totalCreators },
-                                    { id: 'multi-question', label: '📋 Multi-Question', count: totalMultiQuestion },
                                 ].map((type) => (
                                     <button
                                         key={type.id}
                                         onClick={() => {
-                                            setTypeFilter(type.id as typeof typeFilter);
+                                            setTypeFilter(type.id as 'all' | 'polls' | 'surveys' | 'creators');
                                             setSelectedCategory('all'); // Reset category when changing type
                                             // Update URL hash
                                             if (type.id !== 'all') {
@@ -805,6 +739,31 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </div>
                             </div>
                             
+                            {/* Featured Surveys - Customer & Employee */}
+                            {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Surveys</h3>
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {csatTemplates.length > 0 && (
+                                            <FeaturedSurveyCard
+                                                surveyCategory={FEATURED_SURVEY_CATEGORIES[0]}
+                                                templates={csatTemplates}
+                                                onSelectTemplate={onSelectTemplate}
+                                                onViewAll={() => setSearchQuery('customer')}
+                                            />
+                                        )}
+                                        {employeeTemplates.length > 0 && (
+                                            <FeaturedSurveyCard
+                                                surveyCategory={FEATURED_SURVEY_CATEGORIES[1]}
+                                                templates={employeeTemplates}
+                                                onSelectTemplate={onSelectTemplate}
+                                                onViewAll={() => setSearchQuery('employee')}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
                             {/* Poll Templates Section */}
                             {pollTemplates.length > 0 && (
                                 <div ref={pollsSectionRef} className="mb-12 scroll-mt-48">
@@ -826,16 +785,36 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </div>
                             )}
                             
-                            {/* Quick Feedback Templates Section */}
-                            {quickSurveyTemplates.length > 0 && (
-                                <div ref={surveysSectionRef} className="scroll-mt-48 mb-12">
+                            {/* Survey Templates Section */}
+                            {surveyTemplates.length > 0 && (
+                                <div ref={surveysSectionRef} className="scroll-mt-48">
                                     <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                                         <ClipboardList className="w-5 h-5 text-teal-600" />
-                                        Quick Feedback
-                                        <span className="text-sm font-normal text-slate-500">({quickSurveyTemplates.length})</span>
+                                        Multi-Question Surveys
+                                        <span className="text-sm font-normal text-slate-500">({surveyTemplates.length} templates)</span>
                                     </h2>
+                                    
+                                    {/* All Survey Templates Grid (multi-question surveys only) */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {quickSurveyTemplates.map((template, index) => (
+                                        {/* Create Blank Survey Card */}
+                                        <a
+                                            href="/survey"
+                                            className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-teal-300 hover:border-teal-500 bg-gradient-to-br from-teal-50 to-emerald-50 transition-all duration-300 hover:shadow-lg"
+                                        >
+                                            <div className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
+                                                <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                                    <ClipboardList className="w-8 h-8 text-teal-600" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-slate-800 mb-2">Create Blank Survey</h3>
+                                                <p className="text-sm text-slate-500 text-center">Build a multi-question survey from scratch</p>
+                                                <div className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold text-sm group-hover:bg-teal-700 transition-colors flex items-center gap-2">
+                                                    <Zap size={14} />
+                                                    Start Building
+                                                </div>
+                                            </div>
+                                        </a>
+                                        
+                                        {surveyTemplates.map((template, index) => (
                                             <TemplateCard
                                                 key={template.id}
                                                 template={template}
@@ -846,70 +825,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     </div>
                                 </div>
                             )}
-                            
-                            {/* Multi-Question Surveys Section - Links to /survey */}
-                            {multiQuestionSurveys.length > 0 && (
-                                <div className="scroll-mt-48">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                            <ClipboardList className="w-5 h-5 text-emerald-600" />
-                                            Multi-Question Surveys
-                                            <span className="text-sm font-normal text-slate-500">({multiQuestionSurveys.length})</span>
-                                        </h2>
-                                        <a 
-                                            href="/survey"
-                                            className="text-sm text-emerald-600 font-medium hover:underline flex items-center gap-1"
-                                        >
-                                            Create Survey <ChevronRight size={14} />
-                                        </a>
-                                    </div>
-                                    
-                                    {/* Info banner */}
-                                    <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                                        <p className="text-sm text-emerald-700">
-                                            <strong>These templates open in our Survey Builder</strong> — create comprehensive surveys with multiple questions, sections, and advanced logic.
-                                        </p>
-                                    </div>
-                                    
-                                    {/* Featured Survey Types */}
-                                    {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
-                                        <div className="grid md:grid-cols-2 gap-6 mb-8">
-                                            {csatTemplates.length > 0 && (
-                                                <FeaturedSurveyCard
-                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
-                                                    templates={csatTemplates}
-                                                    onSelectTemplate={onSelectTemplate}
-                                                    onViewAll={() => setSearchQuery('customer')}
-                                                />
-                                            )}
-                                            {employeeTemplates.length > 0 && (
-                                                <FeaturedSurveyCard
-                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
-                                                    templates={employeeTemplates}
-                                                    onSelectTemplate={onSelectTemplate}
-                                                    onViewAll={() => setSearchQuery('employee')}
-                                                />
-                                            )}
-                                        </div>
-                                    )}
-                                    
-                                    {/* Multi-Question Survey Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {multiQuestionSurveys.map((template, index) => (
-                                            <MultiQuestionSurveyCard
-                                                key={template.id}
-                                                template={template}
-                                                index={index}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </>
                     )}
                     
-                    {/* POLLS / QUICK FEEDBACK FILTERED VIEW */}
-                    {(typeFilter === 'polls' || typeFilter === 'quick-surveys') && (
+                    {/* POLLS/SURVEYS FILTERED VIEW */}
+                    {(typeFilter === 'polls' || typeFilter === 'surveys') && (
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={`${selectedCategory}-${typeFilter}`}
@@ -918,54 +838,14 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                <div 
-                                    ref={typeFilter === 'polls' ? pollsSectionRef : surveysSectionRef}
-                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                                >
-                                    {filteredTemplates.map((template, index) => (
-                                        <TemplateCard
-                                            key={template.id}
-                                            template={template}
-                                            onSelect={onSelectTemplate}
-                                            index={index}
-                                        />
-                                    ))}
-                                </div>
-                            </motion.div>
-                        </AnimatePresence>
-                    )}
-                    
-                    {/* MULTI-QUESTION FILTERED VIEW */}
-                    {typeFilter === 'multi-question' && (
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key="multi-question"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {/* Info banner */}
-                                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
-                                    <p className="text-sm text-emerald-700">
-                                        <strong>Multi-question surveys</strong> open in our Survey Builder with sections, logic, and advanced features.
-                                    </p>
-                                    <a 
-                                        href="/survey"
-                                        className="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition"
-                                    >
-                                        Create Survey →
-                                    </a>
-                                </div>
-                                
-                                {/* Featured Survey Types */}
-                                {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
+                                {/* Featured Surveys - Show when viewing surveys */}
+                                {typeFilter === 'surveys' && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
                                     <div className="mb-8">
-                                        <h3 className="text-lg font-bold text-slate-900 mb-4">Popular Survey Types</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Surveys</h3>
                                         <div className="grid md:grid-cols-2 gap-6">
                                             {csatTemplates.length > 0 && (
                                                 <FeaturedSurveyCard
-                                                    surveyType={FEATURED_SURVEY_TYPES[0]}
+                                                    surveyCategory={FEATURED_SURVEY_CATEGORIES[0]}
                                                     templates={csatTemplates}
                                                     onSelectTemplate={onSelectTemplate}
                                                     onViewAll={() => setSearchQuery('customer')}
@@ -973,7 +853,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                             )}
                                             {employeeTemplates.length > 0 && (
                                                 <FeaturedSurveyCard
-                                                    surveyType={FEATURED_SURVEY_TYPES[1]}
+                                                    surveyCategory={FEATURED_SURVEY_CATEGORIES[1]}
                                                     templates={employeeTemplates}
                                                     onSelectTemplate={onSelectTemplate}
                                                     onViewAll={() => setSearchQuery('employee')}
@@ -983,13 +863,35 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     </div>
                                 )}
                                 
-                                {/* All Multi-Question Templates */}
-                                <h3 className="text-lg font-bold text-slate-900 mb-4">All Multi-Question Templates</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div 
+                                    ref={typeFilter === 'polls' ? pollsSectionRef : surveysSectionRef}
+                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                >
+                                    {/* Create Blank Survey Card - Show in surveys view */}
+                                    {typeFilter === 'surveys' && (
+                                        <a
+                                            href="/survey"
+                                            className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-teal-300 hover:border-teal-500 bg-gradient-to-br from-teal-50 to-emerald-50 transition-all duration-300 hover:shadow-lg"
+                                        >
+                                            <div className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
+                                                <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                                    <ClipboardList className="w-8 h-8 text-teal-600" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-slate-800 mb-2">Create Blank Survey</h3>
+                                                <p className="text-sm text-slate-500 text-center">Build a multi-question survey from scratch</p>
+                                                <div className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold text-sm group-hover:bg-teal-700 transition-colors flex items-center gap-2">
+                                                    <Zap size={14} />
+                                                    Start Building
+                                                </div>
+                                            </div>
+                                        </a>
+                                    )}
+                                    
                                     {filteredTemplates.map((template, index) => (
-                                        <MultiQuestionSurveyCard
+                                        <TemplateCard
                                             key={template.id}
                                             template={template}
+                                            onSelect={onSelectTemplate}
                                             index={index}
                                         />
                                     ))}

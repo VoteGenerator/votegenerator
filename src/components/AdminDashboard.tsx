@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard
+    Pause, Play, CreditCard, Menu
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
@@ -179,6 +179,7 @@ const AdminDashboard: React.FC = () => {
     // Individual poll actions
     const [duplicatingPollId, setDuplicatingPollId] = useState<string | null>(null);
     const [pausingPollId, setPausingPollId] = useState<string | null>(null);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1128,11 +1129,11 @@ const AdminDashboard: React.FC = () => {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8 sm:w-9 sm:h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="font-bold text-lg sm:text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                     </a>
                     
-                    {/* Nav Links */}
+                    {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
                         <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                             <PlusCircle size={16} /> Create Poll
@@ -1145,21 +1146,23 @@ const AdminDashboard: React.FC = () => {
                         </a>
                     </nav>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {/* Free users see Upgrade button */}
                         {tier === 'free' && (
                             <button
                                 onClick={() => setShowUpgradeModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg"
                             >
-                                <Crown size={16} /> Upgrade
+                                <Crown size={14} className="sm:w-4 sm:h-4" /> 
+                                <span className="hidden xs:inline">Upgrade</span>
                             </button>
                         )}
                         {/* Paid users see tier badge */}
                         {tier !== 'free' && (
-                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                                {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
-                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                            <div className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}>
+                                {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
+                                <span className="hidden sm:inline">{config.label}</span>
+                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
                                     {isPlanExpired 
                                         ? 'Expired' 
                                         : session?.expiresAt 
@@ -1174,8 +1177,40 @@ const AdminDashboard: React.FC = () => {
                                 <Settings size={20} className="text-slate-500" />
                             </button>
                         )}
+                        
+                        {/* Mobile menu button */}
+                        <button 
+                            onClick={() => setShowMobileMenu(!showMobileMenu)}
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
+                        >
+                            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                        </button>
                     </div>
                 </div>
+                
+                {/* Mobile Navigation Menu */}
+                <AnimatePresence>
+                    {showMobileMenu && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="md:hidden border-t border-slate-100 bg-white overflow-hidden"
+                        >
+                            <nav className="p-3 space-y-1">
+                                <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                    <PlusCircle size={20} /> Create New Poll
+                                </a>
+                                <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 text-indigo-600 font-medium">
+                                    <LayoutDashboard size={20} /> My Dashboard
+                                </a>
+                                <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                    <Zap size={20} /> Templates
+                                </a>
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 py-8">

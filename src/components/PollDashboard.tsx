@@ -2057,7 +2057,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         />
                                     </label>
                                     {/* Share Buttons - FREE */}
-                                    <div className="grid grid-cols-5 gap-2">
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                                         <button 
                                             onClick={shareToWhatsapp}
                                             className="flex flex-col items-center gap-2 p-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-colors"

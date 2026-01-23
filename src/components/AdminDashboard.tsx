@@ -1139,7 +1139,7 @@ const AdminDashboard: React.FC = () => {
                             <PlusCircle size={16} /> Create Poll
                         </a>
                         <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
-                            <LayoutDashboard size={16} /> My Dashboard
+                            <LayoutDashboard size={16} /> Admin Dashboard
                         </a>
                         <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                             <Zap size={16} /> Templates
@@ -1202,7 +1202,7 @@ const AdminDashboard: React.FC = () => {
                                     <PlusCircle size={20} /> Create New Poll
                                 </a>
                                 <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 text-indigo-600 font-medium">
-                                    <LayoutDashboard size={20} /> My Dashboard
+                                    <LayoutDashboard size={20} /> Admin Dashboard
                                 </a>
                                 <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
                                     <Zap size={20} /> Templates

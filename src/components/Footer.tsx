@@ -13,9 +13,9 @@ const Footer: React.FC = () => {
                         <h3 className="font-bold text-white mb-4">Product</h3>
                         <ul className="space-y-2 text-sm">
                             <li><a href="/create" className="hover:text-white transition">Create Poll</a></li>
+                            <li><a href="/survey" className="hover:text-white transition">Survey Maker</a></li>
                             <li><a href="/templates" className="hover:text-white transition">Templates</a></li>
                             <li><a href="/pricing" className="hover:text-white transition">Pricing</a></li>
-                            <li><a href="/survey" className="hover:text-white transition">Survey Maker</a></li>
                         </ul>
                     </div>
                     
@@ -33,18 +33,19 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Resources</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
                             <li><a href="/how-it-works" className="hover:text-white transition">How It Works</a></li>
+                            <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
                             <li><a href="/recover" className="hover:text-white transition">Recover Access</a></li>
                             <li><a href="/#manage-subscription" className="hover:text-white transition">Manage Subscription</a></li>
-                            <li><a href="/contact" className="hover:text-white transition">Contact Us</a></li>
                         </ul>
                     </div>
                     
-                    {/* Legal */}
+                    {/* Company & Legal */}
                     <div>
-                        <h3 className="font-bold text-white mb-4">Legal</h3>
+                        <h3 className="font-bold text-white mb-4">Company</h3>
                         <ul className="space-y-2 text-sm">
+                            <li><a href="/about" className="hover:text-white transition">About Us</a></li>
+                            <li><a href="/contact" className="hover:text-white transition">Contact Us</a></li>
                             <li><a href="/privacy" className="hover:text-white transition">Privacy Policy</a></li>
                             <li><a href="/terms" className="hover:text-white transition">Terms of Service</a></li>
                             <li><a href="/refund" className="hover:text-white transition">Refund Policy</a></li>

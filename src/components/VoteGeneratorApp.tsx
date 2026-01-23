@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, RefreshCw, ArrowRight, RotateCcw, LayoutDashboard, Zap, Crown, PlusCircle, Share2, Check } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw, ArrowRight, RotateCcw, LayoutDashboard, Zap, Crown, PlusCircle, Share2, Check, Menu, X } from 'lucide-react';
 import LandingPage from './LandingPage';
 import CreatePage from './CreatePage';
 import AdWall from './AdWall';
@@ -61,6 +61,7 @@ const VoteGeneratorApp: React.FC = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [upgradeHighlight, setUpgradeHighlight] = useState<string | undefined>(undefined);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     const pollInterval = useRef<number | undefined>(undefined);
 
     const parseHash = useCallback(() => {
@@ -530,8 +531,8 @@ const VoteGeneratorApp: React.FC = () => {
                             href="/"
                             className="flex items-center gap-2 hover:opacity-80 transition"
                         >
-                            <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
+                            <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8 sm:w-9 sm:h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            <span className="font-bold text-lg sm:text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                         </a>
                         
                         {/* Nav Links - consistent with AdminDashboard */}
@@ -543,13 +544,14 @@ const VoteGeneratorApp: React.FC = () => {
                             
                             return (
                                 <>
+                                    {/* Desktop Nav */}
                                     <nav className="hidden md:flex items-center gap-1">
                                         <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                                             <PlusCircle size={16} /> Create Poll
                                         </a>
                                         {hasPolls && (
                                             <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                                <LayoutDashboard size={16} /> My Dashboard
+                                                <LayoutDashboard size={16} /> Admin Dashboard
                                             </a>
                                         )}
                                         <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
@@ -558,27 +560,37 @@ const VoteGeneratorApp: React.FC = () => {
                                     </nav>
                                     
                                     {/* Right side - Upgrade or Tier badge */}
-                                    <div className="hidden md:flex items-center gap-3">
-                                        {isFreeUser ? (
-                                            <button
-                                                onClick={() => {
-                                                    setUpgradeHighlight(undefined);
-                                                    setShowUpgradeModal(true);
-                                                }}
-                                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
-                                            >
-                                                <Crown size={16} /> Upgrade
-                                            </button>
-                                        ) : (
-                                            <div className={`px-4 py-2 bg-gradient-to-r ${
-                                                subscriptionTier === 'business' 
-                                                    ? 'from-amber-500 to-orange-500' 
-                                                    : 'from-purple-500 to-indigo-500'
-                                            } text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                                                <Crown size={16} />
-                                                {subscriptionTier === 'business' ? 'Business' : 'Pro'}
-                                            </div>
-                                        )}
+                                    <div className="flex items-center gap-2 sm:gap-3">
+                                        <div className="hidden md:flex items-center">
+                                            {isFreeUser ? (
+                                                <button
+                                                    onClick={() => {
+                                                        setUpgradeHighlight(undefined);
+                                                        setShowUpgradeModal(true);
+                                                    }}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                                                >
+                                                    <Crown size={16} /> Upgrade
+                                                </button>
+                                            ) : (
+                                                <div className={`px-4 py-2 bg-gradient-to-r ${
+                                                    subscriptionTier === 'business' 
+                                                        ? 'from-amber-500 to-orange-500' 
+                                                        : 'from-purple-500 to-indigo-500'
+                                                } text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
+                                                    <Crown size={16} />
+                                                    {subscriptionTier === 'business' ? 'Business' : 'Pro'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Mobile menu button */}
+                                        <button 
+                                            onClick={() => setShowMobileMenu(!showMobileMenu)}
+                                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
+                                        >
+                                            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                                        </button>
                                     </div>
                                 </>
                             );
@@ -595,6 +607,44 @@ const VoteGeneratorApp: React.FC = () => {
                             </button>
                         )}
                     </div>
+                    
+                    {/* Mobile Navigation Menu */}
+                    {showMobileMenu && (viewState.type === 'results' || viewState.type === 'survey-results') && viewState.isAdmin && (() => {
+                        const userPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                        const hasPolls = userPolls.length > 0;
+                        const subscriptionTier = localStorage.getItem('vg_subscription_tier') || 'free';
+                        const isFreeUser = subscriptionTier === 'free';
+                        
+                        return (
+                            <div className="md:hidden border-t border-slate-100 bg-white">
+                                <nav className="p-3 space-y-1">
+                                    <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                        <PlusCircle size={20} /> Create New Poll
+                                    </a>
+                                    {hasPolls && (
+                                        <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                            <LayoutDashboard size={20} /> Admin Dashboard
+                                        </a>
+                                    )}
+                                    <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                        <Zap size={20} /> Templates
+                                    </a>
+                                    {isFreeUser && (
+                                        <button
+                                            onClick={() => {
+                                                setShowMobileMenu(false);
+                                                setUpgradeHighlight(undefined);
+                                                setShowUpgradeModal(true);
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 mt-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl"
+                                        >
+                                            <Crown size={18} /> Upgrade to Pro
+                                        </button>
+                                    )}
+                                </nav>
+                            </div>
+                        );
+                    })()}
                 </header>
             )}
 

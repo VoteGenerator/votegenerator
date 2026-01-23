@@ -1008,7 +1008,26 @@ const AdminDashboard: React.FC = () => {
 
     // Individual poll actions
     const handleDuplicatePoll = async (poll: UserPoll) => {
-        if (!session) return;
+        if (!session) {
+            alert('Session not found. Please refresh the page.');
+            return;
+        }
+        
+        // Debug log the poll object
+        console.log('Poll to duplicate:', {
+            id: poll.id,
+            title: poll.title,
+            hasAdminKey: !!poll.adminKey,
+            adminKeyLength: poll.adminKey?.length
+        });
+        
+        // Check if poll has adminKey
+        if (!poll.adminKey) {
+            console.error('Poll missing adminKey:', poll);
+            alert('Unable to duplicate: This poll is missing authentication data. Try refreshing the page first, or open the poll dashboard and duplicate from there.');
+            return;
+        }
+        
         setDuplicatingPollId(poll.id);
         
         try {
@@ -1021,13 +1040,14 @@ const AdminDashboard: React.FC = () => {
                 })
             });
             
-            if (response.ok) {
-                const { newPollId, newAdminKey } = await response.json();
-                
+            const data = await response.json();
+            console.log('Duplicate response:', response.status, data);
+            
+            if (response.ok && data.newPollId) {
                 // Add to local state
                 const newPoll: UserPoll = {
-                    id: newPollId,
-                    adminKey: newAdminKey,
+                    id: data.newPollId,
+                    adminKey: data.newAdminKey,
                     title: `${poll.title} (Copy)`,
                     type: poll.type,
                     createdAt: new Date().toISOString(),
@@ -1039,16 +1059,27 @@ const AdminDashboard: React.FC = () => {
                 localStorage.setItem('vg_user_session', JSON.stringify(updated));
                 setSession(updated);
                 
+                // Also update vg_polls
+                const vgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                vgPolls.unshift({ 
+                    id: data.newPollId, 
+                    adminKey: data.newAdminKey, 
+                    title: `${poll.title} (Copy)`,
+                    type: poll.type,
+                    createdAt: new Date().toISOString() 
+                });
+                localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
+                
                 // Highlight the new poll
-                setJustCreatedPollId(newPollId);
+                setJustCreatedPollId(data.newPollId);
                 setTimeout(() => setJustCreatedPollId(null), 5000);
             } else {
-                const data = await response.json();
-                alert(data.error || 'Failed to duplicate poll');
+                console.error('Duplicate failed:', data);
+                alert(data.error || 'Unable to duplicate poll. Please try again.');
             }
         } catch (error) {
             console.error('Duplicate error:', error);
-            alert('Failed to duplicate poll. Please try again.');
+            alert('Unable to duplicate: Network error. Please check your connection and try again.');
         }
         
         setDuplicatingPollId(null);
@@ -1611,7 +1642,7 @@ const AdminDashboard: React.FC = () => {
                                                         This poll is paused and not accepting votes. Upgrade or delete another poll to reactivate.
                                                     </div>
                                                 )}
-                                                <div className="flex items-start justify-between gap-4">
+                                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                                     {/* Bulk selection checkbox */}
                                                     {bulkSelectionMode && (
                                                         <div 
@@ -1661,15 +1692,30 @@ const AdminDashboard: React.FC = () => {
                                                                 {poll.responseCount || 0} votes
                                                             </span>
                                                             {(poll.responseCount || 0) === 0 && !isDraft && !isPaused && (
-                                                                <span className="text-amber-600 flex items-center gap-1">
+                                                                <span className="text-amber-600 flex items-center gap-1 hidden sm:flex">
                                                                     <Share2 size={12} />
                                                                     Share to get responses
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        
+                                                        {/* MOBILE: Primary action button - always visible */}
+                                                        <div className="sm:hidden mt-4">
+                                                            <a
+                                                                href={poll.type === 'survey' 
+                                                                    ? `/#survey=${poll.id}&admin=${poll.adminKey}`
+                                                                    : `/#id=${poll.id}&admin=${poll.adminKey}`
+                                                                }
+                                                                className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition flex items-center justify-center gap-2 font-semibold shadow-md"
+                                                            >
+                                                                <ExternalLink size={18} />
+                                                                {isDraft ? 'Edit & Preview' : 'Manage & Share'}
+                                                            </a>
+                                                        </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2">
+                                                    {/* DESKTOP: Action buttons row */}
+                                                    <div className="hidden sm:flex items-center gap-2">
                                                         {isPaused ? (
                                                             <button
                                                                 onClick={() => setShowUpgradeModal(true)}
@@ -1738,16 +1784,17 @@ const AdminDashboard: React.FC = () => {
                                                                 )}
                                                             </button>
                                                         )}
+                                                        {/* MANAGE & SHARE - Primary action, always visible */}
                                                         <a
                                                             href={poll.type === 'survey' 
                                                                 ? `/#survey=${poll.id}&admin=${poll.adminKey}`
                                                                 : `/#id=${poll.id}&admin=${poll.adminKey}`
                                                             }
-                                                            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition flex items-center gap-1.5 text-sm font-medium"
+                                                            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium shadow-sm"
                                                             title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
                                                         >
                                                             <ExternalLink size={16} />
-                                                            <span className="hidden sm:inline">{isDraft ? 'Edit' : 'Manage & Share'}</span>
+                                                            <span>{isDraft ? 'Edit' : 'Open'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
@@ -1756,6 +1803,56 @@ const AdminDashboard: React.FC = () => {
                                                         >
                                                             <Trash2 size={18} />
                                                         </button>
+                                                    </div>
+                                                    
+                                                    {/* MOBILE: Secondary actions row */}
+                                                    <div className="sm:hidden flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-100">
+                                                        <div className="flex items-center gap-2">
+                                                            {isPaused ? (
+                                                                <button
+                                                                    onClick={() => setShowUpgradeModal(true)}
+                                                                    className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg text-sm flex items-center gap-1.5"
+                                                                >
+                                                                    <Play size={14} /> Reactivate
+                                                                </button>
+                                                            ) : isDraft ? (
+                                                                <button
+                                                                    onClick={() => setShowGoLiveModal(poll.id)}
+                                                                    className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-lg text-sm flex items-center gap-1.5"
+                                                                >
+                                                                    <Rocket size={14} /> Go Live
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleCopyLink(poll, 'vote')}
+                                                                    className="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium flex items-center gap-1.5"
+                                                                >
+                                                                    {copiedId === `${poll.id}-vote` ? <Check size={14} /> : <Share2 size={14} />}
+                                                                    {copiedId === `${poll.id}-vote` ? 'Copied!' : 'Copy Link'}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <button
+                                                                onClick={() => handleDuplicatePoll(poll)}
+                                                                disabled={duplicatingPollId === poll.id}
+                                                                className="p-2 bg-slate-100 text-slate-600 rounded-lg"
+                                                                title="Duplicate"
+                                                            >
+                                                                {duplicatingPollId === poll.id ? (
+                                                                    <Loader2 size={16} className="animate-spin" />
+                                                                ) : (
+                                                                    <Copy size={16} />
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeletePoll(poll)}
+                                                                className="p-2 bg-slate-100 text-slate-600 hover:text-red-600 rounded-lg"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </motion.div>

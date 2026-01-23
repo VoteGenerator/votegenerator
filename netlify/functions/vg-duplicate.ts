@@ -42,35 +42,57 @@ export const handler: Handler = async (event) => {
     try {
         const body = JSON.parse(event.body || '{}');
         const { pollId, adminKey } = body;
+        
+        console.log('Duplicate request received');
+        console.log('pollId:', pollId);
+        console.log('adminKey provided:', adminKey ? 'yes (length: ' + adminKey.length + ')' : 'no');
 
-        if (!pollId || !adminKey) {
+        if (!pollId) {
+            console.log('Missing pollId');
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Missing pollId or adminKey' })
+                body: JSON.stringify({ error: 'Missing poll ID' })
+            };
+        }
+        
+        if (!adminKey) {
+            console.log('Missing adminKey');
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Missing admin key. Please refresh the page and try again.' })
             };
         }
 
         // Get poll store
         const store = getStore('polls');
+        console.log('Fetching poll from store...');
         const pollData = await store.get(pollId, { type: 'json' });
 
         if (!pollData) {
+            console.log('Poll not found:', pollId);
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ error: 'Poll not found. It may have been deleted.' })
             };
         }
 
         const poll = pollData as any;
+        console.log('Poll found:', poll.title);
+        console.log('Poll adminKey exists:', !!poll.adminKey);
+        console.log('AdminKey comparison:', poll.adminKey === adminKey ? 'MATCH' : 'MISMATCH');
 
         // Verify admin key
         if (poll.adminKey !== adminKey) {
+            console.log('Admin key mismatch');
+            console.log('Expected length:', poll.adminKey?.length);
+            console.log('Received length:', adminKey?.length);
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'Invalid admin key' })
+                body: JSON.stringify({ error: 'Invalid admin key. Please refresh the page and try again.' })
             };
         }
 

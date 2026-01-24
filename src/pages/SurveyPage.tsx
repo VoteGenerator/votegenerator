@@ -894,24 +894,24 @@ const SurveyPage: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 20 }}
-                            className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-lg"
+                            className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:p-4 shadow-lg z-50"
                         >
-                            <div className="max-w-6xl mx-auto flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 bg-gradient-to-br ${selectedTemplate.gradient} rounded-lg flex items-center justify-center`}>
+                            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                                    <div className={`w-10 h-10 bg-gradient-to-br ${selectedTemplate.gradient} rounded-lg flex items-center justify-center flex-shrink-0`}>
                                         <selectedTemplate.icon className="w-5 h-5 text-white" />
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-slate-900">{selectedTemplate.name}</p>
-                                        <p className="text-sm text-slate-600">{selectedTemplate.questionCount} questions • {selectedTemplate.estimatedTime}</p>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-bold text-slate-900 truncate">{selectedTemplate.name}</p>
+                                        <p className="text-xs sm:text-sm text-slate-600">{selectedTemplate.questionCount} questions • {selectedTemplate.estimatedTime}</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={handleStartBuilding}
-                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center gap-2"
+                                    className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
                                     Use this template
-                                    <ArrowRight className="w-5 h-5" />
+                                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
                             </div>
                         </motion.div>

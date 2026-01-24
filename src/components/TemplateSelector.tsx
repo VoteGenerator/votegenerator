@@ -659,7 +659,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     {typeFilter === 'creators' && (
                         <div ref={creatorsSectionRef} className="scroll-mt-48">
                             {/* Platform Cards */}
-                            <div className="grid md:grid-cols-3 gap-6 mb-12">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-12">
                                 <CreatorPlatformCard 
                                     platform={CREATOR_PLATFORMS[0]} 
                                     templates={youtubeTemplates} 
@@ -714,7 +714,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                         View all <ChevronRight size={14} />
                                     </a>
                                 </h2>
-                                <div className="grid md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                                     {CREATOR_PLATFORMS.map((platform) => {
                                         const templates = platform.id === 'youtube' ? youtubeTemplates :
                                                          platform.id === 'twitch' ? twitchTemplates :

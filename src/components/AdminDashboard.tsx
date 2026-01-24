@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu
+    Pause, Play, CreditCard, Menu, Bookmark
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
@@ -1217,53 +1217,73 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
-                        {/* Dashboard Access Info */}
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Link2 size={20} className="text-slate-600" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
-                                        {tier !== 'free' && (
-                                            <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
-                                        )}
-                                        {tier === 'free' && (
-                                            <div className="mt-2">
-                                                <p className="text-sm text-slate-500 mb-2">Save access to your polls:</p>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <input 
-                                                        type="text" 
-                                                        readOnly 
-                                                        value={window.location.href}
-                                                        className="flex-1 min-w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
-                                                    />
+                        {/* Dashboard Access Info - Combined */}
+                        {(() => {
+                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
+                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
+                            
+                            const dashboardUrl = session?.dashboardToken 
+                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                : window.location.href;
+                            
+                            return (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Link2 size={20} className="text-indigo-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-indigo-800 mb-1">Save Your Dashboard Access</h4>
+                                                <p className="text-sm text-indigo-700 mb-3">
+                                                    {tier !== 'free' 
+                                                        ? "Your login link was sent to your email. You can also save it using the options below."
+                                                        : "Choose how you'd like to access your dashboard in the future:"}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(window.location.href);
-                                                            setCopiedId('dashboard-link');
-                                                            setTimeout(() => setCopiedId(null), 2000);
+                                                            navigator.clipboard.writeText(dashboardUrl);
+                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            setCopiedDashboardLink(true);
+                                                            setTimeout(() => setCopiedDashboardLink(false), 2000);
                                                         }}
                                                         className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
                                                     >
-                                                        {copiedId === 'dashboard-link' ? <Check size={16} /> : <Copy size={16} />}
-                                                        {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
+                                                        {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                        {copiedDashboardLink ? 'Copied!' : 'Copy Link'}
                                                     </button>
                                                     <a
-                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime`)}`}
-                                                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
+                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
                                                     >
                                                         <Mail size={16} />
                                                         Email to Self
                                                     </a>
+                                                    <button
+                                                        onClick={() => {
+                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            setAdminLinkWarningDismissed(true);
+                                                        }}
+                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                    >
+                                                        <Bookmark size={16} />
+                                                        I've Bookmarked It
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setAdminLinkWarningDismissed(true)}
+                                                        className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                    >
+                                                        Dismiss
+                                                    </button>
                                                 </div>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </motion.div>
+                                </motion.div>
+                            );
+                        })()}
 
                         {/* Plan Expired Banner */}
                         {isPlanExpired && (
@@ -1378,65 +1398,6 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                             </motion.div>
                         )}
-
-                        {/* ⚠️ Save Your Dashboard Link Warning */}
-                        {(() => {
-                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
-                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
-                            
-                            const dashboardUrl = session?.dashboardToken 
-                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                : window.location.href;
-                            
-                            return (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: -10 }} 
-                                    animate={{ opacity: 1, y: 0 }} 
-                                    className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <AlertTriangle size={20} className="text-amber-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-amber-800 mb-1">Save Your Dashboard Link!</h4>
-                                            <p className="text-sm text-amber-700 mb-3">
-                                                Bookmark this page or save the link below. This is how you'll access your dashboard and manage all your polls.
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(dashboardUrl);
-                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                        setCopiedDashboardLink(true);
-                                                        setTimeout(() => setCopiedDashboardLink(false), 2000);
-                                                    }}
-                                                    className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
-                                                >
-                                                    {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
-                                                    {copiedDashboardLink ? 'Copied!' : 'Copy Dashboard Link'}
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                        setAdminLinkWarningDismissed(true);
-                                                    }}
-                                                    className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
-                                                >
-                                                    I've bookmarked it
-                                                </button>
-                                                <button
-                                                    onClick={() => setAdminLinkWarningDismissed(true)}
-                                                    className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
-                                                >
-                                                    Remind me later
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })()}
 
                         {/* Dashboard Header with Search */}
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">

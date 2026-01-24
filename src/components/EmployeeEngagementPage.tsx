@@ -1,503 +1,370 @@
 // ============================================================================
-// Employee Engagement Survey Landing Page - Typeform-Inspired Design
-// Target Keywords: employee engagement survey, staff engagement survey
-// Design: Clean, bold, conversion-focused with interactive preview
+// Employee Engagement Survey Landing Page
+// Target Keywords: employee engagement survey, staff engagement survey, 
+// team engagement survey, workplace engagement survey
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
-    ArrowRight, Check, ChevronRight, ChevronLeft, Star,
-    Users, BarChart3, Clock, Zap, Download, Shield,
-    Play, Sparkles
+    Users, BarChart3, Clock, CheckCircle, ArrowRight, Star,
+    TrendingUp, Zap, Shield, Download, Smartphone, Globe,
+    MessageSquare, Target, Award, ChevronRight, Play,
+    ListOrdered, Scale, AlignLeft, Hash
 } from 'lucide-react';
 
 // ============================================================================
-// INTERACTIVE SURVEY PREVIEW - Typeform-style one question at a time
+// Survey Preview Component - Shows actual question types
 // ============================================================================
 
-const TypeformPreview: React.FC = () => {
-    const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [answers, setAnswers] = useState<Record<number, any>>({});
-    const [isComplete, setIsComplete] = useState(false);
-
-    const questions = [
+const SurveyPreview: React.FC = () => {
+    const [activeSection, setActiveSection] = useState(0);
+    
+    const sections = [
         {
-            id: 0,
-            type: 'scale',
-            question: "How satisfied are you with your current role?",
-            subtitle: "1 = Not at all, 10 = Extremely satisfied",
-            scale: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            title: 'Overall Satisfaction',
+            questions: [
+                { type: 'scale', question: 'How satisfied are you with your role?', scale: '1-10' },
+                { type: 'rating', question: 'Rate your work-life balance', stars: 5 },
+            ]
         },
         {
-            id: 1,
-            type: 'choice',
-            question: "Do you feel you have opportunities for growth?",
-            options: ['Strongly agree', 'Agree', 'Neutral', 'Disagree', 'Strongly disagree']
+            title: 'Growth & Development',
+            questions: [
+                { type: 'multiple_choice', question: 'Do you feel you have growth opportunities?', options: ['Strongly agree', 'Agree', 'Neutral', 'Disagree'] },
+                { type: 'text', question: 'What skills would you like to develop?' },
+            ]
         },
         {
-            id: 2,
-            type: 'rating',
-            question: "How would you rate team collaboration?",
-            subtitle: "Your honest feedback helps us improve"
-        },
-        {
-            id: 3,
-            type: 'text',
-            question: "What's one thing we could do better?",
-            subtitle: "Optional but valuable",
-            placeholder: "Type your answer here..."
+            title: 'Team & Culture',
+            questions: [
+                { type: 'rating', question: 'How well does your team collaborate?', stars: 5 },
+                { type: 'textarea', question: 'What would improve our culture?' },
+            ]
         }
     ];
 
-    const progress = ((currentQuestion + 1) / questions.length) * 100;
-
-    const handleAnswer = (answer: any) => {
-        setAnswers({ ...answers, [currentQuestion]: answer });
-    };
-
-    const nextQuestion = () => {
-        if (currentQuestion < questions.length - 1) {
-            setCurrentQuestion(currentQuestion + 1);
-        } else {
-            setIsComplete(true);
-        }
-    };
-
-    const prevQuestion = () => {
-        if (currentQuestion > 0) {
-            setCurrentQuestion(currentQuestion - 1);
-        }
-    };
-
-    const currentQ = questions[currentQuestion];
-    const hasAnswer = answers[currentQuestion] !== undefined;
-
-    if (isComplete) {
-        return (
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden h-[500px] flex flex-col">
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex-1 flex flex-col items-center justify-center p-12 text-center"
-                >
-                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-                        <Check size={40} className="text-emerald-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Thanks for your feedback!</h3>
-                    <p className="text-slate-500 mb-8">Your responses help us build a better workplace.</p>
-                    <button 
-                        onClick={() => { setCurrentQuestion(0); setIsComplete(false); setAnswers({}); }}
-                        className="text-emerald-600 font-medium hover:underline"
-                    >
-                        Try again →
-                    </button>
-                </motion.div>
-            </div>
-        );
-    }
-
     return (
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden h-[500px] flex flex-col">
-            {/* Progress Bar */}
-            <div className="h-1 bg-slate-100">
-                <motion.div 
-                    className="h-full bg-emerald-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.3 }}
-                />
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <Users size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg">Employee Engagement Survey</h3>
+                        <p className="text-emerald-100 text-sm">3 sections • 6 questions • ~3 min</p>
+                    </div>
+                </div>
+                
+                {/* Progress */}
+                <div className="mt-4">
+                    <div className="flex gap-2">
+                        {sections.map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setActiveSection(i)}
+                                className={`flex-1 h-2 rounded-full transition ${
+                                    i === activeSection ? 'bg-white' : 'bg-white/30'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            {/* Question Area */}
-            <div className="flex-1 flex flex-col p-8 lg:p-12">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={currentQuestion}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex-1 flex flex-col"
-                    >
-                        {/* Question Number */}
-                        <span className="text-sm text-emerald-600 font-medium mb-4">
-                            {currentQuestion + 1} → {questions.length}
-                        </span>
+            {/* Content */}
+            <div className="p-6">
+                <div className="mb-4">
+                    <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                        Section {activeSection + 1} of {sections.length}
+                    </span>
+                    <h4 className="text-xl font-bold text-slate-800 mt-1">
+                        {sections[activeSection].title}
+                    </h4>
+                </div>
 
-                        {/* Question Text */}
-                        <h2 className="text-2xl lg:text-3xl font-bold text-slate-800 mb-2 leading-tight">
-                            {currentQ.question}
-                        </h2>
-                        {currentQ.subtitle && (
-                            <p className="text-slate-500 mb-8">{currentQ.subtitle}</p>
-                        )}
-
-                        {/* Answer Input */}
-                        <div className="flex-1 flex flex-col justify-center">
-                            {currentQ.type === 'scale' && (
-                                <div className="flex justify-between gap-2">
-                                    {currentQ.scale?.map((num) => (
-                                        <button
-                                            key={num}
-                                            onClick={() => handleAnswer(num)}
-                                            className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl font-bold text-lg transition-all ${
-                                                answers[currentQuestion] === num
-                                                    ? 'bg-emerald-500 text-white scale-110 shadow-lg'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
-                                            }`}
-                                        >
-                                            {num}
-                                        </button>
+                <div className="space-y-4">
+                    {sections[activeSection].questions.map((q, i) => (
+                        <div key={i} className="p-4 bg-slate-50 rounded-xl">
+                            <p className="font-medium text-slate-700 mb-3">{q.question}</p>
+                            
+                            {q.type === 'scale' && (
+                                <div className="flex gap-2">
+                                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                        <div key={n} className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium border-2 ${
+                                            n === 7 ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-400'
+                                        }`}>
+                                            {n}
+                                        </div>
                                     ))}
                                 </div>
                             )}
-
-                            {currentQ.type === 'choice' && (
-                                <div className="space-y-3">
-                                    {currentQ.options?.map((option, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleAnswer(option)}
-                                            className={`w-full p-4 rounded-xl text-left font-medium transition-all flex items-center gap-3 ${
-                                                answers[currentQuestion] === option
-                                                    ? 'bg-emerald-500 text-white shadow-lg'
-                                                    : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
-                                            }`}
-                                        >
-                                            <span className={`w-6 h-6 rounded-md flex items-center justify-center text-sm ${
-                                                answers[currentQuestion] === option
-                                                    ? 'bg-white/20 text-white'
-                                                    : 'bg-white text-slate-500'
+                            
+                            {q.type === 'rating' && (
+                                <div className="flex gap-1">
+                                    {[1,2,3,4,5].map(n => (
+                                        <Star key={n} size={28} className={n <= 4 ? 'text-amber-400 fill-amber-400' : 'text-slate-300'} />
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {q.type === 'multiple_choice' && q.options && (
+                                <div className="space-y-2">
+                                    {q.options.map((opt, j) => (
+                                        <div key={j} className={`p-3 rounded-lg border-2 flex items-center gap-3 ${
+                                            j === 1 ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+                                        }`}>
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                                j === 1 ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'
                                             }`}>
-                                                {String.fromCharCode(65 + i)}
-                                            </span>
-                                            {option}
-                                        </button>
+                                                {j === 1 && <CheckCircle size={12} className="text-white" />}
+                                            </div>
+                                            <span className="text-sm text-slate-700">{opt}</span>
+                                        </div>
                                     ))}
                                 </div>
                             )}
-
-                            {currentQ.type === 'rating' && (
-                                <div className="flex justify-center gap-3">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            onClick={() => handleAnswer(star)}
-                                            className="transition-transform hover:scale-110"
-                                        >
-                                            <Star
-                                                size={44}
-                                                className={`transition ${
-                                                    answers[currentQuestion] >= star
-                                                        ? 'text-amber-400 fill-amber-400'
-                                                        : 'text-slate-300 hover:text-amber-300'
-                                                }`}
-                                            />
-                                        </button>
-                                    ))}
-                                </div>
+                            
+                            {q.type === 'text' && (
+                                <input 
+                                    type="text" 
+                                    placeholder="Type your answer..." 
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:outline-none"
+                                />
                             )}
-
-                            {currentQ.type === 'text' && (
-                                <textarea
-                                    value={answers[currentQuestion] || ''}
-                                    onChange={(e) => handleAnswer(e.target.value)}
-                                    placeholder={currentQ.placeholder}
-                                    className="w-full h-32 p-4 text-lg border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:outline-none resize-none"
+                            
+                            {q.type === 'textarea' && (
+                                <textarea 
+                                    placeholder="Share your thoughts..." 
+                                    rows={3}
+                                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:outline-none resize-none"
                                 />
                             )}
                         </div>
-                    </motion.div>
-                </AnimatePresence>
-            </div>
+                    ))}
+                </div>
 
-            {/* Navigation */}
-            <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-                <button
-                    onClick={prevQuestion}
-                    disabled={currentQuestion === 0}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                        currentQuestion === 0
-                            ? 'text-slate-300 cursor-not-allowed'
-                            : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                    <ChevronLeft size={20} />
-                    Back
-                </button>
-
-                <button
-                    onClick={nextQuestion}
-                    disabled={!hasAnswer && currentQ.type !== 'text'}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition ${
-                        hasAnswer || currentQ.type === 'text'
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/30'
-                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    }`}
-                >
-                    {currentQuestion === questions.length - 1 ? 'Submit' : 'OK'}
-                    <Check size={18} />
-                </button>
+                {/* Navigation */}
+                <div className="flex gap-3 mt-6">
+                    {activeSection > 0 && (
+                        <button 
+                            onClick={() => setActiveSection(activeSection - 1)}
+                            className="px-4 py-2 text-slate-600 font-medium"
+                        >
+                            ← Back
+                        </button>
+                    )}
+                    <button 
+                        onClick={() => setActiveSection(Math.min(activeSection + 1, sections.length - 1))}
+                        className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition"
+                    >
+                        {activeSection === sections.length - 1 ? 'Submit' : 'Next Section →'}
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
 
 // ============================================================================
-// RESULTS PREVIEW
+// Results Preview Component
 // ============================================================================
 
 const ResultsPreview: React.FC = () => {
-    const [animate, setAnimate] = useState(false);
-    
-    useEffect(() => {
-        const timer = setTimeout(() => setAnimate(true), 500);
-        return () => clearTimeout(timer);
-    }, []);
+    const data = [
+        { label: 'Very Satisfied', value: 42, color: 'bg-emerald-500' },
+        { label: 'Satisfied', value: 31, color: 'bg-emerald-400' },
+        { label: 'Neutral', value: 18, color: 'bg-slate-400' },
+        { label: 'Dissatisfied', value: 9, color: 'bg-orange-400' },
+    ];
+    const total = data.reduce((sum, d) => sum + d.value, 0);
 
     return (
-        <div className="bg-white rounded-3xl shadow-xl p-8">
-            <div className="flex items-center justify-between mb-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-xl font-bold text-slate-800">Engagement Score</h3>
-                    <p className="text-slate-500 text-sm">Last 30 days • 47 responses</p>
+                    <h4 className="font-bold text-slate-800">Results Dashboard</h4>
+                    <p className="text-sm text-slate-500">{total} responses collected</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-100 rounded-full">
+                <div className="flex items-center gap-2 text-emerald-600">
                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-sm font-medium text-emerald-700">Live</span>
+                    <span className="text-sm font-medium">Live</span>
                 </div>
             </div>
 
-            {/* Big Number */}
-            <div className="text-center mb-8">
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={animate ? { scale: 1 } : {}}
-                    transition={{ type: "spring", duration: 0.8 }}
-                    className="inline-flex items-baseline gap-1"
-                >
-                    <span className="text-7xl font-black text-emerald-600">7.8</span>
-                    <span className="text-2xl text-slate-400">/10</span>
-                </motion.div>
-                <p className="text-slate-500 mt-2">Average satisfaction score</p>
-            </div>
-
-            {/* Breakdown */}
-            <div className="space-y-4">
-                {[
-                    { label: 'Role Satisfaction', score: 8.2, color: 'bg-emerald-500' },
-                    { label: 'Growth Opportunities', score: 6.9, color: 'bg-blue-500' },
-                    { label: 'Team Collaboration', score: 8.5, color: 'bg-purple-500' },
-                ].map((item, i) => (
+            <div className="space-y-3">
+                {data.map((item, i) => (
                     <div key={i}>
-                        <div className="flex justify-between text-sm mb-2">
-                            <span className="text-slate-600">{item.label}</span>
-                            <span className="font-bold text-slate-800">{item.score}</span>
+                        <div className="flex justify-between text-sm mb-1">
+                            <span className="text-slate-700">{item.label}</span>
+                            <span className="text-slate-500">{item.value} ({Math.round(item.value/total*100)}%)</span>
                         </div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={animate ? { width: `${item.score * 10}%` } : {}}
-                                transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }}
+                                animate={{ width: `${(item.value/total)*100}%` }}
+                                transition={{ duration: 0.8, delay: i * 0.1 }}
                                 className={`h-full ${item.color} rounded-full`}
                             />
                         </div>
                     </div>
                 ))}
             </div>
+
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-100">
+                <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-800">4.2</p>
+                    <p className="text-xs text-slate-500">Avg Rating</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-2xl font-bold text-emerald-600">73%</p>
+                    <p className="text-xs text-slate-500">Satisfied+</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-800">2.4m</p>
+                    <p className="text-xs text-slate-500">Avg Time</p>
+                </div>
+            </div>
         </div>
     );
 };
 
 // ============================================================================
-// MAIN PAGE
+// Main Page Component
 // ============================================================================
 
 const EmployeeEngagementPage: React.FC = () => {
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* Hero - Clean, Typeform-style */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 min-h-[90vh] flex items-center">
-                {/* Subtle background pattern */}
-                <div className="absolute inset-0 opacity-5">
-                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" strokeWidth="1"/>
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+            {/* Hero Section */}
+            <section className="relative overflow-hidden">
+                {/* Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700" />
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                        backgroundSize: '32px 32px'
+                    }} />
                 </div>
 
-                <div className="relative max-w-7xl mx-auto px-6 py-20 w-full">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                <div className="relative max-w-6xl mx-auto px-4 py-20 lg:py-28">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Left: Copy */}
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
                         >
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-8"
-                            >
-                                <Sparkles size={16} />
-                                Free template • No signup for employees
-                            </motion.div>
+                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full text-white text-sm font-medium mb-6">
+                                <Zap size={16} />
+                                Free Survey Template
+                            </span>
                             
-                            <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-6">
-                                Employee
-                                <br />
-                                <span className="text-emerald-300">Engagement</span>
-                                <br />
-                                Survey
+                            <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6">
+                                Employee Engagement Survey
                             </h1>
                             
-                            <p className="text-xl text-emerald-100/80 mb-10 leading-relaxed max-w-lg">
-                                Understand how your team really feels. Beautiful surveys that employees actually complete—with results you can act on.
+                            <p className="text-xl text-emerald-100 mb-8 leading-relaxed">
+                                Understand how your team really feels. Create a professional engagement survey in minutes—no signup required for your employees to respond.
                             </p>
 
-                            <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex flex-col sm:flex-row gap-4 mb-8">
                                 <a 
                                     href="/create?template=employee-engagement&type=survey"
-                                    className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-emerald-700 font-bold text-lg rounded-2xl hover:shadow-2xl hover:shadow-white/20 transition-all"
+                                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-emerald-700 font-bold rounded-xl hover:bg-emerald-50 transition shadow-xl"
                                 >
-                                    Use this template
-                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                    Use This Template
+                                    <ArrowRight size={20} />
                                 </a>
                                 <a 
                                     href="#preview"
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-4 text-white/90 font-medium rounded-2xl hover:bg-white/10 transition"
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 backdrop-blur text-white font-medium rounded-xl hover:bg-white/20 transition border border-white/20"
                                 >
                                     <Play size={18} />
-                                    See it in action
+                                    See Preview
                                 </a>
                             </div>
+
+                            {/* Trust Signals */}
+                            <div className="flex flex-wrap gap-6 text-emerald-100 text-sm">
+                                <span className="flex items-center gap-2">
+                                    <CheckCircle size={16} />
+                                    No signup for respondents
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <CheckCircle size={16} />
+                                    Works on any device
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <CheckCircle size={16} />
+                                    Results in real-time
+                                </span>
+                            </div>
                         </motion.div>
 
-                        {/* Right: Interactive Preview */}
+                        {/* Right: Preview */}
                         <motion.div
-                            initial={{ opacity: 0, x: 40 }}
+                            initial={{ opacity: 0, x: 30 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
+                            transition={{ delay: 0.2 }}
                             className="hidden lg:block"
                         >
-                            <TypeformPreview />
+                            <SurveyPreview />
                         </motion.div>
                     </div>
                 </div>
             </section>
 
-            {/* Trust Bar */}
-            <section className="bg-white border-b border-slate-200">
-                <div className="max-w-7xl mx-auto px-6 py-6">
-                    <div className="flex flex-wrap justify-center gap-8 lg:gap-16 text-slate-600">
-                        {[
-                            { icon: Clock, text: '2 min to create' },
-                            { icon: Users, text: 'No signup for respondents' },
-                            { icon: BarChart3, text: 'Real-time results' },
-                            { icon: Download, text: 'Export to CSV' },
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm">
-                                <item.icon size={18} className="text-emerald-600" />
-                                <span>{item.text}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Problem → Solution */}
-            <section className="py-24 bg-white">
-                <div className="max-w-4xl mx-auto px-6 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <h2 className="text-4xl font-bold text-slate-900 mb-6">
-                            Long surveys don't get completed.
-                            <br />
-                            <span className="text-emerald-600">Simple ones do.</span>
+            {/* What's Included */}
+            <section className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            Everything You Need to Measure Engagement
                         </h2>
-                        <p className="text-xl text-slate-600 leading-relaxed">
-                            Our one-question-at-a-time format keeps employees engaged. 
-                            You get higher response rates and more honest feedback.
-                        </p>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* Interactive Demo Section */}
-            <section id="preview" className="py-24 bg-slate-50">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">Try it yourself</h2>
-                        <p className="text-slate-600">This is exactly what your employees will see.</p>
-                    </div>
-
-                    <div className="max-w-2xl mx-auto lg:hidden">
-                        <TypeformPreview />
-                    </div>
-
-                    <div className="hidden lg:grid lg:grid-cols-2 gap-12 items-start">
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-4">What employees see</h3>
-                            <TypeformPreview />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-4">What you see</h3>
-                            <ResultsPreview />
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Features - Clean Grid */}
-            <section className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything you need</h2>
-                        <p className="text-slate-600 max-w-2xl mx-auto">
-                            Built for teams who want actionable feedback without the complexity.
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            Our employee engagement template includes proven question types used by HR teams worldwide.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-3 gap-8">
                         {[
                             {
-                                icon: Star,
-                                title: 'Multiple question types',
-                                description: 'Scales, ratings, multiple choice, and open text. Mix and match to get the feedback you need.'
+                                icon: Scale,
+                                title: 'Satisfaction Scales',
+                                description: '1-10 scales and 5-star ratings to measure satisfaction, engagement, and likelihood to recommend.',
+                                color: 'bg-emerald-100 text-emerald-600'
                             },
                             {
-                                icon: Zap,
-                                title: 'One-click for employees',
-                                description: 'No accounts, no apps, no friction. Employees click a link and start responding immediately.'
+                                icon: ListOrdered,
+                                title: 'Multiple Choice',
+                                description: 'Pre-built questions about growth, culture, management, and work-life balance.',
+                                color: 'bg-blue-100 text-blue-600'
+                            },
+                            {
+                                icon: AlignLeft,
+                                title: 'Open-Ended Feedback',
+                                description: 'Text fields for employees to share detailed thoughts and suggestions in their own words.',
+                                color: 'bg-purple-100 text-purple-600'
                             },
                             {
                                 icon: BarChart3,
-                                title: 'Visual results dashboard',
-                                description: 'Watch responses come in. See averages, distributions, and individual feedback all in one place.'
+                                title: 'Visual Results Dashboard',
+                                description: 'See responses as they come in with charts, averages, and breakdowns by question.',
+                                color: 'bg-amber-100 text-amber-600'
                             },
                             {
                                 icon: Download,
                                 title: 'Export to CSV',
-                                description: 'Download all responses for deeper analysis in Excel, Google Sheets, or your HR tools.'
+                                description: 'Download all responses for deeper analysis in Excel, Google Sheets, or your HR tools.',
+                                color: 'bg-rose-100 text-rose-600'
                             },
                             {
-                                icon: Users,
-                                title: 'Multi-section surveys',
-                                description: 'Organize questions into sections: satisfaction, growth, culture, management—whatever you need.'
-                            },
-                            {
-                                icon: Clock,
-                                title: '2 minutes to create',
-                                description: 'Start with our template or build your own. Add questions, customize, and share—that fast.'
+                                icon: Smartphone,
+                                title: 'Mobile-Friendly',
+                                description: 'Employees can respond from any device—phone, tablet, or desktop. No app needed.',
+                                color: 'bg-cyan-100 text-cyan-600'
                             },
                         ].map((feature, i) => (
                             <motion.div
@@ -506,10 +373,10 @@ const EmployeeEngagementPage: React.FC = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
-                                className="p-8 rounded-2xl bg-slate-50 hover:bg-slate-100 transition"
+                                className="p-6 bg-slate-50 rounded-2xl hover:shadow-lg transition"
                             >
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-4">
-                                    <feature.icon size={24} className="text-emerald-600" />
+                                <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
+                                    <feature.icon size={24} />
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-800 mb-2">{feature.title}</h3>
                                 <p className="text-slate-600">{feature.description}</p>
@@ -519,18 +386,38 @@ const EmployeeEngagementPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* How It Works - Minimal */}
-            <section className="py-24 bg-slate-50">
-                <div className="max-w-5xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-slate-900 mb-4">How it works</h2>
+            {/* How It Works */}
+            <section className="py-20 bg-slate-50">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            How It Works
+                        </h2>
+                        <p className="text-lg text-slate-600">
+                            From creation to insights in three simple steps.
+                        </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { step: '1', title: 'Create', description: 'Use our template or customize your own questions. Takes about 2 minutes.' },
-                            { step: '2', title: 'Share', description: 'Send the link via email, Slack, or any tool. Employees click and respond—no signup.' },
-                            { step: '3', title: 'Learn', description: 'See results in real-time. Averages, breakdowns, and all feedback in one dashboard.' },
+                            {
+                                step: '1',
+                                title: 'Create Your Survey',
+                                description: 'Start with our template or customize your own. Add sections, change questions, set which are required.',
+                                time: '2 minutes'
+                            },
+                            {
+                                step: '2',
+                                title: 'Share the Link',
+                                description: 'Send the survey link via email, Slack, or your internal tools. Employees click and respond—no account needed.',
+                                time: 'Instant'
+                            },
+                            {
+                                step: '3',
+                                title: 'Review Results',
+                                description: 'Watch responses come in on your dashboard. See charts, averages, and individual feedback. Export anytime.',
+                                time: 'Real-time'
+                            },
                         ].map((item, i) => (
                             <motion.div
                                 key={i}
@@ -538,70 +425,155 @@ const EmployeeEngagementPage: React.FC = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
-                                className="text-center"
+                                className="relative"
                             >
-                                <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                                    {item.step}
+                                <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 h-full">
+                                    <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xl font-bold mb-6">
+                                        {item.step}
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-800 mb-3">{item.title}</h3>
+                                    <p className="text-slate-600 mb-4">{item.description}</p>
+                                    <span className="inline-flex items-center gap-1 text-sm text-emerald-600 font-medium">
+                                        <Clock size={14} />
+                                        {item.time}
+                                    </span>
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">{item.title}</h3>
-                                <p className="text-slate-600">{item.description}</p>
+                                {i < 2 && (
+                                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                                        <ChevronRight size={24} className="text-slate-300" />
+                                    </div>
+                                )}
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* CTA - Bold and Simple */}
-            <section className="py-24 bg-emerald-600">
-                <div className="max-w-4xl mx-auto px-6 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-                            Ready to hear from your team?
-                        </h2>
-                        <p className="text-xl text-emerald-100 mb-10">
-                            Create your survey in minutes. Free to start.
-                        </p>
-                        <a 
-                            href="/create?template=employee-engagement&type=survey"
-                            className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-emerald-700 font-bold text-lg rounded-2xl hover:shadow-2xl transition-all"
-                        >
-                            Get started free
-                            <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
-                        </a>
-                        <p className="text-emerald-200 text-sm mt-6">
-                            No credit card required
-                        </p>
-                    </motion.div>
+            {/* Results Preview */}
+            <section id="preview" className="py-20 bg-white">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                                Insights at a Glance
+                            </h2>
+                            <p className="text-lg text-slate-600 mb-6">
+                                Your results dashboard shows you exactly how your team feels—with visual charts and actionable metrics.
+                            </p>
+                            
+                            <ul className="space-y-4">
+                                {[
+                                    'Real-time response tracking',
+                                    'Visual breakdown by question',
+                                    'Average scores and ratings',
+                                    'Full text responses for open-ended questions',
+                                    'Export everything to CSV'
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-3 text-slate-700">
+                                        <CheckCircle size={20} className="text-emerald-500 flex-shrink-0" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        
+                        <ResultsPreview />
+                    </div>
                 </div>
             </section>
 
-            {/* FAQ - Clean */}
-            <section className="py-24 bg-white">
-                <div className="max-w-3xl mx-auto px-6">
+            {/* Question Types */}
+            <section className="py-20 bg-slate-50">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                            15 Question Types to Choose From
+                        </h2>
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            Build the perfect survey with our flexible question types. Mix and match to get the feedback you need.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {[
+                            { name: 'Multiple Choice', icon: CheckCircle },
+                            { name: 'Star Rating', icon: Star },
+                            { name: 'Scale (1-10)', icon: Hash },
+                            { name: 'Yes / No', icon: Target },
+                            { name: 'Short Text', icon: MessageSquare },
+                            { name: 'Long Text', icon: AlignLeft },
+                            { name: 'Dropdown', icon: ListOrdered },
+                            { name: 'Ranking', icon: Award },
+                            { name: 'Number', icon: Hash },
+                            { name: 'Date Picker', icon: Clock },
+                        ].map((type, i) => (
+                            <div key={i} className="bg-white rounded-xl p-4 border border-slate-200 text-center">
+                                <type.icon size={24} className="mx-auto text-slate-400 mb-2" />
+                                <span className="text-sm font-medium text-slate-700">{type.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-20 bg-gradient-to-r from-emerald-600 to-teal-600">
+                <div className="max-w-4xl mx-auto px-4 text-center">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+                        Ready to hear from your team?
+                    </h2>
+                    <p className="text-xl text-emerald-100 mb-8">
+                        Create your employee engagement survey in minutes. No credit card required.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a 
+                            href="/create?template=employee-engagement&type=survey"
+                            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-emerald-700 font-bold rounded-xl hover:bg-emerald-50 transition shadow-xl"
+                        >
+                            Use This Template
+                            <ArrowRight size={20} />
+                        </a>
+                        <a 
+                            href="/create?type=survey"
+                            className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 backdrop-blur text-white font-medium rounded-xl hover:bg-white/20 transition border border-white/20"
+                        >
+                            Start from Scratch
+                        </a>
+                    </div>
+                    
+                    <p className="text-emerald-200 text-sm mt-6">
+                        Free to create • No signup for respondents • Results in real-time
+                    </p>
+                </div>
+            </section>
+
+            {/* FAQ */}
+            <section className="py-20 bg-white">
+                <div className="max-w-3xl mx-auto px-4">
                     <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
-                        Questions & Answers
+                        Frequently Asked Questions
                     </h2>
                     
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {[
                             {
-                                q: 'Do employees need to create an account?',
-                                a: 'No. Employees click the link and start responding immediately. No signup, no app download—works on any device.'
+                                q: 'Do employees need to create an account to respond?',
+                                a: 'No. Employees simply click the link and start answering. No signup, no app download, no email required.'
                             },
                             {
                                 q: 'Can I customize the questions?',
-                                a: 'Yes. Start with our template and add, edit, or remove any question. Create multiple sections, set required fields, and make it yours.'
+                                a: 'Yes. Start with our template and add, remove, or edit any question. You can also create multiple sections and set which questions are required.'
                             },
                             {
-                                q: 'Can I see who responded?',
-                                a: 'Yes. You can see individual responses with all answers and timestamps. Names are collected if you include a name field, otherwise responses are identified by submission number.'
+                                q: 'How do I share the survey with my team?',
+                                a: 'You get a unique link that you can share via email, Slack, Teams, or any communication tool your company uses.'
                             },
                             {
-                                q: 'Is there a limit on responses?',
+                                q: 'Can I see individual responses?',
+                                a: 'Yes. The results dashboard shows both aggregated data (charts, averages) and individual responses. You can view each submission with all answers.'
+                            },
+                            {
+                                q: 'Is there a limit on how many people can respond?',
                                 a: 'The free plan has response limits. For larger teams or unlimited responses, check our Pro and Business plans.'
                             },
                             {
@@ -609,7 +581,7 @@ const EmployeeEngagementPage: React.FC = () => {
                                 a: 'Yes. Export all responses to CSV for analysis in Excel, Google Sheets, or your HR analytics tools.'
                             },
                         ].map((faq, i) => (
-                            <div key={i}>
+                            <div key={i} className="border-b border-slate-200 pb-6">
                                 <h3 className="text-lg font-semibold text-slate-800 mb-2">{faq.q}</h3>
                                 <p className="text-slate-600">{faq.a}</p>
                             </div>

@@ -2308,11 +2308,19 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Embed Poll"
                             icon={<Code size={20} />}
-                            badge={isFree && usagePercentage >= 100 ? (
-                                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">
-                                    At Limit
-                                </span>
-                            ) : null}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Add this poll directly to your website, blog, or Notion page. Visitors can vote without leaving your site."
+                                        position="left"
+                                    />
+                                    {isFree && usagePercentage >= 100 ? (
+                                        <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                                            At Limit
+                                        </span>
+                                    ) : null}
+                                </>
+                            }
                             defaultOpen={false}
                         >
                             <div className="pt-4">
@@ -2370,7 +2378,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Custom Short Link"
                             icon={<Link2 size={20} />}
-                            badge={!isPro && <UpgradeBadge small />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Create a memorable, branded URL for your poll like 'vote.gen/team-survey'. Easier to share and remember."
+                                        position="left"
+                                    />
+                                    {!isPro && <UpgradeBadge small />}
+                                </>
+                            }
                             defaultOpen={false}
                         >
                             <div className="pt-4">
@@ -2408,6 +2424,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Backup Dashboard Link"
                             icon={<Key size={20} />}
+                            badge={
+                                <HelpTooltip 
+                                    content="Save this backup link to access this specific poll's dashboard from any device. Unlike your main dashboard, this only manages this one poll."
+                                    position="left"
+                                />
+                            }
                             defaultOpen={false}
                         >
                             <div className="pt-4 space-y-4">
@@ -2499,6 +2521,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Poll Settings"
                             icon={<Settings size={20} />}
+                            badge={
+                                <HelpTooltip 
+                                    content="View and edit your poll's configuration including security, result visibility, deadline, and sharing options."
+                                    position="left"
+                                />
+                            }
                             defaultOpen={true}
                         >
                             <div className="pt-4 space-y-4">
@@ -2609,7 +2637,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <CollapsibleSection
                                 title="Access Codes"
                                 icon={<Key size={20} />}
-                                badge={<span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">{poll.allowedCodes.length}</span>}
+                                badge={
+                                    <>
+                                        <HelpTooltip 
+                                            content="Unique one-time codes for secure voting. Each code can only be used once. Distribute these to your intended voters."
+                                            position="left"
+                                        />
+                                        <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">{poll.allowedCodes.length}</span>
+                                    </>
+                                }
                                 defaultOpen={false}
                             >
                                 <div className="pt-4">
@@ -2640,15 +2676,23 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Email Notifications"
                             icon={<Bell size={20} />}
-                            badge={isFree ? (
-                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
-                                    Limited
-                                </span>
-                            ) : (
-                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                                    All included
-                                </span>
-                            )}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Get notified via email when important events happen: new responses, milestones reached, or when your poll closes."
+                                        position="left"
+                                    />
+                                    {isFree ? (
+                                        <span className="ml-2 px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
+                                            Limited
+                                        </span>
+                                    ) : (
+                                        <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                                            All included
+                                        </span>
+                                    )}
+                                </>
+                            }
                             defaultOpen={false}
                         >
                             <div className="pt-4">
@@ -2679,7 +2723,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <CollapsibleSection
                             title="Custom Branding"
                             icon={<ImageIcon size={20} />}
-                            badge={!isPro && <UpgradeBadge small />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Remove VoteGenerator branding and add your own logo, colors, and custom thank-you message for a professional look."
+                                        position="left"
+                                    />
+                                    {!isPro && <UpgradeBadge small />}
+                                </>
+                            }
                             defaultOpen={false}
                         >
                             <div className="pt-4">

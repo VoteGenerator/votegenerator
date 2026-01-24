@@ -782,38 +782,38 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden"
+                    className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 overflow-hidden"
                 >
                     {/* Section Header */}
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
-                        <h2 className="text-2xl font-bold">{currentSection?.title}</h2>
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 sm:p-6 text-white">
+                        <h2 className="text-xl sm:text-2xl font-bold">{currentSection?.title}</h2>
                         {currentSection?.description && (
-                            <p className="text-indigo-100 mt-1">{currentSection.description}</p>
+                            <p className="text-indigo-100 mt-1 text-sm sm:text-base">{currentSection.description}</p>
                         )}
                     </div>
                     
                     {/* Questions */}
-                    <div className="p-6 space-y-8">
+                    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
                         {currentSection?.questions.map((question, qIdx) => (
                             <div key={question.id} className="space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <span className="w-8 h-8 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-lg font-bold text-sm shrink-0">
+                                <div className="flex items-start gap-2 sm:gap-3">
+                                    <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-lg font-bold text-xs sm:text-sm shrink-0">
                                         {qIdx + 1}
                                     </span>
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-semibold text-slate-800">
+                                        <h3 className="text-base sm:text-lg font-semibold text-slate-800">
                                             {question.question}
                                             {question.required && (
                                                 <span className="text-red-500 ml-1">*</span>
                                             )}
                                         </h3>
                                         {question.description && (
-                                            <p className="text-sm text-slate-500 mt-1">{question.description}</p>
+                                            <p className="text-xs sm:text-sm text-slate-500 mt-1">{question.description}</p>
                                         )}
                                     </div>
                                 </div>
                                 
-                                <div className="ml-11">
+                                <div className="ml-9 sm:ml-11">
                                     <QuestionRenderer
                                         question={question}
                                         answer={answers[question.id]}
@@ -833,25 +833,25 @@ const SurveyVote: React.FC<SurveyVoteProps> = ({ poll, onSubmit, voterName }) =>
                     </div>
                     
                     {/* Navigation */}
-                    <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-4">
+                    <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-200 flex gap-3 sm:gap-4">
                         {!isFirstSection && settings.allowBack !== false && (
                             <button
                                 onClick={goBack}
-                                className="flex-1 py-3 px-6 border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-100 transition flex items-center justify-center gap-2"
+                                className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-100 transition flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                             >
-                                <ChevronLeft size={18} /> Back
+                                <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px]" /> Back
                             </button>
                         )}
                         <button
                             onClick={goNext}
-                            className="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
+                            className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                         >
                             {isLastSection ? (
-                                settings.showSummary ? 'Review Answers' : 'Submit'
+                                settings.showSummary ? 'Review' : 'Submit'
                             ) : (
                                 'Next'
                             )}
-                            <ChevronRight size={18} />
+                            <ChevronRight size={16} className="sm:w-[18px] sm:h-[18px]" />
                         </button>
                     </div>
                 </motion.div>

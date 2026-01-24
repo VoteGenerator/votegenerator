@@ -14,13 +14,52 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
+// Type definitions for survey questions
+// ============================================================================
+
+type ScaleQuestion = {
+    type: 'scale';
+    question: string;
+    scale: string;
+};
+
+type RatingQuestion = {
+    type: 'rating';
+    question: string;
+    stars: number;
+};
+
+type MultipleChoiceQuestion = {
+    type: 'multiple_choice';
+    question: string;
+    options: string[];
+};
+
+type TextQuestion = {
+    type: 'text';
+    question: string;
+};
+
+type TextareaQuestion = {
+    type: 'textarea';
+    question: string;
+};
+
+type SurveyQuestion = ScaleQuestion | RatingQuestion | MultipleChoiceQuestion | TextQuestion | TextareaQuestion;
+
+interface SurveySection {
+    title: string;
+    questions: SurveyQuestion[];
+}
+
+// ============================================================================
 // Survey Preview Component - Shows actual question types
 // ============================================================================
 
 const SurveyPreview: React.FC = () => {
     const [activeSection, setActiveSection] = useState(0);
     
-    const sections = [
+    const sections: SurveySection[] = [
         {
             title: 'Overall Satisfaction',
             questions: [
@@ -110,9 +149,9 @@ const SurveyPreview: React.FC = () => {
                                 </div>
                             )}
                             
-                            {q.type === 'multiple_choice' && q.options && (
+                            {q.type === 'multiple_choice' && (
                                 <div className="space-y-2">
-                                    {q.options.map((opt, j) => (
+                                    {q.options.map((opt: string, j: number) => (
                                         <div key={j} className={`p-3 rounded-lg border-2 flex items-center gap-3 ${
                                             j === 1 ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
                                         }`}>

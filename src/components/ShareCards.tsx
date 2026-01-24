@@ -113,23 +113,126 @@ const THEME_COLORS: Record<string, {
 // Card design templates
 type CardDesign = 'modern' | 'minimal' | 'bold' | 'elegant' | 'playful' | 'corporate';
 
-const CARD_DESIGNS: { id: CardDesign; name: string; description: string }[] = [
-    { id: 'modern', name: 'Modern', description: 'Clean gradient with centered QR' },
-    { id: 'minimal', name: 'Minimal', description: 'Simple white card with accent' },
-    { id: 'bold', name: 'Bold', description: 'Full gradient background' },
-    { id: 'elegant', name: 'Elegant', description: 'Subtle pattern overlay' },
-    { id: 'playful', name: 'Playful', description: 'Rounded corners and shapes' },
-    { id: 'corporate', name: 'Corporate', description: 'Professional business look' }
+const CARD_DESIGNS: { 
+    id: CardDesign; 
+    name: string; 
+    description: string;
+    previewBg: string;
+    previewAccent: string;
+    previewStyle: 'gradient' | 'minimal' | 'pattern' | 'shapes' | 'split';
+}[] = [
+    { id: 'modern', name: 'Modern', description: 'Clean gradient with floating card', previewBg: 'from-indigo-500 via-purple-500 to-pink-500', previewAccent: 'white', previewStyle: 'gradient' },
+    { id: 'minimal', name: 'Minimal', description: 'Simple & elegant white design', previewBg: 'from-slate-50 to-white', previewAccent: 'indigo', previewStyle: 'minimal' },
+    { id: 'bold', name: 'Bold', description: 'Eye-catching full gradient', previewBg: 'from-orange-500 via-red-500 to-pink-500', previewAccent: 'white', previewStyle: 'gradient' },
+    { id: 'elegant', name: 'Elegant', description: 'Sophisticated pattern overlay', previewBg: 'from-slate-800 via-slate-700 to-slate-900', previewAccent: 'gold', previewStyle: 'pattern' },
+    { id: 'playful', name: 'Playful', description: 'Fun shapes and rounded corners', previewBg: 'from-cyan-400 via-blue-500 to-purple-600', previewAccent: 'yellow', previewStyle: 'shapes' },
+    { id: 'corporate', name: 'Corporate', description: 'Professional business style', previewBg: 'from-slate-100 to-slate-200', previewAccent: 'blue', previewStyle: 'split' }
 ];
 
 // Card format options
 type CardFormat = 'square' | 'story' | 'landscape';
 
-const CARD_FORMATS: { id: CardFormat; name: string; ratio: string; width: number; height: number }[] = [
-    { id: 'square', name: 'Square', ratio: '1:1', width: 1080, height: 1080 },
-    { id: 'story', name: 'Story', ratio: '9:16', width: 1080, height: 1920 },
-    { id: 'landscape', name: 'Landscape', ratio: '16:9', width: 1920, height: 1080 }
+const CARD_FORMATS: { id: CardFormat; name: string; ratio: string; width: number; height: number; icon: string }[] = [
+    { id: 'square', name: 'Square', ratio: '1:1', width: 1080, height: 1080, icon: '⬜' },
+    { id: 'story', name: 'Story', ratio: '9:16', width: 1080, height: 1920, icon: '📱' },
+    { id: 'landscape', name: 'Landscape', ratio: '16:9', width: 1920, height: 1080, icon: '🖥️' }
 ];
+
+// Design Preview Component - Shows mini visual representation
+const DesignPreview: React.FC<{ design: typeof CARD_DESIGNS[0]; isSelected: boolean; themeColors: typeof THEME_COLORS.default }> = ({ design, isSelected, themeColors }) => {
+    return (
+        <div className={`relative w-full aspect-[4/3] rounded-xl overflow-hidden ${
+            design.previewStyle === 'minimal' ? 'border border-slate-200' : ''
+        }`}>
+            {/* Background */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${design.previewBg}`} />
+            
+            {/* Pattern overlay for elegant */}
+            {design.previewStyle === 'pattern' && (
+                <div className="absolute inset-0 opacity-20" style={{
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,215,0,0.3) 1px, transparent 0)',
+                    backgroundSize: '8px 8px'
+                }} />
+            )}
+            
+            {/* Floating shapes for playful */}
+            {design.previewStyle === 'shapes' && (
+                <>
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-yellow-300 rounded-full opacity-80" />
+                    <div className="absolute bottom-3 left-2 w-3 h-3 bg-pink-300 rounded-full opacity-80" />
+                    <div className="absolute top-1/2 right-3 w-2 h-2 bg-white rounded-full opacity-60" />
+                </>
+            )}
+            
+            {/* Split design for corporate */}
+            {design.previewStyle === 'split' && (
+                <div className="absolute left-0 top-0 bottom-0 w-1/4 bg-gradient-to-b from-blue-600 to-blue-700" />
+            )}
+            
+            {/* Center card mockup */}
+            <div className={`absolute inset-0 flex items-center justify-center p-3`}>
+                {design.previewStyle === 'gradient' || design.previewStyle === 'shapes' ? (
+                    <div className="bg-white/95 rounded-lg shadow-lg w-[70%] h-[65%] flex flex-col items-center justify-center p-2">
+                        <div className="w-3 h-0.5 bg-slate-300 rounded mb-1" />
+                        <div className="w-6 h-6 bg-slate-100 rounded border border-slate-200 mb-1 flex items-center justify-center">
+                            <div className="w-4 h-4 grid grid-cols-3 gap-px">
+                                {[...Array(9)].map((_, i) => (
+                                    <div key={i} className="bg-slate-400 rounded-[1px]" />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-4 h-0.5 bg-slate-200 rounded" />
+                    </div>
+                ) : design.previewStyle === 'minimal' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+                        <div className="w-8 h-1 bg-slate-800 rounded mb-2" />
+                        <div className="w-8 h-8 bg-slate-100 rounded border border-slate-200 mb-1 flex items-center justify-center">
+                            <div className="w-5 h-5 grid grid-cols-3 gap-px">
+                                {[...Array(9)].map((_, i) => (
+                                    <div key={i} className="bg-indigo-400 rounded-[1px]" />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-6 h-0.5 bg-slate-300 rounded" />
+                    </div>
+                ) : design.previewStyle === 'pattern' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                        <div className="text-amber-300 text-[8px] font-bold mb-1">✦ VOTE ✦</div>
+                        <div className="w-8 h-8 bg-white/10 backdrop-blur rounded border border-white/20 mb-1 flex items-center justify-center">
+                            <div className="w-5 h-5 grid grid-cols-3 gap-px">
+                                {[...Array(9)].map((_, i) => (
+                                    <div key={i} className="bg-amber-300/80 rounded-[1px]" />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="w-6 h-0.5 bg-white/30 rounded" />
+                    </div>
+                ) : design.previewStyle === 'split' ? (
+                    <div className="w-full h-full flex">
+                        <div className="w-1/4" />
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <div className="w-6 h-1 bg-slate-600 rounded mb-2" />
+                            <div className="w-7 h-7 bg-white rounded border border-slate-300 shadow-sm mb-1 flex items-center justify-center">
+                                <div className="w-4 h-4 grid grid-cols-3 gap-px">
+                                    {[...Array(9)].map((_, i) => (
+                                        <div key={i} className="bg-blue-500 rounded-[1px]" />
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="w-5 h-0.5 bg-slate-400 rounded" />
+                        </div>
+                    </div>
+                ) : null}
+            </div>
+            
+            {/* Selection indicator */}
+            {isSelected && (
+                <div className="absolute inset-0 ring-2 ring-indigo-500 ring-offset-2 rounded-xl" />
+            )}
+        </div>
+    );
+};
 
 const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescription, pollUrl, theme = 'default', onClose }) => {
     const [selectedDesign, setSelectedDesign] = useState<CardDesign>('modern');
@@ -624,56 +727,79 @@ const ShareCards: React.FC<ShareCardsProps> = ({ pollId, pollTitle, pollDescript
                         <div className="lg:w-80 p-6 border-b lg:border-b-0 lg:border-r border-slate-200 overflow-y-auto">
                             {/* Format Selection */}
                             <div className="mb-6">
-                                <label className="text-sm font-bold text-slate-700 mb-3 block">Format</label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <label className="text-sm font-bold text-slate-700 mb-3 block flex items-center gap-2">
+                                    📐 Format
+                                </label>
+                                <div className="grid grid-cols-3 gap-3">
                                     {CARD_FORMATS.map(format => (
                                         <button
                                             key={format.id}
                                             onClick={() => setSelectedFormat(format.id)}
-                                            className={`p-3 rounded-xl border-2 transition-all ${
+                                            className={`group p-3 rounded-xl border-2 transition-all hover:shadow-md ${
                                                 selectedFormat === format.id
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-slate-200 hover:border-slate-300'
+                                                    ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-sm'
+                                                    : 'border-slate-200 hover:border-indigo-300 bg-white'
                                             }`}
                                         >
-                                            <div className={`mx-auto mb-2 bg-slate-200 ${
-                                                format.id === 'square' ? 'w-8 h-8' :
-                                                format.id === 'story' ? 'w-5 h-9' :
-                                                'w-10 h-6'
-                                            } rounded`} />
-                                            <div className="text-xs font-semibold text-slate-700">{format.name}</div>
-                                            <div className="text-[10px] text-slate-500">{format.ratio}</div>
+                                            <div className="flex flex-col items-center">
+                                                <div className={`mb-2 bg-gradient-to-br ${
+                                                    selectedFormat === format.id 
+                                                        ? 'from-indigo-400 to-purple-500' 
+                                                        : 'from-slate-200 to-slate-300 group-hover:from-indigo-200 group-hover:to-purple-200'
+                                                } ${
+                                                    format.id === 'square' ? 'w-10 h-10' :
+                                                    format.id === 'story' ? 'w-7 h-12' :
+                                                    'w-12 h-7'
+                                                } rounded-lg shadow-sm transition-all`} />
+                                                <div className={`text-xs font-bold ${selectedFormat === format.id ? 'text-indigo-700' : 'text-slate-600'}`}>
+                                                    {format.name}
+                                                </div>
+                                                <div className={`text-[10px] ${selectedFormat === format.id ? 'text-indigo-500' : 'text-slate-400'}`}>
+                                                    {format.ratio}
+                                                </div>
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             
-                            {/* Design Selection */}
+                            {/* Design Selection - Visual Grid */}
                             <div>
-                                <label className="text-sm font-bold text-slate-700 mb-3 block">Style</label>
-                                <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 mb-3 block flex items-center gap-2">
+                                    🎨 Style
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
                                     {CARD_DESIGNS.map(design => (
                                         <button
                                             key={design.id}
                                             onClick={() => setSelectedDesign(design.id)}
-                                            className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${
+                                            className={`group rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${
                                                 selectedDesign === design.id
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-slate-200 hover:border-slate-300'
+                                                    ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200'
+                                                    : 'border-slate-200 hover:border-indigo-300'
                                             }`}
                                         >
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                selectedDesign === design.id ? 'bg-indigo-500' : 'bg-slate-100'
+                                            {/* Visual Preview */}
+                                            <DesignPreview 
+                                                design={design} 
+                                                isSelected={selectedDesign === design.id}
+                                                themeColors={colors}
+                                            />
+                                            
+                                            {/* Label */}
+                                            <div className={`p-2.5 text-center transition-colors ${
+                                                selectedDesign === design.id 
+                                                    ? 'bg-indigo-50' 
+                                                    : 'bg-white group-hover:bg-slate-50'
                                             }`}>
-                                                {selectedDesign === design.id ? (
-                                                    <Check size={18} className="text-white" />
-                                                ) : (
-                                                    <ImageIcon size={18} className="text-slate-400" />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold text-slate-700 text-sm">{design.name}</div>
-                                                <div className="text-xs text-slate-500">{design.description}</div>
+                                                <div className={`text-xs font-bold ${
+                                                    selectedDesign === design.id ? 'text-indigo-700' : 'text-slate-700'
+                                                }`}>
+                                                    {design.name}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                                                    {design.description}
+                                                </div>
                                             </div>
                                         </button>
                                     ))}

@@ -5,7 +5,7 @@
 // ============================================================================
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Heart, Sparkles, Star, Share2, Home, PartyPopper } from 'lucide-react';
+import { CheckCircle, Sparkles, Star, Home, PartyPopper } from 'lucide-react';
 
 interface ThankYouPageProps {
     title?: string;
@@ -65,11 +65,10 @@ const Confetti: React.FC = () => {
     );
 };
 
-// Floating hearts/stars background
+// Floating stars background
 const FloatingElements: React.FC = () => {
     const elements = Array.from({ length: 12 }, (_, i) => ({
         id: i,
-        type: i % 3 === 0 ? 'star' : i % 3 === 1 ? 'heart' : 'sparkle',
         x: 10 + Math.random() * 80,
         delay: Math.random() * 3,
         duration: 4 + Math.random() * 3,
@@ -95,9 +94,7 @@ const FloatingElements: React.FC = () => {
                         ease: "linear"
                     }}
                 >
-                    {el.type === 'star' && <Star size={el.size} fill="currentColor" />}
-                    {el.type === 'heart' && <Heart size={el.size} fill="currentColor" />}
-                    {el.type === 'sparkle' && <Sparkles size={el.size} />}
+                    <Star size={el.size} fill="currentColor" />
                 </motion.div>
             ))}
         </div>
@@ -117,9 +114,10 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
         return () => clearTimeout(timer);
     }, []);
     
+    // Generic default messages
     const defaultMessage = type === 'survey' 
-        ? "Your responses have been recorded. We appreciate you taking the time to share your feedback!"
-        : "Your vote has been recorded. Thank you for participating!";
+        ? "Your responses have been submitted successfully."
+        : "Your response has been recorded successfully.";
     
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -134,27 +132,27 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="relative z-10 max-w-lg w-full"
+                className="relative z-10 max-w-lg w-full mx-4"
             >
-                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden">
                     {/* Header with gradient */}
-                    <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-8 text-center relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 sm:p-8 text-center relative overflow-hidden">
                         {/* Decorative circles */}
-                        <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                        <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2" />
+                        <div className="absolute top-0 left-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                        <div className="absolute bottom-0 right-0 w-20 sm:w-24 h-20 sm:h-24 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2" />
                         
                         {/* Success icon */}
                         <motion.div
                             initial={{ scale: 0, rotate: -180 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                            className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
+                            className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg"
                         >
                             <motion.div
                                 animate={{ scale: [1, 1.1, 1] }}
                                 transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                                <CheckCircle className="w-12 h-12 text-emerald-500" />
+                                <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-500" />
                             </motion.div>
                         </motion.div>
                         
@@ -163,7 +161,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="text-3xl font-bold text-white mb-2"
+                            className="text-2xl sm:text-3xl font-bold text-white mb-2"
                         >
                             {title}
                         </motion.h1>
@@ -172,37 +170,36 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
-                            className="flex items-center justify-center gap-1 text-white/80"
+                            className="flex items-center justify-center gap-1.5 text-white/80"
                         >
-                            <PartyPopper size={18} />
+                            <PartyPopper size={16} className="sm:w-[18px] sm:h-[18px]" />
                             <span className="text-sm font-medium">
-                                {type === 'survey' ? 'Survey Completed' : 'Vote Recorded'}
+                                {type === 'survey' ? 'Submitted Successfully' : 'Response Recorded'}
                             </span>
                         </motion.div>
                     </div>
                     
                     {/* Body */}
-                    <div className="p-8">
+                    <div className="p-5 sm:p-8">
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.5 }}
-                            className="text-slate-600 text-center text-lg leading-relaxed mb-8"
+                            className="text-slate-600 text-center text-base sm:text-lg leading-relaxed mb-6 sm:mb-8"
                         >
                             {customMessage || defaultMessage}
                         </motion.p>
                         
-                        {/* Appreciation box */}
+                        {/* Success confirmation box */}
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
-                            className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-6"
+                            className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-5 sm:mb-6 border border-emerald-100"
                         >
-                            <div className="flex items-center justify-center gap-3 text-indigo-600">
-                                <Heart size={20} fill="currentColor" />
-                                <span className="font-medium">Your input makes a difference</span>
-                                <Heart size={20} fill="currentColor" />
+                            <div className="flex items-center justify-center gap-2 text-emerald-600">
+                                <CheckCircle size={18} className="sm:w-5 sm:h-5" />
+                                <span className="font-medium text-sm sm:text-base">All done! You can close this page.</span>
                             </div>
                         </motion.div>
                         
@@ -215,19 +212,19 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
                         >
                             {showCreateCTA && (
                                 <a
-                                    href="/"
-                                    className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl"
+                                    href="/create"
+                                    className="flex items-center justify-center gap-2 w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
                                 >
-                                    <Sparkles size={20} />
-                                    Create Your Own {type === 'survey' ? 'Survey' : 'Poll'}
+                                    <Sparkles size={18} className="sm:w-5 sm:h-5" />
+                                    Create Your Own
                                 </a>
                             )}
                             
                             <a
                                 href="/"
-                                className="flex items-center justify-center gap-2 w-full px-6 py-3 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors"
+                                className="flex items-center justify-center gap-2 w-full px-5 sm:px-6 py-2.5 sm:py-3 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm sm:text-base"
                             >
-                                <Home size={18} />
+                                <Home size={16} className="sm:w-[18px] sm:h-[18px]" />
                                 Go to Homepage
                             </a>
                         </motion.div>
@@ -239,7 +236,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="text-center text-slate-400 text-sm mt-6"
+                    className="text-center text-slate-400 text-xs sm:text-sm mt-4 sm:mt-6"
                 >
                     Powered by VoteGenerator
                 </motion.p>

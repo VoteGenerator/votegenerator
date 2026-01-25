@@ -11,7 +11,7 @@ import {
     ListOrdered, CheckSquare, Calendar, ChevronDown, ChevronUp, 
     SlidersHorizontal, Image as ImageIcon, Smartphone, Monitor, Users, 
     ArrowLeftRight, Share2, Zap, Crown, X, Upload, LayoutTemplate,
-    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check
+    MessageSquare, Lock, Shield, Key, ClipboardList, Star, Timer, Clock, Check, HelpCircle, Info
 } from 'lucide-react';
 import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
@@ -1146,9 +1146,23 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                             
                                             {/* ===== VOTING RULES SECTION ===== */}
                                             <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <CheckSquare size={18} className="text-indigo-600" />
-                                                    <h3 className="text-sm font-bold text-indigo-800">Voting Rules</h3>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <CheckSquare size={18} className="text-indigo-600" />
+                                                        <h3 className="text-sm font-bold text-indigo-800">Voting Rules</h3>
+                                                    </div>
+                                                    <div className="relative group">
+                                                        <HelpCircle size={16} className="text-indigo-400 hover:text-indigo-600 cursor-help" />
+                                                        <div className="absolute right-0 bottom-full mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 w-64 shadow-lg">
+                                                            <p className="font-semibold mb-1">Customize how voters interact:</p>
+                                                            <ul className="space-y-1 text-slate-300">
+                                                                <li>• <strong>Multiple selections:</strong> Let voters pick several options</li>
+                                                                <li>• <strong>Require names:</strong> Identify who voted (not anonymous)</li>
+                                                                <li>• <strong>Hide results:</strong> Keep results secret until poll closes</li>
+                                                            </ul>
+                                                            <div className="absolute right-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2">
                                                     {pollType === 'multiple' && (

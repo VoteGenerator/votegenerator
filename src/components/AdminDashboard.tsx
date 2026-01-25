@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
@@ -1278,67 +1278,116 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         {/* Dashboard Access Info - Combined */}
                         {(() => {
+                            // Free users don't have a shareable dashboard link
+                            const isFreeUser = tier === 'free' || session?.dashboardToken === 'free_user';
                             const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
                             if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
                             
-                            const dashboardUrl = session?.dashboardToken 
-                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                : window.location.href;
+                            // For paid users, show the shareable link
+                            if (!isFreeUser && session?.dashboardToken && session.dashboardToken !== 'free_user') {
+                                const dashboardUrl = `${window.location.origin}/admin?t=${session.dashboardToken}`;
+                                
+                                return (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                        <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                    <Link2 size={20} className="text-indigo-600" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                                                        Save Your Dashboard Access
+                                                        <HelpTooltip 
+                                                            content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
+                                                            position="right"
+                                                        />
+                                                    </h4>
+                                                    <p className="text-sm text-indigo-700 mb-3">
+                                                        Your login link was sent to your email. You can also save it using the options below.
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(dashboardUrl);
+                                                                setCopiedDashboardLink(true);
+                                                                // Don't dismiss immediately - let them email too
+                                                                setTimeout(() => {
+                                                                    localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                                    setCopiedDashboardLink(false);
+                                                                    setAdminLinkWarningDismissed(true);
+                                                                }, 3000);
+                                                            }}
+                                                            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                        >
+                                                            {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                            {copiedDashboardLink ? 'Copied! Box will close...' : 'Copy Link'}
+                                                        </button>
+                                                        <a
+                                                            href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
+                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                            onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
+                                                        >
+                                                            <Mail size={16} />
+                                                            Email to Self
+                                                        </a>
+                                                        <button
+                                                            onClick={() => {
+                                                                localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                                setAdminLinkWarningDismissed(true);
+                                                            }}
+                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        >
+                                                            <Bookmark size={16} />
+                                                            I've Bookmarked It
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setAdminLinkWarningDismissed(true)}
+                                                            className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                        >
+                                                            Dismiss
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            }
                             
+                            // For free users, show a different message
                             return (
                                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                    <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
                                         <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Link2 size={20} className="text-indigo-600" />
+                                            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Smartphone size={20} className="text-amber-600" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
-                                                    Save Your Dashboard Access
-                                                    <HelpTooltip 
-                                                        content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
-                                                        position="right"
-                                                    />
-                                                </h4>
-                                                <p className="text-sm text-indigo-700 mb-3">
-                                                    {tier !== 'free' 
-                                                        ? "Your login link was sent to your email. You can also save it using the options below."
-                                                        : "Choose how you'd like to access your dashboard in the future:"}
+                                                <h4 className="font-bold text-amber-800 mb-1">Access Your Polls</h4>
+                                                <p className="text-sm text-amber-700 mb-3">
+                                                    Your polls are saved in this browser. Bookmark this page or use the same device to return.
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(dashboardUrl);
-                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                            setCopiedDashboardLink(true);
-                                                            setTimeout(() => setCopiedDashboardLink(false), 2000);
-                                                        }}
-                                                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
-                                                    >
-                                                        {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
-                                                        {copiedDashboardLink ? 'Copied!' : 'Copy Link'}
-                                                    </button>
-                                                    <a
-                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
-                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
-                                                        onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
-                                                    >
-                                                        <Mail size={16} />
-                                                        Email to Self
-                                                    </a>
-                                                    <button
-                                                        onClick={() => {
-                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            localStorage.setItem('vg_dashboard_saved_free', 'true');
                                                             setAdminLinkWarningDismissed(true);
                                                         }}
-                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
                                                     >
                                                         <Bookmark size={16} />
                                                         I've Bookmarked It
                                                     </button>
+                                                    <a
+                                                        href="/pricing"
+                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-amber-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-amber-200 transition"
+                                                    >
+                                                        <Crown size={16} />
+                                                        Get Shareable Link (Upgrade)
+                                                    </a>
                                                     <button
                                                         onClick={() => setAdminLinkWarningDismissed(true)}
-                                                        className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                        className="px-3 py-2 text-amber-500 text-sm hover:text-amber-700 transition"
                                                     >
                                                         Dismiss
                                                     </button>
@@ -1838,15 +1887,19 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         {/* MANAGE & SHARE - Primary action, always visible */}
                                                         <a
-                                                            href={poll.type === 'survey' 
-                                                                ? `/#survey=${poll.id}&admin=${poll.adminKey}`
-                                                                : `/#id=${poll.id}&admin=${poll.adminKey}`
+                                                            href={poll.adminKey 
+                                                                ? (poll.type === 'survey' 
+                                                                    ? `/#survey=${poll.id}&admin=${poll.adminKey}`
+                                                                    : `/#id=${poll.id}&admin=${poll.adminKey}`)
+                                                                : (poll.type === 'survey'
+                                                                    ? `/#survey=${poll.id}`
+                                                                    : `/#id=${poll.id}`)
                                                             }
                                                             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium shadow-sm"
-                                                            title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
+                                                            title={isDraft ? "Preview & Edit" : "Open Poll Dashboard"}
                                                         >
                                                             <ExternalLink size={16} />
-                                                            <span>{isDraft ? 'Edit' : 'Open'}</span>
+                                                            <span>{isDraft ? 'Edit' : 'Manage'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}

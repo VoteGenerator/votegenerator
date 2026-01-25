@@ -11,11 +11,10 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
+    Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
     Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info
 } from 'lucide-react';
-import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
 
@@ -214,7 +213,6 @@ const AdminDashboard: React.FC = () => {
     const [showStatsPanel, setShowStatsPanel] = useState(true);
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
-    const [showShareCards, setShowShareCards] = useState<string | null>(null); // Poll ID for share cards modal
     
     // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
@@ -1804,17 +1802,6 @@ const AdminDashboard: React.FC = () => {
                                                                 {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
                                                             </button>
                                                         )}
-                                                        {/* Hide Invite button for just-created polls - it's in Manage section */}
-                                                        {!isJustCreated && (
-                                                            <button
-                                                                onClick={() => setShowShareCards(poll.id)}
-                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
-                                                                title="Create beautiful invite cards with QR codes"
-                                                            >
-                                                                <Palette size={18} />
-                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
-                                                            </button>
-                                                        )}
                                                         {/* Duplicate button */}
                                                         <button
                                                             onClick={() => handleDuplicatePoll(poll)}
@@ -2427,43 +2414,6 @@ const AdminDashboard: React.FC = () => {
                         onConfirm={() => handleGoLive(showGoLiveModal)}
                     />
                 )}
-            </AnimatePresence>
-
-            {/* Share Cards Modal */}
-            <AnimatePresence>
-                {showShareCards && (() => {
-                    const poll = polls.find(p => p.id === showShareCards);
-                    if (!poll) return null;
-                    const hashParam = poll.type === 'survey' ? 'survey' : 'id';
-                    const pollUrl = poll.customSlug 
-                        ? `${window.location.origin}/p/${poll.customSlug}`
-                        : `${window.location.origin}/#${hashParam}=${poll.id}`;
-                    return (
-                        <motion.div 
-                            initial={{ opacity: 0 }} 
-                            animate={{ opacity: 1 }} 
-                            exit={{ opacity: 0 }} 
-                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" 
-                            onClick={() => setShowShareCards(null)}
-                        >
-                            <motion.div 
-                                initial={{ scale: 0.95, opacity: 0 }} 
-                                animate={{ scale: 1, opacity: 1 }} 
-                                exit={{ scale: 0.95, opacity: 0 }} 
-                                className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <ShareCards
-                                    pollId={poll.id}
-                                    pollTitle={poll.title}
-                                    pollDescription={poll.description}
-                                    pollUrl={pollUrl}
-                                    onClose={() => setShowShareCards(null)}
-                                />
-                            </motion.div>
-                        </motion.div>
-                    );
-                })()}
             </AnimatePresence>
 
             {/* Upgrade Modal */}

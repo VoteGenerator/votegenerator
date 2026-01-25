@@ -78,7 +78,8 @@ const TIER_CONFIG: Record<string, {
     maxResponses: number;
     activeDays: number;
     requiresActivation: boolean;
-    features: { name: string; included: boolean }[];
+    description: string;
+    highlights: string[];
 }> = {
     free: {
         label: 'Free',
@@ -90,13 +91,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 100,
         activeDays: 30,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '100 responses/month', included: true },
-            { name: '3 active polls', included: true },
-            { name: '30 days active', included: true },
-            { name: 'Export to CSV', included: false },
-        ]
+        description: '3 active polls • 100 responses/mo • 30 days',
+        highlights: ['All 8 poll types', 'Real-time results', 'QR codes & sharing'],
     },
     pro: {
         label: 'Pro',
@@ -108,13 +104,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 10000,
         activeDays: 365,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '10,000 responses/month', included: true },
-            { name: 'Business polls', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'Custom branding', included: true },
-        ]
+        description: 'Unlimited polls • 10K responses/mo',
+        highlights: ['Export CSV & Excel', 'Remove branding', 'Premium themes'],
     },
     business: {
         label: 'Business',
@@ -126,15 +117,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 100000,
         activeDays: 365,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '100,000 responses/month', included: true },
-            { name: 'Business polls', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'PIN protection', included: true },
-            { name: 'Custom branding', included: true },
-            { name: 'Priority support', included: true },
-        ]
+        description: 'Unlimited polls • 100K responses/mo',
+        highlights: ['PDF reports', 'Team access tokens', 'Priority support'],
     },
 };
 
@@ -1178,23 +1162,57 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
-            {/* Header with Paid Nav */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+            {/* Header with Tier-Colored Nav */}
+            <header className={`sticky top-0 z-40 ${
+                tier === 'free' 
+                    ? 'bg-white border-b border-slate-200' 
+                    : tier === 'pro'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg'
+            }`}>
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8 sm:w-9 sm:h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-lg sm:text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className={`w-8 h-8 sm:w-9 sm:h-9 ${tier !== 'free' ? 'brightness-0 invert' : ''}`}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
+                        />
+                        <span className={`font-bold text-lg sm:text-xl ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                            Vote<span className={tier !== 'free' ? 'text-white/80' : 'text-indigo-600'}>Generator</span>
+                        </span>
                     </a>
                     
                     {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                        <a 
+                            href="/create" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                            }`}
+                        >
                             <PlusCircle size={16} /> Create Poll
                         </a>
-                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
-                            <LayoutDashboard size={16} /> Admin Dashboard
+                        <a 
+                            href="/admin" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white bg-white/20' 
+                                    : 'text-indigo-600 bg-indigo-50'
+                            }`}
+                        >
+                            <LayoutDashboard size={16} /> Dashboard
                         </a>
-                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                        <a 
+                            href="/templates" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                            }`}
+                        >
                             <Zap size={16} /> Templates
                         </a>
                     </nav>
@@ -1210,15 +1228,19 @@ const AdminDashboard: React.FC = () => {
                                 <span className="hidden xs:inline">Upgrade</span>
                             </button>
                         )}
-                        {/* Paid users see tier badge */}
+                        {/* Paid users see tier badge - white on colored header */}
                         {tier !== 'free' && (
                             <div 
-                                className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 ${
+                                    isPlanExpired 
+                                        ? 'bg-red-100 text-red-700' 
+                                        : 'bg-white/20 text-white'
+                                }`}
                                 title={isPlanExpired ? 'Your plan has expired. Renew to continue creating polls.' : `${config.label} Plan - Days remaining in your billing period`}
                             >
                                 {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
-                                <span className="hidden sm:inline">{config.label}</span>
-                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                <span>{config.label}</span>
+                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-red-200' : 'bg-white/20'}`}>
                                     {isPlanExpired 
                                         ? 'Expired' 
                                         : session?.expiresAt 
@@ -1229,15 +1251,15 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Manage PIN security and dashboard preferences">
-                                <Settings size={20} className="text-slate-500" />
+                            <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg transition ${tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-500'}`} title="Manage PIN security and dashboard preferences">
+                                <Settings size={20} />
                             </button>
                         )}
                         
                         {/* Mobile menu button */}
                         <button 
                             onClick={() => setShowMobileMenu(!showMobileMenu)}
-                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
+                            className={`md:hidden p-2 rounded-lg transition ${tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'}`}
                         >
                             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
                         </button>
@@ -1251,16 +1273,43 @@ const AdminDashboard: React.FC = () => {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="md:hidden border-t border-slate-100 bg-white overflow-hidden"
+                            className={`md:hidden overflow-hidden ${
+                                tier === 'free' 
+                                    ? 'border-t border-slate-100 bg-white' 
+                                    : tier === 'pro'
+                                        ? 'bg-purple-700'
+                                        : 'bg-amber-600'
+                            }`}
                         >
                             <nav className="p-3 space-y-1">
-                                <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                <a 
+                                    href="/create" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
                                     <PlusCircle size={20} /> Create New Poll
                                 </a>
-                                <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 text-indigo-600 font-medium">
-                                    <LayoutDashboard size={20} /> Admin Dashboard
+                                <a 
+                                    href="/admin" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
+                                        tier !== 'free' 
+                                            ? 'bg-white/20 text-white' 
+                                            : 'bg-indigo-50 text-indigo-600'
+                                    }`}
+                                >
+                                    <LayoutDashboard size={20} /> Dashboard
                                 </a>
-                                <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                <a 
+                                    href="/templates" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
                                     <Zap size={20} /> Templates
                                 </a>
                             </nav>
@@ -2196,20 +2245,25 @@ const AdminDashboard: React.FC = () => {
                             
                             {showPlanPanel && (
                                 <div className="p-4 border-t border-slate-100">
+                                    {/* Clean summary line */}
+                                    <p className="text-sm text-slate-600 mb-3">{config.description}</p>
+                                    
+                                    {/* Highlights - positive features only */}
                                     <div className="space-y-2 mb-4">
-                                        {config.features.map((feature, i) => (
-                                            <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
-                                                {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
-                                                <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
+                                        {config.highlights.map((highlight, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                                                <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                                <span>{highlight}</span>
                                             </div>
                                         ))}
                                     </div>
+                                    
                                     {tier !== 'business' && !isPlanExpired && (
                                     <button 
                                         onClick={() => setShowUpgradeModal(true)}
                                         className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3"
                                     >
-                                        Upgrade Plan
+                                        {tier === 'free' ? 'Unlock More Features' : 'Upgrade to Business'}
                                     </button>
                                 )}
 

@@ -75,24 +75,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
 
     const { isPaid, tier, hasPolls } = subscriptionStatus;
 
-    const TierBadge = () => {
-        if (!isPaid) return null;
-        
-        const isBusiness = tier === 'business';
-        return (
-            <span className={`
-                inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold
-                ${isBusiness 
-                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white' 
-                    : 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white'
-                }
-            `}>
-                {isBusiness ? <Crown size={12} /> : <Zap size={12} />}
-                {isBusiness ? 'Business' : 'Pro'}
-            </span>
-        );
-    };
-
     // Nav items - Free users with polls get Dashboard link too
     const navItems = isPaid ? PAID_NAV_ITEMS : hasPolls ? [
         { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -101,8 +83,12 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
 
     return (
         <header className={`
-            ${transparent ? 'bg-transparent' : 'bg-white border-b border-slate-200'}
-            sticky top-0 z-50
+            sticky top-0 z-50 ${
+                transparent ? 'bg-transparent' : 
+                tier === 'pro' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg' :
+                tier === 'business' ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg' :
+                'bg-white border-b border-slate-200'
+            }
         `}>
             <div className="max-w-7xl mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
@@ -111,10 +97,17 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                         <img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
-                            className="h-9 w-9"
+                            className={`h-9 w-9 ${isPaid ? 'brightness-0 invert' : ''}`}
                         />
-                        <span className="text-xl font-bold text-slate-900">VoteGenerator</span>
-                        <TierBadge />
+                        <span className={`text-xl font-bold ${isPaid ? 'text-white' : 'text-slate-900'}`}>
+                            Vote<span className={isPaid ? 'text-white/80' : 'text-indigo-600'}>Generator</span>
+                        </span>
+                        {isPaid && (
+                            <span className="px-2 py-1 bg-white/20 rounded-full text-xs font-bold text-white flex items-center gap-1">
+                                {tier === 'business' ? <Crown size={12} /> : <Zap size={12} />}
+                                {tier === 'business' ? 'Business' : 'Pro'}
+                            </span>
+                        )}
                     </a>
 
                     {/* Desktop Navigation */}
@@ -125,7 +118,11 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                 <a
                                     key={item.href}
                                     href={item.href}
-                                    className="relative px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium text-sm rounded-lg hover:bg-indigo-50 transition flex items-center gap-2"
+                                    className={`relative px-4 py-2 font-medium text-sm rounded-lg transition flex items-center gap-2 ${
+                                        isPaid 
+                                            ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                                            : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                                    }`}
                                 >
                                     {IconComponent && <IconComponent size={16} />}
                                     {item.label}
@@ -161,7 +158,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                         ) : (
                             <a
                                 href="/settings"
-                                className="ml-2 p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                                className={`ml-2 p-2 rounded-lg transition ${
+                                    isPaid ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                }`}
                                 title="Settings"
                             >
                                 <Settings size={20} />
@@ -172,7 +171,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                        className={`md:hidden p-2 rounded-lg ${
+                            isPaid ? 'text-white hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100'
+                        }`}
                     >
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -185,7 +186,11 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden mt-4 pb-4 border-t border-slate-200 pt-4"
+                            className={`md:hidden mt-4 pb-4 pt-4 ${
+                                isPaid 
+                                    ? tier === 'pro' ? 'bg-purple-700 border-t border-purple-500' : 'bg-amber-600 border-t border-amber-400'
+                                    : 'border-t border-slate-200'
+                            }`}
                         >
                             <nav className="flex flex-col gap-1">
                                 {navItems.map((item) => {
@@ -194,7 +199,11 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                         <a
                                             key={item.href}
                                             href={item.href}
-                                            className="px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl font-medium flex items-center gap-3"
+                                            className={`px-4 py-3 rounded-xl font-medium flex items-center gap-3 ${
+                                                isPaid 
+                                                    ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                                    : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                            }`}
                                         >
                                             {IconComponent && <IconComponent size={20} />}
                                             {item.label}
@@ -229,7 +238,9 @@ const NavHeader: React.FC<NavHeaderProps> = ({ transparent = false }) => {
                                 ) : (
                                     <a
                                         href="/settings"
-                                        className="px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-xl font-medium flex items-center gap-3"
+                                        className={`px-4 py-3 rounded-xl font-medium flex items-center gap-3 ${
+                                            isPaid ? 'text-white/90 hover:bg-white/10' : 'text-slate-700 hover:bg-slate-100'
+                                        }`}
                                     >
                                         <Settings size={20} />
                                         Settings

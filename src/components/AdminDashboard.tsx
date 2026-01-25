@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
@@ -78,7 +78,8 @@ const TIER_CONFIG: Record<string, {
     maxResponses: number;
     activeDays: number;
     requiresActivation: boolean;
-    features: { name: string; included: boolean }[];
+    description: string;
+    highlights: string[];
 }> = {
     free: {
         label: 'Free',
@@ -90,13 +91,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 100,
         activeDays: 30,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '100 responses/month', included: true },
-            { name: '3 active polls', included: true },
-            { name: '30 days active', included: true },
-            { name: 'Export to CSV', included: false },
-        ]
+        description: '3 active polls • 100 responses/mo • 30 days',
+        highlights: ['All 8 poll types', 'Real-time results', 'QR codes & sharing'],
     },
     pro: {
         label: 'Pro',
@@ -108,13 +104,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 10000,
         activeDays: 365,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '10,000 responses/month', included: true },
-            { name: 'Business polls', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'Custom branding', included: true },
-        ]
+        description: 'Unlimited polls • 10K responses/mo',
+        highlights: ['Export CSV & Excel', 'Remove branding', 'Premium themes'],
     },
     business: {
         label: 'Business',
@@ -126,15 +117,8 @@ const TIER_CONFIG: Record<string, {
         maxResponses: 100000,
         activeDays: 365,
         requiresActivation: false,
-        features: [
-            { name: 'All poll types', included: true },
-            { name: '100,000 responses/month', included: true },
-            { name: 'Business polls', included: true },
-            { name: 'Export CSV/PDF/PNG', included: true },
-            { name: 'PIN protection', included: true },
-            { name: 'Custom branding', included: true },
-            { name: 'Priority support', included: true },
-        ]
+        description: 'Unlimited polls • 100K responses/mo',
+        highlights: ['PDF reports', 'Team access tokens', 'Priority support'],
     },
 };
 
@@ -218,6 +202,12 @@ const AdminDashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
+    const [gettingStartedDismissed, setGettingStartedDismissed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('vg_seen_getting_started') === 'true';
+        }
+        return false;
+    });
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
@@ -755,17 +745,9 @@ const AdminDashboard: React.FC = () => {
     const handleDeletePoll = async (poll: UserPoll) => {
         if (!session) return;
         
-        // Get response count for warning message
-        const hasResponses = (poll.responseCount || 0) > 0;
-        const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
-        
-        // Check tier restriction
-        if (hasResponses && isRestrictedTier) {
-            // Show upgrade modal instead
-            setPollToDelete(null);
-            setShowUpgradeModal(true);
-            return;
-        }
+        // Free and Pro users CAN delete polls (even with responses) to free up slots
+        // This is essential for the "3 active polls" limit to work properly
+        // Users lose the data but can create new polls
         
         // Show custom delete confirmation modal
         setPollToDelete(poll);
@@ -967,10 +949,9 @@ const AdminDashboard: React.FC = () => {
     
     const canBulkDelete = (() => {
         if (!session) return false;
-        // Business tier can delete anything
-        if (session.tier === 'business') return true;
-        // Free/Pro can only delete polls without responses
-        return selectedPollsWithResponses.length === 0;
+        // All tiers can delete polls - this is essential for the "3 active polls" limit
+        // Users lose the data but can create new polls
+        return true;
     })();
     
     const handleBulkDelete = () => {
@@ -1181,23 +1162,57 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
-            {/* Header with Paid Nav */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+            {/* Header with Tier-Colored Nav */}
+            <header className={`sticky top-0 z-40 ${
+                tier === 'free' 
+                    ? 'bg-white border-b border-slate-200' 
+                    : tier === 'pro'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg'
+            }`}>
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8 sm:w-9 sm:h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-lg sm:text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className={`w-8 h-8 sm:w-9 sm:h-9 ${tier !== 'free' ? 'brightness-0 invert' : ''}`}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
+                        />
+                        <span className={`font-bold text-lg sm:text-xl ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                            Vote<span className={tier !== 'free' ? 'text-white/80' : 'text-indigo-600'}>Generator</span>
+                        </span>
                     </a>
                     
                     {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                        <a 
+                            href="/create" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                            }`}
+                        >
                             <PlusCircle size={16} /> Create Poll
                         </a>
-                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
-                            <LayoutDashboard size={16} /> Admin Dashboard
+                        <a 
+                            href="/admin" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white bg-white/20' 
+                                    : 'text-indigo-600 bg-indigo-50'
+                            }`}
+                        >
+                            <LayoutDashboard size={16} /> Dashboard
                         </a>
-                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                        <a 
+                            href="/templates" 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
+                                tier !== 'free' 
+                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                            }`}
+                        >
                             <Zap size={16} /> Templates
                         </a>
                     </nav>
@@ -1213,15 +1228,19 @@ const AdminDashboard: React.FC = () => {
                                 <span className="hidden xs:inline">Upgrade</span>
                             </button>
                         )}
-                        {/* Paid users see tier badge */}
+                        {/* Paid users see tier badge - white on colored header */}
                         {tier !== 'free' && (
                             <div 
-                                className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 ${
+                                    isPlanExpired 
+                                        ? 'bg-red-100 text-red-700' 
+                                        : 'bg-white/20 text-white'
+                                }`}
                                 title={isPlanExpired ? 'Your plan has expired. Renew to continue creating polls.' : `${config.label} Plan - Days remaining in your billing period`}
                             >
                                 {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
-                                <span className="hidden sm:inline">{config.label}</span>
-                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                                <span>{config.label}</span>
+                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-red-200' : 'bg-white/20'}`}>
                                     {isPlanExpired 
                                         ? 'Expired' 
                                         : session?.expiresAt 
@@ -1232,15 +1251,15 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Manage PIN security and dashboard preferences">
-                                <Settings size={20} className="text-slate-500" />
+                            <button onClick={() => setShowSettings(true)} className="p-2 rounded-lg transition hover:bg-white/10 text-white" title="Manage PIN security and dashboard preferences">
+                                <Settings size={20} />
                             </button>
                         )}
                         
                         {/* Mobile menu button */}
                         <button 
                             onClick={() => setShowMobileMenu(!showMobileMenu)}
-                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
+                            className={`md:hidden p-2 rounded-lg transition ${tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'}`}
                         >
                             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
                         </button>
@@ -1254,16 +1273,43 @@ const AdminDashboard: React.FC = () => {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="md:hidden border-t border-slate-100 bg-white overflow-hidden"
+                            className={`md:hidden overflow-hidden ${
+                                tier === 'free' 
+                                    ? 'border-t border-slate-100 bg-white' 
+                                    : tier === 'pro'
+                                        ? 'bg-purple-700'
+                                        : 'bg-amber-600'
+                            }`}
                         >
                             <nav className="p-3 space-y-1">
-                                <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                <a 
+                                    href="/create" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
                                     <PlusCircle size={20} /> Create New Poll
                                 </a>
-                                <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 text-indigo-600 font-medium">
-                                    <LayoutDashboard size={20} /> Admin Dashboard
+                                <a 
+                                    href="/admin" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
+                                        tier !== 'free' 
+                                            ? 'bg-white/20 text-white' 
+                                            : 'bg-indigo-50 text-indigo-600'
+                                    }`}
+                                >
+                                    <LayoutDashboard size={20} /> Dashboard
                                 </a>
-                                <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                <a 
+                                    href="/templates" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
                                     <Zap size={20} /> Templates
                                 </a>
                             </nav>
@@ -1278,77 +1324,202 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         {/* Dashboard Access Info - Combined */}
                         {(() => {
+                            // Free users don't have a shareable dashboard link
+                            const isFreeUser = tier === 'free' || session?.dashboardToken === 'free_user';
                             const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
                             if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
                             
-                            const dashboardUrl = session?.dashboardToken 
-                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                : window.location.href;
+                            // For paid users, show the shareable link
+                            if (!isFreeUser && session?.dashboardToken && session.dashboardToken !== 'free_user') {
+                                const dashboardUrl = `${window.location.origin}/admin?t=${session.dashboardToken}`;
+                                
+                                return (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                        <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                    <Link2 size={20} className="text-indigo-600" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                                                        Save Your Dashboard Access
+                                                        <HelpTooltip 
+                                                            content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
+                                                            position="right"
+                                                        />
+                                                    </h4>
+                                                    <p className="text-sm text-indigo-700 mb-3">
+                                                        Your login link was sent to your email. You can also save it using the options below.
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(dashboardUrl);
+                                                                setCopiedDashboardLink(true);
+                                                                // Don't dismiss immediately - let them email too
+                                                                setTimeout(() => {
+                                                                    localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                                    setCopiedDashboardLink(false);
+                                                                    setAdminLinkWarningDismissed(true);
+                                                                }, 3000);
+                                                            }}
+                                                            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                        >
+                                                            {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                            {copiedDashboardLink ? 'Copied! Box will close...' : 'Copy Link'}
+                                                        </button>
+                                                        <a
+                                                            href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
+                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                            onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
+                                                        >
+                                                            <Mail size={16} />
+                                                            Open Email App
+                                                        </a>
+                                                        <button
+                                                            onClick={() => {
+                                                                localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                                setAdminLinkWarningDismissed(true);
+                                                            }}
+                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        >
+                                                            <Bookmark size={16} />
+                                                            I've Bookmarked It
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setAdminLinkWarningDismissed(true)}
+                                                            className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                        >
+                                                            Dismiss
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            }
                             
+                            // For free users, show a different message
                             return (
                                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                    <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-md">
                                         <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Link2 size={20} className="text-indigo-600" />
+                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={24} className="text-red-600" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
-                                                    Save Your Dashboard Access
-                                                    <HelpTooltip 
-                                                        content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
-                                                        position="right"
-                                                    />
-                                                </h4>
-                                                <p className="text-sm text-indigo-700 mb-3">
-                                                    {tier !== 'free' 
-                                                        ? "Your login link was sent to your email. You can also save it using the options below."
-                                                        : "Choose how you'd like to access your dashboard in the future:"}
-                                                </p>
+                                                <h4 className="font-bold text-red-800 text-lg mb-2">⚠️ Important: Save This Page Now</h4>
+                                                <div className="p-3 bg-white/80 rounded-lg border border-red-200 mb-3">
+                                                    <p className="text-sm text-red-800 font-medium mb-2">
+                                                        Your polls are stored <strong>only in this browser</strong>. If you:
+                                                    </p>
+                                                    <ul className="text-sm text-red-700 space-y-1 ml-4">
+                                                        <li>• Clear your browser history or cookies</li>
+                                                        <li>• Use a different device or browser</li>
+                                                        <li>• Use incognito/private mode</li>
+                                                    </ul>
+                                                    <p className="text-sm text-red-800 font-bold mt-2">
+                                                        → You will permanently lose access to your polls and all responses.
+                                                    </p>
+                                                </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(dashboardUrl);
-                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                            setCopiedDashboardLink(true);
-                                                            setTimeout(() => setCopiedDashboardLink(false), 2000);
-                                                        }}
-                                                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
-                                                    >
-                                                        {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
-                                                        {copiedDashboardLink ? 'Copied!' : 'Copy Link'}
-                                                    </button>
-                                                    <a
-                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
-                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
-                                                        onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
-                                                    >
-                                                        <Mail size={16} />
-                                                        Email to Self
-                                                    </a>
-                                                    <button
-                                                        onClick={() => {
-                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            // Actually trigger the browser bookmark dialog hint
+                                                            alert('Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page now!');
+                                                            localStorage.setItem('vg_dashboard_saved_free', 'true');
                                                             setAdminLinkWarningDismissed(true);
                                                         }}
-                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
                                                     >
                                                         <Bookmark size={16} />
-                                                        I've Bookmarked It
+                                                        Bookmark Now (Ctrl+D)
                                                     </button>
-                                                    <button
-                                                        onClick={() => setAdminLinkWarningDismissed(true)}
-                                                        className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                    <a
+                                                        href="/pricing"
+                                                        className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
                                                     >
-                                                        Dismiss
-                                                    </button>
+                                                        <Crown size={16} />
+                                                        Upgrade for Secure Access
+                                                    </a>
                                                 </div>
+                                                <p className="text-xs text-red-600 mt-3">
+                                                    💡 Pro tip: Upgrade to get a permanent link you can access from any device, plus email login.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 </motion.div>
                             );
                         })()}
+
+                        {/* Getting Started Guide - For first-time users */}
+                        {!gettingStartedDismissed && polls.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                                    <Sparkles size={16} className="text-white" />
+                                                </div>
+                                                <h3 className="font-bold text-emerald-800 text-lg">🎉 Your poll is ready!</h3>
+                                            </div>
+                                            
+                                            <div className="space-y-3 mb-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">1</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Click "Manage" on your poll</p>
+                                                        <p className="text-sm text-emerald-600">Opens the Poll Dashboard where you can share, view results, and manage settings</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">2</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Share with your audience</p>
+                                                        <p className="text-sm text-emerald-600">Copy the voting link, generate a QR code, or share directly to social media</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">3</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Watch results come in</p>
+                                                        <p className="text-sm text-emerald-600">Results update in real-time. Set up email notifications to stay informed!</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {tier === 'free' && (
+                                                <div className="p-3 bg-white/60 rounded-lg border border-emerald-200">
+                                                    <p className="text-xs font-medium text-emerald-700">
+                                                        <strong>Free Plan:</strong> {config.maxPolls} active polls • {config.maxResponses.toLocaleString()} responses/month • 
+                                                        <span className="text-emerald-600"> "Active" means polls accepting votes. Pause or delete polls to free up slots.</span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('vg_seen_getting_started', 'true');
+                                                setGettingStartedDismissed(true);
+                                            }}
+                                            className="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-lg transition flex-shrink-0"
+                                            title="Dismiss guide"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Plan Expired Banner */}
                         {isPlanExpired && (
@@ -1838,15 +2009,19 @@ const AdminDashboard: React.FC = () => {
                                                         )}
                                                         {/* MANAGE & SHARE - Primary action, always visible */}
                                                         <a
-                                                            href={poll.type === 'survey' 
-                                                                ? `/#survey=${poll.id}&admin=${poll.adminKey}`
-                                                                : `/#id=${poll.id}&admin=${poll.adminKey}`
+                                                            href={poll.adminKey 
+                                                                ? (poll.type === 'survey' 
+                                                                    ? `/#survey=${poll.id}&admin=${poll.adminKey}`
+                                                                    : `/#id=${poll.id}&admin=${poll.adminKey}`)
+                                                                : (poll.type === 'survey'
+                                                                    ? `/#survey=${poll.id}`
+                                                                    : `/#id=${poll.id}`)
                                                             }
                                                             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium shadow-sm"
-                                                            title={isDraft ? "Preview & Edit" : "Manage & Share Poll"}
+                                                            title={isDraft ? "Preview & Edit" : "Open Poll Dashboard"}
                                                         >
                                                             <ExternalLink size={16} />
-                                                            <span>{isDraft ? 'Edit' : 'Open'}</span>
+                                                            <span>{isDraft ? 'Edit' : 'Manage'}</span>
                                                         </a>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
@@ -2070,20 +2245,25 @@ const AdminDashboard: React.FC = () => {
                             
                             {showPlanPanel && (
                                 <div className="p-4 border-t border-slate-100">
+                                    {/* Clean summary line */}
+                                    <p className="text-sm text-slate-600 mb-3">{config.description}</p>
+                                    
+                                    {/* Highlights - positive features only */}
                                     <div className="space-y-2 mb-4">
-                                        {config.features.map((feature, i) => (
-                                            <div key={i} className={`flex items-center gap-2 text-sm ${feature.included ? 'text-slate-700' : 'text-slate-400'}`}>
-                                                {feature.included ? <CheckCircle size={16} className="text-emerald-500" /> : <X size={16} className="text-red-400" />}
-                                                <span className={!feature.included ? 'line-through' : ''}>{feature.name}</span>
+                                        {config.highlights.map((highlight, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                                                <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                                                <span>{highlight}</span>
                                             </div>
                                         ))}
                                     </div>
+                                    
                                     {tier !== 'business' && !isPlanExpired && (
                                     <button 
                                         onClick={() => setShowUpgradeModal(true)}
                                         className="block w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-medium text-center transition mt-3"
                                     >
-                                        Upgrade Plan
+                                        {tier === 'free' ? 'Unlock More Features' : 'Upgrade to Business'}
                                     </button>
                                 )}
 

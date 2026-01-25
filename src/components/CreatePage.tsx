@@ -62,62 +62,54 @@ const CreatePage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Nav Header - Matching AdminDashboard exactly */}
-            <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+            {/* Nav Header - CREATION MODE - Distinct amber/orange color */}
+            <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    {/* Logo - same as AdminDashboard */}
+                    {/* Logo */}
                     <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
                         <img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
-                            className="w-9 h-9"
+                            className="w-9 h-9 brightness-0 invert"
                             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
-                        <span className="font-bold text-xl text-slate-800">
-                            Vote<span className="text-indigo-600">Generator</span>
+                        <span className="font-bold text-xl text-white">
+                            Vote<span className="text-amber-100">Generator</span>
                         </span>
                     </a>
 
-                    {/* Desktop Nav - same structure as AdminDashboard */}
+                    {/* Creation Mode Badge - Center */}
+                    <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
+                        <PlusCircle size={16} className="text-white" />
+                        <span className="text-white font-semibold text-sm">Creating Poll</span>
+                    </div>
+
+                    {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
-                            <PlusCircle size={16} /> Create Poll
+                        <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition text-sm">
+                            <LayoutDashboard size={16} /> Dashboard
                         </a>
-                        {hasPolls && (
-                            <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                <LayoutDashboard size={16} /> Admin Dashboard
-                            </a>
-                        )}
-                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
+                        <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition text-sm">
                             <Zap size={16} /> Templates
                         </a>
-                    </nav>
-
-                    {/* Right side - Upgrade or Tier Badge (same as AdminDashboard) */}
-                    <div className="hidden md:flex items-center gap-3">
                         {tier === 'free' ? (
-                            // Free user - Upgrade button
                             <a
                                 href="/pricing"
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-amber-600 font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg ml-2"
                             >
                                 <Crown size={16} /> Upgrade
                             </a>
                         ) : (
-                            // Paid user - Tier badge
-                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                                {isPlanExpired ? <AlertTriangle size={16} /> : <TierIcon size={16} />} {config.label}
-                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
-                                    {isPlanExpired ? 'Expired' : `${daysRemaining}d`}
-                                </span>
+                            <div className={`px-3 py-1.5 bg-white/20 text-white rounded-lg text-sm font-bold flex items-center gap-2 ml-2`}>
+                                {isPlanExpired ? <AlertTriangle size={14} /> : <TierIcon size={14} />} {config.label}
                             </div>
                         )}
-                    </div>
+                    </nav>
 
                     {/* Mobile menu button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                        className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg"
                     >
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -125,9 +117,15 @@ const CreatePage: React.FC = () => {
 
                 {/* Mobile Menu */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden bg-white border-t border-slate-200 px-4 py-4">
+                    <div className="md:hidden bg-amber-600 border-t border-amber-400 px-4 py-4">
+                        {/* Creation Mode Badge */}
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg mb-3">
+                            <PlusCircle size={18} className="text-white" />
+                            <span className="text-white font-semibold">Creating Poll</span>
+                        </div>
+                        
                         {isPaid && (
-                            <div className={`flex items-center justify-between p-3 bg-gradient-to-r ${config.gradient} rounded-xl text-white mb-4`}>
+                            <div className={`flex items-center justify-between p-3 bg-white/20 rounded-xl text-white mb-4`}>
                                 <div className="flex items-center gap-2">
                                     <TierIcon size={20} />
                                     <span className="font-bold">{config.label} Plan</span>
@@ -137,21 +135,16 @@ const CreatePage: React.FC = () => {
                                 </span>
                             </div>
                         )}
-                        <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-600 bg-indigo-50">
-                            <PlusCircle size={20} /> Create Poll
+                        <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white hover:bg-white/10">
+                            <LayoutDashboard size={20} /> Dashboard
                         </a>
-                        {hasPolls && (
-                            <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">
-                                <LayoutDashboard size={20} /> Admin Dashboard
-                            </a>
-                        )}
-                        <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">
+                        <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white hover:bg-white/10">
                             <Zap size={20} /> Templates
                         </a>
                         {!isPaid && (
                             <a
                                 href="/pricing"
-                                className="flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-bold"
+                                className="flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-white rounded-xl text-amber-600 font-bold"
                             >
                                 <Crown size={18} />
                                 Upgrade

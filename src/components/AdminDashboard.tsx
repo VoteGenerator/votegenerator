@@ -1987,13 +1987,32 @@ const AdminDashboard: React.FC = () => {
                                                         
                                                         {/* MOBILE: Primary action button - always visible */}
                                                         <div className="sm:hidden mt-4">
-                                                            <a
-                                                                href={`/poll?id=${poll.id}${poll.adminKey ? `&admin=${poll.adminKey}` : ''}`}
+                                                            <button
+                                                                onClick={() => {
+                                                                    // Try to recover adminKey if missing
+                                                                    let adminKey = poll.adminKey;
+                                                                    if (!adminKey) {
+                                                                        const vgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                                                                        const match = vgPolls.find((p: any) => p.id === poll.id);
+                                                                        if (match?.adminKey) {
+                                                                            adminKey = match.adminKey;
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    if (adminKey) {
+                                                                        const hashParam = poll.type === 'survey' ? 'survey' : 'id';
+                                                                        window.location.href = `/#${hashParam}=${poll.id}&admin=${adminKey}`;
+                                                                    } else {
+                                                                        // No adminKey - go to vote view
+                                                                        const hashParam = poll.type === 'survey' ? 'survey' : 'id';
+                                                                        window.location.href = `/#${hashParam}=${poll.id}`;
+                                                                    }
+                                                                }}
                                                                 className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition flex items-center justify-center gap-2 font-semibold shadow-md"
                                                             >
                                                                 <ExternalLink size={18} />
                                                                 {isDraft ? 'Edit & Preview' : 'Manage & Share'}
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                     </div>
 
@@ -2057,21 +2076,31 @@ const AdminDashboard: React.FC = () => {
                                                             </button>
                                                         )}
                                                         {/* MANAGE & SHARE - Primary action, always visible */}
-                                                        <a
-                                                            href={poll.adminKey 
-                                                                ? (poll.type === 'survey' 
-                                                                    ? `/#survey=${poll.id}&admin=${poll.adminKey}`
-                                                                    : `/#id=${poll.id}&admin=${poll.adminKey}`)
-                                                                : (poll.type === 'survey'
-                                                                    ? `/#survey=${poll.id}`
-                                                                    : `/#id=${poll.id}`)
-                                                            }
+                                                        <button
+                                                            onClick={() => {
+                                                                // Try to recover adminKey if missing
+                                                                let adminKey = poll.adminKey;
+                                                                if (!adminKey) {
+                                                                    const vgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+                                                                    const match = vgPolls.find((p: any) => p.id === poll.id);
+                                                                    if (match?.adminKey) {
+                                                                        adminKey = match.adminKey;
+                                                                    }
+                                                                }
+                                                                
+                                                                const hashParam = poll.type === 'survey' ? 'survey' : 'id';
+                                                                if (adminKey) {
+                                                                    window.location.href = `/#${hashParam}=${poll.id}&admin=${adminKey}`;
+                                                                } else {
+                                                                    window.location.href = `/#${hashParam}=${poll.id}`;
+                                                                }
+                                                            }}
                                                             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition flex items-center gap-1.5 text-sm font-medium shadow-sm"
                                                             title={isDraft ? "Preview & Edit" : "Open Poll Dashboard"}
                                                         >
                                                             <ExternalLink size={16} />
                                                             <span>{isDraft ? 'Edit' : 'Manage'}</span>
-                                                        </a>
+                                                        </button>
                                                         <button
                                                             onClick={() => handleDeletePoll(poll)}
                                                             className="p-2.5 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition"

@@ -1354,41 +1354,50 @@ const AdminDashboard: React.FC = () => {
                             // For free users, show a different message
                             return (
                                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                    <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                                    <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-md">
                                         <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Smartphone size={20} className="text-amber-600" />
+                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={24} className="text-red-600" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-amber-800 mb-1">Access Your Polls</h4>
-                                                <p className="text-sm text-amber-700 mb-3">
-                                                    Your polls are saved in this browser. Bookmark this page or use the same device to return.
-                                                </p>
+                                                <h4 className="font-bold text-red-800 text-lg mb-2">⚠️ Important: Save This Page Now</h4>
+                                                <div className="p-3 bg-white/80 rounded-lg border border-red-200 mb-3">
+                                                    <p className="text-sm text-red-800 font-medium mb-2">
+                                                        Your polls are stored <strong>only in this browser</strong>. If you:
+                                                    </p>
+                                                    <ul className="text-sm text-red-700 space-y-1 ml-4">
+                                                        <li>• Clear your browser history or cookies</li>
+                                                        <li>• Use a different device or browser</li>
+                                                        <li>• Use incognito/private mode</li>
+                                                    </ul>
+                                                    <p className="text-sm text-red-800 font-bold mt-2">
+                                                        → You will permanently lose access to your polls and all responses.
+                                                    </p>
+                                                </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
+                                                            // Actually trigger the browser bookmark dialog hint
+                                                            alert('Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page now!');
                                                             localStorage.setItem('vg_dashboard_saved_free', 'true');
                                                             setAdminLinkWarningDismissed(true);
                                                         }}
-                                                        className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                        className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
                                                     >
                                                         <Bookmark size={16} />
-                                                        I've Bookmarked It
+                                                        Bookmark Now (Ctrl+D)
                                                     </button>
                                                     <a
                                                         href="/pricing"
-                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-amber-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-amber-200 transition"
+                                                        className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
                                                     >
                                                         <Crown size={16} />
-                                                        Get Shareable Link (Upgrade)
+                                                        Upgrade for Secure Access
                                                     </a>
-                                                    <button
-                                                        onClick={() => setAdminLinkWarningDismissed(true)}
-                                                        className="px-3 py-2 text-amber-500 text-sm hover:text-amber-700 transition"
-                                                    >
-                                                        Dismiss
-                                                    </button>
                                                 </div>
+                                                <p className="text-xs text-red-600 mt-3">
+                                                    💡 Pro tip: Upgrade to get a permanent link you can access from any device, plus email login.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

@@ -12,7 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ClipboardList, ArrowRight, Sparkles, Users, Star, TrendingUp,
+    ClipboardList, ArrowRight, ArrowLeft, Sparkles, Users, Star, TrendingUp,
     ShoppingCart, MessageSquare, Calendar, ChevronRight, Check,
     Shield, Clock, BarChart3, Eye, EyeOff, Plus, Building2
 } from 'lucide-react';
@@ -704,23 +704,44 @@ const SurveyPage: React.FC = () => {
     if (showBuilder) {
         return (
             <div className="min-h-screen bg-slate-50">
-                <NavHeader />
-                
-                {/* Back button */}
-                <div className="max-w-4xl mx-auto px-4 pt-6">
-                    <button
-                        onClick={() => {
-                            setShowBuilder(false);
-                            window.history.pushState({}, '', '/survey');
-                        }}
-                        className="text-sm text-slate-600 hover:text-indigo-600 flex items-center gap-1"
-                    >
-                        ← Back to templates
-                    </button>
-                </div>
+                {/* Creation Mode Header - Teal/Cyan theme for Survey */}
+                <header className="sticky top-0 z-50 bg-gradient-to-r from-teal-500 to-cyan-500 shadow-lg">
+                    <div className="max-w-7xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
+                        {/* Logo */}
+                        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                            <img 
+                                src="/logo.svg" 
+                                alt="VoteGenerator" 
+                                className="w-8 h-8 sm:w-9 sm:h-9 brightness-0 invert"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                            <span className="font-bold text-lg sm:text-xl text-white">
+                                Vote<span className="text-teal-100">Generator</span>
+                            </span>
+                        </a>
+
+                        {/* Creation Mode Badge - Center */}
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
+                            <ClipboardList size={14} className="text-white sm:w-4 sm:h-4" />
+                            <span className="text-white font-semibold text-xs sm:text-sm">Creating Survey</span>
+                        </div>
+
+                        {/* Back Button */}
+                        <button
+                            onClick={() => {
+                                setShowBuilder(false);
+                                window.history.pushState({}, '', '/survey');
+                            }}
+                            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs sm:text-sm font-medium transition"
+                        >
+                            <ArrowLeft size={14} className="sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Templates</span>
+                        </button>
+                    </div>
+                </header>
                 
                 {/* Survey Builder */}
-                <div className="max-w-4xl mx-auto px-4 py-8">
+                <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
                     {selectedTemplate && (
                         <div className="mb-8">
                             <div className="flex items-center gap-3 mb-2">

@@ -2793,9 +2793,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         'One-time vote codes',
                                         'IP allowlist/blocklist',
                                         'Scheduled close',
-                                        'Undo close (5 min)',
-                                        'Version history',
-                                        'Duplicate polls',
+                                        'Email notifications',
+                                        'Custom colors',
+                                        'Remove branding',
                                         'Domain restriction'
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center gap-2 text-slate-500">

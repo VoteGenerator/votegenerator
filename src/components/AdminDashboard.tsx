@@ -1251,7 +1251,7 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className={`p-2 rounded-lg transition ${tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-500'}`} title="Manage PIN security and dashboard preferences">
+                            <button onClick={() => setShowSettings(true)} className="p-2 rounded-lg transition hover:bg-white/10 text-white" title="Manage PIN security and dashboard preferences">
                                 <Settings size={20} />
                             </button>
                         )}

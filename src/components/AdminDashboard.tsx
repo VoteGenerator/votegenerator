@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info
 } from 'lucide-react';
 import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
@@ -137,6 +137,64 @@ const TIER_CONFIG: Record<string, {
             { name: 'Priority support', included: true },
         ]
     },
+};
+
+// ============================================================================
+// HelpTooltip Component - Contextual help for dashboard elements
+// ============================================================================
+const HelpTooltip: React.FC<{
+    content: string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    maxWidth?: string;
+    children?: React.ReactNode;
+}> = ({ content, position = 'top', maxWidth = '250px', children }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    
+    const positionClasses = {
+        top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+        bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+        left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+        right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+    };
+    
+    const arrowClasses = {
+        top: 'top-full left-1/2 -translate-x-1/2 border-t-slate-800 border-x-transparent border-b-transparent',
+        bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-800 border-x-transparent border-t-transparent',
+        left: 'left-full top-1/2 -translate-y-1/2 border-l-slate-800 border-y-transparent border-r-transparent',
+        right: 'right-full top-1/2 -translate-y-1/2 border-r-slate-800 border-y-transparent border-l-transparent',
+    };
+    
+    return (
+        <span 
+            className="relative inline-flex items-center"
+            onMouseEnter={() => setIsVisible(true)}
+            onMouseLeave={() => setIsVisible(false)}
+        >
+            {children || (
+                <HelpCircle 
+                    size={14} 
+                    className="text-slate-400 hover:text-slate-600 cursor-help transition-colors" 
+                />
+            )}
+            <AnimatePresence>
+                {isVisible && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className={`absolute z-50 ${positionClasses[position]}`}
+                        style={{ maxWidth }}
+                    >
+                        <div className="bg-slate-800 text-white text-xs px-3 py-2 rounded-lg shadow-xl">
+                            {content}
+                        </div>
+                        <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </span>
+    );
 };
 
 // ============================================================================
@@ -1159,7 +1217,10 @@ const AdminDashboard: React.FC = () => {
                         )}
                         {/* Paid users see tier badge */}
                         {tier !== 'free' && (
-                            <div className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}>
+                            <div 
+                                className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}
+                                title={isPlanExpired ? 'Your plan has expired. Renew to continue creating polls.' : `${config.label} Plan - Days remaining in your billing period`}
+                            >
                                 {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
                                 <span className="hidden sm:inline">{config.label}</span>
                                 <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
@@ -1173,7 +1234,7 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
+                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Manage PIN security and dashboard preferences">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
                         )}
@@ -1234,7 +1295,13 @@ const AdminDashboard: React.FC = () => {
                                                 <Link2 size={20} className="text-indigo-600" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-indigo-800 mb-1">Save Your Dashboard Access</h4>
+                                                <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                                                    Save Your Dashboard Access
+                                                    <HelpTooltip 
+                                                        content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
+                                                        position="right"
+                                                    />
+                                                </h4>
                                                 <p className="text-sm text-indigo-700 mb-3">
                                                     {tier !== 'free' 
                                                         ? "Your login link was sent to your email. You can also save it using the options below."
@@ -1438,6 +1505,7 @@ const AdminDashboard: React.FC = () => {
                                             }
                                         }}
                                         className="px-4 py-2.5 bg-white border-2 border-purple-200 hover:border-purple-300 text-purple-700 rounded-xl font-medium flex items-center gap-2 hover:bg-purple-50 transition"
+                                        title="Compare response rates, trends, and results across your polls side-by-side"
                                     >
                                         <ArrowLeftRight size={18} />
                                         <span className="hidden sm:inline">Compare</span>
@@ -1538,6 +1606,7 @@ const AdminDashboard: React.FC = () => {
                                             <button
                                                 onClick={() => setBulkSelectionMode(true)}
                                                 className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                                title="Select multiple polls to export or delete in bulk"
                                             >
                                                 <CheckSquare size={16} />
                                                 Select Multiple
@@ -1916,8 +1985,12 @@ const AdminDashboard: React.FC = () => {
                                             <Shield size={22} className="text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <h3 className="font-bold text-amber-900">
+                                            <h3 className="font-bold text-amber-900 flex items-center gap-1.5">
                                                 Security & Access
+                                                <HelpTooltip 
+                                                    content="Protect your dashboard with a PIN and create access tokens for team members with different permission levels."
+                                                    position="bottom"
+                                                />
                                             </h3>
                                             <p className="text-xs text-amber-700">PIN protection & team tokens</p>
                                         </div>
@@ -1933,9 +2006,13 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${session.hasPin ? 'bg-emerald-100' : 'bg-slate-100'}`}>
                                                         <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
                                                     </div>
-                                                    <div>
+                                                    <div className="flex items-center gap-1">
                                                         <span className="text-sm font-bold text-slate-800">Admin PIN</span>
-                                                        <span className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                                                        <HelpTooltip 
+                                                            content="Require a PIN to access your dashboard. Adds an extra layer of security if someone gets your dashboard link."
+                                                            position="right"
+                                                        />
+                                                        <span className={`ml-1 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
                                                             {session.hasPin ? '✓ ACTIVE' : 'OFF'}
                                                         </span>
                                                     </div>
@@ -1948,10 +2025,18 @@ const AdminDashboard: React.FC = () => {
 
                                         {/* Token Buttons */}
                                         <div className="flex gap-2">
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200">
+                                            <button 
+                                                onClick={() => setShowSettings(true)} 
+                                                className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200"
+                                                title="Create tokens for team members who can manage polls and view results"
+                                            >
                                                 <Plus size={14} /> Admin Token
                                             </button>
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1">
+                                            <button 
+                                                onClick={() => setShowSettings(true)} 
+                                                className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1"
+                                                title="Create read-only tokens for stakeholders who can only view results"
+                                            >
                                                 <Plus size={14} /> Viewer Token
                                             </button>
                                         </div>
@@ -1979,7 +2064,13 @@ const AdminDashboard: React.FC = () => {
                                         {config.icon}
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                                            {config.label} Plan
+                                            <HelpTooltip 
+                                                content="Your current subscription tier. Determines your poll limits, response limits, and available features."
+                                                position="bottom"
+                                            />
+                                        </h3>
                                         {session?.expiresAt && !isPlanExpired && (
                                             <p className="text-xs text-slate-500">
                                                 {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
@@ -2079,7 +2170,13 @@ const AdminDashboard: React.FC = () => {
                                         <BarChart3 size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800">Usage This Month</h3>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                                            Usage This Month
+                                            <HelpTooltip 
+                                                content="Track your poll and response limits. Limits reset at the start of each billing cycle."
+                                                position="right"
+                                            />
+                                        </h3>
                                         <p className="text-xs text-slate-500">
                                             {tier === 'free' ? 'Free plan limits' : `${config.label} plan`}
                                         </p>
@@ -2089,7 +2186,13 @@ const AdminDashboard: React.FC = () => {
                                 {/* Polls Usage */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between text-sm mb-1.5">
-                                        <span className="text-slate-600 font-medium">Polls Created</span>
+                                        <span className="text-slate-600 font-medium flex items-center gap-1">
+                                            Polls Created
+                                            <HelpTooltip 
+                                                content="Total polls in your dashboard. Free tier allows 3 active polls. Upgrade for unlimited."
+                                                position="right"
+                                            />
+                                        </span>
                                         <span className={`font-bold ${
                                             tier === 'free' && polls.length >= config.maxPolls 
                                                 ? 'text-red-600' 
@@ -2122,7 +2225,13 @@ const AdminDashboard: React.FC = () => {
                                 {/* Responses Usage */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between text-sm mb-1.5">
-                                        <span className="text-slate-600 font-medium">Responses Received</span>
+                                        <span className="text-slate-600 font-medium flex items-center gap-1">
+                                            Responses Received
+                                            <HelpTooltip 
+                                                content="Total votes/submissions across all your polls this month. When you hit the limit, polls will stop accepting new responses."
+                                                position="right"
+                                            />
+                                        </span>
                                         <span className={`font-bold ${
                                             totalVotes >= config.maxResponses 
                                                 ? 'text-red-600' 

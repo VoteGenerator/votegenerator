@@ -288,11 +288,16 @@ const VoteGeneratorApp: React.FC = () => {
             if (adminKey) {
                 poll = await getPollAsAdmin(pollId, adminKey);
                 isAdmin = true;
+                
+                // ADMIN ALWAYS goes directly to results/dashboard - no voting page
+                const results = await getResults(pollId, adminKey);
+                setViewState({ type: 'results', poll, results, isAdmin: true });
+                return; // Exit early - admin always sees dashboard
             } else {
                 poll = await getPoll(pollId);
             }
 
-            // Logic to determine what to show (Vote vs Results)
+            // Logic to determine what to show (Vote vs Results) - FOR NON-ADMIN ONLY
             const userVoted = hasVoted(pollId);
             const allowMultiple = poll.settings?.allowMultiple || poll.settings?.security === 'none';
             const hideResults = poll.settings?.hideResults;
@@ -315,14 +320,10 @@ const VoteGeneratorApp: React.FC = () => {
                         customMessage: poll.settings?.thankYouMessage,
                         title: poll.settings?.thankYouTitle
                     });
-                } else if (isAdmin) {
-                    // Admin - show results
-                    const results = await getResults(pollId, adminKey || undefined);
-                    setViewState({ type: 'results', poll, results, isAdmin });
                 } else {
                     // Show results with ability to vote again if security is 'none'
                     const results = await getResults(pollId, adminKey || undefined);
-                    setViewState({ type: 'results', poll, results, isAdmin });
+                    setViewState({ type: 'results', poll, results, isAdmin: false });
                 }
             } else {
                 // User hasn't voted yet - check if we need to show ad-wall first

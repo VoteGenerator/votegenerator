@@ -712,7 +712,8 @@ const AdminDashboard: React.FC = () => {
             if (!poll.adminKey && adminKeyMap.has(poll.id)) {
                 needsUpdate = true;
                 console.log('Syncing adminKey for poll:', poll.id);
-                return { ...poll, adminKey: adminKeyMap.get(poll.id) };
+                // Use non-null assertion since we verified with has()
+                return { ...poll, adminKey: adminKeyMap.get(poll.id) as string };
             }
             return poll;
         });

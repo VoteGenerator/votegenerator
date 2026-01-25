@@ -40,15 +40,15 @@ const PLANS = {
         color: 'indigo',
         gradient: 'from-indigo-500 to-blue-600',
         features: [
-            { text: '3 active polls', icon: BarChart3 },
-            { text: '5,000 responses/month', icon: Users },
+            { text: 'Unlimited polls', icon: BarChart3 },
+            { text: '10,000 responses/month', icon: Users },
             { text: 'All 8 poll types', icon: Check },
             { text: 'Remove branding', icon: Shield },
             { text: 'Export CSV & Excel', icon: Download },
             { text: 'Premium themes', icon: Palette },
             { text: 'Email support', icon: Mail }
         ],
-        highlight: ['analytics', 'export', 'themes']
+        highlight: ['analytics', 'export', 'themes', 'branding', 'unlimited']
     },
     business: {
         name: 'Business',
@@ -57,8 +57,8 @@ const PLANS = {
         color: 'purple',
         gradient: 'from-violet-500 to-purple-600',
         features: [
-            { text: '10 active polls', icon: BarChart3 },
-            { text: '50,000 responses/month', icon: Users },
+            { text: 'Unlimited polls', icon: BarChart3 },
+            { text: '100,000 responses/month', icon: Users },
             { text: 'Custom logo upload', icon: ImageIcon },
             { text: 'PDF reports', icon: FileText },
             { text: 'Advanced analytics', icon: BarChart3 },
@@ -109,18 +109,25 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                 })
             });
 
+            if (!response.ok) {
+                // If function doesn't exist or fails, redirect to pricing page
+                window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
+                return;
+            }
+
             const data = await response.json();
 
             if (data.url) {
                 // Redirect to Stripe Checkout
                 window.location.href = data.url;
             } else {
-                throw new Error(data.error || 'Failed to create checkout session');
+                // Fallback to pricing page
+                window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
             }
         } catch (error) {
             console.error('Checkout error:', error);
-            alert('Something went wrong. Please try again or visit our pricing page.');
-            setLoadingPlan(null);
+            // Fallback to pricing page on any error
+            window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
         }
     };
 
@@ -232,14 +239,14 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                                                 <span className="text-3xl font-black text-slate-900">
                                                     ${price.toFixed(0)}
                                                 </span>
-                                                <span className="text-slate-500">/month</span>
+                                                <span className="text-slate-500">USD/month</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {billingCycle === 'yearly' && (
                                         <p className="text-sm text-emerald-600 mb-4">
-                                            Billed ${plan.price.yearly}/year
+                                            Billed ${plan.price.yearly} USD/year
                                         </p>
                                     )}
 

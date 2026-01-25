@@ -96,6 +96,7 @@ export interface SurveySection {
 // Survey-specific settings
 export interface SurveySettings {
     // === INTRO SCREEN ===
+    showIntro?: boolean;             // Show welcome/intro screen before survey
     welcomeMessage?: string;        // Custom welcome text
     estimatedTime?: number;         // Estimated minutes to complete
     showAnonymousNotice?: boolean;  // Show "responses are anonymous" notice

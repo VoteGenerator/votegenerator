@@ -509,8 +509,12 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     theme.headerStyle || 'bg-slate-50 border-slate-100'
                 } ${theme.id === 'midnight' || theme.id === 'neon' ? 'text-white' : ''}`}>
                     {poll.pollType === 'budget' && (
-                        <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-sm font-bold text-green-800 border-b border-green-100 flex items-center justify-center gap-2">
-                            Budget: <span className="text-green-600">${budgetLimit}</span> | Spent: <span className="text-red-500">${budgetSpent}</span> | Remaining: <span className="text-emerald-600 flex items-center"><DollarSign size={12}/>{budgetRemaining}</span>
+                        <div className="absolute top-0 right-0 left-0 bg-green-50 p-2 text-center text-xs sm:text-sm font-bold text-green-800 border-b border-green-100 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                            <span>Budget: <span className="text-green-600">${budgetLimit}</span></span>
+                            <span className="hidden sm:inline">|</span>
+                            <span>Spent: <span className="text-red-500">${budgetSpent}</span></span>
+                            <span className="hidden sm:inline">|</span>
+                            <span>Left: <span className="text-emerald-600 inline-flex items-center"><DollarSign size={12}/>{budgetRemaining}</span></span>
                         </div>
                     )}
                     {/* Logo if present */}
@@ -658,15 +662,15 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                         </div>
                                     </div>
                                     <AnimatePresence mode="wait">
-                                        <motion.div key={currentPairIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="grid gap-4">
+                                        <motion.div key={currentPairIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="grid gap-3 sm:gap-4">
                                             {pairwiseQueue[currentPairIndex] && (
                                                 <>
-                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].left, pairwiseQueue[currentPairIndex].right)} className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left">
-                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].left.text}</span>
+                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].left, pairwiseQueue[currentPairIndex].right)} className="p-4 sm:p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-xl sm:rounded-2xl shadow-sm transition-all group text-left">
+                                                        <span className="text-base sm:text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].left.text}</span>
                                                     </button>
-                                                    <div className="flex items-center justify-center text-slate-300 font-bold text-sm uppercase"><div className="h-px bg-slate-200 w-10 mr-2"></div>VS<div className="h-px bg-slate-200 w-10 ml-2"></div></div>
-                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].right, pairwiseQueue[currentPairIndex].left)} className="p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-2xl shadow-sm transition-all group text-left">
-                                                        <span className="text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].right.text}</span>
+                                                    <div className="flex items-center justify-center text-slate-300 font-bold text-xs sm:text-sm uppercase"><div className="h-px bg-slate-200 w-8 sm:w-10 mr-2"></div>VS<div className="h-px bg-slate-200 w-8 sm:w-10 ml-2"></div></div>
+                                                    <button onClick={() => handlePairwiseVote(pairwiseQueue[currentPairIndex].right, pairwiseQueue[currentPairIndex].left)} className="p-4 sm:p-6 bg-white border-2 border-slate-100 hover:border-orange-500 hover:bg-orange-50 rounded-xl sm:rounded-2xl shadow-sm transition-all group text-left">
+                                                        <span className="text-base sm:text-lg md:text-xl font-bold text-slate-700 group-hover:text-orange-700">{pairwiseQueue[currentPairIndex].right.text}</span>
                                                     </button>
                                                 </>
                                             )}
@@ -674,10 +678,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                                     </AnimatePresence>
                                 </div>
                             ) : (
-                                <div className="text-center py-10">
-                                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><Check size={40} /></div>
-                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Complete!</h3>
-                                    <p className="text-slate-500">You've made all your comparisons.</p>
+                                <div className="text-center py-8 sm:py-10">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><Check size={32} className="sm:w-10 sm:h-10" /></div>
+                                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Complete!</h3>
+                                    <p className="text-slate-500 text-sm sm:text-base">You've made all your comparisons.</p>
                                 </div>
                             )}
                         </div>

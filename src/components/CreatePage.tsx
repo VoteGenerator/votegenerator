@@ -85,7 +85,7 @@ const CreatePage: React.FC = () => {
                         </a>
                         {hasPolls && (
                             <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
-                                <LayoutDashboard size={16} /> My Dashboard
+                                <LayoutDashboard size={16} /> Admin Dashboard
                             </a>
                         )}
                         <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
@@ -142,7 +142,7 @@ const CreatePage: React.FC = () => {
                         </a>
                         {hasPolls && (
                             <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">
-                                <LayoutDashboard size={20} /> My Dashboard
+                                <LayoutDashboard size={20} /> Admin Dashboard
                             </a>
                         )}
                         <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-700 hover:bg-slate-50">

@@ -11,11 +11,10 @@ import {
     Zap, Share2, Settings, X, CheckCircle, Link2,
     Shield, Eye, Edit3, Lock, Key, ChevronDown, ChevronUp,
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
-    Home, AlertTriangle, RefreshCw, QrCode, Palette, Mail,
+    Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info
 } from 'lucide-react';
-import ShareCards from './ShareCards';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
 
@@ -140,6 +139,64 @@ const TIER_CONFIG: Record<string, {
 };
 
 // ============================================================================
+// HelpTooltip Component - Contextual help for dashboard elements
+// ============================================================================
+const HelpTooltip: React.FC<{
+    content: string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    maxWidth?: string;
+    children?: React.ReactNode;
+}> = ({ content, position = 'top', maxWidth = '250px', children }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    
+    const positionClasses = {
+        top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+        bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+        left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+        right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+    };
+    
+    const arrowClasses = {
+        top: 'top-full left-1/2 -translate-x-1/2 border-t-slate-800 border-x-transparent border-b-transparent',
+        bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-slate-800 border-x-transparent border-t-transparent',
+        left: 'left-full top-1/2 -translate-y-1/2 border-l-slate-800 border-y-transparent border-r-transparent',
+        right: 'right-full top-1/2 -translate-y-1/2 border-r-slate-800 border-y-transparent border-l-transparent',
+    };
+    
+    return (
+        <span 
+            className="relative inline-flex items-center"
+            onMouseEnter={() => setIsVisible(true)}
+            onMouseLeave={() => setIsVisible(false)}
+        >
+            {children || (
+                <HelpCircle 
+                    size={14} 
+                    className="text-slate-400 hover:text-slate-600 cursor-help transition-colors" 
+                />
+            )}
+            <AnimatePresence>
+                {isVisible && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className={`absolute z-50 ${positionClasses[position]}`}
+                        style={{ maxWidth }}
+                    >
+                        <div className="bg-slate-800 text-white text-xs px-3 py-2 rounded-lg shadow-xl">
+                            {content}
+                        </div>
+                        <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </span>
+    );
+};
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -156,7 +213,6 @@ const AdminDashboard: React.FC = () => {
     const [showStatsPanel, setShowStatsPanel] = useState(true);
     const [showPinSetup, setShowPinSetup] = useState(false);
     const [showGoLiveModal, setShowGoLiveModal] = useState<string | null>(null);
-    const [showShareCards, setShowShareCards] = useState<string | null>(null); // Poll ID for share cards modal
     
     // Search & Pagination
     const [searchQuery, setSearchQuery] = useState('');
@@ -179,6 +235,7 @@ const AdminDashboard: React.FC = () => {
     // Individual poll actions
     const [duplicatingPollId, setDuplicatingPollId] = useState<string | null>(null);
     const [pausingPollId, setPausingPollId] = useState<string | null>(null);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     // Get token and session_id from URL (supports multiple formats)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1128,38 +1185,43 @@ const AdminDashboard: React.FC = () => {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-9 h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="font-bold text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
+                        <img src="/logo.svg" alt="VoteGenerator" className="w-8 h-8 sm:w-9 sm:h-9" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="font-bold text-lg sm:text-xl text-slate-800">Vote<span className="text-indigo-600">Generator</span></span>
                     </a>
                     
-                    {/* Nav Links */}
+                    {/* Desktop Nav Links */}
                     <nav className="hidden md:flex items-center gap-1">
                         <a href="/create" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                             <PlusCircle size={16} /> Create Poll
                         </a>
                         <a href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium transition text-sm">
-                            <LayoutDashboard size={16} /> My Dashboard
+                            <LayoutDashboard size={16} /> Admin Dashboard
                         </a>
                         <a href="/templates" className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-medium transition text-sm">
                             <Zap size={16} /> Templates
                         </a>
                     </nav>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {/* Free users see Upgrade button */}
                         {tier === 'free' && (
                             <button
                                 onClick={() => setShowUpgradeModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-sm transition-all shadow-md hover:shadow-lg"
+                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg"
                             >
-                                <Crown size={16} /> Upgrade
+                                <Crown size={14} className="sm:w-4 sm:h-4" /> 
+                                <span className="hidden xs:inline">Upgrade</span>
                             </button>
                         )}
                         {/* Paid users see tier badge */}
                         {tier !== 'free' && (
-                            <div className={`px-4 py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-sm font-bold flex items-center gap-2`}>
-                                {isPlanExpired ? <AlertTriangle size={16} /> : config.icon} {config.label}
-                                <span className={`text-xs px-2 py-0.5 rounded-full ml-1 ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
+                            <div 
+                                className={`px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r ${isPlanExpired ? 'from-red-500 to-rose-500' : config.gradient} text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2`}
+                                title={isPlanExpired ? 'Your plan has expired. Renew to continue creating polls.' : `${config.label} Plan - Days remaining in your billing period`}
+                            >
+                                {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
+                                <span className="hidden sm:inline">{config.label}</span>
+                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${isPlanExpired ? 'bg-white/30' : 'bg-white/20'}`}>
                                     {isPlanExpired 
                                         ? 'Expired' 
                                         : session?.expiresAt 
@@ -1170,65 +1232,123 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Settings">
+                            <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-100 rounded-lg transition" title="Manage PIN security and dashboard preferences">
                                 <Settings size={20} className="text-slate-500" />
                             </button>
                         )}
+                        
+                        {/* Mobile menu button */}
+                        <button 
+                            onClick={() => setShowMobileMenu(!showMobileMenu)}
+                            className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
+                        >
+                            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                        </button>
                     </div>
                 </div>
+                
+                {/* Mobile Navigation Menu */}
+                <AnimatePresence>
+                    {showMobileMenu && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="md:hidden border-t border-slate-100 bg-white overflow-hidden"
+                        >
+                            <nav className="p-3 space-y-1">
+                                <a href="/create" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                    <PlusCircle size={20} /> Create New Poll
+                                </a>
+                                <a href="/admin" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-50 text-indigo-600 font-medium">
+                                    <LayoutDashboard size={20} /> Admin Dashboard
+                                </a>
+                                <a href="/templates" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 font-medium transition">
+                                    <Zap size={20} /> Templates
+                                </a>
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
-                        {/* Dashboard Access Info */}
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                            <div className="p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-xl">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Link2 size={20} className="text-slate-600" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-slate-800">Bookmark this page to return to your dashboard</p>
-                                        {tier !== 'free' && (
-                                            <p className="text-sm text-slate-500">Your login link was also sent to your email</p>
-                                        )}
-                                        {tier === 'free' && (
-                                            <div className="mt-2">
-                                                <p className="text-sm text-slate-500 mb-2">Save access to your polls:</p>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <input 
-                                                        type="text" 
-                                                        readOnly 
-                                                        value={window.location.href}
-                                                        className="flex-1 min-w-[200px] px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 truncate"
+                        {/* Dashboard Access Info - Combined */}
+                        {(() => {
+                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
+                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
+                            
+                            const dashboardUrl = session?.dashboardToken 
+                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
+                                : window.location.href;
+                            
+                            return (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                <Link2 size={20} className="text-indigo-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                                                    Save Your Dashboard Access
+                                                    <HelpTooltip 
+                                                        content="Your dashboard link is unique to you. Save it to return to your polls anytime. Without this link, you won't be able to manage your polls."
+                                                        position="right"
                                                     />
+                                                </h4>
+                                                <p className="text-sm text-indigo-700 mb-3">
+                                                    {tier !== 'free' 
+                                                        ? "Your login link was sent to your email. You can also save it using the options below."
+                                                        : "Choose how you'd like to access your dashboard in the future:"}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(window.location.href);
-                                                            setCopiedId('dashboard-link');
-                                                            setTimeout(() => setCopiedId(null), 2000);
+                                                            navigator.clipboard.writeText(dashboardUrl);
+                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            setCopiedDashboardLink(true);
+                                                            setTimeout(() => setCopiedDashboardLink(false), 2000);
                                                         }}
                                                         className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
                                                     >
-                                                        {copiedId === 'dashboard-link' ? <Check size={16} /> : <Copy size={16} />}
-                                                        {copiedId === 'dashboard-link' ? 'Copied!' : 'Copy'}
+                                                        {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
+                                                        {copiedDashboardLink ? 'Copied!' : 'Copy Link'}
                                                     </button>
                                                     <a
-                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${window.location.href}\n\nSave this email to access your polls anytime`)}`}
-                                                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium flex items-center gap-1.5 transition"
+                                                        href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
+                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                        onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
                                                     >
                                                         <Mail size={16} />
                                                         Email to Self
                                                     </a>
+                                                    <button
+                                                        onClick={() => {
+                                                            localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
+                                                            setAdminLinkWarningDismissed(true);
+                                                        }}
+                                                        className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                    >
+                                                        <Bookmark size={16} />
+                                                        I've Bookmarked It
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setAdminLinkWarningDismissed(true)}
+                                                        className="px-3 py-2 text-indigo-500 text-sm hover:text-indigo-700 transition"
+                                                    >
+                                                        Dismiss
+                                                    </button>
                                                 </div>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </motion.div>
+                                </motion.div>
+                            );
+                        })()}
 
                         {/* Plan Expired Banner */}
                         {isPlanExpired && (
@@ -1344,65 +1464,6 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {/* ⚠️ Save Your Dashboard Link Warning */}
-                        {(() => {
-                            const dashboardLinkSaved = localStorage.getItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`);
-                            if (dashboardLinkSaved || adminLinkWarningDismissed) return null;
-                            
-                            const dashboardUrl = session?.dashboardToken 
-                                ? `${window.location.origin}/admin?t=${session.dashboardToken}`
-                                : window.location.href;
-                            
-                            return (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: -10 }} 
-                                    animate={{ opacity: 1, y: 0 }} 
-                                    className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl shadow-sm"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <AlertTriangle size={20} className="text-amber-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-amber-800 mb-1">Save Your Dashboard Link!</h4>
-                                            <p className="text-sm text-amber-700 mb-3">
-                                                Bookmark this page or save the link below. This is how you'll access your dashboard and manage all your polls.
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(dashboardUrl);
-                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                        setCopiedDashboardLink(true);
-                                                        setTimeout(() => setCopiedDashboardLink(false), 2000);
-                                                    }}
-                                                    className="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-2"
-                                                >
-                                                    {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
-                                                    {copiedDashboardLink ? 'Copied!' : 'Copy Dashboard Link'}
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
-                                                        setAdminLinkWarningDismissed(true);
-                                                    }}
-                                                    className="px-4 py-2 bg-white text-amber-700 text-sm font-medium rounded-lg border border-amber-300 hover:bg-amber-100 transition-colors"
-                                                >
-                                                    I've bookmarked it
-                                                </button>
-                                                <button
-                                                    onClick={() => setAdminLinkWarningDismissed(true)}
-                                                    className="px-3 py-2 text-amber-600 text-sm hover:text-amber-800 transition-colors"
-                                                >
-                                                    Remind me later
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })()}
-
                         {/* Dashboard Header with Search */}
                         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                             <div>
@@ -1442,6 +1503,7 @@ const AdminDashboard: React.FC = () => {
                                             }
                                         }}
                                         className="px-4 py-2.5 bg-white border-2 border-purple-200 hover:border-purple-300 text-purple-700 rounded-xl font-medium flex items-center gap-2 hover:bg-purple-50 transition"
+                                        title="Compare response rates, trends, and results across your polls side-by-side"
                                     >
                                         <ArrowLeftRight size={18} />
                                         <span className="hidden sm:inline">Compare</span>
@@ -1542,6 +1604,7 @@ const AdminDashboard: React.FC = () => {
                                             <button
                                                 onClick={() => setBulkSelectionMode(true)}
                                                 className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                                                title="Select multiple polls to export or delete in bulk"
                                             >
                                                 <CheckSquare size={16} />
                                                 Select Multiple
@@ -1739,17 +1802,6 @@ const AdminDashboard: React.FC = () => {
                                                                 {copiedId === `${poll.id}-vote` ? <Check size={18} /> : <Share2 size={18} />}
                                                             </button>
                                                         )}
-                                                        {/* Hide Invite button for just-created polls - it's in Manage section */}
-                                                        {!isJustCreated && (
-                                                            <button
-                                                                onClick={() => setShowShareCards(poll.id)}
-                                                                className="p-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-lg transition flex items-center gap-1.5"
-                                                                title="Create beautiful invite cards with QR codes"
-                                                            >
-                                                                <Palette size={18} />
-                                                                <span className="hidden sm:inline text-sm font-medium">Invite</span>
-                                                            </button>
-                                                        )}
                                                         {/* Duplicate button */}
                                                         <button
                                                             onClick={() => handleDuplicatePoll(poll)}
@@ -1920,8 +1972,12 @@ const AdminDashboard: React.FC = () => {
                                             <Shield size={22} className="text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <h3 className="font-bold text-amber-900">
+                                            <h3 className="font-bold text-amber-900 flex items-center gap-1.5">
                                                 Security & Access
+                                                <HelpTooltip 
+                                                    content="Protect your dashboard with a PIN and create access tokens for team members with different permission levels."
+                                                    position="bottom"
+                                                />
                                             </h3>
                                             <p className="text-xs text-amber-700">PIN protection & team tokens</p>
                                         </div>
@@ -1937,9 +1993,13 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${session.hasPin ? 'bg-emerald-100' : 'bg-slate-100'}`}>
                                                         <Lock size={16} className={session.hasPin ? 'text-emerald-600' : 'text-slate-400'} />
                                                     </div>
-                                                    <div>
+                                                    <div className="flex items-center gap-1">
                                                         <span className="text-sm font-bold text-slate-800">Admin PIN</span>
-                                                        <span className={`ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                                                        <HelpTooltip 
+                                                            content="Require a PIN to access your dashboard. Adds an extra layer of security if someone gets your dashboard link."
+                                                            position="right"
+                                                        />
+                                                        <span className={`ml-1 px-2 py-0.5 text-[10px] font-bold rounded-full ${session.hasPin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
                                                             {session.hasPin ? '✓ ACTIVE' : 'OFF'}
                                                         </span>
                                                     </div>
@@ -1952,10 +2012,18 @@ const AdminDashboard: React.FC = () => {
 
                                         {/* Token Buttons */}
                                         <div className="flex gap-2">
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200">
+                                            <button 
+                                                onClick={() => setShowSettings(true)} 
+                                                className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-md shadow-blue-200"
+                                                title="Create tokens for team members who can manage polls and view results"
+                                            >
                                                 <Plus size={14} /> Admin Token
                                             </button>
-                                            <button onClick={() => setShowSettings(true)} className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1">
+                                            <button 
+                                                onClick={() => setShowSettings(true)} 
+                                                className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border-2 border-slate-200 transition flex items-center justify-center gap-1"
+                                                title="Create read-only tokens for stakeholders who can only view results"
+                                            >
                                                 <Plus size={14} /> Viewer Token
                                             </button>
                                         </div>
@@ -1983,7 +2051,13 @@ const AdminDashboard: React.FC = () => {
                                         {config.icon}
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-bold text-slate-800">{config.label} Plan</h3>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                                            {config.label} Plan
+                                            <HelpTooltip 
+                                                content="Your current subscription tier. Determines your poll limits, response limits, and available features."
+                                                position="bottom"
+                                            />
+                                        </h3>
                                         {session?.expiresAt && !isPlanExpired && (
                                             <p className="text-xs text-slate-500">
                                                 {Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
@@ -2083,7 +2157,13 @@ const AdminDashboard: React.FC = () => {
                                         <BarChart3 size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800">Usage This Month</h3>
+                                        <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                                            Usage This Month
+                                            <HelpTooltip 
+                                                content="Track your poll and response limits. Limits reset at the start of each billing cycle."
+                                                position="right"
+                                            />
+                                        </h3>
                                         <p className="text-xs text-slate-500">
                                             {tier === 'free' ? 'Free plan limits' : `${config.label} plan`}
                                         </p>
@@ -2093,7 +2173,13 @@ const AdminDashboard: React.FC = () => {
                                 {/* Polls Usage */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between text-sm mb-1.5">
-                                        <span className="text-slate-600 font-medium">Polls Created</span>
+                                        <span className="text-slate-600 font-medium flex items-center gap-1">
+                                            Polls Created
+                                            <HelpTooltip 
+                                                content="Total polls in your dashboard. Free tier allows 3 active polls. Upgrade for unlimited."
+                                                position="right"
+                                            />
+                                        </span>
                                         <span className={`font-bold ${
                                             tier === 'free' && polls.length >= config.maxPolls 
                                                 ? 'text-red-600' 
@@ -2126,7 +2212,13 @@ const AdminDashboard: React.FC = () => {
                                 {/* Responses Usage */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between text-sm mb-1.5">
-                                        <span className="text-slate-600 font-medium">Responses Received</span>
+                                        <span className="text-slate-600 font-medium flex items-center gap-1">
+                                            Responses Received
+                                            <HelpTooltip 
+                                                content="Total votes/submissions across all your polls this month. When you hit the limit, polls will stop accepting new responses."
+                                                position="right"
+                                            />
+                                        </span>
                                         <span className={`font-bold ${
                                             totalVotes >= config.maxResponses 
                                                 ? 'text-red-600' 
@@ -2322,43 +2414,6 @@ const AdminDashboard: React.FC = () => {
                         onConfirm={() => handleGoLive(showGoLiveModal)}
                     />
                 )}
-            </AnimatePresence>
-
-            {/* Share Cards Modal */}
-            <AnimatePresence>
-                {showShareCards && (() => {
-                    const poll = polls.find(p => p.id === showShareCards);
-                    if (!poll) return null;
-                    const hashParam = poll.type === 'survey' ? 'survey' : 'id';
-                    const pollUrl = poll.customSlug 
-                        ? `${window.location.origin}/p/${poll.customSlug}`
-                        : `${window.location.origin}/#${hashParam}=${poll.id}`;
-                    return (
-                        <motion.div 
-                            initial={{ opacity: 0 }} 
-                            animate={{ opacity: 1 }} 
-                            exit={{ opacity: 0 }} 
-                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" 
-                            onClick={() => setShowShareCards(null)}
-                        >
-                            <motion.div 
-                                initial={{ scale: 0.95, opacity: 0 }} 
-                                animate={{ scale: 1, opacity: 1 }} 
-                                exit={{ scale: 0.95, opacity: 0 }} 
-                                className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <ShareCards
-                                    pollId={poll.id}
-                                    pollTitle={poll.title}
-                                    pollDescription={poll.description}
-                                    pollUrl={pollUrl}
-                                    onClose={() => setShowShareCards(null)}
-                                />
-                            </motion.div>
-                        </motion.div>
-                    );
-                })()}
             </AnimatePresence>
 
             {/* Upgrade Modal */}

@@ -1361,100 +1361,81 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     }
     
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* ============================================ */}
-            {/* STICKY PUBLISH BAR AT TOP - More visible! */}
+            {/* STEP INDICATOR - Shows progress */}
             {/* ============================================ */}
-            {!showTemplates && (
-                <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm mb-6">
-                    <div className="flex items-center justify-between gap-4">
-                        {/* Left: Status */}
-                        <div className="flex items-center gap-3">
-                            {/* Ready indicator */}
-                            {surveyTitle.trim() && totalQuestions > 0 ? (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 border border-emerald-200 rounded-full">
-                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                                    <span className="text-sm font-medium text-emerald-700">
-                                        Ready to publish
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full">
-                                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                                    <span className="text-sm font-medium text-amber-700">
-                                        {!surveyTitle.trim() ? 'Add title' : 'Add questions'}
-                                    </span>
-                                </div>
-                            )}
-                            
-                            {/* Question count */}
-                            <div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-500">
-                                <FileText size={14} />
-                                <span>{totalQuestions} question{totalQuestions !== 1 ? 's' : ''}</span>
-                            </div>
+            <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2 sm:gap-4">
+                    {/* Step 1: Title */}
+                    <div className={`flex items-center gap-2 ${surveyTitle.trim() ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${
+                            surveyTitle.trim() ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                            {surveyTitle.trim() ? <Check size={14} /> : '1'}
                         </div>
-                        
-                        {/* Right: Publish Button */}
-                        <button
-                            onClick={handlePublish}
-                            disabled={isPublishing || !canPublish}
-                            className={`px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all ${
-                                isPublishing || !canPublish
-                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
-                            }`}
-                        >
-                            {isPublishing ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    <span className="hidden sm:inline">Publishing...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Send size={18} />
-                                    <span>Publish Survey</span>
-                                </>
-                            )}
-                        </button>
+                        <span className="text-xs sm:text-sm font-medium hidden sm:inline">Title</span>
+                    </div>
+                    <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all ${surveyTitle.trim() ? 'bg-emerald-400 w-full' : 'w-0'}`} />
                     </div>
                     
-                    {/* Error message */}
-                    {publishError && (
-                        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                            {publishError}
+                    {/* Step 2: Questions */}
+                    <div className={`flex items-center gap-2 ${totalQuestions > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${
+                            totalQuestions > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                            {totalQuestions > 0 ? <Check size={14} /> : '2'}
                         </div>
-                    )}
+                        <span className="text-xs sm:text-sm font-medium hidden sm:inline">Questions</span>
+                    </div>
+                    <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all ${totalQuestions > 0 ? 'bg-emerald-400 w-full' : 'w-0'}`} />
+                    </div>
+                    
+                    {/* Step 3: Publish */}
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs sm:text-sm font-bold">
+                            3
+                        </div>
+                        <span className="text-xs sm:text-sm font-medium hidden sm:inline">Publish</span>
+                    </div>
                 </div>
-            )}
+            </div>
 
             {/* ============================================ */}
-            {/* TITLE & DESCRIPTION - AT THE TOP */}
+            {/* STEP 1: SURVEY TITLE - Clear, prominent input */}
             {/* ============================================ */}
-            <div className="bg-white rounded-2xl border-2 border-indigo-200 p-6 shadow-sm">
+            <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-indigo-200 p-4 sm:p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <FileText size={20} className="text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FileText size={18} className="text-white sm:w-5 sm:h-5" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-800">Survey Details</h3>
-                        <p className="text-sm text-slate-500">Give your survey a title</p>
+                        <h3 className="font-bold text-slate-800 text-sm sm:text-base">Step 1: Name Your Survey</h3>
+                        <p className="text-xs sm:text-sm text-slate-500">What is this survey about?</p>
                     </div>
                 </div>
-                <div className="space-y-4">
+                
+                <div className="space-y-3 sm:space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            Survey Title <span className="text-red-500">*</span>
-                        </label>
                         <input
                             type="text"
                             value={surveyTitle}
                             onChange={(e) => setSurveyTitle(e.target.value)}
-                            placeholder="e.g., Employee Satisfaction Survey 2024"
-                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none text-lg"
+                            placeholder="e.g., Customer Feedback Survey"
+                            className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none text-base sm:text-lg font-medium placeholder-slate-400"
+                            autoFocus
                         />
+                        {!surveyTitle.trim() && (
+                            <p className="mt-2 text-xs text-amber-600 flex items-center gap-1">
+                                <AlertTriangle size={12} /> Required: Give your survey a title
+                            </p>
+                        )}
                     </div>
+                    
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-slate-600 mb-1">
                             Description (optional)
                         </label>
                         <textarea
@@ -1462,87 +1443,67 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                             onChange={(e) => setSurveyDescription(e.target.value)}
                             placeholder="Tell respondents what this survey is about..."
                             rows={2}
-                            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none"
+                            className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none text-sm"
                         />
                     </div>
                 </div>
             </div>
             
-            {/* Header Stats & Actions */}
-            <div className="bg-gradient-to-r from-slate-50 to-indigo-50 rounded-2xl p-4 border border-slate-200">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {/* Stats */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-indigo-100">
-                            <FileText size={18} className="text-indigo-600" />
-                            <span className="font-semibold text-indigo-600">
-                                {sections.length} Section{sections.length !== 1 ? 's' : ''}
-                            </span>
-                            {maxSections !== Infinity && (
-                                <span className="text-xs text-indigo-400">/ {maxSections}</span>
-                            )}
-                        </div>
-                        <div className={`flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border ${
-                            totalQuestions >= maxQuestions ? 'border-amber-300 bg-amber-50' : 'border-purple-100'
-                        }`}>
-                            <HelpCircle size={18} className={totalQuestions >= maxQuestions ? 'text-amber-600' : 'text-purple-600'} />
-                            <span className={`font-semibold ${totalQuestions >= maxQuestions ? 'text-amber-600' : 'text-purple-600'}`}>
-                                {totalQuestions} Question{totalQuestions !== 1 ? 's' : ''}
-                            </span>
-                            {maxQuestions !== Infinity && (
-                                <span className={`text-xs ${totalQuestions >= maxQuestions ? 'text-amber-500' : 'text-purple-400'}`}>
-                                    / {maxQuestions}
-                                </span>
-                            )}
-                        </div>
-                        {/* Anonymous Mode indicator */}
-                        {settings.anonymousMode && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-xl shadow-sm border border-emerald-200">
-                                <Shield size={18} className="text-emerald-600" />
-                                <span className="font-semibold text-emerald-600">Anonymous</span>
-                            </div>
+            {/* ============================================ */}
+            {/* QUICK ACTIONS BAR - Templates & Settings */}
+            {/* ============================================ */}
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200">
+                {/* Stats */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white rounded-lg border text-xs sm:text-sm">
+                        <FileText size={14} className="text-indigo-500" />
+                        <span className="font-semibold text-indigo-600">{sections.length}</span>
+                        <span className="text-slate-500 hidden sm:inline">section{sections.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white rounded-lg border text-xs sm:text-sm ${
+                        totalQuestions >= maxQuestions ? 'border-amber-300' : ''
+                    }`}>
+                        <HelpCircle size={14} className={totalQuestions >= maxQuestions ? 'text-amber-500' : 'text-purple-500'} />
+                        <span className={`font-semibold ${totalQuestions >= maxQuestions ? 'text-amber-600' : 'text-purple-600'}`}>
+                            {totalQuestions}
+                        </span>
+                        {maxQuestions !== Infinity && (
+                            <span className="text-slate-400">/ {maxQuestions}</span>
                         )}
+                        <span className="text-slate-500 hidden sm:inline">questions</span>
                     </div>
-                    
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowTemplates(!showTemplates)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition font-medium ${
-                                showTemplates 
-                                    ? 'bg-amber-500 text-white shadow-md' 
-                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-700'
-                            }`}
-                        >
-                            <Sparkles size={16} /> Templates
-                        </button>
-                        <button
-                            onClick={() => setShowSettings(!showSettings)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition font-medium ${
-                                showSettings
-                                    ? 'bg-slate-700 text-white shadow-md'
-                                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                            }`}
-                        >
-                            <Settings2 size={16} /> Settings
-                        </button>
-                        <button
-                            onClick={handlePublish}
-                            disabled={isPublishing || !canPublish}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition font-medium ${
-                                isPublishing || !canPublish
-                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg'
-                            }`}
-                        >
-                            {isPublishing ? (
-                                <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                                <Send size={16} />
-                            )}
-                            Publish
-                        </button>
-                    </div>
+                    {settings.anonymousMode && (
+                        <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200 text-xs sm:text-sm">
+                            <Shield size={14} className="text-emerald-500" />
+                            <span className="text-emerald-600 font-medium hidden sm:inline">Anonymous</span>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowTemplates(!showTemplates)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition font-medium text-xs sm:text-sm ${
+                            showTemplates 
+                                ? 'bg-amber-500 text-white' 
+                                : 'bg-amber-100 hover:bg-amber-200 text-amber-700'
+                        }`}
+                    >
+                        <Sparkles size={14} /> 
+                        <span className="hidden xs:inline">Templates</span>
+                    </button>
+                    <button
+                        onClick={() => setShowSettings(!showSettings)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition font-medium text-xs sm:text-sm ${
+                            showSettings
+                                ? 'bg-slate-700 text-white'
+                                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}
+                    >
+                        <Settings2 size={14} /> 
+                        <span className="hidden xs:inline">Settings</span>
+                    </button>
                 </div>
             </div>
             
@@ -1553,11 +1514,11 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-6"
+                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl sm:rounded-2xl border-2 border-amber-200 p-4 sm:p-6 overflow-hidden"
                     >
-                        <div className="flex items-center justify-between mb-5">
-                            <h3 className="font-bold text-lg text-amber-800 flex items-center gap-2">
-                                <Sparkles size={20} /> Choose a Template
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-base sm:text-lg text-amber-800 flex items-center gap-2">
+                                <Sparkles size={18} /> Choose a Template
                             </h3>
                             <button
                                 onClick={() => setShowTemplates(false)}
@@ -1567,9 +1528,9 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                             </button>
                         </div>
                         
-                        {/* Template Grid - Larger Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {/* Start from Scratch - Featured */}
+                        {/* Template Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                            {/* Start from Scratch */}
                             <button
                                 onClick={() => {
                                     updateSections([{
@@ -1579,14 +1540,14 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                     }]);
                                     setShowTemplates(false);
                                 }}
-                                className="p-5 bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group"
+                                className="p-4 sm:p-5 bg-white rounded-xl border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center gap-2 sm:gap-3 text-center group"
                             >
-                                <div className="w-14 h-14 bg-slate-100 group-hover:bg-indigo-100 rounded-xl flex items-center justify-center transition">
-                                    <Plus size={28} className="text-slate-500 group-hover:text-indigo-600" />
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-100 group-hover:bg-indigo-100 rounded-xl flex items-center justify-center transition">
+                                    <Plus size={24} className="text-slate-500 group-hover:text-indigo-600" />
                                 </div>
                                 <div>
-                                    <span className="font-bold text-slate-800 text-base block">Blank Survey</span>
-                                    <span className="text-sm text-slate-500">Build your own from scratch</span>
+                                    <span className="font-bold text-slate-800 text-sm sm:text-base block">Blank Survey</span>
+                                    <span className="text-xs sm:text-sm text-slate-500">Start from scratch</span>
                                 </div>
                             </button>
                             
@@ -1598,420 +1559,311 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
                                 return (
                                     <button
                                         key={template.id}
-                                        onClick={() => applyTemplate(template)}
-                                        className="p-5 bg-white rounded-2xl border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg transition-all flex flex-col items-center gap-3 text-center group relative"
+                                        onClick={() => {
+                                            applyTemplate(template);
+                                            setSurveyTitle(template.name);
+                                            setShowTemplates(false);
+                                        }}
+                                        className="p-4 sm:p-5 bg-white rounded-xl border-2 border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all text-left group"
                                     >
-                                        {/* Anonymous badge for templates that recommend it */}
-                                        {template.recommendedSettings?.anonymousMode && (
-                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium flex items-center gap-1">
-                                                <Shield size={10} /> Anonymous
+                                        <div className="flex items-start gap-3">
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 ${bgColor} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                                <Icon size={20} className={template.color} />
                                             </div>
-                                        )}
-                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${bgColor}`}>
-                                            <Icon size={28} className={template.color} />
-                                        </div>
-                                        <div>
-                                            <span className="font-bold text-slate-800 text-base block">{template.name}</span>
-                                            <span className="text-sm text-slate-500">
-                                                {template.sections.length} section{template.sections.length > 1 ? 's' : ''} - {questionCount} question{questionCount > 1 ? 's' : ''}
-                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="font-bold text-slate-800 text-sm sm:text-base block truncate">
+                                                    {template.name}
+                                                </span>
+                                                <span className="text-xs text-slate-500">
+                                                    {template.sections.length} section{template.sections.length !== 1 ? 's' : ''} · {questionCount} questions
+                                                </span>
+                                            </div>
                                         </div>
                                     </button>
                                 );
                             })}
                         </div>
-                        
-                        <p className="text-xs text-amber-600 mt-5 text-center">
-                            Templates give you a head start - you can always customize them later
-                        </p>
                     </motion.div>
                 )}
             </AnimatePresence>
             
-            {/* Settings Panel - COMPREHENSIVE */}
+            {/* Settings Panel - Collapsible */}
             <AnimatePresence>
                 {showSettings && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-slate-50 rounded-2xl border-2 border-slate-200 p-6 space-y-6"
+                        className="bg-white rounded-xl sm:rounded-2xl border-2 border-slate-200 p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden"
                     >
                         <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                            <h3 className="font-bold text-base sm:text-lg text-slate-800 flex items-center gap-2">
                                 <Settings2 size={18} /> Survey Settings
                             </h3>
                             <button
                                 onClick={() => setShowSettings(false)}
-                                className="text-slate-600 hover:text-slate-800"
+                                className="text-slate-400 hover:text-slate-600 p-1"
                             >
-                                <ChevronUp size={18} />
+                                <ChevronUp size={20} />
                             </button>
                         </div>
                         
-                        {/* ========== INTRO SCREEN SETTINGS ========== */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <Sparkles size={16} className="text-indigo-500" />
+                        {/* Welcome Screen */}
+                        <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                            <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
+                                <Eye size={16} className="text-blue-500" />
                                 Welcome Screen
                             </h4>
-                            
-                            <div className="space-y-4">
-                                {/* Welcome Message */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Welcome Message
-                                    </label>
-                                    <textarea
-                                        value={settings.welcomeMessage || ''}
-                                        onChange={(e) => updateSettings({ ...settings, welcomeMessage: e.target.value })}
-                                        placeholder="Welcome! Please take a few minutes to share your feedback..."
-                                        rows={2}
-                                        className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none resize-none"
-                                    />
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Estimated Time */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Estimated Time (minutes)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="60"
-                                            value={settings.estimatedTime || ''}
-                                            onChange={(e) => updateSettings({ ...settings, estimatedTime: parseInt(e.target.value) || undefined })}
-                                            placeholder="5"
-                                            className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
-                                        />
-                                    </div>
-                                    
-                                    {/* Start Button Text */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Start Button Text
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={settings.startButtonText || ''}
-                                            onChange={(e) => updateSettings({ ...settings, startButtonText: e.target.value })}
-                                            placeholder="Start Survey"
-                                            className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                {/* Show Anonymous Notice */}
-                                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer">
                                     <input
                                         type="checkbox"
-                                        checked={settings.showAnonymousNotice ?? true}
-                                        onChange={(e) => updateSettings({ ...settings, showAnonymousNotice: e.target.checked })}
+                                        checked={settings.showIntro ?? true}
+                                        onChange={(e) => updateSettings({ ...settings, showIntro: e.target.checked })}
                                         className="w-5 h-5 rounded accent-indigo-600"
                                     />
                                     <div>
-                                        <p className="font-medium text-slate-800">Show privacy notice</p>
-                                        <p className="text-xs text-slate-500">Display "Responses are anonymous" on welcome screen</p>
+                                        <p className="font-medium text-slate-800 text-sm">Show welcome screen</p>
+                                        <p className="text-xs text-slate-500">Display intro before questions</p>
                                     </div>
+                                </label>
+                                {(settings.showIntro ?? true) && (
+                                    <input
+                                        type="text"
+                                        value={settings.startButtonText || ''}
+                                        onChange={(e) => updateSettings({ ...settings, startButtonText: e.target.value })}
+                                        placeholder="Start Survey"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 focus:outline-none text-sm"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                        
+                        {/* Navigation */}
+                        <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                            <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
+                                <ArrowRight size={16} className="text-green-500" />
+                                Navigation
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+                                <label className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg cursor-pointer text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.allowBack ?? true}
+                                        onChange={(e) => updateSettings({ ...settings, allowBack: e.target.checked })}
+                                        className="w-4 h-4 rounded accent-indigo-600"
+                                    />
+                                    <span className="font-medium text-slate-800">Allow back</span>
+                                </label>
+                                <label className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg cursor-pointer text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.showProgress ?? true}
+                                        onChange={(e) => updateSettings({ ...settings, showProgress: e.target.checked })}
+                                        className="w-4 h-4 rounded accent-indigo-600"
+                                    />
+                                    <span className="font-medium text-slate-800">Progress bar</span>
+                                </label>
+                                <label className="flex items-center gap-2 p-2 sm:p-3 bg-white rounded-lg cursor-pointer text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.showSummary ?? false}
+                                        onChange={(e) => updateSettings({ ...settings, showSummary: e.target.checked })}
+                                        className="w-4 h-4 rounded accent-indigo-600"
+                                    />
+                                    <span className="font-medium text-slate-800">Show summary</span>
                                 </label>
                             </div>
                         </div>
                         
-                        {/* ========== BRANDING (Pro/Business) ========== */}
-                        <div className={`bg-white rounded-xl border p-4 ${
-                            subscriptionTier === 'free' ? 'border-slate-200 opacity-60' : 'border-slate-200'
+                        {/* Privacy / Anonymous */}
+                        <div className={`rounded-xl p-3 sm:p-4 border-2 ${
+                            settings.anonymousMode ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'
                         }`}>
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="font-semibold text-slate-800 flex items-center gap-2">
-                                    <Palette size={16} className="text-purple-500" />
-                                    Branding
-                                </h4>
-                                {subscriptionTier === 'free' && (
-                                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full font-medium flex items-center gap-1">
-                                        <Crown size={12} /> Pro
-                                    </span>
-                                )}
-                            </div>
-                            
-                            {subscriptionTier === 'free' ? (
-                                <div className="text-center py-4">
-                                    <p className="text-sm text-slate-600 mb-2">Add your logo and custom colors</p>
-                                    <a href="/pricing" className="text-indigo-600 text-sm font-medium hover:underline">
-                                        Upgrade to unlock →
-                                    </a>
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={settings.anonymousMode ?? false}
+                                    onChange={(e) => updateSettings({ ...settings, anonymousMode: e.target.checked })}
+                                    className="w-5 h-5 rounded accent-emerald-600 mt-0.5"
+                                />
+                                <div>
+                                    <p className="font-semibold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                                        <Shield size={16} className={settings.anonymousMode ? 'text-emerald-600' : 'text-slate-400'} />
+                                        Anonymous Mode
+                                    </p>
+                                    <p className="text-xs sm:text-sm text-slate-600">
+                                        Hide individual responses - only see aggregated results
+                                    </p>
                                 </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {/* Logo URL */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Logo URL
-                                        </label>
-                                        <input
-                                            type="url"
-                                            value={settings.logoUrl || ''}
-                                            onChange={(e) => updateSettings({ ...settings, logoUrl: e.target.value })}
-                                            placeholder="https://yoursite.com/logo.png"
-                                            className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
-                                        />
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Theme Color */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Theme Color
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="color"
-                                                    value={settings.themeColor || '#6366f1'}
-                                                    onChange={(e) => updateSettings({ ...settings, themeColor: e.target.value })}
-                                                    className="w-12 h-10 rounded-lg border-2 border-slate-200 cursor-pointer"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    value={settings.themeColor || '#6366f1'}
-                                                    onChange={(e) => updateSettings({ ...settings, themeColor: e.target.value })}
-                                                    placeholder="#6366f1"
-                                                    className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none font-mono text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Background Color */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Background
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="color"
-                                                    value={settings.backgroundColor || '#f8fafc'}
-                                                    onChange={(e) => updateSettings({ ...settings, backgroundColor: e.target.value })}
-                                                    className="w-12 h-10 rounded-lg border-2 border-slate-200 cursor-pointer"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    value={settings.backgroundColor || '#f8fafc'}
-                                                    onChange={(e) => updateSettings({ ...settings, backgroundColor: e.target.value })}
-                                                    placeholder="#f8fafc"
-                                                    className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none font-mono text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            </label>
                         </div>
                         
-                        {/* ========== RESULTS VISIBILITY ========== */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <Eye size={16} className="text-blue-500" />
+                        {/* Results Visibility */}
+                        <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                            <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
+                                <Eye size={16} className="text-purple-500" />
                                 Results Visibility
                             </h4>
-                            
-                            <div className="space-y-3">
-                                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition ${
-                                    settings.hideResults ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                            <div className="space-y-2">
+                                <label className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border ${
+                                    settings.hideResults ?? true ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
                                 }`}>
                                     <input
                                         type="radio"
                                         checked={settings.hideResults ?? true}
                                         onChange={() => updateSettings({ ...settings, hideResults: true })}
-                                        className="w-5 h-5 accent-blue-600"
+                                        className="w-4 h-4 accent-blue-600"
                                     />
                                     <div>
-                                        <p className="font-medium text-slate-800">Admin Only (Recommended)</p>
-                                        <p className="text-xs text-slate-500">Only you can see results - respondents see a thank you message</p>
+                                        <p className="font-medium text-slate-800 text-sm">Admin only</p>
+                                        <p className="text-xs text-slate-500">Only you see results</p>
                                     </div>
                                 </label>
-                                
-                                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition ${
-                                    !settings.hideResults ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                                <label className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border ${
+                                    !(settings.hideResults ?? true) ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
                                 }`}>
                                     <input
                                         type="radio"
                                         checked={!(settings.hideResults ?? true)}
                                         onChange={() => updateSettings({ ...settings, hideResults: false })}
-                                        className="w-5 h-5 accent-blue-600"
+                                        className="w-4 h-4 accent-blue-600"
                                     />
                                     <div>
-                                        <p className="font-medium text-slate-800">Show to Respondents</p>
-                                        <p className="text-xs text-slate-500">Respondents can see aggregated results after submitting</p>
-                                    </div>
-                                </label>
-                            </div>
-                            
-                            <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
-                                <p className="text-xs text-amber-700 flex items-start gap-2">
-                                    <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
-                                    <span>Note: We do not collect email addresses. While we don't track individual identities, we cannot guarantee complete anonymity as responses may be identifiable through their content.</span>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        {/* ========== NAVIGATION SETTINGS ========== */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h4 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                <ArrowRight size={16} className="text-green-500" />
-                                Navigation
-                            </h4>
-                            
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.allowBack ?? true}
-                                        onChange={(e) => updateSettings({ ...settings, allowBack: e.target.checked })}
-                                        className="w-5 h-5 rounded accent-indigo-600"
-                                    />
-                                    <div>
-                                        <p className="font-medium text-slate-800 text-sm">Allow back</p>
-                                        <p className="text-xs text-slate-500">Go to previous</p>
-                                    </div>
-                                </label>
-                                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.showProgress ?? true}
-                                        onChange={(e) => updateSettings({ ...settings, showProgress: e.target.checked })}
-                                        className="w-5 h-5 rounded accent-indigo-600"
-                                    />
-                                    <div>
-                                        <p className="font-medium text-slate-800 text-sm">Progress bar</p>
-                                        <p className="text-xs text-slate-500">Show progress</p>
-                                    </div>
-                                </label>
-                                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.showSummary ?? false}
-                                        onChange={(e) => updateSettings({ ...settings, showSummary: e.target.checked })}
-                                        className="w-5 h-5 rounded accent-indigo-600"
-                                    />
-                                    <div>
-                                        <p className="font-medium text-slate-800 text-sm">Summary</p>
-                                        <p className="text-xs text-slate-500">Review before submit</p>
+                                        <p className="font-medium text-slate-800 text-sm">Show to respondents</p>
+                                        <p className="text-xs text-slate-500">Respondents see results after submitting</p>
                                     </div>
                                 </label>
                             </div>
                         </div>
                         
-                        {/* ========== PRIVACY (ANONYMOUS MODE) ========== */}
-                        <div className={`rounded-xl border-2 p-4 transition-all ${
-                            settings.anonymousMode 
-                                ? 'bg-emerald-50 border-emerald-200' 
-                                : 'bg-white border-slate-200'
-                        }`}>
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Shield size={18} className={settings.anonymousMode ? 'text-emerald-600' : 'text-slate-400'} />
-                                        <span className="font-semibold text-slate-800">Anonymous Mode (Admin View)</span>
-                                        {settings.anonymousMode && (
-                                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium">ON</span>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-slate-600 mb-2">
-                                        Hide individual responses from YOUR view. You will only see aggregated results.
-                                    </p>
-                                    
-                                    {settings.anonymousMode && (
-                                        <div className="space-y-1 text-xs text-emerald-700 bg-emerald-100/50 p-2 rounded-lg">
-                                            <p>✓ Individual responses hidden from admin</p>
-                                            <p>✓ Respondents see "anonymous" badge</p>
-                                            <p>✓ Open feedback shown in random order</p>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.anonymousMode ?? false}
-                                        onChange={(e) => updateSettings({ ...settings, anonymousMode: e.target.checked })}
-                                        className="sr-only"
-                                    />
-                                    <div className={`w-11 h-6 rounded-full transition-colors ${
-                                        settings.anonymousMode ? 'bg-emerald-500' : 'bg-slate-300'
-                                    }`}>
-                                        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            settings.anonymousMode ? 'translate-x-[22px]' : 'translate-x-0.5'
-                                        }`} />
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        {/* ========== COMPLETION MESSAGE ========== */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-4">
-                            <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                        {/* Completion Message */}
+                        <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                            <h4 className="font-semibold text-slate-800 mb-2 flex items-center gap-2 text-sm sm:text-base">
                                 <Check size={16} className="text-emerald-500" />
-                                Completion
+                                Thank You Message
                             </h4>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Thank you message
-                            </label>
                             <input
                                 type="text"
                                 value={settings.completionMessage || ''}
                                 onChange={(e) => updateSettings({ ...settings, completionMessage: e.target.value })}
                                 placeholder="Thank you for your response!"
-                                className="w-full px-4 py-2 border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:outline-none"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 focus:outline-none text-sm"
                             />
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-            
-            {/* Sections */}
-            <div className="space-y-6">
-                {sections.map((section, index) => (
-                    <SectionEditor
-                        key={section.id}
-                        section={section}
-                        sectionIndex={index}
-                        totalSections={sections.length}
-                        onChange={(updated) => updateSection(section.id, updated)}
-                        onDelete={() => deleteSection(section.id)}
-                        onDuplicate={() => duplicateSection(section.id)}
-                        canAddQuestion={canAddQuestion}
-                        questionLimitMessage={
-                            maxQuestions !== Infinity 
-                                ? `Question limit reached (${totalQuestions}/${maxQuestions})` 
-                                : undefined
-                        }
-                    />
-                ))}
-            </div>
-            
-            {/* Add Section Button */}
-            {sections.length < maxSections && (
-                <button
-                    onClick={addSection}
-                    className="w-full py-4 border-2 border-dashed border-indigo-300 rounded-2xl text-indigo-600 hover:border-indigo-500 hover:bg-indigo-50 transition flex items-center justify-center gap-2 font-semibold"
-                >
-                    <Plus size={20} /> Add Section
-                </button>
-            )}
-            
-            {/* Upgrade prompt */}
-            {sections.length >= maxSections && maxSections !== Infinity && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
-                    <p className="text-amber-800 font-medium">
-                        You have reached the section limit for your plan.
-                    </p>
-                    <a href="/pricing" className="text-amber-600 hover:underline text-sm">
-                        Upgrade for unlimited sections
-                    </a>
+
+            {/* ============================================ */}
+            {/* STEP 2: ADD YOUR QUESTIONS */}
+            {/* ============================================ */}
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl sm:rounded-2xl border-2 border-purple-200 p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <HelpCircle size={18} className="text-white sm:w-5 sm:h-5" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-sm sm:text-base">Step 2: Add Your Questions</h3>
+                        <p className="text-xs sm:text-sm text-slate-500">
+                            {totalQuestions === 0 
+                                ? 'Click "+ Add Question" below to get started' 
+                                : `${totalQuestions} question${totalQuestions !== 1 ? 's' : ''} added`
+                            }
+                        </p>
+                    </div>
                 </div>
-            )}
-            
-            {/* Bottom publish section removed - Now using sticky top bar for better visibility */}
+                
+                {/* Sections */}
+                <div className="space-y-4 sm:space-y-6">
+                    {sections.map((section, index) => (
+                        <SectionEditor
+                            key={section.id}
+                            section={section}
+                            sectionIndex={index}
+                            totalSections={sections.length}
+                            onChange={(updated) => updateSection(section.id, updated)}
+                            onDelete={() => deleteSection(section.id)}
+                            onDuplicate={() => duplicateSection(section.id)}
+                            canAddQuestion={canAddQuestion}
+                            questionLimitMessage={
+                                maxQuestions !== Infinity 
+                                    ? `Question limit reached (${totalQuestions}/${maxQuestions})` 
+                                    : undefined
+                            }
+                        />
+                    ))}
+                </div>
+                
+                {/* Add Section Button */}
+                {sections.length < maxSections && (
+                    <button
+                        onClick={addSection}
+                        className="w-full mt-4 py-3 sm:py-4 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 hover:border-purple-500 hover:bg-purple-50 transition flex items-center justify-center gap-2 font-semibold text-sm sm:text-base"
+                    >
+                        <Plus size={18} /> Add Another Section
+                    </button>
+                )}
+                
+                {sections.length >= maxSections && maxSections !== Infinity && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-center text-sm">
+                        <p className="text-amber-700">
+                            Section limit reached. <a href="/pricing" className="underline font-medium">Upgrade</a> for more.
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* ============================================ */}
+            {/* STEP 3: PUBLISH - Sticky bottom bar */}
+            {/* ============================================ */}
+            <div className="sticky bottom-0 z-30 -mx-4 px-4 py-3 sm:py-4 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+                <div className="flex items-center justify-between gap-3 sm:gap-4 max-w-4xl mx-auto">
+                    {/* Status */}
+                    <div className="flex-1 min-w-0">
+                        {!surveyTitle.trim() ? (
+                            <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                <AlertTriangle size={14} /> Add a title to publish
+                            </p>
+                        ) : totalQuestions === 0 ? (
+                            <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                <AlertTriangle size={14} /> Add at least one question
+                            </p>
+                        ) : (
+                            <p className="text-emerald-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                <Check size={14} /> Ready to publish!
+                            </p>
+                        )}
+                    </div>
+                    
+                    {/* Publish Button */}
+                    <button
+                        onClick={handlePublish}
+                        disabled={isPublishing || !canPublish}
+                        className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center gap-2 transition-all text-sm sm:text-base ${
+                            isPublishing || !canPublish
+                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                        }`}
+                    >
+                        {isPublishing ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                <span className="hidden sm:inline">Publishing...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Send size={18} />
+                                <span>Publish</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+                
+                {publishError && (
+                    <p className="mt-2 text-red-600 text-xs sm:text-sm text-center">{publishError}</p>
+                )}
+            </div>
         </div>
     );
 };

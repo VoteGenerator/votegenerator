@@ -207,7 +207,7 @@ const DashboardResults: React.FC<{
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50 border-b border-slate-200">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-50 border-b border-slate-200">
                 {[
                     { label: 'Total Votes', value: totalVotes, icon: BarChart3, color: 'text-indigo-600' },
                     { label: 'Leading', value: `${Math.round((winner.votes / totalVotes) * 100)}%`, icon: Trophy, color: 'text-amber-500' },
@@ -222,9 +222,9 @@ const DashboardResults: React.FC<{
             </div>
 
             {/* View Toggle */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                <h4 className="font-bold text-slate-900">{poll.demoQuestion}</h4>
-                <div className="flex bg-slate-100 rounded-lg p-1">
+            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 border-b border-slate-100">
+                <h4 className="font-bold text-slate-900 text-sm sm:text-base truncate">{poll.demoQuestion}</h4>
+                <div className="flex bg-slate-100 rounded-lg p-1 flex-shrink-0">
                     {[
                         { id: 'bar', icon: BarChart3, label: 'Bar' },
                         { id: 'pie', icon: PieChart, label: 'Pie' },
@@ -871,21 +871,21 @@ const SurveyDemo: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Template Selector */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-4">
                 <h4 className="text-sm font-bold text-slate-700 mb-3">Choose a Template:</h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {surveyTemplates.map((template) => (
                         <button
                             key={template.id}
                             onClick={() => selectTemplate(template)}
-                            className={`p-3 rounded-xl border-2 text-center transition ${
+                            className={`p-2 sm:p-3 rounded-xl border-2 text-center transition ${
                                 selectedTemplate.id === template.id
                                     ? 'border-indigo-500 bg-indigo-50'
                                     : 'border-slate-200 hover:border-slate-300'
                             }`}
                         >
-                            <span className="text-2xl block mb-1">{template.emoji}</span>
-                            <span className="text-sm font-medium text-slate-700">{template.name}</span>
+                            <span className="text-xl sm:text-2xl block mb-1">{template.emoji}</span>
+                            <span className="text-xs sm:text-sm font-medium text-slate-700">{template.name}</span>
                         </button>
                     ))}
                 </div>
@@ -1131,7 +1131,7 @@ function DemoPage(): React.ReactElement {
             {/* Tab Navigation */}
             <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-sm">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex gap-1 py-2">
+                    <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
                         {[
                             { id: 'polls', label: '8 Poll Types', icon: CheckSquare },
                             { id: 'surveys', label: 'Surveys', icon: FileText },
@@ -1140,14 +1140,15 @@ function DemoPage(): React.ReactElement {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as 'polls' | 'surveys' | 'finder')}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap ${
                                     activeTab === tab.id
                                         ? 'bg-indigo-100 text-indigo-700'
                                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
-                                <tab.icon size={16} />
-                                {tab.label}
+                                <tab.icon size={14} className="sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">{tab.label}</span>
+                                <span className="sm:hidden">{tab.label.split(' ').slice(-1)[0]}</span>
                             </button>
                         ))}
                     </div>

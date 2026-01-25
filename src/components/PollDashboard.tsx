@@ -1293,6 +1293,79 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             </AnimatePresence>
 
             {/* ================================================================ */}
+            {/* TAB NAVIGATION - Super prominent, sticky dashboard tabs */}
+            {/* ================================================================ */}
+            <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-md border-b-2 border-indigo-100 shadow-lg print:hidden">
+                <div className="max-w-5xl mx-auto">
+                    {/* Colorful tab bar */}
+                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-1 rounded-2xl shadow-xl shadow-indigo-200/50">
+                        <div className="bg-white rounded-xl flex overflow-x-auto scrollbar-hide">
+                            {tabs.map((tab, index) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                const isLocked = tab.premium;
+                                const shouldPulse = tab.id === 'share' && voteCount === 0 && !isActive;
+                                
+                                // Color schemes for each tab
+                                const tabStyles: Record<string, { active: string; icon: string }> = {
+                                    results: { active: 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg shadow-indigo-200', icon: 'text-indigo-500' },
+                                    share: { active: 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-200', icon: 'text-emerald-500' },
+                                    notify: { active: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200', icon: 'text-amber-500' },
+                                    settings: { active: 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-lg shadow-slate-200', icon: 'text-slate-500' },
+                                    downloads: { active: 'bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg shadow-purple-200', icon: 'text-purple-500' },
+                                    analytics: { active: 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-200', icon: 'text-pink-500' },
+                                };
+                                
+                                const style = tabStyles[tab.id] || tabStyles.results;
+                                
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            if (isLocked) {
+                                                openUpgradeModal('analytics');
+                                            } else {
+                                                setActiveTab(tab.id);
+                                            }
+                                        }}
+                                        className={`relative flex-1 min-w-[90px] sm:min-w-[110px] flex items-center justify-center gap-2 px-3 sm:px-5 py-3 sm:py-4 text-sm font-bold transition-all rounded-xl m-1 ${
+                                            isActive 
+                                                ? style.active
+                                                : isLocked
+                                                    ? 'text-slate-300 hover:bg-slate-50'
+                                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        {/* Pulse indicator for Share when no votes */}
+                                        {shouldPulse && (
+                                            <>
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full animate-ping opacity-75" />
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">!</span>
+                                            </>
+                                        )}
+                                        
+                                        <Icon size={18} className={isActive ? 'text-white' : isLocked ? 'text-slate-300' : style.icon} />
+                                        <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
+                                        
+                                        {isLocked && (
+                                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm">
+                                                <Lock size={10} className="text-amber-900" />
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    
+                    {/* Active tab indicator text on mobile */}
+                    <p className="sm:hidden text-center text-xs text-indigo-600 font-medium mt-2">
+                        {tabs.find(t => t.id === activeTab)?.label} • Swipe for more
+                    </p>
+                </div>
+            </div>
+
+            {/* ================================================================ */}
             {/* QUICK STATS */}
             {/* ================================================================ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -1487,74 +1560,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     )}
                 </div>
             </motion.div>
-
-            {/* ================================================================ */}
-            {/* TAB NAVIGATION - Prominent and visually distinct */}
-            {/* ================================================================ */}
-            <div className="mb-6 relative">
-                {/* Scroll hint gradients for mobile */}
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
-                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none sm:hidden" />
-                
-                {/* Gradient border wrapper */}
-                <div className="p-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg">
-                    <div className="flex gap-1.5 sm:gap-2 p-1.5 bg-white rounded-[14px] overflow-x-auto scrollbar-hide">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
-                        const isLocked = tab.premium;
-                        const colors = tabColors[tab.id];
-                        const shouldPulse = tab.id === 'share' && voteCount === 0 && !isActive;
-                        
-                        return (
-                            <HelpTooltip 
-                                key={tab.id}
-                                content={isLocked ? `${tab.tooltip} (Pro feature)` : tab.tooltip}
-                                position="bottom"
-                                maxWidth="220px"
-                            >
-                                <button
-                                    onClick={() => {
-                                        if (isLocked) {
-                                            openUpgradeModal('analytics');
-                                        } else {
-                                            setActiveTab(tab.id);
-                                        }
-                                    }}
-                                    className={`relative flex-shrink-0 sm:flex-1 min-w-[70px] sm:min-w-[90px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                                        isActive 
-                                            ? colors.active
-                                            : isLocked
-                                                ? 'text-slate-400 hover:text-slate-500'
-                                                : colors.hover
-                                    }`}
-                                >
-                                    {/* Pulse effect for Share tab when no votes */}
-                                    {shouldPulse && (
-                                        <motion.div
-                                            className="absolute inset-0 bg-emerald-400/30 rounded-xl"
-                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
-                                            transition={{ duration: 2, repeat: Infinity }}
-                                        />
-                                    )}
-                                    <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isActive ? '' : colors.icon}`} />
-                                    <span className="truncate">{tab.label}</span>
-                                    {isLocked && <Lock size={12} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />}
-                                    {shouldPulse && (
-                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-emerald-500 rounded-full animate-pulse" />
-                                    )}
-                                </button>
-                            </HelpTooltip>
-                        );
-                    })}
-                    </div>
-                </div>
-                
-                {/* Mobile scroll hint text */}
-                <p className="text-center text-xs text-slate-400 mt-2 sm:hidden">
-                    ← Swipe to see more tabs →
-                </p>
-            </div>
 
             {/* ================================================================ */}
             {/* TAB CONTENT */}

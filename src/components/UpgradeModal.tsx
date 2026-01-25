@@ -36,7 +36,7 @@ const PLANS = {
     pro: {
         name: 'Pro',
         icon: Zap,
-        price: { monthly: 16, yearly: 190 },
+        price: { monthly: 19, yearly: 190 },
         color: 'indigo',
         gradient: 'from-indigo-500 to-blue-600',
         features: [
@@ -53,7 +53,7 @@ const PLANS = {
     business: {
         name: 'Business',
         icon: Crown,
-        price: { monthly: 41, yearly: 490 },
+        price: { monthly: 49, yearly: 490 },
         color: 'purple',
         gradient: 'from-violet-500 to-purple-600',
         features: [
@@ -109,18 +109,25 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                 })
             });
 
+            if (!response.ok) {
+                // If function doesn't exist or fails, redirect to pricing page
+                window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
+                return;
+            }
+
             const data = await response.json();
 
             if (data.url) {
                 // Redirect to Stripe Checkout
                 window.location.href = data.url;
             } else {
-                throw new Error(data.error || 'Failed to create checkout session');
+                // Fallback to pricing page
+                window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
             }
         } catch (error) {
             console.error('Checkout error:', error);
-            alert('Something went wrong. Please try again or visit our pricing page.');
-            setLoadingPlan(null);
+            // Fallback to pricing page on any error
+            window.location.href = `/pricing?plan=${plan}&billing=${billingCycle}`;
         }
     };
 

@@ -691,6 +691,40 @@ const AdminDashboard: React.FC = () => {
         return false;
     }, [session]);
 
+    // Sync adminKeys from vg_polls to session.polls (fixes missing adminKey issue)
+    useEffect(() => {
+        if (!session || !session.polls) return;
+        
+        const vgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+        if (vgPolls.length === 0) return;
+        
+        // Create a map of pollId -> adminKey from vg_polls
+        const adminKeyMap = new Map<string, string>();
+        vgPolls.forEach((p: any) => {
+            if (p.id && p.adminKey) {
+                adminKeyMap.set(p.id, p.adminKey);
+            }
+        });
+        
+        // Check if any session polls are missing adminKey
+        let needsUpdate = false;
+        const updatedPolls = session.polls.map(poll => {
+            if (!poll.adminKey && adminKeyMap.has(poll.id)) {
+                needsUpdate = true;
+                console.log('Syncing adminKey for poll:', poll.id);
+                return { ...poll, adminKey: adminKeyMap.get(poll.id) };
+            }
+            return poll;
+        });
+        
+        // Update session if any adminKeys were synced
+        if (needsUpdate) {
+            const updatedSession = { ...session, polls: updatedPolls };
+            localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+            setSession(updatedSession);
+        }
+    }, [session?.polls?.length]); // Only run when polls count changes
+
     // Filtered and paginated polls - with highlight sorting
     const filteredPolls = useMemo(() => {
         if (!session) return [];
@@ -1059,11 +1093,28 @@ const AdminDashboard: React.FC = () => {
             adminKeyLength: poll.adminKey?.length
         });
         
-        // Check if poll has adminKey
+        // Check if poll has adminKey - try to recover from vg_polls first
         if (!poll.adminKey) {
-            console.error('Poll missing adminKey:', poll);
-            alert('Unable to duplicate: This poll is missing authentication data. Try refreshing the page first, or open the poll dashboard and duplicate from there.');
-            return;
+            console.log('Poll missing adminKey, attempting recovery from vg_polls...');
+            const vgPolls = JSON.parse(localStorage.getItem('vg_polls') || '[]');
+            const matchingPoll = vgPolls.find((p: any) => p.id === poll.id);
+            
+            if (matchingPoll?.adminKey) {
+                console.log('Recovered adminKey from vg_polls');
+                poll.adminKey = matchingPoll.adminKey;
+                
+                // Also update session
+                const updatedPolls = session.polls.map(p => 
+                    p.id === poll.id ? { ...p, adminKey: matchingPoll.adminKey } : p
+                );
+                const updatedSession = { ...session, polls: updatedPolls };
+                localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                setSession(updatedSession);
+            } else {
+                console.error('Poll missing adminKey and not found in vg_polls:', poll);
+                alert('Unable to duplicate: This poll is missing authentication data. Please try refreshing the page.');
+                return;
+            }
         }
         
         setDuplicatingPollId(poll.id);
@@ -1445,7 +1496,7 @@ const AdminDashboard: React.FC = () => {
                                                     </a>
                                                 </div>
                                                 <p className="text-xs text-red-600 mt-3">
-                                                    💡 Pro tip: Upgrade to get a permanent link you can access from any device, plus email login.
+                                                    💡 Pro tip: Upgrade to get a permanent link you can access from any device.
                                                 </p>
                                             </div>
                                         </div>
@@ -1936,10 +1987,7 @@ const AdminDashboard: React.FC = () => {
                                                         {/* MOBILE: Primary action button - always visible */}
                                                         <div className="sm:hidden mt-4">
                                                             <a
-                                                                href={poll.type === 'survey' 
-                                                                    ? `/#survey=${poll.id}&admin=${poll.adminKey}`
-                                                                    : `/#id=${poll.id}&admin=${poll.adminKey}`
-                                                                }
+                                                                href={`/poll?id=${poll.id}${poll.adminKey ? `&admin=${poll.adminKey}` : ''}`}
                                                                 className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition flex items-center justify-center gap-2 font-semibold shadow-md"
                                                             >
                                                                 <ExternalLink size={18} />

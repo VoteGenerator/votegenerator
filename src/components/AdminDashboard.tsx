@@ -218,6 +218,12 @@ const AdminDashboard: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLinkWarningDismissed, setAdminLinkWarningDismissed] = useState(false);
+    const [gettingStartedDismissed, setGettingStartedDismissed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('vg_seen_getting_started') === 'true';
+        }
+        return false;
+    });
     const [copiedDashboardLink, setCopiedDashboardLink] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showChooseActiveModal, setShowChooseActiveModal] = useState(false);
@@ -755,17 +761,9 @@ const AdminDashboard: React.FC = () => {
     const handleDeletePoll = async (poll: UserPoll) => {
         if (!session) return;
         
-        // Get response count for warning message
-        const hasResponses = (poll.responseCount || 0) > 0;
-        const isRestrictedTier = session.tier === 'free' || session.tier === 'pro';
-        
-        // Check tier restriction
-        if (hasResponses && isRestrictedTier) {
-            // Show upgrade modal instead
-            setPollToDelete(null);
-            setShowUpgradeModal(true);
-            return;
-        }
+        // Free and Pro users CAN delete polls (even with responses) to free up slots
+        // This is essential for the "3 active polls" limit to work properly
+        // Users lose the data but can create new polls
         
         // Show custom delete confirmation modal
         setPollToDelete(poll);
@@ -967,10 +965,9 @@ const AdminDashboard: React.FC = () => {
     
     const canBulkDelete = (() => {
         if (!session) return false;
-        // Business tier can delete anything
-        if (session.tier === 'business') return true;
-        // Free/Pro can only delete polls without responses
-        return selectedPollsWithResponses.length === 0;
+        // All tiers can delete polls - this is essential for the "3 active polls" limit
+        // Users lose the data but can create new polls
+        return true;
     })();
     
     const handleBulkDelete = () => {
@@ -1328,7 +1325,7 @@ const AdminDashboard: React.FC = () => {
                                                             onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
                                                         >
                                                             <Mail size={16} />
-                                                            Email to Self
+                                                            Open Email App
                                                         </a>
                                                         <button
                                                             onClick={() => {
@@ -1398,6 +1395,73 @@ const AdminDashboard: React.FC = () => {
                                 </motion.div>
                             );
                         })()}
+
+                        {/* Getting Started Guide - For first-time users */}
+                        {!gettingStartedDismissed && polls.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                                    <Sparkles size={16} className="text-white" />
+                                                </div>
+                                                <h3 className="font-bold text-emerald-800 text-lg">🎉 Your poll is ready!</h3>
+                                            </div>
+                                            
+                                            <div className="space-y-3 mb-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">1</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Click "Manage" on your poll</p>
+                                                        <p className="text-sm text-emerald-600">Opens the Poll Dashboard where you can share, view results, and manage settings</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">2</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Share with your audience</p>
+                                                        <p className="text-sm text-emerald-600">Copy the voting link, generate a QR code, or share directly to social media</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <span className="text-emerald-700 text-xs font-bold">3</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-emerald-800">Watch results come in</p>
+                                                        <p className="text-sm text-emerald-600">Results update in real-time. Set up email notifications to stay informed!</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {tier === 'free' && (
+                                                <div className="p-3 bg-white/60 rounded-lg border border-emerald-200">
+                                                    <p className="text-xs font-medium text-emerald-700">
+                                                        <strong>Free Plan:</strong> {config.maxPolls} active polls • {config.maxResponses.toLocaleString()} responses/month • 
+                                                        <span className="text-emerald-600"> "Active" means polls accepting votes. Pause or delete polls to free up slots.</span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                localStorage.setItem('vg_seen_getting_started', 'true');
+                                                setGettingStartedDismissed(true);
+                                            }}
+                                            className="p-1.5 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-lg transition flex-shrink-0"
+                                            title="Dismiss guide"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Plan Expired Banner */}
                         {isPlanExpired && (

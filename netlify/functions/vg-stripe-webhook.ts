@@ -1,179 +1,186 @@
 // ============================================================================
-// vg-stripe-webhook.ts - Handle Stripe webhooks
+// vg-stripe-webhook.ts - Handle Stripe subscription events
 // Location: netlify/functions/vg-stripe-webhook.ts
-// Processes checkout.session.completed to register customers
+// 
+// Handles:
+// - customer.subscription.updated (tier changes, renewals)
+// - customer.subscription.deleted (cancellations)
+// - checkout.session.completed (new subscriptions)
+// - invoice.payment_failed (payment issues)
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
-import Stripe from 'stripe';
 import { getStore } from '@netlify/blobs';
-import crypto from 'crypto';
+import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2023-10-16',
+    apiVersion: '2023-10-16'
 });
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
-interface CustomerRecord {
-    email: string;
-    tier: string;
-    stripeCustomerId?: string;
-    stripeSessionId: string;
-    dashboardToken: string;
-    expiresAt: string; // Plan expiration date
-    polls: {
-        id: string;
-        adminKey: string;
-        title: string;
-        type: string;
-        status: 'draft' | 'live';
-        createdAt: string;
-    }[];
-    createdAt: string;
-    updatedAt?: string;
+// Tier configuration - must match vg-create.ts
+const TIER_CONFIG: Record<string, { maxResponses: number }> = {
+    free: { maxResponses: 100 },
+    pro: { maxResponses: 10000 },
+    business: { maxResponses: 100000 },
+};
+
+// ============================================================================
+// DETERMINE TIER FROM SUBSCRIPTION
+// ============================================================================
+function determineTier(subscription: Stripe.Subscription): 'free' | 'pro' | 'business' {
+    const priceId = subscription.items.data[0]?.price?.id;
+    
+    const businessPrices = [
+        process.env.STRIPE_BUSINESS_MONTHLY_PRICE,
+        process.env.STRIPE_BUSINESS_ANNUAL_PRICE,
+    ].filter(Boolean);
+    
+    const proPrices = [
+        process.env.STRIPE_PRO_MONTHLY_PRICE,
+        process.env.STRIPE_PRO_ANNUAL_PRICE,
+    ].filter(Boolean);
+    
+    if (businessPrices.includes(priceId)) return 'business';
+    if (proPrices.includes(priceId)) return 'pro';
+    
+    // Check metadata
+    const tierMeta = subscription.metadata?.tier;
+    if (tierMeta === 'business') return 'business';
+    if (tierMeta === 'pro') return 'pro';
+    
+    return 'pro'; // Default for unknown paid subscriptions
 }
 
-// Generate a unique dashboard token
-const generateDashboardToken = (): string => {
-    return crypto.randomBytes(12).toString('base64url');
-};
-
-// Get tier duration in days
-const getTierDuration = (tier: string): number => {
-    switch (tier) {
-        case 'pro': return 30;
-        case 'pro': return 60;
-        case 'business': return 30;
-        case 'business': return 365;
-        default: return 7;
-    }
-};
-
-// Get tier display label
-const getTierLabel = (tier: string): string => {
-    const labels: Record<string, string> = {
-        free: 'Free',
-        pro: 'Pro',
-        business: 'Business',
-    };
-    return labels[tier] || 'Free';
-};
-
-// Send welcome email via Resend
-const sendWelcomeEmail = async (
-    email: string,
-    tier: string,
-    sessionId: string,
-    expiresAt: string
-): Promise<boolean> => {
-    if (!RESEND_API_KEY) {
-        console.log('Skipping email: No RESEND_API_KEY');
-        return false;
-    }
+// ============================================================================
+// UPDATE CUSTOMER AND THEIR POLLS
+// ============================================================================
+async function syncCustomerTier(
+    stripeCustomerId: string, 
+    newTier: 'free' | 'pro' | 'business',
+    expiresAt: string | null,
+    isActive: boolean
+): Promise<{ updated: number; errors: number }> {
+    const siteId = process.env.VG_SITE_ID || '';
+    const authToken = process.env.NETLIFY_AUTH_TOKEN || '';
     
-    const tierLabel = getTierLabel(tier);
-    const baseUrl = process.env.URL || 'https://votegenerator.com';
-    const dashboardUrl = `${baseUrl}/admin?t=${sessionId}`; // sessionId is actually the token now
-    const expirationDate = new Date(expiresAt).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
+    const customerStore = getStore({
+        name: 'vg-customers',
+        siteID: siteId,
+        token: authToken
     });
     
+    const pollStore = getStore({
+        name: 'polls',
+        siteID: siteId,
+        token: authToken
+    });
+
+    let updatedPolls = 0;
+    let errors = 0;
+
     try {
-        console.log(`Sending welcome email to ${email.substring(0, 5)}...`);
+        // Find customer by Stripe customer ID
+        const customerData = await customerStore.get(stripeCustomerId, { type: 'json' }) as any;
         
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                from: 'VoteGenerator <noreply@mail.votegenerator.com>',
-                to: email,
-                subject: `🗳️ Welcome to VoteGenerator ${tierLabel}!`,
-                html: `
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
-                        <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
-                            <h1 style="color: white; margin: 0; font-size: 28px;">🗳️ VoteGenerator</h1>
-                            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 16px;">Welcome to ${tierLabel}!</p>
-                        </div>
-                        
-                        <div style="background: white; padding: 32px; border-radius: 0 0 16px 16px;">
-                            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-                                Thank you for your purchase! Your poll dashboard is ready.
-                            </p>
-                            
-                            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                                <p style="margin: 0 0 12px 0; color: #92400e; font-weight: bold; font-size: 14px;">
-                                    ⚠️ IMPORTANT: Save Your Dashboard Link!
-                                </p>
-                                <a href="${dashboardUrl}" 
-                                   style="display: block; background: #f59e0b; color: white; text-decoration: none; padding: 14px 20px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 16px;">
-                                    Open My Dashboard →
-                                </a>
-                                <p style="margin: 12px 0 0 0; font-size: 11px; color: #92400e; word-break: break-all;">
-                                    ${dashboardUrl}
-                                </p>
-                            </div>
-                            
-                            <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                                <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
-                                <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                                    <li style="margin-bottom: 8px;">${tier === 'business' ? '50,000' : '5,000'} responses per month</li>
-                                    <li style="margin-bottom: 8px;">Unlimited polls</li>
-                                    <li style="margin-bottom: 8px;">Valid until ${expirationDate}</li>
-                                </ul>
-                            </div>
-                            
-                            <p style="color: #64748b; font-size: 14px; margin: 0;">
-                                Questions? Reply to this email or contact 
-                                <a href="mailto:support@votegenerator.com" style="color: #6366f1;">support@votegenerator.com</a>
-                            </p>
-                        </div>
-                        
-                        <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 20px;">
-                            © ${new Date().getFullYear()} VoteGenerator. All rights reserved.
-                        </p>
-                    </div>
-                `,
-            }),
-        });
+        if (!customerData) {
+            console.log(`[webhook] Customer ${stripeCustomerId} not found in store`);
+            return { updated: 0, errors: 0 };
+        }
+
+        const oldTier = customerData.tier;
+        const tierChanged = oldTier !== newTier;
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Resend API error:', errorData);
-            return false;
+        console.log(`[webhook] Syncing customer ${stripeCustomerId}: ${oldTier} -> ${newTier}`);
+
+        // Update customer record
+        const updatedCustomer = {
+            ...customerData,
+            tier: newTier,
+            expiresAt: expiresAt || customerData.expiresAt,
+            isActive,
+            updatedAt: new Date().toISOString(),
+            lastSyncedAt: new Date().toISOString()
+        };
+
+        // Save to both keys
+        await customerStore.setJSON(stripeCustomerId, updatedCustomer);
+        
+        if (customerData.dashboardToken) {
+            await customerStore.setJSON(`token_${customerData.dashboardToken}`, updatedCustomer);
         }
         
-        console.log('Welcome email sent successfully!');
-        return true;
+        if (customerData.stripeSessionId) {
+            await customerStore.setJSON(`session_${customerData.stripeSessionId}`, updatedCustomer);
+        }
+
+        // ================================================================
+        // UPDATE ALL POLLS BELONGING TO THIS CUSTOMER
+        // ================================================================
+        if (customerData.polls && Array.isArray(customerData.polls)) {
+            const newMaxResponses = TIER_CONFIG[newTier]?.maxResponses || 100;
+            
+            for (const pollRef of customerData.polls) {
+                const pollId = typeof pollRef === 'string' ? pollRef : pollRef.id;
+                
+                if (!pollId) continue;
+                
+                try {
+                    const poll = await pollStore.get(pollId, { type: 'json' }) as any;
+                    
+                    if (!poll) {
+                        console.log(`[webhook] Poll ${pollId} not found`);
+                        continue;
+                    }
+
+                    // Determine new status based on tier change
+                    let newStatus = poll.status;
+                    
+                    // If downgrading to free and over limit, pause the poll
+                    if (newTier === 'free' && poll.voteCount >= newMaxResponses) {
+                        newStatus = 'paused';
+                        console.log(`[webhook] Pausing poll ${pollId} - over free limit`);
+                    }
+                    
+                    // If upgrading and was paused due to limits, reactivate
+                    if (tierChanged && poll.status === 'paused' && newTier !== 'free') {
+                        newStatus = 'live';
+                        console.log(`[webhook] Reactivating poll ${pollId} - upgraded`);
+                    }
+
+                    // Update poll
+                    const updatedPoll = {
+                        ...poll,
+                        tier: newTier,
+                        maxResponses: newMaxResponses,
+                        status: newStatus,
+                        updatedAt: new Date().toISOString(),
+                        tierSyncedAt: new Date().toISOString()
+                    };
+
+                    await pollStore.setJSON(pollId, updatedPoll);
+                    updatedPolls++;
+                    
+                    console.log(`[webhook] Updated poll ${pollId}: tier=${newTier}, maxResponses=${newMaxResponses}, status=${newStatus}`);
+
+                } catch (pollError) {
+                    console.error(`[webhook] Error updating poll ${pollId}`);
+                    errors++;
+                }
+            }
+        }
+
+        return { updated: updatedPolls, errors };
+
     } catch (error) {
-        console.error('Failed to send welcome email:', error);
-        return false;
+        console.error('[webhook] Error syncing customer tier');
+        return { updated: 0, errors: 1 };
     }
-};
+}
 
-// Map Stripe price IDs to tiers (using environment variables)
-const getPriceToTier = (): Record<string, string> => {
-    const mapping: Record<string, string> = {};
-    
-    if (process.env.STRIPE_PRICE_STARTER) {
-        mapping[process.env.STRIPE_PRICE_STARTER] = 'pro';
-    }
-    if (process.env.STRIPE_PRICE_PRO_EVENT) {
-        mapping[process.env.STRIPE_PRICE_PRO_EVENT] = 'pro';
-    }
-    if (process.env.STRIPE_PRICE_UNLIMITED) {
-        mapping[process.env.STRIPE_PRICE_UNLIMITED] = 'business';
-    }
-    
-    return mapping;
-};
-
+// ============================================================================
+// MAIN WEBHOOK HANDLER
+// ============================================================================
 export const handler: Handler = async (event) => {
     const headers = {
         'Content-Type': 'application/json',
@@ -187,13 +194,15 @@ export const handler: Handler = async (event) => {
         };
     }
 
-    const sig = event.headers['stripe-signature'];
+    // Verify webhook signature
+    const signature = event.headers['stripe-signature'];
     
-    if (!sig) {
+    if (!signature || !WEBHOOK_SECRET) {
+        console.error('[webhook] Missing signature or webhook secret');
         return {
             statusCode: 400,
             headers,
-            body: JSON.stringify({ error: 'Missing Stripe signature' }),
+            body: JSON.stringify({ error: 'Missing signature' }),
         };
     }
 
@@ -202,149 +211,173 @@ export const handler: Handler = async (event) => {
     try {
         stripeEvent = stripe.webhooks.constructEvent(
             event.body || '',
-            sig,
-            endpointSecret
+            signature,
+            WEBHOOK_SECRET
         );
-    } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
+    } catch (err) {
+        console.error('[webhook] Signature verification failed');
         return {
             statusCode: 400,
             headers,
-            body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
+            body: JSON.stringify({ error: 'Invalid signature' }),
         };
     }
 
-    // Handle the event
-    switch (stripeEvent.type) {
-        case 'checkout.session.completed': {
-            const session = stripeEvent.data.object as Stripe.Checkout.Session;
-            
-            console.log('Checkout session completed:', session.id);
-            
-            // Get customer email
-            const email = session.customer_email || session.customer_details?.email;
-            
-            if (!email) {
-                console.error('No email found in checkout session');
-                break;
-            }
+    console.log(`[webhook] Received event: ${stripeEvent.type}`);
 
-            // Determine tier from line items
-            let tier = 'pro'; // Default
-            const priceToTier = getPriceToTier();
-            
-            if (session.line_items?.data?.[0]?.price?.id) {
-                const priceId = session.line_items.data[0].price.id;
-                tier = priceToTier[priceId] || 'pro';
-            } else if (session.metadata?.tier) {
-                tier = session.metadata.tier;
-            }
-
-            // Get or create customer record
-            const customerStore = getStore({
-                name: 'customers',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
-            const normalizedEmail = email.toLowerCase().trim();
-
-            let customer: CustomerRecord | null = null;
-            try {
-                customer = await customerStore.get(normalizedEmail, { type: 'json' }) as CustomerRecord | null;
-            } catch {
-                // Customer doesn't exist
-            }
-
-            // Calculate new expiration date
-            const tierDays = getTierDuration(tier);
-            let newExpiresAt: Date;
-
-            if (customer && customer.expiresAt) {
-                const currentExpiry = new Date(customer.expiresAt);
-                const now = new Date();
+    try {
+        switch (stripeEvent.type) {
+            // ============================================================
+            // SUBSCRIPTION UPDATED (renewals, plan changes)
+            // ============================================================
+            case 'customer.subscription.updated': {
+                const subscription = stripeEvent.data.object as Stripe.Subscription;
+                const customerId = typeof subscription.customer === 'string' 
+                    ? subscription.customer 
+                    : subscription.customer.id;
                 
-                // If still active, EXTEND from current expiry (reward early renewal)
-                // If expired, start from today
-                if (currentExpiry > now) {
-                    newExpiresAt = new Date(currentExpiry.getTime() + tierDays * 24 * 60 * 60 * 1000);
-                    console.log(`Extending plan from ${currentExpiry.toISOString()} to ${newExpiresAt.toISOString()}`);
-                } else {
-                    newExpiresAt = new Date(now.getTime() + tierDays * 24 * 60 * 60 * 1000);
-                    console.log(`Plan was expired, starting fresh from today until ${newExpiresAt.toISOString()}`);
-                }
-            } else {
-                // New customer - start from today
-                newExpiresAt = new Date(Date.now() + tierDays * 24 * 60 * 60 * 1000);
-            }
-
-            if (customer) {
-                // Update existing customer
-                customer.tier = tier;
-                customer.stripeSessionId = session.id;
-                customer.stripeCustomerId = session.customer as string;
-                customer.expiresAt = newExpiresAt.toISOString();
-                customer.updatedAt = new Date().toISOString();
-            } else {
-                // Create new customer
-                customer = {
-                    email: normalizedEmail,
-                    tier,
-                    stripeSessionId: session.id,
-                    stripeCustomerId: session.customer as string,
-                    dashboardToken: generateDashboardToken(),
-                    expiresAt: newExpiresAt.toISOString(),
-                    polls: [],
-                    createdAt: new Date().toISOString(),
+                const newTier = determineTier(subscription);
+                const expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
+                const isActive = subscription.status === 'active';
+                
+                console.log(`[webhook] Subscription updated: customer=${customerId}, tier=${newTier}, active=${isActive}`);
+                
+                const result = await syncCustomerTier(customerId, newTier, expiresAt, isActive);
+                
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ 
+                        received: true, 
+                        action: 'subscription_updated',
+                        tier: newTier,
+                        pollsUpdated: result.updated 
+                    }),
                 };
             }
 
-            await customerStore.setJSON(normalizedEmail, customer);
-            
-            // Also store by token for short URL lookup
-            await customerStore.setJSON(`token_${customer.dashboardToken}`, customer);
-            
-            // Also store by session ID for success page lookup
-            await customerStore.setJSON(`session_${session.id}`, customer);
-            
-            console.log(`Customer registered/updated: ${normalizedEmail} (${tier}) expires: ${customer.expiresAt}`);
-            console.log(`Dashboard token: ${customer.dashboardToken}`);
+            // ============================================================
+            // SUBSCRIPTION DELETED (cancellation)
+            // ============================================================
+            case 'customer.subscription.deleted': {
+                const subscription = stripeEvent.data.object as Stripe.Subscription;
+                const customerId = typeof subscription.customer === 'string' 
+                    ? subscription.customer 
+                    : subscription.customer.id;
+                
+                // Check if period has ended
+                const periodEnd = subscription.current_period_end * 1000;
+                const hasEnded = Date.now() > periodEnd;
+                
+                if (hasEnded) {
+                    // Downgrade to free
+                    console.log(`[webhook] Subscription ended: customer=${customerId}, downgrading to free`);
+                    
+                    const result = await syncCustomerTier(customerId, 'free', null, false);
+                    
+                    return {
+                        statusCode: 200,
+                        headers,
+                        body: JSON.stringify({ 
+                            received: true, 
+                            action: 'downgraded_to_free',
+                            pollsUpdated: result.updated 
+                        }),
+                    };
+                } else {
+                    // Still in paid period, keep current tier until period ends
+                    const tier = determineTier(subscription);
+                    const expiresAt = new Date(periodEnd).toISOString();
+                    
+                    console.log(`[webhook] Subscription canceled but period active: customer=${customerId}, expires=${expiresAt}`);
+                    
+                    const result = await syncCustomerTier(customerId, tier, expiresAt, true);
+                    
+                    return {
+                        statusCode: 200,
+                        headers,
+                        body: JSON.stringify({ 
+                            received: true, 
+                            action: 'subscription_canceled_period_active',
+                            tier,
+                            expiresAt,
+                            pollsUpdated: result.updated 
+                        }),
+                    };
+                }
+            }
 
-            // Send welcome email with SHORT token URL
-            const emailSent = await sendWelcomeEmail(
-                normalizedEmail,
-                tier,
-                customer.dashboardToken, // Use token instead of session ID!
-                customer.expiresAt
-            );
-            console.log(`Welcome email sent: ${emailSent}`);
+            // ============================================================
+            // CHECKOUT COMPLETED (new subscription)
+            // ============================================================
+            case 'checkout.session.completed': {
+                const session = stripeEvent.data.object as Stripe.Checkout.Session;
+                
+                if (session.mode === 'subscription' && session.subscription) {
+                    const subscriptionId = typeof session.subscription === 'string'
+                        ? session.subscription
+                        : session.subscription.id;
+                    
+                    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                    const customerId = typeof subscription.customer === 'string'
+                        ? subscription.customer
+                        : subscription.customer.id;
+                    
+                    const newTier = determineTier(subscription);
+                    const expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
+                    
+                    console.log(`[webhook] New subscription: customer=${customerId}, tier=${newTier}`);
+                    
+                    const result = await syncCustomerTier(customerId, newTier, expiresAt, true);
+                    
+                    return {
+                        statusCode: 200,
+                        headers,
+                        body: JSON.stringify({ 
+                            received: true, 
+                            action: 'new_subscription',
+                            tier: newTier,
+                            pollsUpdated: result.updated 
+                        }),
+                    };
+                }
+                break;
+            }
 
-            break;
+            // ============================================================
+            // PAYMENT FAILED
+            // ============================================================
+            case 'invoice.payment_failed': {
+                const invoice = stripeEvent.data.object as Stripe.Invoice;
+                const customerId = typeof invoice.customer === 'string'
+                    ? invoice.customer
+                    : invoice.customer?.id;
+                
+                if (customerId) {
+                    console.log(`[webhook] Payment failed: customer=${customerId}`);
+                    
+                    // Don't immediately downgrade - Stripe will retry
+                    // Just log for now, subscription.deleted will handle actual downgrade
+                }
+                break;
+            }
+
+            default:
+                console.log(`[webhook] Unhandled event type: ${stripeEvent.type}`);
         }
 
-        case 'customer.subscription.updated': {
-            const subscription = stripeEvent.data.object as Stripe.Subscription;
-            console.log('Subscription updated:', subscription.id);
-            
-            // Handle subscription updates (tier changes, cancellations, etc.)
-            // You can expand this based on your needs
-            break;
-        }
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ received: true }),
+        };
 
-        case 'customer.subscription.deleted': {
-            const subscription = stripeEvent.data.object as Stripe.Subscription;
-            console.log('Subscription cancelled:', subscription.id);
-            
-            // Optionally downgrade customer or mark as expired
-            break;
-        }
-
-        default:
-            console.log(`Unhandled event type: ${stripeEvent.type}`);
+    } catch (error) {
+        console.error('[webhook] Error processing event');
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Webhook processing failed' }),
+        };
     }
-
-    return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ received: true }),
-    };
 };

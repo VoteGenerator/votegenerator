@@ -3613,7 +3613,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 isOpen={showEmbedModal}
                 onClose={() => setShowEmbedModal(false)}
                 isPremium={isPro}
-                tier={tier}
+                tier={tier as 'free' | 'pro' | 'business'}
                 onUpgradeClick={() => {
                     setShowEmbedModal(false);
                     openUpgradeModal('branding');

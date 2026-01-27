@@ -133,8 +133,18 @@ export const handler: Handler = async (event) => {
             response.customSlug = poll.customSlug;
         } else {
             // For non-admins, only include votes if results aren't hidden
+            // SECURITY: Strip sensitive data from votes
             if (!poll.settings?.hideResults) {
-                response.votes = poll.votes || [];
+                response.votes = (poll.votes || []).map((v: any) => ({
+                    id: v.id,
+                    timestamp: v.timestamp,
+                    selectedOptionIds: v.selectedOptionIds,
+                    rankedOptionIds: v.rankedOptionIds,
+                    surveyAnswers: v.surveyAnswers,
+                    // Only include comment if comments are public
+                    comment: poll.settings?.publicComments ? v.comment : undefined,
+                    // Strip: ipHash, voterName, analytics, usedCode
+                }));
             }
             
             // Check if PIN required

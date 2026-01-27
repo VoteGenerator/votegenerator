@@ -21,6 +21,7 @@ import SurveyResults from './SurveyResults';
 import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
 import CustomSlugInput from './CustomSlugInput';
+import LogoUpload from './LogoUpload';
 import ResponseTimelineChart from './ResponseTimelineChart';
 import HourlyHeatmap from './HourlyHeatmap';
 import GeoChart from './GeoChart';
@@ -281,6 +282,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
     const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
     const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
+    const [localRedirectUrl, setLocalRedirectUrl] = useState((poll.settings as any)?.redirectUrl || '');
+    const [localCustomLogo, setLocalCustomLogo] = useState((poll.settings as any)?.customLogo || null);
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
     // Track recently updated settings to prevent useEffect from reverting them
@@ -2724,14 +2727,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Custom Branding - PAID */}
+                        {/* Custom Branding - PRO+ (remove badge) */}
                         <CollapsibleSection
                             title="Custom Branding"
                             icon={<ImageIcon size={20} />}
                             badge={
                                 <>
                                     <HelpTooltip 
-                                        content="Remove VoteGenerator branding and add your own logo, colors, and custom thank-you message for a professional look."
+                                        content="Remove VoteGenerator branding, customize colors, and set a custom thank-you message."
                                         position="left"
                                     />
                                     {!isPro && <UpgradeBadge small />}
@@ -2743,14 +2746,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 {isPro ? (
                                     <div className="space-y-4">
                                         <p className="text-sm text-slate-600">
-                                            Upload your logo, customize colors, and set a custom thank-you message.
+                                            Remove "Powered by VoteGenerator" badge and customize colors.
                                         </p>
                                         <button
                                             onClick={onEdit}
                                             className="w-full py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <ImageIcon size={18} />
-                                            Customize Branding
+                                            <Palette size={18} />
+                                            Customize Colors & Badge
                                         </button>
                                     </div>
                                 ) : (
@@ -2758,15 +2761,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="flex items-start gap-3">
                                             <ImageIcon size={20} className="text-purple-500 mt-0.5" />
                                             <div>
-                                                <p className="font-semibold text-purple-800">Paid Feature</p>
+                                                <p className="font-semibold text-purple-800">Pro Feature</p>
                                                 <p className="text-sm text-purple-700 mt-1">
-                                                    Remove "Powered by VoteGenerator", add your logo, custom colors, and thank-you message.
+                                                    Remove "Powered by VoteGenerator" and customize colors.
                                                 </p>
                                                 <button
                                                     onClick={() => openUpgradeModal('branding')}
                                                     className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm"
                                                 >
-                                                    Upgrade Now
+                                                    Upgrade to Pro
                                                 </button>
                                             </div>
                                         </div>
@@ -2775,7 +2778,133 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Advanced Settings Preview - PAID */}
+                        {/* Custom Logo - BUSINESS ONLY */}
+                        <CollapsibleSection
+                            title="Custom Logo"
+                            icon={<ImageIcon size={20} />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Upload your company logo to display on your polls for a fully branded experience."
+                                        position="left"
+                                    />
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
+                                </>
+                            }
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4">
+                                {isBusiness ? (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-slate-600">
+                                            Upload your company logo to appear on your polls and results pages.
+                                        </p>
+                                        <LogoUpload
+                                            currentLogo={localCustomLogo}
+                                            onLogoChange={(logoUrl) => {
+                                                setLocalCustomLogo(logoUrl);
+                                                updatePollSetting('customLogo', logoUrl);
+                                            }}
+                                            tier={tier}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <Crown size={20} className="text-amber-500 mt-0.5" />
+                                            <div>
+                                                <p className="font-semibold text-amber-800">Business Feature</p>
+                                                <p className="text-sm text-amber-700 mt-1">
+                                                    Upload your company logo for a fully branded polling experience.
+                                                </p>
+                                                <button
+                                                    onClick={() => openUpgradeModal('logo')}
+                                                    className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm"
+                                                >
+                                                    Upgrade to Business
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CollapsibleSection>
+
+                        {/* Post-Vote Redirect - BUSINESS ONLY */}
+                        <CollapsibleSection
+                            title="Post-Vote Redirect"
+                            icon={<ExternalLink size={20} />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Automatically redirect voters to a custom URL after they submit their response."
+                                        position="left"
+                                    />
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
+                                </>
+                            }
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4">
+                                {isBusiness ? (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-slate-600">
+                                            After voting, redirect participants to your website, thank-you page, or any URL.
+                                        </p>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Redirect URL</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="url"
+                                                    value={localRedirectUrl}
+                                                    onChange={(e) => setLocalRedirectUrl(e.target.value)}
+                                                    placeholder="https://yoursite.com/thank-you"
+                                                    className="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                />
+                                                <button
+                                                    onClick={() => updatePollSetting('redirectUrl', localRedirectUrl || null)}
+                                                    disabled={settingsUpdating}
+                                                    className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm transition-colors disabled:opacity-50"
+                                                >
+                                                    {settingsUpdating ? <Loader2 size={16} className="animate-spin" /> : 'Save'}
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-slate-500">
+                                                Leave empty to show the default thank-you page. Must include https://
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <Crown size={20} className="text-amber-500 mt-0.5" />
+                                            <div>
+                                                <p className="font-semibold text-amber-800">Business Feature</p>
+                                                <p className="text-sm text-amber-700 mt-1">
+                                                    Redirect voters to your website or custom thank-you page after they vote.
+                                                </p>
+                                                <button
+                                                    onClick={() => openUpgradeModal('redirect')}
+                                                    className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm"
+                                                >
+                                                    Upgrade to Business
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CollapsibleSection>
+
+                        {/* Advanced Settings Preview - FREE ONLY */}
                         {isFree && (
                             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-5">
                                 <div className="flex items-center gap-3 mb-4">
@@ -2790,19 +2919,33 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                     {[
                                         'PIN code access',
-                                        'One-time vote codes',
-                                        'IP allowlist/blocklist',
-                                        'Scheduled close',
                                         'Email notifications',
+                                        'Scheduled close',
                                         'Custom colors',
                                         'Remove branding',
-                                        'Domain restriction'
+                                        'CSV/Excel export'
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center gap-2 text-slate-500">
-                                            <Lock size={10} className="text-amber-500" />
+                                            <Lock size={10} className="text-purple-500" />
                                             {feature}
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                    <p className="text-xs font-semibold text-amber-700 mb-2">Business-only:</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                        {[
+                                            'Custom logo upload',
+                                            'Post-vote redirect',
+                                            'Hourly heatmap',
+                                            'Custom short links'
+                                        ].map((feature, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-slate-500">
+                                                <Lock size={10} className="text-amber-500" />
+                                                {feature}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => openUpgradeModal('settings')}
@@ -3014,15 +3157,38 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <div className="flex items-center gap-2 mb-3">
                                     <Filter size={16} className="text-slate-500" />
                                     <span className="text-sm font-semibold text-slate-700">Cross-Tab Filters</span>
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
                                     <HelpTooltip 
                                         content="Segment your data by specific answer choices to discover how different voter groups responded. Great for identifying patterns and correlations."
                                         position="right"
                                     />
                                 </div>
-                                <CrossTabFilter 
-                                    votes={votes}
-                                    onFilteredVotesChange={setCrossTabFilteredVotes}
-                                />
+                                {isBusiness ? (
+                                    <CrossTabFilter 
+                                        votes={votes}
+                                        onFilteredVotesChange={setCrossTabFilteredVotes}
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                        <div className="flex items-center gap-3">
+                                            <Lock size={20} className="text-amber-400" />
+                                            <div>
+                                                <p className="text-sm font-semibold text-amber-800">Cross-tab filters are a Business feature</p>
+                                                <p className="text-xs text-amber-600 mt-0.5">Filter results by specific answer choices to find patterns</p>
+                                            </div>
+                                            <button
+                                                onClick={() => openUpgradeModal('crosstab')}
+                                                className="ml-auto px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-xs"
+                                            >
+                                                Upgrade
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -3052,19 +3218,40 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         {/* Analytics Grid */}
                         {votes.length >= 5 ? (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Hourly Heatmap - BUSINESS ONLY */}
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="font-semibold text-slate-700 flex items-center gap-2">
                                             <Clock size={16} className="text-slate-500" />
                                             Hourly Activity
+                                            {!isBusiness && (
+                                                <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                                    Business
+                                                </span>
+                                            )}
                                         </h4>
                                         <HelpTooltip 
                                             content="Shows which hours of the day see the most engagement. Use this to optimize when you share polls for maximum participation."
                                             position="left"
                                         />
                                     </div>
-                                    <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
+                                    {isBusiness ? (
+                                        <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
+                                    ) : (
+                                        <div className="h-48 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 flex flex-col items-center justify-center p-4">
+                                            <Lock size={24} className="text-amber-400 mb-2" />
+                                            <p className="text-sm font-semibold text-amber-800 text-center">Hourly heatmap is a Business feature</p>
+                                            <p className="text-xs text-amber-600 text-center mt-1">See exactly when your audience is most active</p>
+                                            <button
+                                                onClick={() => openUpgradeModal('heatmap')}
+                                                className="mt-3 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-xs"
+                                            >
+                                                Upgrade to Business
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+                                {/* Geographic Distribution - PRO+ */}
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="font-semibold text-slate-700 flex items-center gap-2">
@@ -3078,6 +3265,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                     <GeoChart votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} maxCountries={5} />
                                 </div>
+                                {/* Word Cloud - PRO+ */}
                                 {results.comments && results.comments.length >= 3 && (
                                     <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200">
                                         <div className="flex items-center justify-between mb-3">

@@ -956,7 +956,7 @@ const AnalyticsSection: React.FC = () => (
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-900">Export Data</p>
-                            <p className="text-[10px] text-slate-500">CSV, Excel, PDF</p>
+                            <p className="text-[10px] text-slate-500">CSV & Excel</p>
                         </div>
                     </div>
                 </motion.div>
@@ -985,7 +985,7 @@ const AnalyticsSection: React.FC = () => (
                     { icon: BarChart3, title: 'Live charts', desc: 'Results update instantly as votes come in' },
                     { icon: TrendingUp, title: 'Timeline view', desc: 'See response patterns over time' },
                     { icon: Globe, title: 'Geographic data', desc: 'Know where voters are located' },
-                    { icon: Download, title: 'Export anywhere', desc: 'Download CSV, Excel, or PDF' },
+                    { icon: Download, title: 'Export anywhere', desc: 'Download CSV or Excel files' },
                 ].map((item, i) => (
                     <div key={i} className="text-center">
                         <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -1197,7 +1197,7 @@ const DeviceShowcaseSection: React.FC = () => (
 );
 
 // ============================================================================
-// Exports & Sharing Section - Show CSV, PDF, QR code visuals
+// Exports & Sharing Section - Show CSV, Excel, QR code visuals
 // ============================================================================
 
 const ExportsSection: React.FC = () => (
@@ -1306,14 +1306,14 @@ const ExportsSection: React.FC = () => (
                             <Download size={14} className="text-slate-400" />
                         </div>
                         
-                        {/* PDF */}
+                        {/* Print */}
                         <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
-                            <div className="w-10 h-12 bg-red-500 rounded flex items-center justify-center text-white text-[10px] font-bold">
-                                PDF
+                            <div className="w-10 h-12 bg-slate-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                PRINT
                             </div>
                             <div className="flex-1">
-                                <div className="text-xs font-medium text-slate-700">poll_report.pdf</div>
-                                <div className="text-[10px] text-slate-400">Shareable summary</div>
+                                <div className="text-xs font-medium text-slate-700">Print Results</div>
+                                <div className="text-[10px] text-slate-400">Browser print view</div>
                             </div>
                             <Download size={14} className="text-slate-400" />
                         </div>
@@ -1441,7 +1441,7 @@ const ValueSection: React.FC = () => (
                     <ul className="space-y-2 text-sm text-indigo-100">
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Real-time analytics dashboard</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 8 poll types included</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> CSV, Excel, PDF export</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> CSV & Excel export</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 12+ premium themes</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> No signup to vote</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Month-to-month, cancel anytime</li>
@@ -1536,7 +1536,7 @@ const FeaturesSection: React.FC = () => {
                 { icon: BarChart3, title: 'Real-time results', desc: 'Watch votes come in live with auto-updating charts.' },
                 { icon: TrendingUp, title: 'Response timeline', desc: 'See when votes arrived and spot trends over time.' },
                 { icon: Globe, title: 'Geographic insights', desc: 'See where your respondents are located.' },
-                { icon: Download, title: 'Export data', desc: 'Download as CSV, Excel, or generate PDF reports.' },
+                { icon: Download, title: 'Export data', desc: 'Download as CSV or Excel spreadsheets.' },
             ]
         },
         {
@@ -1743,7 +1743,7 @@ const PricingPreviewSection: React.FC = () => (
                     <p className="text-sm text-slate-400 mb-6">or $490/year USD <span className="text-amber-400 font-semibold">(2 months free)</span></p>
                     
                     <ul className="space-y-2 mb-6">
-                        {['Everything in Pro', '50,000 responses/month', 'Custom logo', 'PDF reports'].map((f, i) => (
+                        {['Everything in Pro', '100,000 responses/month', 'Custom logo', 'Hourly heatmap'].map((f, i) => (
                             <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                 <Check size={16} className="text-amber-400" /> {f}
                             </li>

@@ -402,7 +402,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 name: 'Comment word cloud', 
                 tooltip: 'Visualize common themes in text responses',
                 free: false, 
-                pro: false, 
+                pro: true, 
                 business: true 
             },
         ]
@@ -556,13 +556,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
         icon: Building2,
         color: 'slate',
         features: [
-            { 
-                name: 'Custom short links', 
-                tooltip: 'Create memorable URLs like votegenerator.com/p/your-poll',
-                free: false, 
-                pro: true, 
-                business: true
-            },
             { 
                 name: 'Embed domain restriction', 
                 tooltip: 'Only allow your poll to be embedded on specific websites',
@@ -859,8 +852,8 @@ function PricingPage(): React.ReactElement {
                                 'Everything in Pro, plus:',
                                 '100,000 responses/month',
                                 'Upload your company logo',
-                                'Custom branded short links',
-                                'Advanced analytics dashboard',
+                                'Custom short links',
+                                'Hourly activity heatmap',
                                 'Cross-tabulation filters',
                                 'Post-vote redirect URL',
                                 'Priority support (24h)',

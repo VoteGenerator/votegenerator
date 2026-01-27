@@ -118,7 +118,7 @@ const TIER_CONFIG: Record<string, {
         activeDays: 365,
         requiresActivation: false,
         description: 'Unlimited polls • 100K responses/mo',
-        highlights: ['PDF reports', 'Team access tokens', 'Priority support'],
+        highlights: ['Custom logo upload', 'Hourly heatmap', 'Post-vote redirect'],
     },
 };
 

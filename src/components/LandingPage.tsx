@@ -1743,7 +1743,7 @@ const PricingPreviewSection: React.FC = () => (
                     <p className="text-sm text-slate-400 mb-6">or $490/year USD <span className="text-amber-400 font-semibold">(2 months free)</span></p>
                     
                     <ul className="space-y-2 mb-6">
-                        {['Everything in Pro', '100,000 responses/month', 'Custom logo', 'Hourly heatmap'].map((f, i) => (
+                        {['Everything in Pro', '100,000 responses/month', 'White-label embeds', 'Bulk exports'].map((f, i) => (
                             <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                 <Check size={16} className="text-amber-400" /> {f}
                             </li>

@@ -187,9 +187,16 @@ const FEATURE_SECTIONS: FeatureSection[] = [
             },
             { 
                 name: 'Remove VoteGenerator badge', 
-                tooltip: 'Hide the "Powered by VoteGenerator" branding',
+                tooltip: 'Hide the "Powered by VoteGenerator" branding on poll page',
                 free: false, 
                 pro: true, 
+                business: true
+            },
+            { 
+                name: 'White-label embeds', 
+                tooltip: 'Remove VoteGenerator branding from embedded polls on your website',
+                free: false, 
+                pro: false, 
                 business: true
             },
             { 
@@ -439,6 +446,20 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Download as .xlsx with formatting',
                 free: false, 
                 pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Filtered exports', 
+                tooltip: 'Export only the data matching your filters (date range, device, etc.)',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'Bulk export all polls', 
+                tooltip: 'Export data from multiple polls at once in a single CSV',
+                free: false, 
+                pro: false, 
                 business: true 
             },
             { 
@@ -852,9 +873,9 @@ function PricingPage(): React.ReactElement {
                                 'Everything in Pro, plus:',
                                 '100,000 responses/month',
                                 'Upload your company logo',
-                                'Custom short links',
+                                'White-label embeds',
+                                'Filtered & bulk exports',
                                 'Hourly activity heatmap',
-                                'Cross-tabulation filters',
                                 'Post-vote redirect URL',
                                 'Priority support (24h)',
                             ].map((f, i) => (

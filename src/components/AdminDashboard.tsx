@@ -13,7 +13,7 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone, Download, Database, FileSpreadsheet
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
@@ -118,7 +118,7 @@ const TIER_CONFIG: Record<string, {
         activeDays: 365,
         requiresActivation: false,
         description: 'Unlimited polls • 100K responses/mo',
-        highlights: ['Custom logo upload', 'Hourly heatmap', 'Post-vote redirect'],
+        highlights: ['White-label embeds', 'Bulk exports', 'Post-vote redirect'],
     },
 };
 
@@ -1043,11 +1043,17 @@ const AdminDashboard: React.FC = () => {
         setShowBulkDeleteModal(false);
     };
     
-    const handleBulkExport = async () => {
+    const handleBulkExport = async (includeResponses: boolean = false) => {
         if (!session || selectedPolls.size === 0) return;
         
-        // Pro+ feature
+        // Pro+ feature for basic export
         if (session.tier === 'free') {
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        // Business-only for full responses export
+        if (includeResponses && session.tier !== 'business') {
             setShowUpgradeModal(true);
             return;
         }
@@ -1057,20 +1063,65 @@ const AdminDashboard: React.FC = () => {
         try {
             const pollsToExport = polls.filter(p => selectedPolls.has(p.id));
             
-            // Create CSV content
-            let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
-            pollsToExport.forEach(p => {
-                csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
-            });
-            
-            // Download
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            if (includeResponses) {
+                // Business feature: Export all responses across all selected polls
+                let allResponses: any[] = [];
+                
+                for (const poll of pollsToExport) {
+                    try {
+                        // Fetch responses for each poll
+                        const response = await fetch(
+                            `/.netlify/functions/vg-get-results?pollId=${poll.id}&adminKey=${poll.adminKey}`
+                        );
+                        if (response.ok) {
+                            const data = await response.json();
+                            const votes = data.votes || [];
+                            
+                            // Add poll context to each vote
+                            votes.forEach((vote: any) => {
+                                allResponses.push({
+                                    pollId: poll.id,
+                                    pollTitle: poll.title,
+                                    pollType: poll.type,
+                                    ...vote
+                                });
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Failed to fetch responses for poll ${poll.id}:`, err);
+                    }
+                }
+                
+                // Create detailed CSV
+                let csv = 'Poll ID,Poll Title,Poll Type,Vote ID,Choice,Timestamp,Device,Country,IP Hash\n';
+                allResponses.forEach(r => {
+                    csv += `"${r.pollId}","${r.pollTitle?.replace(/"/g, '""') || ''}","${r.pollType || ''}","${r.id || ''}","${(r.choice || r.selectedOption || '').toString().replace(/"/g, '""')}","${r.timestamp || r.createdAt || ''}","${r.device || ''}","${r.country || ''}","${r.ipHash || ''}"\n`;
+                });
+                
+                // Download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `all-responses-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                // Basic export (Pro+): Just poll metadata
+                let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
+                pollsToExport.forEach(p => {
+                    csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
+                });
+                
+                // Download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
         } catch (err) {
             console.error('Bulk export error:', err);
             alert('Export failed. Please try again.');
@@ -1861,21 +1912,54 @@ const AdminDashboard: React.FC = () => {
                                             animate={{ opacity: 1, x: 0 }}
                                             className="flex items-center gap-2"
                                         >
-                                            <button
-                                                onClick={handleBulkExport}
-                                                disabled={isBulkExporting}
-                                                className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
-                                            >
-                                                {isBulkExporting ? (
-                                                    <Loader2 size={16} className="animate-spin" />
-                                                ) : (
-                                                    <ArrowRight size={16} />
-                                                )}
-                                                Export
-                                                {session?.tier === 'free' && (
-                                                    <Crown size={12} className="text-amber-500" />
-                                                )}
-                                            </button>
+                                            {/* Export dropdown */}
+                                            <div className="relative group">
+                                                <button
+                                                    disabled={isBulkExporting}
+                                                    className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                                                >
+                                                    {isBulkExporting ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
+                                                    Export
+                                                    <ChevronDown size={14} />
+                                                    {session?.tier === 'free' && (
+                                                        <Crown size={12} className="text-amber-500" />
+                                                    )}
+                                                </button>
+                                                {/* Dropdown */}
+                                                <div className="absolute right-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                                    <button
+                                                        onClick={() => handleBulkExport(false)}
+                                                        disabled={isBulkExporting || session?.tier === 'free'}
+                                                        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3 disabled:opacity-50"
+                                                    >
+                                                        <FileSpreadsheet size={18} className="text-emerald-500" />
+                                                        <div>
+                                                            <div className="font-medium text-slate-700">Export Poll Info</div>
+                                                            <div className="text-xs text-slate-500">Poll metadata only (Pro+)</div>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleBulkExport(true)}
+                                                        disabled={isBulkExporting || session?.tier !== 'business'}
+                                                        className="w-full px-4 py-3 text-left text-sm hover:bg-amber-50 flex items-center gap-3 disabled:opacity-50 border-t border-slate-100"
+                                                    >
+                                                        <Database size={18} className="text-amber-500" />
+                                                        <div>
+                                                            <div className="font-medium text-slate-700 flex items-center gap-2">
+                                                                Export All Responses
+                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded">
+                                                                    Business
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">All votes across selected polls</div>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={handleBulkDelete}
                                                 className="px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition flex items-center gap-2"

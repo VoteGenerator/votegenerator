@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart2, ExternalLink, Copy, Check, Code, Monitor, Smartphone, X, Settings, Palette, Shield, Lock } from 'lucide-react';
+import { BarChart2, ExternalLink, Copy, Check, Code, Monitor, Smartphone, X, Settings, Palette, Shield, Lock, Crown } from 'lucide-react';
 import type { Poll } from '../types';
 
 interface EmbedModalProps {
     poll: Poll;
     isOpen: boolean;
     onClose: () => void;
-    isPremium: boolean; // Premium users get no branding
+    isPremium: boolean; // Pro+ users get domain restriction
+    tier?: 'free' | 'pro' | 'business'; // Specific tier for feature gating
     onUpgradeClick?: () => void;
 }
 
@@ -15,19 +16,24 @@ interface EmbedModalProps {
 interface EmbedConfig {
     width: string;
     height: string;
-    showBranding: boolean; // Free users always have branding
+    showBranding: boolean; // Only Business can remove branding
     theme: 'light' | 'dark' | 'auto';
     borderRadius: number;
     allowedDomains: string; // Comma-separated domains (Pro/Business feature)
 }
 
-const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium, onUpgradeClick }) => {
+const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremium, tier = 'free', onUpgradeClick }) => {
     const [copied, setCopied] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+    
+    // Business-only: can remove branding
+    const isBusiness = tier === 'business';
+    const canRemoveBranding = isBusiness;
+    
     const [config, setConfig] = useState<EmbedConfig>({
         width: '100%',
         height: '500',
-        showBranding: !isPremium, // Free = branding, Premium = optional
+        showBranding: !canRemoveBranding, // Only Business can default to no branding
         theme: 'light',
         borderRadius: 12,
         allowedDomains: '' // Empty = allow all domains
@@ -171,22 +177,29 @@ const EmbedModal: React.FC<EmbedModalProps> = ({ poll, isOpen, onClose, isPremiu
                                     />
                                 </div>
                                 
-                                {/* Branding Toggle - Only for Premium */}
-                                <div className={`p-3 rounded-xl ${isPremium ? 'bg-slate-50' : 'bg-amber-50 border border-amber-200'}`}>
+                                {/* Branding Toggle - BUSINESS ONLY */}
+                                <div className={`p-3 rounded-xl ${canRemoveBranding ? 'bg-slate-50' : 'bg-amber-50 border border-amber-200'}`}>
                                     <label className="flex items-center justify-between cursor-pointer">
                                         <div>
-                                            <div className="font-medium text-slate-700 text-sm">Show VoteGenerator branding</div>
-                                            {!isPremium && (
+                                            <div className="font-medium text-slate-700 text-sm flex items-center gap-2">
+                                                Show VoteGenerator branding
+                                                {!canRemoveBranding && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full flex items-center gap-0.5">
+                                                        <Crown size={8} /> Business
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {!canRemoveBranding && (
                                                 <div className="text-xs text-amber-700 mt-0.5">
-                                                    Upgrade to Pro to remove branding
+                                                    Upgrade to Business to remove branding from embeds
                                                 </div>
                                             )}
                                         </div>
                                         <input 
                                             type="checkbox" 
                                             checked={config.showBranding}
-                                            onChange={(e) => isPremium && setConfig({...config, showBranding: e.target.checked})}
-                                            disabled={!isPremium}
+                                            onChange={(e) => canRemoveBranding && setConfig({...config, showBranding: e.target.checked})}
+                                            disabled={!canRemoveBranding}
                                             className="w-5 h-5 accent-indigo-600"
                                         />
                                     </label>

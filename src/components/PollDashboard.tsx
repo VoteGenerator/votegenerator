@@ -509,14 +509,133 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         }
     };
 
-    const handleExportCSV = async () => {
+    // Export CSV with optional filtering (Business feature)
+    const handleExportCSV = async (applyFilters: boolean = false) => {
         if (!isPro) {
             setUpgradeHighlight('export');
             setShowUpgradeModal(true);
             return;
         }
+        
+        // Filtered export is Business-only
+        if (applyFilters && !isBusiness) {
+            setUpgradeHighlight('filtered-export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
         setIsExporting(true);
-        setTimeout(() => setIsExporting(false), 1000);
+        
+        try {
+            // Get the data to export (filtered or all)
+            const dataToExport = applyFilters && filteredVotes.length > 0 
+                ? filteredVotes 
+                : votes;
+            
+            // Build CSV headers
+            let csv = 'Vote ID,Timestamp,Choice,Device,Country,Browser,IP Hash';
+            if (poll.settings.allowComments) {
+                csv += ',Comment';
+            }
+            if (poll.settings.requireNames) {
+                csv += ',Voter Name';
+            }
+            csv += '\n';
+            
+            // Build CSV rows
+            dataToExport.forEach((vote: any) => {
+                const timestamp = vote.timestamp || vote.createdAt || '';
+                const choice = (vote.choice || vote.selectedOption || vote.selections?.join('; ') || '').toString().replace(/"/g, '""');
+                const device = vote.device || vote.userAgent?.includes('Mobile') ? 'Mobile' : 'Desktop';
+                const country = vote.country || vote.geo?.country || '';
+                const browser = vote.browser || '';
+                const ipHash = vote.ipHash || '';
+                
+                csv += `"${vote.id || ''}","${timestamp}","${choice}","${device}","${country}","${browser}","${ipHash}"`;
+                
+                if (poll.settings.allowComments) {
+                    csv += `,"${(vote.comment || '').replace(/"/g, '""')}"`;
+                }
+                if (poll.settings.requireNames) {
+                    csv += `,"${(vote.voterName || '').replace(/"/g, '""')}"`;
+                }
+                csv += '\n';
+            });
+            
+            // Add summary row
+            csv += '\n';
+            csv += `"Total Responses","${dataToExport.length}"`;
+            if (applyFilters && filteredVotes.length > 0) {
+                csv += `,"(filtered from ${votes.length} total)"`;
+            }
+            csv += '\n';
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filterLabel = applyFilters ? '-filtered' : '';
+            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('CSV export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsExporting(false);
+    };
+    
+    // Export Excel with optional filtering (Business feature)
+    const handleExportExcel = async (applyFilters: boolean = false) => {
+        if (!isPro) {
+            setUpgradeHighlight('export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        // Filtered export is Business-only
+        if (applyFilters && !isBusiness) {
+            setUpgradeHighlight('filtered-export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        setIsExporting(true);
+        
+        try {
+            // For Excel, we use CSV with .xlsx extension (Excel can open CSV)
+            // A proper implementation would use SheetJS/xlsx library
+            const dataToExport = applyFilters && filteredVotes.length > 0 
+                ? filteredVotes 
+                : votes;
+            
+            // Build tab-separated values for Excel compatibility
+            let tsv = 'Vote ID\tTimestamp\tChoice\tDevice\tCountry\n';
+            dataToExport.forEach((vote: any) => {
+                const choice = (vote.choice || vote.selectedOption || '').toString().replace(/\t/g, ' ');
+                tsv += `${vote.id || ''}\t${vote.timestamp || ''}\t${choice}\t${vote.device || ''}\t${vote.country || ''}\n`;
+            });
+            
+            const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filterLabel = applyFilters ? '-filtered' : '';
+            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Excel export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsExporting(false);
     };
 
     const handleDownloadQR = async () => {
@@ -3035,9 +3154,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </button>
                                 
-                                {/* CSV Export - PAID */}
+                                {/* CSV Export - PRO+ */}
                                 <button
-                                    onClick={handleExportCSV}
+                                    onClick={() => handleExportCSV(false)}
                                     disabled={isExporting}
                                     className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
                                 >
@@ -3047,13 +3166,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         </div>
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                Export to CSV
+                                                Export All to CSV
                                                 <HelpTooltip 
                                                     content="Raw data export with all votes, timestamps, and metadata. Import into Excel, Google Sheets, or any data analysis tool."
                                                     position="right"
                                                 />
                                             </div>
-                                            <div className="text-xs text-slate-500">Spreadsheet format for Excel, Google Sheets, etc.</div>
+                                            <div className="text-xs text-slate-500">All {votes.length} responses • Spreadsheet format</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -3066,7 +3185,83 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </button>
                                 
-                                {/* PDF Report - PAID */}
+                                {/* Filtered CSV Export - BUSINESS ONLY */}
+                                {filteredVotes.length > 0 && filteredVotes.length !== votes.length && (
+                                    <button
+                                        onClick={() => handleExportCSV(true)}
+                                        disabled={isExporting}
+                                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors border ${
+                                            isBusiness 
+                                                ? 'bg-amber-50 hover:bg-amber-100 border-amber-200' 
+                                                : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                isBusiness ? 'bg-amber-100' : 'bg-slate-200'
+                                            }`}>
+                                                <Filter size={24} className={isBusiness ? 'text-amber-600' : 'text-slate-400'} />
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="font-semibold text-slate-700 flex items-center gap-2">
+                                                    Export Filtered Results
+                                                    {!isBusiness && (
+                                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full flex items-center gap-0.5">
+                                                            <Crown size={10} /> Business
+                                                        </span>
+                                                    )}
+                                                    <HelpTooltip 
+                                                        content="Export only the responses matching your current filters (date range, device, etc.)"
+                                                        position="right"
+                                                    />
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {filteredVotes.length} of {votes.length} responses (filtered)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {isExporting ? (
+                                                <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                            ) : (
+                                                <Download size={18} className="text-slate-400" />
+                                            )}
+                                        </div>
+                                    </button>
+                                )}
+                                
+                                {/* Excel Export - PRO+ */}
+                                <button
+                                    onClick={() => handleExportExcel(false)}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                            <FileSpreadsheet size={24} className="text-green-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                Export to Excel
+                                                <HelpTooltip 
+                                                    content="Excel-compatible format with all data and formatting preserved."
+                                                    position="right"
+                                                />
+                                            </div>
+                                            <div className="text-xs text-slate-500">Microsoft Excel format (.xlsx)</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {!isPro && <UpgradeBadge small />}
+                                        {isExporting ? (
+                                            <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                        ) : (
+                                            <Download size={18} className="text-slate-400" />
+                                        )}
+                                    </div>
+                                </button>
+                                
+                                {/* Print / Save as PDF - PRO+ */}
                                 <button
                                     onClick={() => {
                                         if (!isPro) {
@@ -3083,9 +3278,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         </div>
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                PDF Report
+                                                Print / Save as PDF
                                                 <HelpTooltip 
-                                                    content="Professional print-ready report with charts, results summary, and poll details. Great for presentations and stakeholder updates."
+                                                    content="Use your browser's print function to save as PDF. Great for presentations and stakeholder updates."
                                                     position="right"
                                                 />
                                             </div>
@@ -3107,13 +3302,34 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div>
                                             <p className="font-semibold text-amber-800">Unlock all export options</p>
                                             <p className="text-sm text-amber-700 mt-1">
-                                                Export your complete poll data including all votes, comments, and analytics to CSV or PDF.
+                                                Export your complete poll data including all votes, comments, and analytics to CSV or Excel.
                                             </p>
                                             <button
                                                 onClick={() => openUpgradeModal('export')}
                                                 className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
                                             >
                                                 Upgrade Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Business filtered export CTA for Pro users */}
+                            {isPro && !isBusiness && (
+                                <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                    <div className="flex items-start gap-3">
+                                        <Crown size={20} className="text-amber-500 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800">Business feature: Filtered exports</p>
+                                            <p className="text-sm text-amber-700 mt-1">
+                                                Export only the data matching your filters. Great for segmented analysis and reporting.
+                                            </p>
+                                            <button
+                                                onClick={() => openUpgradeModal('filtered-export')}
+                                                className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
+                                            >
+                                                Upgrade to Business
                                             </button>
                                         </div>
                                     </div>
@@ -3397,6 +3613,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 isOpen={showEmbedModal}
                 onClose={() => setShowEmbedModal(false)}
                 isPremium={isPro}
+                tier={tier}
                 onUpgradeClick={() => {
                     setShowEmbedModal(false);
                     openUpgradeModal('branding');

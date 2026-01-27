@@ -41,7 +41,6 @@ interface Feature {
     free: boolean | string;
     pro: boolean | string;
     business: boolean | string;
-    highlight?: 'free' | 'pro' | 'business';
 }
 
 interface FeatureSection {
@@ -59,46 +58,44 @@ interface FeatureSection {
 const FEATURE_SECTIONS: FeatureSection[] = [
     {
         id: 'polls-responses',
-        name: 'Polls & Responses',
+        name: 'Polls, Surveys & Limits',
         icon: BarChart3,
         color: 'indigo',
         features: [
             { 
-                name: 'Active polls', 
-                tooltip: 'Number of polls that can accept votes at the same time',
+                name: 'Active polls & surveys', 
+                tooltip: 'Number of polls/surveys that can accept responses at the same time',
                 free: '3', 
                 pro: 'Unlimited', 
                 business: 'Unlimited' 
             },
             { 
                 name: 'Responses per month', 
-                tooltip: 'Total votes across all your polls each month. Resets on the 1st.',
+                tooltip: 'Total votes/responses across all your polls and surveys. Resets on the 1st.',
                 free: '100', 
                 pro: '10,000', 
-                business: '100,000',
-                highlight: 'pro'
+                business: '100,000'
             },
             { 
-                name: 'Poll duration', 
-                tooltip: 'How long polls stay active before auto-closing',
-                free: '30 days', 
-                pro: '1 year', 
-                business: 'Unlimited' 
+                name: 'Multi-question surveys', 
+                tooltip: 'Create surveys with multiple questions across sections',
+                free: true, 
+                pro: true, 
+                business: true 
             },
             { 
-                name: 'Response history', 
-                tooltip: 'How long we store your poll data',
-                free: '90 days', 
-                pro: '2 years', 
-                business: 'Forever' 
-            },
-            { 
-                name: 'Survey questions', 
-                tooltip: 'Maximum questions per multi-question survey',
+                name: 'Questions per survey', 
+                tooltip: 'Maximum questions allowed in a single survey',
                 free: '10', 
                 pro: '25', 
-                business: 'Unlimited',
-                highlight: 'business'
+                business: 'Unlimited'
+            },
+            { 
+                name: 'Templates library', 
+                tooltip: 'Pre-built poll and survey templates to get started quickly',
+                free: true, 
+                pro: true, 
+                business: true 
             },
         ]
     },
@@ -193,8 +190,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Hide the "Powered by VoteGenerator" branding',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Custom colors', 
@@ -208,8 +204,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Add your company logo to polls',
                 free: false, 
                 pro: false, 
-                business: true,
-                highlight: 'business'
+                business: true
             },
             { 
                 name: 'Custom thank-you message', 
@@ -316,8 +311,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Require a PIN to view or vote on polls',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'One-time vote codes', 
@@ -338,8 +332,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get notified of potential vote manipulation',
                 free: false, 
                 pro: false, 
-                business: true,
-                highlight: 'business'
+                business: true
             },
         ]
     },
@@ -382,8 +375,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'See what devices voters used (mobile/desktop)',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Geographic distribution', 
@@ -404,8 +396,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Filter results by device, location, etc.',
                 free: false, 
                 pro: false, 
-                business: true,
-                highlight: 'business'
+                business: true
             },
             { 
                 name: 'Comment word cloud', 
@@ -441,8 +432,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Download raw data as comma-separated values',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Export Excel', 
@@ -506,8 +496,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get notified when votes come in',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Scheduled close', 
@@ -532,15 +521,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
         color: 'rose',
         features: [
             { 
-                name: 'Help documentation', 
-                tooltip: 'Guides and tutorials in our help center',
-                free: true, 
-                pro: true, 
-                business: true 
-            },
-            { 
-                name: 'Community support', 
-                tooltip: 'Get help from the VoteGenerator community',
+                name: 'Help center & guides', 
+                tooltip: 'Step-by-step tutorials and documentation',
                 free: true, 
                 pro: true, 
                 business: true 
@@ -550,20 +532,18 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get help from our team via email',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Priority support', 
                 tooltip: 'Faster response times from our team',
                 free: false, 
                 pro: false, 
-                business: true,
-                highlight: 'business'
+                business: true
             },
             { 
-                name: 'Response time SLA', 
-                tooltip: 'Guaranteed response within 24 hours',
+                name: 'Response time', 
+                tooltip: 'Typical response time for support requests',
                 free: '-', 
                 pro: '48 hours', 
                 business: '24 hours' 
@@ -577,19 +557,11 @@ const FEATURE_SECTIONS: FeatureSection[] = [
         color: 'slate',
         features: [
             { 
-                name: 'Templates library', 
-                tooltip: 'Access ready-to-use poll and survey templates',
-                free: '10 templates', 
-                pro: 'All 40+', 
-                business: 'All 40+' 
-            },
-            { 
                 name: 'Custom short links', 
                 tooltip: 'Create memorable URLs like votegenerator.com/p/your-poll',
                 free: false, 
                 pro: true, 
-                business: true,
-                highlight: 'pro'
+                business: true
             },
             { 
                 name: 'Embed domain restriction', 
@@ -603,8 +575,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Send voters to a custom URL after they submit',
                 free: false, 
                 pro: false, 
-                business: true,
-                highlight: 'business'
+                business: true
             },
         ]
     },
@@ -645,15 +616,11 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 // =============================================================================
 // FEATURE CELL COMPONENT
 // =============================================================================
-const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier: string }> = ({ value, highlight, tier }) => {
-    const isHighlighted = highlight === tier;
-    
+const FeatureCell: React.FC<{ value: boolean | string; tier: string }> = ({ value, tier }) => {
     if (typeof value === 'boolean') {
         return value ? (
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
-                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-100'
-            }`}>
-                <Check className={isHighlighted ? 'text-white' : 'text-emerald-600'} size={16} />
+            <div className="w-7 h-7 rounded-full flex items-center justify-center mx-auto bg-emerald-100">
+                <Check className="text-emerald-600" size={16} />
             </div>
         ) : (
             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -667,9 +634,7 @@ const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier:
     }
     
     return (
-        <span className={`text-sm font-semibold ${
-            isHighlighted ? 'text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full' : 'text-slate-700'
-        }`}>
+        <span className="text-sm font-medium text-slate-700">
             {value}
         </span>
     );
@@ -775,12 +740,12 @@ function PricingPage(): React.ReactElement {
                         
                         <ul className="space-y-3 mb-8">
                             {[
-                                '3 active polls',
+                                '3 active polls/surveys',
                                 '100 responses/month',
                                 'All 8 poll types',
+                                'Multi-question surveys',
                                 'Real-time results',
                                 'QR codes & embedding',
-                                '3 basic themes',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
                                     <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
@@ -813,7 +778,7 @@ function PricingPage(): React.ReactElement {
                             </div>
                             <div>
                                 <h3 className="font-bold">Pro</h3>
-                                <p className="text-xs text-indigo-200">For growing teams</p>
+                                <p className="text-xs text-indigo-200">For creators & pros</p>
                             </div>
                         </div>
                         
@@ -967,15 +932,15 @@ function PricingPage(): React.ReactElement {
                         </div>
                         <div className="py-4 px-4 text-center">
                             <span className="text-sm font-bold text-slate-600">Free</span>
-                            <div className="text-xs text-slate-400">$0</div>
+                            <div className="text-xs text-slate-400">$0 USD</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-indigo-50">
                             <span className="text-sm font-bold text-indigo-700">Pro</span>
-                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}/mo</div>
+                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')} USD/mo</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-slate-100">
                             <span className="text-sm font-bold text-slate-700">Business</span>
-                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}/mo</div>
+                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')} USD/mo</div>
                         </div>
                     </div>
 
@@ -1038,13 +1003,13 @@ function PricingPage(): React.ReactElement {
                                                         </Tooltip>
                                                     </div>
                                                     <div className="py-3 px-4 text-center">
-                                                        <FeatureCell value={feature.free} highlight={feature.highlight} tier="free" />
+                                                        <FeatureCell value={feature.free} tier="free" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-indigo-50/30">
-                                                        <FeatureCell value={feature.pro} highlight={feature.highlight} tier="pro" />
+                                                        <FeatureCell value={feature.pro} tier="pro" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-slate-50/50">
-                                                        <FeatureCell value={feature.business} highlight={feature.highlight} tier="business" />
+                                                        <FeatureCell value={feature.business} tier="business" />
                                                     </div>
                                                 </div>
                                             ))}

@@ -854,17 +854,42 @@ const AdminDashboard: React.FC = () => {
     const handleGoLive = async (pollId: string) => {
         if (!session) return;
         
-        // Update poll status to live
-        const updatedPolls = session.polls.map(p => 
-            p.id === pollId ? { ...p, status: 'live' as const } : p
-        );
-        const updated = { ...session, polls: updatedPolls };
-        localStorage.setItem('vg_user_session', JSON.stringify(updated));
-        setSession(updated);
-        setShowGoLiveModal(null);
+        // Find the poll to get its adminKey
+        const poll = session.polls.find(p => p.id === pollId);
+        if (!poll || !poll.adminKey) {
+            alert('Unable to activate poll - missing admin key');
+            return;
+        }
         
-        // TODO: Call backend to activate poll
-        // await fetch('/.netlify/functions/vg-activate-poll', { ... });
+        try {
+            // Call backend to update poll status
+            const response = await fetch('/.netlify/functions/vg-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId,
+                    adminKey: poll.adminKey,
+                    updates: { status: 'live' }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to activate poll');
+            }
+            
+            // Update local state
+            const updatedPolls = session.polls.map(p => 
+                p.id === pollId ? { ...p, status: 'live' as const } : p
+            );
+            const updated = { ...session, polls: updatedPolls };
+            localStorage.setItem('vg_user_session', JSON.stringify(updated));
+            setSession(updated);
+            setShowGoLiveModal(null);
+            
+        } catch (error) {
+            console.error('Failed to activate poll:', error);
+            alert('Failed to activate poll. Please try again.');
+        }
     };
 
     const handleRegenerateToken = () => {

@@ -14,7 +14,7 @@ import {
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
     PieChart, Calendar, Filter, MessageSquare, Crown, Star,
     MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus,
-    HelpCircle, Info
+    HelpCircle, Info, PlusCircle, Menu
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import SurveyResults from './SurveyResults';
@@ -267,6 +267,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     
     // Response Filters state (Pro+ feature)
     const [showFilters, setShowFilters] = useState(false);
@@ -932,6 +933,98 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 }
             `}</style>
             
+            {/* ================================================================ */}
+            {/* MOBILE NAVIGATION HEADER */}
+            {/* ================================================================ */}
+            <header className={`md:hidden sticky top-0 z-40 print:hidden ${
+                tier === 'business' 
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                    : tier === 'pro' 
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600'
+                        : 'bg-white border-b border-slate-200'
+            }`}>
+                <div className="px-4 py-3 flex items-center justify-between">
+                    <a href="/" className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            tier !== 'free' ? 'bg-white/20' : 'bg-indigo-100'
+                        }`}>
+                            <BarChart3 size={16} className={tier !== 'free' ? 'text-white' : 'text-indigo-600'} />
+                        </div>
+                        <span className={`font-bold ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                            VoteGenerator
+                        </span>
+                    </a>
+                    
+                    <button 
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                        className={`p-2 rounded-lg transition ${
+                            tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'
+                        }`}
+                    >
+                        {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                </div>
+                
+                {/* Mobile Menu Dropdown */}
+                <AnimatePresence>
+                    {showMobileMenu && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className={`overflow-hidden ${
+                                tier === 'free' 
+                                    ? 'border-t border-slate-100 bg-white' 
+                                    : tier === 'pro'
+                                        ? 'bg-purple-700'
+                                        : 'bg-amber-600'
+                            }`}
+                        >
+                            <nav className="p-3 space-y-1">
+                                <a 
+                                    href="/admin" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <LayoutDashboard size={20} /> Back to Dashboard
+                                </a>
+                                <a 
+                                    href="/create" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <PlusCircle size={20} /> Create New Poll
+                                </a>
+                                <a 
+                                    href="/templates" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <Zap size={20} /> Templates
+                                </a>
+                                {tier === 'free' && (
+                                    <a 
+                                        href="/pricing" 
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                                    >
+                                        <Crown size={20} /> Upgrade to Pro
+                                    </a>
+                                )}
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </header>
+            
             <div className="max-w-5xl mx-auto px-4 py-6">
                 {/* Print Header - Only visible when printing */}
                 <div className="hidden print:block print-header mb-6">
@@ -1053,6 +1146,22 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50"
                                         >
                                             <div className="py-1">
+                                                {/* Navigation Links */}
+                                                <a
+                                                    href="/admin"
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <LayoutDashboard size={16} className="text-slate-400" />
+                                                    Back to Dashboard
+                                                </a>
+                                                <a
+                                                    href="/create"
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <PlusCircle size={16} className="text-slate-400" />
+                                                    Create New Poll
+                                                </a>
+                                                <div className="border-t border-slate-100 my-1" />
                                                 <button
                                                     onClick={handleTestAsVoter}
                                                     className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"

@@ -388,8 +388,9 @@ interface EmbedPollPageProps {
 }
 
 export const EmbedPollPage: React.FC<EmbedPollPageProps> = ({ pollId }) => {
-    const [poll, _setPoll] = useState<Poll | null>(null);
+    const [poll, setPoll] = useState<Poll | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     
     // Parse URL params for config
     const params = new URLSearchParams(window.location.search);
@@ -397,14 +398,17 @@ export const EmbedPollPage: React.FC<EmbedPollPageProps> = ({ pollId }) => {
     const showBranding = params.get('branding') !== '0';
     
     useEffect(() => {
-        // Fetch poll data
         const fetchPoll = async () => {
             try {
-                // TODO: Import and use your actual service
-                // const data = await getPoll(pollId);
-                // setPoll(data);
+                const response = await fetch(`/.netlify/functions/vg-get?id=${pollId}`);
+                if (!response.ok) {
+                    throw new Error('Poll not found');
+                }
+                const data = await response.json();
+                setPoll(data);
             } catch (e) {
-                console.error(e);
+                console.error('Failed to fetch poll:', e);
+                setError('Poll not found');
             } finally {
                 setLoading(false);
             }
@@ -421,14 +425,26 @@ export const EmbedPollPage: React.FC<EmbedPollPageProps> = ({ pollId }) => {
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
+            ) : error ? (
+                <div className="text-center py-8 text-red-500">{error}</div>
             ) : poll ? (
-                <div>
-                    {/* Your poll voting UI here - simplified for embed */}
-                    {/* ... */}
+                <div className={`p-4 ${showBranding ? 'pb-16' : ''}`}>
+                    <h2 className={`text-lg font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                        {poll.title}
+                    </h2>
+                    {poll.description && (
+                        <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                            {poll.description}
+                        </p>
+                    )}
+                    {/* Poll options would render here - using VoteGeneratorVote component */}
+                    <div className={`text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {poll.voteCount || 0} responses
+                    </div>
                 </div>
             ) : (
                 <div className="text-center py-8 text-slate-500">Poll not found</div>
-            )}
+            )}}
             
             {/* Branding Footer */}
             {showBranding && (

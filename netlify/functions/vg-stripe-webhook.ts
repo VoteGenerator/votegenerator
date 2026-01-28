@@ -7,6 +7,8 @@
 // - customer.subscription.deleted (cancellations)
 // - checkout.session.completed (new subscriptions)
 // - invoice.payment_failed (payment issues)
+//
+// IDEMPOTENCY: Events are tracked to prevent duplicate processing
 // ============================================================================
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
@@ -17,6 +19,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 });
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+
+// Idempotency: Track processed events to prevent duplicates
+const PROCESSED_EVENTS_TTL_HOURS = 24; // Keep event IDs for 24 hours
 
 // Tier configuration - must match vg-create.ts
 const TIER_CONFIG: Record<string, { maxResponses: number }> = {
@@ -225,6 +230,45 @@ export const handler: Handler = async (event) => {
 
     console.log(`[webhook] Received event: ${stripeEvent.type}`);
 
+    // ================================================================
+    // IDEMPOTENCY CHECK - Prevent duplicate processing
+    // ================================================================
+    const eventId = stripeEvent.id;
+    const eventStore = getStore({
+        name: 'webhook-events',
+        siteID: process.env.VG_SITE_ID || '',
+        token: process.env.NETLIFY_AUTH_TOKEN || ''
+    });
+
+    try {
+        // Check if we've already processed this event
+        const existingEvent = await eventStore.get(eventId, { type: 'json' }) as any;
+        
+        if (existingEvent) {
+            console.log(`[webhook] Event ${eventId} already processed at ${existingEvent.processedAt}, skipping`);
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ 
+                    received: true, 
+                    skipped: true,
+                    reason: 'duplicate_event',
+                    originalProcessedAt: existingEvent.processedAt
+                }),
+            };
+        }
+
+        // Mark event as being processed (with timestamp for cleanup)
+        await eventStore.setJSON(eventId, {
+            processedAt: new Date().toISOString(),
+            eventType: stripeEvent.type,
+            status: 'processing'
+        });
+    } catch (idempotencyError) {
+        // If idempotency check fails, continue processing (better to double-process than miss)
+        console.error('[webhook] Idempotency check failed, continuing:', idempotencyError);
+    }
+
     try {
         switch (stripeEvent.type) {
             // ============================================================
@@ -366,6 +410,18 @@ export const handler: Handler = async (event) => {
                 console.log(`[webhook] Unhandled event type: ${stripeEvent.type}`);
         }
 
+        // Mark event as successfully processed
+        try {
+            await eventStore.setJSON(eventId, {
+                processedAt: new Date().toISOString(),
+                eventType: stripeEvent.type,
+                status: 'completed'
+            });
+        } catch (e) {
+            // Non-critical, just log
+            console.error('[webhook] Failed to update event status');
+        }
+
         return {
             statusCode: 200,
             headers,
@@ -373,7 +429,21 @@ export const handler: Handler = async (event) => {
         };
 
     } catch (error) {
-        console.error('[webhook] Error processing event');
+        console.error('[webhook] Error processing event:', error);
+        
+        // Mark event as failed (so it can be retried)
+        try {
+            await eventStore.setJSON(eventId, {
+                processedAt: new Date().toISOString(),
+                eventType: stripeEvent.type,
+                status: 'failed',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            });
+        } catch (e) {
+            // Non-critical
+        }
+        
+        // Return 500 so Stripe will retry
         return {
             statusCode: 500,
             headers,

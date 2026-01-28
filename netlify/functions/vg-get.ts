@@ -46,7 +46,30 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Poll not found' })
+                body: JSON.stringify({ 
+                    error: 'Poll not found',
+                    code: 'NOT_FOUND',
+                    message: 'This poll doesn\'t exist. It may have been deleted by the creator.',
+                    suggestions: [
+                        'Check that the URL is correct',
+                        'The poll may have been deleted',
+                        'Ask the poll creator for the correct link'
+                    ]
+                })
+            };
+        }
+
+        // Check if poll was explicitly deleted
+        if (poll.status === 'deleted') {
+            return {
+                statusCode: 410,
+                headers,
+                body: JSON.stringify({ 
+                    error: 'Poll deleted',
+                    code: 'DELETED',
+                    message: 'This poll has been deleted by its creator.',
+                    deletedAt: poll.deletedAt || null
+                })
             };
         }
 
@@ -55,7 +78,13 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 410,
                 headers,
-                body: JSON.stringify({ error: 'This poll has expired' })
+                body: JSON.stringify({ 
+                    error: 'Poll expired',
+                    code: 'EXPIRED',
+                    message: 'This poll has expired and is no longer accepting responses.',
+                    expiredAt: poll.expiresAt,
+                    title: poll.title // Include title so user knows they found the right poll
+                })
             };
         }
 
@@ -64,7 +93,39 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'This poll is not yet published' })
+                body: JSON.stringify({ 
+                    error: 'Poll not published',
+                    code: 'DRAFT',
+                    message: 'This poll is still being set up by the creator. Check back soon!'
+                })
+            };
+        }
+
+        // Check if poll is closed
+        if (poll.status === 'closed') {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    ...poll,
+                    isClosed: true,
+                    code: 'CLOSED',
+                    message: 'This poll has been closed by the creator and is no longer accepting responses.'
+                })
+            };
+        }
+
+        // Check if poll is paused
+        if (poll.status === 'paused') {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    ...poll,
+                    isPaused: true,
+                    code: 'PAUSED',
+                    message: 'This poll is temporarily paused. Check back later!'
+                })
             };
         }
 

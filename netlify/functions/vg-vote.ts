@@ -417,6 +417,25 @@ export const handler: Handler = async (event) => {
             poll.blockedVotes!.lastBlocked = new Date().toISOString();
             await store.setJSON(body.pollId, poll);
             console.log(`vg-vote: Blocked (${reason}). Total blocked: ${poll.blockedVotes!.total}`);
+            
+            // For rate limiting, give a helpful message (user might be legitimate)
+            if (reason === 'rateLimit') {
+                return {
+                    statusCode: 429,
+                    headers: {
+                        ...headers,
+                        'Retry-After': '60'
+                    },
+                    body: JSON.stringify({ 
+                        error: 'Whoa, slow down! Too many votes submitted. Please wait a minute and try again.',
+                        code: 'RATE_LIMITED',
+                        retryAfter: 60,
+                        friendlyMessage: true
+                    })
+                };
+            }
+            
+            // For bots (honeypot/timing), silently "accept" to not reveal detection
             return {
                 statusCode: 200,
                 headers,

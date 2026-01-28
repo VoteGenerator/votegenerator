@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import { 
     AlertTriangle, Clock, Trash2, Lock, PauseCircle, 
     Home, PlusCircle, ArrowLeft, Search, XCircle,
-    Calendar, RefreshCw, Mail, HelpCircle
+    Calendar, RefreshCw, Mail, HelpCircle,
+    LucideIcon
 } from 'lucide-react';
 
 type ErrorCode = 'NOT_FOUND' | 'DELETED' | 'EXPIRED' | 'DRAFT' | 'CLOSED' | 'PAUSED' | 'UNKNOWN';
@@ -22,7 +23,7 @@ interface PollErrorPageProps {
 }
 
 const errorConfig: Record<ErrorCode, {
-    icon: React.FC<{ size?: number; className?: string }>;
+    icon: LucideIcon;
     emoji: string;
     title: string;
     subtitle: string;

@@ -444,7 +444,7 @@ export const EmbedPollPage: React.FC<EmbedPollPageProps> = ({ pollId }) => {
                 </div>
             ) : (
                 <div className="text-center py-8 text-slate-500">Poll not found</div>
-            )}}
+            )}
             
             {/* Branding Footer */}
             {showBranding && (

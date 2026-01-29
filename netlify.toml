@@ -313,3 +313,33 @@
 # - GDPR Article 5(1)(e) - Storage Limitation
 # - Logs all deletions for audit trail
 # ============================================================================
+
+
+
+[functions."vg-backup-structure"]
+  schedule = "0 9 * * 1"
+```
+
+**What happens:**
+- Every **Monday at 9 AM UTC** → Netlify triggers the function
+- Function detects it's a scheduled run via `x-netlify-event: schedule` header
+- Auto-emails backup summary to `ADMIN_EMAIL`
+- No password needed for scheduled runs (it's server-to-server)
+
+**Required env variables:**
+- `ADMIN_EMAIL` - Your email address
+- `SENDGRID_API_KEY` - Already configured
+- `FROM_EMAIL` - Already configured
+- `VG_SITE_ID` - Already configured
+- `NETLIFY_AUTH_TOKEN` - Already configured
+
+**Manual usage still works:**
+```
+# View backup (requires password)
+/.netlify/functions/vg-backup-structure?password=YOUR_ADMIN_PASSWORD
+
+# Download JSON file
+/.netlify/functions/vg-backup-structure?download=true&password=YOUR_ADMIN_PASSWORD
+
+# Trigger email manually
+/.netlify/functions/vg-backup-structure?email=true&password=YOUR_ADMIN_PASSWORD

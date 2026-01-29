@@ -155,6 +155,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [sharedPin, setSharedPin] = useState('');
     const [currentPollCount, setCurrentPollCount] = useState(0);
     const [isOverLimit, setIsOverLimit] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
     
     // Check for subscription tier
     const subscriptionTier = typeof window !== 'undefined' 
@@ -1454,10 +1455,44 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             </div>
                         )}
 
+                        {/* Terms & Privacy Acceptance */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <div className="relative flex items-center justify-center mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={termsAccepted}
+                                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                                        className="sr-only"
+                                    />
+                                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+                                        termsAccepted 
+                                            ? 'bg-indigo-600 border-indigo-600' 
+                                            : 'border-slate-300 group-hover:border-indigo-400'
+                                    }`}>
+                                        {termsAccepted && (
+                                            <Check size={14} className="text-white" />
+                                        )}
+                                    </div>
+                                </div>
+                                <span className="text-sm text-slate-600">
+                                    I agree to the{' '}
+                                    <a href="/terms" target="_blank" className="text-indigo-600 hover:underline font-medium">
+                                        Terms of Service
+                                    </a>
+                                    {' '}and{' '}
+                                    <a href="/privacy" target="_blank" className="text-indigo-600 hover:underline font-medium">
+                                        Privacy Policy
+                                    </a>
+                                    . I understand that poll data will be stored as described in these documents.
+                                </span>
+                            </label>
+                        </div>
+
                         <motion.button 
                             type="button" 
                             onClick={handleCreate} 
-                            disabled={isCreating || !title.trim() || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
+                            disabled={isCreating || !title.trim() || !termsAccepted || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
                             whileHover={{ scale: 1.01 }} 
                             whileTap={{ scale: 0.99 }}
                             className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
@@ -1467,6 +1502,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             }`}
                         >
                             {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={20} /></>}
+                        </motion.button>
                         </motion.button>
                     </div>
 

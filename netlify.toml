@@ -284,3 +284,32 @@
   from = "/blog/*"
   to = "/index.html"
   status = 200
+
+
+  # ============================================================================
+# netlify.toml - ADD THIS SECTION for scheduled cleanup
+# ============================================================================
+# Add this to your existing netlify.toml file
+
+# Scheduled function for GDPR-compliant auto-cleanup
+[functions."vg-cleanup-inactive"]
+  # Runs daily at 3:00 AM UTC
+  schedule = "0 3 * * *"
+
+# ============================================================================
+# WHAT THIS DOES:
+# 
+# FREE TIER POLLS:
+# - Polls with NO VOTES for 6 months → AUTO-DELETED
+# - Polls older than 12 months → AUTO-DELETED
+# - Warning email sent 14 days before deletion
+# 
+# PAID TIER POLLS:
+# - Kept while subscription is active
+# - 90-day grace period after cancellation
+# - After grace period → AUTO-DELETED
+# 
+# COMPLIANCE:
+# - GDPR Article 5(1)(e) - Storage Limitation
+# - Logs all deletions for audit trail
+# ============================================================================

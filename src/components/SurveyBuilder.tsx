@@ -1112,6 +1112,7 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     const [publishError, setPublishError] = useState<string | null>(null);
     const [createdSurvey, setCreatedSurvey] = useState<{ id: string; adminKey: string } | null>(null);
     const [copiedLink, setCopiedLink] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
     
     // Get subscription tier from localStorage if not passed
     const subscriptionTier = tier || (typeof window !== 'undefined' 
@@ -1260,7 +1261,7 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     };
     
     // Can publish check
-    const canPublish = surveyTitle.trim() !== '' && totalQuestions > 0;
+    const canPublish = surveyTitle.trim() !== '' && totalQuestions > 0 && termsAccepted;
     
     // Ad countdown state for free tier
     const [adCountdown, setAdCountdown] = useState(10);
@@ -1818,46 +1819,85 @@ const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
             {/* STEP 3: PUBLISH - Sticky bottom bar */}
             {/* ============================================ */}
             <div className="sticky bottom-0 z-30 -mx-4 px-4 py-3 sm:py-4 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-                <div className="flex items-center justify-between gap-3 sm:gap-4 max-w-4xl mx-auto">
-                    {/* Status */}
-                    <div className="flex-1 min-w-0">
-                        {!surveyTitle.trim() ? (
-                            <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
-                                <AlertTriangle size={14} /> Add a title to publish
-                            </p>
-                        ) : totalQuestions === 0 ? (
-                            <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
-                                <AlertTriangle size={14} /> Add at least one question
-                            </p>
-                        ) : (
-                            <p className="text-emerald-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
-                                <Check size={14} /> Ready to publish!
-                            </p>
-                        )}
+                <div className="max-w-4xl mx-auto">
+                    {/* Terms Acceptance */}
+                    <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                            <div className="relative flex items-center justify-center mt-0.5">
+                                <input
+                                    type="checkbox"
+                                    checked={termsAccepted}
+                                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                                    className="sr-only"
+                                />
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+                                    termsAccepted 
+                                        ? 'bg-indigo-600 border-indigo-600' 
+                                        : 'border-slate-300 group-hover:border-indigo-400'
+                                }`}>
+                                    {termsAccepted && (
+                                        <Check size={14} className="text-white" />
+                                    )}
+                                </div>
+                            </div>
+                            <span className="text-xs sm:text-sm text-slate-600">
+                                I agree to the{' '}
+                                <a href="/terms" target="_blank" className="text-indigo-600 hover:underline font-medium">
+                                    Terms of Service
+                                </a>
+                                {' '}and{' '}
+                                <a href="/privacy" target="_blank" className="text-indigo-600 hover:underline font-medium">
+                                    Privacy Policy
+                                </a>
+                            </span>
+                        </label>
                     </div>
-                    
-                    {/* Publish Button */}
-                    <button
-                        onClick={handlePublish}
-                        disabled={isPublishing || !canPublish}
-                        className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center gap-2 transition-all text-sm sm:text-base ${
-                            isPublishing || !canPublish
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
-                        }`}
-                    >
-                        {isPublishing ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                <span className="hidden sm:inline">Publishing...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Send size={18} />
-                                <span>Publish</span>
-                            </>
-                        )}
-                    </button>
+
+                    <div className="flex items-center justify-between gap-3 sm:gap-4">
+                        {/* Status */}
+                        <div className="flex-1 min-w-0">
+                            {!surveyTitle.trim() ? (
+                                <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                    <AlertTriangle size={14} /> Add a title to publish
+                                </p>
+                            ) : totalQuestions === 0 ? (
+                                <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                    <AlertTriangle size={14} /> Add at least one question
+                                </p>
+                            ) : !termsAccepted ? (
+                                <p className="text-amber-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                    <AlertTriangle size={14} /> Accept terms to publish
+                                </p>
+                            ) : (
+                                <p className="text-emerald-600 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                                    <Check size={14} /> Ready to publish!
+                                </p>
+                            )}
+                        </div>
+                        
+                        {/* Publish Button */}
+                        <button
+                            onClick={handlePublish}
+                            disabled={isPublishing || !canPublish}
+                            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold flex items-center gap-2 transition-all text-sm sm:text-base ${
+                                isPublishing || !canPublish
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                            }`}
+                        >
+                            {isPublishing ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    <span className="hidden sm:inline">Publishing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Send size={18} />
+                                    <span>Publish</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
                 
                 {publishError && (

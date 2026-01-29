@@ -1503,7 +1503,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                         >
                             {isCreating ? <><Loader2 className="animate-spin" size={20} />Creating Poll...</> : <><Sparkles size={20} />Create Poll<ArrowRight size={20} /></>}
                         </motion.button>
-                        </motion.button>
                     </div>
 
                     {/* Right: Preview */}

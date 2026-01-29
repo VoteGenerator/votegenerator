@@ -7,6 +7,15 @@
   node_bundler = "esbuild"
 
 # ============================================================================
+# Scheduled Functions
+# ============================================================================
+[functions."vg-cleanup-inactive"]
+  schedule = "0 3 * * *"
+
+[functions."vg-backup-structure"]
+  schedule = "0 9 * * 1"
+
+# ============================================================================
 # Stripe API Routes
 # ============================================================================
 [[redirects]]
@@ -146,8 +155,7 @@
   status = 200
 
 # ============================================================================
-# NEW: Survey & SEO Landing Page Routes (SPA handles these)
-# These MUST come before the wildcard fallback
+# Survey & SEO Landing Page Routes (SPA handles these)
 # ============================================================================
 [[redirects]]
   from = "/survey"
@@ -169,28 +177,56 @@
   to = "/index.html"
   status = 200
 
-# Poll Created Success
+# ============================================================================
+# Poll Routes
+# ============================================================================
 [[redirects]]
   from = "/poll-created"
   to = "/create.html"
   status = 200
 
-# Poll voting page (public)
 [[redirects]]
   from = "/v/:pollId"
   to = "/vote.html"
   status = 200
 
-# Poll admin page
 [[redirects]]
   from = "/admin/:pollId/:token"
   to = "/admin.html"
   status = 200
 
-# Custom short links
 [[redirects]]
   from = "/p/*"
   to = "/.netlify/functions/short-link"
+  status = 200
+
+# ============================================================================
+# SPA Routes
+# ============================================================================
+[[redirects]]
+  from = "/checkout/success"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/index.html"
+  status = 200
+
+# SPA Fallback - MUST BE LAST
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 # ============================================================================
@@ -249,97 +285,3 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-
-# ============================================================================
-# SPA Routes - Specific routes MUST come before wildcard
-# ============================================================================
-[[redirects]]
-  from = "/checkout/success"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/admin"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/admin/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/recover"
-  to = "/index.html"
-  status = 200
-
-# SPA Fallback - MUST BE LAST
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-
-[[redirects]]
-  from = "/blog/*"
-  to = "/index.html"
-  status = 200
-
-
-  # ============================================================================
-# netlify.toml - ADD THIS SECTION for scheduled cleanup
-# ============================================================================
-# Add this to your existing netlify.toml file
-
-# Scheduled function for GDPR-compliant auto-cleanup
-[functions."vg-cleanup-inactive"]
-  # Runs daily at 3:00 AM UTC
-  schedule = "0 3 * * *"
-
-# ============================================================================
-# WHAT THIS DOES:
-# 
-# FREE TIER POLLS:
-# - Polls with NO VOTES for 6 months → AUTO-DELETED
-# - Polls older than 12 months → AUTO-DELETED
-# - Warning email sent 14 days before deletion
-# 
-# PAID TIER POLLS:
-# - Kept while subscription is active
-# - 90-day grace period after cancellation
-# - After grace period → AUTO-DELETED
-# 
-# COMPLIANCE:
-# - GDPR Article 5(1)(e) - Storage Limitation
-# - Logs all deletions for audit trail
-# ============================================================================
-
-
-
-[functions."vg-backup-structure"]
-  schedule = "0 9 * * 1"
-```
-
-**What happens:**
-- Every **Monday at 9 AM UTC** → Netlify triggers the function
-- Function detects it's a scheduled run via `x-netlify-event: schedule` header
-- Auto-emails backup summary to `ADMIN_EMAIL`
-- No password needed for scheduled runs (it's server-to-server)
-
-**Required env variables:**
-- `ADMIN_EMAIL` - Your email address
-- `SENDGRID_API_KEY` - Already configured
-- `FROM_EMAIL` - Already configured
-- `VG_SITE_ID` - Already configured
-- `NETLIFY_AUTH_TOKEN` - Already configured
-
-**Manual usage still works:**
-```
-# View backup (requires password)
-/.netlify/functions/vg-backup-structure?password=YOUR_ADMIN_PASSWORD
-
-# Download JSON file
-/.netlify/functions/vg-backup-structure?download=true&password=YOUR_ADMIN_PASSWORD
-
-# Trigger email manually
-/.netlify/functions/vg-backup-structure?email=true&password=YOUR_ADMIN_PASSWORD

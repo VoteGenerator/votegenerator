@@ -215,7 +215,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
 }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
-    const [spotlightStyle, setSpotlightStyle] = useState<React.CSSProperties>({});
+    const [spotlightStyle, setSpotlightStyle] = useState<{ top: number; left: number; width: number; height: number }>({ top: 0, left: 0, width: 0, height: 0 });
 
     const positionTooltip = useCallback(() => {
         if (!isActive) return;

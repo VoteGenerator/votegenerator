@@ -15,8 +15,6 @@ import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
 import CookieConsent from './components/CookieConsent';
-import DataPolicyPage from './components/DataPolicyPage';
-import DataDeletionPage from './components/DataDeletionPage';
 import { Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
 
 // Format date nicely
@@ -227,9 +225,9 @@ function App() {
         if (path === '/admin' || path === '/admin/') return <AdminDashboard />;
         if (path === '/checkout/success' || path === '/checkout/success/') return <CheckoutSuccess />;
         
-        // GDPR / Legal pages
-        if (path === '/data-policy' || path === '/data-policy/') return <DataPolicyPage />;
-        if (path === '/account/delete-request' || path === '/account/delete-request/') return <DataDeletionPage />;
+        // TODO: Add these routes when you've added the component files:
+        // if (path === '/data-policy' || path === '/data-policy/') return <DataPolicyPage />;
+        // if (path === '/account/delete-request' || path === '/account/delete-request/') return <DataDeletionPage />;
         
         return <VoteGeneratorApp />;
     };

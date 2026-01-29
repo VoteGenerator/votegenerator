@@ -1,5 +1,5 @@
 // ============================================================================
-// monitoring.ts - Error Monitoring, Backup, and Status Utilities
+// monitoring.ts - Error Monitoring Utilities
 // Location: src/utils/monitoring.ts
 //
 // PROBLEM: No Sentry/LogRocket - how do you know when things break?
@@ -21,13 +21,13 @@ interface ErrorLog {
 }
 
 // Simple error logger - sends to your endpoint
-export const logError = async (error: Error, extra?: Record<string, unknown>) => {
+export const logError = async (error: Error, extra?: Record<string, unknown>): Promise<void> => {
     const errorLog: ErrorLog = {
         timestamp: new Date().toISOString(),
         message: error.message,
         stack: error.stack,
-        url: window.location.href,
-        userAgent: navigator.userAgent,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
         ...extra,
     };
 
@@ -46,15 +46,23 @@ export const logError = async (error: Error, extra?: Record<string, unknown>) =>
     }
 
     // Also store locally for debugging
-    const stored = JSON.parse(localStorage.getItem('vg_error_log') || '[]');
-    stored.push(errorLog);
-    // Keep last 50 errors
-    if (stored.length > 50) stored.shift();
-    localStorage.setItem('vg_error_log', JSON.stringify(stored));
+    if (typeof localStorage !== 'undefined') {
+        try {
+            const stored = JSON.parse(localStorage.getItem('vg_error_log') || '[]');
+            stored.push(errorLog);
+            // Keep last 50 errors
+            if (stored.length > 50) stored.shift();
+            localStorage.setItem('vg_error_log', JSON.stringify(stored));
+        } catch {
+            // localStorage might be full or disabled
+        }
+    }
 };
 
 // Global error handler - catches unhandled errors
-export const setupGlobalErrorHandler = () => {
+export const setupGlobalErrorHandler = (): void => {
+    if (typeof window === 'undefined') return;
+
     // JavaScript errors
     window.onerror = (message, source, lineno, colno, error) => {
         logError(error || new Error(String(message)), {
@@ -89,87 +97,31 @@ export const setupGlobalErrorHandler = () => {
 // They'll alert you via email/SMS when the site is down.
 
 // ============================================================================
-// 3. ERROR BOUNDARY COMPONENT - React error boundary
+// 3. GET LOCAL ERROR LOG - For debugging
 // ============================================================================
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-
-interface ErrorBoundaryProps {
-    children: ReactNode;
-    fallback?: ReactNode;
-}
-
-interface ErrorBoundaryState {
-    hasError: boolean;
-    error?: Error;
-}
-
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-    constructor(props: ErrorBoundaryProps) {
-        super(props);
-        this.state = { hasError: false };
+export const getLocalErrorLog = (): ErrorLog[] => {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+        return JSON.parse(localStorage.getItem('vg_error_log') || '[]');
+    } catch {
+        return [];
     }
+};
 
-    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        logError(error, {
-            componentStack: errorInfo.componentStack,
-            type: 'reactError',
-        });
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return this.props.fallback || (
-                <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-                    <div className="text-center max-w-md">
-                        <div className="text-6xl mb-4">😵</div>
-                        <h1 className="text-2xl font-bold text-slate-800 mb-2">
-                            Oops! Something went wrong
-                        </h1>
-                        <p className="text-slate-600 mb-6">
-                            We've been notified and are working on it. Please try refreshing the page.
-                        </p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700"
-                        >
-                            Refresh Page
-                        </button>
-                        <p className="text-xs text-slate-400 mt-4">
-                            Error: {this.state.error?.message}
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
-        return this.props.children;
-    }
-}
-
-// ============================================================================
-// 4. DAILY EMAIL DIGEST - Netlify function to email you errors
-// ============================================================================
-// See: vg-error-digest.ts (separate file)
-
+export const clearLocalErrorLog = (): void => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem('vg_error_log');
+};
 
 // ============================================================================
 // USAGE IN APP.TSX:
 // ============================================================================
 /*
-import { setupGlobalErrorHandler, ErrorBoundary } from './utils/monitoring';
+import { setupGlobalErrorHandler } from './utils/monitoring';
 
 // In your App component:
 useEffect(() => {
     setupGlobalErrorHandler();
 }, []);
-
-// Wrap your app:
-<ErrorBoundary>
-    <App />
-</ErrorBoundary>
 */

@@ -2,8 +2,8 @@
 // VoteGeneratorCreate - FORM ONLY (parent handles headers)
 // UPDATED: All poll types FREE, Template loading, Comments, Security sections
 // STYLING FIXES: Better background contrast, template banner, card styling
+// FIXES: Rating scale 1 option minimum, duplicate warning, validation
 // ============================================================================
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -258,9 +258,19 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     }, [options]);
 
     const hasDuplicates = duplicateIndices.size > 0;
+
     const getMaxDeadline = () => { const m = new Date(); m.setDate(m.getDate() + maxDays); return m.toISOString().slice(0, 16); };
+
     const addOption = () => { if (options.length < 20) setOptions([...options, '']); };
-    const removeOption = (i: number) => { if (options.length > 2) setOptions(options.filter((_, idx) => idx !== i)); };
+
+    // FIXED: Rating polls can have just 1 item, other polls need minimum 2
+    const removeOption = (i: number) => { 
+        const minOptions = pollType === 'rating' ? 1 : 2;
+        if (options.length > minOptions) {
+            setOptions(options.filter((_, idx) => idx !== i)); 
+        }
+    };
+
     const updateOption = (i: number, v: string) => { const n = [...options]; n[i] = v; setOptions(n); if (error?.includes('Duplicate')) setError(null); };
 
     const handleCreate = async () => {
@@ -272,7 +282,13 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 setError('Upload at least 2 images for visual poll'); 
                 return; 
             }
+        } else if (pollType === 'rating') {
+            // FIXED: Rating polls only need 1 item minimum
+            const valid = options.filter(o => o.trim());
+            if (valid.length < 1) { setError('Add at least 1 item to rate'); return; }
+            if (hasDuplicates) { setError('Remove duplicate items - each must be unique'); return; }
         } else {
+            // All other poll types need 2+ options
             const valid = options.filter(o => o.trim());
             if (valid.length < 2) { setError('Add at least 2 options'); return; }
             if (hasDuplicates) { setError('Remove duplicate options'); return; }
@@ -323,6 +339,11 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
             // Add image URLs for visual polls
             if (pollType === 'image') {
                 pollData.imageUrls = imageOptions.map(img => img.url);
+            }
+
+            // Add rating icon type for rating polls
+            if (pollType === 'rating') {
+                pollData.ratingIcon = ratingIcon;
             }
 
             // Add access codes if using code security
@@ -596,7 +617,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 <p className="text-sm text-slate-700 font-medium">
                                     {pollType === 'multiple' && '💡 Voters will pick one or more options from your list. Best for quick decisions.'}
                                     {pollType === 'ranked' && '💡 Voters drag to rank options by preference. Best for prioritizing choices.'}
-                                    {pollType === 'rating' && '💡 Voters rate each aspect 1-5 stars. Best for reviews and feedback.'}
+                                    {pollType === 'rating' && '💡 Voters rate each aspect 1-5 stars. Best for reviews and feedback. You can have just one item to rate!'}
                                     {pollType === 'meeting' && '💡 Voters mark availability for each time slot. Best for scheduling.'}
                                     {pollType === 'rsvp' && '💡 Voters respond Yes, No, or Maybe. Best for event attendance.'}
                                     {pollType === 'pairwise' && '💡 Voters choose between two options. Best for A/B testing and comparisons.'}
@@ -668,13 +689,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                     {/* Rating aspects */}
                                     <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
                                         <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                            What should voters rate? <span className="text-slate-400 font-normal">(add items)</span>
+                                            What should voters rate? <span className="text-slate-400 font-normal">(min 1 item)</span>
                                         </label>
                                         
-                                        {/* Rating items */}
+                                        {/* Rating items - FIXED with duplicate highlighting */}
                                         <div className="space-y-2 mb-3">
                                             {options.map((opt, i) => {
                                                 const currentEmoji = RATING_ICONS.find(r => r.id === ratingIcon)?.emoji || '⭐';
+                                                const isDuplicate = duplicateIndices.has(i);
                                                 return (
                                                     <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-2 items-center">
                                                         <input 
@@ -682,13 +704,18 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             value={opt} 
                                                             onChange={(e) => updateOption(i, e.target.value)} 
                                                             placeholder={`e.g., ${['Service', 'Cleanliness', 'Value', 'Staff', 'Overall'][i] || 'Aspect ' + (i + 1)}`}
-                                                            className="flex-1 px-3 py-2 border-2 border-amber-200 rounded-lg text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 bg-white"
+                                                            className={`flex-1 px-3 py-2 border-2 rounded-lg text-sm focus:ring-2 bg-white ${
+                                                                isDuplicate 
+                                                                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100' 
+                                                                    : 'border-amber-200 focus:border-amber-400 focus:ring-amber-100'
+                                                            }`}
                                                         />
                                                         <div className="flex gap-0.5 shrink-0 bg-white px-2 py-1 rounded-lg border border-amber-200">
                                                             {[1, 2, 3, 4, 5].map((n) => (
                                                                 <span key={n} className="text-sm">{currentEmoji}</span>
                                                             ))}
                                                         </div>
+                                                        {/* FIXED: Allow deleting down to 1 option for rating polls */}
                                                         {options.length > 1 && (
                                                             <button onClick={() => removeOption(i)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
                                                                 <Trash2 size={16} />
@@ -698,6 +725,14 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                 );
                                             })}
                                         </div>
+                                        
+                                        {/* FIXED: Duplicate warning for rating scale */}
+                                        {hasDuplicates && (
+                                            <div className="p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 mb-3">
+                                                <AlertCircle size={14} className="text-red-600 shrink-0" />
+                                                <p className="text-red-700 text-xs font-medium">Duplicate items detected - each rating aspect must be unique</p>
+                                            </div>
+                                        )}
                                         
                                         {options.length < 10 && (
                                             <button onClick={addOption} className="flex items-center gap-2 px-3 py-2 text-amber-600 hover:bg-amber-100 rounded-lg text-sm font-medium border border-dashed border-amber-300 w-full justify-center">
@@ -1108,6 +1143,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                 </span>
                                 {showAdvanced ? <ChevronUp size={20} className="text-indigo-600" /> : <ChevronDown size={20} className="text-slate-400" />}
                             </button>
+
                             <AnimatePresence>
                                 {showAdvanced && (
                                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-slate-200">
@@ -1489,10 +1525,17 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                             </label>
                         </div>
 
+                        {/* FIXED: Create button disabled logic for rating polls */}
                         <motion.button 
                             type="button" 
                             onClick={handleCreate} 
-                            disabled={isCreating || !title.trim() || !termsAccepted || (pollType === 'image' ? imageOptions.length < 2 : (options.filter(o => o.trim()).length < 2 || hasDuplicates))} 
+                            disabled={isCreating || !title.trim() || !termsAccepted || (
+                                pollType === 'image' 
+                                    ? imageOptions.length < 2 
+                                    : pollType === 'rating'
+                                        ? (options.filter(o => o.trim()).length < 1 || hasDuplicates)
+                                        : (options.filter(o => o.trim()).length < 2 || hasDuplicates)
+                            )} 
                             whileHover={{ scale: 1.01 }} 
                             whileTap={{ scale: 0.99 }}
                             className={`w-full py-4 text-white font-bold rounded-xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg ${
@@ -1541,7 +1584,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Card Content - Fix: detect dark card background */}
+                                                    {/* Card Content */}
                                                     {(() => {
                                                         const isDarkCard = currentTheme.cardBg?.includes('slate-8') || currentTheme.cardBg?.includes('slate-9');
                                                         return (
@@ -1560,7 +1603,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                                                 </div>
                                                                             ))
                                                                         ) : (
-                                                                            /* Placeholder image boxes */
                                                                             [1, 2].map((n) => (
                                                                                 <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${isDarkCard ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
                                                                                     <ImageIcon size={24} className={isDarkCard ? 'text-slate-500' : 'text-slate-300'} />
@@ -1680,7 +1722,6 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        /* Placeholder image boxes */
                                                         [1, 2].map((n) => (
                                                             <div key={n} className={`aspect-square rounded-lg border-2 ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.cardBg?.includes('slate-8') ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
                                                                 <div className="text-center">

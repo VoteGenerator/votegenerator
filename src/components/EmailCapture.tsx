@@ -370,19 +370,22 @@ export const SavePollsPrompt: React.FC<SavePollsPromptProps> = ({
 };
 
 // ============================================================================
-// 2. ADMIN DASHBOARD BOOKMARK BANNER - For free users without email
-// Shows prominently at top of admin dashboard
+// 2. ADMIN DASHBOARD BANNER - Different for free vs paid users
 // ============================================================================
 interface BookmarkBannerProps {
     adminUrl: string;
     hasEmail: boolean;
     onSaveEmail: () => void;
+    tier?: 'free' | 'pro' | 'business';
+    customerEmail?: string;
 }
 
 export const BookmarkBanner: React.FC<BookmarkBannerProps> = ({
     adminUrl,
     hasEmail,
     onSaveEmail,
+    tier = 'free',
+    customerEmail,
 }) => {
     const [copied, setCopied] = useState(false);
     const [dismissed, setDismissed] = useState(false);
@@ -404,9 +407,95 @@ export const BookmarkBanner: React.FC<BookmarkBannerProps> = ({
         setDismissed(true);
     };
 
-    // Don't show if user has email saved or dismissed
-    if (hasEmail || dismissed) return null;
+    // Don't show if dismissed
+    if (dismissed) return null;
 
+    // ========================================
+    // PAID USERS - Show confirmation message
+    // ========================================
+    if (tier === 'pro' || tier === 'business') {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 mb-6"
+            >
+                <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Check className="text-emerald-600" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-emerald-800 flex items-center gap-2">
+                            ✅ {tier === 'pro' ? 'Pro' : 'Business'} Account Active
+                        </h3>
+                        <p className="text-sm text-emerald-700 mt-1">
+                            Your admin links are saved to <strong>{customerEmail || 'your account email'}</strong>. 
+                            You can recover access anytime at <a href="/recover" className="underline">/recover</a>.
+                        </p>
+                        
+                        {/* Still offer copy link for convenience */}
+                        <button
+                            onClick={copyLink}
+                            className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                copied
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700'
+                            }`}
+                        >
+                            {copied ? <Check size={14} /> : <Copy size={14} />}
+                            {copied ? 'Copied!' : 'Copy Link'}
+                        </button>
+                    </div>
+                    
+                    <button
+                        onClick={handleDismiss}
+                        className="text-emerald-400 hover:text-emerald-600 p-1"
+                        title="Dismiss"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            </motion.div>
+        );
+    }
+
+    // ========================================
+    // FREE USERS WITH EMAIL - Show softer message
+    // ========================================
+    if (hasEmail) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 mb-6"
+            >
+                <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Mail className="text-blue-600" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-blue-800">
+                            📧 Admin Link Saved
+                        </h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                            We've emailed your admin link. You can recover access anytime at <a href="/recover" className="underline">/recover</a>.
+                        </p>
+                    </div>
+                    
+                    <button
+                        onClick={handleDismiss}
+                        className="text-blue-400 hover:text-blue-600 p-1"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            </motion.div>
+        );
+    }
+
+    // ========================================
+    // FREE USERS WITHOUT EMAIL - Show warning
+    // ========================================
     return (
         <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -704,6 +793,133 @@ export const RecoveryForm: React.FC<RecoveryFormProps> = ({ onRecover }) => {
 };
 
 // ============================================================================
+// 5. BACKUP FILE RESTORE - Upload downloaded backup to recover access
+// Used on /recover page as alternative recovery method
+// ============================================================================
+interface BackupRestoreProps {
+    onRestore?: (adminUrl: string) => void;
+}
+
+export const BackupRestore: React.FC<BackupRestoreProps> = ({ onRestore }) => {
+    const [restored, setRestored] = useState<{ pollTitle: string; adminUrl: string } | null>(null);
+    const [error, setError] = useState('');
+    const [isDragging, setIsDragging] = useState(false);
+
+    const processFile = (file: File) => {
+        if (!file.name.endsWith('.json')) {
+            setError('Please upload a .json backup file');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const backup = JSON.parse(event.target?.result as string);
+                if (backup.adminUrl && backup.pollTitle) {
+                    setRestored(backup);
+                    setError('');
+                    if (onRestore) {
+                        onRestore(backup.adminUrl);
+                    }
+                } else {
+                    setError('Invalid backup file - missing required data');
+                }
+            } catch {
+                setError('Could not read backup file - invalid JSON');
+            }
+        };
+        reader.onerror = () => {
+            setError('Failed to read file');
+        };
+        reader.readAsText(file);
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            processFile(file);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            processFile(file);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    return (
+        <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`p-6 border-2 border-dashed rounded-xl transition-colors ${
+                isDragging 
+                    ? 'border-indigo-400 bg-indigo-50' 
+                    : 'border-slate-200 hover:border-slate-300'
+            }`}
+        >
+            {restored ? (
+                <div className="text-center">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Check className="text-emerald-600" size={24} />
+                    </div>
+                    <h4 className="font-bold text-slate-800 mb-1">Backup Restored!</h4>
+                    <p className="text-sm text-slate-600 mb-4">
+                        Found: <strong>{restored.pollTitle}</strong>
+                    </p>
+                    <a
+                        href={restored.adminUrl}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition"
+                    >
+                        Go to Poll Dashboard
+                        <ArrowRight size={16} />
+                    </a>
+                </div>
+            ) : (
+                <label className="cursor-pointer block text-center">
+                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Download className="text-slate-400" size={24} />
+                    </div>
+                    <p className="text-slate-700 font-medium mb-1">
+                        Drop backup file here
+                    </p>
+                    <p className="text-sm text-slate-500 mb-3">
+                        or <span className="text-indigo-600 underline">browse</span> to select
+                    </p>
+                    <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                    />
+                    {error && (
+                        <p className="text-red-500 text-sm flex items-center justify-center gap-1 mt-2">
+                            <AlertCircle size={14} />
+                            {error}
+                        </p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-3">
+                        Looking for a file like: poll-backup-*.json
+                    </p>
+                </label>
+            )}
+        </div>
+    );
+};
+
+// ============================================================================
 // HOOK: useEmailCapture - Track email state for a poll
 // ============================================================================
 export const useEmailCapture = (pollId: string) => {
@@ -735,5 +951,6 @@ export default {
     BookmarkBanner,
     PollCreatedLinks,
     RecoveryForm,
+    BackupRestore,
     useEmailCapture,
 };

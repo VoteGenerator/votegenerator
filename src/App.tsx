@@ -11,12 +11,13 @@ import ComparePage from './components/ComparePage';
 import PollCreatedSuccess from './components/PollCreatedSuccess';
 import AdminDashboard from './components/AdminDashboard';
 import CheckoutSuccess from './components/CheckoutSuccess';
+import RecoveryPage from './components/RecoveryPage';
+import DataPolicyPage from './components/DataPolicyPage';
+import DataDeletionPage from './components/DataDeletionPage';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
 import CookieConsent from './components/CookieConsent';
-import DataPolicyPage from './components/DataPolicyPage';
-import DataDeletionPage from './components/DataDeletionPage';
 import { Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
 
 // Format date nicely
@@ -219,6 +220,7 @@ function App() {
     
     // Render page based on path
     const renderPage = () => {
+        // Main pages
         if (path === '/create' || path === '/create/') return <CreatePage />;
         if (path === '/poll-created' || path === '/poll-created/') return <PollCreatedSuccess />;
         if (path === '/ad-wall' || path.startsWith('/ad-wall')) return <AdWall />;
@@ -227,10 +229,12 @@ function App() {
         if (path === '/admin' || path === '/admin/') return <AdminDashboard />;
         if (path === '/checkout/success' || path === '/checkout/success/') return <CheckoutSuccess />;
         
-        // GDPR / Legal pages
+        // Recovery & GDPR pages
+        if (path === '/recover' || path === '/recover/') return <RecoveryPage />;
         if (path === '/data-policy' || path === '/data-policy/') return <DataPolicyPage />;
         if (path === '/account/delete-request' || path === '/account/delete-request/') return <DataDeletionPage />;
         
+        // Default: VoteGeneratorApp handles landing, voting, results, surveys, etc.
         return <VoteGeneratorApp />;
     };
     

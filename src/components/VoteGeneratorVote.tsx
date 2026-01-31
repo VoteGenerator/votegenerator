@@ -401,9 +401,22 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     </div>
                 )}
                 
-                {/* Error message - special styling for limit and paused errors */}
+                {/* Error message - special styling for limit, paused, and rate limit errors */}
                 {errorMessage && (
-                    errorMessage.toLowerCase().includes('limit') || errorMessage.toLowerCase().includes('paused') ? (
+                    errorMessage.toLowerCase().includes('slow down') || errorMessage.toLowerCase().includes('rate') ? (
+                        <div className="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Clock size={20} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-blue-800 mb-1">Please Wait a Moment</p>
+                                    <p className="text-sm text-blue-700">{errorMessage}</p>
+                                    <p className="text-xs text-blue-500 mt-2">This helps us prevent spam and keep polls fair for everyone.</p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : errorMessage.toLowerCase().includes('limit') || errorMessage.toLowerCase().includes('paused') ? (
                         <div className="mb-6 p-5 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">

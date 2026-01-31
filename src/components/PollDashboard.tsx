@@ -14,13 +14,14 @@ import {
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
     PieChart, Calendar, Filter, MessageSquare, Crown, Star,
     MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus,
-    HelpCircle, Info
+    HelpCircle, Info, PlusCircle, Menu
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import SurveyResults from './SurveyResults';
 import ShareCards from './ShareCards';
 import NotificationSettings from './NotificationSettings';
 import CustomSlugInput from './CustomSlugInput';
+import LogoUpload from './LogoUpload';
 import ResponseTimelineChart from './ResponseTimelineChart';
 import HourlyHeatmap from './HourlyHeatmap';
 import GeoChart from './GeoChart';
@@ -266,6 +267,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     
     // Response Filters state (Pro+ feature)
     const [showFilters, setShowFilters] = useState(false);
@@ -281,6 +283,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
     const [localAllowedViews, setLocalAllowedViews] = useState<string[]>(poll.settings?.allowedViews || ['bar', 'pie']);
     const [localShowSocialShare, setLocalShowSocialShare] = useState(poll.settings?.showSocialShare !== false); // Default true
+    const [localRedirectUrl, setLocalRedirectUrl] = useState((poll.settings as any)?.redirectUrl || '');
+    const [localCustomLogo, setLocalCustomLogo] = useState((poll.settings as any)?.customLogo || null);
     const [settingsUpdating, setSettingsUpdating] = useState(false);
     
     // Track recently updated settings to prevent useEffect from reverting them
@@ -506,14 +510,133 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         }
     };
 
-    const handleExportCSV = async () => {
+    // Export CSV with optional filtering (Business feature)
+    const handleExportCSV = async (applyFilters: boolean = false) => {
         if (!isPro) {
             setUpgradeHighlight('export');
             setShowUpgradeModal(true);
             return;
         }
+        
+        // Filtered export is Business-only
+        if (applyFilters && !isBusiness) {
+            setUpgradeHighlight('filtered-export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
         setIsExporting(true);
-        setTimeout(() => setIsExporting(false), 1000);
+        
+        try {
+            // Get the data to export (filtered or all)
+            const dataToExport = applyFilters && filteredVotes.length > 0 
+                ? filteredVotes 
+                : votes;
+            
+            // Build CSV headers
+            let csv = 'Vote ID,Timestamp,Choice,Device,Country,Browser,IP Hash';
+            if (poll.settings.allowComments) {
+                csv += ',Comment';
+            }
+            if (poll.settings.requireNames) {
+                csv += ',Voter Name';
+            }
+            csv += '\n';
+            
+            // Build CSV rows
+            dataToExport.forEach((vote: any) => {
+                const timestamp = vote.timestamp || vote.createdAt || '';
+                const choice = (vote.choice || vote.selectedOption || vote.selections?.join('; ') || '').toString().replace(/"/g, '""');
+                const device = vote.device || vote.userAgent?.includes('Mobile') ? 'Mobile' : 'Desktop';
+                const country = vote.country || vote.geo?.country || '';
+                const browser = vote.browser || '';
+                const ipHash = vote.ipHash || '';
+                
+                csv += `"${vote.id || ''}","${timestamp}","${choice}","${device}","${country}","${browser}","${ipHash}"`;
+                
+                if (poll.settings.allowComments) {
+                    csv += `,"${(vote.comment || '').replace(/"/g, '""')}"`;
+                }
+                if (poll.settings.requireNames) {
+                    csv += `,"${(vote.voterName || '').replace(/"/g, '""')}"`;
+                }
+                csv += '\n';
+            });
+            
+            // Add summary row
+            csv += '\n';
+            csv += `"Total Responses","${dataToExport.length}"`;
+            if (applyFilters && filteredVotes.length > 0) {
+                csv += `,"(filtered from ${votes.length} total)"`;
+            }
+            csv += '\n';
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filterLabel = applyFilters ? '-filtered' : '';
+            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('CSV export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsExporting(false);
+    };
+    
+    // Export Excel with optional filtering (Business feature)
+    const handleExportExcel = async (applyFilters: boolean = false) => {
+        if (!isPro) {
+            setUpgradeHighlight('export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        // Filtered export is Business-only
+        if (applyFilters && !isBusiness) {
+            setUpgradeHighlight('filtered-export');
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        setIsExporting(true);
+        
+        try {
+            // For Excel, we use CSV with .xlsx extension (Excel can open CSV)
+            // A proper implementation would use SheetJS/xlsx library
+            const dataToExport = applyFilters && filteredVotes.length > 0 
+                ? filteredVotes 
+                : votes;
+            
+            // Build tab-separated values for Excel compatibility
+            let tsv = 'Vote ID\tTimestamp\tChoice\tDevice\tCountry\n';
+            dataToExport.forEach((vote: any) => {
+                const choice = (vote.choice || vote.selectedOption || '').toString().replace(/\t/g, ' ');
+                tsv += `${vote.id || ''}\t${vote.timestamp || ''}\t${choice}\t${vote.device || ''}\t${vote.country || ''}\n`;
+            });
+            
+            const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filterLabel = applyFilters ? '-filtered' : '';
+            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Excel export error:', err);
+            alert('Export failed. Please try again.');
+        }
+        
+        setIsExporting(false);
     };
 
     const handleDownloadQR = async () => {
@@ -810,6 +933,98 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 }
             `}</style>
             
+            {/* ================================================================ */}
+            {/* MOBILE NAVIGATION HEADER */}
+            {/* ================================================================ */}
+            <header className={`md:hidden sticky top-0 z-40 print:hidden ${
+                tier === 'business' 
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                    : tier === 'pro' 
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600'
+                        : 'bg-white border-b border-slate-200'
+            }`}>
+                <div className="px-4 py-3 flex items-center justify-between">
+                    <a href="/" className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            tier !== 'free' ? 'bg-white/20' : 'bg-indigo-100'
+                        }`}>
+                            <BarChart3 size={16} className={tier !== 'free' ? 'text-white' : 'text-indigo-600'} />
+                        </div>
+                        <span className={`font-bold ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                            VoteGenerator
+                        </span>
+                    </a>
+                    
+                    <button 
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                        className={`p-2 rounded-lg transition ${
+                            tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'
+                        }`}
+                    >
+                        {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                </div>
+                
+                {/* Mobile Menu Dropdown */}
+                <AnimatePresence>
+                    {showMobileMenu && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className={`overflow-hidden ${
+                                tier === 'free' 
+                                    ? 'border-t border-slate-100 bg-white' 
+                                    : tier === 'pro'
+                                        ? 'bg-purple-700'
+                                        : 'bg-amber-600'
+                            }`}
+                        >
+                            <nav className="p-3 space-y-1">
+                                <a 
+                                    href="/admin" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <LayoutDashboard size={20} /> Back to Dashboard
+                                </a>
+                                <a 
+                                    href="/create" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <PlusCircle size={20} /> Create New Poll
+                                </a>
+                                <a 
+                                    href="/templates" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <Zap size={20} /> Templates
+                                </a>
+                                {tier === 'free' && (
+                                    <a 
+                                        href="/pricing" 
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                                    >
+                                        <Crown size={20} /> Upgrade to Pro
+                                    </a>
+                                )}
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </header>
+            
             <div className="max-w-5xl mx-auto px-4 py-6">
                 {/* Print Header - Only visible when printing */}
                 <div className="hidden print:block print-header mb-6">
@@ -931,6 +1146,22 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                             className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50"
                                         >
                                             <div className="py-1">
+                                                {/* Navigation Links */}
+                                                <a
+                                                    href="/admin"
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <LayoutDashboard size={16} className="text-slate-400" />
+                                                    Back to Dashboard
+                                                </a>
+                                                <a
+                                                    href="/create"
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <PlusCircle size={16} className="text-slate-400" />
+                                                    Create New Poll
+                                                </a>
+                                                <div className="border-t border-slate-100 my-1" />
                                                 <button
                                                     onClick={handleTestAsVoter}
                                                     className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
@@ -2724,14 +2955,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Custom Branding - PAID */}
+                        {/* Custom Branding - PRO+ (remove badge) */}
                         <CollapsibleSection
                             title="Custom Branding"
                             icon={<ImageIcon size={20} />}
                             badge={
                                 <>
                                     <HelpTooltip 
-                                        content="Remove VoteGenerator branding and add your own logo, colors, and custom thank-you message for a professional look."
+                                        content="Remove VoteGenerator branding, customize colors, and set a custom thank-you message."
                                         position="left"
                                     />
                                     {!isPro && <UpgradeBadge small />}
@@ -2743,14 +2974,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 {isPro ? (
                                     <div className="space-y-4">
                                         <p className="text-sm text-slate-600">
-                                            Upload your logo, customize colors, and set a custom thank-you message.
+                                            Remove "Powered by VoteGenerator" badge and customize colors.
                                         </p>
                                         <button
                                             onClick={onEdit}
                                             className="w-full py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <ImageIcon size={18} />
-                                            Customize Branding
+                                            <Palette size={18} />
+                                            Customize Colors & Badge
                                         </button>
                                     </div>
                                 ) : (
@@ -2758,15 +2989,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div className="flex items-start gap-3">
                                             <ImageIcon size={20} className="text-purple-500 mt-0.5" />
                                             <div>
-                                                <p className="font-semibold text-purple-800">Paid Feature</p>
+                                                <p className="font-semibold text-purple-800">Pro Feature</p>
                                                 <p className="text-sm text-purple-700 mt-1">
-                                                    Remove "Powered by VoteGenerator", add your logo, custom colors, and thank-you message.
+                                                    Remove "Powered by VoteGenerator" and customize colors.
                                                 </p>
                                                 <button
                                                     onClick={() => openUpgradeModal('branding')}
                                                     className="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm"
                                                 >
-                                                    Upgrade Now
+                                                    Upgrade to Pro
                                                 </button>
                                             </div>
                                         </div>
@@ -2775,7 +3006,133 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             </div>
                         </CollapsibleSection>
 
-                        {/* Advanced Settings Preview - PAID */}
+                        {/* Custom Logo - BUSINESS ONLY */}
+                        <CollapsibleSection
+                            title="Custom Logo"
+                            icon={<ImageIcon size={20} />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Upload your company logo to display on your polls for a fully branded experience."
+                                        position="left"
+                                    />
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
+                                </>
+                            }
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4">
+                                {isBusiness ? (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-slate-600">
+                                            Upload your company logo to appear on your polls and results pages.
+                                        </p>
+                                        <LogoUpload
+                                            currentLogo={localCustomLogo}
+                                            onLogoChange={(logoUrl) => {
+                                                setLocalCustomLogo(logoUrl);
+                                                updatePollSetting('customLogo', logoUrl);
+                                            }}
+                                            tier={tier}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <Crown size={20} className="text-amber-500 mt-0.5" />
+                                            <div>
+                                                <p className="font-semibold text-amber-800">Business Feature</p>
+                                                <p className="text-sm text-amber-700 mt-1">
+                                                    Upload your company logo for a fully branded polling experience.
+                                                </p>
+                                                <button
+                                                    onClick={() => openUpgradeModal('logo')}
+                                                    className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm"
+                                                >
+                                                    Upgrade to Business
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CollapsibleSection>
+
+                        {/* Post-Vote Redirect - BUSINESS ONLY */}
+                        <CollapsibleSection
+                            title="Post-Vote Redirect"
+                            icon={<ExternalLink size={20} />}
+                            badge={
+                                <>
+                                    <HelpTooltip 
+                                        content="Automatically redirect voters to a custom URL after they submit their response."
+                                        position="left"
+                                    />
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
+                                </>
+                            }
+                            defaultOpen={false}
+                        >
+                            <div className="pt-4">
+                                {isBusiness ? (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-slate-600">
+                                            After voting, redirect participants to your website, thank-you page, or any URL.
+                                        </p>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Redirect URL</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="url"
+                                                    value={localRedirectUrl}
+                                                    onChange={(e) => setLocalRedirectUrl(e.target.value)}
+                                                    placeholder="https://yoursite.com/thank-you"
+                                                    className="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                />
+                                                <button
+                                                    onClick={() => updatePollSetting('redirectUrl', localRedirectUrl || null)}
+                                                    disabled={settingsUpdating}
+                                                    className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm transition-colors disabled:opacity-50"
+                                                >
+                                                    {settingsUpdating ? <Loader2 size={16} className="animate-spin" /> : 'Save'}
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-slate-500">
+                                                Leave empty to show the default thank-you page. Must include https://
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
+                                        <div className="flex items-start gap-3">
+                                            <Crown size={20} className="text-amber-500 mt-0.5" />
+                                            <div>
+                                                <p className="font-semibold text-amber-800">Business Feature</p>
+                                                <p className="text-sm text-amber-700 mt-1">
+                                                    Redirect voters to your website or custom thank-you page after they vote.
+                                                </p>
+                                                <button
+                                                    onClick={() => openUpgradeModal('redirect')}
+                                                    className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm"
+                                                >
+                                                    Upgrade to Business
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CollapsibleSection>
+
+                        {/* Advanced Settings Preview - FREE ONLY */}
                         {isFree && (
                             <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-5">
                                 <div className="flex items-center gap-3 mb-4">
@@ -2790,19 +3147,33 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                     {[
                                         'PIN code access',
-                                        'One-time vote codes',
-                                        'IP allowlist/blocklist',
+                                        'Email notifications',
                                         'Scheduled close',
-                                        'Undo close (5 min)',
-                                        'Version history',
-                                        'Duplicate polls',
-                                        'Domain restriction'
+                                        'Custom colors',
+                                        'Remove branding',
+                                        'CSV/Excel export'
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center gap-2 text-slate-500">
-                                            <Lock size={10} className="text-amber-500" />
+                                            <Lock size={10} className="text-purple-500" />
                                             {feature}
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                    <p className="text-xs font-semibold text-amber-700 mb-2">Business-only:</p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                        {[
+                                            'Custom logo upload',
+                                            'Post-vote redirect',
+                                            'Hourly heatmap',
+                                            'Custom short links'
+                                        ].map((feature, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-slate-500">
+                                                <Lock size={10} className="text-amber-500" />
+                                                {feature}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => openUpgradeModal('settings')}
@@ -2892,9 +3263,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </button>
                                 
-                                {/* CSV Export - PAID */}
+                                {/* CSV Export - PRO+ */}
                                 <button
-                                    onClick={handleExportCSV}
+                                    onClick={() => handleExportCSV(false)}
                                     disabled={isExporting}
                                     className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
                                 >
@@ -2904,13 +3275,13 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         </div>
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                Export to CSV
+                                                Export All to CSV
                                                 <HelpTooltip 
                                                     content="Raw data export with all votes, timestamps, and metadata. Import into Excel, Google Sheets, or any data analysis tool."
                                                     position="right"
                                                 />
                                             </div>
-                                            <div className="text-xs text-slate-500">Spreadsheet format for Excel, Google Sheets, etc.</div>
+                                            <div className="text-xs text-slate-500">All {votes.length} responses • Spreadsheet format</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -2923,7 +3294,83 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </button>
                                 
-                                {/* PDF Report - PAID */}
+                                {/* Filtered CSV Export - BUSINESS ONLY */}
+                                {filteredVotes.length > 0 && filteredVotes.length !== votes.length && (
+                                    <button
+                                        onClick={() => handleExportCSV(true)}
+                                        disabled={isExporting}
+                                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-colors border ${
+                                            isBusiness 
+                                                ? 'bg-amber-50 hover:bg-amber-100 border-amber-200' 
+                                                : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                isBusiness ? 'bg-amber-100' : 'bg-slate-200'
+                                            }`}>
+                                                <Filter size={24} className={isBusiness ? 'text-amber-600' : 'text-slate-400'} />
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="font-semibold text-slate-700 flex items-center gap-2">
+                                                    Export Filtered Results
+                                                    {!isBusiness && (
+                                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full flex items-center gap-0.5">
+                                                            <Crown size={10} /> Business
+                                                        </span>
+                                                    )}
+                                                    <HelpTooltip 
+                                                        content="Export only the responses matching your current filters (date range, device, etc.)"
+                                                        position="right"
+                                                    />
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {filteredVotes.length} of {votes.length} responses (filtered)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {isExporting ? (
+                                                <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                            ) : (
+                                                <Download size={18} className="text-slate-400" />
+                                            )}
+                                        </div>
+                                    </button>
+                                )}
+                                
+                                {/* Excel Export - PRO+ */}
+                                <button
+                                    onClick={() => handleExportExcel(false)}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                            <FileSpreadsheet size={24} className="text-green-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
+                                                Export to Excel
+                                                <HelpTooltip 
+                                                    content="Excel-compatible format with all data and formatting preserved."
+                                                    position="right"
+                                                />
+                                            </div>
+                                            <div className="text-xs text-slate-500">Microsoft Excel format (.xlsx)</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {!isPro && <UpgradeBadge small />}
+                                        {isExporting ? (
+                                            <Loader2 size={18} className="text-slate-400 animate-spin" />
+                                        ) : (
+                                            <Download size={18} className="text-slate-400" />
+                                        )}
+                                    </div>
+                                </button>
+                                
+                                {/* Print / Save as PDF - PRO+ */}
                                 <button
                                     onClick={() => {
                                         if (!isPro) {
@@ -2940,9 +3387,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         </div>
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                PDF Report
+                                                Print / Save as PDF
                                                 <HelpTooltip 
-                                                    content="Professional print-ready report with charts, results summary, and poll details. Great for presentations and stakeholder updates."
+                                                    content="Use your browser's print function to save as PDF. Great for presentations and stakeholder updates."
                                                     position="right"
                                                 />
                                             </div>
@@ -2964,13 +3411,34 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         <div>
                                             <p className="font-semibold text-amber-800">Unlock all export options</p>
                                             <p className="text-sm text-amber-700 mt-1">
-                                                Export your complete poll data including all votes, comments, and analytics to CSV or PDF.
+                                                Export your complete poll data including all votes, comments, and analytics to CSV or Excel.
                                             </p>
                                             <button
                                                 onClick={() => openUpgradeModal('export')}
                                                 className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
                                             >
                                                 Upgrade Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Business filtered export CTA for Pro users */}
+                            {isPro && !isBusiness && (
+                                <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                    <div className="flex items-start gap-3">
+                                        <Crown size={20} className="text-amber-500 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800">Business feature: Filtered exports</p>
+                                            <p className="text-sm text-amber-700 mt-1">
+                                                Export only the data matching your filters. Great for segmented analysis and reporting.
+                                            </p>
+                                            <button
+                                                onClick={() => openUpgradeModal('filtered-export')}
+                                                className="mt-3 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg text-sm"
+                                            >
+                                                Upgrade to Business
                                             </button>
                                         </div>
                                     </div>
@@ -3014,15 +3482,38 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <div className="flex items-center gap-2 mb-3">
                                     <Filter size={16} className="text-slate-500" />
                                     <span className="text-sm font-semibold text-slate-700">Cross-Tab Filters</span>
+                                    {!isBusiness && (
+                                        <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Business
+                                        </span>
+                                    )}
                                     <HelpTooltip 
                                         content="Segment your data by specific answer choices to discover how different voter groups responded. Great for identifying patterns and correlations."
                                         position="right"
                                     />
                                 </div>
-                                <CrossTabFilter 
-                                    votes={votes}
-                                    onFilteredVotesChange={setCrossTabFilteredVotes}
-                                />
+                                {isBusiness ? (
+                                    <CrossTabFilter 
+                                        votes={votes}
+                                        onFilteredVotesChange={setCrossTabFilteredVotes}
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                                        <div className="flex items-center gap-3">
+                                            <Lock size={20} className="text-amber-400" />
+                                            <div>
+                                                <p className="text-sm font-semibold text-amber-800">Cross-tab filters are a Business feature</p>
+                                                <p className="text-xs text-amber-600 mt-0.5">Filter results by specific answer choices to find patterns</p>
+                                            </div>
+                                            <button
+                                                onClick={() => openUpgradeModal('crosstab')}
+                                                className="ml-auto px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-xs"
+                                            >
+                                                Upgrade
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -3052,19 +3543,40 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         {/* Analytics Grid */}
                         {votes.length >= 5 ? (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Hourly Heatmap - BUSINESS ONLY */}
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="font-semibold text-slate-700 flex items-center gap-2">
                                             <Clock size={16} className="text-slate-500" />
                                             Hourly Activity
+                                            {!isBusiness && (
+                                                <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded-full">
+                                                    Business
+                                                </span>
+                                            )}
                                         </h4>
                                         <HelpTooltip 
                                             content="Shows which hours of the day see the most engagement. Use this to optimize when you share polls for maximum participation."
                                             position="left"
                                         />
                                     </div>
-                                    <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
+                                    {isBusiness ? (
+                                        <HourlyHeatmap votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} />
+                                    ) : (
+                                        <div className="h-48 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 flex flex-col items-center justify-center p-4">
+                                            <Lock size={24} className="text-amber-400 mb-2" />
+                                            <p className="text-sm font-semibold text-amber-800 text-center">Hourly heatmap is a Business feature</p>
+                                            <p className="text-xs text-amber-600 text-center mt-1">See exactly when your audience is most active</p>
+                                            <button
+                                                onClick={() => openUpgradeModal('heatmap')}
+                                                className="mt-3 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg text-xs"
+                                            >
+                                                Upgrade to Business
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+                                {/* Geographic Distribution - PRO+ */}
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="font-semibold text-slate-700 flex items-center gap-2">
@@ -3078,6 +3590,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                     <GeoChart votes={crossTabFilteredVotes.length > 0 ? crossTabFilteredVotes : votes} maxCountries={5} />
                                 </div>
+                                {/* Word Cloud - PRO+ */}
                                 {results.comments && results.comments.length >= 3 && (
                                     <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200">
                                         <div className="flex items-center justify-between mb-3">
@@ -3209,6 +3722,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 isOpen={showEmbedModal}
                 onClose={() => setShowEmbedModal(false)}
                 isPremium={isPro}
+                tier={tier as 'free' | 'pro' | 'business'}
                 onUpgradeClick={() => {
                     setShowEmbedModal(false);
                     openUpgradeModal('branding');

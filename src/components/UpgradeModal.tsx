@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     X, Zap, Crown, Check, Loader2, ArrowRight,
     BarChart3, Users, Shield, Download, Palette, 
-    Mail, Clock, Image as ImageIcon, FileText
+    Mail, Clock, Image as ImageIcon, FileText, Link2, ExternalLink, Code
 } from 'lucide-react';
 
 interface UpgradeModalProps {
@@ -60,12 +60,13 @@ const PLANS = {
             { text: 'Unlimited polls', icon: BarChart3 },
             { text: '100,000 responses/month', icon: Users },
             { text: 'Custom logo upload', icon: ImageIcon },
-            { text: 'PDF reports', icon: FileText },
-            { text: 'Advanced analytics', icon: BarChart3 },
-            { text: 'Version history', icon: Clock },
-            { text: 'Priority support', icon: Mail }
+            { text: 'White-label embeds', icon: Code },
+            { text: 'Filtered exports', icon: Download },
+            { text: 'Bulk export all polls', icon: Download },
+            { text: 'Post-vote redirect', icon: ExternalLink },
+            { text: 'Hourly heatmap', icon: Clock }
         ],
-        highlight: ['logo', 'unlimited', 'pdf', 'version']
+        highlight: ['logo', 'embed', 'export', 'redirect', 'heatmap']
     }
 };
 

@@ -13,10 +13,11 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone, Download, Database, FileSpreadsheet
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
+import EmailCaptureBanner from './EmailCaptureBanner';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -118,7 +119,7 @@ const TIER_CONFIG: Record<string, {
         activeDays: 365,
         requiresActivation: false,
         description: 'Unlimited polls • 100K responses/mo',
-        highlights: ['PDF reports', 'Team access tokens', 'Priority support'],
+        highlights: ['White-label embeds', 'Bulk exports', 'Post-vote redirect'],
     },
 };
 
@@ -214,6 +215,11 @@ const AdminDashboard: React.FC = () => {
     const [showComparison, setShowComparison] = useState(false);
     const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
     const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
+    const [emailCaptureComplete, setEmailCaptureComplete] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return !!localStorage.getItem('vg_saved_email') || 
+               localStorage.getItem('vg_access_banner_dismissed') === 'permanent';
+    });
     
     // Bulk Actions State
     const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
@@ -854,17 +860,42 @@ const AdminDashboard: React.FC = () => {
     const handleGoLive = async (pollId: string) => {
         if (!session) return;
         
-        // Update poll status to live
-        const updatedPolls = session.polls.map(p => 
-            p.id === pollId ? { ...p, status: 'live' as const } : p
-        );
-        const updated = { ...session, polls: updatedPolls };
-        localStorage.setItem('vg_user_session', JSON.stringify(updated));
-        setSession(updated);
-        setShowGoLiveModal(null);
+        // Find the poll to get its adminKey
+        const poll = session.polls.find(p => p.id === pollId);
+        if (!poll || !poll.adminKey) {
+            alert('Unable to activate poll - missing admin key');
+            return;
+        }
         
-        // TODO: Call backend to activate poll
-        // await fetch('/.netlify/functions/vg-activate-poll', { ... });
+        try {
+            // Call backend to update poll status
+            const response = await fetch('/.netlify/functions/vg-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pollId,
+                    adminKey: poll.adminKey,
+                    updates: { status: 'live' }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to activate poll');
+            }
+            
+            // Update local state
+            const updatedPolls = session.polls.map(p => 
+                p.id === pollId ? { ...p, status: 'live' as const } : p
+            );
+            const updated = { ...session, polls: updatedPolls };
+            localStorage.setItem('vg_user_session', JSON.stringify(updated));
+            setSession(updated);
+            setShowGoLiveModal(null);
+            
+        } catch (error) {
+            console.error('Failed to activate poll:', error);
+            alert('Failed to activate poll. Please try again.');
+        }
     };
 
     const handleRegenerateToken = () => {
@@ -1043,11 +1074,17 @@ const AdminDashboard: React.FC = () => {
         setShowBulkDeleteModal(false);
     };
     
-    const handleBulkExport = async () => {
+    const handleBulkExport = async (includeResponses: boolean = false) => {
         if (!session || selectedPolls.size === 0) return;
         
-        // Pro+ feature
+        // Pro+ feature for basic export
         if (session.tier === 'free') {
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+        // Business-only for full responses export
+        if (includeResponses && session.tier !== 'business') {
             setShowUpgradeModal(true);
             return;
         }
@@ -1057,20 +1094,65 @@ const AdminDashboard: React.FC = () => {
         try {
             const pollsToExport = polls.filter(p => selectedPolls.has(p.id));
             
-            // Create CSV content
-            let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
-            pollsToExport.forEach(p => {
-                csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
-            });
-            
-            // Download
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            if (includeResponses) {
+                // Business feature: Export all responses across all selected polls
+                let allResponses: any[] = [];
+                
+                for (const poll of pollsToExport) {
+                    try {
+                        // Fetch responses for each poll
+                        const response = await fetch(
+                            `/.netlify/functions/vg-get-results?pollId=${poll.id}&adminKey=${poll.adminKey}`
+                        );
+                        if (response.ok) {
+                            const data = await response.json();
+                            const votes = data.votes || [];
+                            
+                            // Add poll context to each vote
+                            votes.forEach((vote: any) => {
+                                allResponses.push({
+                                    pollId: poll.id,
+                                    pollTitle: poll.title,
+                                    pollType: poll.type,
+                                    ...vote
+                                });
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Failed to fetch responses for poll ${poll.id}:`, err);
+                    }
+                }
+                
+                // Create detailed CSV
+                let csv = 'Poll ID,Poll Title,Poll Type,Vote ID,Choice,Timestamp,Device,Country,IP Hash\n';
+                allResponses.forEach(r => {
+                    csv += `"${r.pollId}","${r.pollTitle?.replace(/"/g, '""') || ''}","${r.pollType || ''}","${r.id || ''}","${(r.choice || r.selectedOption || '').toString().replace(/"/g, '""')}","${r.timestamp || r.createdAt || ''}","${r.device || ''}","${r.country || ''}","${r.ipHash || ''}"\n`;
+                });
+                
+                // Download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `all-responses-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                // Basic export (Pro+): Just poll metadata
+                let csv = 'Poll ID,Title,Type,Created,Responses,Status\n';
+                pollsToExport.forEach(p => {
+                    csv += `"${p.id}","${p.title.replace(/"/g, '""')}","${p.type}","${new Date(p.createdAt).toLocaleDateString()}","${p.responseCount || 0}","${p.status || 'live'}"\n`;
+                });
+                
+                // Download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `polls-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
         } catch (err) {
             console.error('Bulk export error:', err);
             alert('Export failed. Please try again.');
@@ -1374,6 +1456,15 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
+                        {/* Email Capture Banner for Free Users */}
+                        {tier === 'free' && polls.length > 0 && !emailCaptureComplete && (
+                            <EmailCaptureBanner 
+                                pollId={polls[0]?.id}
+                                onComplete={() => setEmailCaptureComplete(true)}
+                                onUpgrade={() => setShowUpgradeModal(true)}
+                            />
+                        )}
+                        
                         {/* Dashboard Access Info - Combined */}
                         {(() => {
                             // Free users don't have a shareable dashboard link
@@ -1452,58 +1543,8 @@ const AdminDashboard: React.FC = () => {
                                 );
                             }
                             
-                            // For free users, show a different message
-                            return (
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                    <div className="p-5 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-md">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <AlertTriangle size={24} className="text-red-600" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-red-800 text-lg mb-2">⚠️ Important: Save This Page Now</h4>
-                                                <div className="p-3 bg-white/80 rounded-lg border border-red-200 mb-3">
-                                                    <p className="text-sm text-red-800 font-medium mb-2">
-                                                        Your polls are stored <strong>only in this browser</strong>. If you:
-                                                    </p>
-                                                    <ul className="text-sm text-red-700 space-y-1 ml-4">
-                                                        <li>• Clear your browser history or cookies</li>
-                                                        <li>• Use a different device or browser</li>
-                                                        <li>• Use incognito/private mode</li>
-                                                    </ul>
-                                                    <p className="text-sm text-red-800 font-bold mt-2">
-                                                        → You will permanently lose access to your polls and all responses.
-                                                    </p>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            // Actually trigger the browser bookmark dialog hint
-                                                            alert('Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page now!');
-                                                            localStorage.setItem('vg_dashboard_saved_free', 'true');
-                                                            setAdminLinkWarningDismissed(true);
-                                                        }}
-                                                        className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
-                                                    >
-                                                        <Bookmark size={16} />
-                                                        Bookmark Now (Ctrl+D)
-                                                    </button>
-                                                    <a
-                                                        href="/pricing"
-                                                        className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-sm font-bold flex items-center gap-1.5 transition shadow-sm"
-                                                    >
-                                                        <Crown size={16} />
-                                                        Upgrade for Secure Access
-                                                    </a>
-                                                </div>
-                                                <p className="text-xs text-red-600 mt-3">
-                                                    💡 Pro tip: Upgrade to get a permanent link you can access from any device.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
+                            // For free users - EmailCaptureBanner handles this above
+                            return null;
                         })()}
 
                         {/* Getting Started Guide - For first-time users */}
@@ -1861,21 +1902,54 @@ const AdminDashboard: React.FC = () => {
                                             animate={{ opacity: 1, x: 0 }}
                                             className="flex items-center gap-2"
                                         >
-                                            <button
-                                                onClick={handleBulkExport}
-                                                disabled={isBulkExporting}
-                                                className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
-                                            >
-                                                {isBulkExporting ? (
-                                                    <Loader2 size={16} className="animate-spin" />
-                                                ) : (
-                                                    <ArrowRight size={16} />
-                                                )}
-                                                Export
-                                                {session?.tier === 'free' && (
-                                                    <Crown size={12} className="text-amber-500" />
-                                                )}
-                                            </button>
+                                            {/* Export dropdown */}
+                                            <div className="relative group">
+                                                <button
+                                                    disabled={isBulkExporting}
+                                                    className="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                                                >
+                                                    {isBulkExporting ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
+                                                    Export
+                                                    <ChevronDown size={14} />
+                                                    {session?.tier === 'free' && (
+                                                        <Crown size={12} className="text-amber-500" />
+                                                    )}
+                                                </button>
+                                                {/* Dropdown */}
+                                                <div className="absolute right-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                                    <button
+                                                        onClick={() => handleBulkExport(false)}
+                                                        disabled={isBulkExporting || session?.tier === 'free'}
+                                                        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3 disabled:opacity-50"
+                                                    >
+                                                        <FileSpreadsheet size={18} className="text-emerald-500" />
+                                                        <div>
+                                                            <div className="font-medium text-slate-700">Export Poll Info</div>
+                                                            <div className="text-xs text-slate-500">Poll metadata only (Pro+)</div>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleBulkExport(true)}
+                                                        disabled={isBulkExporting || session?.tier !== 'business'}
+                                                        className="w-full px-4 py-3 text-left text-sm hover:bg-amber-50 flex items-center gap-3 disabled:opacity-50 border-t border-slate-100"
+                                                    >
+                                                        <Database size={18} className="text-amber-500" />
+                                                        <div>
+                                                            <div className="font-medium text-slate-700 flex items-center gap-2">
+                                                                Export All Responses
+                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded">
+                                                                    Business
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-xs text-slate-500">All votes across selected polls</div>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={handleBulkDelete}
                                                 className="px-4 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition flex items-center gap-2"
@@ -2639,7 +2713,6 @@ const AdminDashboard: React.FC = () => {
                             if (session) {
                                 let pinHash: string | undefined = undefined;
                                 if (hasPin && pinValue) {
-                                    // Simple hash for PIN
                                     let hash = 0;
                                     for (let i = 0; i < pinValue.length; i++) {
                                         const char = pinValue.charCodeAt(i);
@@ -2731,7 +2804,6 @@ const AdminDashboard: React.FC = () => {
                             className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            {/* Header with warning icon */}
                             <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-center">
                                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                                     <Trash2 size={32} className="text-white" />
@@ -2739,7 +2811,6 @@ const AdminDashboard: React.FC = () => {
                                 <h3 className="text-xl font-bold text-white">Delete {pollToDelete.type === 'survey' ? 'Survey' : 'Poll'}?</h3>
                             </div>
                             
-                            {/* Content */}
                             <div className="p-6">
                                 <div className="bg-slate-50 rounded-xl p-4 mb-4">
                                     <p className="font-semibold text-slate-800 text-center mb-1">"{pollToDelete.title}"</p>
@@ -2750,7 +2821,6 @@ const AdminDashboard: React.FC = () => {
                                     )}
                                 </div>
                                 
-                                {/* Warning */}
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
                                     <div className="flex items-start gap-3">
                                         <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -2765,7 +2835,6 @@ const AdminDashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 
-                                {/* Buttons */}
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setPollToDelete(null)}
@@ -2821,7 +2890,6 @@ const AdminDashboard: React.FC = () => {
                                     You're about to permanently delete {selectedPolls.size} poll{selectedPolls.size !== 1 ? 's' : ''}:
                                 </p>
                                 
-                                {/* List selected polls */}
                                 <div className="bg-slate-50 rounded-xl p-3 mb-4 max-h-40 overflow-y-auto">
                                     {polls.filter(p => selectedPolls.has(p.id)).map(poll => (
                                         <div key={poll.id} className="py-2 border-b border-slate-200 last:border-0">
@@ -2831,7 +2899,6 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                 </div>
                                 
-                                {/* Warning */}
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
                                     <div className="flex items-start gap-2">
                                         <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
@@ -2896,13 +2963,11 @@ const AdminDashboard: React.FC = () => {
                             setSelectedActivePolls(newSelected);
                         }}
                         onConfirm={async () => {
-                            // Update poll statuses
                             const updatedPolls = polls.map(p => ({
                                 ...p,
                                 status: selectedActivePolls.has(p.id) ? 'live' as const : 'paused' as const
                             }));
                             
-                            // Call backend to update poll statuses for each poll that changed
                             const pollsToUpdate = updatedPolls.filter((p, i) => p.status !== polls[i].status);
                             
                             try {
@@ -2918,13 +2983,11 @@ const AdminDashboard: React.FC = () => {
                                     })
                                 ));
                                 
-                                // Save to session and localStorage after successful backend update
                                 if (session) {
                                     const updatedSession = { ...session, polls: updatedPolls };
                                     localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
                                     setSession(updatedSession);
                                     
-                                    // Also update vg_polls
                                     const vgPolls = updatedPolls.map(p => ({
                                         id: p.id,
                                         adminKey: p.adminKey,
@@ -2938,7 +3001,7 @@ const AdminDashboard: React.FC = () => {
                             } catch (error) {
                                 console.error('Failed to update poll statuses:', error);
                                 alert('Failed to update poll statuses. Please try again.');
-                                return; // Don't close modal on error
+                                return;
                             }
                             
                             setShowChooseActiveModal(false);
@@ -2956,9 +3019,8 @@ const AdminDashboard: React.FC = () => {
 };
 
 // ============================================================================
-// Inline PIN Setup Modal (self-contained)
+// Inline PIN Setup Modal
 // ============================================================================
-
 const PinSetupModalInline: React.FC<{
     isOpen: boolean;
     hasExistingPin: boolean;
@@ -2984,7 +3046,6 @@ const PinSetupModalInline: React.FC<{
                 setConfirmPin('');
                 return;
             }
-            // Pass the PIN value to onSuccess for hashing
             onSuccess(true, pin);
         }
     };
@@ -3050,9 +3111,8 @@ const PinSetupModalInline: React.FC<{
 };
 
 // ============================================================================
-// Inline Go Live Modal (self-contained)
+// Inline Go Live Modal
 // ============================================================================
-
 const GoLiveModalInline: React.FC<{
     isOpen: boolean;
     pollTitle: string;
@@ -3132,10 +3192,8 @@ const GoLiveModalInline: React.FC<{
 };
 
 // ============================================================================
-// Inline Choose Active Polls Modal (self-contained)
-// Science-backed: Loss aversion, forced choice creates upgrade pressure
+// Inline Choose Active Polls Modal
 // ============================================================================
-
 const ChooseActivePollsModal: React.FC<{
     isOpen: boolean;
     polls: UserPoll[];
@@ -3166,7 +3224,6 @@ const ChooseActivePollsModal: React.FC<{
                 className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" 
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header - Loss Aversion Framing */}
                 <div className="bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -3176,15 +3233,14 @@ const ChooseActivePollsModal: React.FC<{
                             <h2 className="font-bold text-lg">Choose Your {maxActive} Active Polls</h2>
                             <p className="text-white/80 text-sm">
                                 {pausedCount > 0 
-                                    ? `${pausedCount} poll${pausedCount > 1 ? 's' : ''} will be paused and stop accepting votes`
+                                    ? `${pausedCount} poll${pausedCount > 1 ? 's' : ''} will be paused`
                                     : `Select ${maxActive} polls to keep active`
                                 }
                             </p>
                         </div>
                     </div>
                 </div>
-
-                {/* Upgrade CTA - Anchoring (show the easy path first) */}
+                
                 <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -3202,8 +3258,7 @@ const ChooseActivePollsModal: React.FC<{
                         </button>
                     </div>
                 </div>
-
-                {/* Poll Selection - Scrollable */}
+                
                 <div className="flex-1 overflow-y-auto p-4">
                     <p className="text-sm text-slate-500 mb-3">
                         Or choose {maxActive} polls to keep active ({selectedIds.size}/{maxActive} selected):
@@ -3226,7 +3281,6 @@ const ChooseActivePollsModal: React.FC<{
                                                 : 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
                                     }`}
                                 >
-                                    {/* Checkbox */}
                                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                         isSelected 
                                             ? 'bg-emerald-500 text-white' 
@@ -3235,7 +3289,6 @@ const ChooseActivePollsModal: React.FC<{
                                         {isSelected && <Check size={16} />}
                                     </div>
                                     
-                                    {/* Poll Info */}
                                     <div className="flex-1 min-w-0">
                                         <p className={`font-semibold truncate ${isSelected ? 'text-emerald-800' : 'text-slate-700'}`}>
                                             {poll.title}
@@ -3245,7 +3298,6 @@ const ChooseActivePollsModal: React.FC<{
                                         </p>
                                     </div>
                                     
-                                    {/* Status indicator */}
                                     {!isSelected && (
                                         <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
                                             Will pause
@@ -3256,13 +3308,12 @@ const ChooseActivePollsModal: React.FC<{
                         })}
                     </div>
                 </div>
-
-                {/* Footer - Consequences reminder */}
+                
                 <div className="p-4 border-t border-slate-200 bg-slate-50">
                     {pausedCount > 0 && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
                             <p className="text-xs text-red-700">
-                                <strong>Warning:</strong> {pausedCount} poll{pausedCount > 1 ? 's' : ''} will show "Poll Paused" to voters and stop collecting responses.
+                                <strong>Warning:</strong> {pausedCount} poll{pausedCount > 1 ? 's' : ''} will show "Poll Paused" to voters.
                             </p>
                         </div>
                     )}

@@ -1325,4 +1325,4 @@ const VoteGeneratorApp: React.FC = () => {
     );
 };
 
-export default VoteGeneratorApp;
+export default VoteGeneratorApp;9

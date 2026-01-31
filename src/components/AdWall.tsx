@@ -226,7 +226,7 @@ const FeaturePill: React.FC<{
 );
 
 const AdWall: React.FC = () => {
-    const [countdown, setCountdown] = useState(5);
+    const [countdown, setCountdown] = useState(10);
     const [canSkip, setCanSkip] = useState(false);
     
     const urlParams = new URLSearchParams(window.location.search);

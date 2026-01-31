@@ -185,7 +185,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
     variant, 
     pollTitle,
     onComplete,
-    countdownSeconds = 5
+    countdownSeconds = 10
 }) => {
     const [countdown, setCountdown] = useState(countdownSeconds);
     const [canSkip, setCanSkip] = useState(false);

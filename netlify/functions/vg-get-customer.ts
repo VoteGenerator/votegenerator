@@ -1,10 +1,15 @@
 // ============================================================================
-// vg-get-customer.ts - Lookup customer by dashboard token or session ID
+// vg-get-customer.ts - Lookup customer with Stripe verification
 // Location: netlify/functions/vg-get-customer.ts
+// SECURITY: Verifies tier against Stripe, sanitizes all responses
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2023-10-16'
+});
 
 interface CustomerData {
     email: string;
@@ -13,14 +18,100 @@ interface CustomerData {
     stripeCustomerId?: string;
     dashboardToken: string;
     expiresAt: string;
-    polls: string[];
+    polls: any[];
     createdAt: string;
     updatedAt?: string;
 }
 
+// Tier config for response limits
+const TIER_LIMITS: Record<string, number> = {
+    free: 100,
+    pro: 10000,
+    business: 100000
+};
+
+// ============================================================================
+// VERIFY TIER AGAINST STRIPE
+// ============================================================================
+async function verifyTierFromStripe(customerId: string): Promise<{
+    tier: 'free' | 'pro' | 'business';
+    expiresAt: string | null;
+    isActive: boolean;
+}> {
+    try {
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'active',
+            limit: 1
+        });
+
+        if (subscriptions.data.length === 0) {
+            // Check for canceled but not yet expired
+            const allSubs = await stripe.subscriptions.list({
+                customer: customerId,
+                limit: 1
+            });
+            
+            if (allSubs.data.length > 0) {
+                const sub = allSubs.data[0];
+                if (sub.status === 'canceled' && sub.current_period_end * 1000 > Date.now()) {
+                    // Still has access until period ends
+                    const tierMeta = sub.metadata?.tier as 'pro' | 'business' | undefined;
+                    return {
+                        tier: tierMeta || 'free',
+                        expiresAt: new Date(sub.current_period_end * 1000).toISOString(),
+                        isActive: true
+                    };
+                }
+            }
+            
+            return { tier: 'free', expiresAt: null, isActive: false };
+        }
+
+        const subscription = subscriptions.data[0];
+        const priceId = subscription.items.data[0]?.price?.id;
+
+        // Map price IDs to tiers
+        const businessPrices = [
+            process.env.STRIPE_BUSINESS_MONTHLY_PRICE,
+            process.env.STRIPE_BUSINESS_ANNUAL_PRICE,
+        ].filter(Boolean);
+
+        const proPrices = [
+            process.env.STRIPE_PRO_MONTHLY_PRICE,
+            process.env.STRIPE_PRO_ANNUAL_PRICE,
+        ].filter(Boolean);
+
+        let tier: 'free' | 'pro' | 'business' = 'free';
+
+        if (businessPrices.includes(priceId)) {
+            tier = 'business';
+        } else if (proPrices.includes(priceId)) {
+            tier = 'pro';
+        } else {
+            // Check metadata as fallback
+            const tierMeta = subscription.metadata?.tier;
+            if (tierMeta === 'business') tier = 'business';
+            else if (tierMeta === 'pro') tier = 'pro';
+        }
+
+        return {
+            tier,
+            expiresAt: new Date(subscription.current_period_end * 1000).toISOString(),
+            isActive: true
+        };
+
+    } catch (error) {
+        // Log internally but don't expose to user
+        console.error('Stripe verification failed:', error instanceof Error ? error.message : 'Unknown');
+        return { tier: 'free', expiresAt: null, isActive: false };
+    }
+}
+
+// ============================================================================
+// MAIN HANDLER
+// ============================================================================
 export const handler: Handler = async (event) => {
-    console.log('>>> vg-get-customer INVOKED <<<', event.httpMethod, event.path);
-    
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
@@ -29,7 +120,6 @@ export const handler: Handler = async (event) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        console.log('>>> OPTIONS request - returning 204');
         return { statusCode: 204, headers, body: '' };
     }
 
@@ -41,31 +131,32 @@ export const handler: Handler = async (event) => {
         };
     }
 
-    // Get params - support both formats
     const token = event.queryStringParameters?.token || event.queryStringParameters?.t;
     const sessionId = event.queryStringParameters?.session_id || event.queryStringParameters?.s;
 
-    console.log('=== vg-get-customer called ===');
-    console.log('Token param:', token ? token.substring(0, 8) + '...' : 'none');
-    console.log('Session ID param:', sessionId ? sessionId.substring(0, 20) + '...' : 'none');
+    // Sanitized logging - no sensitive data
+    console.log('vg-get-customer: Request received', {
+        hasToken: !!token,
+        hasSessionId: !!sessionId
+    });
 
     if (!token && !sessionId) {
-        console.log('ERROR: No token or session_id provided');
         return {
             statusCode: 400,
             headers,
-            body: JSON.stringify({ error: 'Missing token or session_id parameter' }),
+            body: JSON.stringify({ error: 'Authentication required' }),
         };
     }
 
     try {
         const siteId = process.env.VG_SITE_ID;
         if (!siteId) {
-            console.error('ERROR: VG_SITE_ID not configured');
+            // Don't reveal configuration details
+            console.error('VG_SITE_ID not configured');
             return {
                 statusCode: 500,
                 headers,
-                body: JSON.stringify({ error: 'Server configuration error' }),
+                body: JSON.stringify({ error: 'Service temporarily unavailable' }),
             };
         }
 
@@ -77,30 +168,23 @@ export const handler: Handler = async (event) => {
 
         let customerData: CustomerData | null = null;
 
-        // METHOD 1: Direct token lookup (fastest)
+        // METHOD 1: Direct token lookup
         if (token) {
             const tokenKey = `token_${token}`;
-            console.log('Trying token lookup:', tokenKey);
             customerData = await customerStore.get(tokenKey, { type: 'json' }) as CustomerData | null;
-            console.log('Token lookup result:', customerData ? 'FOUND' : 'NOT FOUND');
         }
 
         // METHOD 2: Session ID index lookup
         if (!customerData && sessionId) {
             const sessionKey = `session_${sessionId}`;
-            console.log('Trying session index lookup:', sessionKey.substring(0, 30) + '...');
             customerData = await customerStore.get(sessionKey, { type: 'json' }) as CustomerData | null;
-            console.log('Session index lookup result:', customerData ? 'FOUND' : 'NOT FOUND');
         }
 
-        // METHOD 3: Scan all customers by stripeSessionId (slowest, but comprehensive)
+        // METHOD 3: Scan by stripeSessionId (last resort)
         if (!customerData && sessionId) {
-            console.log('Trying full scan for stripeSessionId...');
             const list = await customerStore.list();
-            console.log('Total entries to scan:', list.blobs.length);
             
             for (const item of list.blobs) {
-                // Skip index keys
                 if (item.key.startsWith('token_') || item.key.startsWith('session_')) {
                     continue;
                 }
@@ -108,58 +192,110 @@ export const handler: Handler = async (event) => {
                 try {
                     const customer = await customerStore.get(item.key, { type: 'json' }) as CustomerData | null;
                     if (customer && customer.stripeSessionId === sessionId) {
-                        console.log('FOUND by scan! Key:', item.key);
                         customerData = customer;
                         break;
                     }
-                } catch (e) {
-                    // Skip invalid entries
+                } catch {
+                    // Skip invalid entries silently
                 }
-            }
-            
-            if (!customerData) {
-                console.log('Scan complete - NOT FOUND');
             }
         }
 
-        // Not found
         if (!customerData) {
-            console.log('=== Customer NOT FOUND ===');
             return {
                 statusCode: 404,
                 headers,
-                body: JSON.stringify({ error: 'Customer not found' }),
+                body: JSON.stringify({ error: 'Account not found' }),
             };
         }
 
-        // Success!
-        console.log('=== Customer FOUND ===');
-        console.log('Email:', customerData.email?.substring(0, 5) + '...');
-        console.log('Tier:', customerData.tier);
-        console.log('Dashboard Token:', customerData.dashboardToken);
-        console.log('Expires:', customerData.expiresAt);
+        // ====================================================================
+        // SECURITY: Verify tier against Stripe (don't trust stored value)
+        // ====================================================================
+        let verifiedTier: 'free' | 'pro' | 'business' = 'free';
+        let verifiedExpiresAt: string | null = customerData.expiresAt;
+        let isActive = true;
 
-        const isExpired = new Date(customerData.expiresAt) < new Date();
+        if (customerData.stripeCustomerId) {
+            const stripeVerification = await verifyTierFromStripe(customerData.stripeCustomerId);
+            verifiedTier = stripeVerification.tier;
+            verifiedExpiresAt = stripeVerification.expiresAt || customerData.expiresAt;
+            isActive = stripeVerification.isActive;
 
+            // Update stored data if tier changed
+            if (verifiedTier !== customerData.tier) {
+                console.log('vg-get-customer: Tier mismatch detected, updating', {
+                    stored: customerData.tier,
+                    verified: verifiedTier
+                });
+
+                customerData.tier = verifiedTier;
+                customerData.expiresAt = verifiedExpiresAt || customerData.expiresAt;
+                customerData.updatedAt = new Date().toISOString();
+
+                // Update stored data
+                if (token) {
+                    await customerStore.setJSON(`token_${token}`, customerData);
+                }
+                if (customerData.stripeCustomerId) {
+                    await customerStore.setJSON(customerData.stripeCustomerId, customerData);
+                }
+            }
+        } else {
+            // No Stripe customer ID - must be free tier
+            verifiedTier = 'free';
+        }
+
+        const isExpired = verifiedExpiresAt ? new Date(verifiedExpiresAt) < new Date() : false;
+
+        // ====================================================================
+        // SANITIZED RESPONSE - No sensitive data leaked
+        // ====================================================================
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
-                tier: customerData.tier,
-                expiresAt: customerData.expiresAt,
-                polls: customerData.polls || [],
-                createdAt: customerData.createdAt,
-                email: customerData.email ? `${customerData.email.substring(0, 3)}...` : undefined,
-                dashboardToken: customerData.dashboardToken,
+                // Verified tier from Stripe
+                tier: verifiedTier,
+                expiresAt: verifiedExpiresAt,
                 isExpired,
+                isActive,
+                
+                // Poll data (IDs only, not full poll data)
+                polls: (customerData.polls || []).map((p: any) => ({
+                    id: p.id || p,
+                    title: p.title,
+                    createdAt: p.createdAt,
+                    responseCount: p.responseCount,
+                    status: p.status,
+                    adminKey: p.adminKey, // Needed for dashboard access
+                    type: p.type || p.pollType
+                })),
+                
+                // Metadata
+                createdAt: customerData.createdAt,
+                
+                // Dashboard token for URL construction (this IS the auth)
+                dashboardToken: customerData.dashboardToken,
+                
+                // Masked email for display
+                email: customerData.email 
+                    ? `${customerData.email.split('@')[0].substring(0, 3)}***@${customerData.email.split('@')[1]}`
+                    : undefined,
+                    
+                // Response limit based on verified tier
+                maxResponses: TIER_LIMITS[verifiedTier] || 100,
             }),
         };
+
     } catch (error) {
-        console.error('=== ERROR ===', error);
+        // SECURITY: Never expose error details to client
+        console.error('vg-get-customer error:', error instanceof Error ? error.message : 'Unknown error');
+        
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Internal server error' }),
+            body: JSON.stringify({ error: 'Unable to retrieve account information' }),
         };
     }
 };

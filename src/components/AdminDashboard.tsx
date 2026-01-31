@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
+import EmailCaptureBanner from './EmailCaptureBanner';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -214,6 +215,10 @@ const AdminDashboard: React.FC = () => {
     const [showComparison, setShowComparison] = useState(false);
     const [pollToDelete, setPollToDelete] = useState<UserPoll | null>(null); // Delete confirmation modal
     const [selectedActivePolls, setSelectedActivePolls] = useState<Set<string>>(new Set());
+    const [emailCaptureComplete, setEmailCaptureComplete] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return !!localStorage.getItem('vg_saved_email') || !!localStorage.getItem('vg_email_capture_dismissed');
+    });
     
     // Bulk Actions State
     const [bulkSelectionMode, setBulkSelectionMode] = useState(false);
@@ -1450,6 +1455,15 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
+                        {/* Email Capture Banner for Free Users */}
+                        {tier === 'free' && polls.length > 0 && !emailCaptureComplete && (
+                            <EmailCaptureBanner 
+                                pollId={polls[0]?.id}
+                                onComplete={() => setEmailCaptureComplete(true)}
+                                onUpgrade={() => setShowUpgradeModal(true)}
+                            />
+                        )}
+                        
                         {/* Dashboard Access Info - Combined */}
                         {(() => {
                             // Free users don't have a shareable dashboard link

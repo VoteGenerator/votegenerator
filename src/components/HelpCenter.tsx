@@ -1,5 +1,5 @@
 // ============================================================================
-// HelpCenterComplete.tsx - Comprehensive Help Center
+// HelpCenter.tsx - Comprehensive Help Center
 // Route: /help
 // 
 // Features:
@@ -2109,7 +2109,7 @@ const CategoryCard: React.FC<{
 // ============================================================================
 // Main Component
 // ============================================================================
-const HelpCenterComplete: React.FC = () => {
+const HelpCenter: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -2431,4 +2431,4 @@ const HelpCenterComplete: React.FC = () => {
     );
 };
 
-export default HelpCenterComplete;
+export default HelpCenter;

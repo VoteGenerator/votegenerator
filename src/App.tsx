@@ -14,6 +14,7 @@ import CheckoutSuccess from './components/CheckoutSuccess';
 import RecoveryPage from './components/RecoveryPage';
 import DataPolicyPage from './components/DataPolicyPage';
 import DataDeletionPage from './components/DataDeletionPage';
+import HelpCenter from './components/HelpCenter';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
@@ -37,17 +38,13 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     const isExpiringVerySoon = daysRemaining !== null && daysRemaining <= 7;
     
     const copyAdminLink = () => {
-        // Copy the current URL - this is their access link
         navigator.clipboard.writeText(window.location.href);
         setCopiedAdmin(true);
         setTimeout(() => setCopiedAdmin(false), 2000);
     };
     
-    // Tier-specific styling (tiers: free, pro, business)
     const isBusiness = tier === 'business';
-    const isPro = tier === 'pro';
     
-    // Colors based on tier - Business gets dark premium look
     const navBg = isBusiness 
         ? 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900' 
         : 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700';
@@ -61,13 +58,11 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     return (
         <header className={`${navBg} text-white sticky top-0 z-50 shadow-xl`}>
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                {/* Logo */}
                 <a href="/" className="flex items-center gap-2 font-bold text-white/90 hover:text-white transition-colors">
                     <Home size={20} />
                     <span className="hidden sm:inline">VoteGenerator</span>
                 </a>
                 
-                {/* Center - Plan Badge */}
                 <div className="flex items-center gap-3">
                     <div className={`flex items-center gap-2 px-4 py-1.5 ${tierConfig.badge} rounded-full font-bold text-sm shadow-lg`}>
                         <TierIcon size={16} />
@@ -78,9 +73,7 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                     </span>
                 </div>
                 
-                {/* Right - Links & Actions */}
                 <div className="flex items-center gap-2">
-                    {/* Expiry Warning */}
                     {(isExpiringSoon || isExpiringVerySoon) && (
                         <div className={`hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
                             isExpiringVerySoon ? 'bg-red-500 text-white' : 'bg-amber-400 text-amber-900'
@@ -90,7 +83,6 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                         </div>
                     )}
                     
-                    {/* Nav Links - Paid user specific */}
                     <nav className="hidden md:flex items-center gap-1">
                         <a href="/blog" className="px-3 py-1.5 rounded-lg hover:bg-white/10 transition text-sm">
                             <BookOpen size={14} className="inline mr-1" />Blog
@@ -100,7 +92,6 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                         </a>
                     </nav>
                     
-                    {/* Upgrade Button (not for business) */}
                     {!isBusiness && (
                         <a 
                             href="/.netlify/functions/vg-checkout?tier=business"
@@ -111,7 +102,6 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                         </a>
                     )}
                     
-                    {/* Copy Admin Link - Important! */}
                     <button
                         onClick={copyAdminLink}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
@@ -127,7 +117,6 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                 </div>
             </div>
             
-            {/* Expiry Date Bar */}
             {endDate && (
                 <div className={`text-center py-1.5 text-xs ${
                     isExpiringVerySoon ? 'bg-red-600' : 
@@ -147,24 +136,18 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     );
 }
 
-// Create page wrapper - detects paid vs free
+// Create page wrapper
 function CreatePage() {
-    // Direct read from localStorage (same pattern as VoteGeneratorCreate)
     const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') : null;
     const expiresAt = typeof window !== 'undefined' ? localStorage.getItem('vg_expires_at') : null;
-    
     const isPaidUser = !!purchasedTier;
     
-    // Premium background based on tier (free, pro, business)
     const getBackground = () => {
         if (!purchasedTier) return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
         switch (purchasedTier) {
-            case 'business':
-                return 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50';
-            case 'pro':
-                return 'bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50';
-            default:
-                return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
+            case 'business': return 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50';
+            case 'pro': return 'bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50';
+            default: return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
         }
     };
     
@@ -180,7 +163,6 @@ function CreatePage() {
             )}
             
             <div className="max-w-5xl mx-auto px-4 py-8">
-                {/* Header - different for paid vs free */}
                 <div className="text-center mb-8">
                     {isPaidUser ? (
                         <>
@@ -218,7 +200,6 @@ function CreatePage() {
 function App() {
     const path = window.location.pathname;
     
-    // Render page based on path
     const renderPage = () => {
         // Main pages
         if (path === '/create' || path === '/create/') return <CreatePage />;
@@ -228,6 +209,9 @@ function App() {
         if (path === '/compare' || path === '/compare/') return <ComparePage />;
         if (path === '/admin' || path === '/admin/') return <AdminDashboard />;
         if (path === '/checkout/success' || path === '/checkout/success/') return <CheckoutSuccess />;
+        
+        // Help & Support
+        if (path === '/help' || path === '/help/' || path.startsWith('/help/')) return <HelpCenter />;
         
         // Recovery & GDPR pages
         if (path === '/recover' || path === '/recover/') return <RecoveryPage />;

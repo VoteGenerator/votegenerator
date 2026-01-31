@@ -2748,6 +2748,671 @@ const AdminDashboard: React.FC = () => {
                             if (session) {
                                 let pinHash: string | undefined = undefined;
                                 if (hasPin && pinValue) {
+                                    let hash = 0;
+                                    for (let i = 0; i < pinValue.length; i++) {
+                                        const char = pinValue.charCodeAt(i);
+                                        hash = ((hash << 5) - hash) + char;
+                                        hash = hash & hash;
+                                    }
+                                    pinHash = 'pin_' + Math.abs(hash).toString(16);
+                                }
+                                const updated = { ...session, hasPin, pinHash };
+                                localStorage.setItem('vg_user_session', JSON.stringify(updated));
+                                setSession(updated);
+                            }
+                            setShowPinSetup(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Go Live Modal */}
+            <AnimatePresence>
+                {showGoLiveModal && (
+                    <GoLiveModalInline
+                        isOpen={!!showGoLiveModal}
+                        pollTitle={polls.find(p => p.id === showGoLiveModal)?.title || 'Poll'}
+                        tier={tier as 'pro' | 'business'}
+                        pollsUsed={livePolls.length}
+                        pollsMax={config.maxPolls}
+                        activeDays={config.activeDays}
+                        onClose={() => setShowGoLiveModal(null)}
+                        onConfirm={() => handleGoLive(showGoLiveModal)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                currentTier={tier}
+                source="admin_dashboard"
+            />
+
+            {/* Poll Comparison Modal */}
+            <AnimatePresence>
+                {showComparison && (
+                    <PollComparison
+                        availablePolls={polls.map(p => {
+                            const totalVotes = p.voteCount || p.responseCount || 0;
+                            return {
+                                id: p.id,
+                                title: p.title,
+                                description: p.description,
+                                type: p.type,
+                                createdAt: p.createdAt,
+                                expiresAt: p.expiresAt,
+                                status: (p.status || 'live') as 'live' | 'closed' | 'draft' | 'paused',
+                                totalVotes,
+                                options: p.options?.map(opt => ({
+                                    id: opt.id || opt.text,
+                                    text: opt.text,
+                                    votes: opt.votes || 0,
+                                    percentage: totalVotes > 0 ? Math.round(((opt.votes || 0) / totalVotes) * 100) : 0,
+                                    imageUrl: opt.imageUrl
+                                })) || [],
+                                tier: p.tier
+                            };
+                        })}
+                        onClose={() => setShowComparison(false)}
+                        tier={tier}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {pollToDelete && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={() => setPollToDelete(null)}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                            animate={{ scale: 1, opacity: 1, y: 0 }} 
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", duration: 0.3 }}
+                            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Trash2 size={32} className="text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white">Delete {pollToDelete.type === 'survey' ? 'Survey' : 'Poll'}?</h3>
+                            </div>
+                            
+                            <div className="p-6">
+                                <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                                    <p className="font-semibold text-slate-800 text-center mb-1">"{pollToDelete.title}"</p>
+                                    {(pollToDelete.responseCount || 0) > 0 && (
+                                        <p className="text-sm text-slate-500 text-center">
+                                            {pollToDelete.responseCount} response{pollToDelete.responseCount !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
+                                </div>
+                                
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-amber-800 text-sm">This action cannot be undone</p>
+                                            <p className="text-amber-700 text-sm mt-1">
+                                                {(pollToDelete.responseCount || 0) > 0 
+                                                    ? `All ${pollToDelete.responseCount} responses will be permanently deleted.`
+                                                    : 'This will permanently remove the poll and its settings.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setPollToDelete(null)}
+                                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDeletePoll}
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={18} />
+                                        Delete Forever
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Bulk Delete Confirmation Modal */}
+            <AnimatePresence>
+                {showBulkDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowBulkDeleteModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="bg-gradient-to-r from-red-500 to-rose-500 p-6 text-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <Trash2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">Delete {selectedPolls.size} Poll{selectedPolls.size !== 1 ? 's' : ''}?</h3>
+                                        <p className="text-white/80 text-sm">This cannot be undone</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="p-6">
+                                <p className="text-slate-600 mb-4">
+                                    You're about to permanently delete {selectedPolls.size} poll{selectedPolls.size !== 1 ? 's' : ''}:
+                                </p>
+                                
+                                <div className="bg-slate-50 rounded-xl p-3 mb-4 max-h-40 overflow-y-auto">
+                                    {polls.filter(p => selectedPolls.has(p.id)).map(poll => (
+                                        <div key={poll.id} className="py-2 border-b border-slate-200 last:border-0">
+                                            <p className="font-medium text-slate-800 truncate">{poll.title}</p>
+                                            <p className="text-xs text-slate-500">{poll.responseCount || 0} responses</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                                        <p className="text-sm text-amber-800">
+                                            All responses, analytics, and settings will be permanently deleted.
+                                            {(() => {
+                                                const totalResponses = polls
+                                                    .filter(p => selectedPolls.has(p.id))
+                                                    .reduce((sum, p) => sum + (p.responseCount || 0), 0);
+                                                return totalResponses > 0 ? ` You will lose ${totalResponses} response${totalResponses !== 1 ? 's' : ''}.` : '';
+                                            })()}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowBulkDeleteModal(false)}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmBulkDelete}
+                                        disabled={isBulkDeleting}
+                                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isBulkDeleting ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Deleting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 size={18} />
+                                                Delete All
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Choose Active Polls Modal */}
+            <AnimatePresence>
+                {showChooseActiveModal && (
+                    <ChooseActivePollsModal
+                        isOpen={showChooseActiveModal}
+                        polls={polls}
+                        maxActive={config.maxPolls}
+                        selectedIds={selectedActivePolls}
+                        onToggle={(pollId) => {
+                            const newSelected = new Set(selectedActivePolls);
+                            if (newSelected.has(pollId)) {
+                                newSelected.delete(pollId);
+                            } else if (newSelected.size < config.maxPolls) {
+                                newSelected.add(pollId);
+                            }
+                            setSelectedActivePolls(newSelected);
+                        }}
+                        onConfirm={async () => {
+                            const updatedPolls = polls.map(p => ({
+                                ...p,
+                                status: selectedActivePolls.has(p.id) ? 'live' as const : 'paused' as const
+                            }));
+                            
+                            const pollsToUpdate = updatedPolls.filter((p, i) => p.status !== polls[i].status);
+                            
+                            try {
+                                await Promise.all(pollsToUpdate.map(p => 
+                                    fetch('/.netlify/functions/vg-update-status', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            pollId: p.id,
+                                            adminKey: p.adminKey,
+                                            status: p.status
+                                        })
+                                    })
+                                ));
+                                
+                                if (session) {
+                                    const updatedSession = { ...session, polls: updatedPolls };
+                                    localStorage.setItem('vg_user_session', JSON.stringify(updatedSession));
+                                    setSession(updatedSession);
+                                    
+                                    const vgPolls = updatedPolls.map(p => ({
+                                        id: p.id,
+                                        adminKey: p.adminKey,
+                                        title: p.title,
+                                        type: p.type,
+                                        createdAt: p.createdAt,
+                                        status: p.status
+                                    }));
+                                    localStorage.setItem('vg_polls', JSON.stringify(vgPolls));
+                                }
+                            } catch (error) {
+                                console.error('Failed to update poll statuses:', error);
+                                alert('Failed to update poll statuses. Please try again.');
+                                return;
+                            }
+                            
+                            setShowChooseActiveModal(false);
+                        }}
+                        onClose={() => setShowChooseActiveModal(false)}
+                        onUpgrade={() => {
+                            setShowChooseActiveModal(false);
+                            setShowUpgradeModal(true);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// ============================================================================
+// Inline PIN Setup Modal
+// ============================================================================
+const PinSetupModalInline: React.FC<{
+    isOpen: boolean;
+    hasExistingPin: boolean;
+    onClose: () => void;
+    onSuccess: (hasPin: boolean, pinValue?: string) => void;
+}> = ({ isOpen, hasExistingPin, onClose, onSuccess }) => {
+    const [pin, setPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+    const [step, setStep] = useState<'enter' | 'confirm'>('enter');
+    const [error, setError] = useState('');
+
+    const handleSubmit = () => {
+        if (step === 'enter') {
+            if (pin.length !== 6 || !/^\d+$/.test(pin)) {
+                setError('PIN must be exactly 6 digits');
+                return;
+            }
+            setStep('confirm');
+            setError('');
+        } else {
+            if (pin !== confirmPin) {
+                setError('PINs do not match');
+                setConfirmPin('');
+                return;
+            }
+            onSuccess(true, pin);
+        }
+    };
+
+    const handleRemove = () => {
+        if (confirm('Remove PIN protection?')) {
+            onSuccess(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Lock size={24} />
+                            <h2 className="font-bold text-lg">{hasExistingPin ? 'Change PIN' : 'Set Admin PIN'}</h2>
+                        </div>
+                        <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg"><X size={20} /></button>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <p className="text-slate-600 text-sm mb-4">
+                        {step === 'enter' ? 'Enter a 6-digit PIN to protect your admin links:' : 'Confirm your PIN:'}
+                    </p>
+                    <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={step === 'enter' ? pin : confirmPin}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            step === 'enter' ? setPin(val) : setConfirmPin(val);
+                            setError('');
+                        }}
+                        placeholder="••••••"
+                        className="w-full text-center text-2xl tracking-[0.5em] font-bold py-4 border-2 border-slate-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        autoFocus
+                    />
+                    {error && <p className="text-red-600 text-sm mt-2 text-center">{error}</p>}
+                    <div className="mt-6 flex gap-3">
+                        {hasExistingPin && step === 'enter' && (
+                            <button onClick={handleRemove} className="px-4 py-3 border-2 border-red-200 text-red-600 rounded-xl font-medium hover:bg-red-50 transition">
+                                Remove
+                            </button>
+                        )}
+                        {step === 'confirm' && (
+                            <button onClick={() => { setStep('enter'); setConfirmPin(''); }} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">
+                                Back
+                            </button>
+                        )}
+                        <button onClick={handleSubmit} disabled={step === 'enter' ? pin.length !== 6 : confirmPin.length !== 6} className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50">
+                            {step === 'enter' ? 'Continue' : 'Set PIN'}
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Go Live Modal
+// ============================================================================
+const GoLiveModalInline: React.FC<{
+    isOpen: boolean;
+    pollTitle: string;
+    tier: 'pro' | 'business';
+    pollsUsed: number;
+    pollsMax: number;
+    activeDays: number;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ isOpen, pollTitle, tier, pollsUsed, pollsMax, activeDays, onClose, onConfirm }) => {
+    const [confirmed, setConfirmed] = useState(false);
+    const isLastPoll = pollsMax - pollsUsed === 1;
+    const gradient = tier === 'pro' ? 'from-purple-500 to-pink-500' : tier === 'business' ? 'from-orange-400 to-amber-500' : 'from-blue-500 to-indigo-600';
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={onClose}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className={`bg-gradient-to-r ${gradient} p-6 text-white`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                            <Rocket size={28} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Ready to Go Live?</h2>
+                            <p className="text-white/80 text-sm">Launch for real voting</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-6">
+                    <div className="mb-4 p-4 bg-slate-50 rounded-xl">
+                        <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Poll</p>
+                        <p className="font-bold text-slate-800 truncate">{pollTitle}</p>
+                    </div>
+                    <div className="mb-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle size={18} className="text-emerald-500" />
+                            <span className="text-slate-700 text-sm">Real voting will be enabled</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Calendar size={18} className="text-blue-500" />
+                            <span className="text-slate-700 text-sm">{activeDays}-day countdown starts</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Lock size={18} className="text-amber-500" />
+                            <span className="text-slate-700 text-sm">Uses 1 of {pollsMax} poll credits</span>
+                        </div>
+                    </div>
+                    <div className={`mb-4 p-4 rounded-xl ${isLastPoll ? 'bg-red-50 border-2 border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={20} className={isLastPoll ? 'text-red-500' : 'text-amber-500'} />
+                            <div>
+                                <p className={`font-semibold ${isLastPoll ? 'text-red-700' : 'text-amber-700'}`}>
+                                    {isLastPoll ? '⚠️ This is your last poll!' : 'This cannot be undone'}
+                                </p>
+                                <p className={`text-sm ${isLastPoll ? 'text-red-600' : 'text-amber-600'}`}>
+                                    {isLastPoll ? 'After this, upgrade for more.' : 'Cannot revert to draft after going live.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <label className="flex items-start gap-3 mb-6 cursor-pointer">
+                        <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600" />
+                        <span className="text-sm text-slate-600">I understand this will use 1 poll credit and cannot be undone.</span>
+                    </label>
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition">Keep as Draft</button>
+                        <button onClick={onConfirm} disabled={!confirmed} className={`flex-1 py-3 bg-gradient-to-r ${gradient} text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2`}>
+                            <Rocket size={18} /> Go Live
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// ============================================================================
+// Inline Choose Active Polls Modal
+// ============================================================================
+const ChooseActivePollsModal: React.FC<{
+    isOpen: boolean;
+    polls: UserPoll[];
+    maxActive: number;
+    selectedIds: Set<string>;
+    onToggle: (pollId: string) => void;
+    onConfirm: () => void;
+    onClose: () => void;
+    onUpgrade: () => void;
+}> = ({ isOpen, polls, maxActive, selectedIds, onToggle, onConfirm, onClose, onUpgrade }) => {
+    const pausedCount = polls.length - selectedIds.size;
+    const canConfirm = selectedIds.size === maxActive;
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" 
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.95, opacity: 0 }} 
+                className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="bg-gradient-to-r from-red-500 to-orange-500 p-5 text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold text-lg">Choose Your {maxActive} Active Polls</h2>
+                            <p className="text-white/80 text-sm">
+                                {pausedCount > 0 
+                                    ? `${pausedCount} poll${pausedCount > 1 ? 's' : ''} will be paused`
+                                    : `Select ${maxActive} polls to keep active`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-200">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <Sparkles size={20} className="text-emerald-600" />
+                            <div>
+                                <p className="font-semibold text-emerald-800">Keep all {polls.length} polls active</p>
+                                <p className="text-xs text-emerald-600">Upgrade and never worry about limits</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={onUpgrade}
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-lg hover:shadow-lg transition text-sm"
+                        >
+                            Upgrade →
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4">
+                    <p className="text-sm text-slate-500 mb-3">
+                        Or choose {maxActive} polls to keep active ({selectedIds.size}/{maxActive} selected):
+                    </p>
+                    <div className="space-y-2">
+                        {polls.map((poll) => {
+                            const isSelected = selectedIds.has(poll.id);
+                            const canSelect = isSelected || selectedIds.size < maxActive;
+                            
+                            return (
+                                <button
+                                    key={poll.id}
+                                    onClick={() => canSelect && onToggle(poll.id)}
+                                    disabled={!canSelect}
+                                    className={`w-full p-3 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
+                                        isSelected 
+                                            ? 'border-emerald-500 bg-emerald-50' 
+                                            : canSelect
+                                                ? 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                : 'border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                        isSelected 
+                                            ? 'bg-emerald-500 text-white' 
+                                            : 'border-2 border-slate-300'
+                                    }`}>
+                                        {isSelected && <Check size={16} />}
+                                    </div>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold truncate ${isSelected ? 'text-emerald-800' : 'text-slate-700'}`}>
+                                            {poll.title}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {poll.responseCount || 0} votes • Created {new Date(poll.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    
+                                    {!isSelected && (
+                                        <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                                            Will pause
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+                
+                <div className="p-4 border-t border-slate-200 bg-slate-50">
+                    {pausedCount > 0 && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
+                            <p className="text-xs text-red-700">
+                                <strong>Warning:</strong> {pausedCount} poll{pausedCount > 1 ? 's' : ''} will show "Poll Paused" to voters.
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={onConfirm} 
+                            disabled={!canConfirm}
+                            className={`flex-1 py-3 font-bold rounded-xl transition flex items-center justify-center gap-2 ${
+                                canConfirm
+                                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:shadow-lg'
+                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            }`}
+                        >
+                            {canConfirm ? `Pause ${pausedCount} Poll${pausedCount > 1 ? 's' : ''}` : `Select ${maxActive} polls`}
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+export default AdminDashboard; to-purple-50 rounded-xl border border-indigo-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <CreditCard size={20} className="text-indigo-600" />
+                                                <div>
+                                                    <p className="font-medium text-slate-800">Subscription</p>
+                                                    <p className="text-xs text-slate-500">Update payment, change plan, or cancel</p>
+                                                </div>
+                                            </div>
+                                            <a 
+                                                href="/#manage-subscription" 
+                                                onClick={() => setShowSettings(false)}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                                            >
+                                                Manage
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* PIN Setup Modal */}
+            <AnimatePresence>
+                {showPinSetup && (
+                    <PinSetupModalInline
+                        isOpen={showPinSetup}
+                        hasExistingPin={!!session?.hasPin}
+                        onClose={() => setShowPinSetup(false)}
+                        onSuccess={(hasPin, pinValue) => {
+                            if (session) {
+                                let pinHash: string | undefined = undefined;
+                                if (hasPin && pinValue) {
                                     // Simple hash for PIN
                                     let hash = 0;
                                     for (let i = 0; i < pinValue.length; i++) {

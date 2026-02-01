@@ -21,12 +21,6 @@ import PromoBanner from './components/PromoBanner';
 import CookieConsent from './components/CookieConsent';
 import { Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
 
-function App() {
-    console.log('[APP] App is running!');  // ADD THIS LINE
-    const path = window.location.pathname;
-
-
-
 // Format date nicely
 const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -214,6 +208,7 @@ function CreatePage() {
 }
 
 function App() {
+    console.log('[APP] App is running!');
     const path = window.location.pathname;
     
     const renderPage = () => {

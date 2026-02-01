@@ -190,6 +190,7 @@ const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [setupTimedOut, setSetupTimedOut] = useState(false); // Timeout for "Setting Up" banner
     
     // UI State
     const [showSettings, setShowSettings] = useState(false);
@@ -321,6 +322,29 @@ const AdminDashboard: React.FC = () => {
     useEffect(() => {
         validateAndLoadSession();
     }, []);
+
+    // Timeout for "Setting Up Your Account" banner - stop spinning after 30 seconds
+    useEffect(() => {
+        const storedTier = localStorage.getItem('vg_purchased_tier') || 'free';
+        const currentTier = session?.tier || storedTier;
+        const isPaidUserWithoutToken = session && 
+            currentTier !== 'free' && 
+            !session.dashboardToken &&
+            !loading;
+        
+        if (isPaidUserWithoutToken && !setupTimedOut) {
+            const timeoutId = setTimeout(() => {
+                setSetupTimedOut(true);
+            }, 30000); // 30 seconds
+            
+            return () => clearTimeout(timeoutId);
+        }
+        
+        // Reset timeout state if we get a dashboardToken
+        if (session?.dashboardToken) {
+            setSetupTimedOut(false);
+        }
+    }, [session, loading, setupTimedOut]);
 
     // Refresh poll data from backend to get updated vote counts
     const refreshPollData = async (sessionData: UserSession) => {
@@ -1309,7 +1333,7 @@ const AdminDashboard: React.FC = () => {
                         <img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
-                            className={`w-8 h-8 sm:w-9 sm:h-9 ${tier !== 'free' ? 'brightness-0 invert' : ''}`}
+                            className="w-8 h-8 sm:w-9 sm:h-9"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
                         />
                         <span className={`font-bold text-lg sm:text-xl ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
@@ -1643,31 +1667,83 @@ const AdminDashboard: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {/* Payment Processing Banner - for paid users whose webhook hasn't completed */}
+                        {/* Payment Processing Banner - with timeout handling */}
                         {!isPlanExpired && tier !== 'free' && !session?.dashboardToken && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl">
+                                <div className={`p-4 bg-gradient-to-r ${setupTimedOut ? 'from-amber-50 to-orange-50 border-amber-300' : 'from-blue-50 to-indigo-50 border-blue-300'} border-2 rounded-xl`}>
                                     <div className="flex items-start justify-between gap-4 flex-wrap">
                                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                <Loader2 size={20} className="text-blue-600 animate-spin" />
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${setupTimedOut ? 'bg-amber-100' : 'bg-blue-100'}`}>
+                                                {setupTimedOut ? (
+                                                    <AlertCircle size={20} className="text-amber-600" />
+                                                ) : (
+                                                    <Loader2 size={20} className="text-blue-600 animate-spin" />
+                                                )}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-blue-800">Setting Up Your Account...</p>
-                                                <p className="text-sm text-blue-600">
-                                                    Your payment was successful! We're just finishing setting up your account.
-                                                    This usually takes a few seconds. You can start creating polls now, or refresh to get your permanent dashboard link.
-                                                </p>
+                                                {setupTimedOut ? (
+                                                    <>
+                                                        <p className="font-bold text-amber-800">Taking Longer Than Expected</p>
+                                                        <p className="text-sm text-amber-700">
+                                                            Your payment was successful, but account setup is delayed. Try refreshing, 
+                                                            or check your email for a dashboard link in a few minutes.
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="font-bold text-blue-800">Setting Up Your Account...</p>
+                                                        <p className="text-sm text-blue-600">
+                                                            Your payment was successful! We're just finishing setting up your account.
+                                                            This usually takes a few seconds. You can start creating polls now, or refresh to get your permanent dashboard link.
+                                                        </p>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => window.location.reload()}
-                                            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition flex-shrink-0"
-                                        >
-                                            <RefreshCw size={16} />
-                                            Refresh
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                                            <button 
+                                                onClick={() => window.location.reload()}
+                                                className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition ${
+                                                    setupTimedOut 
+                                                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' 
+                                                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
+                                                }`}
+                                            >
+                                                <RefreshCw size={16} />
+                                                Refresh
+                                            </button>
+                                            {setupTimedOut && (
+                                                <button 
+                                                    onClick={() => {
+                                                        // Dismiss the banner - user can continue using the app
+                                                        const currentSession = session || {
+                                                            dashboardToken: 'pending',
+                                                            tier: tier,
+                                                            polls: [],
+                                                            createdAt: new Date().toISOString()
+                                                        };
+                                                        localStorage.setItem('vg_user_session', JSON.stringify({
+                                                            ...currentSession,
+                                                            dashboardToken: 'pending_' + Date.now()
+                                                        }));
+                                                        window.location.reload();
+                                                    }}
+                                                    className="px-5 py-2.5 bg-white border-2 border-amber-300 text-amber-700 rounded-xl font-semibold hover:bg-amber-50 transition"
+                                                >
+                                                    Continue Anyway
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+                                    {setupTimedOut && (
+                                        <div className="mt-3 pt-3 border-t border-amber-200">
+                                            <p className="text-xs text-amber-600">
+                                                💡 <strong>Note:</strong> If you've created polls, they're saved locally. 
+                                                You can continue using the app while we finish setting up your account. 
+                                                Check your email for the dashboard link shortly.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}

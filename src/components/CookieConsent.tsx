@@ -45,25 +45,30 @@ const CookieConsent: React.FC = () => {
     });
 
     useEffect(() => {
-        // Check if consent already given
-        const stored = localStorage.getItem(CONSENT_KEY);
-        if (stored) {
-            try {
-                const consent: ConsentRecord = JSON.parse(stored);
-                // Check if policy version changed - need re-consent
-                if (consent.version !== CONSENT_VERSION) {
+        // Small delay to prevent flash on page load
+        const timer = setTimeout(() => {
+            // Check if consent already given
+            const stored = localStorage.getItem(CONSENT_KEY);
+            if (stored) {
+                try {
+                    const consent: ConsentRecord = JSON.parse(stored);
+                    // Check if policy version changed - need re-consent
+                    if (consent.version !== CONSENT_VERSION) {
+                        setShowBanner(true);
+                    } else {
+                        // Apply stored preferences
+                        setPreferences(consent.preferences);
+                        applyPreferences(consent.preferences);
+                    }
+                } catch {
                     setShowBanner(true);
-                } else {
-                    // Apply stored preferences
-                    setPreferences(consent.preferences);
-                    applyPreferences(consent.preferences);
                 }
-            } catch {
+            } else {
                 setShowBanner(true);
             }
-        } else {
-            setShowBanner(true);
-        }
+        }, 1500); // 1.5 second delay
+
+        return () => clearTimeout(timer);
     }, []);
 
     // Apply cookie preferences (enable/disable tracking scripts)

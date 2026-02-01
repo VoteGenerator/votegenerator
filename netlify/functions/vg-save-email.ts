@@ -102,14 +102,13 @@ export const handler: Handler = async (event) => {
         }
 
         const emailLower = email.toLowerCase().trim();
-        const siteId = process.env.VG_SITE_ID || process.env.SITE_ID || '';
-
         console.log('[vg-save-email] Action:', action, 'Email:', emailLower.substring(0, 5) + '***');
 
-        // Initialize stores
-        const verificationStore = getStore({ name: 'email-verifications', siteID: siteId });
-        const customerStore = getStore({ name: 'customers', siteID: siteId });
-        const pollStore = getStore({ name: 'polls', siteID: siteId });
+        // Initialize stores - Netlify auto-injects credentials in deployed environment
+        // DO NOT pass siteID explicitly - it causes MissingBlobsEnvironmentError
+        const verificationStore = getStore('email-verifications');
+        const customerStore = getStore('customers');
+        const pollStore = getStore('polls');
 
         // ================================================================
         // ACTION: SEND VERIFICATION CODE

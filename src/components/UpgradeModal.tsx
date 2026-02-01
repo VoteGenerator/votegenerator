@@ -3,7 +3,6 @@
 // Location: src/components/UpgradeModal.tsx
 // Shows pricing tiers without redirecting to pricing page
 // ============================================================================
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -117,7 +116,6 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
             }
 
             const data = await response.json();
-
             if (data.url) {
                 // Redirect to Stripe Checkout
                 window.location.href = data.url;
@@ -218,7 +216,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
                                     key={planKey}
                                     className={`rounded-2xl border-2 p-6 relative ${
                                         isHighlighted 
-                                            ? `border-${plan.color}-400 bg-${plan.color}-50/50` 
+                                            ? 'border-indigo-400 bg-indigo-50/50' 
                                             : 'border-slate-200 hover:border-slate-300'
                                     } transition-all`}
                                     whileHover={{ y: -2 }}

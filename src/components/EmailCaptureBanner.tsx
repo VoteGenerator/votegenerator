@@ -7,7 +7,6 @@
 // - X button with confirmation modal before dismissing
 // - Saves dismissal to localStorage so it doesn't come back
 // ============================================================================
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {

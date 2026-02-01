@@ -14,7 +14,7 @@ import { getStore } from '@netlify/blobs';
 
 // SendGrid for emails
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@votegenerator.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mail.votegenerator.com';
 
 // Generate 6-character alphanumeric code
 function generateCode(): string {

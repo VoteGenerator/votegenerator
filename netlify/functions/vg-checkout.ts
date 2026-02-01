@@ -1,8 +1,8 @@
 // ============================================================================
 // VoteGenerator Stripe Checkout - Subscription Model
 // Handles both monthly and annual subscriptions
+// Location: netlify/functions/vg-checkout.ts
 // ============================================================================
-
 import Stripe from 'stripe';
 import type { Handler } from '@netlify/functions';
 

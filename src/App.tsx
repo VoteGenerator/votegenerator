@@ -55,8 +55,12 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     
     const TierIcon = tierConfig.icon;
     
+    // Build className strings
+    const headerClassName = navBg + ' text-white sticky top-0 z-50 shadow-xl';
+    const badgeClassName = 'flex items-center gap-2 px-4 py-1.5 ' + tierConfig.badge + ' rounded-full font-bold text-sm shadow-lg';
+    
     return (
-        <header className={`${navBg} text-white sticky top-0 z-50 shadow-xl`}>
+        <header className={headerClassName}>
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 <a href="/" className="flex items-center gap-2 font-bold text-white/90 hover:text-white transition-colors">
                     <Home size={20} />
@@ -64,7 +68,7 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                 </a>
                 
                 <div className="flex items-center gap-3">
-                    <div className={`flex items-center gap-2 px-4 py-1.5 ${tierConfig.badge} rounded-full font-bold text-sm shadow-lg`}>
+                    <div className={badgeClassName}>
                         <TierIcon size={16} />
                         {tierConfig.name}
                     </div>
@@ -75,9 +79,10 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                 
                 <div className="flex items-center gap-2">
                     {(isExpiringSoon || isExpiringVerySoon) && (
-                        <div className={`hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                            isExpiringVerySoon ? 'bg-red-500 text-white' : 'bg-amber-400 text-amber-900'
-                        }`}>
+                        <div className={isExpiringVerySoon 
+                            ? 'hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white' 
+                            : 'hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-400 text-amber-900'
+                        }>
                             <AlertTriangle size={12} />
                             {daysRemaining}d left
                         </div>
@@ -104,11 +109,10 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                     
                     <button
                         onClick={copyAdminLink}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                            copiedAdmin 
-                                ? 'bg-emerald-500 text-white' 
-                                : 'bg-white/20 hover:bg-white/30'
-                        }`}
+                        className={copiedAdmin 
+                            ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition bg-emerald-500 text-white' 
+                            : 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition bg-white/20 hover:bg-white/30'
+                        }
                         title="Save this link to access your premium features later!"
                     >
                         {copiedAdmin ? <Check size={14} /> : <Copy size={14} />}
@@ -118,15 +122,18 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
             </div>
             
             {endDate && (
-                <div className={`text-center py-1.5 text-xs ${
-                    isExpiringVerySoon ? 'bg-red-600' : 
-                    isExpiringSoon ? 'bg-amber-600' : 
-                    'bg-black/20'
-                }`}>
+                <div className={
+                    isExpiringVerySoon ? 'text-center py-1.5 text-xs bg-red-600' : 
+                    isExpiringSoon ? 'text-center py-1.5 text-xs bg-amber-600' : 
+                    'text-center py-1.5 text-xs bg-black/20'
+                }>
                     <Calendar size={12} className="inline mr-1" />
                     Plan expires: <strong>{formatDate(expiresAt!)}</strong> ({daysRemaining} days remaining)
                     {(isExpiringSoon || isExpiringVerySoon) && (
-                        <a href={`/.netlify/functions/vg-checkout?tier=${tier}`} className="ml-2 underline hover:no-underline">
+                        <a 
+                            href={'/.netlify/functions/vg-checkout?tier=' + tier} 
+                            className="ml-2 underline hover:no-underline"
+                        >
                             Renew now <ArrowUpRight size={10} className="inline" />
                         </a>
                     )}
@@ -150,9 +157,16 @@ function CreatePage() {
             default: return 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
         }
     };
+
+    const getHeadingClass = () => {
+        if (purchasedTier === 'business') {
+            return 'text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent';
+        }
+        return 'text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent';
+    };
     
     return (
-        <div className={`min-h-screen ${getBackground()}`}>
+        <div className={'min-h-screen ' + getBackground()}>
             {isPaidUser ? (
                 <PremiumNav tier={purchasedTier!} expiresAt={expiresAt || undefined} />
             ) : (
@@ -166,11 +180,7 @@ function CreatePage() {
                 <div className="text-center mb-8">
                     {isPaidUser ? (
                         <>
-                            <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${
-                                purchasedTier === 'business' 
-                                    ? 'bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent'
-                                    : 'bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent'
-                            }`}>
+                            <h1 className={getHeadingClass()}>
                                 Create Premium Poll
                             </h1>
                             <p className="text-slate-600">
@@ -225,7 +235,6 @@ function App() {
     return (
         <>
             {renderPage()}
-            {/* Cookie Consent Banner - Shows on ALL pages */}
             <CookieConsent />
         </>
     );

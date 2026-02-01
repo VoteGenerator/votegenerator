@@ -45,25 +45,34 @@ const CookieConsent: React.FC = () => {
     });
 
     useEffect(() => {
+        console.log('[CookieConsent] Component mounted, waiting 1.5s...');
+        
         // Small delay to prevent flash on page load
         const timer = setTimeout(() => {
             // Check if consent already given
             const stored = localStorage.getItem(CONSENT_KEY);
+            console.log('[CookieConsent] Stored consent:', stored);
+            
             if (stored) {
                 try {
                     const consent: ConsentRecord = JSON.parse(stored);
+                    console.log('[CookieConsent] Parsed consent:', consent);
                     // Check if policy version changed - need re-consent
                     if (consent.version !== CONSENT_VERSION) {
+                        console.log('[CookieConsent] Version mismatch, showing banner');
                         setShowBanner(true);
                     } else {
+                        console.log('[CookieConsent] Valid consent found, NOT showing banner');
                         // Apply stored preferences
                         setPreferences(consent.preferences);
                         applyPreferences(consent.preferences);
                     }
-                } catch {
+                } catch (e) {
+                    console.log('[CookieConsent] Parse error, showing banner:', e);
                     setShowBanner(true);
                 }
             } else {
+                console.log('[CookieConsent] No stored consent, showing banner');
                 setShowBanner(true);
             }
         }, 1500); // 1.5 second delay
@@ -165,13 +174,15 @@ const CookieConsent: React.FC = () => {
 
     if (!showBanner) return null;
 
+    console.log('[CookieConsent] Rendering banner now!');
+
     return (
         <AnimatePresence>
             <motion.div
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 100, opacity: 0 }}
-                className="fixed bottom-0 left-0 right-0 z-50 p-4"
+                className="fixed bottom-0 left-0 right-0 z-[9999] p-4"
             >
                 <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
                     {/* Header */}

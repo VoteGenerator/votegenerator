@@ -97,18 +97,94 @@
         sessionStorage.removeItem('refreshed');
       });
     </script>
+
+<!-- 
+====================================================================
+COOKIE CONSENT BANNER - AdSense Ready & GDPR Compliant
+Add this code RIGHT BEFORE </body> in public/index.html
+
+Features:
+- GDPR compliant (users can reject)
+- AdSense ready (Accept All is prominent for better ad revenue)
+- Stores preference in localStorage
+- Won't show again after user makes a choice
+- Mobile responsive
+====================================================================
+-->
+
 <!-- Cookie Consent Banner -->
-<div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#1e1b4b; color:white; padding:20px; z-index:99999;">
-  <div style="max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-    <span>🍪 We use cookies to improve your experience.</span>
-    <div>
-      <button onclick="localStorage.setItem('vg_cookie_consent','no');document.getElementById('cookie-banner').style.display='none';" style="padding:10px 20px; background:#475569; color:white; border:none; border-radius:8px; cursor:pointer; margin-right:10px;">Decline</button>
-      <button onclick="localStorage.setItem('vg_cookie_consent','yes');document.getElementById('cookie-banner').style.display='none';" style="padding:10px 20px; background:#6366f1; color:white; border:none; border-radius:8px; cursor:pointer;">Accept</button>
+<div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color:white; padding:0; z-index:99999; box-shadow:0 -8px 32px rgba(0,0,0,0.3); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:1200px; margin:0 auto; padding:20px 24px;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:20px;">
+      <!-- Text Content -->
+      <div style="flex:1; min-width:280px;">
+        <div style="font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">🍪</span> Cookie Preferences
+        </div>
+        <p style="margin:0; font-size:14px; line-height:1.6; opacity:0.9;">
+          We use cookies to enhance your experience, analyze site traffic, and serve personalized ads. 
+          By clicking "Accept All", you consent to our use of cookies. 
+          <a href="/privacy" style="color:#a5b4fc; text-decoration:underline;">Privacy Policy</a> · 
+          <a href="/data-policy" style="color:#a5b4fc; text-decoration:underline;">Cookie Policy</a>
+        </p>
+      </div>
+      <!-- Buttons -->
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <button onclick="acceptCookies('essential')" style="padding:12px 20px; background:rgba(255,255,255,0.1); color:white; border:2px solid rgba(255,255,255,0.3); border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+          Essential Only
+        </button>
+        <button onclick="acceptCookies('all')" style="padding:14px 28px; background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(99,102,241,0.4); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 14px rgba(99,102,241,0.4)'">
+          ✓ Accept All
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
 <script>
-if(!localStorage.getItem('vg_cookie_consent')){document.getElementById('cookie-banner').style.display='block';}
+// Cookie consent functions
+function acceptCookies(type) {
+  // Store consent with timestamp
+  var consent = {
+    type: type,
+    timestamp: new Date().toISOString(),
+    version: '1.0'
+  };
+  localStorage.setItem('vg_cookie_consent', JSON.stringify(consent));
+  
+  // Hide banner
+  document.getElementById('cookie-banner').style.display = 'none';
+  
+  // If user accepted all, enable Google Analytics/AdSense (when you add them)
+  if (type === 'all') {
+    // Enable analytics - uncomment when you add Google Analytics
+    // gtag('consent', 'update', { analytics_storage: 'granted', ad_storage: 'granted' });
+    console.log('[Cookies] All cookies accepted - ads enabled');
+  } else {
+    // Essential only - no tracking
+    // gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied' });
+    console.log('[Cookies] Essential only - ads disabled');
+  }
+}
+
+// Check consent on page load
+(function() {
+  var stored = localStorage.getItem('vg_cookie_consent');
+  if (!stored) {
+    // No consent yet - show banner
+    document.getElementById('cookie-banner').style.display = 'block';
+  } else {
+    // User already made a choice
+    try {
+      var consent = JSON.parse(stored);
+      console.log('[Cookies] Existing consent:', consent.type);
+    } catch(e) {
+      // Old format - show banner again
+      localStorage.removeItem('vg_cookie_consent');
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+  }
+})();
 </script>
   </body>
 </html>

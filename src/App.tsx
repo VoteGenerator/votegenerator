@@ -155,29 +155,7 @@ function App() {
     else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
     else page = <VoteGeneratorApp />;
     
-    return (
-        <>
-            {page}
-            <div id="cookie-banner" style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: '#1e1b4b',
-                color: 'white',
-                padding: '20px',
-                zIndex: 99999
-            }}>
-                <span>🍪 We use cookies. This banner should ALWAYS show.</span>
-                <button 
-                    onClick={() => alert('clicked')}
-                    style={{ marginLeft: '20px', padding: '10px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-                >
-                    Accept
-                </button>
-            </div>
-        </>
-    );
+    return <>{page}</>;
 }
 
 export default App;

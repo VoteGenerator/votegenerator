@@ -155,37 +155,27 @@ function App() {
     else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
     else page = <VoteGeneratorApp />;
     
-    // Check cookie consent
-    const hasConsent = typeof window !== 'undefined' && localStorage.getItem('vg_cookie_consent');
-    
     return (
         <>
             {page}
-            {!hasConsent && (
-                <div id="cookie-banner" style={{
-                    position: 'fixed',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: '#1e1b4b',
-                    color: 'white',
-                    padding: '20px',
-                    zIndex: 99999,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '16px'
-                }}>
-                    <span>🍪 We use cookies to improve your experience.</span>
-                    <button 
-                        onClick={() => { localStorage.setItem('vg_cookie_consent', 'yes'); window.location.reload(); }}
-                        style={{ padding: '10px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-                    >
-                        Accept
-                    </button>
-                </div>
-            )}
+            <div id="cookie-banner" style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: '#1e1b4b',
+                color: 'white',
+                padding: '20px',
+                zIndex: 99999
+            }}>
+                <span>🍪 We use cookies. This banner should ALWAYS show.</span>
+                <button 
+                    onClick={() => alert('clicked')}
+                    style={{ marginLeft: '20px', padding: '10px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                >
+                    Accept
+                </button>
+            </div>
         </>
     );
 }

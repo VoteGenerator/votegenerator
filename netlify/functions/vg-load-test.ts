@@ -8,8 +8,8 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// Set a password to prevent abuse
-const TEST_PASSWORD = process.env.LOAD_TEST_PASSWORD || 'votegen-load-test-2024';
+// Set a password to prevent abuse - MUST be set in Netlify env vars
+const TEST_PASSWORD = process.env.LOAD_TEST_PASSWORD;
 
 // Realistic geo data - weighted towards US but includes international
 const geoData = [
@@ -250,6 +250,10 @@ export const handler: Handler = async (event) => {
         const { pollId, adminKey, count = 100, daysBack = 7, testPassword } = body;
 
         // Security check
+        if (!TEST_PASSWORD) {
+            return { statusCode: 500, headers, body: JSON.stringify({ error: 'LOAD_TEST_PASSWORD not configured in environment' }) };
+        }
+        
         if (testPassword !== TEST_PASSWORD) {
             return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid test password' }) };
         }

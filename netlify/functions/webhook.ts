@@ -28,7 +28,7 @@ interface Poll {
 function generateDashboardToken(sessionId: string): string {
   // Use session ID directly - it's unique and both sides know it
   // Add a prefix for easy identification
-  return `vg_${sessionId.replace('cs_', '').substring(0, 32)}`;
+  return 'vg_' + sessionId.replace('cs_', '').substring(0, 32);
 }
 
 // Map price IDs to tiers (update with your actual price IDs)
@@ -45,12 +45,28 @@ function getTierFromPriceId(priceId: string): string {
 }
 
 // Get days for tier
-function getTierDays(tier: string): number {
+function getTierDays(tier: string, billing?: string): number {
+  // Yearly subscriptions get 365 days, monthly get 30
+  if (billing === 'annual' || billing === 'yearly') {
+    return 365;
+  }
+  if (billing === 'monthly') {
+    return 30;
+  }
+  // Default based on tier (for backward compatibility)
   switch (tier) {
-    case 'pro': return 30;
-    case 'pro': return 60;
     case 'business': return 365;
+    case 'pro': return 365;
     default: return 30;
+  }
+}
+
+// Get response limit for tier
+function getResponseLimit(tier: string): string {
+  switch (tier) {
+    case 'business': return '100,000';
+    case 'pro': return '10,000';
+    default: return '100';
   }
 }
 
@@ -59,7 +75,8 @@ async function sendDashboardEmail(
   email: string, 
   tier: string, 
   dashboardToken: string,
-  sessionId: string
+  sessionId: string,
+  billing?: string
 ): Promise<boolean> {
   if (!RESEND_API_KEY || !email) {
     console.log('Skipping email: No API key or email');
@@ -72,32 +89,34 @@ async function sendDashboardEmail(
     business: 'Business',
   };
   
-  const tierLabel = tierLabels[tier] || 'Free';
+  const tierLabel = tierLabels[tier] || 'Pro';
   const baseUrl = process.env.URL || 'https://votegenerator.com';
   
   // Use full URL format with both token and session_id (proven to work)
-  const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}&session_id=${sessionId}`;
+  const dashboardUrl = baseUrl + '/admin?token=' + dashboardToken + '&session_id=' + sessionId;
   
-  const days = getTierDays(tier);
+  const days = getTierDays(tier, billing);
   const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric'
   });
   
+  const responseLimit = getResponseLimit(tier);
+  
   try {
-    console.log(`Sending dashboard email to ${email.substring(0, 5)}... with token ${dashboardToken.substring(0, 10)}...`);
+    console.log('Sending dashboard email to ' + email.substring(0, 5) + '... with token ' + dashboardToken.substring(0, 10) + '...');
     
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Authorization': 'Bearer ' + RESEND_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         from: 'VoteGenerator <noreply@mail.votegenerator.com>',
         to: email,
-        subject: `🗳️ Welcome to VoteGenerator ${tierLabel}!`,
+        subject: '🗳️ Welcome to VoteGenerator ' + tierLabel + '!',
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
             <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
@@ -126,8 +145,8 @@ async function sendDashboardEmail(
               <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                 <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
                 <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                  <li style="margin-bottom: 8px;">${tier === 'business' ? 'Business polls' : tier === 'pro' ? '3 polls' : '1 poll'}</li>
-                  <li style="margin-bottom: 8px;">${tier === 'business' ? '10,000' : tier === 'pro' ? '2,000' : '500'} responses per poll</li>
+                  <li style="margin-bottom: 8px;">Unlimited polls</li>
+                  <li style="margin-bottom: 8px;">${responseLimit} responses per poll</li>
                   <li style="margin-bottom: 8px;">Valid until <strong>${expirationDate}</strong></li>
                 </ul>
               </div>
@@ -171,10 +190,13 @@ async function tryRegisterCustomer(
   tier: string,
   stripeCustomerId: string | null,
   sessionId: string,
-  dashboardToken: string
+  dashboardToken: string,
+  billing?: string
 ): Promise<boolean> {
   try {
     const store = getStore('vg-customers');
+    
+    const days = getTierDays(tier, billing);
     
     const customerData = {
       email,
@@ -183,14 +205,14 @@ async function tryRegisterCustomer(
       stripeSessionId: sessionId,
       dashboardToken,
       createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + getTierDays(tier) * 24 * 60 * 60 * 1000).toISOString(),
+      expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
       polls: [],
     };
     
     // Store by both email and token for lookups
-    await store.setJSON(`customer_${email}`, customerData);
-    await store.setJSON(`token_${dashboardToken}`, customerData);
-    await store.setJSON(`session_${sessionId}`, customerData);
+    await store.setJSON('customer_' + email, customerData);
+    await store.setJSON('token_' + dashboardToken, customerData);
+    await store.setJSON('session_' + sessionId, customerData);
     
     console.log('Customer registered in Blobs');
     return true;
@@ -244,7 +266,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
+      body: JSON.stringify({ error: 'Webhook Error: ' + err.message }),
     };
   }
 
@@ -261,6 +283,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         
         // Determine tier from metadata or line items
         let tier = metadata.tier || 'pro';
+        const billing = metadata.billing || 'yearly';
         
         // If no tier in metadata, try to determine from line items
         if (!metadata.tier && session.line_items?.data?.[0]?.price?.id) {
@@ -270,6 +293,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         console.log('Checkout completed:', {
           sessionId: session.id,
           tier,
+          billing,
           pollId: metadata.pollId,
           email: customerEmail ? customerEmail.substring(0, 5) + '...' : 'none',
         });
@@ -285,8 +309,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         // STEP 1: SEND EMAIL FIRST (most important!)
         // ================================================================
         if (customerEmail) {
-          const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardToken, session.id);
-          console.log(`Dashboard email sent: ${emailSent}`);
+          const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardToken, session.id, billing);
+          console.log('Dashboard email sent: ' + emailSent);
         }
         
         // ================================================================
@@ -298,9 +322,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             tier,
             session.customer as string | null,
             session.id,
-            dashboardToken
+            dashboardToken,
+            billing
           );
-          console.log(`Customer registered in Blobs: ${registered}`);
+          console.log('Customer registered in Blobs: ' + registered);
         }
 
         // ================================================================
@@ -321,7 +346,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
               };
               
               await pollStore.setJSON(metadata.pollId, upgradedPoll);
-              console.log(`Poll ${metadata.pollId} upgraded to ${metadata.tier}`);
+              console.log('Poll ' + metadata.pollId + ' upgraded to ' + metadata.tier);
             }
           } catch (error: any) {
             console.error('Poll upgrade failed (non-fatal):', error.message);
@@ -334,7 +359,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         if (metadata.licenseType === 'business' && customerEmail) {
           try {
             const licenseStore = getStore('vg-licenses');
-            await licenseStore.setJSON(`license_${customerEmail}`, {
+            await licenseStore.setJSON('license_' + customerEmail, {
               email: customerEmail,
               type: 'business',
               purchasedAt: new Date().toISOString(),
@@ -342,7 +367,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
               stripeCustomerId: session.customer,
               stripeSessionId: session.id,
             });
-            console.log(`Business license created for ${customerEmail.substring(0, 5)}...`);
+            console.log('Business license created for ' + customerEmail.substring(0, 5) + '...');
           } catch (error: any) {
             console.error('License creation failed (non-fatal):', error.message);
           }
@@ -360,7 +385,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       }
 
       default:
-        console.log(`Unhandled event type: ${stripeEvent.type}`);
+        console.log('Unhandled event type: ' + stripeEvent.type);
     }
 
     // Always return 200 to Stripe to acknowledge receipt

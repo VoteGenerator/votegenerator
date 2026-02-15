@@ -1402,19 +1402,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Custom Logo - Display only */}
-                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                    {/* Custom Logo - Business only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${subscriptionTier === 'business' ? 'bg-white/50' : ''}`}>
                                                         <div className="flex items-center gap-3">
-                                                            <ImageIcon size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <ImageIcon size={16} className={subscriptionTier === 'business' ? 'text-purple-500' : 'text-slate-400'} />
                                                             <div>
                                                                 <span className="font-medium text-slate-700 text-sm">Upload custom logo</span>
                                                                 <p className="text-xs text-slate-500">Add your brand to polls</p>
                                                             </div>
                                                         </div>
-                                                        {isPaidUser ? (
+                                                        {subscriptionTier === 'business' ? (
                                                             <Check size={18} className="text-emerald-500" />
                                                         ) : (
-                                                            <Lock size={14} className="text-slate-400" />
+                                                            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                                                                <Star size={12} /> Business
+                                                            </span>
                                                         )}
                                                     </div>
                                                     
@@ -1434,19 +1436,21 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Custom Short Links - Display only */}
-                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                    {/* Custom Short Links - Business only */}
+                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${subscriptionTier === 'business' ? 'bg-white/50' : ''}`}>
                                                         <div className="flex items-center gap-3">
-                                                            <Share2 size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                            <Share2 size={16} className={subscriptionTier === 'business' ? 'text-purple-500' : 'text-slate-400'} />
                                                             <div>
                                                                 <span className="font-medium text-slate-700 text-sm">Custom short links</span>
                                                                 <p className="text-xs text-slate-500">votegenerator.com/your-name</p>
                                                             </div>
                                                         </div>
-                                                        {isPaidUser ? (
+                                                        {subscriptionTier === 'business' ? (
                                                             <Check size={18} className="text-emerald-500" />
                                                         ) : (
-                                                            <Lock size={14} className="text-slate-400" />
+                                                            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                                                                <Star size={12} /> Business
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>

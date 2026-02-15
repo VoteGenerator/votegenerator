@@ -17,7 +17,11 @@ import HelpCenter from './components/HelpCenter';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
-import { Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, HelpCircle, BookOpen, ArrowUpRight } from 'lucide-react';
+import { 
+    Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 
+    HelpCircle, BookOpen, ArrowUpRight, LayoutDashboard, 
+    PlusCircle, CreditCard, Mail, Menu, X
+} from 'lucide-react';
 
 const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -26,6 +30,7 @@ const formatDate = (dateStr: string) => {
 
 function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     const [copiedAdmin, setCopiedAdmin] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
     const endDate = expiresAt ? new Date(expiresAt) : null;
     const daysRemaining = endDate ? Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
@@ -39,62 +44,191 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
     };
     
     const isBusiness = tier === 'business';
-    const navBg = isBusiness ? 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900' : 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700';
-    const tierConfig = isBusiness ? { name: 'Business', icon: Star, badge: 'bg-amber-400 text-amber-900' } : { name: 'Pro', icon: Crown, badge: 'bg-pink-400 text-pink-900' };
+    const navBg = isBusiness 
+        ? 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900' 
+        : 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700';
+    const tierConfig = isBusiness 
+        ? { name: 'Business', icon: Star, badge: 'bg-amber-400 text-amber-900' } 
+        : { name: 'Pro', icon: Crown, badge: 'bg-pink-400 text-pink-900' };
     const TierIcon = tierConfig.icon;
+    
+    // Current path for active state
+    const currentPath = window.location.pathname;
+    
+    const navItems = [
+        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: currentPath === '/create' },
+        { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, active: currentPath === '/admin' },
+        { label: 'Help', href: '/help', icon: HelpCircle, active: currentPath.startsWith('/help') },
+    ];
     
     return (
         <header className={navBg + ' text-white sticky top-0 z-50 shadow-xl'}>
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                {/* Logo */}
                 <a href="/" className="flex items-center gap-2 font-bold text-white/90 hover:text-white transition-colors">
-                    <Home size={20} />
-                    <span className="hidden sm:inline">VoteGenerator</span>
+                    <img 
+                        src="/logo.svg" 
+                        alt="VoteGenerator" 
+                        className="h-8 w-8 brightness-0 invert"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                        }}
+                    />
+                    <span className="hidden sm:inline text-lg">
+                        Vote<span className="text-white/80">Generator</span>
+                    </span>
                 </a>
                 
-                <div className="flex items-center gap-3">
+                {/* Plan Badge - Center */}
+                <div className="flex items-center gap-2">
                     <div className={'flex items-center gap-2 px-4 py-1.5 ' + tierConfig.badge + ' rounded-full font-bold text-sm shadow-lg'}>
                         <TierIcon size={16} />
                         {tierConfig.name}
                     </div>
-                    <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 text-xs font-bold rounded-full animate-pulse">ACTIVE</span>
+                    <span className="px-2 py-0.5 bg-emerald-400 text-emerald-900 text-xs font-bold rounded-full animate-pulse">
+                        ACTIVE
+                    </span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                    {(isExpiringSoon || isExpiringVerySoon) && (
-                        <div className={isExpiringVerySoon ? 'hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-500 text-white' : 'hidden md:flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-400 text-amber-900'}>
-                            <AlertTriangle size={12} />
-                            {daysRemaining}d left
-                        </div>
-                    )}
-                    
-                    <nav className="hidden md:flex items-center gap-1">
-                        <a href="/blog" className="px-3 py-1.5 rounded-lg hover:bg-white/10 transition text-sm"><BookOpen size={14} className="inline mr-1" />Blog</a>
-                        <a href="/help" className="px-3 py-1.5 rounded-lg hover:bg-white/10 transition text-sm"><HelpCircle size={14} className="inline mr-1" />Help</a>
+                {/* Desktop Nav */}
+                <div className="hidden md:flex items-center gap-2">
+                    <nav className="flex items-center gap-1">
+                        {navItems.map((item) => (
+                            <a
+                                key={item.label}
+                                href={item.href}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                    item.active 
+                                        ? 'bg-white/20 text-white' 
+                                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                }`}
+                            >
+                                <item.icon size={16} />
+                                {item.label}
+                            </a>
+                        ))}
                     </nav>
                     
+                    <div className="w-px h-6 bg-white/20 mx-2" />
+                    
+                    {/* Manage Subscription */}
+                    <a 
+                        href="/admin?tab=settings" 
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white transition"
+                    >
+                        <CreditCard size={16} />
+                        <span className="hidden lg:inline">Manage Plan</span>
+                    </a>
+                    
+                    {/* Upgrade for Pro users */}
                     {!isBusiness && (
-                        <a href="/.netlify/functions/vg-checkout?tier=business" className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition shadow-lg">
-                            <Star size={14} />Upgrade
+                        <a 
+                            href="/.netlify/functions/vg-checkout?tier=business&billing=annual" 
+                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition shadow-lg"
+                        >
+                            <Star size={14} />
+                            Upgrade
+                        </a>
+                    )}
+                    
+                    {/* Save Link */}
+                    <button
+                        onClick={copyAdminLink}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                            copiedAdmin 
+                                ? 'bg-emerald-500 text-white' 
+                                : 'bg-white/20 hover:bg-white/30 text-white'
+                        }`}
+                        title="Save this link to access your premium features later!"
+                    >
+                        {copiedAdmin ? <Check size={14} /> : <Copy size={14} />}
+                        <span className="hidden lg:inline">{copiedAdmin ? 'Copied!' : 'Save Link'}</span>
+                    </button>
+                </div>
+                
+                {/* Mobile Menu Button */}
+                <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="md:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
+                >
+                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+            </div>
+            
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+                <div className="md:hidden bg-black/20 border-t border-white/10 px-4 py-4">
+                    {navItems.map((item) => (
+                        <a
+                            key={item.label}
+                            href={item.href}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
+                                item.active 
+                                    ? 'bg-white/20 text-white' 
+                                    : 'text-white/80 hover:bg-white/10'
+                            }`}
+                        >
+                            <item.icon size={20} />
+                            {item.label}
+                        </a>
+                    ))}
+                    
+                    <div className="h-px bg-white/10 my-3" />
+                    
+                    <a
+                        href="/admin?tab=settings"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white/80 hover:bg-white/10"
+                    >
+                        <CreditCard size={20} />
+                        Manage Subscription
+                    </a>
+                    
+                    <a
+                        href="mailto:support@votegenerator.com"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white/80 hover:bg-white/10"
+                    >
+                        <Mail size={20} />
+                        Contact Support
+                    </a>
+                    
+                    {!isBusiness && (
+                        <a
+                            href="/.netlify/functions/vg-checkout?tier=business&billing=annual"
+                            className="flex items-center gap-3 px-4 py-3 mt-2 bg-amber-400 text-amber-900 rounded-xl font-bold"
+                        >
+                            <Star size={20} />
+                            Upgrade to Business
                         </a>
                     )}
                     
                     <button
                         onClick={copyAdminLink}
-                        className={copiedAdmin ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition bg-emerald-500 text-white' : 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition bg-white/20 hover:bg-white/30'}
-                        title="Save this link to access your premium features later!"
+                        className="flex items-center gap-3 px-4 py-3 mt-2 bg-white/20 text-white rounded-xl font-medium w-full"
                     >
-                        {copiedAdmin ? <Check size={14} /> : <Copy size={14} />}
-                        <span className="hidden sm:inline">{copiedAdmin ? 'Saved!' : 'Save Link'}</span>
+                        {copiedAdmin ? <Check size={20} /> : <Copy size={20} />}
+                        {copiedAdmin ? 'Link Copied!' : 'Copy Dashboard Link'}
                     </button>
                 </div>
-            </div>
+            )}
             
+            {/* Expiration Banner */}
             {endDate && (
-                <div className={isExpiringVerySoon ? 'text-center py-1.5 text-xs bg-red-600' : isExpiringSoon ? 'text-center py-1.5 text-xs bg-amber-600' : 'text-center py-1.5 text-xs bg-black/20'}>
+                <div className={
+                    isExpiringVerySoon 
+                        ? 'text-center py-1.5 text-xs bg-red-600' 
+                        : isExpiringSoon 
+                            ? 'text-center py-1.5 text-xs bg-amber-600' 
+                            : 'text-center py-1.5 text-xs bg-black/20'
+                }>
                     <Calendar size={12} className="inline mr-1" />
                     Plan expires: <strong>{formatDate(expiresAt!)}</strong> ({daysRemaining} days remaining)
                     {(isExpiringSoon || isExpiringVerySoon) && (
-                        <a href={'/.netlify/functions/vg-checkout?tier=' + tier} className="ml-2 underline hover:no-underline">Renew now <ArrowUpRight size={10} className="inline" /></a>
+                        <a 
+                            href={'/.netlify/functions/vg-checkout?tier=' + tier + '&billing=annual'} 
+                            className="ml-2 underline hover:no-underline"
+                        >
+                            Renew now <ArrowUpRight size={10} className="inline" />
+                        </a>
                     )}
                 </div>
             )}
@@ -103,9 +237,13 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
 }
 
 function CreatePage() {
-    const purchasedTier = typeof window !== 'undefined' ? localStorage.getItem('vg_purchased_tier') : null;
-    const expiresAt = typeof window !== 'undefined' ? localStorage.getItem('vg_expires_at') : null;
-    const isPaidUser = !!purchasedTier;
+    const purchasedTier = typeof window !== 'undefined' 
+        ? (localStorage.getItem('vg_purchased_tier') || localStorage.getItem('vg_subscription_tier')) 
+        : null;
+    const expiresAt = typeof window !== 'undefined' 
+        ? (localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at')) 
+        : null;
+    const isPaidUser = purchasedTier === 'pro' || purchasedTier === 'business';
     
     let bgClass = 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
     if (purchasedTier === 'business') bgClass = 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50';
@@ -116,13 +254,20 @@ function CreatePage() {
     
     return (
         <div className={'min-h-screen ' + bgClass}>
-            {isPaidUser ? <PremiumNav tier={purchasedTier!} expiresAt={expiresAt || undefined} /> : <><PromoBanner position="top" /><NavHeader /></>}
+            {isPaidUser ? (
+                <PremiumNav tier={purchasedTier!} expiresAt={expiresAt || undefined} />
+            ) : (
+                <>
+                    <PromoBanner position="top" />
+                    <NavHeader />
+                </>
+            )}
             <div className="max-w-5xl mx-auto px-4 py-8">
                 <div className="text-center mb-8">
                     {isPaidUser ? (
                         <>
                             <h1 className={headingClass}>Create Premium Poll</h1>
-                            <p className="text-slate-600">All features unlocked • No ads • Priority support</p>
+                            <p className="text-slate-600">All {purchasedTier === 'business' ? 'Business' : 'Pro'} features unlocked • No ads • Priority support</p>
                         </>
                     ) : (
                         <>
@@ -134,6 +279,17 @@ function CreatePage() {
                 <VoteGeneratorCreate />
             </div>
             {!isPaidUser && <Footer />}
+            {isPaidUser && (
+                <footer className="bg-white/50 border-t border-slate-200 py-6 mt-12">
+                    <div className="max-w-5xl mx-auto px-4 text-center text-slate-500 text-sm">
+                        <p>
+                            Need help? <a href="/help" className="text-indigo-600 hover:underline">Help Center</a>
+                            {' • '}
+                            <a href="mailto:support@votegenerator.com" className="text-indigo-600 hover:underline">Contact Support</a>
+                        </p>
+                    </div>
+                </footer>
+            )}
         </div>
     );
 }

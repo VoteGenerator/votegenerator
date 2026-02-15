@@ -323,6 +323,19 @@ const AdminDashboard: React.FC = () => {
         validateAndLoadSession();
     }, []);
 
+    // SYNC TIER TO LOCALSTORAGE - ensures /create page can detect paid status
+    useEffect(() => {
+        if (session?.tier && session.tier !== 'free') {
+            localStorage.setItem('vg_purchased_tier', session.tier);
+            localStorage.setItem('vg_subscription_tier', session.tier);
+            if (session.expiresAt) {
+                localStorage.setItem('vg_tier_expires', session.expiresAt);
+                localStorage.setItem('vg_expires_at', session.expiresAt);
+            }
+            console.log('AdminDashboard: Synced tier to localStorage:', session.tier);
+        }
+    }, [session?.tier, session?.expiresAt]);
+
     // Timeout for "Setting Up Your Account" banner - stop spinning after 30 seconds
     useEffect(() => {
         const storedTier = localStorage.getItem('vg_purchased_tier') || 'free';

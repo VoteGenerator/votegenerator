@@ -1,7 +1,6 @@
 // ============================================================================
 // CheckoutSuccess.tsx - Post-purchase success page
 // Location: src/components/CheckoutSuccess.tsx
-// Uses existing vg-get-customer endpoint
 // ============================================================================
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -13,22 +12,21 @@ import {
 
 const CheckoutSuccess: React.FC = () => {
     const [copied, setCopied] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [dashboardUrl, setDashboardUrl] = useState('');
-    const [error, setError] = useState('');
     
     // Get params from URL
     const params = new URLSearchParams(window.location.search);
     const tierParam = params.get('tier') || 'pro';
     const billingParam = params.get('billing') || 'yearly';
-    const sessionId = params.get('session_id');
+    const sessionId = params.get('session_id') || '';
     const upgraded = params.get('upgraded') === 'true';
     
     // Normalize billing (handle both "annual" and "yearly")
     const billing = billingParam === 'annual' ? 'yearly' : billingParam;
     const tier = tierParam.toLowerCase();
     
-    // CORRECT Pricing configuration
+    // Pricing configuration
     const pricing = {
         pro: {
             monthly: 19,
@@ -70,80 +68,18 @@ const CheckoutSuccess: React.FC = () => {
     const TierIcon = planConfig.icon;
     
     useEffect(() => {
-        const fetchCustomerData = async () => {
-            setIsLoading(true);
-            setError('');
+        // Generate dashboard URL with BOTH token and session_id (like the email)
+        if (sessionId) {
+            const token = 'vg_' + sessionId.replace('cs_', '').substring(0, 32);
+            const url = window.location.origin + '/admin?token=' + token + '&session_id=' + sessionId;
+            setDashboardUrl(url);
             
-            try {
-                // Use EXISTING vg-get-customer endpoint
-                if (sessionId) {
-                    const response = await fetch('/.netlify/functions/vg-get-customer?session_id=' + sessionId);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        // Store in localStorage
-                        if (data.dashboardToken) {
-                            localStorage.setItem('vg_dashboard_token', data.dashboardToken);
-                            const url = window.location.origin + '/admin?token=' + data.dashboardToken;
-                            setDashboardUrl(url);
-                        }
-                        if (data.tier) {
-                            localStorage.setItem('vg_purchased_tier', data.tier);
-                        }
-                        if (data.expiresAt) {
-                            localStorage.setItem('vg_expires_at', data.expiresAt);
-                        }
-                    } else {
-                        console.error('Failed to fetch customer data:', response.status);
-                    }
-                }
-                
-                // Fallback: check localStorage for existing token
-                if (!dashboardUrl) {
-                    const existingToken = localStorage.getItem('vg_dashboard_token');
-                    if (existingToken) {
-                        const url = window.location.origin + '/admin?token=' + existingToken;
-                        setDashboardUrl(url);
-                    }
-                }
-                
-                // Store tier if not already set
-                if (!localStorage.getItem('vg_purchased_tier')) {
-                    localStorage.setItem('vg_purchased_tier', tier);
-                }
-                
-                // Calculate expiration if not already set
-                if (!localStorage.getItem('vg_expires_at')) {
-                    const now = new Date();
-                    if (billing === 'yearly') {
-                        now.setFullYear(now.getFullYear() + 1);
-                    } else {
-                        now.setMonth(now.getMonth() + 1);
-                    }
-                    localStorage.setItem('vg_expires_at', now.toISOString());
-                }
-                
-            } catch (err) {
-                console.error('Setup error:', err);
-                setError('Failed to load dashboard. Please contact support.');
-            }
-            
-            setIsLoading(false);
-        };
-        
-        fetchCustomerData();
-    }, [sessionId, tier, billing]);
-    
-    // Re-check dashboardUrl after state update
-    useEffect(() => {
-        if (!dashboardUrl && !isLoading) {
-            const existingToken = localStorage.getItem('vg_dashboard_token');
-            if (existingToken) {
-                setDashboardUrl(window.location.origin + '/admin?token=' + existingToken);
-            }
+            // Store in localStorage
+            localStorage.setItem('vg_dashboard_token', token);
+            localStorage.setItem('vg_session_id', sessionId);
+            localStorage.setItem('vg_purchased_tier', tier);
         }
-    }, [isLoading, dashboardUrl]);
+    }, [sessionId, tier]);
     
     const copyDashboardLink = () => {
         if (dashboardUrl) {
@@ -157,7 +93,6 @@ const CheckoutSuccess: React.FC = () => {
         if (dashboardUrl) {
             window.location.href = dashboardUrl;
         } else {
-            // Fallback to create page
             window.location.href = '/create';
         }
     };
@@ -227,12 +162,6 @@ const CheckoutSuccess: React.FC = () => {
                     
                     {/* Dashboard Link */}
                     <div className="p-6 bg-slate-50">
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                                {error}
-                            </div>
-                        )}
-                        
                         <div className="mb-4">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
                                 🔑 Your Dashboard Link
@@ -240,12 +169,7 @@ const CheckoutSuccess: React.FC = () => {
                             <p className="text-xs text-slate-500 mb-2">
                                 Save this link! You'll need it to access your premium dashboard.
                             </p>
-                            {isLoading ? (
-                                <div className="flex items-center justify-center py-4">
-                                    <Loader2 className="animate-spin text-slate-400" size={24} />
-                                    <span className="ml-2 text-slate-500 text-sm">Loading your dashboard...</span>
-                                </div>
-                            ) : dashboardUrl ? (
+                            {dashboardUrl ? (
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
@@ -266,8 +190,9 @@ const CheckoutSuccess: React.FC = () => {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
-                                    Setting up your dashboard... This may take a moment.
+                                <div className="flex items-center justify-center py-4">
+                                    <Loader2 className="animate-spin text-slate-400" size={24} />
+                                    <span className="ml-2 text-slate-500 text-sm">Generating link...</span>
                                 </div>
                             )}
                         </div>
@@ -275,36 +200,19 @@ const CheckoutSuccess: React.FC = () => {
                         {/* Go to Dashboard */}
                         <button
                             onClick={goToDashboard}
-                            disabled={isLoading}
+                            disabled={!dashboardUrl}
                             className={'w-full py-3 bg-gradient-to-r ' + planConfig.gradient + ' text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'}
                         >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 size={20} className="animate-spin" />
-                                    Setting up...
-                                </>
-                            ) : (
-                                <>
-                                    Go to Dashboard
-                                    <ArrowRight size={20} />
-                                </>
-                            )}
+                            Go to Dashboard
+                            <ArrowRight size={20} />
                         </button>
-                        
-                        {/* Fallback link */}
-                        {!isLoading && !dashboardUrl && (
-                            <a 
-                                href="/create" 
-                                className="block mt-3 text-center text-sm text-indigo-600 hover:underline"
-                            >
-                                Or start creating a poll →
-                            </a>
-                        )}
                     </div>
                     
                     {/* Footer */}
                     <div className="p-4 text-center text-xs text-slate-500">
-                        Questions? Contact us at support@votegenerator.com
+                        A confirmation email has been sent to your inbox.
+                        <br />
+                        Questions? Contact support@votegenerator.com
                     </div>
                 </div>
             </motion.div>

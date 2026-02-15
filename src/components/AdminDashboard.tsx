@@ -440,6 +440,7 @@ const AdminDashboard: React.FC = () => {
                     customerData.dashboardToken = urlDashboardToken; // Ensure we keep the token
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    localStorage.setItem('vg_subscription_tier', customerData.tier);
                     if (customerData.expiresAt) {
                         localStorage.setItem('vg_tier_expires', customerData.expiresAt);
                     }
@@ -476,6 +477,7 @@ const AdminDashboard: React.FC = () => {
                     // Got it! Save and use
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
+                    localStorage.setItem('vg_subscription_tier', customerData.tier);
                     if (customerData.expiresAt) {
                         localStorage.setItem('vg_tier_expires', customerData.expiresAt);
                     }
@@ -945,6 +947,7 @@ const AdminDashboard: React.FC = () => {
         // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
         if (session?.tier) {
             localStorage.setItem('vg_purchased_tier', session.tier);
+            localStorage.setItem('vg_subscription_tier', session.tier);
             // Also store expiration info
             if (session.expiresAt) {
                 localStorage.setItem('vg_tier_expires', session.expiresAt);
@@ -1535,14 +1538,6 @@ const AdminDashboard: React.FC = () => {
                                                             {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
                                                             {copiedDashboardLink ? 'Copied! Box will close...' : 'Copy Link'}
                                                         </button>
-                                                        <a
-                                                            href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
-                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
-                                                            onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
-                                                        >
-                                                            <Mail size={16} />
-                                                            Open Email App
-                                                        </a>
                                                         <button
                                                             onClick={() => {
                                                                 localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');

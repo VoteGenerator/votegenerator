@@ -36,8 +36,8 @@ const TIER_CONFIG: Record<PaidTier, {
 const PaidCreatePage: React.FC = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
-    // Get tier from localStorage
-    const tier = (localStorage.getItem('vg_purchased_tier') || 'pro') as PaidTier;
+    // Get tier from localStorage - check both keys
+    const tier = (localStorage.getItem('vg_purchased_tier') || localStorage.getItem('vg_subscription_tier') || 'pro') as PaidTier;
     const expiresAt = localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at');
     
     const config = TIER_CONFIG[tier] || TIER_CONFIG.pro;
@@ -50,7 +50,7 @@ const PaidCreatePage: React.FC = () => {
 
     // Nav items for paid users
     const navItems = [
-        { label: 'Create Poll', href: '/', icon: PlusCircle, active: true },
+        { label: 'Create Poll', href: '/create', icon: PlusCircle, active: true },
         { label: 'My Dashboard', href: '/admin', icon: LayoutDashboard },
         { label: 'Help', href: '/help', icon: HelpCircle },
     ];

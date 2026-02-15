@@ -137,6 +137,8 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [requireNames, setRequireNames] = useState(false);
     const [hideResults, setHideResults] = useState(true); // Default: hide results from respondents
     const [allowComments, setAllowComments] = useState(false);
+    const [hideBranding, setHideBranding] = useState(false); // Pro feature: Remove VoteGenerator badge
+    const [customThankYou, setCustomThankYou] = useState(''); // Pro feature: Custom thank-you message
     const [buttonText, setButtonText] = useState('Submit Vote');
     const [deadline, setDeadline] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('default');
@@ -323,11 +325,15 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     requireNames, 
                     hideResults,
                     allowComments,
+                    hideBranding: isPaidUser ? hideBranding : false, // Pro feature
+                    customThankYou: isPaidUser && customThankYou.trim() ? customThankYou.trim() : undefined, // Pro feature
                     security,
                     deadline: deadline ? new Date(deadline).toISOString() : undefined 
                 }, 
                 buttonText: buttonText || 'Submit Vote', 
                 tier: subscriptionTier || 'free',
+                hideBranding: isPaidUser ? hideBranding : false, // Also at top level for easy access
+                customThankYou: isPaidUser && customThankYou.trim() ? customThankYou.trim() : undefined, // Also at top level
                 // Set response limits based on tier
                 maxResponses: subscriptionTier === 'business' ? 100000 
                     : subscriptionTier === 'pro' ? 10000 
@@ -1386,7 +1392,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Remove Branding - Display only */}
+                                                    {/* Remove Branding - Pro feature toggle */}
                                                     <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
                                                         <div className="flex items-center gap-3">
                                                             <X size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
@@ -1396,7 +1402,12 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                             </div>
                                                         </div>
                                                         {isPaidUser ? (
-                                                            <Check size={18} className="text-emerald-500" />
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={hideBranding} 
+                                                                onChange={(e) => setHideBranding(e.target.checked)} 
+                                                                className="w-5 h-5 rounded text-purple-600 cursor-pointer" 
+                                                            />
                                                         ) : (
                                                             <Lock size={14} className="text-slate-400" />
                                                         )}
@@ -1420,19 +1431,29 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Custom Thank You - Display only */}
-                                                    <div className={`flex items-center justify-between p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
-                                                        <div className="flex items-center gap-3">
-                                                            <Sparkles size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
-                                                            <div>
-                                                                <span className="font-medium text-slate-700 text-sm">Custom thank-you message</span>
-                                                                <p className="text-xs text-slate-500">Personalized post-vote screen</p>
+                                                    {/* Custom Thank You - Pro feature with text input */}
+                                                    <div className={`flex flex-col gap-2 p-3 rounded-lg ${isPaidUser ? 'bg-white/50' : ''}`}>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <Sparkles size={16} className={isPaidUser ? 'text-purple-500' : 'text-slate-400'} />
+                                                                <div>
+                                                                    <span className="font-medium text-slate-700 text-sm">Custom thank-you message</span>
+                                                                    <p className="text-xs text-slate-500">Personalized post-vote screen</p>
+                                                                </div>
                                                             </div>
+                                                            {!isPaidUser && (
+                                                                <Lock size={14} className="text-slate-400" />
+                                                            )}
                                                         </div>
-                                                        {isPaidUser ? (
-                                                            <Check size={18} className="text-emerald-500" />
-                                                        ) : (
-                                                            <Lock size={14} className="text-slate-400" />
+                                                        {isPaidUser && (
+                                                            <input
+                                                                type="text"
+                                                                value={customThankYou}
+                                                                onChange={(e) => setCustomThankYou(e.target.value)}
+                                                                placeholder="Thanks for voting! Your response has been recorded."
+                                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                                maxLength={200}
+                                                            />
                                                         )}
                                                     </div>
                                                     

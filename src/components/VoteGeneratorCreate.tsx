@@ -157,9 +157,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
     const [isOverLimit, setIsOverLimit] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
     
-    // Check for subscription tier
+    // Check for subscription tier - check both possible keys
     const subscriptionTier = typeof window !== 'undefined' 
-        ? (localStorage.getItem('vg_subscription_tier') as SubscriptionTier | null) 
+        ? ((localStorage.getItem('vg_purchased_tier') || localStorage.getItem('vg_subscription_tier')) as SubscriptionTier | null) 
         : null;
     
     const isPaidUser = subscriptionTier === 'pro' || subscriptionTier === 'business';

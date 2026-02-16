@@ -608,25 +608,27 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         setIsExporting(true);
         
         try {
-            // For Excel, we use CSV with .xlsx extension (Excel can open CSV)
-            // A proper implementation would use SheetJS/xlsx library
             const dataToExport = applyFilters && filteredVotes.length > 0 
                 ? filteredVotes 
                 : votes;
             
-            // Build tab-separated values for Excel compatibility
-            let tsv = 'Vote ID\tTimestamp\tChoice\tDevice\tCountry\n';
+            // Build CSV (Excel opens CSV files natively)
+            let csv = 'Vote ID,Timestamp,Choice,Device,Country\n';
             dataToExport.forEach((vote: any) => {
-                const choice = (vote.choice || vote.selectedOption || '').toString().replace(/\t/g, ' ');
-                tsv += `${vote.id || ''}\t${vote.timestamp || ''}\t${choice}\t${vote.device || ''}\t${vote.country || ''}\n`;
+                const choice = (vote.choice || vote.selectedOption || '').toString().replace(/,/g, ' ').replace(/"/g, "'");
+                const timestamp = vote.timestamp || '';
+                const device = vote.device || '';
+                const country = vote.country || '';
+                csv += `"${vote.id || ''}","${timestamp}","${choice}","${device}","${country}"\n`;
             });
             
-            const blob = new Blob([tsv], { type: 'application/vnd.ms-excel' });
+            // Use CSV extension - Excel opens these natively
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             const filterLabel = applyFilters ? '-filtered' : '';
-            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.xlsx`;
+            a.download = `${poll.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}${filterLabel}-${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -3263,37 +3265,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </div>
                                 </button>
                                 
-                                {/* CSV Export - PRO+ */}
-                                <button
-                                    onClick={() => handleExportCSV(false)}
-                                    disabled={isExporting}
-                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <FileSpreadsheet size={24} className="text-emerald-600" />
-                                        </div>
-                                        <div className="text-left">
-                                            <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                Export All to CSV
-                                                <HelpTooltip 
-                                                    content="Raw data export with all votes, timestamps, and metadata. Import into Excel, Google Sheets, or any data analysis tool."
-                                                    position="right"
-                                                />
-                                            </div>
-                                            <div className="text-xs text-slate-500">All {votes.length} responses • Spreadsheet format</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        {!isPro && <UpgradeBadge small />}
-                                        {isExporting ? (
-                                            <Loader2 size={18} className="text-slate-400 animate-spin" />
-                                        ) : (
-                                            <Download size={18} className="text-slate-400" />
-                                        )}
-                                    </div>
-                                </button>
-                                
                                 {/* Filtered CSV Export - BUSINESS ONLY */}
                                 {filteredVotes.length > 0 && filteredVotes.length !== votes.length && (
                                     <button
@@ -3339,25 +3310,25 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     </button>
                                 )}
                                 
-                                {/* Excel Export - PRO+ */}
+                                {/* CSV/Excel Export - PRO+ */}
                                 <button
-                                    onClick={() => handleExportExcel(false)}
+                                    onClick={() => handleExportCSV(false)}
                                     disabled={isExporting}
                                     className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <FileSpreadsheet size={24} className="text-green-600" />
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <FileSpreadsheet size={24} className="text-emerald-600" />
                                         </div>
                                         <div className="text-left">
                                             <div className="font-semibold text-slate-700 flex items-center gap-1">
-                                                Export to Excel
+                                                Export to CSV
                                                 <HelpTooltip 
-                                                    content="Excel-compatible format with all data and formatting preserved."
+                                                    content="Download all votes as CSV. Opens in Excel, Google Sheets, or any spreadsheet app."
                                                     position="right"
                                                 />
                                             </div>
-                                            <div className="text-xs text-slate-500">Microsoft Excel format (.xlsx)</div>
+                                            <div className="text-xs text-slate-500">All {votes.length} responses • Opens in Excel</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">

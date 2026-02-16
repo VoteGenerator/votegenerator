@@ -114,10 +114,12 @@ async function sendVerificationEmail(
 
         if (!response.ok) {
             const error = await response.text();
-            console.error('Resend API error:', error);
+            console.error('Resend API error:', response.status, error);
             return false;
         }
 
+        const result = await response.json();
+        console.log('Resend API success:', JSON.stringify(result));
         return true;
     } catch (error) {
         console.error('Failed to send verification email:', error);

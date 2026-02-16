@@ -17,6 +17,7 @@ import HelpCenter from './components/HelpCenter';
 import NavHeader from './components/NavHeader';
 import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
+import VerifyResult from './components/VerifyResult';
 import { 
     Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 
     HelpCircle, BookOpen, ArrowUpRight, LayoutDashboard, 
@@ -309,6 +310,7 @@ function App() {
     else if (path === '/recover' || path === '/recover/') page = <RecoveryPage />;
     else if (path === '/data-policy' || path === '/data-policy/') page = <DataPolicyPage />;
     else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
+    else if (path === '/verify-result' || path === '/verify-result/') page = <VerifyResult />;
     else page = <VoteGeneratorApp />;
     
     return <>{page}</>;

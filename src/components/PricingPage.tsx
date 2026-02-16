@@ -22,11 +22,11 @@ import Footer from './Footer';
 // =============================================================================
 const PRICING = {
     pro: {
-        monthly: 19,
+        monthly: 16,
         annual: 190,
     },
     business: {
-        monthly: 49,
+        monthly: 41,
         annual: 490,
     }
 };
@@ -41,6 +41,7 @@ interface Feature {
     free: boolean | string;
     pro: boolean | string;
     business: boolean | string;
+    highlight?: 'free' | 'pro' | 'business';
 }
 
 interface FeatureSection {
@@ -58,44 +59,37 @@ interface FeatureSection {
 const FEATURE_SECTIONS: FeatureSection[] = [
     {
         id: 'polls-responses',
-        name: 'Polls, Surveys & Limits',
+        name: 'Polls & Responses',
         icon: BarChart3,
         color: 'indigo',
         features: [
             { 
-                name: 'Active polls & surveys', 
-                tooltip: 'Number of polls/surveys that can accept responses at the same time',
+                name: 'Active polls', 
+                tooltip: 'Number of polls that can accept votes at the same time',
                 free: '3', 
                 pro: 'Unlimited', 
                 business: 'Unlimited' 
             },
             { 
                 name: 'Responses per month', 
-                tooltip: 'Total votes/responses across all your polls and surveys. Resets on the 1st.',
+                tooltip: 'Total votes across all your polls each month. Resets on the 1st.',
                 free: '100', 
-                pro: '10,000', 
-                business: '100,000'
+                pro: '5,000', 
+                business: '50,000' 
             },
             { 
-                name: 'Multi-question surveys', 
-                tooltip: 'Create surveys with multiple questions across sections',
-                free: true, 
-                pro: true, 
-                business: true 
+                name: 'Poll duration', 
+                tooltip: 'How long polls stay active before auto-closing',
+                free: '30 days', 
+                pro: '1 year', 
+                business: 'Unlimited' 
             },
             { 
-                name: 'Questions per survey', 
-                tooltip: 'Maximum questions allowed in a single survey',
-                free: '10', 
-                pro: '25', 
-                business: 'Unlimited'
-            },
-            { 
-                name: 'Templates library', 
-                tooltip: 'Pre-built poll and survey templates to get started quickly',
-                free: true, 
-                pro: true, 
-                business: true 
+                name: 'Response history', 
+                tooltip: 'How long we store your poll data',
+                free: '90 days', 
+                pro: '2 years', 
+                business: 'Forever' 
             },
         ]
     },
@@ -187,17 +181,11 @@ const FEATURE_SECTIONS: FeatureSection[] = [
             },
             { 
                 name: 'Remove VoteGenerator badge', 
-                tooltip: 'Hide the "Powered by VoteGenerator" branding on poll page',
+                tooltip: 'Hide the "Powered by VoteGenerator" branding',
                 free: false, 
                 pro: true, 
-                business: true
-            },
-            { 
-                name: 'White-label embeds', 
-                tooltip: 'Remove VoteGenerator branding from embedded polls on your website',
-                free: false, 
-                pro: false, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'Custom colors', 
@@ -211,7 +199,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Add your company logo to polls',
                 free: false, 
                 pro: false, 
-                business: true
+                business: true,
+                highlight: 'business'
             },
             { 
                 name: 'Custom thank-you message', 
@@ -318,7 +307,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Require a PIN to view or vote on polls',
                 free: false, 
                 pro: true, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'One-time vote codes', 
@@ -339,7 +329,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get notified of potential vote manipulation',
                 free: false, 
                 pro: false, 
-                business: true
+                business: true,
+                highlight: 'business'
             },
         ]
     },
@@ -382,7 +373,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'See what devices voters used (mobile/desktop)',
                 free: false, 
                 pro: true, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'Geographic distribution', 
@@ -403,13 +395,14 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Filter results by device, location, etc.',
                 free: false, 
                 pro: false, 
-                business: true
+                business: true,
+                highlight: 'business'
             },
             { 
                 name: 'Comment word cloud', 
                 tooltip: 'Visualize common themes in text responses',
                 free: false, 
-                pro: true, 
+                pro: false, 
                 business: true 
             },
         ]
@@ -428,8 +421,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 business: true 
             },
             { 
-                name: 'Print / Save as PDF', 
-                tooltip: 'Print-friendly view - use browser\'s "Save as PDF" option',
+                name: 'Print results', 
+                tooltip: 'Print-friendly view for physical copies',
                 free: true, 
                 pro: true, 
                 business: true 
@@ -439,7 +432,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Download raw data as comma-separated values',
                 free: false, 
                 pro: true, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'Export Excel', 
@@ -449,18 +443,12 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 business: true 
             },
             { 
-                name: 'Filtered exports', 
-                tooltip: 'Export only the data matching your filters (date range, device, etc.)',
+                name: 'PDF reports', 
+                tooltip: 'Generate professional PDF summaries',
                 free: false, 
                 pro: false, 
-                business: true 
-            },
-            { 
-                name: 'Bulk export all polls', 
-                tooltip: 'Export data from multiple polls at once in a single CSV',
-                free: false, 
-                pro: false, 
-                business: true 
+                business: true,
+                highlight: 'business'
             },
             { 
                 name: 'Shareable results link', 
@@ -507,8 +495,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
             },
             { 
                 name: 'Undo close (5 min)', 
-                tooltip: 'Accidentally closed? Reopen within 5 minutes',
-                free: true, 
+                tooltip: 'Reopen a poll within 5 minutes of closing',
+                free: false, 
                 pro: true, 
                 business: true 
             },
@@ -517,7 +505,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get notified when votes come in',
                 free: false, 
                 pro: true, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'Scheduled close', 
@@ -527,9 +516,16 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 business: true 
             },
             { 
+                name: 'Version history', 
+                tooltip: 'See previous versions of edited polls',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
                 name: 'Duplicate polls', 
                 tooltip: 'Clone a poll as a starting point',
-                free: true, 
+                free: false, 
                 pro: true, 
                 business: true 
             },
@@ -542,8 +538,15 @@ const FEATURE_SECTIONS: FeatureSection[] = [
         color: 'rose',
         features: [
             { 
-                name: 'Help center & guides', 
-                tooltip: 'Step-by-step tutorials and documentation',
+                name: 'Help documentation', 
+                tooltip: 'Guides and tutorials in our help center',
+                free: true, 
+                pro: true, 
+                business: true 
+            },
+            { 
+                name: 'Community support', 
+                tooltip: 'Get help from the VoteGenerator community',
                 free: true, 
                 pro: true, 
                 business: true 
@@ -553,18 +556,20 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 tooltip: 'Get help from our team via email',
                 free: false, 
                 pro: true, 
-                business: true
+                business: true,
+                highlight: 'pro'
             },
             { 
                 name: 'Priority support', 
                 tooltip: 'Faster response times from our team',
                 free: false, 
                 pro: false, 
-                business: true
+                business: true,
+                highlight: 'business'
             },
             { 
-                name: 'Response time', 
-                tooltip: 'Typical response time for support requests',
+                name: 'Response time SLA', 
+                tooltip: 'Guaranteed response within 24 hours',
                 free: '-', 
                 pro: '48 hours', 
                 business: '24 hours' 
@@ -573,23 +578,60 @@ const FEATURE_SECTIONS: FeatureSection[] = [
     },
     {
         id: 'advanced',
-        name: 'Advanced Features',
+        name: 'Advanced & Enterprise',
         icon: Building2,
         color: 'slate',
         features: [
             { 
-                name: 'Embed domain restriction', 
-                tooltip: 'Only allow your poll to be embedded on specific websites',
-                free: false, 
-                pro: true, 
-                business: true
+                name: 'Templates library', 
+                tooltip: 'Access 40+ ready-to-use poll templates',
+                free: '10 templates', 
+                pro: 'All 40+', 
+                business: 'All 40+' 
             },
             { 
-                name: 'Post-vote redirect', 
-                tooltip: 'Send voters to a custom URL after they submit',
+                name: 'Custom short links', 
+                tooltip: 'Create memorable URLs like vote.link/your-poll',
+                free: false, 
+                pro: true, 
+                business: true,
+                highlight: 'pro'
+            },
+            { 
+                name: 'Domain restriction', 
+                tooltip: 'Limit voting to specific email domains (e.g. @company.com)',
                 free: false, 
                 pro: false, 
-                business: true
+                business: true,
+                highlight: 'business'
+            },
+            { 
+                name: 'Webhooks', 
+                tooltip: 'Send vote data to your own systems in real-time',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'API access', 
+                tooltip: 'Programmatically create polls and fetch results',
+                free: false, 
+                pro: false, 
+                business: true 
+            },
+            { 
+                name: 'SSO integration', 
+                tooltip: 'Single Sign-On for enterprise team management',
+                free: false, 
+                pro: false, 
+                business: 'Coming soon' 
+            },
+            { 
+                name: 'Custom data retention', 
+                tooltip: 'Choose how long your data is stored',
+                free: false, 
+                pro: false, 
+                business: true 
             },
         ]
     },
@@ -630,11 +672,15 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 // =============================================================================
 // FEATURE CELL COMPONENT
 // =============================================================================
-const FeatureCell: React.FC<{ value: boolean | string; tier: string }> = ({ value, tier }) => {
+const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier: string }> = ({ value, highlight, tier }) => {
+    const isHighlighted = highlight === tier;
+    
     if (typeof value === 'boolean') {
         return value ? (
-            <div className="w-7 h-7 rounded-full flex items-center justify-center mx-auto bg-emerald-100">
-                <Check className="text-emerald-600" size={16} />
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
+                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-100'
+            }`}>
+                <Check className={isHighlighted ? 'text-white' : 'text-emerald-600'} size={16} />
             </div>
         ) : (
             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -648,7 +694,9 @@ const FeatureCell: React.FC<{ value: boolean | string; tier: string }> = ({ valu
     }
     
     return (
-        <span className="text-sm font-medium text-slate-700">
+        <span className={`text-sm font-semibold ${
+            isHighlighted ? 'text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full' : 'text-slate-700'
+        }`}>
             {value}
         </span>
     );
@@ -748,18 +796,17 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-6">
                             <span className="text-4xl font-black text-slate-900">$0</span>
-                            <span className="text-slate-500 ml-1">USD</span>
-                            <span className="text-slate-400 text-sm ml-1">forever</span>
+                            <span className="text-slate-500 ml-1">forever</span>
                         </div>
                         
                         <ul className="space-y-3 mb-8">
                             {[
-                                '3 active polls/surveys',
+                                '3 active polls',
                                 '100 responses/month',
                                 'All 8 poll types',
-                                'Multi-question surveys',
                                 'Real-time results',
                                 'QR codes & embedding',
+                                '3 basic themes',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
                                     <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
@@ -792,18 +839,17 @@ function PricingPage(): React.ReactElement {
                             </div>
                             <div>
                                 <h3 className="font-bold">Pro</h3>
-                                <p className="text-xs text-indigo-200">For creators & pros</p>
+                                <p className="text-xs text-indigo-200">For growing teams</p>
                             </div>
                         </div>
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}</span>
-                            <span className="text-indigo-200 ml-1">USD</span>
-                            <span className="text-indigo-300 text-sm ml-1">/month</span>
+                            <span className="text-indigo-200 ml-1">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-indigo-200 mb-6">
-                                ${getPrice('pro')} USD billed annually
+                                ${getPrice('pro')} billed annually
                             </p>
                         ) : (
                             <p className="text-sm text-indigo-200 mb-6">
@@ -813,17 +859,17 @@ function PricingPage(): React.ReactElement {
                         
                         <ul className="space-y-3 mb-8">
                             {[
-                                'Unlimited active polls',
-                                '10,000 responses/month',
+                                'Unlimited polls',
+                                '5,000 responses/month',
                                 'Remove VoteGenerator badge',
-                                'All 15 premium themes',
+                                'All premium themes',
                                 'CSV & Excel export',
                                 'Email notifications',
-                                'PIN-protected access',
-                                'Priority email support',
+                                'PIN code access',
+                                'Email support',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-indigo-100">
-                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-amber-300 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>
@@ -855,12 +901,11 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}</span>
-                            <span className="text-slate-400 ml-1">USD</span>
-                            <span className="text-slate-500 text-sm ml-1">/month</span>
+                            <span className="text-slate-400 ml-1">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-slate-400 mb-6">
-                                ${getPrice('business')} USD billed annually
+                                ${getPrice('business')} billed annually
                             </p>
                         ) : (
                             <p className="text-sm text-slate-400 mb-6">
@@ -870,17 +915,17 @@ function PricingPage(): React.ReactElement {
                         
                         <ul className="space-y-3 mb-8">
                             {[
-                                'Everything in Pro, plus:',
-                                '100,000 responses/month',
-                                'Upload your company logo',
-                                'White-label embeds',
-                                'Filtered & bulk exports',
-                                'Hourly activity heatmap',
-                                'Post-vote redirect URL',
+                                'Everything in Pro',
+                                '50,000 responses/month',
+                                'Upload custom logo',
+                                'Custom short links',
+                                'PDF reports',
+                                'Advanced analytics',
+                                'Version history',
                                 'Priority support (24h)',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-amber-400 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>
@@ -904,7 +949,7 @@ function PricingPage(): React.ReactElement {
                     </div>
                     <div className="flex items-center gap-2">
                         <BadgeCheck size={18} className="text-slate-400" />
-                        <span>Cancel anytime</span>
+                        <span>Cancel anytime, no refunds</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Lock size={18} className="text-slate-400" />
@@ -946,15 +991,15 @@ function PricingPage(): React.ReactElement {
                         </div>
                         <div className="py-4 px-4 text-center">
                             <span className="text-sm font-bold text-slate-600">Free</span>
-                            <div className="text-xs text-slate-400">$0 USD</div>
+                            <div className="text-xs text-slate-400">$0</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-indigo-50">
                             <span className="text-sm font-bold text-indigo-700">Pro</span>
-                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')} USD/mo</div>
+                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}/mo</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-slate-100">
                             <span className="text-sm font-bold text-slate-700">Business</span>
-                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')} USD/mo</div>
+                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}/mo</div>
                         </div>
                     </div>
 
@@ -1017,13 +1062,13 @@ function PricingPage(): React.ReactElement {
                                                         </Tooltip>
                                                     </div>
                                                     <div className="py-3 px-4 text-center">
-                                                        <FeatureCell value={feature.free} tier="free" />
+                                                        <FeatureCell value={feature.free} highlight={feature.highlight} tier="free" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-indigo-50/30">
-                                                        <FeatureCell value={feature.pro} tier="pro" />
+                                                        <FeatureCell value={feature.pro} highlight={feature.highlight} tier="pro" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-slate-50/50">
-                                                        <FeatureCell value={feature.business} tier="business" />
+                                                        <FeatureCell value={feature.business} highlight={feature.highlight} tier="business" />
                                                     </div>
                                                 </div>
                                             ))}
@@ -1043,7 +1088,7 @@ function PricingPage(): React.ReactElement {
                     {[
                         { 
                             q: 'Can I cancel anytime?', 
-                            a: 'Yes! You can cancel your subscription anytime from your dashboard. You\'ll keep access until the end of your billing period.' 
+                            a: 'Yes! You can cancel your subscription anytime from your dashboard. You\'ll keep access until the end of your billing period. No refunds for unused time.' 
                         },
                         { 
                             q: 'What happens if I hit my response limit?', 
@@ -1055,7 +1100,7 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'How does "2 months free" work?', 
-                            a: 'Annual plans save you 2 months! Pro is $190 USD/year (instead of $228 if paid monthly) and Business is $490 USD/year (instead of $588 if paid monthly). These are limited-time USD rates locked in for as long as you stay subscribed.' 
+                            a: 'Annual plans are priced at 10 months instead of 12. Pro is $190/year (saves $38 vs monthly) and Business is $490/year (saves $98 vs monthly). You\'re essentially getting 2 months completely free!' 
                         },
                         { 
                             q: 'Can I switch plans later?', 
@@ -1063,7 +1108,7 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'Do you offer refunds?', 
-                            a: 'We offer a 14-day money-back guarantee on all paid plans. If you\'re not satisfied, contact support for a full refund.' 
+                            a: 'All sales are final. You can cancel anytime and keep access until the end of your billing period, but we do not offer refunds for unused time. We recommend starting with a monthly plan if you\'re unsure.' 
                         },
                         { 
                             q: 'What payment methods do you accept?', 

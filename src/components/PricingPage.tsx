@@ -74,8 +74,8 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 name: 'Responses per month', 
                 tooltip: 'Total votes across all your polls each month. Resets on the 1st.',
                 free: '100', 
-                pro: '5,000', 
-                business: '50,000' 
+                pro: '10,000', 
+                business: '100,000' 
             },
             { 
                 name: 'Poll duration', 
@@ -796,7 +796,8 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-6">
                             <span className="text-4xl font-black text-slate-900">$0</span>
-                            <span className="text-slate-500 ml-1">forever</span>
+                            <span className="text-slate-500 ml-1">USD</span>
+                            <span className="text-slate-400 text-sm ml-1">forever</span>
                         </div>
                         
                         <ul className="space-y-3 mb-8">
@@ -845,22 +846,23 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}</span>
-                            <span className="text-indigo-200 ml-1">/month</span>
+                            <span className="text-indigo-200 ml-1">USD</span>
+                            <span className="text-indigo-200 text-sm">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-indigo-200 mb-6">
-                                ${getPrice('pro')} billed annually
+                                ${getPrice('pro')} USD billed annually (save $38)
                             </p>
                         ) : (
                             <p className="text-sm text-indigo-200 mb-6">
-                                Limited time pricing
+                                or ${PRICING.pro.annual} USD/year (save $38)
                             </p>
                         )}
                         
                         <ul className="space-y-3 mb-8">
                             {[
                                 'Unlimited polls',
-                                '5,000 responses/month',
+                                '10,000 responses/month',
                                 'Remove VoteGenerator badge',
                                 'All premium themes',
                                 'CSV & Excel export',
@@ -901,22 +903,23 @@ function PricingPage(): React.ReactElement {
                         
                         <div className="mb-1">
                             <span className="text-4xl font-black">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}</span>
-                            <span className="text-slate-400 ml-1">/month</span>
+                            <span className="text-slate-400 ml-1">USD</span>
+                            <span className="text-slate-400 text-sm">/month</span>
                         </div>
                         {isAnnual ? (
                             <p className="text-sm text-slate-400 mb-6">
-                                ${getPrice('business')} billed annually
+                                ${getPrice('business')} USD billed annually (save $98)
                             </p>
                         ) : (
                             <p className="text-sm text-slate-400 mb-6">
-                                Limited time pricing
+                                or ${PRICING.business.annual} USD/year (save $98)
                             </p>
                         )}
                         
                         <ul className="space-y-3 mb-8">
                             {[
                                 'Everything in Pro',
-                                '50,000 responses/month',
+                                '100,000 responses/month',
                                 'Upload custom logo',
                                 'Custom short links',
                                 'PDF reports',
@@ -991,15 +994,15 @@ function PricingPage(): React.ReactElement {
                         </div>
                         <div className="py-4 px-4 text-center">
                             <span className="text-sm font-bold text-slate-600">Free</span>
-                            <div className="text-xs text-slate-400">$0</div>
+                            <div className="text-xs text-slate-400">$0 USD</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-indigo-50">
                             <span className="text-sm font-bold text-indigo-700">Pro</span>
-                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')}/mo</div>
+                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')} USD/mo</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-slate-100">
                             <span className="text-sm font-bold text-slate-700">Business</span>
-                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')}/mo</div>
+                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')} USD/mo</div>
                         </div>
                     </div>
 
@@ -1099,8 +1102,8 @@ function PricingPage(): React.ReactElement {
                             a: 'Nope! VoteGenerator is privacy-first. No signup required for any plan. We\'ll email you a secure link to manage your polls and subscription.' 
                         },
                         { 
-                            q: 'How does "2 months free" work?', 
-                            a: 'Annual plans are priced at 10 months instead of 12. Pro is $190/year (saves $38 vs monthly) and Business is $490/year (saves $98 vs monthly). You\'re essentially getting 2 months completely free!' 
+                            q: 'How much do I save with annual billing?', 
+                            a: 'Pro annual is $190/year (saves $38 vs $228 monthly). Business annual is $490/year (saves $98 vs $588 monthly). That\'s about 17% off!' 
                         },
                         { 
                             q: 'Can I switch plans later?', 

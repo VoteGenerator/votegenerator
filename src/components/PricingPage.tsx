@@ -22,11 +22,11 @@ import Footer from './Footer';
 // =============================================================================
 const PRICING = {
     pro: {
-        monthly: 16,
+        monthly: 19,
         annual: 190,
     },
     business: {
-        monthly: 41,
+        monthly: 49,
         annual: 490,
     }
 };
@@ -998,11 +998,11 @@ function PricingPage(): React.ReactElement {
                         </div>
                         <div className="py-4 px-4 text-center bg-indigo-50">
                             <span className="text-sm font-bold text-indigo-700">Pro</span>
-                            <div className="text-xs text-indigo-500">${isAnnual ? Math.round(getMonthlyEquivalent('pro')) : getPrice('pro')} USD/mo</div>
+                            <div className="text-xs text-indigo-500">$19 USD/mo</div>
                         </div>
                         <div className="py-4 px-4 text-center bg-slate-100">
                             <span className="text-sm font-bold text-slate-700">Business</span>
-                            <div className="text-xs text-slate-500">${isAnnual ? Math.round(getMonthlyEquivalent('business')) : getPrice('business')} USD/mo</div>
+                            <div className="text-xs text-slate-500">$49 USD/mo</div>
                         </div>
                     </div>
 

@@ -291,8 +291,20 @@ export const handler: Handler = async (event) => {
 
         console.log('[vg-load-test] Getting poll:', pollId);
         
-        // Get poll - use auto-injection of credentials
-        const pollStore = getStore('polls');
+        // Get poll - use explicit credentials
+        const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+        const token = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+        
+        if (!siteID || !token) {
+            console.log('[vg-load-test] Missing siteID or token');
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ error: 'Blobs not configured - missing VG_SITE_ID or NETLIFY_AUTH_TOKEN' }) 
+            };
+        }
+        
+        const pollStore = getStore({ name: 'polls', siteID, token });
         
         let poll: any;
         try {

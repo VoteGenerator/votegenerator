@@ -88,195 +88,236 @@ function weightedRandom<T extends { weight: number }>(items: T[]): T {
     return items[0];
 }
 
-function randomFrom<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function generateFakeIP(geo: any): string {
-    // Generate somewhat realistic IP ranges per country
-    const ipRanges: { [key: string]: string } = {
-        'US': `${Math.floor(Math.random() * 50) + 50}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        'GB': `${Math.floor(Math.random() * 30) + 80}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        'CA': `${Math.floor(Math.random() * 20) + 24}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        'AU': `${Math.floor(Math.random() * 20) + 120}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        'DE': `${Math.floor(Math.random() * 30) + 85}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-    };
-    return ipRanges[geo.country] || `${Math.floor(Math.random() * 200) + 20}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-}
-
-function generateUserAgent(device: any, browser: any, os: any): string {
-    if (device.type === 'mobile' && os.name === 'iOS') {
-        return `Mozilla/5.0 (iPhone; CPU iPhone OS ${os.version.replace('.', '_')} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${browser.version} Mobile/15E148 Safari/604.1`;
-    }
-    if (device.type === 'mobile' && os.name === 'Android') {
-        return `Mozilla/5.0 (Linux; Android ${os.version}; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version} Mobile Safari/537.36`;
-    }
-    if (os.name === 'Windows') {
-        return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version} Safari/537.36`;
-    }
-    if (os.name === 'macOS') {
-        return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${browser.version} Safari/605.1.15`;
-    }
-    return `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version} Safari/537.36`;
-}
-
-function generateTimestamp(daysBack: number): string {
+// Generate random timestamp within the last N days
+function randomTimestamp(daysBack: number): string {
     const now = Date.now();
-    const past = now - (daysBack * 24 * 60 * 60 * 1000);
-    
-    // Weight towards more recent votes
-    const random = Math.pow(Math.random(), 0.7); // Skew towards recent
-    const timestamp = past + random * (now - past);
-    
-    return new Date(timestamp).toISOString();
+    const msBack = daysBack * 24 * 60 * 60 * 1000;
+    const randomMs = Math.random() * msBack;
+    return new Date(now - randomMs).toISOString();
 }
 
+// Generate a realistic fingerprint-like hash
+function generateFingerprint(): string {
+    const chars = 'abcdef0123456789';
+    let fp = '';
+    for (let i = 0; i < 32; i++) {
+        fp += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return fp;
+}
+
+// Generate random IP (fake but realistic format)
+function generateIP(): string {
+    return [
+        Math.floor(Math.random() * 223) + 1, // Avoid 0.x.x.x and 224+
+        Math.floor(Math.random() * 256),
+        Math.floor(Math.random() * 256),
+        Math.floor(Math.random() * 256)
+    ].join('.');
+}
+
+// Generate a fake vote with all realistic data
 function generateFakeVote(poll: any, index: number, daysBack: number): any {
-    const options = poll.options || [];
-    const pollType = poll.pollType || 'multiple-choice';
-    
-    // Pick random data
     const geo = weightedRandom(geoData);
     const device = weightedRandom(devices);
     const browser = weightedRandom(browsers);
     const os = weightedRandom(operatingSystems);
     const referrer = weightedRandom(referrers);
     
-    const vote: any = {
-        oderId: `test_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: generateTimestamp(daysBack),
+    // Pick a random option
+    const optionIndex = Math.floor(Math.random() * (poll.options?.length || 2));
+    const option = poll.options?.[optionIndex] || { id: 'opt_0', text: 'Option 1' };
+    
+    // For rating polls, generate a rating
+    let rating: number | undefined;
+    if (poll.pollType === 'rating') {
+        // Weighted towards positive ratings
+        const ratings = [1, 2, 3, 4, 5];
+        const weights = [5, 10, 20, 35, 30]; // Skewed positive
+        let r = Math.random() * 100;
+        for (let i = 0; i < ratings.length; i++) {
+            r -= weights[i];
+            if (r <= 0) {
+                rating = ratings[i];
+                break;
+            }
+        }
+        rating = rating || 4;
+    }
+    
+    // For ranked choice, generate a ranking
+    let rankings: string[] | undefined;
+    if (poll.pollType === 'ranked') {
+        const optionIds = poll.options?.map((o: any) => o.id) || ['opt_0', 'opt_1'];
+        rankings = [...optionIds].sort(() => Math.random() - 0.5);
+    }
+    
+    // Generate vote ID
+    const voteId = 'vote_test_' + Date.now().toString(36) + '_' + index.toString(36);
+    
+    return {
+        id: voteId,
+        optionId: option.id,
+        optionText: option.text,
+        rating,
+        rankings,
+        timestamp: randomTimestamp(daysBack),
         
-        // Geo data
-        ip: generateFakeIP(geo),
-        country: geo.country,
-        region: geo.region,
-        city: geo.city,
+        // Voter info (optional)
+        voterName: poll.settings?.requireNames ? generateRandomName() : undefined,
         
-        // Device data
+        // Device/Browser info
         deviceType: device.type,
         browser: browser.name,
         browserVersion: browser.version,
         os: os.name,
         osVersion: os.version,
-        userAgent: generateUserAgent(device, browser, os),
         
-        // Referrer data
+        // Geo data
+        country: geo.country,
+        region: geo.region,
+        city: geo.city,
+        
+        // Referrer
         referrerSource: referrer.source,
         referrerMedium: referrer.medium,
         
-        // Screen info (for mobile vs desktop)
-        screenWidth: device.type === 'mobile' ? randomFrom([375, 390, 414, 428]) : 
-                     device.type === 'tablet' ? randomFrom([768, 820, 834]) :
-                     randomFrom([1280, 1366, 1440, 1920, 2560]),
-        screenHeight: device.type === 'mobile' ? randomFrom([667, 844, 896, 926]) :
-                      device.type === 'tablet' ? randomFrom([1024, 1180, 1194]) :
-                      randomFrom([720, 768, 900, 1080, 1440]),
+        // Security/tracking
+        fingerprint: generateFingerprint(),
+        ip: generateIP(), // Fake IP for testing
+        
+        // Meta
+        isTestVote: true,
+        userAgent: generateUserAgent(browser, os, device.type),
     };
-    
-    // Generate vote based on poll type
-    switch (pollType) {
-        case 'multiple-choice':
-        case 'image-poll':
-            // Weight votes slightly towards first options (realistic)
-            const weights = options.map((_: any, i: number) => Math.pow(0.8, i));
-            const totalWeight = weights.reduce((a: number, b: number) => a + b, 0);
-            let r = Math.random() * totalWeight;
-            for (let i = 0; i < options.length; i++) {
-                r -= weights[i];
-                if (r <= 0) {
-                    vote.optionId = options[i]?.id || i;
-                    break;
-                }
-            }
-            if (vote.optionId === undefined) vote.optionId = options[0]?.id || 0;
-            break;
-            
-        case 'rating-scale':
-            // Bell curve around 3-4 stars
-            const ratings = [1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5];
-            vote.rating = randomFrom(ratings);
-            break;
-            
-        case 'ranked-choice':
-            const shuffled = [...options].sort(() => Math.random() - 0.5);
-            vote.rankings = shuffled.map((o: any) => o.id);
-            break;
-            
-        case 'open-ended':
-            const responses = [
-                'Great experience overall!',
-                'Really enjoyed this, would recommend.',
-                'Could use some improvements but solid.',
-                'Excellent! Exceeded my expectations.',
-                'Good value for the price.',
-                'Very satisfied with the results.',
-                'Would definitely use again.',
-                'Not bad, room for improvement.',
-                'Impressive quality and service.',
-                'Met my needs perfectly.',
-                'Fast and efficient.',
-                'User friendly and intuitive.',
-                'Amazing product, love it!',
-                'Decent but could be better.',
-                'Highly recommended!',
-            ];
-            vote.response = randomFrom(responses);
-            break;
-            
-        default:
-            vote.optionId = options[0]?.id || 0;
-    }
-    
-    return vote;
 }
 
+// Generate realistic user agent
+function generateUserAgent(browser: any, os: any, deviceType: string): string {
+    const osStrings: Record<string, string> = {
+        'Windows 10': 'Windows NT 10.0; Win64; x64',
+        'Windows 11': 'Windows NT 10.0; Win64; x64',
+        'macOS 14.2': 'Macintosh; Intel Mac OS X 14_2',
+        'iOS 17.2': 'iPhone; CPU iPhone OS 17_2 like Mac OS X',
+        'Android 14': 'Linux; Android 14',
+        'Linux': 'X11; Linux x86_64',
+    };
+    
+    const osKey = os.name + (os.version ? ' ' + os.version : '');
+    const osString = osStrings[osKey] || 'Windows NT 10.0; Win64; x64';
+    
+    if (browser.name === 'Chrome') {
+        return 'Mozilla/5.0 (' + osString + ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + browser.version + ' Safari/537.36';
+    }
+    if (browser.name === 'Safari') {
+        return 'Mozilla/5.0 (' + osString + ') AppleWebKit/605.1.15 (KHTML, like Gecko) Version/' + browser.version + ' Safari/605.1.15';
+    }
+    if (browser.name === 'Firefox') {
+        return 'Mozilla/5.0 (' + osString + '; rv:' + browser.version + ') Gecko/20100101 Firefox/' + browser.version;
+    }
+    return 'Mozilla/5.0 (' + osString + ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+}
+
+// Generate random name
+function generateRandomName(): string {
+    const firstNames = ['Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Quinn', 'Avery', 'Parker', 'Cameron', 'Drew', 'Jamie', 'Skyler', 'Reese', 'Dakota'];
+    const lastInitials = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return firstNames[Math.floor(Math.random() * firstNames.length)] + ' ' + lastInitials[Math.floor(Math.random() * lastInitials.length)] + '.';
+}
+
+// Main handler
 export const handler: Handler = async (event) => {
+    console.log('[vg-load-test] Function invoked');
+    
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json',
     };
 
     if (event.httpMethod === 'OPTIONS') {
+        console.log('[vg-load-test] OPTIONS request');
         return { statusCode: 204, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
+        console.log('[vg-load-test] Wrong method:', event.httpMethod);
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
+        console.log('[vg-load-test] Parsing body');
         const body = JSON.parse(event.body || '{}');
         const { pollId, adminKey, count = 100, daysBack = 7, testPassword } = body;
 
+        console.log('[vg-load-test] Checking password...');
+        console.log('[vg-load-test] TEST_PASSWORD exists:', !!TEST_PASSWORD);
+        console.log('[vg-load-test] testPassword provided:', !!testPassword);
+        
         // Security check
         if (!TEST_PASSWORD) {
-            return { statusCode: 500, headers, body: JSON.stringify({ error: 'LOAD_TEST_PASSWORD not configured in environment' }) };
+            console.log('[vg-load-test] ERROR: LOAD_TEST_PASSWORD not in env');
+            return { 
+                statusCode: 500, 
+                headers, 
+                body: JSON.stringify({ error: 'LOAD_TEST_PASSWORD not configured in environment' }) 
+            };
         }
         
         if (testPassword !== TEST_PASSWORD) {
-            return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid test password' }) };
+            console.log('[vg-load-test] ERROR: Password mismatch');
+            console.log('[vg-load-test] Expected length:', TEST_PASSWORD.length);
+            console.log('[vg-load-test] Received length:', testPassword?.length || 0);
+            return { 
+                statusCode: 403, 
+                headers, 
+                body: JSON.stringify({ error: 'Invalid test password' }) 
+            };
         }
 
+        console.log('[vg-load-test] Password OK, checking inputs');
+        
         if (!pollId || !adminKey) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'pollId and adminKey required' }) };
+            return { 
+                statusCode: 400, 
+                headers, 
+                body: JSON.stringify({ error: 'pollId and adminKey required' }) 
+            };
         }
 
         // Limit to prevent abuse
         const voteCount = Math.min(count, 1000); // Max 1000 per request
 
-        // Get poll
+        console.log('[vg-load-test] Getting poll:', pollId);
+        
+        // Get poll - use auto-injection of credentials
         const pollStore = getStore('polls');
-        const poll = await pollStore.get(pollId, { type: 'json' }) as any;
+        
+        let poll: any;
+        try {
+            poll = await pollStore.get(pollId, { type: 'json' });
+        } catch (e) {
+            console.log('[vg-load-test] Poll fetch error:', e);
+            return { 
+                statusCode: 404, 
+                headers, 
+                body: JSON.stringify({ error: 'Poll not found or access error' }) 
+            };
+        }
 
         if (!poll) {
+            console.log('[vg-load-test] Poll not found');
             return { statusCode: 404, headers, body: JSON.stringify({ error: 'Poll not found' }) };
         }
 
         if (poll.adminKey !== adminKey) {
+            console.log('[vg-load-test] Admin key mismatch');
             return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid admin key' }) };
         }
 
+        console.log('[vg-load-test] Generating', voteCount, 'votes');
+        
         // Generate fake votes
         const existingVotes = poll.votes || [];
         const newVotes = [];
@@ -289,34 +330,45 @@ export const handler: Handler = async (event) => {
         poll.votes = [...existingVotes, ...newVotes];
         poll.totalVotes = poll.votes.length;
         
+        console.log('[vg-load-test] Saving poll with', poll.totalVotes, 'total votes');
+        
         await pollStore.setJSON(pollId, poll);
 
         // Calculate some stats for response
-        const countries = new Set(newVotes.map((v: any) => v.country));
-        const devices = {
+        const countriesSet = new Set(newVotes.map((v: any) => v.country));
+        const deviceStats = {
             mobile: newVotes.filter((v: any) => v.deviceType === 'mobile').length,
             desktop: newVotes.filter((v: any) => v.deviceType === 'desktop').length,
             tablet: newVotes.filter((v: any) => v.deviceType === 'tablet').length,
         };
 
+        console.log('[vg-load-test] Success!');
+        
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 success: true,
-                message: `Added ${voteCount} test votes`,
+                message: 'Added ' + voteCount + ' test votes',
                 totalVotes: poll.totalVotes,
                 stats: {
-                    countriesGenerated: countries.size,
-                    deviceBreakdown: devices,
-                    timeSpan: `${daysBack} days`,
+                    countriesGenerated: countriesSet.size,
+                    deviceBreakdown: deviceStats,
+                    timeSpan: daysBack + ' days',
                 },
                 warning: '⚠️ DELETE THIS FUNCTION AFTER TESTING!'
             }),
         };
 
-    } catch (err) {
+    } catch (err: any) {
         console.error('[vg-load-test] Error:', err);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal error' }) };
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ 
+                error: 'Internal error', 
+                details: err.message || 'Unknown error' 
+            }) 
+        };
     }
 };

@@ -19,8 +19,220 @@ import {
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
-import HeroSection from './HeroSection';
 
+// ============================================================================
+// Hero Section - Immediate value, single CTA, interactive demo
+// Research: 48% exit without interaction - need instant engagement
+// ============================================================================
+
+const HeroSection: React.FC = () => {
+    const [demoVotes, setDemoVotes] = useState([42, 38, 28, 15]);
+    const [selectedOption, setSelectedOption] = useState<number | null>(null);
+    const [hasVoted, setHasVoted] = useState(false);
+
+    const demoOptions = [
+        { text: 'Hawaiian Paradise', emoji: '🏝️' },
+        { text: 'Mountain Lodge', emoji: '🏔️' },
+        { text: 'Beach Resort', emoji: '🏖️' },
+        { text: 'City Adventure', emoji: '🌆' },
+    ];
+
+    const handleVote = (index: number) => {
+        if (hasVoted) return;
+        setSelectedOption(index);
+        const newVotes = [...demoVotes];
+        newVotes[index] += 1;
+        setDemoVotes(newVotes);
+        setHasVoted(true);
+    };
+
+    const totalVotes = demoVotes.reduce((sum, v) => sum + v, 0);
+
+    return (
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full opacity-20 blur-3xl" />
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400 rounded-full opacity-20 blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
+            </div>
+
+            <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20">
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                    {/* Left: Copy */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center lg:text-left"
+                    >
+                        {/* Trust badge - small, credible */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-indigo-100 text-sm mb-6">
+                            <Lock size={14} />
+                            <span>No signup required to create or vote</span>
+                        </div>
+
+                        {/* Main headline - simple, benefit-focused */}
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-6">
+                            Create polls in<br />
+                            <span className="text-amber-300">30 seconds</span>
+                        </h1>
+
+                        {/* Subheadline - what + why */}
+                        <p className="text-lg md:text-xl text-indigo-100 mb-8 max-w-lg mx-auto lg:mx-0">
+                            The fastest way to gather opinions. Share a link, get instant votes. 
+                            Works on any device.
+                        </p>
+
+                        {/* Key benefits - scannable */}
+                        <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
+                            {[
+                                { icon: Zap, text: 'Create in 30 seconds' },
+                                { icon: Lock, text: 'No account needed' },
+                                { icon: Smartphone, text: 'Works on any device' },
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 text-white text-sm font-medium">
+                                    <item.icon size={16} className="text-amber-300" />
+                                    {item.text}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Single primary CTA */}
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                            <a 
+                                href="#create" 
+                                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition shadow-xl shadow-indigo-900/20"
+                            >
+                                <Sparkles size={20} /> 
+                                Create Free Poll 
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </a>
+                            <a 
+                                href="/demo" 
+                                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 backdrop-blur text-white font-medium rounded-xl hover:bg-white/20 transition border border-white/20"
+                            >
+                                <Play size={18} /> See all 8 poll types
+                            </a>
+                        </div>
+                    </motion.div>
+
+                    {/* Right: Interactive Demo Poll */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: 30 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        transition={{ delay: 0.2 }}
+                        className="hidden lg:block"
+                    >
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-500">
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                    <span className="text-xs font-medium text-emerald-600">Live Demo</span>
+                                </div>
+                                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
+                                    {totalVotes} votes
+                                </span>
+                            </div>
+                            
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                🗳️ Where should we host the team retreat?
+                            </h3>
+                            
+                            <div className="space-y-2.5">
+                                {demoOptions.map((opt, i) => {
+                                    const pct = Math.round((demoVotes[i] / totalVotes) * 100);
+                                    const isSelected = selectedOption === i;
+                                    const isWinner = demoVotes[i] === Math.max(...demoVotes);
+                                    
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleVote(i)}
+                                            disabled={hasVoted}
+                                            className={`relative w-full p-3 rounded-xl border-2 text-left transition-all ${
+                                                isSelected 
+                                                    ? 'border-indigo-500 bg-indigo-50' 
+                                                    : hasVoted
+                                                        ? 'border-slate-100 bg-slate-50'
+                                                        : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 cursor-pointer'
+                                            }`}
+                                        >
+                                            {/* Progress bar */}
+                                            <motion.div 
+                                                className={`absolute inset-0 rounded-xl ${isSelected ? 'bg-indigo-200' : 'bg-slate-100'}`}
+                                                initial={{ scaleX: 0 }}
+                                                animate={{ scaleX: hasVoted ? pct / 100 : 0 }}
+                                                transition={{ duration: 0.5, ease: "easeOut" }}
+                                                style={{ transformOrigin: 'left', opacity: 0.5 }}
+                                            />
+                                            
+                                            <div className="relative flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg">{opt.emoji}</span>
+                                                    <span className={`font-medium ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                                        {opt.text}
+                                                    </span>
+                                                    {isWinner && hasVoted && (
+                                                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">
+                                                            Leading
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {hasVoted && (
+                                                    <span className={`text-sm font-bold ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`}>
+                                                        {pct}%
+                                                    </span>
+                                                )}
+                                                {isSelected && (
+                                                    <CheckCircle2 className="absolute -right-1 -top-1 text-indigo-600 bg-white rounded-full" size={20} />
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            {hasVoted ? (
+                                <p className="text-center text-emerald-600 text-sm font-medium mt-4 flex items-center justify-center gap-2">
+                                    <CheckCircle2 size={16} /> Vote recorded! Results update in real-time.
+                                </p>
+                            ) : (
+                                <p className="text-center text-slate-400 text-sm mt-4">
+                                    👆 Click an option to vote (try it!)
+                                </p>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// Trust Bar - For new company without logos, use feature/security signals
+// ============================================================================
+
+const TrustBar: React.FC = () => (
+    <div className="bg-slate-900 py-4 border-y border-slate-800">
+        <div className="max-w-7xl mx-auto px-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm">
+                {[
+                    { icon: Lock, text: 'No Signup Required', color: 'text-emerald-400' },
+                    { icon: Mail, text: 'No Email to Vote', color: 'text-blue-400' },
+                    { icon: Layers, text: '8 Poll Types', color: 'text-purple-400' },
+                    { icon: Globe, text: 'Works on Any Device', color: 'text-amber-400' },
+                    { icon: Zap, text: 'Real-time Results', color: 'text-pink-400' },
+                ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-slate-400">
+                        <item.icon size={16} className={item.color} />
+                        <span>{item.text}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
 
 // ============================================================================
 // Problem Section - Show pain points of existing tools
@@ -28,7 +240,7 @@ import HeroSection from './HeroSection';
 // ============================================================================
 
 const ProblemSection: React.FC = () => (
-    <section className="py-16 bg-gradient-to-b from-indigo-50/50 to-white">
+    <section className="py-16 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4">
             <div className="text-center mb-12">
                 <span className="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full mb-4">
@@ -88,8 +300,8 @@ const ProblemSection: React.FC = () => (
                     We built VoteGenerator differently.
                 </h3>
                 <p className="text-indigo-100 max-w-2xl mx-auto">
-                    No accounts required. No emails collected. Just polls that work instantly, 
-                    on any device, with complete privacy for your voters.
+                    No accounts. No emails. No subscriptions. Just polls that work instantly, 
+                    on any device, with complete privacy for everyone.
                 </p>
             </motion.div>
         </div>
@@ -158,6 +370,9 @@ const HowItWorksSection: React.FC = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* Connector line on desktop */}
+                <div className="hidden md:block relative h-0.5 bg-gradient-to-r from-indigo-200 via-purple-200 to-emerald-200 -mt-[140px] mx-20 mb-[100px]" />
             </div>
         </section>
     );
@@ -402,7 +617,7 @@ const PollTypesSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
+        <section className="py-20 bg-slate-50">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-bold rounded-full mb-4">
@@ -736,7 +951,7 @@ const TemplatesSection: React.FC = () => {
                         Get started faster
                     </span>
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                        Free templates for every use case
+                        40+ ready-to-use templates
                     </h2>
                     <p className="text-lg text-slate-500 max-w-2xl mx-auto">
                         Don't start from scratch. Pick a template, customize it, and launch in seconds.
@@ -752,7 +967,7 @@ const TemplatesSection: React.FC = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: i * 0.05 }}
-                            className="group bg-white border-2 border-slate-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all cursor-pointer"
+                            className="group bg-slate-100 rounded-xl overflow-hidden hover:shadow-xl transition-all cursor-pointer"
                         >
                             {/* Visual preview */}
                             <div className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 min-h-[120px] flex items-center justify-center">
@@ -774,34 +989,12 @@ const TemplatesSection: React.FC = () => {
                     ))}
                 </div>
 
-                {/* Creator Platform Links */}
-                <div className="flex flex-wrap justify-center gap-4 mb-8">
-                    <a 
-                        href="/youtube-polls"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-red-50 border-2 border-red-200 text-red-700 font-semibold rounded-xl hover:bg-red-100 hover:border-red-300 transition"
-                    >
-                        <span>▶️</span> For YouTubers
-                    </a>
-                    <a 
-                        href="/twitch-polls"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-purple-50 border-2 border-purple-200 text-purple-700 font-semibold rounded-xl hover:bg-purple-100 hover:border-purple-300 transition"
-                    >
-                        <span>📺</span> For Streamers
-                    </a>
-                    <a 
-                        href="/reddit-polls"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border-2 border-orange-200 text-orange-700 font-semibold rounded-xl hover:bg-orange-100 hover:border-orange-300 transition"
-                    >
-                        <span>🔗</span> For Reddit
-                    </a>
-                </div>
-
                 <div className="text-center">
                     <a 
                         href="/templates" 
                         className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition"
                     >
-                        Browse All Templates <ArrowRight size={18} />
+                        Browse All 40+ Templates <ArrowRight size={18} />
                     </a>
                 </div>
             </div>
@@ -956,7 +1149,7 @@ const AnalyticsSection: React.FC = () => (
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-900">Export Data</p>
-                            <p className="text-[10px] text-slate-500">CSV & Excel</p>
+                            <p className="text-[10px] text-slate-500">CSV, Excel, PDF</p>
                         </div>
                     </div>
                 </motion.div>
@@ -985,7 +1178,7 @@ const AnalyticsSection: React.FC = () => (
                     { icon: BarChart3, title: 'Live charts', desc: 'Results update instantly as votes come in' },
                     { icon: TrendingUp, title: 'Timeline view', desc: 'See response patterns over time' },
                     { icon: Globe, title: 'Geographic data', desc: 'Know where voters are located' },
-                    { icon: Download, title: 'Export anywhere', desc: 'Download CSV or Excel files' },
+                    { icon: Download, title: 'Export anywhere', desc: 'Download CSV, Excel, or PDF' },
                 ].map((item, i) => (
                     <div key={i} className="text-center">
                         <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -1197,11 +1390,11 @@ const DeviceShowcaseSection: React.FC = () => (
 );
 
 // ============================================================================
-// Exports & Sharing Section - Show CSV, Excel, QR code visuals
+// Exports & Sharing Section - Show CSV, PDF, QR code visuals
 // ============================================================================
 
 const ExportsSection: React.FC = () => (
-    <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
+    <section className="py-20 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
                 <span className="inline-block px-3 py-1 bg-violet-100 text-violet-700 text-sm font-bold rounded-full mb-4">
@@ -1306,14 +1499,14 @@ const ExportsSection: React.FC = () => (
                             <Download size={14} className="text-slate-400" />
                         </div>
                         
-                        {/* Print */}
+                        {/* PDF */}
                         <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
-                            <div className="w-10 h-12 bg-slate-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
-                                PRINT
+                            <div className="w-10 h-12 bg-red-500 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                PDF
                             </div>
                             <div className="flex-1">
-                                <div className="text-xs font-medium text-slate-700">Print Results</div>
-                                <div className="text-[10px] text-slate-400">Browser print view</div>
+                                <div className="text-xs font-medium text-slate-700">poll_report.pdf</div>
+                                <div className="text-[10px] text-slate-400">Shareable summary</div>
                             </div>
                             <Download size={14} className="text-slate-400" />
                         </div>
@@ -1441,10 +1634,10 @@ const ValueSection: React.FC = () => (
                     <ul className="space-y-2 text-sm text-indigo-100">
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Real-time analytics dashboard</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 8 poll types included</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> CSV & Excel export</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> CSV, Excel, PDF export</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> 12+ premium themes</li>
                         <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> No signup to vote</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Month-to-month, cancel anytime</li>
+                        <li className="flex items-center gap-2"><Check size={14} className="text-emerald-400" /> Month-to-month billing</li>
                     </ul>
                 </div>
             </div>
@@ -1478,7 +1671,7 @@ const ValueSection: React.FC = () => (
                             { icon: Shield, title: 'Anti-Fraud Protection', desc: 'IP detection & browser fingerprinting' },
                             { icon: Bell, title: 'Email Notifications', desc: 'Get notified when votes come in' },
                             { icon: Timer, title: 'Scheduled Close', desc: 'Auto-close polls at a set time' },
-                            { icon: FileText, title: 'Free Templates', desc: 'Ready-to-use poll templates' },
+                            { icon: FileText, title: '40+ Templates', desc: 'Ready-to-use poll templates' },
                             { icon: TrendingUp, title: 'Response Timeline', desc: 'See when votes come in over time' },
                             { icon: Link, title: 'Custom Short Links', desc: 'Branded, memorable poll URLs' },
                         ].map((item, i) => (
@@ -1536,7 +1729,7 @@ const FeaturesSection: React.FC = () => {
                 { icon: BarChart3, title: 'Real-time results', desc: 'Watch votes come in live with auto-updating charts.' },
                 { icon: TrendingUp, title: 'Response timeline', desc: 'See when votes arrived and spot trends over time.' },
                 { icon: Globe, title: 'Geographic insights', desc: 'See where your respondents are located.' },
-                { icon: Download, title: 'Export data', desc: 'Download as CSV or Excel spreadsheets.' },
+                { icon: Download, title: 'Export data', desc: 'Download as CSV, Excel, or generate PDF reports.' },
             ]
         },
         {
@@ -1628,7 +1821,7 @@ const UseCasesSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
+        <section className="py-20 bg-slate-50">
             <div className="max-w-6xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -1743,7 +1936,7 @@ const PricingPreviewSection: React.FC = () => (
                     <p className="text-sm text-slate-400 mb-6">or $490/year USD <span className="text-amber-400 font-semibold">(2 months free)</span></p>
                     
                     <ul className="space-y-2 mb-6">
-                        {['Everything in Pro', '100,000 responses/month', 'White-label embeds', 'Bulk exports'].map((f, i) => (
+                        {['Everything in Pro', '50,000 responses/month', 'Custom logo', 'PDF reports'].map((f, i) => (
                             <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                 <Check size={16} className="text-amber-400" /> {f}
                             </li>
@@ -1798,7 +1991,7 @@ const FAQSection: React.FC = () => {
     ];
 
     return (
-        <section className="py-20 bg-gradient-to-b from-blue-50/30 to-white">
+        <section className="py-20 bg-slate-50">
             <div className="max-w-3xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -1866,9 +2059,10 @@ function LandingPage(): React.ReactElement {
         <div className="min-h-screen">
             <NavHeader />
             <HeroSection />
+            <TrustBar />
             
             {/* ============ CREATE POLL SECTION ============ */}
-            <section id="create" className="py-16 bg-gradient-to-b from-slate-50/50 to-white">
+            <section id="create" className="py-16 bg-gradient-to-b from-white to-slate-50">
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="text-center mb-8">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">

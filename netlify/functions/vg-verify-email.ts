@@ -101,13 +101,13 @@ async function sendVerificationEmail(
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Authorization': 'Bearer ' + RESEND_API_KEY,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 from: FROM_EMAIL,
                 to: [email],
-                subject: `Confirm notifications for "${pollTitle}"`,
+                subject: 'Confirm notifications for "' + pollTitle + '"',
                 html
             })
         });
@@ -146,7 +146,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': `${SITE_URL}/#verification=invalid`
+                    'Location': SITE_URL + '/verify-result?status=invalid'
                 },
                 body: ''
             };
@@ -154,19 +154,20 @@ export const handler: Handler = async (event) => {
 
         try {
             // Get verification record
-            const verifyStore = getStore({
-                name: 'email-verifications',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
-
-            const verification = await verifyStore.get(token, { type: 'json' }) as any;
+            const verifyStore = getStore('email-verifications');
+            
+            let verification: any = null;
+            try {
+                verification = await verifyStore.get(token, { type: 'json' });
+            } catch (e) {
+                // Token not found
+            }
 
             if (!verification) {
                 return {
                     statusCode: 302,
                     headers: {
-                        'Location': `${SITE_URL}/#verification=expired`
+                        'Location': SITE_URL + '/verify-result?status=expired'
                     },
                     body: ''
                 };
@@ -182,20 +183,21 @@ export const handler: Handler = async (event) => {
                 return {
                     statusCode: 302,
                     headers: {
-                        'Location': `${SITE_URL}/#verification=expired`
+                        'Location': SITE_URL + '/verify-result?status=expired'
                     },
                     body: ''
                 };
             }
 
             // Get poll and update notification settings
-            const pollStore = getStore({
-                name: 'polls',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
-
-            const poll = await pollStore.get(verification.pollId, { type: 'json' }) as any;
+            const pollStore = getStore('polls');
+            
+            let poll: any = null;
+            try {
+                poll = await pollStore.get(verification.pollId, { type: 'json' });
+            } catch (e) {
+                // Poll not found
+            }
 
             if (poll && poll.notificationSettings) {
                 // Find and verify the email
@@ -217,7 +219,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': `${SITE_URL}/#verification=success&poll=${verification.pollId}`
+                    'Location': SITE_URL + '/verify-result?status=success&poll=' + verification.pollId
                 },
                 body: ''
             };
@@ -227,7 +229,7 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': `${SITE_URL}/#verification=error`
+                    'Location': SITE_URL + '/verify-result?status=error'
                 },
                 body: ''
             };
@@ -262,13 +264,14 @@ export const handler: Handler = async (event) => {
         }
 
         // Verify admin access
-        const pollStore = getStore({
-            name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-
-        const poll = await pollStore.get(pollId, { type: 'json' }) as any;
+        const pollStore = getStore('polls');
+        
+        let poll: any = null;
+        try {
+            poll = await pollStore.get(pollId, { type: 'json' });
+        } catch (e) {
+            // Poll not found
+        }
 
         if (!poll || poll.adminKey !== adminKey) {
             return {
@@ -280,15 +283,11 @@ export const handler: Handler = async (event) => {
 
         // Generate verification token
         const token = generateToken();
-        const verifyUrl = `${SITE_URL}/.netlify/functions/vg-verify-email?token=${token}`;
+        const verifyUrl = SITE_URL + '/.netlify/functions/vg-verify-email?token=' + token;
 
         // Store verification record
-        const verifyStore = getStore({
-            name: 'email-verifications',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
-
+        const verifyStore = getStore('email-verifications');
+        
         await verifyStore.setJSON(token, {
             pollId,
             email: email.toLowerCase(),
@@ -347,7 +346,7 @@ export const handler: Handler = async (event) => {
 
         await pollStore.setJSON(pollId, poll);
 
-        console.log(`Verification email sent to ${email} for poll ${pollId}`);
+        console.log('Verification email sent to ' + email + ' for poll ' + pollId);
 
         return {
             statusCode: 200,

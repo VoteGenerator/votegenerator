@@ -67,14 +67,14 @@ const TIER_CONFIG: Record<string, {
         features: ['all'],
     },
     pro: {
-        maxResponses: 10000,  // Updated to match pricing page
-        expiresInDays: 30,
+        maxResponses: 10000,
+        expiresInDays: 365,
         maxPolls: -1, // unlimited
         features: ['all'],
     },
     business: {
-        maxResponses: 100000,  // Updated to match pricing page
-        expiresInDays: 30,
+        maxResponses: 100000,
+        expiresInDays: 365,
         maxPolls: -1,
         features: ['all'],
     },
@@ -97,13 +97,14 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
     try {
         // Method 1: Check by dashboard token (most reliable)
         if (dashboardToken) {
-            const customerStore = getStore({
-                name: 'vg-customers',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
+            const customerStore = getStore('vg-customers');
             
-            const customerData = await customerStore.get(`token_${dashboardToken}`, { type: 'json' }) as any;
+            let customerData: any = null;
+            try {
+                customerData = await customerStore.get('token_' + dashboardToken, { type: 'json' });
+            } catch (e) {
+                console.log('vg-create: Token lookup failed');
+            }
             
             if (customerData && customerData.stripeCustomerId) {
                 // Verify against Stripe
@@ -125,11 +126,15 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                         const businessPrices = [
                             process.env.STRIPE_BUSINESS_MONTHLY_PRICE,
                             process.env.STRIPE_BUSINESS_ANNUAL_PRICE,
+                            process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
+                            process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
                         ].filter(Boolean);
                         
                         const proPrices = [
                             process.env.STRIPE_PRO_MONTHLY_PRICE,
                             process.env.STRIPE_PRO_ANNUAL_PRICE,
+                            process.env.STRIPE_PRICE_PRO_MONTHLY,
+                            process.env.STRIPE_PRICE_PRO_ANNUAL,
                         ].filter(Boolean);
                         
                         let tier: 'free' | 'pro' | 'business' = 'free';
@@ -145,7 +150,7 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                             else if (tierMeta === 'pro') tier = 'pro';
                         }
                         
-                        console.log(`vg-create: Verified tier from Stripe: ${tier}`);
+                        console.log('vg-create: Verified tier from Stripe: ' + tier);
                         return {
                             tier,
                             customerId: customerData.stripeCustomerId,
@@ -179,11 +184,15 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                     const businessPrices = [
                         process.env.STRIPE_BUSINESS_MONTHLY_PRICE,
                         process.env.STRIPE_BUSINESS_ANNUAL_PRICE,
+                        process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
+                        process.env.STRIPE_PRICE_BUSINESS_ANNUAL,
                     ].filter(Boolean);
                     
                     const proPrices = [
                         process.env.STRIPE_PRO_MONTHLY_PRICE,
                         process.env.STRIPE_PRO_ANNUAL_PRICE,
+                        process.env.STRIPE_PRICE_PRO_MONTHLY,
+                        process.env.STRIPE_PRICE_PRO_ANNUAL,
                     ].filter(Boolean);
                     
                     let tier: 'free' | 'pro' | 'business' = 'free';
@@ -198,7 +207,7 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                         else if (tierMeta === 'pro') tier = 'pro';
                     }
                     
-                    console.log(`vg-create: Verified tier from email: ${tier}`);
+                    console.log('vg-create: Verified tier from email: ' + tier);
                     return {
                         tier,
                         customerId: customer.id,
@@ -235,7 +244,7 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                             tier = session.metadata.tier as 'pro' | 'business';
                         }
                         
-                        console.log(`vg-create: Verified tier from session: ${tier}`);
+                        console.log('vg-create: Verified tier from session: ' + tier);
                         return {
                             tier,
                             customerId,
@@ -268,38 +277,34 @@ async function countUserPolls(dashboardToken?: string, sessionId?: string, custo
     }
     
     try {
-        const customerStore = getStore({
-            name: 'vg-customers',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
+        const customerStore = getStore('vg-customers');
         
         let customerData: any = null;
         
         // Try dashboard token first
         if (dashboardToken) {
-            customerData = await customerStore.get(`token_${dashboardToken}`, { type: 'json' });
+            try {
+                customerData = await customerStore.get('token_' + dashboardToken, { type: 'json' });
+            } catch (e) {
+                // Token not found
+            }
         }
         
         // Try customer ID
         if (!customerData && customerId) {
-            customerData = await customerStore.get(customerId, { type: 'json' });
+            try {
+                customerData = await customerStore.get(customerId, { type: 'json' });
+            } catch (e) {
+                // Customer not found
+            }
         }
         
         // Try session ID lookup
         if (!customerData && sessionId) {
-            const list = await customerStore.list();
-            for (const key of list.blobs) {
-                if (key.key.startsWith('token_')) continue;
-                try {
-                    const customer = await customerStore.get(key.key, { type: 'json' }) as any;
-                    if (customer && customer.stripeSessionId === sessionId) {
-                        customerData = customer;
-                        break;
-                    }
-                } catch (e) {
-                    // Skip invalid entries
-                }
+            try {
+                customerData = await customerStore.get('session_' + sessionId, { type: 'json' });
+            } catch (e) {
+                // Session not found
             }
         }
         
@@ -348,7 +353,8 @@ export const handler: Handler = async (event) => {
             status: requestedStatus, imageUrls, pin, allowedCodes, 
             dashboardToken, sessionId, theme, ratingStyle, 
             meetingDuration, logoUrl, buttonText, sections, 
-            surveySettings, isSurvey, userEmail 
+            surveySettings, isSurvey, userEmail,
+            hideBranding, customThankYou
         } = body;
 
         // ====================================================================
@@ -360,7 +366,7 @@ export const handler: Handler = async (event) => {
             sessionId
         );
         
-        console.log(`vg-create: Verified tier = ${tier} (requested tier was ${body.tier || 'not specified'})`);
+        console.log('vg-create: Verified tier = ' + tier + ' (requested tier was ' + (body.tier || 'not specified') + ')');
         
         // Get tier config based on VERIFIED tier
         const tierConfig = TIER_CONFIG[tier];
@@ -407,14 +413,14 @@ export const handler: Handler = async (event) => {
         if (tierConfig.maxPolls > 0) {
             const existingPollCount = await countUserPolls(dashboardToken, sessionId, customerId);
             
-            console.log(`vg-create: User has ${existingPollCount} polls, limit is ${tierConfig.maxPolls}`);
+            console.log('vg-create: User has ' + existingPollCount + ' polls, limit is ' + tierConfig.maxPolls);
             
             if (existingPollCount >= tierConfig.maxPolls) {
                 return {
                     statusCode: 403,
                     headers,
                     body: JSON.stringify({ 
-                        error: `You've reached the maximum of ${tierConfig.maxPolls} active poll${tierConfig.maxPolls > 1 ? 's' : ''} for the free plan. Upgrade to Pro for unlimited polls!`,
+                        error: 'You have reached the maximum of ' + tierConfig.maxPolls + ' active poll' + (tierConfig.maxPolls > 1 ? 's' : '') + ' for the free plan. Upgrade to Pro for unlimited polls!',
                         pollLimit: tierConfig.maxPolls,
                         currentPolls: existingPollCount,
                         upgradeRequired: true,
@@ -442,13 +448,14 @@ export const handler: Handler = async (event) => {
             }
             
             // Check if slug is already taken
-            const slugStore = getStore({
-                name: 'poll-slugs',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
+            const slugStore = getStore('poll-slugs');
             
-            const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
+            let existingPollId: string | null = null;
+            try {
+                existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
+            } catch (e) {
+                // Slug not found, which is good
+            }
             
             if (existingPollId) {
                 return {
@@ -456,7 +463,7 @@ export const handler: Handler = async (event) => {
                     headers,
                     body: JSON.stringify({ 
                         error: 'This custom link is already taken',
-                        suggestion: `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`
+                        suggestion: normalizedSlug + '-' + Math.random().toString(36).substring(2, 6)
                     }),
                 };
             }
@@ -465,7 +472,7 @@ export const handler: Handler = async (event) => {
             hasCustomSlug = true;
         } else if (customSlug && tier !== 'business') {
             // User tried to use custom slug without Business tier
-            console.log(`vg-create: Blocked custom slug attempt from ${tier} user`);
+            console.log('vg-create: Blocked custom slug attempt from ' + tier + ' user');
             // Don't error, just ignore the custom slug
             pollId = generateSecureId();
         } else {
@@ -479,6 +486,12 @@ export const handler: Handler = async (event) => {
             Date.now() + tierConfig.expiresInDays * 24 * 60 * 60 * 1000
         ).toISOString();
 
+        // ====================================================================
+        // FEATURE GATING - Strip features user doesn't have access to
+        // ====================================================================
+        const isPaidUser = tier === 'pro' || tier === 'business';
+        const isBusiness = tier === 'business';
+
         // Create poll object with VERIFIED tier
         const poll = {
             id: pollId,
@@ -487,7 +500,7 @@ export const handler: Handler = async (event) => {
             question: question.trim(),
             description: body.description || null,
             options: (options || []).filter((o: string) => o && o.trim()).map((o: string, i: number) => ({
-                id: `opt_${i}`,
+                id: 'opt_' + i,
                 text: o.trim(),
                 imageUrl: (pollType === 'image' && imageUrls && imageUrls[i]) ? imageUrls[i] : undefined,
             })),
@@ -501,6 +514,9 @@ export const handler: Handler = async (event) => {
                 deadline: settings?.deadline || null,
                 unlisted: unlisted || false,
                 security: settings?.security || 'none',
+                // Pro features - only if paid
+                hideBranding: isPaidUser ? (hideBranding || false) : false,
+                customThankYou: isPaidUser && customThankYou ? customThankYou : null,
             },
             pin: pin || null,
             allowedCodes: allowedCodes || null,
@@ -514,8 +530,11 @@ export const handler: Handler = async (event) => {
             voteCount: 0,
             responseCount: 0,
             status: tier === 'free' ? 'live' : (requestedStatus || 'live'),
+            // Pro features at top level
+            hideBranding: isPaidUser ? (hideBranding || false) : false,
+            customThankYou: isPaidUser && customThankYou ? customThankYou : null,
             // Logo URL - only for Business tier
-            logoUrl: tier === 'business' ? (logoUrl || null) : null,
+            logoUrl: isBusiness ? (logoUrl || null) : null,
             theme: theme || 'default',
             ratingStyle: ratingStyle || 'stars',
             meetingDuration: meetingDuration || 60,
@@ -529,25 +548,17 @@ export const handler: Handler = async (event) => {
         };
 
         // Store poll
-        const store = getStore({
-            name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
-        });
+        const store = getStore('polls');
         
         await store.setJSON(pollId, poll);
         
         // Store slug mapping if custom
         if (hasCustomSlug) {
-            const slugStore = getStore({
-                name: 'poll-slugs',
-                siteID: process.env.VG_SITE_ID || '',
-                token: process.env.NETLIFY_AUTH_TOKEN || ''
-            });
+            const slugStore = getStore('poll-slugs');
             await slugStore.set(pollId, pollId);
         }
 
-        console.log(`vg-create: Poll created: ${pollId} (tier: ${tier}, maxResponses: ${tierConfig.maxResponses})`);
+        console.log('vg-create: Poll created: ' + pollId + ' (tier: ' + tier + ', maxResponses: ' + tierConfig.maxResponses + ')');
 
         return {
             statusCode: 200,
@@ -558,10 +569,10 @@ export const handler: Handler = async (event) => {
                 pollId,
                 adminKey,
                 customSlug: hasCustomSlug ? pollId : null,
-                voteUrl: `/vote/${pollId}`,
-                adminUrl: `/admin/${pollId}/${adminKey}`,
-                resultsUrl: `/results/${pollId}`,
-                shareUrl: hasCustomSlug ? `/p/${pollId}` : `/#id=${pollId}`,
+                voteUrl: '/vote/' + pollId,
+                adminUrl: '/admin/' + pollId + '/' + adminKey,
+                resultsUrl: '/results/' + pollId,
+                shareUrl: hasCustomSlug ? '/p/' + pollId : '/#id=' + pollId,
                 // Return VERIFIED tier info
                 tier,
                 maxResponses: tierConfig.maxResponses,

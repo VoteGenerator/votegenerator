@@ -153,8 +153,12 @@ export const handler: Handler = async (event) => {
         }
 
         try {
+            // Get Blobs credentials
+            const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+            const blobToken = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+            
             // Get verification record
-            const verifyStore = getStore('email-verifications');
+            const verifyStore = getStore({ name: 'email-verifications', siteID, token: blobToken });
             
             let verification: any = null;
             try {
@@ -190,7 +194,7 @@ export const handler: Handler = async (event) => {
             }
 
             // Get poll and update notification settings
-            const pollStore = getStore('polls');
+            const pollStore = getStore({ name: 'polls', siteID, token: blobToken });
             
             let poll: any = null;
             try {
@@ -263,8 +267,12 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        // Get Blobs credentials
+        const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+        const blobToken = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
         // Verify admin access
-        const pollStore = getStore('polls');
+        const pollStore = getStore({ name: 'polls', siteID, token: blobToken });
         
         let poll: any = null;
         try {
@@ -286,7 +294,7 @@ export const handler: Handler = async (event) => {
         const verifyUrl = SITE_URL + '/.netlify/functions/vg-verify-email?token=' + token;
 
         // Store verification record
-        const verifyStore = getStore('email-verifications');
+        const verifyStore = getStore({ name: 'email-verifications', siteID, token: blobToken });
         
         await verifyStore.setJSON(token, {
             pollId,

@@ -678,9 +678,9 @@ const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier:
     if (typeof value === 'boolean') {
         return value ? (
             <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
-                isHighlighted ? 'bg-indigo-500 ring-2 ring-indigo-200' : 'bg-indigo-100'
+                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-100'
             }`}>
-                <Check className={isHighlighted ? 'text-white' : 'text-indigo-600'} size={16} />
+                <Check className={isHighlighted ? 'text-white' : 'text-emerald-600'} size={16} />
             </div>
         ) : (
             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -695,7 +695,7 @@ const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier:
     
     return (
         <span className={`text-sm font-semibold ${
-            isHighlighted ? 'text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full' : 'text-slate-700'
+            isHighlighted ? 'text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full' : 'text-slate-700'
         }`}>
             {value}
         </span>
@@ -810,7 +810,7 @@ function PricingPage(): React.ReactElement {
                                 '3 basic themes',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                                    <Check size={18} className="text-indigo-500 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>
@@ -871,7 +871,7 @@ function PricingPage(): React.ReactElement {
                                 'Email support',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-indigo-100">
-                                    <Check size={18} className="text-amber-300 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>
@@ -928,7 +928,7 @@ function PricingPage(): React.ReactElement {
                                 'Priority support (24h)',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                                    <Check size={18} className="text-amber-400 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>

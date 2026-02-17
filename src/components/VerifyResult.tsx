@@ -3,12 +3,11 @@
 // Location: src/components/VerifyResult.tsx
 // ============================================================================
 import React from 'react';
-import { CheckCircle, XCircle, Clock, AlertTriangle, Home, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, Home } from 'lucide-react';
 
 const VerifyResult: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status') || 'error';
-    const pollId = params.get('poll');
 
     const configs: Record<string, {
         icon: typeof CheckCircle;
@@ -16,7 +15,6 @@ const VerifyResult: React.FC = () => {
         bgGradient: string;
         title: string;
         message: string;
-        showPollLink: boolean;
     }> = {
         success: {
             icon: CheckCircle,
@@ -24,7 +22,6 @@ const VerifyResult: React.FC = () => {
             bgGradient: 'from-emerald-500 to-teal-600',
             title: 'Email Verified!',
             message: 'You\'ll now receive notifications about this poll. We\'ll let you know when there are new votes, milestones reached, or when the poll closes.',
-            showPollLink: true,
         },
         expired: {
             icon: Clock,
@@ -32,7 +29,6 @@ const VerifyResult: React.FC = () => {
             bgGradient: 'from-amber-500 to-orange-600',
             title: 'Link Expired',
             message: 'This verification link has expired. Verification links are valid for 7 days. Please ask the poll creator to resend the verification email.',
-            showPollLink: false,
         },
         invalid: {
             icon: XCircle,
@@ -40,7 +36,6 @@ const VerifyResult: React.FC = () => {
             bgGradient: 'from-red-500 to-rose-600',
             title: 'Invalid Link',
             message: 'This verification link is invalid. It may have already been used or the link is malformed.',
-            showPollLink: false,
         },
         error: {
             icon: AlertTriangle,
@@ -48,7 +43,6 @@ const VerifyResult: React.FC = () => {
             bgGradient: 'from-slate-500 to-slate-700',
             title: 'Something Went Wrong',
             message: 'We couldn\'t process your verification. Please try again or contact support if the problem persists.',
-            showPollLink: false,
         },
     };
 
@@ -78,19 +72,9 @@ const VerifyResult: React.FC = () => {
 
                         {/* Actions */}
                         <div className="space-y-3">
-                            {config.showPollLink && pollId && (
-                                <a
-                                    href={`/#id=${pollId}`}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
-                                >
-                                    View Poll Results
-                                    <ArrowRight size={18} />
-                                </a>
-                            )}
-                            
                             <a
                                 href="/"
-                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition"
+                                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
                             >
                                 <Home size={18} />
                                 Back to Home

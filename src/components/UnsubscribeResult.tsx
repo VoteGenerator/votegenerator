@@ -1,48 +1,43 @@
 // ============================================================================
-// VerifyResult.tsx - Email verification result page
-// Location: src/components/VerifyResult.tsx
+// UnsubscribeResult.tsx - Unsubscribe result page
+// Location: src/components/UnsubscribeResult.tsx
 // ============================================================================
 import React from 'react';
-import { CheckCircle, XCircle, Clock, AlertTriangle, Home } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Home, Mail } from 'lucide-react';
 
-const VerifyResult: React.FC = () => {
+const UnsubscribeResult: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status') || 'error';
 
     const configs: Record<string, {
         icon: typeof CheckCircle;
-        iconColor: string;
         bgGradient: string;
         title: string;
         message: string;
     }> = {
         success: {
             icon: CheckCircle,
-            iconColor: 'text-emerald-500',
             bgGradient: 'from-emerald-500 to-teal-600',
-            title: 'Email Verified!',
-            message: 'You\'ll now receive notifications about this poll. We\'ll let you know when there are new votes, milestones reached, or when the poll closes.',
+            title: 'Unsubscribed',
+            message: 'You\'ve been successfully unsubscribed from notifications for this poll. You won\'t receive any more emails about it.',
         },
-        expired: {
-            icon: Clock,
-            iconColor: 'text-amber-500',
+        'not-found': {
+            icon: Mail,
             bgGradient: 'from-amber-500 to-orange-600',
-            title: 'Link Expired',
-            message: 'This verification link has expired. Verification links are valid for 7 days. Please ask the poll creator to resend the verification email.',
+            title: 'Already Unsubscribed',
+            message: 'This email was already unsubscribed or wasn\'t found in the notification list for this poll.',
         },
         invalid: {
             icon: XCircle,
-            iconColor: 'text-red-500',
             bgGradient: 'from-red-500 to-rose-600',
             title: 'Invalid Link',
-            message: 'This verification link is invalid. It may have already been used or the link is malformed.',
+            message: 'This unsubscribe link is invalid or has expired. Please use the link from a recent notification email.',
         },
         error: {
             icon: AlertTriangle,
-            iconColor: 'text-slate-500',
             bgGradient: 'from-slate-500 to-slate-700',
             title: 'Something Went Wrong',
-            message: 'We couldn\'t process your verification. Please try again or contact support if the problem persists.',
+            message: 'We couldn\'t process your unsubscribe request. Please try again later or contact support.',
         },
     };
 
@@ -80,6 +75,12 @@ const VerifyResult: React.FC = () => {
                                 Back to Home
                             </a>
                         </div>
+
+                        {status === 'success' && (
+                            <p className="text-sm text-slate-500 mt-6">
+                                Changed your mind? Contact the poll creator to re-add you to notifications.
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -95,4 +96,4 @@ const VerifyResult: React.FC = () => {
     );
 };
 
-export default VerifyResult;
+export default UnsubscribeResult;

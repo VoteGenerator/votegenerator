@@ -340,9 +340,11 @@ export const handler: Handler = async (event) => {
 
         // Update poll
         poll.votes = [...existingVotes, ...newVotes];
-        poll.totalVotes = poll.votes.length;
+        poll.voteCount = poll.votes.length;
+        poll.totalVotes = poll.votes.length;  // Keep both for compatibility
+        poll.responseCount = poll.votes.length;  // Also update responseCount
         
-        console.log('[vg-load-test] Saving poll with', poll.totalVotes, 'total votes');
+        console.log('[vg-load-test] Saving poll with', poll.voteCount, 'total votes');
         
         await pollStore.setJSON(pollId, poll);
 

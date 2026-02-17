@@ -179,13 +179,14 @@ export const handler: Handler = async (event) => {
             imageUrls: poll.imageUrls,
             // Rating poll fields
             ratingStyle: poll.ratingStyle,
+            // Tier - needed for ad-wall logic (not sensitive)
+            tier: poll.tier || 'free',
         };
 
         // Add admin-only fields
         if (isAdmin) {
             response.adminKey = poll.adminKey;
             response.votes = poll.votes || [];
-            response.tier = poll.tier;
             response.maxResponses = poll.maxResponses;
             response.pin = poll.pin;
             response.allowedCodes = poll.allowedCodes;

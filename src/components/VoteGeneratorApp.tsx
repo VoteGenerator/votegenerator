@@ -20,6 +20,7 @@ import VoterAdWall from './VoterAdWall';
 import PollDashboard from './PollDashboard';
 import RedditCommunityPage from './RedditCommunityPage';
 import VerifyResult from './VerifyResult';
+import UnsubscribeResult from './UnsubscribeResult';
 // Survey components
 import SurveyVote from './SurveyVote';
 import SurveyResults from './SurveyResults';
@@ -491,6 +492,8 @@ const VoteGeneratorApp: React.FC = () => {
             {/* ROUTE: /verify-result */}
             {window.location.pathname === '/verify-result' || window.location.pathname.startsWith('/verify-result') ? (
                 <VerifyResult />
+            ) : window.location.pathname === '/unsubscribe-result' || window.location.pathname.startsWith('/unsubscribe-result') ? (
+                <UnsubscribeResult />
             ) : window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
             ) : window.location.pathname === '/checkout/success' || window.location.pathname.startsWith('/checkout/success') ? (

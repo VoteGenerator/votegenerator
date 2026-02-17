@@ -538,16 +538,19 @@ export const handler: Handler = async (event) => {
             };
         }
         
-        // Check response limit (enforced for free tier polls)
-        if (poll.maxResponses && poll.voteCount >= poll.maxResponses) {
+        // Check response limit (enforced for all tiers)
+        // Use votes.length as source of truth, fallback to voteCount
+        const currentVoteCount = poll.votes?.length || poll.voteCount || 0;
+        if (poll.maxResponses && currentVoteCount >= poll.maxResponses) {
             const isFreeLimit = poll.tier === 'free';
+            console.log('[vg-vote] Response limit reached:', currentVoteCount, '>=', poll.maxResponses, 'tier:', poll.tier);
             return {
                 statusCode: 403,
                 headers,
                 body: JSON.stringify({ 
                     error: isFreeLimit 
-                        ? 'This poll has reached its free plan limit of 100 responses. Ask the poll creator to upgrade for unlimited responses!'
-                        : 'This poll has reached its response limit',
+                        ? 'This poll has reached its free plan limit. Ask the poll creator to upgrade for more responses!'
+                        : 'This poll has reached its response limit.',
                     code: 'RESPONSE_LIMIT_REACHED',
                     isFreeLimit
                 })

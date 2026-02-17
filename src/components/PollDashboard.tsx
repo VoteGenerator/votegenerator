@@ -2739,7 +2739,19 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 adminKey={adminKey}
                                 pollTitle={poll.title}
                                 tier={tier}
-                                currentSettings={poll.notificationSettings}
+                                currentSettings={poll.notificationSettings ? {
+                                    enabled: poll.notificationSettings.enabled ?? true,
+                                    emails: poll.notificationSettings.emails ?? [],
+                                    skipFirstVotes: poll.notificationSettings.skipFirstVotes ?? 3,
+                                    notifyOn: {
+                                        eachResponse: poll.notificationSettings.notifyOn?.eachResponse ?? false,
+                                        milestones: poll.notificationSettings.notifyOn?.milestones ?? true,
+                                        dailyDigest: poll.notificationSettings.notifyOn?.dailyDigest ?? false,
+                                        pollClosed: poll.notificationSettings.notifyOn?.pollClosed ?? true,
+                                        limitReached: poll.notificationSettings.notifyOn?.limitReached ?? true,
+                                        newComment: poll.notificationSettings.notifyOn?.newComment ?? false
+                                    }
+                                } : undefined}
                             />
                         </div>
                     </motion.div>
@@ -2954,7 +2966,19 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     adminKey={adminKey}
                                     pollTitle={poll.title}
                                     tier={tier}
-                                    currentSettings={poll.notificationSettings}
+                                    currentSettings={poll.notificationSettings ? {
+                                        enabled: poll.notificationSettings.enabled ?? true,
+                                        emails: poll.notificationSettings.emails ?? [],
+                                        skipFirstVotes: poll.notificationSettings.skipFirstVotes ?? 3,
+                                        notifyOn: {
+                                            eachResponse: poll.notificationSettings.notifyOn?.eachResponse ?? false,
+                                            milestones: poll.notificationSettings.notifyOn?.milestones ?? true,
+                                            dailyDigest: poll.notificationSettings.notifyOn?.dailyDigest ?? false,
+                                            pollClosed: poll.notificationSettings.notifyOn?.pollClosed ?? true,
+                                            limitReached: poll.notificationSettings.notifyOn?.limitReached ?? true,
+                                            newComment: poll.notificationSettings.notifyOn?.newComment ?? false
+                                        }
+                                    } : undefined}
                                 />
                             </div>
                         </CollapsibleSection>

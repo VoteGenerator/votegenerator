@@ -41,7 +41,6 @@ interface Feature {
     free: boolean | string;
     pro: boolean | string;
     business: boolean | string;
-    highlight?: 'free' | 'pro' | 'business';
 }
 
 interface FeatureSection {
@@ -185,7 +184,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Custom colors', 
@@ -200,7 +198,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
             { 
                 name: 'Custom thank-you message', 
@@ -308,7 +305,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'One-time vote codes', 
@@ -330,7 +326,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
         ]
     },
@@ -374,7 +369,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Geographic distribution', 
@@ -396,7 +390,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
             { 
                 name: 'Comment word cloud', 
@@ -433,7 +426,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Export Excel', 
@@ -448,7 +440,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
             { 
                 name: 'Shareable results link', 
@@ -506,7 +497,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Scheduled close', 
@@ -557,7 +547,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Priority support', 
@@ -565,7 +554,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
             { 
                 name: 'Response time SLA', 
@@ -595,7 +583,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: true, 
                 business: true,
-                highlight: 'pro'
             },
             { 
                 name: 'Domain restriction', 
@@ -603,7 +590,6 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 free: false, 
                 pro: false, 
                 business: true,
-                highlight: 'business'
             },
             { 
                 name: 'Webhooks', 
@@ -672,15 +658,11 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 // =============================================================================
 // FEATURE CELL COMPONENT
 // =============================================================================
-const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier: string }> = ({ value, highlight, tier }) => {
-    const isHighlighted = highlight === tier;
-    
+const FeatureCell: React.FC<{ value: boolean | string; tier: string }> = ({ value, tier }) => {
     if (typeof value === 'boolean') {
         return value ? (
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
-                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-50'
-            }`}>
-                <Check className={isHighlighted ? 'text-white' : 'text-emerald-500'} size={16} />
+            <div className="w-7 h-7 rounded-full flex items-center justify-center mx-auto bg-emerald-50">
+                <Check className="text-emerald-500" size={16} />
             </div>
         ) : (
             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -694,9 +676,7 @@ const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier:
     }
     
     return (
-        <span className={`text-sm font-semibold ${
-            isHighlighted ? 'text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full' : 'text-slate-700'
-        }`}>
+        <span className="text-sm font-semibold text-slate-700">
             {value}
         </span>
     );
@@ -1065,13 +1045,13 @@ function PricingPage(): React.ReactElement {
                                                         </Tooltip>
                                                     </div>
                                                     <div className="py-3 px-4 text-center">
-                                                        <FeatureCell value={feature.free} highlight={feature.highlight} tier="free" />
+                                                        <FeatureCell value={feature.free} tier="free" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-indigo-50/30">
-                                                        <FeatureCell value={feature.pro} highlight={feature.highlight} tier="pro" />
+                                                        <FeatureCell value={feature.pro} tier="pro" />
                                                     </div>
                                                     <div className="py-3 px-4 text-center bg-slate-50/50">
-                                                        <FeatureCell value={feature.business} highlight={feature.highlight} tier="business" />
+                                                        <FeatureCell value={feature.business} tier="business" />
                                                     </div>
                                                 </div>
                                             ))}

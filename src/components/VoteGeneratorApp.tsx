@@ -19,6 +19,7 @@ import VoteGeneratorEdit from './VoteGeneratorEdit';
 import VoterAdWall from './VoterAdWall';
 import PollDashboard from './PollDashboard';
 import RedditCommunityPage from './RedditCommunityPage';
+import VerifyResult from './VerifyResult';
 // Survey components
 import SurveyVote from './SurveyVote';
 import SurveyResults from './SurveyResults';
@@ -487,8 +488,10 @@ const VoteGeneratorApp: React.FC = () => {
 
     return (
  <div className="min-h-screen pb-10">
-            {/* ROUTE: /ad-wall */}
-            {window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
+            {/* ROUTE: /verify-result */}
+            {window.location.pathname === '/verify-result' || window.location.pathname.startsWith('/verify-result') ? (
+                <VerifyResult />
+            ) : window.location.pathname === '/ad-wall' || window.location.pathname.startsWith('/ad-wall') ? (
                 <AdWall />
             ) : window.location.pathname === '/checkout/success' || window.location.pathname.startsWith('/checkout/success') ? (
                 <CheckoutSuccess />
@@ -1325,4 +1328,4 @@ const VoteGeneratorApp: React.FC = () => {
     );
 };
 
-export default VoteGeneratorApp;9
+export default VoteGeneratorApp;

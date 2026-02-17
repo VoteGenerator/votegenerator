@@ -2739,6 +2739,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 adminKey={adminKey}
                                 pollTitle={poll.title}
                                 tier={tier}
+                                currentSettings={poll.notificationSettings}
                             />
                         </div>
                     </motion.div>
@@ -2953,6 +2954,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     adminKey={adminKey}
                                     pollTitle={poll.title}
                                     tier={tier}
+                                    currentSettings={poll.notificationSettings}
                                 />
                             </div>
                         </CollapsibleSection>

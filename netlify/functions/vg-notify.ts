@@ -9,7 +9,7 @@ const SITE_URL = process.env.URL || 'https://votegenerator.com';
 interface NotificationPayload {
     pollId: string;
     adminKey: string;
-    type: 'test' | 'milestone' | 'closed' | 'limit' | 'daily' | 'comment';
+    type: 'test' | 'milestone' | 'closed' | 'limit' | 'daily' | 'comment' | 'eachResponse' | 'suspicious';
     emails?: string[];
     data?: {
         voteCount?: number;
@@ -37,9 +37,35 @@ function checkMilestone(voteCount: number): number | null {
     return MILESTONE_POINTS.includes(voteCount) ? voteCount : null;
 }
 
-// Email templates
+// Generate unsubscribe token
+function generateUnsubscribeToken(pollId: string, email: string): string {
+    const data = JSON.stringify({ pollId, email: email.toLowerCase(), ts: Date.now() });
+    return Buffer.from(data).toString('base64url');
+}
+
+// Build unsubscribe URL
+function getUnsubscribeUrl(pollId: string, email: string): string {
+    const token = generateUnsubscribeToken(pollId, email);
+    return SITE_URL + '/.netlify/functions/vg-unsubscribe?token=' + token;
+}
+
+// Email footer with unsubscribe link
+function getEmailFooter(unsubscribeUrl: string): string {
+    return `
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+                Sent from <a href="${SITE_URL}" style="color: #6366f1; text-decoration: none;">VoteGenerator.com</a>
+            </p>
+            <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 10px 0 0;">
+                <a href="${unsubscribeUrl}" style="color: #64748b; text-decoration: underline;">Unsubscribe from this poll's notifications</a>
+            </p>
+        </div>
+    `;
+}
+
+// Email templates - now accepts unsubscribeUrl
 const emailTemplates = {
-    test: (pollTitle: string) => ({
+    test: (pollTitle: string, unsubscribeUrl: string) => ({
         subject: `🔔 Test Notification - ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -60,15 +86,13 @@ const emailTemplates = {
                             ✅ Response limit alerts
                         </p>
                     </div>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
             </div>
         `
     }),
 
-    milestone: (pollTitle: string, milestone: number, totalVotes: number, pollUrl: string) => ({
+    milestone: (pollTitle: string, milestone: number, totalVotes: number, pollUrl: string, unsubscribeUrl: string) => ({
         subject: `🎯 ${milestone} votes reached! - ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -87,15 +111,13 @@ const emailTemplates = {
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px;">
                         View Results →
                     </a>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
             </div>
         `
     }),
 
-    closed: (pollTitle: string, totalVotes: number, winnerText: string, pollUrl: string) => ({
+    closed: (pollTitle: string, totalVotes: number, winnerText: string, pollUrl: string, unsubscribeUrl: string) => ({
         subject: `✅ Poll Closed - ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -116,15 +138,13 @@ const emailTemplates = {
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                         View Final Results →
                     </a>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
             </div>
         `
     }),
 
-    limit: (pollTitle: string, currentVotes: number, maxVotes: number, percentUsed: number, pollUrl: string) => ({
+    limit: (pollTitle: string, currentVotes: number, maxVotes: number, percentUsed: number, pollUrl: string, unsubscribeUrl: string) => ({
         subject: `⚠️ ${percentUsed}% of response limit reached - ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -151,15 +171,13 @@ const emailTemplates = {
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px;">
                         View Poll →
                     </a>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
             </div>
         `
     }),
 
-    daily: (pollTitle: string, newVotes: number, totalVotes: number, topChoice: string, pollUrl: string) => ({
+    daily: (pollTitle: string, newVotes: number, totalVotes: number, topChoice: string, pollUrl: string, unsubscribeUrl: string) => ({
         subject: `📊 Daily Summary: ${newVotes} new votes - ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -190,15 +208,13 @@ const emailTemplates = {
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                         View Full Results →
                     </a>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
             </div>
         `
     }),
 
-    comment: (pollTitle: string, commentAuthor: string, commentText: string, pollUrl: string) => ({
+    comment: (pollTitle: string, commentAuthor: string, commentText: string, pollUrl: string, unsubscribeUrl: string) => ({
         subject: `💬 New comment on ${pollTitle}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -216,16 +232,63 @@ const emailTemplates = {
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                         View All Comments →
                     </a>
+                    ${getEmailFooter(unsubscribeUrl)}
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 20px;">
-                    Sent from VoteGenerator.com
-                </p>
+            </div>
+        `
+    }),
+
+    eachResponse: (pollTitle: string, voteCount: number, pollUrl: string, unsubscribeUrl: string) => ({
+        subject: `📊 New vote on ${pollTitle}`,
+        html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">📊 New Response</h1>
+                </div>
+                <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                        Someone just voted on <strong>"${pollTitle}"</strong>
+                    </p>
+                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
+                        <p style="color: #6366f1; font-size: 36px; font-weight: bold; margin: 0;">${voteCount}</p>
+                        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0;">total votes</p>
+                    </div>
+                    <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                        View Results →
+                    </a>
+                    ${getEmailFooter(unsubscribeUrl)}
+                </div>
+            </div>
+        `
+    }),
+
+    suspicious: (pollTitle: string, pollUrl: string, unsubscribeUrl: string) => ({
+        subject: `🚨 Suspicious activity on ${pollTitle}`,
+        html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">🚨 Suspicious Activity</h1>
+                </div>
+                <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                        We detected unusual voting patterns on <strong>"${pollTitle}"</strong>.
+                    </p>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                        <p style="color: #dc2626; font-size: 14px; margin: 0;">
+                            This could indicate automated voting or manipulation attempts. The suspicious votes have been flagged for your review.
+                        </p>
+                    </div>
+                    <a href="${pollUrl}" style="display: inline-block; background: #ef4444; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                        Review Activity →
+                    </a>
+                    ${getEmailFooter(unsubscribeUrl)}
+                </div>
             </div>
         `
     })
 };
 
-async function sendEmail(to: string[], subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
     if (!RESEND_API_KEY) {
         console.error('RESEND_API_KEY not configured');
         return false;
@@ -235,12 +298,12 @@ async function sendEmail(to: string[], subject: string, html: string): Promise<b
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Authorization': 'Bearer ' + RESEND_API_KEY,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 from: FROM_EMAIL,
-                to,
+                to: [to],
                 subject,
                 html
             })
@@ -314,68 +377,91 @@ export const handler: Handler = async (event) => {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'No verified email addresses configured' }) };
         }
 
-        const pollUrl = `${SITE_URL}/#id=${pollId}&admin=${adminKey}`;
-        let emailContent: { subject: string; html: string };
+        const pollUrl = SITE_URL + '/#id=' + pollId + '&adminKey=' + adminKey;
+        
+        // Send to each email with personalized unsubscribe link
+        let sentCount = 0;
+        
+        for (const email of notifyEmails) {
+            const unsubscribeUrl = getUnsubscribeUrl(pollId, email);
+            let emailContent: { subject: string; html: string };
 
-        switch (type) {
-            case 'test':
-                emailContent = emailTemplates.test(poll.title);
-                break;
-            case 'milestone':
-                emailContent = emailTemplates.milestone(
-                    poll.title,
-                    data?.milestone || 0,
-                    data?.voteCount || poll.voteCount || 0,
-                    pollUrl
-                );
-                break;
-            case 'closed':
-                emailContent = emailTemplates.closed(
-                    poll.title,
-                    poll.voteCount || 0,
-                    '', // TODO: Calculate winner
-                    pollUrl
-                );
-                break;
-            case 'limit':
-                emailContent = emailTemplates.limit(
-                    poll.title,
-                    poll.voteCount || 0,
-                    poll.maxResponses || 100,
-                    data?.limitPercent || 100,
-                    pollUrl
-                );
-                break;
-            case 'daily':
-                emailContent = emailTemplates.daily(
-                    poll.title,
-                    data?.dailySummary?.newVotes || 0,
-                    data?.dailySummary?.totalVotes || poll.voteCount || 0,
-                    data?.dailySummary?.topChoice || '',
-                    pollUrl
-                );
-                break;
-            case 'comment':
-                emailContent = emailTemplates.comment(
-                    poll.title,
-                    data?.commentAuthor || 'Anonymous',
-                    data?.commentText || '',
-                    pollUrl
-                );
-                break;
-            default:
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid notification type' }) };
-        }
+            switch (type) {
+                case 'test':
+                    emailContent = emailTemplates.test(poll.title, unsubscribeUrl);
+                    break;
+                case 'milestone':
+                    emailContent = emailTemplates.milestone(
+                        poll.title,
+                        data?.milestone || 0,
+                        data?.voteCount || poll.voteCount || 0,
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'closed':
+                    emailContent = emailTemplates.closed(
+                        poll.title,
+                        poll.voteCount || 0,
+                        '', // TODO: Calculate winner
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'limit':
+                    emailContent = emailTemplates.limit(
+                        poll.title,
+                        poll.voteCount || 0,
+                        poll.maxResponses || 100,
+                        data?.limitPercent || 100,
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'daily':
+                    emailContent = emailTemplates.daily(
+                        poll.title,
+                        data?.dailySummary?.newVotes || 0,
+                        data?.dailySummary?.totalVotes || poll.voteCount || 0,
+                        data?.dailySummary?.topChoice || '',
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'comment':
+                    emailContent = emailTemplates.comment(
+                        poll.title,
+                        data?.commentAuthor || 'Anonymous',
+                        data?.commentText || '',
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'eachResponse':
+                    emailContent = emailTemplates.eachResponse(
+                        poll.title,
+                        data?.voteCount || poll.voteCount || 0,
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                case 'suspicious':
+                    emailContent = emailTemplates.suspicious(
+                        poll.title,
+                        pollUrl,
+                        unsubscribeUrl
+                    );
+                    break;
+                default:
+                    continue; // Skip unknown types
+            }
 
-        // Send the email
-        const success = await sendEmail(notifyEmails, emailContent.subject, emailContent.html);
-
-        if (!success) {
-            return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to send email' }) };
+            const success = await sendEmail(email, emailContent.subject, emailContent.html);
+            if (success) sentCount++;
         }
 
         // Log notification sent
-        console.log(`Notification sent: ${type} for poll ${pollId} to ${notifyEmails.length} recipient(s)`);
+        console.log('Notification sent: ' + type + ' for poll ' + pollId + ' to ' + sentCount + ' recipient(s)');
 
         return {
             statusCode: 200,
@@ -383,7 +469,8 @@ export const handler: Handler = async (event) => {
             body: JSON.stringify({ 
                 success: true,
                 type,
-                recipients: notifyEmails.length
+                sent: sentCount,
+                total: notifyEmails.length
             })
         };
 

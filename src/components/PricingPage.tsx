@@ -678,9 +678,9 @@ const FeatureCell: React.FC<{ value: boolean | string; highlight?: string; tier:
     if (typeof value === 'boolean') {
         return value ? (
             <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${
-                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-100'
+                isHighlighted ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-emerald-50'
             }`}>
-                <Check className={isHighlighted ? 'text-white' : 'text-emerald-600'} size={16} />
+                <Check className={isHighlighted ? 'text-white' : 'text-emerald-500'} size={16} />
             </div>
         ) : (
             <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -871,7 +871,7 @@ function PricingPage(): React.ReactElement {
                                 'Email support',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-indigo-100">
-                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>
@@ -928,7 +928,7 @@ function PricingPage(): React.ReactElement {
                                 'Priority support (24h)',
                             ].map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                                    <Check size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" /> {f}
+                                    <Check size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" /> {f}
                                 </li>
                             ))}
                         </ul>

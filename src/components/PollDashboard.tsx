@@ -2744,12 +2744,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                     emails: poll.notificationSettings.emails ?? [],
                                     skipFirstVotes: poll.notificationSettings.skipFirstVotes ?? 3,
                                     notifyOn: {
-                                        eachResponse: poll.notificationSettings.notifyOn?.eachResponse ?? false,
+                                        eachResponse: (poll.notificationSettings.notifyOn as any)?.eachResponse ?? false,
                                         milestones: poll.notificationSettings.notifyOn?.milestones ?? true,
                                         dailyDigest: poll.notificationSettings.notifyOn?.dailyDigest ?? false,
                                         pollClosed: poll.notificationSettings.notifyOn?.pollClosed ?? true,
                                         limitReached: poll.notificationSettings.notifyOn?.limitReached ?? true,
-                                        newComment: poll.notificationSettings.notifyOn?.newComment ?? false
+                                        newComment: (poll.notificationSettings.notifyOn as any)?.newComment ?? false
                                     }
                                 } : undefined}
                             />
@@ -2971,12 +2971,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                         emails: poll.notificationSettings.emails ?? [],
                                         skipFirstVotes: poll.notificationSettings.skipFirstVotes ?? 3,
                                         notifyOn: {
-                                            eachResponse: poll.notificationSettings.notifyOn?.eachResponse ?? false,
+                                            eachResponse: (poll.notificationSettings.notifyOn as any)?.eachResponse ?? false,
                                             milestones: poll.notificationSettings.notifyOn?.milestones ?? true,
                                             dailyDigest: poll.notificationSettings.notifyOn?.dailyDigest ?? false,
                                             pollClosed: poll.notificationSettings.notifyOn?.pollClosed ?? true,
                                             limitReached: poll.notificationSettings.notifyOn?.limitReached ?? true,
-                                            newComment: poll.notificationSettings.notifyOn?.newComment ?? false
+                                            newComment: (poll.notificationSettings.notifyOn as any)?.newComment ?? false
                                         }
                                     } : undefined}
                                 />

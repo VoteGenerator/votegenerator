@@ -428,7 +428,7 @@ const FEATURE_SECTIONS: FeatureSection[] = [
                 business: true,
             },
             { 
-                name: 'Export Excel', 
+                name: 'Export CSV', 
                 tooltip: 'Download as .xlsx with formatting',
                 free: false, 
                 pro: true, 
@@ -845,7 +845,7 @@ function PricingPage(): React.ReactElement {
                                 '10,000 responses/month',
                                 'Remove VoteGenerator badge',
                                 'All premium themes',
-                                'CSV & Excel export',
+                                'CSV export',
                                 'Email notifications',
                                 'PIN code access',
                                 'Email support',
@@ -932,7 +932,7 @@ function PricingPage(): React.ReactElement {
                     </div>
                     <div className="flex items-center gap-2">
                         <BadgeCheck size={18} className="text-slate-400" />
-                        <span>Cancel anytime, no refunds</span>
+                        <span>14-day money-back guarantee</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Lock size={18} className="text-slate-400" />
@@ -1071,7 +1071,7 @@ function PricingPage(): React.ReactElement {
                     {[
                         { 
                             q: 'Can I cancel anytime?', 
-                            a: 'Yes! You can cancel your subscription anytime from your dashboard. You\'ll keep access until the end of your billing period. No refunds for unused time.' 
+                            a: 'Yes! Cancel anytime from your dashboard. You\'ll keep access until the end of your billing period. We send a reminder 7 days before renewal so you\'re never surprised.' 
                         },
                         { 
                             q: 'What happens if I hit my response limit?', 
@@ -1087,11 +1087,11 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'Can I switch plans later?', 
-                            a: 'Absolutely! You can upgrade or downgrade at any time. When upgrading, you\'ll be charged the prorated difference. When downgrading, credit is applied to future billing.' 
+                            a: 'Absolutely! Upgrade or downgrade anytime. Upgrades are prorated (you only pay the difference). Downgrades give you credit toward future billing.' 
                         },
                         { 
                             q: 'Do you offer refunds?', 
-                            a: 'All sales are final. You can cancel anytime and keep access until the end of your billing period, but we do not offer refunds for unused time. We recommend starting with a monthly plan if you\'re unsure.' 
+                            a: 'Yes! 14-day money-back guarantee on your first purchase, no questions asked. After 14 days, you can still cancel anytime but we don\'t offer refunds. See our Refund Policy for details.' 
                         },
                         { 
                             q: 'What payment methods do you accept?', 

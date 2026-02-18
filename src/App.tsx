@@ -19,6 +19,9 @@ import Footer from './components/Footer';
 import PromoBanner from './components/PromoBanner';
 import VerifyResult from './components/VerifyResult';
 import UnsubscribeResult from './components/UnsubscribeResult';
+import PrivacyPage from './components/PrivacyPage';
+import TermsPage from './components/TermsPage';
+import RefundPage from './components/RefundPage';
 import { 
     Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 
     HelpCircle, BookOpen, ArrowUpRight, LayoutDashboard, 
@@ -311,6 +314,9 @@ function App() {
     else if (path === '/recover' || path === '/recover/') page = <RecoveryPage />;
     else if (path === '/data-policy' || path === '/data-policy/') page = <DataPolicyPage />;
     else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
+    else if (path === '/privacy' || path === '/privacy/') page = <PrivacyPage />;
+    else if (path === '/terms' || path === '/terms/') page = <TermsPage />;
+    else if (path === '/refund' || path === '/refund/') page = <RefundPage />;
     else if (path === '/verify-result' || path === '/verify-result/') page = <VerifyResult />;
     else if (path === '/unsubscribe-result' || path === '/unsubscribe-result/') page = <UnsubscribeResult />;
     else page = <VoteGeneratorApp />;

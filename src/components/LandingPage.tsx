@@ -17,6 +17,7 @@ import {
     MousePointer, Share2, Link, ExternalLink, Vote, Layers, Bell
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 import VoteGeneratorCreate from './VoteGeneratorCreate';
 
@@ -2055,9 +2056,18 @@ const CTASection: React.FC = () => (
 // ============================================================================
 
 function LandingPage(): React.ReactElement {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
         <div className="min-h-screen">
-            <NavHeader />
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
             <HeroSection />
             <TrustBar />
             

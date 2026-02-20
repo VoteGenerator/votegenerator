@@ -178,6 +178,44 @@
   status = 200
 
 # ============================================================================
+# Legal & Policy Pages (SPA handles these)
+# ============================================================================
+[[redirects]]
+  from = "/privacy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/refund"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/data-policy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/account/delete-request"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/verify-result"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/unsubscribe-result"
+  to = "/index.html"
+  status = 200
+
+# ============================================================================
 # Poll Routes
 # ============================================================================
 [[redirects]]

@@ -4,7 +4,7 @@
 // Updated: Pro $19/mo ($190/yr), Business $49/mo ($490/yr)
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Check, X, Zap, Crown, Users, BarChart3, Clock, ArrowRight, Star, 
@@ -15,6 +15,7 @@ import {
     Timer, TrendingUp, Layers, Building2, Headphones, MessageCircle
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // =============================================================================
@@ -688,6 +689,14 @@ const FeatureCell: React.FC<{ value: boolean | string; tier: string }> = ({ valu
 function PricingPage(): React.ReactElement {
     const [isAnnual, setIsAnnual] = useState(true);
     const [expandedSections, setExpandedSections] = useState<string[]>(['polls-responses', 'poll-types']);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     const toggleSection = (id: string) => {
         setExpandedSections(prev => 
@@ -698,20 +707,20 @@ function PricingPage(): React.ReactElement {
     const expandAll = () => setExpandedSections(FEATURE_SECTIONS.map(s => s.id));
     const collapseAll = () => setExpandedSections([]);
 
-    const getPrice = (tier: 'pro' | 'business') => {
-        return isAnnual ? PRICING[tier].annual : PRICING[tier].monthly;
+    const getPrice = (priceTier: 'pro' | 'business') => {
+        return isAnnual ? PRICING[priceTier].annual : PRICING[priceTier].monthly;
     };
 
-    const getMonthlyEquivalent = (tier: 'pro' | 'business') => {
+    const getMonthlyEquivalent = (priceTier: 'pro' | 'business') => {
         if (isAnnual) {
-            return Math.round(PRICING[tier].annual / 12 * 100) / 100;
+            return Math.round(PRICING[priceTier].annual / 12 * 100) / 100;
         }
-        return PRICING[tier].monthly;
+        return PRICING[priceTier].monthly;
     };
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <NavHeader />
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
             
             {/* Hero */}
             <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 pt-16 pb-32">

@@ -2,13 +2,23 @@
 // ComparePage - Plan Comparison Page (USD Only)
 // ============================================================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Crown, Star, Users, Zap, Building2 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 const ComparePage: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     const plans = [
         {
             name: 'Free',
@@ -95,7 +105,7 @@ const ComparePage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
-            <NavHeader />
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
             
             <main className="max-w-6xl mx-auto px-4 py-16">
                 <motion.div

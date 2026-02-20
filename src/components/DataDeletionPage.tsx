@@ -7,12 +7,15 @@
 // 1. User enters email → receives verification code
 // 2. User enters code → data is deleted
 // ============================================================================
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Trash2, Mail, Shield, AlertTriangle, Check, Loader2,
     ArrowRight, Lock, Key, HelpCircle, ChevronDown
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 type Step = 'request' | 'verify' | 'complete';
 
@@ -24,6 +27,14 @@ const DataDeletionPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [deletionType, setDeletionType] = useState<'all' | 'polls'>('all');
     const [showFAQ, setShowFAQ] = useState(false);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     // Step 1: Request deletion (sends verification email)
     const handleRequestDeletion = async () => {
@@ -95,7 +106,10 @@ const DataDeletionPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50 py-12 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50">
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
+            
+            <div className="py-12 px-4">
             <div className="max-w-lg mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -410,6 +424,9 @@ const DataDeletionPage: React.FC = () => {
                     </p>
                 </div>
             </div>
+            </div>
+            
+            <Footer />
         </div>
     );
 };

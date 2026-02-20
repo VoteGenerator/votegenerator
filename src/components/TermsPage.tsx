@@ -2,17 +2,26 @@
 // TermsPage.tsx - Terms of Service
 // ============================================================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 const TermsPage: React.FC = () => {
     const lastUpdated = "February 2025";
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+    
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
     
     return (
         <div className="min-h-screen bg-white">
-            <NavHeader />
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
             
             <header className="pt-16 md:pt-24 pb-12 px-4">
                 <div className="max-w-2xl mx-auto">

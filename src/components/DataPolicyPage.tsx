@@ -8,19 +8,30 @@
 // - Right to erasure information (Article 17)
 // - Right to data portability (Article 20)
 // ============================================================================
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Shield, Clock, Trash2, Download, Mail, Database,
     ChevronDown, ChevronUp, AlertTriangle, Check, Lock,
     Globe, Eye, FileText, HelpCircle, ExternalLink
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 const DataPolicyPage: React.FC = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>('what-we-collect');
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     // Last updated date
-    const lastUpdated = 'January 2026';
+    const lastUpdated = 'February 2025';
     const policyVersion = '1.0';
 
     const sections = [
@@ -151,8 +162,8 @@ const DataPolicyPage: React.FC = () => {
                                 <div>
                                     <h4 className="font-semibold text-amber-800">Active Polls (Free Users)</h4>
                                     <p className="text-sm text-amber-700">
-                                        Retained for <strong>12 months</strong> from last activity. Polls with no votes 
-                                        in 6 months may be automatically deleted.
+                                        Polls remain active for <strong>30 days</strong>. After that, polls are viewable 
+                                        for 60 more days (90 days total) before automatic deletion.
                                     </p>
                                 </div>
                             </div>
@@ -473,6 +484,8 @@ const DataPolicyPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
+            
             {/* Header */}
             <header className="bg-white border-b border-slate-200">
                 <div className="max-w-4xl mx-auto px-4 py-6">
@@ -558,6 +571,8 @@ const DataPolicyPage: React.FC = () => {
                     </p>
                 </div>
             </main>
+            
+            <Footer />
         </div>
     );
 };

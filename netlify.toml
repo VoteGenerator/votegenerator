@@ -155,60 +155,88 @@
   status = 200
 
 # ============================================================================
+# Legal & Policy Pages (SPA handles these) - MUST BE BEFORE OTHER REDIRECTS
+# ============================================================================
+[[redirects]]
+  from = "/privacy"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/terms"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/refund"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/data-policy"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/account/delete-request"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/help"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/help/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/verify-result"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/unsubscribe-result"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# ============================================================================
 # Survey & SEO Landing Page Routes (SPA handles these)
 # ============================================================================
 [[redirects]]
   from = "/survey"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/survey/*"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/employee-survey"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/customer-feedback"
   to = "/index.html"
   status = 200
-
-# ============================================================================
-# Legal & Policy Pages (SPA handles these)
-# ============================================================================
-[[redirects]]
-  from = "/privacy"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/terms"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/refund"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/data-policy"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/account/delete-request"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/verify-result"
-  to = "/index.html"
-  status = 200
+  force = true
 
 [[redirects]]
   from = "/unsubscribe-result"

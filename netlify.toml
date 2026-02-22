@@ -155,49 +155,42 @@
   status = 200
 
 # ============================================================================
-# Legal & Policy Pages (SPA handles these) - MUST BE BEFORE OTHER REDIRECTS
+# Legal & Policy Pages - Dedicated HTML files (like contact.html)
 # ============================================================================
 [[redirects]]
   from = "/privacy"
-  to = "/index.html"
+  to = "/privacy.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/terms"
-  to = "/index.html"
+  to = "/terms.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/refund"
-  to = "/index.html"
+  to = "/refund.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/data-policy"
-  to = "/index.html"
+  to = "/data-policy.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/account/delete-request"
-  to = "/index.html"
+  to = "/delete-request.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/help"
-  to = "/index.html"
+  to = "/help.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/help/*"
-  to = "/index.html"
+  to = "/help.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/verify-result"

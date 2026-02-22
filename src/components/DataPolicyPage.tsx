@@ -22,14 +22,14 @@ import Footer from './Footer';
 const DataPolicyPage: React.FC = () => {
     const [expandedSection, setExpandedSection] = useState<string | null>('what-we-collect');
     const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
-
+    
     useEffect(() => {
         const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
         if (savedTier === 'pro' || savedTier === 'business') {
             setTier(savedTier);
         }
     }, []);
-
+    
     // Last updated date
     const lastUpdated = 'February 2025';
     const policyVersion = '1.0';
@@ -45,7 +45,6 @@ const DataPolicyPage: React.FC = () => {
                         VoteGenerator collects minimal data necessary to provide our service. We follow the principle 
                         of <strong>data minimization</strong> - we only collect what we need.
                     </p>
-
                     <div className="bg-slate-50 rounded-xl p-4">
                         <h4 className="font-semibold text-slate-800 mb-3">For Poll Creators (You)</h4>
                         <table className="w-full text-sm">
@@ -80,7 +79,6 @@ const DataPolicyPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-
                     <div className="bg-slate-50 rounded-xl p-4">
                         <h4 className="font-semibold text-slate-800 mb-3">For Poll Voters</h4>
                         <table className="w-full text-sm">
@@ -137,7 +135,6 @@ const DataPolicyPage: React.FC = () => {
                         Under GDPR Article 5(1)(e), we must not keep your data longer than necessary. 
                         Here are our retention periods:
                     </p>
-
                     <div className="space-y-3">
                         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
@@ -153,7 +150,6 @@ const DataPolicyPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -168,7 +164,6 @@ const DataPolicyPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -183,7 +178,6 @@ const DataPolicyPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -198,7 +192,6 @@ const DataPolicyPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -226,7 +219,6 @@ const DataPolicyPage: React.FC = () => {
                     <p className="text-slate-600">
                         Under the General Data Protection Regulation (GDPR), you have the following rights:
                     </p>
-
                     <div className="grid gap-3">
                         {[
                             {
@@ -277,7 +269,6 @@ const DataPolicyPage: React.FC = () => {
                             </div>
                         ))}
                     </div>
-
                     <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
                         <h4 className="font-semibold text-indigo-800 mb-2">Exercise Your Rights</h4>
                         <p className="text-sm text-indigo-700 mb-3">
@@ -321,7 +312,6 @@ const DataPolicyPage: React.FC = () => {
                         We use cookies to make our service work. Under the ePrivacy Directive and GDPR, 
                         we need your consent for non-essential cookies.
                     </p>
-
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -366,7 +356,6 @@ const DataPolicyPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-
                     <p className="text-sm text-slate-500">
                         You can change your cookie preferences at any time using the Cookie Settings link in our footer.
                     </p>
@@ -382,7 +371,6 @@ const DataPolicyPage: React.FC = () => {
                     <p className="text-slate-600">
                         We implement technical and organizational measures to protect your data:
                     </p>
-
                     <div className="grid sm:grid-cols-2 gap-3">
                         {[
                             { title: 'Encryption in Transit', desc: 'All data encrypted with TLS 1.3' },
@@ -410,7 +398,6 @@ const DataPolicyPage: React.FC = () => {
                     <p className="text-slate-600">
                         We use the following third-party services that may process your data:
                     </p>
-
                     <div className="space-y-3">
                         {[
                             {
@@ -463,7 +450,6 @@ const DataPolicyPage: React.FC = () => {
                     <p className="text-slate-600">
                         For any privacy-related questions or to exercise your GDPR rights:
                     </p>
-
                     <div className="bg-indigo-50 rounded-xl p-6">
                         <h4 className="font-semibold text-indigo-800 mb-3">Privacy Contact</h4>
                         <div className="space-y-2 text-sm text-indigo-700">
@@ -472,7 +458,6 @@ const DataPolicyPage: React.FC = () => {
                             <p><strong>Data Controller:</strong> VoteGenerator</p>
                         </div>
                     </div>
-
                     <p className="text-sm text-slate-500">
                         If you're not satisfied with our response, you have the right to lodge a complaint 
                         with your local data protection authority.
@@ -545,7 +530,6 @@ const DataPolicyPage: React.FC = () => {
                                     <ChevronDown className="text-slate-400" size={20} />
                                 )}
                             </button>
-
                             {expandedSection === section.id && (
                                 <motion.div
                                     initial={{ height: 0, opacity: 0 }}

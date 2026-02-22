@@ -38,145 +38,138 @@ const RefundPage: React.FC = () => {
                 </div>
             </header>
             
-            <article className="max-w-2xl mx-auto px-4 pb-20">
-                
-                {/* The Short Version */}
-                <div className="mb-12 p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">The Short Version</h2>
-                    <p className="text-slate-700 text-lg">
-                        <strong>14-day money-back guarantee</strong> on your first purchase. No questions asked. After that, you can cancel anytime and keep access until your billing period ends.
-                    </p>
-                </div>
+            <main className="max-w-2xl mx-auto px-4 pb-20">
+                <div className="prose prose-slate prose-lg max-w-none">
+                    
+                    {/* 14-Day Guarantee */}
+                    <section className="mb-12">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 mb-8">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <Check className="text-emerald-600" size={20} />
+                                </div>
+                                <h2 className="text-2xl font-bold text-emerald-900 m-0">14-Day Money-Back Guarantee</h2>
+                            </div>
+                            <p className="text-emerald-800 m-0">
+                                Not satisfied with your first purchase? Get a full refund within 14 days. No questions asked.
+                            </p>
+                        </div>
+                    </section>
 
-                {/* Full Refunds */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">Full Refunds</h2>
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                            <Check className="text-emerald-500 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">First purchase — within 14 days</p>
-                                <p className="text-slate-600 text-sm">Full refund to your original payment method. No questions asked.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                            <Check className="text-emerald-500 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Service issues</p>
-                                <p className="text-slate-600 text-sm">If we fail to provide the service as described, contact us for a refund.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Plan Changes */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <RefreshCw size={20} className="text-indigo-500" />
-                        Plan Changes
-                    </h2>
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                            <CreditCard className="text-indigo-500 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Upgrading (Pro → Business)</p>
-                                <p className="text-slate-600 text-sm">You're charged the prorated difference immediately. Your unused Pro time is credited toward the upgrade.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                            <CreditCard className="text-indigo-500 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Downgrading (Business → Pro)</p>
-                                <p className="text-slate-600 text-sm">Your unused Business time becomes credit applied to future invoices. The change takes effect at your next billing date.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <p className="text-slate-500 text-sm mt-4 italic">
-                        Plan changes are handled automatically by Stripe. Credit is applied to your account, not refunded to your card.
-                    </p>
-                </div>
-
-                {/* Not Refundable */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">Not Eligible for Refund</h2>
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                            <X className="text-slate-400 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Refund requests after 14 days</p>
-                                <p className="text-slate-600 text-sm">You can still cancel anytime — you'll keep access until your billing period ends.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                            <X className="text-slate-400 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Subscription renewals</p>
-                                <p className="text-slate-600 text-sm">We send a reminder 7 days before renewal so you can cancel if needed.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl">
-                            <X className="text-slate-400 flex-shrink-0 mt-0.5" size={20} />
-                            <div>
-                                <p className="font-medium text-slate-900">Partial months</p>
-                                <p className="text-slate-600 text-sm">When you cancel mid-cycle, you keep access until the period ends. No partial refunds.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Cancellation */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">Cancellation</h2>
-                    <div className="prose prose-slate max-w-none">
-                        <p>
-                            Cancel anytime from your <a href="/#manage-subscription" className="text-indigo-600 hover:underline">account dashboard</a>. When you cancel:
-                        </p>
-                        <ul>
-                            <li><strong>You keep access</strong> to all paid features until your billing period ends</li>
-                            <li><strong>Your polls and data stay safe</strong> — nothing is deleted</li>
-                            <li><strong>You won't be charged again</strong> unless you resubscribe</li>
+                    {/* Eligible for Refund */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">Eligible for Refund</h2>
+                        <ul className="space-y-3">
+                            <li className="flex items-start gap-3">
+                                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">First-time purchases within 14 days</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">Both monthly and annual plans</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">Pro and Business tiers</span>
+                            </li>
                         </ul>
-                    </div>
-                </div>
+                    </section>
 
-                {/* How to Request */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">How to Request a Refund</h2>
-                    <div className="p-6 bg-indigo-50 rounded-xl border border-indigo-100">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <Mail className="text-indigo-600" size={20} />
-                            </div>
+                    {/* Not Eligible */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">Not Eligible for Refund</h2>
+                        <ul className="space-y-3">
+                            <li className="flex items-start gap-3">
+                                <X className="text-red-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">Requests made after 14 days</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <X className="text-red-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">Subscription renewals (only first purchase)</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <X className="text-red-500 mt-1 flex-shrink-0" size={20} />
+                                <span className="text-slate-600">Partial months of service</span>
+                            </li>
+                        </ul>
+                    </section>
+
+                    {/* Plan Changes */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <RefreshCw size={24} />
+                            Plan Changes (Upgrades & Downgrades)
+                        </h2>
+                        
+                        <div className="bg-slate-50 rounded-xl p-6 space-y-4">
                             <div>
-                                <p className="font-medium text-slate-900 mb-2">Email us at billing@votegenerator.com</p>
-                                <ul className="text-slate-600 text-sm space-y-1">
-                                    <li>• Include the email address used to purchase</li>
-                                    <li>• We'll process your refund within 5-7 business days</li>
-                                    <li>• Refunds appear on your statement within 5-10 business days</li>
-                                </ul>
+                                <h3 className="font-semibold text-slate-900 mb-2">Upgrading (Pro → Business)</h3>
+                                <p className="text-slate-600 text-base">
+                                    You're charged the prorated difference immediately. Your unused Pro time 
+                                    is credited toward Business.
+                                </p>
+                            </div>
+                            
+                            <div className="border-t border-slate-200 pt-4">
+                                <h3 className="font-semibold text-slate-900 mb-2">Downgrading (Business → Pro)</h3>
+                                <p className="text-slate-600 text-base">
+                                    Your unused Business time is applied as credit toward future Pro invoices. 
+                                    <strong className="text-slate-900"> Credit is applied to your account, not refunded to your card.</strong>
+                                </p>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </section>
 
-                {/* Billing Issues */}
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-900 mb-4">Questions About Your Bill?</h2>
-                    <div className="prose prose-slate max-w-none">
-                        <p>
-                            See a charge you don't recognize? Contact us at <a href="mailto:billing@votegenerator.com" className="text-indigo-600 hover:underline">billing@votegenerator.com</a> before disputing with your bank. We can usually resolve billing issues faster than the chargeback process.
+                    {/* Cancellation */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">Cancellation</h2>
+                        <p className="text-slate-600 leading-relaxed mb-4">
+                            You can cancel your subscription anytime from your dashboard. When you cancel:
                         </p>
-                    </div>
-                </div>
+                        <ul className="list-disc pl-6 space-y-2 text-slate-600">
+                            <li>You keep access until the end of your billing period</li>
+                            <li>Your polls remain active during this time</li>
+                            <li>After expiration, your polls convert to free tier limits</li>
+                        </ul>
+                        <p className="text-slate-600 mt-4">
+                            <a href="/#manage-subscription" className="text-indigo-600 hover:underline font-medium">
+                                Manage your subscription →
+                            </a>
+                        </p>
+                    </section>
 
-                {/* Free Tier Note */}
-                <div className="p-4 bg-slate-50 rounded-xl text-center">
-                    <p className="text-slate-600">
-                        <strong>Not sure yet?</strong> Try VoteGenerator free — 100 responses per poll, no credit card required.
-                    </p>
-                </div>
+                    {/* How to Request */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Mail size={24} />
+                            How to Request a Refund
+                        </h2>
+                        <p className="text-slate-600 leading-relaxed mb-4">
+                            Email us at <a href="mailto:billing@votegenerator.com" className="text-indigo-600 hover:underline font-medium">billing@votegenerator.com</a> with:
+                        </p>
+                        <ul className="list-disc pl-6 space-y-2 text-slate-600">
+                            <li>The email address used for purchase</li>
+                            <li>Your reason for requesting a refund (optional but helpful)</li>
+                        </ul>
+                        <p className="text-slate-600 mt-4">
+                            Refunds are typically processed within 5-7 business days and appear on your 
+                            statement within 1-2 billing cycles.
+                        </p>
+                    </section>
 
-            </article>
+                    {/* Contact */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">Questions?</h2>
+                        <p className="text-slate-600 leading-relaxed">
+                            If you have any questions about our refund policy, contact us at:
+                        </p>
+                        <p className="text-slate-600 mt-4">
+                            <strong>Email:</strong> <a href="mailto:billing@votegenerator.com" className="text-indigo-600 hover:underline">billing@votegenerator.com</a>
+                        </p>
+                    </section>
+
+                </div>
+            </main>
             
             <Footer />
         </div>

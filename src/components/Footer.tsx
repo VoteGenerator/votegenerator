@@ -1,6 +1,6 @@
 // Footer.tsx - Updated with GDPR links, cookie settings, data deletion
 import React from 'react';
-import { Cookie, Shield, Trash2 } from 'lucide-react';
+import { Cookie, Shield, Trash2, HelpCircle } from 'lucide-react';
 
 interface FooterProps {
     minimal?: boolean;  // For embedded/voting pages
@@ -66,6 +66,12 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Resources</h3>
                         <ul className="space-y-2 text-sm">
+                            <li>
+                                <a href="/help" className="hover:text-white transition flex items-center gap-1">
+                                    <HelpCircle size={12} />
+                                    Help Center
+                                </a>
+                            </li>
                             <li><a href="/how-it-works" className="hover:text-white transition">How It Works</a></li>
                             <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
                             <li><a href="/recover" className="hover:text-white transition">Recover Access</a></li>

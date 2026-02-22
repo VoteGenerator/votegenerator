@@ -155,25 +155,84 @@
   status = 200
 
 # ============================================================================
+# Legal & Policy Pages - Dedicated HTML files (like contact.html)
+# ============================================================================
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/refund"
+  to = "/refund.html"
+  status = 200
+
+[[redirects]]
+  from = "/data-policy"
+  to = "/data-policy.html"
+  status = 200
+
+[[redirects]]
+  from = "/account/delete-request"
+  to = "/delete-request.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/help.html"
+  status = 200
+
+[[redirects]]
+  from = "/help/*"
+  to = "/help.html"
+  status = 200
+
+[[redirects]]
+  from = "/verify-result"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/unsubscribe-result"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# ============================================================================
 # Survey & SEO Landing Page Routes (SPA handles these)
 # ============================================================================
 [[redirects]]
   from = "/survey"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/survey/*"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/employee-survey"
   to = "/index.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/customer-feedback"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/unsubscribe-result"
   to = "/index.html"
   status = 200
 

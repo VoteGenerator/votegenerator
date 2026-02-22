@@ -14,7 +14,7 @@
 // - AEO/SEO optimized with FAQ schema
 // ============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, BookOpen, Zap, Share2, BarChart3, Image, HelpCircle,
@@ -29,6 +29,7 @@ import {
     LayoutDashboard, UserCheck, Timer, Ban, Volume2, VolumeX
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // ============================================================================
@@ -689,9 +690,9 @@ Everything in Pro, plus:
 • Your data is never deleted
 
 **Refund Policy:**
-• Cancel within 7 days of purchase for full refund
-• After 7 days, you keep access until period ends
-• Contact support@votegenerator.com for refund requests`,
+• 14-day money-back guarantee on first purchase
+• After 14 days, you keep access until period ends
+• Contact billing@votegenerator.com for refund requests`,
         relatedArticles: ['manage-subscription', 'plan-comparison']
     },
     
@@ -1629,7 +1630,7 @@ const quickFAQs: FAQ[] = [
     },
     {
         question: 'Can I get a refund?',
-        answer: 'Yes, if you cancel within 7 days of purchase. After 7 days, you keep access until your billing period ends. Email support@votegenerator.com for refunds.',
+        answer: 'Yes! 14-day money-back guarantee on your first purchase, no questions asked. After 14 days, you can cancel anytime but keep access until your billing period ends. Email billing@votegenerator.com for refunds.',
         category: 'billing'
     },
     {
@@ -2113,6 +2114,14 @@ const HelpCenter: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
     
     // Categories with their articles
     const categories = useMemo(() => [
@@ -2231,7 +2240,7 @@ const HelpCenter: React.FC = () => {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
             
-            <NavHeader />
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
             
             {/* Hero Section with Search */}
             <section className="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white py-16">

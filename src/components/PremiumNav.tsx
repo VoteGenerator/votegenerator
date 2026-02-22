@@ -1,39 +1,29 @@
 // ============================================================================
-// App.tsx - Main Application Router
+// PremiumNav.tsx - Premium Navigation Bar for Pro/Business Users
+// Location: src/components/PremiumNav.tsx
 // ============================================================================
-import { useState } from 'react';
-import VoteGeneratorApp from './components/VoteGeneratorApp';
-import VoteGeneratorCreate from './components/VoteGeneratorCreate';
-import AdWall from './components/AdWall';
-import PricingPage from './components/PricingPage';
-import ComparePage from './components/ComparePage';
-import PollCreatedSuccess from './components/PollCreatedSuccess';
-import AdminDashboard from './components/AdminDashboard';
-import CheckoutSuccess from './components/CheckoutSuccess';
-import RecoveryPage from './components/RecoveryPage';
-import DataPolicyPage from './components/DataPolicyPage';
-import DataDeletionPage from './components/DataDeletionPage';
-import HelpCenter from './components/HelpCenter';
-import NavHeader from './components/NavHeader';
-import Footer from './components/Footer';
-import PromoBanner from './components/PromoBanner';
-import VerifyResult from './components/VerifyResult';
-import UnsubscribeResult from './components/UnsubscribeResult';
-import PrivacyPage from './components/PrivacyPage';
-import TermsPage from './components/TermsPage';
-import RefundPage from './components/RefundPage';
+
+import React, { useState } from 'react';
 import { 
-    Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 
-    HelpCircle, BookOpen, ArrowUpRight, LayoutDashboard, 
-    PlusCircle, CreditCard, Mail, Menu, X
+    Crown, Star, PlusCircle, LayoutDashboard, HelpCircle, 
+    CreditCard, Copy, Check, Menu, X, Mail, Calendar, ArrowUpRight 
 } from 'lucide-react';
 
-const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
+interface PremiumNavProps {
+    tier: 'pro' | 'business' | string;
+    expiresAt?: string;
+}
 
-function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
+// Format date helper
+function formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+}
+
+const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
@@ -74,10 +64,8 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                     <img 
                         src="/logo.svg" 
                         alt="VoteGenerator" 
-                        className="h-8 w-8 brightness-0 invert"
-                        onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                        }}
+                        className="h-8 w-8"
+                        style={{ filter: 'brightness(0) invert(1)' }}
                     />
                     <span className="hidden sm:inline text-lg">
                         Vote<span className="text-white/80">Generator</span>
@@ -239,89 +227,6 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
             )}
         </header>
     );
-}
+};
 
-function CreatePage() {
-    const purchasedTier = typeof window !== 'undefined' 
-        ? (localStorage.getItem('vg_purchased_tier') || localStorage.getItem('vg_subscription_tier')) 
-        : null;
-    const expiresAt = typeof window !== 'undefined' 
-        ? (localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at')) 
-        : null;
-    const isPaidUser = purchasedTier === 'pro' || purchasedTier === 'business';
-    
-    let bgClass = 'bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30';
-    if (purchasedTier === 'business') bgClass = 'bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50';
-    else if (purchasedTier === 'pro') bgClass = 'bg-gradient-to-br from-purple-50 via-pink-50 to-fuchsia-50';
-    
-    let headingClass = 'text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-clip-text text-transparent';
-    if (purchasedTier === 'business') headingClass = 'text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent';
-    
-    return (
-        <div className={'min-h-screen ' + bgClass}>
-            {isPaidUser ? (
-                <PremiumNav tier={purchasedTier!} expiresAt={expiresAt || undefined} />
-            ) : (
-                <>
-                    <PromoBanner position="top" />
-                    <NavHeader />
-                </>
-            )}
-            <div className="max-w-5xl mx-auto px-4 py-8">
-                <div className="text-center mb-8">
-                    {isPaidUser ? (
-                        <>
-                            <h1 className={headingClass}>Create Premium Poll</h1>
-                            <p className="text-slate-600">All {purchasedTier === 'business' ? 'Business' : 'Pro'} features unlocked • No ads • Priority support</p>
-                        </>
-                    ) : (
-                        <>
-                            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Create Your Poll</h1>
-                            <p className="text-slate-600">Choose a poll type, add your options, and share instantly. No signup required.</p>
-                        </>
-                    )}
-                </div>
-                <VoteGeneratorCreate />
-            </div>
-            {!isPaidUser && <Footer />}
-            {isPaidUser && (
-                <footer className="bg-white/50 border-t border-slate-200 py-6 mt-12">
-                    <div className="max-w-5xl mx-auto px-4 text-center text-slate-500 text-sm">
-                        <p>
-                            Need help? <a href="/help" className="text-indigo-600 hover:underline">Help Center</a>
-                            {' • '}
-                            <a href="mailto:support@votegenerator.com" className="text-indigo-600 hover:underline">Contact Support</a>
-                        </p>
-                    </div>
-                </footer>
-            )}
-        </div>
-    );
-}
-
-function App() {
-    const path = window.location.pathname;
-    
-    let page;
-    if (path === '/create' || path === '/create/') page = <CreatePage />;
-    else if (path === '/poll-created' || path === '/poll-created/') page = <PollCreatedSuccess />;
-    else if (path === '/ad-wall' || path.startsWith('/ad-wall')) page = <AdWall />;
-    else if (path === '/pricing' || path === '/pricing/') page = <PricingPage />;
-    else if (path === '/compare' || path === '/compare/') page = <ComparePage />;
-    else if (path === '/admin' || path === '/admin/') page = <AdminDashboard />;
-    else if (path === '/checkout/success' || path === '/checkout/success/') page = <CheckoutSuccess />;
-    else if (path === '/help' || path === '/help/' || path.startsWith('/help/')) page = <HelpCenter />;
-    else if (path === '/recover' || path === '/recover/') page = <RecoveryPage />;
-    else if (path === '/data-policy' || path === '/data-policy/') page = <DataPolicyPage />;
-    else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
-    else if (path === '/privacy' || path === '/privacy/') page = <PrivacyPage />;
-    else if (path === '/terms' || path === '/terms/') page = <TermsPage />;
-    else if (path === '/refund' || path === '/refund/') page = <RefundPage />;
-    else if (path === '/verify-result' || path === '/verify-result/') page = <VerifyResult />;
-    else if (path === '/unsubscribe-result' || path === '/unsubscribe-result/') page = <UnsubscribeResult />;
-    else page = <VoteGeneratorApp />;
-    
-    return <>{page}</>;
-}
-
-export default App;
+export default PremiumNav;

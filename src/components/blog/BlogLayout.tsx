@@ -10,6 +10,7 @@ import {
     Link2, Check, ArrowRight, Sparkles
 } from 'lucide-react';
 import NavHeader from '../NavHeader';
+import PremiumNav from '../PremiumNav';
 import Footer from '../Footer';
 
 // ============================================================================
@@ -252,10 +253,21 @@ const BlogLayout: React.FC<BlogLayoutProps> = ({
     floatingCTA = "Create survey — 2 min",
     ctaLink = "/survey"
 }) => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
         <div className="min-h-screen bg-white">
             <ReadingProgress />
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
             
             {/* Hero - Clean, lots of whitespace */}
             <header className="pt-16 md:pt-24 pb-12 px-4">

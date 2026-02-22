@@ -4,7 +4,7 @@
 // team engagement survey, workplace engagement survey
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Users, BarChart3, Clock, CheckCircle, ArrowRight, Star,
@@ -12,6 +12,9 @@ import {
     MessageSquare, Target, Award, ChevronRight, Play,
     ListOrdered, Scale, AlignLeft, Hash
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 // ============================================================================
 // Type definitions for survey questions
@@ -275,8 +278,22 @@ const ResultsPreview: React.FC = () => {
 // ============================================================================
 
 const EmployeeEngagementPage: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+            {/* Navigation */}
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
+            
             {/* Hero Section */}
             <section className="relative overflow-hidden">
                 {/* Background */}
@@ -628,6 +645,9 @@ const EmployeeEngagementPage: React.FC = () => {
                     </div>
                 </div>
             </section>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

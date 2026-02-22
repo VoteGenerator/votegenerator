@@ -24,6 +24,7 @@ import {
     Gamepad2, Trophy, Swords, Timer, Tv, Radio, Wifi
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // Twitch icon component
@@ -42,6 +43,16 @@ const HeroSection: React.FC = () => {
     const [hasVoted, setHasVoted] = useState(false);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [liveViewers, setLiveViewers] = useState(1247);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     // Simulate live viewer count
     useEffect(() => {
@@ -81,7 +92,7 @@ const HeroSection: React.FC = () => {
                 }} />
             </div>
 
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
 
             <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
                 <div className="grid lg:grid-cols-2 gap-12 items-center">

@@ -8,9 +8,11 @@ import {
     Home, Search, PlusCircle, HelpCircle, ArrowLeft, 
     BarChart3, Compass, Ghost, RefreshCw
 } from 'lucide-react';
+import PremiumNav from './PremiumNav';
 
 const NotFoundPage: React.FC = () => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
     
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -18,6 +20,15 @@ const NotFoundPage: React.FC = () => {
         };
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
     }, []);
 
     // Fun 404 messages
@@ -39,7 +50,11 @@ const NotFoundPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+            {/* PremiumNav for paid users */}
+            {tier !== 'free' && <PremiumNav tier={tier} />}
+            
+            <div className="flex-1 flex items-center justify-center p-4">
             {/* Animated background elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {[...Array(20)].map((_, i) => (
@@ -162,6 +177,7 @@ const NotFoundPage: React.FC = () => {
                         Report a problem
                     </a>
                 </motion.div>
+            </div>
             </div>
         </div>
     );

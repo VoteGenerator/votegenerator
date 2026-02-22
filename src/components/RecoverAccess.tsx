@@ -5,12 +5,14 @@
 // Only works for PAID users (Stripe has their email)
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Mail, ArrowRight, Loader2, CheckCircle, AlertCircle, 
     Home, ShieldCheck, Lock
 } from 'lucide-react';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 type RecoveryStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -18,6 +20,16 @@ const RecoverAccess: React.FC = () => {
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<RecoveryStatus>('idle');
     const [message, setMessage] = useState('');
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,19 +69,23 @@ const RecoverAccess: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-200">
-                <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <button onClick={goHome} className="flex items-center gap-3 hover:opacity-80 transition">
-                        <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" />
-                        <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
-                    </button>
-                    <a href="/#pricing" className="text-indigo-600 font-medium hover:text-indigo-700">
-                        View Pricing
-                    </a>
-                </div>
-            </header>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex flex-col">
+            {/* Header - PremiumNav for paid users */}
+            {tier !== 'free' ? (
+                <PremiumNav tier={tier} />
+            ) : (
+                <header className="bg-white border-b border-slate-200">
+                    <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+                        <button onClick={goHome} className="flex items-center gap-3 hover:opacity-80 transition">
+                            <img src="/logo.svg" alt="VoteGenerator" className="w-10 h-10" />
+                            <span className="font-bold text-xl text-slate-800">VoteGenerator</span>
+                        </button>
+                        <a href="/#pricing" className="text-indigo-600 font-medium hover:text-indigo-700">
+                            View Pricing
+                        </a>
+                    </div>
+                </header>
+            )}
 
             <main className="max-w-lg mx-auto px-4 py-16">
                 <motion.div
@@ -194,6 +210,11 @@ const RecoverAccess: React.FC = () => {
                     </button>
                 </div>
             </main>
+            
+            {/* Footer */}
+            <div className="mt-auto">
+                <Footer />
+            </div>
         </div>
     );
 };

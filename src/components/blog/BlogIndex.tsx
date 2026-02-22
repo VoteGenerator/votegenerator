@@ -2,10 +2,11 @@
 // BlogIndex.tsx - Clean, minimal blog listing
 // ============================================================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import NavHeader from '../NavHeader';
+import PremiumNav from '../PremiumNav';
 import Footer from '../Footer';
 
 // ============================================================================
@@ -71,9 +72,20 @@ const BlogCard: React.FC<{ post: typeof BLOG_POSTS[0]; index: number }> = ({ pos
 // ============================================================================
 
 const BlogIndex: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
         <div className="min-h-screen bg-white">
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
             
             {/* Hero - Simple */}
             <header className="pt-20 md:pt-28 pb-16 px-4">

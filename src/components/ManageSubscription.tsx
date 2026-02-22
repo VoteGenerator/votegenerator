@@ -11,6 +11,8 @@ import {
     ArrowRight, Shield, Send, Inbox,
     HelpCircle, ChevronDown, ExternalLink
 } from 'lucide-react';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 const ManageSubscription: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -18,6 +20,7 @@ const ManageSubscription: React.FC = () => {
     const [emailSent, setEmailSent] = useState(false);
     const [returnedFromPortal, setReturnedFromPortal] = useState(false);
     const [showFaq, setShowFaq] = useState<string | null>(null);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
 
     // Check URL for success param (returning from Stripe portal)
     useEffect(() => {
@@ -26,6 +29,13 @@ const ManageSubscription: React.FC = () => {
             setReturnedFromPortal(true);
             // Clean up URL
             window.history.replaceState(null, '', window.location.pathname + '#manage-subscription');
+        }
+        
+        // Detect tier from localStorage
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
         }
     }, []);
 
@@ -93,22 +103,41 @@ const ManageSubscription: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
-            {/* Header */}
-            <div className="bg-white border-b border-slate-200">
-                <div className="max-w-4xl mx-auto px-4 py-6">
-                    <a href="/" className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium text-sm mb-4">
-                        ← Back to VoteGenerator
-                    </a>
-                    <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                        <CreditCard className="text-indigo-600" size={32} />
-                        Manage Subscription
-                    </h1>
-                    <p className="text-slate-500 mt-2">
-                        Update payment methods, change plans, view invoices, or cancel
-                    </p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex flex-col">
+            {/* Header - PremiumNav for paid users */}
+            {tier !== 'free' ? (
+                <PremiumNav tier={tier} />
+            ) : (
+                <div className="bg-white border-b border-slate-200">
+                    <div className="max-w-4xl mx-auto px-4 py-6">
+                        <a href="/" className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium text-sm mb-4">
+                            ← Back to VoteGenerator
+                        </a>
+                        <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                            <CreditCard className="text-indigo-600" size={32} />
+                            Manage Subscription
+                        </h1>
+                        <p className="text-slate-500 mt-2">
+                            Update payment methods, change plans, view invoices, or cancel
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
+            
+            {/* Page Title for Paid Users */}
+            {tier !== 'free' && (
+                <div className="bg-white border-b border-slate-200">
+                    <div className="max-w-4xl mx-auto px-4 py-6">
+                        <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                            <CreditCard className="text-indigo-600" size={32} />
+                            Manage Subscription
+                        </h1>
+                        <p className="text-slate-500 mt-2">
+                            Update payment methods, change plans, view invoices, or cancel
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div className="max-w-4xl mx-auto px-4 py-12">
                 {/* Success: Returned from Portal */}
@@ -351,6 +380,11 @@ const ManageSubscription: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="mt-auto">
+                <Footer />
             </div>
         </div>
     );

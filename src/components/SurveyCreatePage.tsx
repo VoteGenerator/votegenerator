@@ -12,6 +12,7 @@ import {
     Key, Share2, QrCode, Loader2, AlertCircle
 } from 'lucide-react';
 import SurveyBuilder from './SurveyBuilder';
+import PremiumNav from './PremiumNav';
 import { SurveySection, SurveySettings, Poll } from '../types';
 
 // ============================================================================
@@ -73,10 +74,19 @@ const SurveyCreatePage: React.FC = () => {
     const [isPublishing, setIsPublishing] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
     const [createdPoll, setCreatedPoll] = useState<{ id: string; adminKey: string } | null>(null);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
     const [copied, setCopied] = useState(false);
     
-    // Tier
-    const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    // Tier - use the state value
     const isFree = tier === 'free';
     
     // Load template from sessionStorage if present
@@ -198,6 +208,9 @@ const SurveyCreatePage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
+            {/* PremiumNav for paid users */}
+            {tier !== 'free' && <PremiumNav tier={tier} />}
+            
             {/* Header */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
                 <div className="max-w-5xl mx-auto px-4 py-4">

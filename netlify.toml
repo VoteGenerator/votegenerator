@@ -183,6 +183,16 @@
   status = 200
 
 [[redirects]]
+  from = "/delete-request"
+  to = "/delete-request.html"
+  status = 200
+
+[[redirects]]
+  from = "/how-it-works"
+  to = "/demo.html"
+  status = 200
+
+[[redirects]]
   from = "/help"
   to = "/help.html"
   status = 200

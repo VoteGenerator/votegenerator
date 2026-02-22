@@ -4,7 +4,7 @@
 // customer feedback form, guest satisfaction survey, user satisfaction survey
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Star, BarChart3, Clock, CheckCircle, ArrowRight, Users,
@@ -12,6 +12,9 @@ import {
     ThumbsUp, ThumbsDown, Meh, ChevronRight, Play, Target,
     Award, Heart, Frown, Smile
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 // ============================================================================
 // CSAT Preview Component - Shows actual rating experience
@@ -200,8 +203,22 @@ const ResultsDashboard: React.FC = () => {
 // ============================================================================
 
 const CustomerSatisfactionPage: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+            {/* Navigation */}
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
+            
             {/* Hero Section */}
             <section className="relative overflow-hidden">
                 {/* Background */}
@@ -574,6 +591,9 @@ const CustomerSatisfactionPage: React.FC = () => {
                     </div>
                 </div>
             </section>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

@@ -17,7 +17,6 @@ export default defineConfig({
                 about: resolve(__dirname, 'about.html'),
                 checkout: resolve(__dirname, 'checkout.html'),
                 success: resolve(__dirname, 'success.html'),
-                // Legal pages
                 privacy: resolve(__dirname, 'privacy.html'),
                 terms: resolve(__dirname, 'terms.html'),
                 refund: resolve(__dirname, 'refund.html'),

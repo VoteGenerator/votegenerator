@@ -11,6 +11,9 @@ import {
     MessageSquare, BarChart3, Clock, Zap, Download, Users,
     Sparkles, ThumbsUp, Lightbulb, Target, Play
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 // ============================================================================
 // INTERACTIVE FEEDBACK PREVIEW
@@ -299,8 +302,22 @@ const ResultsPreview: React.FC = () => {
 // ============================================================================
 
 const FeedbackFormPage: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+            {/* Navigation */}
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
+            
             {/* Hero */}
             <section className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 min-h-[90vh] flex items-center">
                 <div className="absolute inset-0 opacity-5">
@@ -576,6 +593,9 @@ const FeedbackFormPage: React.FC = () => {
                     </div>
                 </div>
             </section>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

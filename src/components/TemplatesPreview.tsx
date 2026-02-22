@@ -2,11 +2,14 @@
 // Templates Preview - Visual preview of the template selector
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Sparkles, ArrowRight, Clock, CheckCircle, 
     ListOrdered, Star, Image, ArrowLeftRight, Zap
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
+import Footer from './Footer';
 
 // Sample templates data
 const TEMPLATES = [
@@ -184,9 +187,22 @@ const TemplateCard = ({ template, index }) => {
 // Main Component
 export default function TemplatesPreview() {
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+            {/* Navigation */}
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
+            
             <style>{`
                 @keyframes fadeInUp {
                     from {
@@ -268,6 +284,9 @@ export default function TemplatesPreview() {
                     </button>
                 </div>
             </div>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     );
 }

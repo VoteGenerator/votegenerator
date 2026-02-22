@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     ArrowRight, 
     Check, 
@@ -22,6 +22,8 @@ import {
     Laptop,
     Heart
 } from 'lucide-react';
+import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // Custom Reddit icon component
@@ -49,6 +51,16 @@ const RedditCommunityPage: React.FC = () => {
         'option8': 142
     });
     const [userVoted, setUserVoted] = useState<string | null>(null);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     const handleDemoVote = (optionId: string) => {
         if (userVoted) return;
@@ -126,6 +138,9 @@ const RedditCommunityPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#DAE0E6]">
+            {/* Navigation */}
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
+            
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-gradient-to-br from-[#FF4500] via-[#FF5722] to-[#FF6D00] text-white">
                 {/* Background pattern */}

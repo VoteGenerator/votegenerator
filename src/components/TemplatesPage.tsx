@@ -3,13 +3,24 @@
 // Route: /templates
 // ============================================================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 import TemplateSelector from './TemplateSelector';
 import { PollTemplate } from './pollTemplates';
 
 const TemplatesPage: React.FC = () => {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
     
     const handleSelectTemplate = (template: PollTemplate) => {
         // Store template in sessionStorage for create page to pick up
@@ -20,7 +31,7 @@ const TemplatesPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
             <TemplateSelector 
                 onSelectTemplate={handleSelectTemplate}
                 isModal={false}

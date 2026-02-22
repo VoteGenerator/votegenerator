@@ -86,8 +86,7 @@ const SurveyCreatePage: React.FC = () => {
     }, []);
     const [copied, setCopied] = useState(false);
     
-    // Tier
-    const tier = localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    // Tier - use the state value
     const isFree = tier === 'free';
     
     // Load template from sessionStorage if present

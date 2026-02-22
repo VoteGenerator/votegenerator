@@ -11,8 +11,21 @@ import NavHeader from './NavHeader';
 import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
+// Template type definition
+interface PreviewTemplate {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    pollType: string;
+    icon: string;
+    gradient: string;
+    question: string;
+    estimatedTime: string;
+}
+
 // Sample templates data
-const TEMPLATES = [
+const TEMPLATES: PreviewTemplate[] = [
     {
         id: 'team-offsite',
         name: 'Team Offsite Location',
@@ -90,7 +103,7 @@ const CATEGORIES = [
 ];
 
 // Template Card
-const TemplateCard = ({ template, index }) => {
+const TemplateCard = ({ template, index }: { template: PreviewTemplate; index: number }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     return (

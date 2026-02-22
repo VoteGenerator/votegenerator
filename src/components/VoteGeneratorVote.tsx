@@ -20,7 +20,7 @@ interface Props {
 // Get theme config from theme ID
 const getThemeConfig = (themeId?: string): ThemeConfig => {
     if (!themeId) return THEMES[0]; // Default classic theme
-    return THEMES.find(t => t.id === themeId) || THEMES[0];
+    return THEMES.find((t: ThemeConfig) => t.id === themeId) || THEMES[0];
 };
 
 // Generate CSS classes for special effects

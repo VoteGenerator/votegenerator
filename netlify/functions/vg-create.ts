@@ -11,6 +11,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
 });
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Generate unique IDs
 function generateId(length: number = 8): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -53,7 +59,6 @@ function isValidSlug(slug: string): boolean {
 }
 
 // Tier limits and features - ALL POLL TYPES ARE FREE
-// Only response limits, poll counts, and premium features differ by tier
 const TIER_CONFIG: Record<string, {
     maxResponses: number;
     expiresInDays: number;
@@ -69,7 +74,7 @@ const TIER_CONFIG: Record<string, {
     pro: {
         maxResponses: 10000,
         expiresInDays: 365,
-        maxPolls: -1, // unlimited
+        maxPolls: -1,
         features: ['all'],
     },
     business: {
@@ -88,16 +93,15 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
     customerId?: string;
     expiresAt?: string;
 }> {
-    // If no identifying info, return free tier
     if (!email && !dashboardToken && !sessionId) {
         console.log('vg-create: No user identification provided, using free tier');
         return { tier: 'free' };
     }
 
     try {
-        // Method 1: Check by dashboard token (most reliable)
+        // Method 1: Check by dashboard token
         if (dashboardToken) {
-            const customerStore = getStore('vg-customers');
+            const customerStore = getStore({ name: 'vg-customers', siteID: SITE_ID, token: BLOB_TOKEN });
             
             let customerData: any = null;
             try {
@@ -107,11 +111,9 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
             }
             
             if (customerData && customerData.stripeCustomerId) {
-                // Verify against Stripe
                 const stripeCustomer = await stripe.customers.retrieve(customerData.stripeCustomerId);
                 
                 if (stripeCustomer && !stripeCustomer.deleted) {
-                    // Check active subscriptions
                     const subscriptions = await stripe.subscriptions.list({
                         customer: customerData.stripeCustomerId,
                         status: 'active',
@@ -122,7 +124,6 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                         const subscription = subscriptions.data[0];
                         const priceId = subscription.items.data[0]?.price?.id;
                         
-                        // Determine tier from price ID
                         const businessPrices = [
                             process.env.STRIPE_BUSINESS_MONTHLY_PRICE,
                             process.env.STRIPE_BUSINESS_ANNUAL_PRICE,
@@ -144,7 +145,6 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
                         } else if (proPrices.includes(priceId)) {
                             tier = 'pro';
                         } else {
-                            // Check metadata as fallback
                             const tierMeta = subscription.metadata?.tier || (stripeCustomer as any).metadata?.tier;
                             if (tierMeta === 'business') tier = 'business';
                             else if (tierMeta === 'pro') tier = 'pro';
@@ -217,7 +217,7 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
             }
         }
         
-        // Method 3: Check by session ID (for recent checkouts)
+        // Method 3: Check by session ID
         if (sessionId) {
             try {
                 const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -257,13 +257,11 @@ async function verifyUserTier(email?: string, dashboardToken?: string, sessionId
             }
         }
         
-        // No valid subscription found
         console.log('vg-create: No active subscription found, using free tier');
         return { tier: 'free' };
         
     } catch (error) {
         console.error('vg-create: Tier verification error:', error);
-        // On error, default to free tier (safe default)
         return { tier: 'free' };
     }
 }
@@ -277,39 +275,29 @@ async function countUserPolls(dashboardToken?: string, sessionId?: string, custo
     }
     
     try {
-        const customerStore = getStore('vg-customers');
+        const customerStore = getStore({ name: 'vg-customers', siteID: SITE_ID, token: BLOB_TOKEN });
         
         let customerData: any = null;
         
-        // Try dashboard token first
         if (dashboardToken) {
             try {
                 customerData = await customerStore.get('token_' + dashboardToken, { type: 'json' });
-            } catch (e) {
-                // Token not found
-            }
+            } catch (e) {}
         }
         
-        // Try customer ID
         if (!customerData && customerId) {
             try {
                 customerData = await customerStore.get(customerId, { type: 'json' });
-            } catch (e) {
-                // Customer not found
-            }
+            } catch (e) {}
         }
         
-        // Try session ID lookup
         if (!customerData && sessionId) {
             try {
                 customerData = await customerStore.get('session_' + sessionId, { type: 'json' });
-            } catch (e) {
-                // Session not found
-            }
+            } catch (e) {}
         }
         
         if (customerData && customerData.polls && Array.isArray(customerData.polls)) {
-            // Count only active polls (not deleted)
             const activePolls = customerData.polls.filter((p: any) => p.status !== 'deleted');
             return activePolls.length;
         }
@@ -337,11 +325,13 @@ export const handler: Handler = async (event) => {
     }
 
     if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: 'Method not allowed' }),
-        };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    }
+
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-create: Missing Blobs credentials');
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error' }) };
     }
 
     try {
@@ -357,9 +347,6 @@ export const handler: Handler = async (event) => {
             hideBranding, customThankYou
         } = body;
 
-        // ====================================================================
-        // SECURITY: Verify tier from Stripe, NOT from request body
-        // ====================================================================
         const { tier, customerId, expiresAt: planExpiresAt } = await verifyUserTier(
             userEmail,
             dashboardToken,
@@ -368,30 +355,18 @@ export const handler: Handler = async (event) => {
         
         console.log('vg-create: Verified tier = ' + tier + ' (requested tier was ' + (body.tier || 'not specified') + ')');
         
-        // Get tier config based on VERIFIED tier
         const tierConfig = TIER_CONFIG[tier];
 
-        // Validation
         if (!question || typeof question !== 'string') {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Question is required' }),
-            };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Question is required' }) };
         }
 
-        // Skip option validation for rating polls and surveys
         const skipOptionValidation = pollType === 'rating' || pollType === 'survey' || isSurvey;
         
         if (!skipOptionValidation && (!options || !Array.isArray(options) || options.length < 2)) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'At least 2 options are required' }),
-            };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'At least 2 options are required' }) };
         }
 
-        // Check if plan has expired (for paid tiers)
         if (tier !== 'free' && planExpiresAt) {
             const expiryDate = new Date(planExpiresAt);
             if (expiryDate < new Date()) {
@@ -407,9 +382,6 @@ export const handler: Handler = async (event) => {
             }
         }
 
-        // ====================================================================
-        // POLL LIMIT ENFORCEMENT - Always check for free tier
-        // ====================================================================
         if (tierConfig.maxPolls > 0) {
             const existingPollCount = await countUserPolls(dashboardToken, sessionId, customerId);
             
@@ -430,9 +402,6 @@ export const handler: Handler = async (event) => {
             }
         }
 
-        // ====================================================================
-        // CUSTOM SLUG - Business tier only (verified)
-        // ====================================================================
         let pollId: string;
         let hasCustomSlug = false;
         
@@ -440,22 +409,15 @@ export const handler: Handler = async (event) => {
             const normalizedSlug = customSlug.trim().toLowerCase();
             
             if (!isValidSlug(normalizedSlug)) {
-                return {
-                    statusCode: 400,
-                    headers,
-                    body: JSON.stringify({ error: 'Invalid custom link format' }),
-                };
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid custom link format' }) };
             }
             
-            // Check if slug is already taken
-            const slugStore = getStore('poll-slugs');
+            const slugStore = getStore({ name: 'poll-slugs', siteID: SITE_ID, token: BLOB_TOKEN });
             
             let existingPollId: string | null = null;
             try {
                 existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
-            } catch (e) {
-                // Slug not found, which is good
-            }
+            } catch (e) {}
             
             if (existingPollId) {
                 return {
@@ -471,9 +433,7 @@ export const handler: Handler = async (event) => {
             pollId = normalizedSlug;
             hasCustomSlug = true;
         } else if (customSlug && tier !== 'business') {
-            // User tried to use custom slug without Business tier
             console.log('vg-create: Blocked custom slug attempt from ' + tier + ' user');
-            // Don't error, just ignore the custom slug
             pollId = generateSecureId();
         } else {
             pollId = generateSecureId();
@@ -481,18 +441,13 @@ export const handler: Handler = async (event) => {
         
         const adminKey = generateAdminKey();
 
-        // Calculate expiry
         const expiresAt = new Date(
             Date.now() + tierConfig.expiresInDays * 24 * 60 * 60 * 1000
         ).toISOString();
 
-        // ====================================================================
-        // FEATURE GATING - Strip features user doesn't have access to
-        // ====================================================================
         const isPaidUser = tier === 'pro' || tier === 'business';
         const isBusiness = tier === 'business';
 
-        // Create poll object with VERIFIED tier
         const poll = {
             id: pollId,
             adminKey,
@@ -514,14 +469,12 @@ export const handler: Handler = async (event) => {
                 deadline: settings?.deadline || null,
                 unlisted: unlisted || false,
                 security: settings?.security || 'none',
-                // Pro features - only if paid
                 hideBranding: isPaidUser ? (hideBranding || false) : false,
                 customThankYou: isPaidUser && customThankYou ? customThankYou : null,
             },
             pin: pin || null,
             allowedCodes: allowedCodes || null,
             customSlug: hasCustomSlug ? pollId : null,
-            // IMPORTANT: Store VERIFIED tier, not frontend-claimed tier
             tier,
             maxResponses: tierConfig.maxResponses,
             expiresAt,
@@ -530,10 +483,8 @@ export const handler: Handler = async (event) => {
             voteCount: 0,
             responseCount: 0,
             status: tier === 'free' ? 'live' : (requestedStatus || 'live'),
-            // Pro features at top level
             hideBranding: isPaidUser ? (hideBranding || false) : false,
             customThankYou: isPaidUser && customThankYou ? customThankYou : null,
-            // Logo URL - only for Business tier
             logoUrl: isBusiness ? (logoUrl || null) : null,
             theme: theme || 'default',
             ratingStyle: ratingStyle || 'stars',
@@ -543,18 +494,15 @@ export const handler: Handler = async (event) => {
             sections: sections || null,
             surveySettings: surveySettings || null,
             notificationSettings: body.notificationSettings || null,
-            // Store creator info for future lookups
             creatorCustomerId: customerId || null,
         };
 
-        // Store poll
-        const store = getStore('polls');
-        
+        // Store poll with EXPLICIT CREDENTIALS
+        const store = getStore({ name: 'polls', siteID: SITE_ID, token: BLOB_TOKEN });
         await store.setJSON(pollId, poll);
         
-        // Store slug mapping if custom
         if (hasCustomSlug) {
-            const slugStore = getStore('poll-slugs');
+            const slugStore = getStore({ name: 'poll-slugs', siteID: SITE_ID, token: BLOB_TOKEN });
             await slugStore.set(pollId, pollId);
         }
 
@@ -573,7 +521,6 @@ export const handler: Handler = async (event) => {
                 adminUrl: '/admin/' + pollId + '/' + adminKey,
                 resultsUrl: '/results/' + pollId,
                 shareUrl: hasCustomSlug ? '/p/' + pollId : '/#id=' + pollId,
-                // Return VERIFIED tier info
                 tier,
                 maxResponses: tierConfig.maxResponses,
                 expiresAt,

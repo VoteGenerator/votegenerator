@@ -3,7 +3,7 @@
 // Bot protection: Netlify's built-in + honeypot field
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Mail, 
@@ -19,12 +19,23 @@ import {
     AlertCircle
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 const ContactPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     const subjects = [
         { value: 'general', label: 'General Inquiry', emoji: '💬' },
@@ -83,7 +94,7 @@ const ContactPage: React.FC = () => {
     if (submitted) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-                <NavHeader />
+                {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
                 
                 <div className="max-w-2xl mx-auto px-4 py-20">
                     <motion.div
@@ -130,7 +141,7 @@ const ContactPage: React.FC = () => {
     // Form State
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
 
             {/* Hero */}
             <div className="pt-16 pb-12 px-4">

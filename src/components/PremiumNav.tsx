@@ -41,10 +41,10 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
     const isBusiness = tier === 'business';
     const navBg = isBusiness 
         ? 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900' 
-        : 'bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700';
+        : 'bg-gradient-to-r from-indigo-900 via-purple-800 to-indigo-900';
     const tierConfig = isBusiness 
         ? { name: 'Business', icon: Star, badge: 'bg-amber-400 text-amber-900' } 
-        : { name: 'Pro', icon: Crown, badge: 'bg-pink-400 text-pink-900' };
+        : { name: 'Pro', icon: Crown, badge: 'bg-white text-purple-900' };
     const TierIcon = tierConfig.icon;
     
     // Current path for active state
@@ -60,13 +60,14 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
         <header className={navBg + ' text-white sticky top-0 z-50 shadow-xl'}>
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
-                <a href="/" className="flex items-center gap-2 font-bold text-white/90 hover:text-white transition-colors">
-                    <img 
-                        src="/logo.svg" 
-                        alt="VoteGenerator" 
-                        className="h-8 w-8"
-                        style={{ filter: 'brightness(0) invert(1)' }}
-                    />
+                <a href="/" className="flex items-center gap-2 font-bold text-white hover:text-white/90 transition-colors">
+                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-md">
+                        <img 
+                            src="/logo.svg" 
+                            alt="VoteGenerator" 
+                            className="h-6 w-6"
+                        />
+                    </div>
                     <span className="hidden sm:inline text-lg">
                         Vote<span className="text-white/80">Generator</span>
                     </span>

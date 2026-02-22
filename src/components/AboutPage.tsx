@@ -3,7 +3,7 @@
 // Uses "we" language, accurate features only, visual mockups
 // ============================================================================
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     ShieldCheck, Lock, Mail, Clock, Heart, Sparkles, Globe, Zap, ArrowRight,
@@ -12,6 +12,7 @@ import {
     BarChart3, Palette, Crown, Building2, Smartphone
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // ============================================================================
@@ -19,6 +20,17 @@ import Footer from './Footer';
 // ============================================================================
 
 function AboutPage(): React.ReactElement {
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
+
     const pollTypes = [
         { name: 'Multiple Choice', icon: CheckSquare, color: 'from-blue-500 to-indigo-600', desc: 'Pick one or more' },
         { name: 'Ranked Choice', icon: ListOrdered, color: 'from-indigo-500 to-purple-600', desc: 'Drag to rank' },
@@ -83,7 +95,7 @@ function AboutPage(): React.ReactElement {
 
     return (
         <div className="min-h-screen bg-white overflow-hidden">
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
 
             {/* Hero Section */}
             <section className="relative py-20 md:py-28 overflow-hidden">

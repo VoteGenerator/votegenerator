@@ -14,6 +14,7 @@ import {
     Trophy, Star, Zap, Target, HelpCircle, ChevronDown, FileText
 } from 'lucide-react';
 import NavHeader from './NavHeader';
+import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 // ============================================================================
@@ -1086,6 +1087,16 @@ function DemoPage(): React.ReactElement {
     const [selectedPoll, setSelectedPoll] = useState<string>('multiple-choice');
     const [userVote, setUserVote] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'polls' | 'surveys' | 'finder'>('polls');
+    const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
+
+    // Detect tier from localStorage
+    useEffect(() => {
+        const savedTier = localStorage.getItem('vg_subscription_tier') || 
+                          localStorage.getItem('vg_purchased_tier');
+        if (savedTier === 'pro' || savedTier === 'business') {
+            setTier(savedTier);
+        }
+    }, []);
 
     const selectedPollData = pollTypes.find(p => p.id === selectedPoll) || pollTypes[0];
 
@@ -1104,7 +1115,7 @@ function DemoPage(): React.ReactElement {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-            <NavHeader />
+            {tier !== 'free' ? <PremiumNav tier={tier} /> : <NavHeader />}
 
             {/* Hero */}
             <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700">

@@ -32,6 +32,9 @@ import EmbedModal from './EmbedPoll';
 import UpgradeModal from './UpgradeModal';
 import EmailAdminLink from './EmailAdminLink';
 import DraftLiveToggle from './DraftLiveToggle';
+import PremiumNav from './PremiumNav';
+import NavHeader from './NavHeader';
+import Footer from './Footer';
 import { AnimatedCounter, PulseIndicator } from './AnimatedComponents';
 import { Poll, RunoffResult } from '../types';
 
@@ -361,6 +364,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Computed values
     const tier = useMemo(() => {
         return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
+    }, []);
+    
+    // Get subscription expiration for PremiumNav
+    const subscriptionExpiresAt = useMemo(() => {
+        return localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at') || undefined;
     }, []);
     
     const isPro = tier === 'pro' || tier === 'business';
@@ -936,96 +944,90 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             `}</style>
             
             {/* ================================================================ */}
-            {/* MOBILE NAVIGATION HEADER */}
+            {/* NAVIGATION - Tier-aware */}
             {/* ================================================================ */}
-            <header className={`md:hidden sticky top-0 z-40 print:hidden ${
-                tier === 'business' 
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
-                    : tier === 'pro' 
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600'
-                        : 'bg-white border-b border-slate-200'
-            }`}>
-                <div className="px-4 py-3 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                            tier !== 'free' ? 'bg-white/20' : 'bg-indigo-100'
-                        }`}>
-                            <BarChart3 size={16} className={tier !== 'free' ? 'text-white' : 'text-indigo-600'} />
-                        </div>
-                        <span className={`font-bold ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
-                            VoteGenerator
-                        </span>
-                    </a>
+            {isPro ? (
+                // Paid users get PremiumNav (handles both desktop and mobile)
+                <PremiumNav tier={tier} expiresAt={subscriptionExpiresAt} />
+            ) : (
+                // Free users get NavHeader on desktop, custom mobile nav
+                <>
+                    {/* Desktop: NavHeader */}
+                    <div className="hidden md:block print:hidden">
+                        <NavHeader />
+                    </div>
                     
-                    <button 
-                        onClick={() => setShowMobileMenu(!showMobileMenu)}
-                        className={`p-2 rounded-lg transition ${
-                            tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'
-                        }`}
-                    >
-                        {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
-                    </button>
-                </div>
-                
-                {/* Mobile Menu Dropdown */}
-                <AnimatePresence>
-                    {showMobileMenu && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className={`overflow-hidden ${
-                                tier === 'free' 
-                                    ? 'border-t border-slate-100 bg-white' 
-                                    : tier === 'pro'
-                                        ? 'bg-purple-700'
-                                        : 'bg-amber-600'
-                            }`}
-                        >
-                            <nav className="p-3 space-y-1">
-                                <a 
-                                    href="/admin" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                                        tier !== 'free' 
-                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
-                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
-                                    }`}
+                    {/* Mobile Header for Free Users */}
+                    <header className="md:hidden sticky top-0 z-40 print:hidden bg-white border-b border-slate-200">
+                        <div className="px-4 py-3 flex items-center justify-between">
+                            <a href="/" className="flex items-center gap-2">
+                                <img 
+                                    src="/logo.svg" 
+                                    alt="VoteGenerator" 
+                                    className="w-8 h-8"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <span className="font-bold text-slate-800">
+                                    VoteGenerator
+                                </span>
+                            </a>
+                            
+                            <button 
+                                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                                className="p-2 rounded-lg transition hover:bg-slate-100 text-slate-600"
+                            >
+                                {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                            </button>
+                        </div>
+                        
+                        {/* Mobile Menu Dropdown */}
+                        <AnimatePresence>
+                            {showMobileMenu && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden border-t border-slate-100 bg-white"
                                 >
-                                    <LayoutDashboard size={20} /> Back to Dashboard
-                                </a>
-                                <a 
-                                    href="/create" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                                        tier !== 'free' 
-                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
-                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
-                                    }`}
-                                >
-                                    <PlusCircle size={20} /> Create New Poll
-                                </a>
-                                <a 
-                                    href="/templates" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                                        tier !== 'free' 
-                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
-                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
-                                    }`}
-                                >
-                                    <Zap size={20} /> Templates
-                                </a>
-                                {tier === 'free' && (
-                                    <a 
-                                        href="/pricing" 
-                                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
-                                    >
-                                        <Crown size={20} /> Upgrade to Pro
-                                    </a>
-                                )}
-                            </nav>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </header>
+                                    <nav className="p-3 space-y-1">
+                                        <a 
+                                            href="/admin" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <LayoutDashboard size={20} /> Back to Dashboard
+                                        </a>
+                                        <a 
+                                            href="/create" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <PlusCircle size={20} /> Create New Poll
+                                        </a>
+                                        <a 
+                                            href="/templates" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <Zap size={20} /> Templates
+                                        </a>
+                                        <a 
+                                            href="/help" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <HelpCircle size={20} /> Help Center
+                                        </a>
+                                        <div className="h-px bg-slate-100 my-2" />
+                                        <a 
+                                            href="/pricing" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                                        >
+                                            <Crown size={20} /> Upgrade to Pro
+                                        </a>
+                                    </nav>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </header>
+                </>
+            )}
             
             <div className="max-w-5xl mx-auto px-4 py-6">
                 {/* Print Header - Only visible when printing */}
@@ -3738,6 +3740,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 source="poll_dashboard"
             />
         </div>
+        
+        {/* Footer */}
+        <Footer />
         </>
     );
 };

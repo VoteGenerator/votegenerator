@@ -2,11 +2,11 @@
 // PremiumNav.tsx - Premium Navigation Bar for Pro/Business Users
 // Location: src/components/PremiumNav.tsx
 // ============================================================================
-
 import React, { useState } from 'react';
 import { 
     Crown, Star, PlusCircle, LayoutDashboard, HelpCircle, 
-    CreditCard, Copy, Check, Menu, X, Mail, Calendar, ArrowUpRight 
+    CreditCard, Copy, Check, Menu, X, Mail, Calendar, ArrowUpRight,
+    Zap, ClipboardList, ChevronDown
 } from 'lucide-react';
 
 interface PremiumNavProps {
@@ -26,6 +26,7 @@ function formatDate(dateStr: string): string {
 const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     
     const endDate = expiresAt ? new Date(expiresAt) : null;
     const daysRemaining = endDate ? Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
@@ -50,18 +51,28 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
     // Current path for active state
     const currentPath = window.location.pathname;
     
-    const navItems = [
+    // Visible nav items (always shown)
+    const visibleNavItems = [
         { label: 'Create Poll', href: '/create', icon: PlusCircle, active: currentPath === '/create' },
         { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, active: currentPath === '/admin' },
+    ];
+    
+    // Dropdown nav items (in "More" menu)
+    const dropdownNavItems = [
+        { label: 'Templates', href: '/templates', icon: Zap, active: currentPath === '/templates' },
+        { label: 'Create Survey', href: '/survey/create', icon: ClipboardList, active: currentPath === '/survey/create' },
         { label: 'Help', href: '/help', icon: HelpCircle, active: currentPath.startsWith('/help') },
     ];
+    
+    // All nav items for mobile
+    const allNavItems = [...visibleNavItems, ...dropdownNavItems];
     
     return (
         <header className={navBg + ' text-white sticky top-0 z-50 shadow-xl'}>
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <a href="/" className="flex items-center gap-2 font-bold text-white hover:text-white/90 transition-colors">
-                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-md">
+                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-md ring-2 ring-white/50">
                         <img 
                             src="/logo.svg" 
                             alt="VoteGenerator" 
@@ -87,7 +98,7 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
                 {/* Desktop Nav */}
                 <div className="hidden md:flex items-center gap-2">
                     <nav className="flex items-center gap-1">
-                        {navItems.map((item) => (
+                        {visibleNavItems.map((item) => (
                             <a
                                 key={item.label}
                                 href={item.href}
@@ -101,14 +112,66 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
                                 {item.label}
                             </a>
                         ))}
+                        
+                        {/* More Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                    dropdownNavItems.some(item => item.active)
+                                        ? 'bg-white/20 text-white' 
+                                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                }`}
+                            >
+                                More
+                                <ChevronDown size={14} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            {dropdownOpen && (
+                                <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 rounded-lg shadow-xl border border-white/10 py-1 z-50">
+                                    {dropdownNavItems.map((item) => (
+                                        <a
+                                            key={item.label}
+                                            href={item.href}
+                                            className={`flex items-center gap-2 px-4 py-2 text-sm transition ${
+                                                item.active 
+                                                    ? 'bg-white/10 text-white' 
+                                                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                            }`}
+                                        >
+                                            <item.icon size={16} />
+                                            {item.label}
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </nav>
                     
                     <div className="w-px h-6 bg-white/20 mx-2" />
                     
-                    {/* Manage Subscription */}
+                    {/* Manage Subscription - opens Stripe Customer Portal */}
                     <a 
-                        href="/admin?tab=settings" 
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white transition"
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            const token = new URLSearchParams(window.location.search).get('t') || 
+                                          new URLSearchParams(window.location.search).get('token') ||
+                                          localStorage.getItem('vg_dashboard_token');
+                            if (token) {
+                                fetch('/.netlify/functions/vg-customer-portal?token=' + token)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data.url) window.location.href = data.url;
+                                        else alert('Unable to open billing portal. Please contact support.');
+                                    })
+                                    .catch(() => alert('Unable to open billing portal. Please contact support.'));
+                            } else {
+                                alert('Dashboard token not found. Please refresh the page.');
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white transition cursor-pointer"
                     >
                         <CreditCard size={16} />
                         <span className="hidden lg:inline">Manage Plan</span>
@@ -152,7 +215,7 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
             {/* Mobile Menu */}
             {mobileMenuOpen && (
                 <div className="md:hidden bg-black/20 border-t border-white/10 px-4 py-4">
-                    {navItems.map((item) => (
+                    {allNavItems.map((item) => (
                         <a
                             key={item.label}
                             href={item.href}
@@ -169,13 +232,28 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
                     
                     <div className="h-px bg-white/10 my-3" />
                     
-                    <a
-                        href="/admin?tab=settings"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white/80 hover:bg-white/10"
+                    <button
+                        onClick={() => {
+                            const token = new URLSearchParams(window.location.search).get('t') || 
+                                          new URLSearchParams(window.location.search).get('token') ||
+                                          localStorage.getItem('vg_dashboard_token');
+                            if (token) {
+                                fetch('/.netlify/functions/vg-customer-portal?token=' + token)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data.url) window.location.href = data.url;
+                                        else alert('Unable to open billing portal. Please contact support.');
+                                    })
+                                    .catch(() => alert('Unable to open billing portal. Please contact support.'));
+                            } else {
+                                alert('Dashboard token not found. Please refresh the page.');
+                            }
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-white/80 hover:bg-white/10 w-full text-left"
                     >
                         <CreditCard size={20} />
                         Manage Subscription
-                    </a>
+                    </button>
                     
                     <a
                         href="mailto:support@votegenerator.com"

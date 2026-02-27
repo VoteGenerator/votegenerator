@@ -119,6 +119,10 @@ async function sendWelcomeEmail(
 
     const baseUrl = process.env.URL || 'https://votegenerator.com';
     const dashboardUrl = baseUrl + '/admin?token=' + dashboardToken + '&session_id=' + sessionId;
+    const manageUrl = baseUrl + '/.netlify/functions/vg-customer-portal?token=' + dashboardToken;
+    const helpUrl = baseUrl + '/help';
+    const createPollUrl = baseUrl + '/create';
+    const templatesUrl = baseUrl + '/templates';
 
     let expirationDate = 'your subscription period';
     try {
@@ -133,6 +137,28 @@ async function sendWelcomeEmail(
     } catch (e) {
         console.log('[webhook] Could not parse expiration date');
     }
+
+    // Tier-specific features
+    const proFeatures = [
+        'Unlimited polls',
+        responseLimit + ' responses per poll',
+        'Hide VoteGenerator branding',
+        'Custom thank you message',
+        'CSV export',
+        'Response filtering',
+        'Advanced analytics',
+    ];
+
+    const businessFeatures = [
+        ...proFeatures.slice(0, 2),
+        'Custom branding with your logo',
+        'Custom poll URL slugs',
+        'Hourly response heatmap',
+        'Cross-tab filtering',
+        'Priority support',
+    ];
+
+    const features = tier === 'business' ? businessFeatures : proFeatures;
 
     try {
         console.log('[webhook] Sending welcome email to: ' + email.substring(0, 5) + '...');
@@ -150,16 +176,17 @@ async function sendWelcomeEmail(
                 subject: '🗳️ Welcome to VoteGenerator ' + tierLabel + '!',
                 html: `
                     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
-                        <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
+                        <div style="background: linear-gradient(135deg, ${tier === 'business' ? '#d97706 0%, #f59e0b' : '#6366f1 0%, #8b5cf6'} 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
                             <h1 style="color: white; margin: 0; font-size: 28px;">🗳️ VoteGenerator</h1>
                             <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 16px;">Welcome to ${tierLabel}!</p>
                         </div>
                         
                         <div style="background: white; padding: 32px; border-radius: 0 0 16px 16px;">
                             <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-                                Thank you for your purchase! Your poll dashboard is ready.
+                                Thank you for upgrading! Your ${tierLabel} account is now active and ready to use.
                             </p>
                             
+                            <!-- Save Dashboard Link Warning -->
                             <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                                 <p style="margin: 0 0 12px 0; color: #92400e; font-weight: bold; font-size: 14px;">
                                     ⚠️ IMPORTANT: Save Your Dashboard Link!
@@ -168,21 +195,80 @@ async function sendWelcomeEmail(
                                    style="display: block; background: #f59e0b; color: white; text-decoration: none; padding: 14px 20px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 16px;">
                                     Open My Dashboard →
                                 </a>
-                                <p style="margin: 12px 0 0 0; font-size: 11px; color: #92400e; word-break: break-all;">
-                                    ${dashboardUrl}
+                                <p style="margin: 12px 0 0 0; font-size: 11px; color: #92400e;">
+                                    Bookmark this link to access your dashboard anytime!
                                 </p>
                             </div>
                             
-                            <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                                <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">Your ${tierLabel} Plan:</h3>
-                                <ul style="margin: 0; padding: 0 0 0 20px; color: #64748b;">
-                                    <li style="margin-bottom: 8px;">Unlimited polls</li>
-                                    <li style="margin-bottom: 8px;">${responseLimit} responses per poll</li>
-                                    <li style="margin-bottom: 8px;">Valid until <strong>${expirationDate}</strong></li>
-                                </ul>
+                            <!-- Quick Start Steps -->
+                            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                <h3 style="margin: 0 0 16px 0; color: #166534; font-size: 16px;">🚀 Get Started in 3 Steps</h3>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 8px 0; vertical-align: top; width: 32px;">
+                                            <span style="display: inline-block; width: 24px; height: 24px; background: #22c55e; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-weight: bold; font-size: 12px;">1</span>
+                                        </td>
+                                        <td style="padding: 8px 0; color: #334155;">
+                                            <a href="${createPollUrl}" style="color: #166534; font-weight: 600; text-decoration: none;">Create your first poll</a> - takes 30 seconds!
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px 0; vertical-align: top;">
+                                            <span style="display: inline-block; width: 24px; height: 24px; background: #22c55e; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-weight: bold; font-size: 12px;">2</span>
+                                        </td>
+                                        <td style="padding: 8px 0; color: #334155;">
+                                            Share the link with your audience
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px 0; vertical-align: top;">
+                                            <span style="display: inline-block; width: 24px; height: 24px; background: #22c55e; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-weight: bold; font-size: 12px;">3</span>
+                                        </td>
+                                        <td style="padding: 8px 0; color: #334155;">
+                                            Watch real-time results in your dashboard
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style="margin-top: 12px;">
+                                    <a href="${templatesUrl}" style="color: #166534; font-size: 13px;">💡 Or start from a template →</a>
+                                </div>
                             </div>
                             
-                            <p style="color: #64748b; font-size: 14px;">
+                            <!-- Your Plan Features -->
+                            <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                <h3 style="margin: 0 0 12px 0; color: #334155; font-size: 16px;">✨ Your ${tierLabel} Features</h3>
+                                <ul style="margin: 0; padding: 0 0 0 20px; color: #475569;">
+                                    ${features.map(f => '<li style="margin-bottom: 6px;">' + f + '</li>').join('')}
+                                </ul>
+                                <p style="margin: 12px 0 0 0; color: #64748b; font-size: 13px;">
+                                    Valid until <strong>${expirationDate}</strong>
+                                </p>
+                            </div>
+                            
+                            <!-- Quick Links -->
+                            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-bottom: 16px;">
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <td style="text-align: center; padding: 8px;">
+                                            <a href="${dashboardUrl}" style="color: #6366f1; text-decoration: none; font-size: 14px;">
+                                                📊 Dashboard
+                                            </a>
+                                        </td>
+                                        <td style="text-align: center; padding: 8px;">
+                                            <a href="${manageUrl}" style="color: #6366f1; text-decoration: none; font-size: 14px;">
+                                                💳 Manage Plan
+                                            </a>
+                                        </td>
+                                        <td style="text-align: center; padding: 8px;">
+                                            <a href="${helpUrl}" style="color: #6366f1; text-decoration: none; font-size: 14px;">
+                                                ❓ Help Center
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <p style="color: #64748b; font-size: 14px; margin: 0;">
                                 Questions? Reply to this email or contact <a href="mailto:support@votegenerator.com" style="color: #6366f1;">support@votegenerator.com</a>
                             </p>
                         </div>

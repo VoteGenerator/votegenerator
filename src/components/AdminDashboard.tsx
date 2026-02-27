@@ -13,11 +13,14 @@ import {
     Search, ChevronLeft, ChevronRight, Rocket, FileEdit,
     Home, AlertTriangle, RefreshCw, QrCode, Mail,
     ListOrdered, CheckSquare, ArrowLeftRight, SlidersHorizontal, Image as ImageIcon, ArrowRight,
-    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone, Download, Database, FileSpreadsheet
+    Pause, Play, CreditCard, Menu, Bookmark, HelpCircle, Info, Smartphone, Download, Database, FileSpreadsheet, ClipboardList
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
 import PollComparison from './PollComparison';
 import EmailCaptureBanner from './EmailCaptureBanner';
+import Footer from './Footer';
+import PremiumNav from './PremiumNav';
+import NavHeader from './NavHeader';
 
 // Poll type display helper
 const POLL_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -323,19 +326,6 @@ const AdminDashboard: React.FC = () => {
         validateAndLoadSession();
     }, []);
 
-    // SYNC TIER TO LOCALSTORAGE - ensures /create page can detect paid status
-    useEffect(() => {
-        if (session?.tier && session.tier !== 'free') {
-            localStorage.setItem('vg_purchased_tier', session.tier);
-            localStorage.setItem('vg_subscription_tier', session.tier);
-            if (session.expiresAt) {
-                localStorage.setItem('vg_tier_expires', session.expiresAt);
-                localStorage.setItem('vg_expires_at', session.expiresAt);
-            }
-            console.log('AdminDashboard: Synced tier to localStorage:', session.tier);
-        }
-    }, [session?.tier, session?.expiresAt]);
-
     // Timeout for "Setting Up Your Account" banner - stop spinning after 30 seconds
     useEffect(() => {
         const storedTier = localStorage.getItem('vg_purchased_tier') || 'free';
@@ -453,7 +443,6 @@ const AdminDashboard: React.FC = () => {
                     customerData.dashboardToken = urlDashboardToken; // Ensure we keep the token
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
-                    localStorage.setItem('vg_subscription_tier', customerData.tier);
                     if (customerData.expiresAt) {
                         localStorage.setItem('vg_tier_expires', customerData.expiresAt);
                     }
@@ -490,7 +479,6 @@ const AdminDashboard: React.FC = () => {
                     // Got it! Save and use
                     localStorage.setItem('vg_user_session', JSON.stringify(customerData));
                     localStorage.setItem('vg_purchased_tier', customerData.tier);
-                    localStorage.setItem('vg_subscription_tier', customerData.tier);
                     if (customerData.expiresAt) {
                         localStorage.setItem('vg_tier_expires', customerData.expiresAt);
                     }
@@ -960,7 +948,6 @@ const AdminDashboard: React.FC = () => {
         // Ensure the tier is set in localStorage for VoteGeneratorCreate to pick up
         if (session?.tier) {
             localStorage.setItem('vg_purchased_tier', session.tier);
-            localStorage.setItem('vg_subscription_tier', session.tier);
             // Also store expiration info
             if (session.expiresAt) {
                 localStorage.setItem('vg_tier_expires', session.expiresAt);
@@ -1336,198 +1323,101 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className={`min-h-screen bg-gradient-to-br ${config.bgGradient}`}>
-            {/* Header with Tier-Colored Nav */}
-            <header className={`sticky top-0 z-40 ${
-                tier === 'free' 
-                    ? 'bg-white border-b border-slate-200' 
-                    : tier === 'pro'
-                        ? 'bg-gradient-to-r from-indigo-900 via-purple-800 to-indigo-900 shadow-lg'
-                        : 'bg-gradient-to-r from-slate-900 via-amber-900 to-slate-900 shadow-lg'
-            }`}>
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    {/* Logo with white background for visibility on colored backgrounds */}
-                    <a href="/" className="flex items-center gap-2 hover:opacity-90 transition">
-                        {tier !== 'free' ? (
-                            <div className="h-8 w-8 sm:h-9 sm:w-9 bg-white rounded-lg flex items-center justify-center shadow-md">
+            {/* Navigation - Tier Aware */}
+            {tier !== 'free' ? (
+                // Paid users get PremiumNav
+                <PremiumNav tier={tier} expiresAt={session?.expiresAt} />
+            ) : (
+                // Free users get NavHeader on desktop, custom mobile nav
+                <>
+                    {/* Desktop: NavHeader */}
+                    <div className="hidden md:block">
+                        <NavHeader />
+                    </div>
+                    
+                    {/* Mobile Header for Free Users */}
+                    <header className="md:hidden sticky top-0 z-40 bg-white border-b border-slate-200">
+                        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <a href="/" className="flex items-center gap-2 hover:opacity-80 transition">
                                 <img 
                                     src="/logo.svg" 
                                     alt="VoteGenerator" 
-                                    className="h-6 w-6 sm:h-7 sm:w-7"
+                                    className="w-8 h-8 sm:w-9 sm:h-9"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
                                 />
-                            </div>
-                        ) : (
-                            <img 
-                                src="/logo.svg" 
-                                alt="VoteGenerator" 
-                                className="w-8 h-8 sm:w-9 sm:h-9"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} 
-                            />
-                        )}
-                        <span className={`font-bold text-lg sm:text-xl ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
-                            Vote<span className={tier !== 'free' ? 'text-white/80' : 'text-indigo-600'}>Generator</span>
-                        </span>
-                    </a>
-                    
-                    {/* Desktop Nav Links */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        <a 
-                            href="/create" 
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
-                                tier !== 'free' 
-                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
-                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                            }`}
-                        >
-                            <PlusCircle size={16} /> Create Poll
-                        </a>
-                        <a 
-                            href="/admin" 
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
-                                tier !== 'free' 
-                                    ? 'text-white bg-white/20' 
-                                    : 'text-indigo-600 bg-indigo-50'
-                            }`}
-                        >
-                            <LayoutDashboard size={16} /> Dashboard
-                        </a>
-                        <a 
-                            href="/help" 
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition text-sm ${
-                                tier !== 'free' 
-                                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
-                                    : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
-                            }`}
-                        >
-                            <HelpCircle size={16} /> Help
-                        </a>
-                    </nav>
-                    
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        {/* Free users see Upgrade button */}
-                        {tier === 'free' && (
-                            <button
-                                onClick={() => setShowUpgradeModal(true)}
-                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg"
-                            >
-                                <Crown size={14} className="sm:w-4 sm:h-4" /> 
-                                <span className="hidden xs:inline">Upgrade</span>
-                            </button>
-                        )}
-                        {/* Pro users: Upgrade to Business button */}
-                        {tier === 'pro' && !isPlanExpired && (
-                            <button
-                                onClick={() => setShowUpgradeModal(true)}
-                                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 font-bold rounded-lg text-xs transition-all shadow-md"
-                            >
-                                <Sparkles size={12} /> Upgrade to Business
-                            </button>
-                        )}
-                        {/* Paid users see tier badge - SOLID BACKGROUND for contrast */}
-                        {tier !== 'free' && (
-                            <div 
-                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 shadow-md ${
-                                    isPlanExpired 
-                                        ? 'bg-red-100 text-red-700' 
-                                        : tier === 'pro'
-                                            ? 'bg-white text-purple-900'
-                                            : 'bg-amber-400 text-amber-900'
-                                }`}
-                                title={isPlanExpired ? 'Your plan has expired. Renew to continue creating polls.' : `${config.label} Plan - Days remaining in your billing period`}
-                            >
-                                {isPlanExpired ? <AlertTriangle size={14} /> : config.icon} 
-                                <span>{config.label}</span>
-                                <span className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
-                                    isPlanExpired 
-                                        ? 'bg-red-200' 
-                                        : tier === 'pro'
-                                            ? 'bg-purple-100 text-purple-700'
-                                            : 'bg-amber-200 text-amber-800'
-                                }`}>
-                                    {isPlanExpired 
-                                        ? 'Expired' 
-                                        : session?.expiresAt 
-                                            ? Math.max(0, Math.ceil((new Date(session.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + 'd'
-                                            : ''
-                                    }
+                                <span className="font-bold text-lg sm:text-xl text-slate-800">
+                                    Vote<span className="text-indigo-600">Generator</span>
                                 </span>
+                            </a>
+                            
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <button
+                                    onClick={() => setShowUpgradeModal(true)}
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs sm:text-sm transition-all shadow-md hover:shadow-lg"
+                                >
+                                    <Crown size={14} className="sm:w-4 sm:h-4" /> 
+                                    <span className="hidden xs:inline">Upgrade</span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => setShowMobileMenu(!showMobileMenu)}
+                                    className="p-2 rounded-lg transition hover:bg-slate-100 text-slate-600"
+                                >
+                                    {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                                </button>
                             </div>
-                        )}
-                        {isBusiness && !isPlanExpired && (
-                            <button onClick={() => setShowSettings(true)} className="p-2 rounded-lg transition hover:bg-white/10 text-white" title="Manage PIN security and dashboard preferences">
-                                <Settings size={20} />
-                            </button>
-                        )}
+                        </div>
                         
-                        {/* Mobile menu button */}
-                        <button 
-                            onClick={() => setShowMobileMenu(!showMobileMenu)}
-                            className={`md:hidden p-2 rounded-lg transition ${tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'}`}
-                        >
-                            {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
-                        </button>
-                    </div>
-                </div>
-                
-                {/* Mobile Navigation Menu */}
-                <AnimatePresence>
-                    {showMobileMenu && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className={`md:hidden overflow-hidden ${
-                                tier === 'free' 
-                                    ? 'border-t border-slate-100 bg-white' 
-                                    : tier === 'pro'
-                                        ? 'bg-indigo-900'
-                                        : 'bg-slate-800'
-                            }`}
-                        >
-                            <nav className="p-3 space-y-1">
-                                <a 
-                                    href="/create" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                                        tier !== 'free' 
-                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
-                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
-                                    }`}
+                        {/* Mobile Navigation Menu */}
+                        <AnimatePresence>
+                            {showMobileMenu && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden border-t border-slate-100 bg-white"
                                 >
-                                    <PlusCircle size={20} /> Create New Poll
-                                </a>
-                                <a 
-                                    href="/admin" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${
-                                        tier !== 'free' 
-                                            ? 'bg-white/20 text-white' 
-                                            : 'bg-indigo-50 text-indigo-600'
-                                    }`}
-                                >
-                                    <LayoutDashboard size={20} /> Dashboard
-                                </a>
-                                <a 
-                                    href="/help" 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
-                                        tier !== 'free' 
-                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
-                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
-                                    }`}
-                                >
-                                    <HelpCircle size={20} /> Help Center
-                                </a>
-                                {tier === 'pro' && !isPlanExpired && (
-                                    <button
-                                        onClick={() => { setShowMobileMenu(false); setShowUpgradeModal(true); }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-amber-400 text-amber-900"
-                                    >
-                                        <Sparkles size={20} /> Upgrade to Business
-                                    </button>
-                                )}
-                            </nav>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </header>
+                                    <nav className="p-3 space-y-1">
+                                        <a 
+                                            href="/create" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <PlusCircle size={20} /> Create New Poll
+                                        </a>
+                                        <a 
+                                            href="/admin" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-indigo-50 text-indigo-600"
+                                        >
+                                            <LayoutDashboard size={20} /> Dashboard
+                                        </a>
+                                        <a 
+                                            href="/help" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <HelpCircle size={20} /> Help Center
+                                        </a>
+                                        
+                                        <div className="my-2 border-t border-slate-200" />
+                                        
+                                        <a 
+                                            href="/templates" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <Zap size={20} /> Templates
+                                        </a>
+                                        <a 
+                                            href="/survey/create" 
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                                        >
+                                            <ClipboardList size={20} /> Create Survey
+                                        </a>
+                                    </nav>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </header>
+                </>
+            )}
 
             <main className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -1588,6 +1478,14 @@ const AdminDashboard: React.FC = () => {
                                                             {copiedDashboardLink ? <Check size={16} /> : <Copy size={16} />}
                                                             {copiedDashboardLink ? 'Copied! Box will close...' : 'Copy Link'}
                                                         </button>
+                                                        <a
+                                                            href={`mailto:?subject=${encodeURIComponent('My VoteGenerator Dashboard')}&body=${encodeURIComponent(`Here's my VoteGenerator dashboard link:\n\n${dashboardUrl}\n\nSave this email to access your polls anytime`)}`}
+                                                            className="px-3 py-2 bg-white hover:bg-slate-50 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1.5 border border-indigo-200 transition"
+                                                            onClick={() => localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true')}
+                                                        >
+                                                            <Mail size={16} />
+                                                            Open Email App
+                                                        </a>
                                                         <button
                                                             onClick={() => {
                                                                 localStorage.setItem(`vg_dashboard_saved_${session?.dashboardToken?.slice(0, 8)}`, 'true');
@@ -3065,6 +2963,9 @@ const AdminDashboard: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+            
+            {/* Footer */}
+            <Footer />
 
             {/* Choose Active Polls Modal */}
             <AnimatePresence>

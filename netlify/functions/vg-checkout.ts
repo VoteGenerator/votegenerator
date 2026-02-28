@@ -63,7 +63,7 @@ export const handler: Handler = async (event) => {
     
     const priceId = PRICE_IDS[tier][billing];
     if (!priceId) {
-        console.error(`No price ID for tier: ${tier}, billing: ${billing}`);
+        console.error('No price ID for tier: ' + tier + ', billing: ' + billing);
         return {
             statusCode: 302,
             headers: { Location: '/pricing?error=price_not_configured' },
@@ -75,19 +75,27 @@ export const handler: Handler = async (event) => {
     
     try {
         const session = await stripe.checkout.sessions.create({
-            mode: 'subscription', // Changed from 'payment' to 'subscription'
+            mode: 'subscription',
             payment_method_types: ['card'],
             line_items: [{ price: priceId, quantity: 1 }],
             allow_promotion_codes: true,
             billing_address_collection: 'required',
-            success_url: `${baseUrl}/checkout/success?tier=${tier}&billing=${billing}&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${baseUrl}/pricing?cancelled=true`,
+            success_url: baseUrl + '/checkout/success?tier=' + tier + '&billing=' + billing + '&session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: baseUrl + '/pricing?cancelled=true',
+            // Require terms acceptance before checkout
+            consent_collection: {
+                terms_of_service: 'required',
+            },
+            custom_text: {
+                terms_of_service_acceptance: {
+                    message: 'I agree to the [Terms of Service](https://votegenerator.com/terms) and [Privacy Policy](https://votegenerator.com/privacy)',
+                },
+            },
             metadata: { 
                 tier, 
                 billing,
                 product: TIER_NAMES[tier] 
             },
-            // Subscription-specific settings
             subscription_data: {
                 metadata: {
                     tier,
@@ -108,7 +116,7 @@ export const handler: Handler = async (event) => {
         console.error('Stripe error:', error);
         return {
             statusCode: 302,
-            headers: { Location: `/pricing?error=checkout_failed` },
+            headers: { Location: '/pricing?error=checkout_failed' },
             body: '',
         };
     }

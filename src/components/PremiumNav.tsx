@@ -72,13 +72,11 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <a href="/" className="flex items-center gap-2 font-bold text-white hover:text-white/90 transition-colors">
-                    <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-md ring-2 ring-white/50">
-                        <img 
-                            src="/logo.svg" 
-                            alt="VoteGenerator" 
-                            className="h-6 w-6"
-                        />
-                    </div>
+                    <img 
+                        src="/logooutline.svg" 
+                        alt="VoteGenerator" 
+                        className="h-8 w-8"
+                    />
                     <span className="hidden sm:inline text-lg">
                         Vote<span className="text-white/80">Generator</span>
                     </span>
@@ -177,15 +175,30 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
                         <span className="hidden lg:inline">Manage Plan</span>
                     </a>
                     
-                    {/* Upgrade for Pro users */}
+                    {/* Upgrade for Pro users - goes through Customer Portal for proper proration */}
                     {!isBusiness && (
-                        <a 
-                            href="/.netlify/functions/vg-checkout?tier=business&billing=annual" 
-                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition shadow-lg"
+                        <button
+                            onClick={() => {
+                                const token = new URLSearchParams(window.location.search).get('t') || 
+                                              new URLSearchParams(window.location.search).get('token') ||
+                                              localStorage.getItem('vg_dashboard_token');
+                                if (token) {
+                                    fetch('/.netlify/functions/vg-customer-portal?token=' + token)
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            if (data.url) window.location.href = data.url;
+                                            else window.location.href = '/pricing';
+                                        })
+                                        .catch(() => window.location.href = '/pricing');
+                                } else {
+                                    window.location.href = '/pricing';
+                                }
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-amber-900 rounded-lg text-sm font-bold transition shadow-lg cursor-pointer"
                         >
                             <Star size={14} />
                             Upgrade
-                        </a>
+                        </button>
                     )}
                     
                     {/* Save Link */}
@@ -264,13 +277,28 @@ const PremiumNav: React.FC<PremiumNavProps> = ({ tier, expiresAt }) => {
                     </a>
                     
                     {!isBusiness && (
-                        <a
-                            href="/.netlify/functions/vg-checkout?tier=business&billing=annual"
-                            className="flex items-center gap-3 px-4 py-3 mt-2 bg-amber-400 text-amber-900 rounded-xl font-bold"
+                        <button
+                            onClick={() => {
+                                const token = new URLSearchParams(window.location.search).get('t') || 
+                                              new URLSearchParams(window.location.search).get('token') ||
+                                              localStorage.getItem('vg_dashboard_token');
+                                if (token) {
+                                    fetch('/.netlify/functions/vg-customer-portal?token=' + token)
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            if (data.url) window.location.href = data.url;
+                                            else window.location.href = '/pricing';
+                                        })
+                                        .catch(() => window.location.href = '/pricing');
+                                } else {
+                                    window.location.href = '/pricing';
+                                }
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 mt-2 bg-amber-400 text-amber-900 rounded-xl font-bold w-full"
                         >
                             <Star size={20} />
                             Upgrade to Business
-                        </a>
+                        </button>
                     )}
                     
                     <button

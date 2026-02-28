@@ -21,5 +21,4 @@ Allow: /contact
 Allow: /help
 Allow: /create
 
-# Sitemap (if you create one later)
-# Sitemap: https://votegenerator.com/sitemap.xml
+Sitemap: https://votegenerator.com/sitemap.xml

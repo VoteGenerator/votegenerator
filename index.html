@@ -25,6 +25,10 @@
     <meta name="twitter:title" content="VoteGenerator - Free Online Polls" />
     <meta name="twitter:description" content="Create polls in seconds. No signup. No email. No tracking." />
     
+    <!-- Site Verification -->
+    <meta name="p:domain_verify" content="1a89f705093cd4551fae6a95c5121feb"/>
+    <meta name="msvalidate.01" content="75CE780401FEFD665ADD7138705A2B3F" />
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -66,8 +70,31 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-8SLP00VP2Z');
+      gtag('config', 'G-8SLP00VP2Z', {
+        // Fix bounce rate - track SPA navigation
+        'send_page_view': true
+      });
+      
+      // Track SPA page views - call this on route change
+      window.trackPageView = function(path, title) {
+        if (typeof gtag === 'function') {
+          gtag('config', 'G-8SLP00VP2Z', {
+            'page_path': path,
+            'page_title': title
+          });
+        }
+      };
+      
+      // Track custom events
+      window.trackEvent = function(eventName, params) {
+        if (typeof gtag === 'function') {
+          gtag('event', eventName, params || {});
+        }
+      };
     </script>
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3037944530219260" crossorigin="anonymous"></script>
     
     <style>
       /* Critical CSS - prevent flash of unstyled content */
@@ -178,6 +205,8 @@
               'ad_user_data': 'granted',
               'ad_personalization': 'granted'
             });
+            // Track the consent event
+            gtag('event', 'cookie_consent', { consent_type: 'all' });
           } else {
             gtag('consent', 'update', {
               'analytics_storage': 'denied',

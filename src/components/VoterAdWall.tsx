@@ -10,6 +10,7 @@ import {
     BarChart3, Users, TrendingUp, Sparkles,
     PieChart, Shield, Palette, Download, Eye
 } from 'lucide-react';
+import { Analytics } from '../utils/analytics';
 
 interface VoterAdWallProps {
     variant: 'before-poll' | 'after-vote';
@@ -191,6 +192,9 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
     const [canSkip, setCanSkip] = useState(false);
     
     useEffect(() => {
+        // Track ad wall shown
+        Analytics.adWallShown(variant === 'before-poll' ? 'before_poll_view' : 'after_vote');
+        
         const timer = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
@@ -203,9 +207,11 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
         }, 1000);
         
         return () => clearInterval(timer);
-    }, []);
+    }, [variant]);
     
     const handleContinue = () => {
+        // Track ad wall completed
+        Analytics.adWallCompleted();
         onComplete();
     };
 

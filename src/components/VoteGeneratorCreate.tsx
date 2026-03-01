@@ -17,6 +17,7 @@ import ThemeSelector, { getThemeById, ThemeConfig } from './ThemeSelector';
 import { compressToTargetSize, formatFileSize } from '../utils/imageCompression';
 import { useTemplateLoader, TemplateBadge, StartFromTemplateButton } from './useTemplateLoader';
 import { PollTemplate } from './pollTemplates';
+import { Analytics } from '../utils/analytics';
 
 // Subscription tiers (all poll types included in all tiers)
 type SubscriptionTier = 'free' | 'pro' | 'business';
@@ -380,6 +381,9 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                     existingPolls.unshift({ id: pollId, adminKey, title, type: pollType, createdAt: new Date().toISOString() });
                     localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
                 }
+                
+                // Track poll creation
+                Analytics.pollCreated(pollType, isPaidUser ? (tier || 'pro') : 'free', options.length);
                 
                 // PAID USERS: Go directly to admin dashboard
                 // FREE USERS: Go through ad-wall first, then to admin dashboard

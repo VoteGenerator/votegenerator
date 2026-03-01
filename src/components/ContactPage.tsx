@@ -21,6 +21,7 @@ import {
 import NavHeader from './NavHeader';
 import PremiumNav from './PremiumNav';
 import Footer from './Footer';
+import { Analytics } from '../utils/analytics';
 
 const ContactPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,6 +66,8 @@ const ContactPage: React.FC = () => {
 
             if (response.ok) {
                 setSubmitted(true);
+                // Track form submission
+                Analytics.contactFormSubmitted();
             } else {
                 throw new Error('Form submission failed');
             }

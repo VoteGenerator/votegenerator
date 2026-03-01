@@ -11,6 +11,7 @@ import {
     Download, Users, Infinity as InfinityIcon, Eye, Sparkles,
     LineChart, PieChart
 } from 'lucide-react';
+import { Analytics } from '../utils/analytics';
 
 // Animated Line Chart Component
 const AnimatedLineChart: React.FC = () => {
@@ -233,6 +234,9 @@ const AdWall: React.FC = () => {
     const redirectUrl = urlParams.get('redirect') || '/admin';
     
     useEffect(() => {
+        // Track ad wall shown
+        Analytics.adWallShown('poll_created_free');
+        
         const timer = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
@@ -248,6 +252,8 @@ const AdWall: React.FC = () => {
     }, []);
     
     const handleContinue = () => {
+        // Track ad wall completed
+        Analytics.adWallCompleted();
         window.location.href = decodeURIComponent(redirectUrl);
     };
     

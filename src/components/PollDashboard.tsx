@@ -37,6 +37,7 @@ import NavHeader from './NavHeader';
 import Footer from './Footer';
 import { AnimatedCounter, PulseIndicator } from './AnimatedComponents';
 import { Poll, RunoffResult } from '../types';
+import { Analytics } from '../utils/analytics';
 
 interface PollDashboardProps {
     poll: Poll;
@@ -509,6 +510,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         if (type === 'share') {
             setCopiedShare(true);
             setTimeout(() => setCopiedShare(false), 2000);
+            // Track share
+            Analytics.pollShared('copy_link');
         } else if (type === 'admin') {
             setCopiedAdmin(true);
             setTimeout(() => setCopiedAdmin(false), 2000);
@@ -590,6 +593,9 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            // Track export
+            Analytics.resultsExported('csv');
         } catch (err) {
             console.error('CSV export error:', err);
             alert('Export failed. Please try again.');

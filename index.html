@@ -25,6 +25,10 @@
     <meta name="twitter:title" content="VoteGenerator - Free Online Polls" />
     <meta name="twitter:description" content="Create polls in seconds. No signup. No email. No tracking." />
     
+    <!-- Site Verification -->
+    <meta name="p:domain_verify" content="1a89f705093cd4551fae6a95c5121feb"/>
+    <meta name="msvalidate.01" content="75CE780401FEFD665ADD7138705A2B3F" />
+    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -33,6 +37,64 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+    
+    <!-- Google Consent Mode - MUST be BEFORE Google tag -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      
+      // Check existing consent
+      var storedConsent = localStorage.getItem('vg_cookie_consent');
+      var hasConsent = false;
+      try {
+        if (storedConsent) {
+          var c = JSON.parse(storedConsent);
+          hasConsent = c.type === 'all';
+        }
+      } catch(e) {}
+      
+      // Set default consent state
+      gtag('consent', 'default', {
+        'analytics_storage': hasConsent ? 'granted' : 'denied',
+        'ad_storage': hasConsent ? 'granted' : 'denied',
+        'ad_user_data': hasConsent ? 'granted' : 'denied',
+        'ad_personalization': hasConsent ? 'granted' : 'denied',
+        'functionality_storage': 'granted',
+        'security_storage': 'granted'
+      });
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8SLP00VP2Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-8SLP00VP2Z', {
+        // Fix bounce rate - track SPA navigation
+        'send_page_view': true
+      });
+      
+      // Track SPA page views - call this on route change
+      window.trackPageView = function(path, title) {
+        if (typeof gtag === 'function') {
+          gtag('config', 'G-8SLP00VP2Z', {
+            'page_path': path,
+            'page_title': title
+          });
+        }
+      };
+      
+      // Track custom events
+      window.trackEvent = function(eventName, params) {
+        if (typeof gtag === 'function') {
+          gtag('event', eventName, params || {});
+        }
+      };
+    </script>
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3037944530219260" crossorigin="anonymous"></script>
     
     <style>
       /* Critical CSS - prevent flash of unstyled content */
@@ -68,6 +130,20 @@
     </style>
   </head>
   <body>
+    <!-- Hidden form for Netlify Forms detection (required for React SPA) -->
+    <form name="contact" netlify netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <select name="subject">
+        <option value="general">General</option>
+        <option value="support">Support</option>
+        <option value="billing">Billing</option>
+        <option value="feature">Feature</option>
+        <option value="partnership">Partnership</option>
+      </select>
+      <textarea name="message"></textarea>
+    </form>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
@@ -77,7 +153,6 @@
       if ('caches' in window) {
         caches.keys().then(function(names) {
           for (let name of names) {
-            // Clear caches older than current version
             caches.delete(name);
           }
         });
@@ -85,9 +160,7 @@
       
       // Force reload if user has stale version
       window.addEventListener('load', function() {
-        // Check if we need to refresh
         if (sessionStorage.getItem('refreshed') !== 'true') {
-          // Mark that we've checked
           sessionStorage.setItem('refreshed', 'true');
         }
       });
@@ -98,93 +171,74 @@
       });
     </script>
 
-<!-- 
-====================================================================
-COOKIE CONSENT BANNER - AdSense Ready & GDPR Compliant
-Add this code RIGHT BEFORE </body> in public/index.html
-
-Features:
-- GDPR compliant (users can reject)
-- AdSense ready (Accept All is prominent for better ad revenue)
-- Stores preference in localStorage
-- Won't show again after user makes a choice
-- Mobile responsive
-====================================================================
--->
-
-<!-- Cookie Consent Banner -->
-<div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color:white; padding:0; z-index:99999; box-shadow:0 -8px 32px rgba(0,0,0,0.3); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:1200px; margin:0 auto; padding:20px 24px;">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:20px;">
-      <!-- Text Content -->
-      <div style="flex:1; min-width:280px;">
-        <div style="font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
-          <span style="font-size:24px;">🍪</span> Cookie Preferences
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color:white; padding:0; z-index:99999; box-shadow:0 -8px 32px rgba(0,0,0,0.3); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+      <div style="max-width:1200px; margin:0 auto; padding:20px 24px;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:20px;">
+          <div style="flex:1; min-width:280px;">
+            <div style="font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:24px;">🍪</span> Cookie Preferences
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.6; opacity:0.9;">
+              We use cookies to enhance your experience, analyze site traffic, and serve personalized ads. 
+              By clicking "Accept All", you consent to our use of cookies. 
+              <a href="/privacy" style="color:#a5b4fc; text-decoration:underline;">Privacy Policy</a> · 
+              <a href="/data-policy" style="color:#a5b4fc; text-decoration:underline;">Cookie Policy</a>
+            </p>
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <button onclick="acceptCookies('essential')" style="padding:12px 20px; background:rgba(255,255,255,0.1); color:white; border:2px solid rgba(255,255,255,0.3); border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+              Essential Only
+            </button>
+            <button onclick="acceptCookies('all')" style="padding:14px 28px; background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(99,102,241,0.4); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 14px rgba(99,102,241,0.4)'">
+              ✓ Accept All
+            </button>
+          </div>
         </div>
-        <p style="margin:0; font-size:14px; line-height:1.6; opacity:0.9;">
-          We use cookies to enhance your experience, analyze site traffic, and serve personalized ads. 
-          By clicking "Accept All", you consent to our use of cookies. 
-          <a href="/privacy" style="color:#a5b4fc; text-decoration:underline;">Privacy Policy</a> · 
-          <a href="/data-policy" style="color:#a5b4fc; text-decoration:underline;">Cookie Policy</a>
-        </p>
-      </div>
-      <!-- Buttons -->
-      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-        <button onclick="acceptCookies('essential')" style="padding:12px 20px; background:rgba(255,255,255,0.1); color:white; border:2px solid rgba(255,255,255,0.3); border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-          Essential Only
-        </button>
-        <button onclick="acceptCookies('all')" style="padding:14px 28px; background:linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(99,102,241,0.4); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 6px 20px rgba(99,102,241,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 14px rgba(99,102,241,0.4)'">
-          ✓ Accept All
-        </button>
       </div>
     </div>
-  </div>
-</div>
 
-<script>
-// Cookie consent functions
-function acceptCookies(type) {
-  // Store consent with timestamp
-  var consent = {
-    type: type,
-    timestamp: new Date().toISOString(),
-    version: '1.0'
-  };
-  localStorage.setItem('vg_cookie_consent', JSON.stringify(consent));
-  
-  // Hide banner
-  document.getElementById('cookie-banner').style.display = 'none';
-  
-  // If user accepted all, enable Google Analytics/AdSense (when you add them)
-  if (type === 'all') {
-    // Enable analytics - uncomment when you add Google Analytics
-    // gtag('consent', 'update', { analytics_storage: 'granted', ad_storage: 'granted' });
-    console.log('[Cookies] All cookies accepted - ads enabled');
-  } else {
-    // Essential only - no tracking
-    // gtag('consent', 'update', { analytics_storage: 'denied', ad_storage: 'denied' });
-    console.log('[Cookies] Essential only - ads disabled');
-  }
-}
+    <script>
+      // Cookie consent with Google Consent Mode integration
+      function acceptCookies(type) {
+        var consent = {
+          type: type,
+          timestamp: new Date().toISOString(),
+          version: '1.0'
+        };
+        localStorage.setItem('vg_cookie_consent', JSON.stringify(consent));
+        
+        document.getElementById('cookie-banner').style.display = 'none';
+        
+        // Update Google Consent Mode
+        if (typeof gtag === 'function') {
+          if (type === 'all') {
+            gtag('consent', 'update', {
+              'analytics_storage': 'granted',
+              'ad_storage': 'granted',
+              'ad_user_data': 'granted',
+              'ad_personalization': 'granted'
+            });
+            // Track the consent event
+            gtag('event', 'cookie_consent', { consent_type: 'all' });
+          } else {
+            gtag('consent', 'update', {
+              'analytics_storage': 'denied',
+              'ad_storage': 'denied',
+              'ad_user_data': 'denied',
+              'ad_personalization': 'denied'
+            });
+          }
+        }
+      }
 
-// Check consent on page load
-(function() {
-  var stored = localStorage.getItem('vg_cookie_consent');
-  if (!stored) {
-    // No consent yet - show banner
-    document.getElementById('cookie-banner').style.display = 'block';
-  } else {
-    // User already made a choice
-    try {
-      var consent = JSON.parse(stored);
-      console.log('[Cookies] Existing consent:', consent.type);
-    } catch(e) {
-      // Old format - show banner again
-      localStorage.removeItem('vg_cookie_consent');
-      document.getElementById('cookie-banner').style.display = 'block';
-    }
-  }
-})();
-</script>
+      // Show banner if no consent yet
+      (function() {
+        var stored = localStorage.getItem('vg_cookie_consent');
+        if (!stored) {
+          document.getElementById('cookie-banner').style.display = 'block';
+        }
+      })();
+    </script>
   </body>
 </html>

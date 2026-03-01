@@ -17,6 +17,7 @@ import {
 import NavHeader from './NavHeader';
 import PremiumNav from './PremiumNav';
 import Footer from './Footer';
+import { Analytics } from '../utils/analytics';
 
 // =============================================================================
 // PRICING CONFIGURATION - Limited Time USD Pricing
@@ -696,6 +697,9 @@ function PricingPage(): React.ReactElement {
         if (savedTier === 'pro' || savedTier === 'business') {
             setTier(savedTier);
         }
+        
+        // Track pricing page view
+        Analytics.pricingViewed();
     }, []);
 
     const toggleSection = (id: string) => {
@@ -867,6 +871,7 @@ function PricingPage(): React.ReactElement {
                         
                         <a 
                             href={`/.netlify/functions/vg-checkout?tier=pro&billing=${isAnnual ? 'annual' : 'monthly'}`}
+                            onClick={() => Analytics.upgradeClicked('pro', isAnnual ? 'annual' : 'monthly')}
                             className="block w-full py-3.5 text-center bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition"
                         >
                             Get Pro
@@ -924,6 +929,7 @@ function PricingPage(): React.ReactElement {
                         
                         <a 
                             href={`/.netlify/functions/vg-checkout?tier=business&billing=${isAnnual ? 'annual' : 'monthly'}`}
+                            onClick={() => Analytics.upgradeClicked('business', isAnnual ? 'annual' : 'monthly')}
                             className="block w-full py-3.5 text-center bg-amber-500 text-slate-900 font-semibold rounded-xl hover:bg-amber-400 transition"
                         >
                             Get Business

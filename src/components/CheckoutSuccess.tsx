@@ -9,6 +9,7 @@ import {
     Crown, Zap, Star, ExternalLink, Loader2,
     BarChart3, Users, Palette, Download, Shield, Clock
 } from 'lucide-react';
+import { Analytics } from '../utils/analytics';
 
 const CheckoutSuccess: React.FC = () => {
     const [copied, setCopied] = useState(false);
@@ -74,12 +75,19 @@ const CheckoutSuccess: React.FC = () => {
             const url = window.location.origin + '/admin?token=' + token + '&session_id=' + sessionId;
             setDashboardUrl(url);
             
-            // Store in localStorage
+            // Store in localStorage - save to BOTH keys for compatibility
             localStorage.setItem('vg_dashboard_token', token);
             localStorage.setItem('vg_session_id', sessionId);
             localStorage.setItem('vg_purchased_tier', tier);
+            localStorage.setItem('vg_subscription_tier', tier);
+            
+            // Track purchase completion
+            const purchaseValue = billing === 'yearly' 
+                ? (tier === 'business' ? 490 : 190) 
+                : (tier === 'business' ? 49 : 19);
+            Analytics.purchaseCompleted(tier, billing === 'yearly' ? 'annual' : 'monthly', purchaseValue);
         }
-    }, [sessionId, tier]);
+    }, [sessionId, tier, billing]);
     
     const copyDashboardLink = () => {
         if (dashboardUrl) {

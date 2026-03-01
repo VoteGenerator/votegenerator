@@ -383,7 +383,7 @@ const VoteGeneratorCreate: React.FC<VoteGeneratorCreateProps> = ({ hideTierBanne
                 }
                 
                 // Track poll creation
-                Analytics.pollCreated(pollType, isPaidUser ? (tier || 'pro') : 'free', options.length);
+                Analytics.pollCreated(pollType, isPaidUser ? (subscriptionTier || 'pro') : 'free', options.length);
                 
                 // PAID USERS: Go directly to admin dashboard
                 // FREE USERS: Go through ad-wall first, then to admin dashboard

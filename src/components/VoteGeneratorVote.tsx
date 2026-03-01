@@ -379,7 +379,7 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 );
                 
                 // Track survey completion
-                Analytics.surveyCompleted(poll.id, poll.surveyQuestions?.length || 0);
+                Analytics.surveyCompleted(poll.id, response.answers?.length || 0);
                 
                 // Mark as voted in localStorage
                 const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');

@@ -5,6 +5,7 @@ import { Poll, PollOption, SurveyResponse } from '../types';
 import { submitVote, hasVoted } from '../services/voteGeneratorService';
 import SurveyVote from './SurveyVote';
 import { THEMES, ThemeConfig } from './ThemeSelector';
+import { Analytics } from '../utils/analytics';
 
 // Anti-bot fields interface
 interface AntiBotFields {
@@ -288,6 +289,10 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                 undefined, // surveyAnswers
                 antiBotFields // anti-bot protection
             );
+            
+            // Track vote submission
+            Analytics.voteSubmitted(poll.id, poll.pollType);
+            
             onVoteSuccess();
         } catch (error) {
             console.error(error);
@@ -372,6 +377,9 @@ const VoteGeneratorVote: React.FC<Props> = ({ poll, onVoteSuccess }) => {
                     antiBotFields, // anti-bot protection
                     { startedAt: response.startedAt, completionTime: response.completionTime } // survey timing
                 );
+                
+                // Track survey completion
+                Analytics.surveyCompleted(poll.id, response.answers?.length || 0);
                 
                 // Mark as voted in localStorage
                 const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');

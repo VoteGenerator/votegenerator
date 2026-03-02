@@ -19,6 +19,183 @@ import NavHeader from '../components/NavHeader';
 import Footer from '../components/Footer';
 
 // ============================================================================
+// JSON-LD SCHEMA FOR AEO (ChatGPT, Perplexity, Google AI Overviews)
+// This is what AI engines read and cite - NOT visible to users
+// ============================================================================
+
+const PageSchema = () => {
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How do I create an anonymous employee satisfaction survey?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To create an anonymous employee satisfaction survey: 1) Go to VoteGenerator and click 'Create Survey', 2) Add your questions using templates or custom questions, 3) Enable 'Anonymous Mode' in settings - this removes all identifying information including names, emails, and IP addresses, 4) Share the survey link with your team via email, Slack, or your intranet. Responses are collected without any way to trace them back to individuals, encouraging honest feedback."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What questions should I include in an employee engagement survey?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Effective employee engagement surveys include questions across these categories: Job Satisfaction (rating overall satisfaction, work-life balance), Management & Leadership (supervisor support, communication), Growth & Development (career opportunities, training), Company Culture (values alignment, team collaboration), Recognition (feeling valued, fair compensation), and Work Environment (resources, tools needed). Use a mix of rating scales (1-5 or 1-10) and open-ended questions. Keep surveys under 15 minutes to maximize completion rates."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How often should companies run employee satisfaction surveys?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Best practices recommend: Annual comprehensive surveys (20-30 questions) for detailed insights, Quarterly pulse surveys (5-10 questions) to track trends, and Event-based surveys after major changes like reorganizations or policy updates. Monthly micro-surveys (2-3 questions) can maintain ongoing feedback loops. The key is balancing frequency with survey fatigue - too many surveys reduce response rates and quality."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is a good employee engagement survey response rate?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A good employee engagement survey response rate is 70-80%. Rates above 80% are excellent and indicate strong employee trust and engagement. Below 50% suggests potential issues with survey fatigue, distrust in anonymity, or poor communication. To improve rates: emphasize anonymity, communicate why feedback matters, keep surveys short (under 10 minutes), send reminders, and share results and actions taken from previous surveys."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Are anonymous employee surveys really anonymous?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "With VoteGenerator's Anonymous Mode, surveys are truly anonymous because: no login or email is required to respond, IP addresses are not stored, browser fingerprinting is disabled, timestamps are removed from individual responses, demographic data is optional and aggregated, and even administrators cannot trace responses to individuals. This is different from some enterprise tools where 'anonymous' may still track department or role data that could identify respondents in small teams."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I analyze employee survey results effectively?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To analyze employee survey results: 1) Start with overall scores and benchmark against industry standards (typically 65-75% favorable is average), 2) Look for patterns in low-scoring areas across departments or demographics, 3) Read open-ended responses for context and specific examples, 4) Compare results to previous surveys to identify trends, 5) Prioritize 2-3 actionable areas rather than trying to fix everything, 6) Share results transparently with employees and create action plans with timelines."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What's the difference between employee satisfaction and employee engagement surveys?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Employee satisfaction surveys measure how happy employees are with their job, compensation, benefits, and work conditions - it's about contentment. Employee engagement surveys measure emotional commitment, motivation, and willingness to go above and beyond - it's about passion and investment in the company's success. An employee can be satisfied (happy with pay and hours) but not engaged (doing the minimum). Engagement surveys typically predict retention and performance better than satisfaction surveys alone."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Do employees need to create accounts to take the survey?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. VoteGenerator requires no signup, login, or email verification for survey respondents. Employees simply click the survey link and respond immediately. This frictionless approach increases response rates significantly compared to enterprise survey tools that require authentication. It also reinforces anonymity since there's no account tied to responses."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I share an employee survey with my team?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "VoteGenerator provides multiple sharing options: 1) Copy the unique survey link to paste in emails, Slack, Microsoft Teams, or your company intranet, 2) Download a QR code for office displays, posters, or printed materials, 3) Embed the survey directly in your internal portal or HR system. No special software or plugins required for respondents."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is eNPS (Employee Net Promoter Score)?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "eNPS (Employee Net Promoter Score) measures employee loyalty using the question 'How likely are you to recommend this company as a place to work?' on a 0-10 scale. Respondents are categorized as Promoters (9-10), Passives (7-8), or Detractors (0-6). eNPS = % Promoters - % Detractors. Scores range from -100 to +100. Above 10 is good, above 30 is great, above 50 is excellent. VoteGenerator calculates eNPS automatically."
+                }
+            }
+        ]
+    };
+
+    const howToSchema = {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to Create an Employee Satisfaction Survey",
+        "description": "Step-by-step guide to creating an anonymous employee engagement or satisfaction survey in under 5 minutes",
+        "totalTime": "PT5M",
+        "estimatedCost": {
+            "@type": "MonetaryAmount",
+            "currency": "USD",
+            "value": "0"
+        },
+        "step": [
+            {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Start the survey builder",
+                "text": "Go to VoteGenerator.com and click 'Create Survey'. Choose the Employee Engagement template or start from scratch."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Add your questions",
+                "text": "Add questions using multiple choice, rating scales (1-5 or 1-10), and open-ended text fields. Include questions about job satisfaction, management, growth opportunities, and company culture."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Enable anonymous mode",
+                "text": "Toggle on Anonymous Mode to remove all identifying information from responses. This ensures employees can provide honest feedback without fear of identification."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Customize settings",
+                "text": "Set a deadline, add a custom thank-you message, and choose whether to show real-time results or keep them hidden until the survey closes."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 5,
+                "name": "Share with your team",
+                "text": "Copy the survey link and share via email, Slack, Microsoft Teams, or your company intranet. Download the QR code for office displays."
+            }
+        ]
+    };
+
+    const articleSchema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "How to Create Anonymous Employee Satisfaction Surveys",
+        "description": "Complete guide to creating employee engagement surveys that get honest feedback. Includes sample questions, best practices, and free survey templates.",
+        "author": {
+            "@type": "Organization",
+            "name": "VoteGenerator"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "VoteGenerator",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://votegenerator.com/logooutline.svg"
+            }
+        },
+        "datePublished": "2024-01-15",
+        "dateModified": "2026-03-01"
+    };
+
+    return (
+        <>
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+            />
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+            />
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+            />
+        </>
+    );
+};
+
+// ============================================================================
 // HERO SECTION - Problem-focused headline, immediate value
 // ============================================================================
 
@@ -920,6 +1097,9 @@ const FAQSection: React.FC = () => {
 const EmployeeSurveyPage: React.FC = () => {
     return (
         <div className="min-h-screen">
+            {/* JSON-LD Schema for SEO/AEO - read by ChatGPT, Perplexity, Google */}
+            <PageSchema />
+            
             <NavHeader />
             <HeroSection />
             <ProblemSection />

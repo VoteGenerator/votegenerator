@@ -355,7 +355,7 @@ const FAQPage: React.FC = () => {
             />
 
             {/* Navigation */}
-            {tier === 'free' ? <NavHeader /> : <PremiumNav />}
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
 
             {/* Hero Section */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-16">

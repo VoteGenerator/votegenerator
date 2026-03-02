@@ -9,11 +9,11 @@ import { motion } from 'framer-motion';
 import {
     Users, Shield, BarChart3, Clock, CheckCircle2, ArrowRight,
     MessageSquare, Zap, ChevronRight, Check, Sparkles,
-    Target, Vote, Handshake, ListOrdered, UserCheck, Building2,
+    Target, Vote, ListOrdered, UserCheck, Building2,
     Calendar, Coffee, Briefcase, Smartphone, Globe
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../components/NavHeader';
+import Footer from '../components/Footer';
 
 // ============================================================================
 // JSON-LD SCHEMA FOR AEO

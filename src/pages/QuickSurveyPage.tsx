@@ -10,10 +10,10 @@ import { motion } from 'framer-motion';
 import {
     Zap, Clock, CheckCircle2, ArrowRight, Smartphone, Star,
     ChevronRight, Check, Sparkles, Timer, Target, Award,
-    Users, BarChart3, Send, Play, Bolt, Rocket, Shield
+    Users, BarChart3, Send, Play, Rocket, Shield
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../components/NavHeader';
+import Footer from '../components/Footer';
 
 // ============================================================================
 // JSON-LD SCHEMA FOR AEO (ChatGPT, Perplexity, Google AI Overviews)

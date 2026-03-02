@@ -25,12 +25,12 @@ import RefundPage from './components/RefundPage';
 
 // SEO Landing Pages
 import FAQPage from './components/FAQPage';
-import EmployeeSurveyPage from './components/EmployeeSurveyPage';
-import CustomerFeedbackPage from './components/CustomerFeedbackPage';
-import RankedChoicePage from './components/pages/RankedChoicePage';
-import HowToCreatePollPage from './components/pages/HowToCreatePollPage';
-import QuickSurveyPage from './components/QuickSurveyPage';
-import TeamVotingPage from './components/TeamVotingPage';
+import EmployeeSurveyPage from './pages/EmployeeSurveyPage';
+import CustomerFeedbackPage from './pages/CustomerFeedbackPage';
+import RankedChoicePage from './pages/RankedChoicePage';
+import HowToCreatePollPage from './pages/HowToCreatePollPage';
+import QuickSurveyPage from './pages/QuickSurveyPage';
+import TeamVotingPage from './pages/TeamVotingPage';
 
 import { 
     Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 

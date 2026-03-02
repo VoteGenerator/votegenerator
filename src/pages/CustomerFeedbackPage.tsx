@@ -16,8 +16,8 @@ import {
     PieChart, LineChart, Target, Award, Smile, Meh, Frown,
     Store, CreditCard, Package, Repeat, Gift, AlertCircle
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import Footer from './Footer';
+import NavHeader from '../components/NavHeader';
+import Footer from '../components/Footer';
 
 // ============================================================================
 // JSON-LD SCHEMA FOR AEO (ChatGPT, Perplexity, Google AI Overviews)

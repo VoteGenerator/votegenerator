@@ -12,9 +12,9 @@ import {
     Star, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import NavHeader from '../NavHeader';
-import PremiumNav from '../PremiumNav';
-import Footer from '../Footer';
+import NavHeader from '../components/NavHeader';
+import PremiumNav from '../components/PremiumNav';
+import Footer from '../components/Footer';
 
 // Schema for SEO
 const PAGE_SCHEMA = {

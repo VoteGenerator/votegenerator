@@ -152,7 +152,7 @@ const HowToCreatePollPage: React.FC = () => {
             />
 
             {/* Navigation */}
-            {tier === 'free' ? <NavHeader /> : <PremiumNav />}
+            {tier === 'free' ? <NavHeader /> : <PremiumNav tier={tier} />}
 
             {/* Hero */}
             <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 md:py-24">

@@ -117,9 +117,6 @@
         } catch(e) {}
       })();
     </script>
-    <noscript>
-      <img height="1" width="1" style="display:none;" alt="" src="https://ct.pinterest.com/v3/?event=init&tid=2613876894632&noscript=1" />
-    </noscript>
     
     <style>
       /* Critical CSS - prevent flash of unstyled content */
@@ -400,6 +397,11 @@
     </script>
   </head>
   <body>
+    <!-- Pinterest noscript fallback (must be in body, not head) -->
+    <noscript>
+      <img height="1" width="1" style="display:none;" alt="" src="https://ct.pinterest.com/v3/?event=init&tid=2613876894632&noscript=1" />
+    </noscript>
+    
     <!-- Hidden form for Netlify Forms detection (required for React SPA) -->
     <form name="contact" netlify netlify-honeypot="bot-field" hidden>
       <input type="text" name="name" />

@@ -11,7 +11,7 @@ import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
 const RefundPage: React.FC = () => {
-    const lastUpdated = "February 2025";
+    const lastUpdated = "March 2026";
     const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
     
     useEffect(() => {
@@ -111,10 +111,11 @@ const RefundPage: React.FC = () => {
                             </div>
                             
                             <div className="border-t border-slate-200 pt-4">
-                                <h3 className="font-semibold text-slate-900 mb-2">Downgrading (Business → Pro)</h3>
+                                <h3 className="font-semibold text-slate-900 mb-2">Downgrading (Business → Pro or Free)</h3>
                                 <p className="text-slate-600 text-base">
-                                    Your unused Business time is applied as credit toward future Pro invoices. 
-                                    <strong className="text-slate-900"> Credit is applied to your account, not refunded to your card.</strong>
+                                    Downgrades take effect at the end of your current billing period. 
+                                    You keep full access to your current plan until then.
+                                    <strong className="text-slate-900"> No refunds or credits are issued for downgrades.</strong>
                                 </p>
                             </div>
                         </div>

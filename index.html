@@ -63,7 +63,7 @@
         'security_storage': 'granted'
       });
     </script>
-
+    
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8SLP00VP2Z"></script>
     <script>
@@ -71,11 +71,10 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-8SLP00VP2Z', {
-        // Fix bounce rate - track SPA navigation
         'send_page_view': true
       });
       
-      // Track SPA page views - call this on route change
+      // Track SPA page views
       window.trackPageView = function(path, title) {
         if (typeof gtag === 'function') {
           gtag('config', 'G-8SLP00VP2Z', {
@@ -95,6 +94,32 @@
     
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3037944530219260" crossorigin="anonymous"></script>
+    
+    <!-- Pinterest Tag - Loads ONLY after cookie consent -->
+    <script>
+      window.loadPinterestTag = function() {
+        !function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src=e;var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+        pintrk('load', '2613876894632');
+        pintrk('page');
+        console.log('Pinterest tag loaded');
+      };
+      
+      // Check if consent already granted on page load
+      (function() {
+        try {
+          var stored = localStorage.getItem('vg_cookie_consent');
+          if (stored) {
+            var consent = JSON.parse(stored);
+            if (consent.type === 'all') {
+              window.loadPinterestTag();
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <noscript>
+      <img height="1" width="1" style="display:none;" alt="" src="https://ct.pinterest.com/v3/?event=init&tid=2613876894632&noscript=1" />
+    </noscript>
     
     <style>
       /* Critical CSS - prevent flash of unstyled content */
@@ -128,6 +153,251 @@
         to { transform: rotate(360deg); }
       }
     </style>
+
+    <!-- ========================================================================
+         STRUCTURED DATA / SCHEMA MARKUP FOR SEO & AEO
+         These are read by Google, ChatGPT, Perplexity, etc. - NOT visible to users
+         ======================================================================== -->
+    
+    <!-- Organization Schema - Brand Identity -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://votegenerator.com/#organization",
+      "name": "VoteGenerator",
+      "url": "https://votegenerator.com",
+      "logo": "https://votegenerator.com/logooutline.svg",
+      "description": "Free online poll and survey maker with real-time results. Create polls in seconds with no signup required.",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://www.pinterest.com/votegenerator"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "hello@votegenerator.com",
+        "availableLanguage": "English"
+      }
+    }
+    </script>
+    
+    <!-- WebApplication Schema - SaaS Product -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "@id": "https://votegenerator.com/#software",
+      "name": "VoteGenerator",
+      "url": "https://votegenerator.com",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Survey Software",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript and HTML5 support",
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "lowPrice": "0",
+        "highPrice": "490",
+        "offerCount": "5",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Free Plan",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "Unlimited polls, 100 responses each, all poll types"
+          },
+          {
+            "@type": "Offer",
+            "name": "Pro Monthly",
+            "price": "19",
+            "priceCurrency": "USD",
+            "description": "10,000 responses, premium themes, CSV export"
+          },
+          {
+            "@type": "Offer",
+            "name": "Pro Annual",
+            "price": "190",
+            "priceCurrency": "USD",
+            "description": "10,000 responses, premium themes, CSV export - save 17%"
+          },
+          {
+            "@type": "Offer",
+            "name": "Business Monthly",
+            "price": "49",
+            "priceCurrency": "USD",
+            "description": "100,000 responses, custom branding, white-label"
+          },
+          {
+            "@type": "Offer",
+            "name": "Business Annual",
+            "price": "490",
+            "priceCurrency": "USD",
+            "description": "100,000 responses, custom branding, white-label - save 17%"
+          }
+        ]
+      },
+      "featureList": [
+        "Multiple Choice Polls",
+        "Ranked Choice Voting", 
+        "Rating Scale Polls",
+        "Image Polls",
+        "Meeting Scheduler",
+        "Multi-Question Surveys",
+        "Real-Time Results",
+        "No Signup Required",
+        "CSV and Excel Export",
+        "Custom Themes",
+        "Embed on Website",
+        "QR Code Sharing",
+        "Anonymous Voting",
+        "Vote Protection"
+      ],
+      "screenshot": "https://votegenerator.com/og-image.png",
+      "author": {
+        "@id": "https://votegenerator.com/#organization"
+      }
+    }
+    </script>
+    
+    <!-- FAQPage Schema - Homepage FAQs (ChatGPT/Perplexity read these!) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is VoteGenerator?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VoteGenerator is a free online poll and survey maker that lets you create polls in under 60 seconds with no signup required. It supports multiple poll types including multiple choice, ranked choice voting, rating scales, image polls, and multi-question surveys. Results update in real-time and can be shared via link, QR code, or embedded on websites."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I create a free online poll?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Creating a poll takes 3 simple steps: 1) Enter your question and add answer options, 2) Choose your poll type (multiple choice, ranked, rating, etc.), 3) Click Create Poll to get your shareable link. No account or signup is required. Your poll is instantly live and ready to share."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is VoteGenerator completely free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, VoteGenerator offers a generous free tier that includes unlimited poll creation, up to 100 responses per poll, 30-day poll duration, basic themes, and all 9 poll types. Paid plans starting at $19/month offer additional features like more responses, premium themes, CSV export, and custom branding."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of polls can I create?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VoteGenerator supports 9 poll types: Multiple Choice (single or multi-select), Ranked Choice Voting (drag to reorder), Rating Scale (1-5 stars, hearts, emojis), Image Polls (visual voting), Meeting Scheduler (Yes/Maybe/No availability), Dot Voting (distribute points), Budget Allocation (buy-a-feature), Matrix Voting (2D priority grid), and Pairwise Comparison (head-to-head). Plus multi-question Surveys."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need an account to create a poll?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Neither poll creators nor voters need to create an account or provide an email address. VoteGenerator is privacy-first and frictionless. Voters simply click your poll link and vote immediately. Poll creators receive a private admin link to manage their poll and view results."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I prevent duplicate votes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VoteGenerator offers multiple vote protection options: Browser Cookies (prevents repeat votes from same browser), Shared PIN (require a code all voters enter), and Unique Access Codes (individual codes for controlled voting). These can be combined with voter name collection for accountability."
+          }
+        },
+        {
+          "@type": "Question", 
+          "name": "Can I embed polls on my website?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. VoteGenerator provides embed code that you can copy and paste into any website, blog, or platform that supports HTML. The embedded poll is fully functional and matches your chosen theme. Business plan users can hide VoteGenerator branding for white-label embeds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I create a survey with multiple questions?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Click 'Create Survey' on VoteGenerator to access the survey builder. Add multiple question types: multiple choice, checkboxes, short text, long text, rating scales, and dropdowns. Free users get 5 questions, Pro gets 25, Business gets 50 questions per survey. Share via link, QR code, or embed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I create an anonymous survey?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Enable Anonymous Mode to hide all identifying information including names, IP addresses, and device details from results. This encourages honest feedback for sensitive topics like employee satisfaction surveys. Anonymous surveys display a badge so respondents know their identity is protected."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long do polls stay active?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Free polls remain active for 30 days. Pro and Business plan polls stay active for up to 365 days. You can set a custom deadline or maximum response count. Polls can be manually closed anytime from your admin dashboard and reopened later if needed."
+          }
+        }
+      ]
+    }
+    </script>
+    
+    <!-- HowTo Schema - Create a Poll -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Create a Free Online Poll",
+      "description": "Step-by-step guide to creating a poll using VoteGenerator in under 60 seconds with no signup required",
+      "totalTime": "PT1M",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Enter your poll question",
+          "text": "Go to votegenerator.com and type your poll question in the title field. Add an optional description for context."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Add answer options",
+          "text": "Enter at least 2 answer options. Click Add Option for more choices, up to 20 options per poll."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Choose poll type",
+          "text": "Select Multiple Choice, Ranked Choice, Rating Scale, Image Poll, Meeting Scheduler, or other types."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Configure settings",
+          "text": "Optionally enable vote protection, require names, allow comments, set deadline, or choose a theme."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 5,
+          "name": "Create and share",
+          "text": "Click Create Poll to generate your poll. Copy the link, download QR code, or embed on your website."
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <!-- Hidden form for Netlify Forms detection (required for React SPA) -->
@@ -170,7 +440,7 @@
         sessionStorage.removeItem('refreshed');
       });
     </script>
-
+    
     <!-- Cookie Consent Banner -->
     <div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color:white; padding:0; z-index:99999; box-shadow:0 -8px 32px rgba(0,0,0,0.3); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
       <div style="max-width:1200px; margin:0 auto; padding:20px 24px;">
@@ -197,14 +467,13 @@
         </div>
       </div>
     </div>
-
     <script>
-      // Cookie consent with Google Consent Mode integration
+      // Cookie consent with Google Consent Mode + Pinterest integration
       function acceptCookies(type) {
         var consent = {
           type: type,
           timestamp: new Date().toISOString(),
-          version: '1.0'
+          version: '1.1'
         };
         localStorage.setItem('vg_cookie_consent', JSON.stringify(consent));
         
@@ -221,6 +490,11 @@
             });
             // Track the consent event
             gtag('event', 'cookie_consent', { consent_type: 'all' });
+            
+            // Load Pinterest tag after consent
+            if (typeof window.loadPinterestTag === 'function') {
+              window.loadPinterestTag();
+            }
           } else {
             gtag('consent', 'update', {
               'analytics_storage': 'denied',
@@ -231,7 +505,7 @@
           }
         }
       }
-
+      
       // Show banner if no consent yet
       (function() {
         var stored = localStorage.getItem('vg_cookie_consent');

@@ -22,6 +22,16 @@ import UnsubscribeResult from './components/UnsubscribeResult';
 import PrivacyPage from './components/PrivacyPage';
 import TermsPage from './components/TermsPage';
 import RefundPage from './components/RefundPage';
+
+// SEO Landing Pages
+import FAQPage from './components/FAQPage';
+import EmployeeSurveyPage from './components/EmployeeSurveyPage';
+import CustomerFeedbackPage from './components/CustomerFeedbackPage';
+import RankedChoicePage from './components/pages/RankedChoicePage';
+import HowToCreatePollPage from './components/pages/HowToCreatePollPage';
+import QuickSurveyPage from './components/QuickSurveyPage';
+import TeamVotingPage from './components/TeamVotingPage';
+
 import { 
     Home, Copy, Check, Crown, Star, AlertTriangle, Calendar, 
     HelpCircle, BookOpen, ArrowUpRight, LayoutDashboard, 
@@ -303,6 +313,8 @@ function App() {
     const path = window.location.pathname;
     
     let page;
+    
+    // Core product pages
     if (path === '/create' || path === '/create/') page = <CreatePage />;
     else if (path === '/poll-created' || path === '/poll-created/') page = <PollCreatedSuccess />;
     else if (path === '/ad-wall' || path.startsWith('/ad-wall')) page = <AdWall />;
@@ -312,13 +324,30 @@ function App() {
     else if (path === '/checkout/success' || path === '/checkout/success/') page = <CheckoutSuccess />;
     else if (path === '/help' || path === '/help/' || path.startsWith('/help/')) page = <HelpCenter />;
     else if (path === '/recover' || path === '/recover/') page = <RecoveryPage />;
+    
+    // Legal pages
     else if (path === '/data-policy' || path === '/data-policy/') page = <DataPolicyPage />;
     else if (path === '/account/delete-request' || path === '/account/delete-request/') page = <DataDeletionPage />;
     else if (path === '/privacy' || path === '/privacy/') page = <PrivacyPage />;
     else if (path === '/terms' || path === '/terms/') page = <TermsPage />;
     else if (path === '/refund' || path === '/refund/') page = <RefundPage />;
+    
+    // Email/verification pages
     else if (path === '/verify-result' || path === '/verify-result/') page = <VerifyResult />;
     else if (path === '/unsubscribe-result' || path === '/unsubscribe-result/') page = <UnsubscribeResult />;
+    
+    // =========================================================================
+    // SEO LANDING PAGES - These bring NEW visitors from Google searches
+    // =========================================================================
+    else if (path === '/faq' || path === '/faq/') page = <FAQPage />;
+    else if (path === '/employee-survey' || path === '/employee-survey/') page = <EmployeeSurveyPage />;
+    else if (path === '/customer-feedback' || path === '/customer-feedback/' || path === '/customer-satisfaction' || path === '/customer-satisfaction/') page = <CustomerFeedbackPage />;
+    else if (path === '/ranked-choice-voting' || path === '/ranked-choice-voting/') page = <RankedChoicePage />;
+    else if (path === '/how-to-create-poll' || path === '/how-to-create-poll/') page = <HowToCreatePollPage />;
+    else if (path === '/quick-survey' || path === '/quick-survey/' || path === '/quick-poll' || path === '/quick-poll/') page = <QuickSurveyPage />;
+    else if (path === '/team-voting' || path === '/team-voting/' || path === '/group-poll' || path === '/group-poll/') page = <TeamVotingPage />;
+    
+    // Default - catches /, /p/*, /s/*, etc.
     else page = <VoteGeneratorApp />;
     
     return <>{page}</>;

@@ -16,8 +16,193 @@ import {
     PieChart, LineChart, Target, Award, Smile, Meh, Frown,
     Store, CreditCard, Package, Repeat, Gift, AlertCircle
 } from 'lucide-react';
-import NavHeader from '../components/NavHeader';
-import Footer from '../components/Footer';
+import NavHeader from './NavHeader';
+import Footer from './Footer';
+
+// ============================================================================
+// JSON-LD SCHEMA FOR AEO (ChatGPT, Perplexity, Google AI Overviews)
+// This targets 500,000+ monthly searches for "customer feedback survey"
+// ============================================================================
+
+const PageSchema = () => {
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is a CSAT survey and how do I create one?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "A CSAT (Customer Satisfaction) survey measures how satisfied customers are with your product, service, or experience. To create one: 1) Go to VoteGenerator and click Create Survey, 2) Add a satisfaction question like 'How satisfied were you with your experience?' with a 1-5 scale, 3) Add optional follow-up questions, 4) Share the survey link via email, SMS, or embed on your website. CSAT scores are calculated as the percentage of respondents who chose 4 or 5 (satisfied or very satisfied)."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What's the difference between CSAT, NPS, and CES surveys?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "CSAT (Customer Satisfaction Score) measures satisfaction with a specific interaction using a 1-5 scale. NPS (Net Promoter Score) measures customer loyalty by asking 'How likely are you to recommend us?' on a 0-10 scale, categorizing respondents as Promoters (9-10), Passives (7-8), or Detractors (0-6). CES (Customer Effort Score) measures how easy it was to resolve an issue. CSAT is best for transactional feedback, NPS for overall loyalty, and CES for support interactions."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What questions should I include in a customer satisfaction survey?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Essential customer satisfaction survey questions include: 1) Overall satisfaction rating (1-5 scale), 2) NPS question: 'How likely are you to recommend us?', 3) Specific experience questions about product quality, customer service, or delivery, 4) Open-ended: 'What could we improve?', 5) Demographic questions if relevant. Keep surveys under 5 questions for higher completion rates. Send within 24 hours of the interaction while the experience is fresh."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I calculate my CSAT score?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Calculate CSAT score using this formula: (Number of satisfied customers / Total respondents) × 100. Satisfied customers are those who rated 4 or 5 on a 5-point scale. Example: If 80 out of 100 respondents rated 4 or 5, your CSAT score is 80%. Industry benchmarks vary, but generally: above 80% is excellent, 70-80% is good, 60-70% needs improvement, below 60% indicates significant issues."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is a good NPS score?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "NPS ranges from -100 to +100. Calculate it by subtracting the percentage of Detractors (0-6 ratings) from Promoters (9-10 ratings). Score interpretation: Above 70 is world-class (Apple, Costco level), 50-70 is excellent, 30-50 is good, 0-30 needs improvement, below 0 indicates serious customer loyalty issues. Benchmarks vary by industry - B2B software averages around 30-40, while consumer retail averages 50-60."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "When should I send customer satisfaction surveys?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Send surveys at these optimal times: Post-purchase: Within 24-48 hours while the experience is fresh. Post-support: Immediately after resolving a ticket or call. Relationship surveys: Quarterly or bi-annually for overall sentiment. Post-onboarding: 30 days after signup for SaaS products. Avoid survey fatigue by limiting to one survey per customer per month."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I increase customer survey response rates?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To increase survey response rates: Keep it short (under 5 questions, 2 minutes max), send at the right time (within 24 hours of interaction), personalize the request with customer name, explain why feedback matters and how you'll use it, offer incentives like discounts or entry into a drawing, use mobile-friendly surveys, send follow-up reminders, and make the first question visible in the email preview."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I embed customer surveys on my website?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. VoteGenerator provides embed code to add surveys to any website. Options include: inline embeds that display directly on the page, popup surveys triggered by user actions or timing, slide-in widgets in the corner of the screen, and exit-intent surveys when users are about to leave. Embedded surveys increase response rates by capturing feedback in the moment rather than requiring customers to click through to an external link."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Do customers need to create accounts to respond to surveys?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. VoteGenerator surveys require no login, signup, or email verification. Customers simply click the survey link and respond immediately. This frictionless experience significantly improves response rates compared to surveys that require authentication. You can optionally collect email addresses for follow-up, but it's not required."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I track and analyze customer feedback over time?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To track customer feedback effectively: 1) Monitor your CSAT/NPS trends weekly or monthly, 2) Segment by customer type, product, or channel to identify patterns, 3) Read every open-ended response to understand context, 4) Set up alerts for low scores to enable quick follow-up, 5) Compare results before and after changes to measure impact, 6) Export data to your CRM or analytics tools for deeper analysis."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What is Voice of Customer (VoC) and how do surveys fit in?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Voice of Customer (VoC) is a comprehensive approach to capturing customer feedback, preferences, and expectations. Surveys are a key VoC tool, but VoC also includes: support ticket analysis, social media monitoring, review analysis, customer interviews, and behavioral data. Effective VoC programs combine multiple sources to get a complete picture of customer sentiment and needs."
+                }
+            }
+        ]
+    };
+
+    const howToSchema = {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to Create a Customer Satisfaction Survey",
+        "description": "Step-by-step guide to creating a CSAT or NPS survey to collect customer feedback in under 2 minutes",
+        "totalTime": "PT2M",
+        "estimatedCost": {
+            "@type": "MonetaryAmount",
+            "currency": "USD",
+            "value": "0"
+        },
+        "step": [
+            {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Choose your survey type",
+                "text": "Go to VoteGenerator and select Create Survey. Choose CSAT (satisfaction scale), NPS (recommendation likelihood), or create a custom feedback form."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Add your questions",
+                "text": "Start with a primary satisfaction question using a 1-5 or 1-10 scale. Add 1-2 follow-up questions like 'What could we improve?' to gather actionable insights."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Customize the experience",
+                "text": "Add your logo, choose colors to match your brand, and write a custom thank-you message. Business plan users can fully white-label the survey."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Share with customers",
+                "text": "Copy the survey link to include in emails, SMS, or receipts. Embed on your website or thank-you page. Generate a QR code for in-store displays."
+            },
+            {
+                "@type": "HowToStep",
+                "position": 5,
+                "name": "Analyze results",
+                "text": "View real-time responses on your dashboard. Export to CSV for deeper analysis. Set up email notifications for new responses or low scores."
+            }
+        ]
+    };
+
+    const articleSchema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "How to Create Customer Satisfaction Surveys (CSAT & NPS)",
+        "description": "Complete guide to creating CSAT and NPS surveys that customers actually complete. Includes templates, best practices, and benchmarks.",
+        "author": {
+            "@type": "Organization",
+            "name": "VoteGenerator"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "VoteGenerator",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://votegenerator.com/logooutline.svg"
+            }
+        },
+        "datePublished": "2024-01-15",
+        "dateModified": "2026-03-01"
+    };
+
+    return (
+        <>
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+            />
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+            />
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+            />
+        </>
+    );
+};
 
 // ============================================================================
 // HERO SECTION
@@ -916,6 +1101,9 @@ const FAQSection: React.FC = () => {
 const CustomerFeedbackPage: React.FC = () => {
     return (
         <div className="min-h-screen">
+            {/* JSON-LD Schema for SEO/AEO - read by ChatGPT, Perplexity, Google */}
+            <PageSchema />
+            
             <NavHeader />
             <HeroSection />
             <MetricsSection />

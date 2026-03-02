@@ -242,6 +242,48 @@
   force = true
 
 [[redirects]]
+  from = "/customer-satisfaction"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ranked-choice-voting"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/how-to-create-poll"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/quick-survey"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/quick-poll"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/team-voting"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/group-poll"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/unsubscribe-result"
   to = "/index.html"
   status = 200

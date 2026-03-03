@@ -24,7 +24,7 @@ import TermsPage from './components/TermsPage';
 import RefundPage from './components/RefundPage';
 
 // SEO Landing Pages
-import FAQPage from './components/FAQPage';
+import FAQPage from './pages/FAQPage';
 import EmployeeSurveyPage from './pages/EmployeeSurveyPage';
 import CustomerFeedbackPage from './pages/CustomerFeedbackPage';
 import RankedChoicePage from './pages/RankedChoicePage';

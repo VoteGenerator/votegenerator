@@ -11,9 +11,9 @@ import {
     FileText, Shield, BarChart3, Share2, Settings,
     Users, Clock, Lock, Star, CheckCircle2, ArrowRight
 } from 'lucide-react';
-import NavHeader from './NavHeader';
-import PremiumNav from './PremiumNav';
-import Footer from './Footer';
+import NavHeader from '../components/NavHeader';
+import PremiumNav from '../components/PremiumNav';
+import Footer from '../components/Footer';
 
 // FAQ Data organized by category - AEO optimized with clear Q&A format
 const FAQ_CATEGORIES = [

@@ -14,6 +14,8 @@ import {
 import SurveyBuilder from './SurveyBuilder';
 import PremiumNav from './PremiumNav';
 import { SurveySection, SurveySettings, Poll } from '../types';
+import { Analytics } from '../utils/analytics';
+import { trackPinterestSignup } from '../utils/pinterestTracking';
 
 // ============================================================================
 // TYPES
@@ -187,6 +189,15 @@ const SurveyCreatePage: React.FC = () => {
                 createdAt: new Date().toISOString(),
             });
             localStorage.setItem('vg_polls', JSON.stringify(existingPolls));
+            
+            // Track survey creation - Google Analytics
+            Analytics.pollCreated('survey', tier, totalQuestions);
+            
+            // Track survey creation - Pinterest (this is the "signup" event)
+            trackPinterestSignup({
+                pollType: 'survey',
+                questionCount: totalQuestions
+            });
             
             setStep('success');
         } catch (err: any) {

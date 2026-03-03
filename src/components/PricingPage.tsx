@@ -18,6 +18,7 @@ import NavHeader from './NavHeader';
 import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 import { Analytics } from '../utils/analytics';
+import { trackPinterestViewCategory } from '../utils/pinterestTracking';
 
 // =============================================================================
 // PRICING CONFIGURATION - Limited Time USD Pricing
@@ -698,8 +699,11 @@ function PricingPage(): React.ReactElement {
             setTier(savedTier);
         }
         
-        // Track pricing page view
+        // Track pricing page view - Google Analytics
         Analytics.pricingViewed();
+        
+        // Track pricing page view - Pinterest
+        trackPinterestViewCategory({ category: 'pricing' });
     }, []);
 
     const toggleSection = (id: string) => {
@@ -984,20 +988,17 @@ function PricingPage(): React.ReactElement {
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
                     {/* Header row - sticky */}
                     <div className="grid grid-cols-4 bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                        <div className="py-4 px-6 text-left text-sm font-bold text-slate-700">
+                        <div className="py-4 px-3 md:px-6 text-left text-xs md:text-sm font-bold text-slate-700">
                             Feature
                         </div>
-                        <div className="py-4 px-4 text-center">
-                            <span className="text-sm font-bold text-slate-600">Free</span>
-                            <div className="text-xs text-slate-400">$0 USD</div>
+                        <div className="py-4 px-2 md:px-4 text-center">
+                            <span className="text-xs md:text-sm font-bold text-slate-600">Free</span>
                         </div>
-                        <div className="py-4 px-4 text-center bg-indigo-50">
-                            <span className="text-sm font-bold text-indigo-700">Pro</span>
-                            <div className="text-xs text-indigo-500">$19 USD/mo</div>
+                        <div className="py-4 px-2 md:px-4 text-center bg-indigo-50">
+                            <span className="text-xs md:text-sm font-bold text-indigo-700">Pro</span>
                         </div>
-                        <div className="py-4 px-4 text-center bg-slate-100">
-                            <span className="text-sm font-bold text-slate-700">Business</span>
-                            <div className="text-xs text-slate-500">$49 USD/mo</div>
+                        <div className="py-4 px-2 md:px-4 text-center bg-slate-100">
+                            <span className="text-xs md:text-sm font-bold text-slate-700">Business</span>
                         </div>
                     </div>
 
@@ -1013,22 +1014,22 @@ function PricingPage(): React.ReactElement {
                                     onClick={() => toggleSection(section.id)}
                                     className="w-full grid grid-cols-4 items-center bg-slate-50/50 hover:bg-slate-50 transition"
                                 >
-                                    <div className="py-4 px-6 text-left flex items-center gap-3">
-                                        <div className={`w-8 h-8 bg-${section.color}-100 rounded-lg flex items-center justify-center`}>
-                                            <IconComponent className={`text-${section.color}-600`} size={16} />
+                                    <div className="py-3 md:py-4 px-3 md:px-6 text-left flex items-center gap-2 md:gap-3">
+                                        <div className={`w-6 h-6 md:w-8 md:h-8 bg-${section.color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                                            <IconComponent className={`text-${section.color}-600`} size={14} />
                                         </div>
-                                        <div>
-                                            <span className="font-bold text-slate-900">{section.name}</span>
+                                        <div className="min-w-0">
+                                            <span className="font-bold text-slate-900 text-xs md:text-sm block truncate">{section.name}</span>
                                             {section.description && (
-                                                <p className="text-xs text-slate-500">{section.description}</p>
+                                                <p className="text-xs text-slate-500 hidden md:block">{section.description}</p>
                                             )}
                                         </div>
                                     </div>
                                     <div className="col-span-2" />
-                                    <div className="py-4 px-6 text-right">
+                                    <div className="py-3 md:py-4 px-3 md:px-6 text-right">
                                         <ChevronDown 
                                             className={`inline text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-                                            size={20} 
+                                            size={18} 
                                         />
                                     </div>
                                 </button>
@@ -1048,24 +1049,24 @@ function PricingPage(): React.ReactElement {
                                                     key={fi} 
                                                     className="grid grid-cols-4 items-center border-t border-slate-100 hover:bg-slate-50/30"
                                                 >
-                                                    <div className="py-3 px-6 pl-16 text-left">
+                                                    <div className="py-2 md:py-3 px-3 md:px-6 md:pl-16 text-left">
                                                         <Tooltip text={feature.tooltip}>
-                                                            <span className="text-sm text-slate-700 inline-flex items-center gap-1.5">
+                                                            <span className="text-xs md:text-sm text-slate-700 inline-flex items-center gap-1 md:gap-1.5">
                                                                 {'icon' in feature && feature.icon && (
-                                                                    <feature.icon size={14} className="text-slate-400" />
+                                                                    <feature.icon size={12} className="text-slate-400 hidden md:block" />
                                                                 )}
-                                                                {feature.name}
-                                                                <HelpCircle size={12} className="text-slate-300" />
+                                                                <span className="line-clamp-2 md:line-clamp-1">{feature.name}</span>
+                                                                <HelpCircle size={10} className="text-slate-300 flex-shrink-0 hidden md:block" />
                                                             </span>
                                                         </Tooltip>
                                                     </div>
-                                                    <div className="py-3 px-4 text-center">
+                                                    <div className="py-2 md:py-3 px-2 md:px-4 text-center">
                                                         <FeatureCell value={feature.free} tier="free" />
                                                     </div>
-                                                    <div className="py-3 px-4 text-center bg-indigo-50/30">
+                                                    <div className="py-2 md:py-3 px-2 md:px-4 text-center bg-indigo-50/30">
                                                         <FeatureCell value={feature.pro} tier="pro" />
                                                     </div>
-                                                    <div className="py-3 px-4 text-center bg-slate-50/50">
+                                                    <div className="py-2 md:py-3 px-2 md:px-4 text-center bg-slate-50/50">
                                                         <FeatureCell value={feature.business} tier="business" />
                                                     </div>
                                                 </div>
@@ -1102,7 +1103,7 @@ function PricingPage(): React.ReactElement {
                         },
                         { 
                             q: 'Can I switch plans later?', 
-                            a: 'Absolutely! Upgrade or downgrade anytime. Upgrades are prorated (you only pay the difference). Downgrades give you credit toward future billing.' 
+                            a: 'Yes! Upgrade anytime and pay the prorated difference. Downgrades take effect at the end of your current billing period - you keep your current plan features until then.' 
                         },
                         { 
                             q: 'Do you offer refunds?', 

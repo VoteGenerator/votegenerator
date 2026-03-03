@@ -312,7 +312,6 @@ const ProblemSection: React.FC = () => (
 // ============================================================================
 // How It Works - Simple 3-step process
 // ============================================================================
-
 const HowItWorksSection: React.FC = () => {
     const steps = [
         {
@@ -337,7 +336,6 @@ const HowItWorksSection: React.FC = () => {
             color: 'emerald'
         }
     ];
-
     return (
         <section className="py-20 bg-white">
             <div className="max-w-5xl mx-auto px-4">
@@ -349,7 +347,6 @@ const HowItWorksSection: React.FC = () => {
                         Create a poll in less time than it takes to read this sentence.
                     </p>
                 </div>
-
                 <div className="grid md:grid-cols-3 gap-8">
                     {steps.map((step, i) => (
                         <motion.div
@@ -371,9 +368,6 @@ const HowItWorksSection: React.FC = () => {
                         </motion.div>
                     ))}
                 </div>
-
-                {/* Connector line on desktop */}
-                <div className="hidden md:block relative h-0.5 bg-gradient-to-r from-indigo-200 via-purple-200 to-emerald-200 -mt-[140px] mx-20 mb-[100px]" />
             </div>
         </section>
     );

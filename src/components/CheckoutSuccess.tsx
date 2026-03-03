@@ -10,6 +10,7 @@ import {
     BarChart3, Users, Palette, Download, Shield, Clock
 } from 'lucide-react';
 import { Analytics } from '../utils/analytics';
+import { trackPinterestCheckout } from '../utils/pinterestTracking';
 
 const CheckoutSuccess: React.FC = () => {
     const [copied, setCopied] = useState(false);

@@ -1,6 +1,6 @@
-// Footer.tsx - Updated with GDPR links, cookie settings, data deletion
+// Footer.tsx - Updated with SEO pages, GDPR links, cookie settings
 import React from 'react';
-import { Cookie, Shield, Trash2, HelpCircle } from 'lucide-react';
+import { Cookie, Shield, Trash2, HelpCircle, Users, ListOrdered, BarChart3 } from 'lucide-react';
 
 interface FooterProps {
     minimal?: boolean;  // For embedded/voting pages
@@ -52,13 +52,49 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                         </ul>
                     </div>
                     
-                    {/* For Creators */}
+                    {/* Guides & Learn - SEO PAGES */}
                     <div>
-                        <h3 className="font-bold text-white mb-4">For Creators</h3>
+                        <h3 className="font-bold text-white mb-4">Guides</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="/youtube-polls" className="hover:text-white transition">YouTube Polls</a></li>
-                            <li><a href="/twitch-polls" className="hover:text-white transition">Twitch Polls</a></li>
-                            <li><a href="/reddit-polls" className="hover:text-white transition">Reddit Polls</a></li>
+                            <li>
+                                <a href="/how-to-create-poll" className="hover:text-white transition flex items-center gap-1">
+                                    <BarChart3 size={12} />
+                                    How to Create a Poll
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/quick-survey" className="hover:text-white transition">
+                                    Quick Survey Maker
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/team-voting" className="hover:text-white transition flex items-center gap-1">
+                                    <Users size={12} />
+                                    Team Voting
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/employee-survey" className="hover:text-white transition">
+                                    Employee Surveys
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/customer-feedback" className="hover:text-white transition">
+                                    Customer Feedback
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/ranked-choice-voting" className="hover:text-white transition flex items-center gap-1">
+                                    <ListOrdered size={12} />
+                                    Ranked Choice Voting
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/faq" className="hover:text-white transition flex items-center gap-1">
+                                    <HelpCircle size={12} />
+                                    FAQ
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
@@ -66,25 +102,17 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Resources</h3>
                         <ul className="space-y-2 text-sm">
-                            <li>
-                                <a href="/help" className="hover:text-white transition flex items-center gap-1">
-                                    <HelpCircle size={12} />
-                                    Help Center
-                                </a>
-                            </li>
-                            <li><a href="/how-it-works" className="hover:text-white transition">How It Works</a></li>
-                            <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
-                            <li><a href="/recover" className="hover:text-white transition">Recover Access</a></li>
+                            <li><a href="/help" className="hover:text-white transition">Help Center</a></li>
+                            <li><a href="/recover" className="hover:text-white transition">Recover Poll Access</a></li>
                             <li><a href="/#manage-subscription" className="hover:text-white transition">Manage Subscription</a></li>
+                            <li><a href="/contact" className="hover:text-white transition">Contact Us</a></li>
                         </ul>
                     </div>
                     
-                    {/* Company */}
+                    {/* Legal & Privacy */}
                     <div>
-                        <h3 className="font-bold text-white mb-4">Company</h3>
+                        <h3 className="font-bold text-white mb-4">Legal</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="/about" className="hover:text-white transition">About Us</a></li>
-                            <li><a href="/contact" className="hover:text-white transition">Contact Us</a></li>
                             <li>
                                 <a href="/privacy" className="hover:text-white transition flex items-center gap-1">
                                     <Shield size={12} />
@@ -93,6 +121,7 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                             </li>
                             <li><a href="/terms" className="hover:text-white transition">Terms of Service</a></li>
                             <li><a href="/data-policy" className="hover:text-white transition">Data & Retention</a></li>
+                            <li><a href="/refund" className="hover:text-white transition">Refund Policy</a></li>
                             <li>
                                 <button 
                                     onClick={openCookieSettings}
@@ -108,7 +137,6 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                                     Delete My Data
                                 </a>
                             </li>
-                            <li><a href="/refund" className="hover:text-white transition">Refund Policy</a></li>
                         </ul>
                     </div>
                 </div>

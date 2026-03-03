@@ -18,6 +18,7 @@ import { compressToTargetSize, formatFileSize } from '../utils/imageCompression'
 import { useTemplateLoader, TemplateBadge, StartFromTemplateButton } from './useTemplateLoader';
 import { PollTemplate } from './pollTemplates';
 import { Analytics } from '../utils/analytics';
+import { trackPinterestSignup } from '../utils/pinterestTracking';
 
 // Subscription tiers (all poll types included in all tiers)
 type SubscriptionTier = 'free' | 'pro' | 'business';

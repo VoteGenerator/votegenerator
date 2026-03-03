@@ -230,56 +230,62 @@
   force = true
 
 [[redirects]]
+  from = "/faq"
+  to = "/faq.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/employee-survey"
-  to = "/index.html"
+  to = "/employee-survey.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/customer-feedback"
-  to = "/index.html"
+  to = "/customer-feedback.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/customer-satisfaction"
-  to = "/index.html"
+  to = "/customer-feedback.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/ranked-choice-voting"
-  to = "/index.html"
+  to = "/ranked-choice-voting.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/how-to-create-poll"
-  to = "/index.html"
+  to = "/how-to-create-poll.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/quick-survey"
-  to = "/index.html"
+  to = "/quick-survey.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/quick-poll"
-  to = "/index.html"
+  to = "/quick-survey.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/team-voting"
-  to = "/index.html"
+  to = "/team-voting.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/group-poll"
-  to = "/index.html"
+  to = "/team-voting.html"
   status = 200
   force = true
 

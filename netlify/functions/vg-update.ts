@@ -6,6 +6,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface PollSettings {
     deadline?: string;
     hideResults?: boolean;
@@ -51,6 +58,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-update: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const payload: UpdatePayload = JSON.parse(event.body || '{}');
         const { pollId, adminKey, updates } = payload;
@@ -72,14 +89,19 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-update: Looking for poll:', pollId);
+        console.log('vg-update: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Get poll from store
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
 
         const poll = await store.get(pollId, { type: 'json' }) as any;
+
+        console.log('vg-update: Poll found:', !!poll);
         
         if (!poll) {
             return { 
@@ -174,7 +196,7 @@ export const handler: Handler = async (event) => {
         // Save updated poll
         await store.setJSON(pollId, poll);
 
-        console.log(`Poll ${pollId} updated: ${updatedFields.join(', ')}`);
+        console.log(`vg-update: Poll ${pollId} updated: ${updatedFields.join(', ')}`);
 
         return {
             statusCode: 200,
@@ -191,7 +213,6 @@ export const handler: Handler = async (event) => {
                 }
             })
         };
-
     } catch (error) {
         console.error('Update poll error:', error);
         return {

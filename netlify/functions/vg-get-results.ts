@@ -2,9 +2,15 @@
 // vg-get-results.ts - Get poll/survey results
 // Location: netlify/functions/vg-get-results.ts
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 export const handler: Handler = async (event) => {
     const headers = {
@@ -22,6 +28,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-get-results: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const pollId = event.queryStringParameters?.id;
         const adminKey = event.queryStringParameters?.admin;
@@ -34,13 +50,18 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-get-results: Looking for poll:', pollId);
+        console.log('vg-get-results: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
 
         const poll = await store.get(pollId, { type: 'json' }) as any;
+
+        console.log('vg-get-results: Poll found:', !!poll);
 
         if (!poll) {
             return {
@@ -72,7 +93,37 @@ export const handler: Handler = async (event) => {
         
         if (votes[0]) {
             console.log('vg-get-results: First vote has surveyAnswers:', !!votes[0].surveyAnswers);
-            console.log('vg-get-results: First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers || {}));
+            console.log('vg-get-results: First vote has ratingVotes:', !!votes[0].ratingVotes);
+            console.log('vg-get-results: First vote keys:', Object.keys(votes[0]));
+        }
+
+        // For rating polls - calculate average ratings
+        let ratingResults: any = null;
+        if (poll.pollType === 'rating') {
+            const allRatings: Record<string, number[]> = {};
+            
+            votes.forEach((v: any) => {
+                if (v.ratingVotes) {
+                    Object.entries(v.ratingVotes).forEach(([optId, rating]) => {
+                        if (!allRatings[optId]) allRatings[optId] = [];
+                        allRatings[optId].push(rating as number);
+                    });
+                }
+            });
+            
+            ratingResults = {};
+            Object.entries(allRatings).forEach(([optId, ratings]) => {
+                const sum = ratings.reduce((a, b) => a + b, 0);
+                ratingResults[optId] = {
+                    average: ratings.length > 0 ? Math.round((sum / ratings.length) * 10) / 10 : 0,
+                    count: ratings.length,
+                    distribution: [1, 2, 3, 4, 5].map(star => 
+                        ratings.filter(r => r === star).length
+                    )
+                };
+            });
+            
+            console.log('vg-get-results: Rating results:', JSON.stringify(ratingResults));
         }
 
         // For regular polls - calculate option tallies
@@ -83,12 +134,20 @@ export const handler: Handler = async (event) => {
                     v.selectedOptionIds?.includes(opt.id) ||
                     v.rankedOptionIds?.includes(opt.id)
                 );
+                
+                // For rating polls, include the rating stats
+                const ratingStats = ratingResults?.[opt.id];
+                
                 return {
                     id: opt.id,
                     text: opt.text,
                     imageUrl: opt.imageUrl,
                     votes: optionVotes.length,
-                    percentage: voteCount > 0 ? Math.round((optionVotes.length / voteCount) * 100) : 0
+                    percentage: voteCount > 0 ? Math.round((optionVotes.length / voteCount) * 100) : 0,
+                    // Rating-specific fields
+                    averageRating: ratingStats?.average,
+                    ratingCount: ratingStats?.count,
+                    ratingDistribution: ratingStats?.distribution,
                 };
             });
         }
@@ -121,10 +180,12 @@ export const handler: Handler = async (event) => {
             voteCount,
             responseCount: voteCount,
             options: optionResults,
+            ratingResults, // Include rating-specific results
             isSurvey: poll.isSurvey || poll.pollType === 'survey',
             sections: poll.sections,
             surveySettings: poll.surveySettings,
             createdAt: poll.createdAt,
+            ratingStyle: poll.ratingStyle, // Include rating style (stars, emojis, etc.)
         };
 
         // For surveys, ALWAYS include surveyResponses (we already checked access above)
@@ -142,14 +203,13 @@ export const handler: Handler = async (event) => {
             response.maxResponses = poll.maxResponses;
         }
 
-        console.log(`Results fetched for poll ${pollId}${isAdmin ? ' (admin)' : ''} - ${voteCount} votes`);
+        console.log(`vg-get-results: Results fetched for poll ${pollId}${isAdmin ? ' (admin)' : ''} - ${voteCount} votes`);
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify(response)
         };
-
     } catch (error) {
         console.error('Get results error:', error);
         return {

@@ -2,9 +2,15 @@
 // vg-get.ts - Get a poll/survey by ID
 // Location: netlify/functions/vg-get.ts
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 export const handler: Handler = async (event) => {
     const headers = {
@@ -22,6 +28,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-get: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const pollId = event.queryStringParameters?.id;
         const adminKey = event.queryStringParameters?.admin;
@@ -34,13 +50,18 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-get: Looking for poll:', pollId);
+        console.log('vg-get: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
 
         const poll = await store.get(pollId, { type: 'json' }) as any;
+
+        console.log('vg-get: Poll found:', !!poll);
 
         if (!poll) {
             return {
@@ -147,6 +168,10 @@ export const handler: Handler = async (event) => {
         // If admin key provided, verify it
         const isAdmin = adminKey && poll.adminKey === adminKey;
 
+        console.log('vg-get: isAdmin:', isAdmin);
+        console.log('vg-get: poll.votes count:', poll.votes?.length || 0);
+        console.log('vg-get: poll.voteCount:', poll.voteCount);
+
         // Prepare response - hide sensitive data for non-admins
         const response: any = {
             id: poll.id,
@@ -163,8 +188,8 @@ export const handler: Handler = async (event) => {
                 allowComments: poll.settings?.allowComments || false,
                 anonymousMode: poll.settings?.anonymousMode || false,
             },
-            voteCount: poll.voteCount || 0,
-            responseCount: poll.responseCount || poll.voteCount || 0,
+            voteCount: poll.voteCount || poll.votes?.length || 0,
+            responseCount: poll.responseCount || poll.voteCount || poll.votes?.length || 0,
             status: poll.status || 'live',
             createdAt: poll.createdAt,
             expiresAt: poll.expiresAt,
@@ -193,6 +218,7 @@ export const handler: Handler = async (event) => {
             response.usedCodes = poll.usedCodes;
             response.notificationSettings = poll.notificationSettings;
             response.customSlug = poll.customSlug;
+            console.log('vg-get: Returning admin response with', response.votes.length, 'votes');
         } else {
             // For non-admins, only include votes if results aren't hidden
             // SECURITY: Strip sensitive data from votes
@@ -202,7 +228,10 @@ export const handler: Handler = async (event) => {
                     timestamp: v.timestamp,
                     selectedOptionIds: v.selectedOptionIds,
                     rankedOptionIds: v.rankedOptionIds,
+                    ratingVotes: v.ratingVotes,
                     surveyAnswers: v.surveyAnswers,
+                    matrixVotes: v.matrixVotes,
+                    pairwiseVotes: v.pairwiseVotes,
                     // Only include comment if comments are public
                     comment: poll.settings?.publicComments ? v.comment : undefined,
                     // Strip: ipHash, voterName, analytics, usedCode
@@ -220,14 +249,13 @@ export const handler: Handler = async (event) => {
             }
         }
 
-        console.log(`Poll ${pollId} fetched${isAdmin ? ' (admin)' : ''}`);
+        console.log(`vg-get: Poll ${pollId} fetched${isAdmin ? ' (admin)' : ''}, votes: ${response.votes?.length || 0}`);
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify(response)
         };
-
     } catch (error) {
         console.error('Get poll error:', error);
         return {

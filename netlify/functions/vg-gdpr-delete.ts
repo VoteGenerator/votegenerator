@@ -22,6 +22,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
 });
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface DeletionRequest {
     email: string;
     requestType: 'delete_all' | 'delete_poll' | 'export_data';
@@ -156,6 +163,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-gdpr-delete: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Service temporarily unavailable' }) 
+        };
+    }
+
     try {
         const body: DeletionRequest = JSON.parse(event.body || '{}');
         const { email, requestType, pollId, verificationCode } = body;
@@ -171,23 +188,25 @@ export const handler: Handler = async (event) => {
         // Normalize email
         const normalizedEmail = email.toLowerCase().trim();
 
+        console.log('vg-gdpr-delete: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Initialize stores
         const customerStore = getStore({
             name: 'customers',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         const pollStore = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         const deletionLogStore = getStore({
             name: 'gdpr-deletion-logs',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // ================================================================
@@ -326,7 +345,7 @@ export const handler: Handler = async (event) => {
         const deletionLog = {
             deletedAt: new Date().toISOString(),
             requestType,
-            emailHash: require('crypto').createHash('sha256').update(normalizedEmail).digest('hex').substring(0, 16),
+            emailHash: crypto.createHash('sha256').update(normalizedEmail).digest('hex').substring(0, 16),
             result: {
                 customersDeleted: result.customersDeleted,
                 pollsDeleted: result.pollsDeleted,
@@ -358,7 +377,6 @@ export const handler: Handler = async (event) => {
                 },
             }),
         };
-
     } catch (error) {
         console.error('[GDPR] Deletion error:', error);
         return {

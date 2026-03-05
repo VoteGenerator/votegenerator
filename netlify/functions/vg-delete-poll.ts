@@ -2,9 +2,15 @@
 // vg-delete-poll.ts - Delete a poll from Netlify Blobs
 // Location: netlify/functions/vg-delete-poll.ts
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface DeletePollPayload {
     pollId: string;
@@ -29,6 +35,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-delete-poll: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const payload: DeletePollPayload = JSON.parse(event.body || '{}');
         const { pollId, adminKey, dashboardToken } = payload;
@@ -42,10 +58,11 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const siteID = process.env.VG_SITE_ID || '';
-        const token = process.env.NETLIFY_AUTH_TOKEN || '';
+        console.log('vg-delete-poll: Deleting poll:', pollId);
+        console.log('vg-delete-poll: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
-        const pollStore = getStore({ name: 'polls', siteID, token });
+        const pollStore = getStore({ name: 'polls', siteID: SITE_ID, token: BLOB_TOKEN });
+
         let pollDeleted = false;
         let customerUpdated = false;
 
@@ -53,6 +70,8 @@ export const handler: Handler = async (event) => {
         try {
             const poll = await pollStore.get(pollId, { type: 'json' }) as any;
             
+            console.log('vg-delete-poll: Poll found:', !!poll);
+
             if (poll) {
                 // Verify admin key
                 if (poll.adminKey !== adminKey) {
@@ -66,18 +85,18 @@ export const handler: Handler = async (event) => {
                 // Delete from polls store
                 await pollStore.delete(pollId);
                 pollDeleted = true;
-                console.log(`Poll ${pollId} deleted from polls store`);
+                console.log(`vg-delete-poll: Poll ${pollId} deleted from polls store`);
             } else {
-                console.log(`Poll ${pollId} not found in polls store - may have been deleted already`);
+                console.log(`vg-delete-poll: Poll ${pollId} not found in polls store - may have been deleted already`);
             }
         } catch (pollErr) {
-            console.log(`Error accessing poll ${pollId}:`, pollErr);
+            console.log(`vg-delete-poll: Error accessing poll ${pollId}:`, pollErr);
         }
 
         // ALWAYS try to clean up customer record if dashboardToken provided
         if (dashboardToken && dashboardToken !== 'free_user') {
             try {
-                const customerStore = getStore({ name: 'vg-customers', siteID, token });
+                const customerStore = getStore({ name: 'vg-customers', siteID: SITE_ID, token: BLOB_TOKEN });
                 const customer = await customerStore.get(`token_${dashboardToken}`, { type: 'json' }) as any;
                 
                 if (customer && customer.polls) {
@@ -88,11 +107,11 @@ export const handler: Handler = async (event) => {
                     if (customer.polls.length < originalLength) {
                         await customerStore.setJSON(`token_${dashboardToken}`, customer);
                         customerUpdated = true;
-                        console.log(`Poll ${pollId} removed from customer ${dashboardToken} record`);
+                        console.log(`vg-delete-poll: Poll ${pollId} removed from customer ${dashboardToken} record`);
                     }
                 }
             } catch (customerErr) {
-                console.error('Failed to update customer record:', customerErr);
+                console.error('vg-delete-poll: Failed to update customer record:', customerErr);
             }
         }
 
@@ -109,7 +128,6 @@ export const handler: Handler = async (event) => {
                 message: pollDeleted || customerUpdated ? 'Poll deleted successfully' : 'Poll already deleted or not found'
             })
         };
-
     } catch (error) {
         console.error('Delete poll error:', error);
         return {

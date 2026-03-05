@@ -10,6 +10,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
 });
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface PollSettings {
     hideResults?: boolean;
     allowMultiple?: boolean;
@@ -124,6 +131,16 @@ const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-update-settings: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { pollId, adminKey, settings, userEmail } = body;
@@ -144,13 +161,19 @@ const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-update-settings: Looking for poll:', pollId);
+        console.log('vg-update-settings: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Get poll from store
         const pollStore = getStore({ 
             name: 'polls', 
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
+
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
+
+        console.log('vg-update-settings: Poll found:', !!pollData);
 
         if (!pollData) {
             return {
@@ -177,7 +200,7 @@ const handler: Handler = async (event) => {
         const isBusiness = userTier === 'business';
         const isPro = userTier === 'pro' || userTier === 'business';
         
-        console.log('Tier validation:', { email, userTier, isBusiness, isPro });
+        console.log('vg-update-settings: Tier validation:', { email, userTier, isBusiness, isPro });
         
         // Check for Business-only settings
         const attemptedBusinessSettings = Object.keys(settings).filter(
@@ -185,7 +208,7 @@ const handler: Handler = async (event) => {
         );
         
         if (attemptedBusinessSettings.length > 0 && !isBusiness) {
-            console.log('Blocked attempt to use Business-only settings:', attemptedBusinessSettings);
+            console.log('vg-update-settings: Blocked attempt to use Business-only settings:', attemptedBusinessSettings);
             return {
                 statusCode: 403,
                 headers,
@@ -217,11 +240,11 @@ const handler: Handler = async (event) => {
             ...filteredSettings
         };
 
-        console.log('Updating settings for poll:', pollId);
-        console.log('User tier:', userTier);
-        console.log('Previous settings:', pollData.settings);
-        console.log('Filtered settings to merge:', filteredSettings);
-        console.log('Updated settings:', updatedSettings);
+        console.log('vg-update-settings: Updating settings for poll:', pollId);
+        console.log('vg-update-settings: User tier:', userTier);
+        console.log('vg-update-settings: Previous settings:', pollData.settings);
+        console.log('vg-update-settings: Filtered settings to merge:', filteredSettings);
+        console.log('vg-update-settings: Updated settings:', updatedSettings);
 
         // Update poll with new settings
         const updatedPoll: Poll = {
@@ -232,7 +255,8 @@ const handler: Handler = async (event) => {
 
         // Save to store
         await pollStore.setJSON(pollId, updatedPoll);
-        console.log('Settings saved successfully');
+
+        console.log('vg-update-settings: Settings saved successfully');
 
         return {
             statusCode: 200,
@@ -244,7 +268,6 @@ const handler: Handler = async (event) => {
                 tier: userTier
             })
         };
-
     } catch (error) {
         console.error('Error updating settings:', error);
         return {

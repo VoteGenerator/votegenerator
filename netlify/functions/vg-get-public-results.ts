@@ -5,6 +5,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface Poll {
     id: string;
     title: string;
@@ -59,6 +66,16 @@ const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-get-public-results: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { pollId, shareKey } = event.queryStringParameters || {};
 
@@ -70,17 +87,19 @@ const handler: Handler = async (event) => {
             };
         }
 
-        console.log('Fetching public results for pollId:', pollId);
+        console.log('vg-get-public-results: Fetching for pollId:', pollId);
+        console.log('vg-get-public-results: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
         // Get poll from store
         const pollStore = getStore({ 
             name: 'polls', 
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
+
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
 
-        console.log('Poll data found:', pollData ? 'yes' : 'no');
+        console.log('vg-get-public-results: Poll data found:', pollData ? 'yes' : 'no');
 
         if (!pollData) {
             return {
@@ -92,8 +111,8 @@ const handler: Handler = async (event) => {
 
         // Check if results are public
         const settings = pollData.settings || {};
-        console.log('Poll settings:', JSON.stringify(settings));
-        console.log('publicResults value:', settings.publicResults);
+        console.log('vg-get-public-results: Poll settings:', JSON.stringify(settings));
+        console.log('vg-get-public-results: publicResults value:', settings.publicResults);
         
         if (!settings.publicResults) {
             return {
@@ -117,17 +136,17 @@ const handler: Handler = async (event) => {
 
         // Votes are stored directly in the poll object
         const votes = (pollData as any).votes || [];
-        console.log('Found votes:', votes.length);
+        console.log('vg-get-public-results: Found votes:', votes.length);
         
         // Debug survey data - use same detection as vg-vote
         const isSurvey = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
         if (isSurvey) {
-            console.log('Survey detected');
-            console.log('pollData.isSurvey:', (pollData as any).isSurvey);
-            console.log('pollData.type:', pollData.type);
-            console.log('pollData.pollType:', (pollData as any).pollType);
-            console.log('surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
-            console.log('sections:', (pollData as any).sections?.length || 0);
+            console.log('vg-get-public-results: Survey detected');
+            console.log('vg-get-public-results: pollData.isSurvey:', (pollData as any).isSurvey);
+            console.log('vg-get-public-results: pollData.type:', pollData.type);
+            console.log('vg-get-public-results: pollData.pollType:', (pollData as any).pollType);
+            console.log('vg-get-public-results: surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
+            console.log('vg-get-public-results: sections:', (pollData as any).sections?.length || 0);
             
             // Log question keys from sections
             const questionKeys: string[] = [];
@@ -136,16 +155,46 @@ const handler: Handler = async (event) => {
                     questionKeys.push(`${q.key || q.name || q.id} (type: ${q.type})`);
                 });
             });
-            console.log('Section question keys:', questionKeys);
+            console.log('vg-get-public-results: Section question keys:', questionKeys);
             
             if (votes.length > 0) {
-                console.log('First vote has surveyAnswers:', !!votes[0].surveyAnswers);
-                console.log('First vote has answers:', !!votes[0].answers);
-                console.log('First vote keys:', Object.keys(votes[0]));
+                console.log('vg-get-public-results: First vote has surveyAnswers:', !!votes[0].surveyAnswers);
+                console.log('vg-get-public-results: First vote has answers:', !!votes[0].answers);
+                console.log('vg-get-public-results: First vote keys:', Object.keys(votes[0]));
                 if (votes[0].surveyAnswers) {
-                    console.log('First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers));
+                    console.log('vg-get-public-results: First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers));
                 }
             }
+        }
+
+        // For rating polls - calculate average ratings
+        let ratingResults: any = null;
+        const pollType = (pollData as any).pollType || pollData.type;
+        if (pollType === 'rating') {
+            const allRatings: Record<string, number[]> = {};
+            
+            votes.forEach((v: any) => {
+                if (v.ratingVotes) {
+                    Object.entries(v.ratingVotes).forEach(([optId, rating]) => {
+                        if (!allRatings[optId]) allRatings[optId] = [];
+                        allRatings[optId].push(rating as number);
+                    });
+                }
+            });
+            
+            ratingResults = {};
+            Object.entries(allRatings).forEach(([optId, ratings]) => {
+                const sum = ratings.reduce((a, b) => a + b, 0);
+                ratingResults[optId] = {
+                    average: ratings.length > 0 ? Math.round((sum / ratings.length) * 10) / 10 : 0,
+                    count: ratings.length,
+                    distribution: [1, 2, 3, 4, 5].map(star => 
+                        ratings.filter(r => r === star).length
+                    )
+                };
+            });
+            
+            console.log('vg-get-public-results: Rating results:', JSON.stringify(ratingResults));
         }
 
         // Prepare public poll data (strip sensitive info)
@@ -165,6 +214,7 @@ const handler: Handler = async (event) => {
             createdAt: pollData.createdAt,
             allowedViews: settings.allowedViews || ['bar', 'pie'],
             showSocialShare: settings.showSocialShare !== false, // Default true
+            ratingStyle: (pollData as any).ratingStyle, // Include rating style
             // Include survey sections if it's a survey
             sections: (pollData as any).sections?.map((s: any) => ({
                 id: s.id,
@@ -195,7 +245,9 @@ const handler: Handler = async (event) => {
         const publicVotes = votes.map((v: any) => ({
             id: v.id,
             choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
-            votedAt: v.votedAt,
+            votedAt: v.votedAt || v.timestamp,
+            // Include ratingVotes for rating polls
+            ratingVotes: v.ratingVotes,
             // Include surveyAnswers for survey types
             surveyAnswers: v.surveyAnswers,
             answers: v.answers,
@@ -219,7 +271,7 @@ const handler: Handler = async (event) => {
             });
         });
 
-        console.log('Simple counts:', simpleCounts);
+        console.log('vg-get-public-results: Simple counts:', simpleCounts);
 
         // Determine winner
         let winnerId: string | undefined;
@@ -241,6 +293,7 @@ const handler: Handler = async (event) => {
                     simpleCounts,
                     winnerId,
                     totalVotes: votes.length,
+                    ratingResults, // Include rating results
                     // Include survey responses for survey types
                     // Check ALL possible locations for survey answers
                     surveyResponses: (() => {
@@ -321,7 +374,6 @@ const handler: Handler = async (event) => {
                 }
             })
         };
-
     } catch (error) {
         console.error('Error fetching public results:', error);
         return {

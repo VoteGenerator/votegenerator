@@ -11,6 +11,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
 });
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface CustomerData {
     email: string;
     tier: string;
@@ -100,7 +107,6 @@ async function verifyTierFromStripe(customerId: string): Promise<{
             expiresAt: new Date(subscription.current_period_end * 1000).toISOString(),
             isActive: true
         };
-
     } catch (error) {
         // Log internally but don't expose to user
         console.error('Stripe verification failed:', error instanceof Error ? error.message : 'Unknown');
@@ -131,6 +137,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-get-customer: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Service temporarily unavailable' }) 
+        };
+    }
+
     const token = event.queryStringParameters?.token || event.queryStringParameters?.t;
     const sessionId = event.queryStringParameters?.session_id || event.queryStringParameters?.s;
 
@@ -149,21 +165,12 @@ export const handler: Handler = async (event) => {
     }
 
     try {
-        const siteId = process.env.VG_SITE_ID;
-        if (!siteId) {
-            // Don't reveal configuration details
-            console.error('VG_SITE_ID not configured');
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Service temporarily unavailable' }),
-            };
-        }
+        console.log('vg-get-customer: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
         const customerStore = getStore({
             name: 'vg-customers',
-            siteID: siteId,
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         let customerData: CustomerData | null = null;
@@ -287,7 +294,6 @@ export const handler: Handler = async (event) => {
                 maxResponses: TIER_LIMITS[verifiedTier] || 100,
             }),
         };
-
     } catch (error) {
         // SECURITY: Never expose error details to client
         console.error('vg-get-customer error:', error instanceof Error ? error.message : 'Unknown error');

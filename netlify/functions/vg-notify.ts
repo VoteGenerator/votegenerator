@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Resend API integration
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'noreply@mail.votegenerator.com';
@@ -338,6 +345,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-notify: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const payload: NotificationPayload = JSON.parse(event.body || '{}');
         const { pollId, adminKey, type, emails, data } = payload;
@@ -347,14 +364,19 @@ export const handler: Handler = async (event) => {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing pollId or adminKey' }) };
         }
 
+        console.log('vg-notify: Looking for poll:', pollId);
+        console.log('vg-notify: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Get poll from store
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
 
         const poll = await store.get(pollId, { type: 'json' }) as any;
+
+        console.log('vg-notify: Poll found:', !!poll);
         
         if (!poll || poll.adminKey !== adminKey) {
             return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid admin key' }) };
@@ -461,7 +483,7 @@ export const handler: Handler = async (event) => {
         }
 
         // Log notification sent
-        console.log('Notification sent: ' + type + ' for poll ' + pollId + ' to ' + sentCount + ' recipient(s)');
+        console.log('vg-notify: Notification sent: ' + type + ' for poll ' + pollId + ' to ' + sentCount + ' recipient(s)');
 
         return {
             statusCode: 200,
@@ -473,7 +495,6 @@ export const handler: Handler = async (event) => {
                 total: notifyEmails.length
             })
         };
-
     } catch (error) {
         console.error('Notification error:', error);
         return {

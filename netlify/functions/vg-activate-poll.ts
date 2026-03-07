@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-activate-poll.ts
 // Called when Pro/Pro user clicks "Go Live" on a draft poll
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface Poll {
     id: string;
@@ -71,6 +77,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-activate-poll: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { pollId, adminKey, dashboardToken } = JSON.parse(event.body || '{}');
 
@@ -82,9 +98,21 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-activate-poll: Activating poll:', pollId);
+        console.log('vg-activate-poll: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Get stores
-        const pollStore = getStore('polls');
-        const customerStore = getStore('customers');
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        const customerStore = getStore({
+            name: 'customers',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Fetch the poll
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
@@ -170,6 +198,8 @@ export const handler: Handler = async (event) => {
 
         await pollStore.setJSON(pollId, updatedPoll);
 
+        console.log('vg-activate-poll: Poll activated successfully');
+
         return {
             statusCode: 200,
             headers,
@@ -184,9 +214,8 @@ export const handler: Handler = async (event) => {
                 },
             }),
         };
-
     } catch (error) {
-        console.error('Activate poll error:', error);
+        console.error('vg-activate-poll: Error:', error);
         return {
             statusCode: 500,
             headers,

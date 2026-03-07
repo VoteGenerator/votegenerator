@@ -2,7 +2,6 @@
 // VoteGenerator - Storage Utility v2
 // Improved with optimistic locking and write-ahead log for race condition safety
 // ============================================================================
-
 import { getStore } from '@netlify/blobs';
 import type { 
   Poll, 
@@ -12,10 +11,16 @@ import type {
   OneTimePurchase 
 } from './types';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // ----------------------------------------------------------------------------
 // Store Names
 // ----------------------------------------------------------------------------
-
 const STORES = {
   POLLS: 'polls',           // Poll configurations
   VOTES: 'votes',           // Vote aggregates (one per poll)
@@ -28,7 +33,6 @@ const STORES = {
 // ----------------------------------------------------------------------------
 // Configuration
 // ----------------------------------------------------------------------------
-
 const CONFIG = {
   MAX_RETRIES: 3,           // Retry writes on conflict
   RETRY_DELAY_MS: 50,       // Base delay between retries (exponential backoff)
@@ -36,61 +40,75 @@ const CONFIG = {
 };
 
 // ----------------------------------------------------------------------------
+// Helper: Validate credentials before any store operation
+// ----------------------------------------------------------------------------
+function validateCredentials(): void {
+  if (!SITE_ID || !BLOB_TOKEN) {
+    console.error('storage.ts: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+    throw new Error('Server configuration error - missing Blobs credentials');
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Helper: Get Stores (with credentials for production)
 // ----------------------------------------------------------------------------
-
 function getPollStore() {
+  validateCredentials();
   return getStore({
     name: STORES.POLLS,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 function getVoteStore() {
+  validateCredentials();
   return getStore({
     name: STORES.VOTES,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 function getVoteLogStore() {
+  validateCredentials();
   return getStore({
     name: STORES.VOTE_LOG,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 function getUserStore() {
+  validateCredentials();
   return getStore({
     name: STORES.USERS,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 function getPurchaseStore() {
+  validateCredentials();
   return getStore({
     name: STORES.PURCHASES,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 function getShortLinkStore() {
+  validateCredentials();
   return getStore({
     name: STORES.SHORT_LINKS,
-    siteID: process.env.SITE_ID || '',
-    token: process.env.NETLIFY_AUTH_TOKEN || ''
+    siteID: SITE_ID,
+    token: BLOB_TOKEN
   });
 }
 
 // ----------------------------------------------------------------------------
 // Utility: Sleep for exponential backoff
 // ----------------------------------------------------------------------------
-
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -98,7 +116,6 @@ function sleep(ms: number): Promise<void> {
 // ----------------------------------------------------------------------------
 // Poll Storage (unchanged - low contention)
 // ----------------------------------------------------------------------------
-
 export async function savePoll(poll: Poll): Promise<void> {
   const store = getPollStore();
   await store.setJSON(poll.id, poll);
@@ -163,7 +180,6 @@ export async function updatePoll(pollId: string, updates: Partial<Poll>): Promis
 // ----------------------------------------------------------------------------
 // Vote Aggregate Storage - WITH OPTIMISTIC LOCKING
 // ----------------------------------------------------------------------------
-
 interface AggregateWithVersion {
   aggregate: VoteAggregate;
   version: number;
@@ -262,7 +278,6 @@ export async function initializeVoteAggregate(pollId: string): Promise<VoteAggre
 // ----------------------------------------------------------------------------
 // Write-Ahead Log for Vote Safety
 // ----------------------------------------------------------------------------
-
 interface VoteLogEntry {
   voteId: string;
   pollId: string;
@@ -301,7 +316,6 @@ async function markVoteLogApplied(pollId: string, voteId: string): Promise<void>
 // ----------------------------------------------------------------------------
 // Add Vote with Retry Logic (Race Condition Safe)
 // ----------------------------------------------------------------------------
-
 /**
  * Add a vote to the aggregate with optimistic locking and retry
  * 
@@ -441,7 +455,6 @@ export async function addVoteToAggregate(
 // ----------------------------------------------------------------------------
 // Recovery: Apply votes from log (run periodically or on-demand)
 // ----------------------------------------------------------------------------
-
 export async function recoverVotesFromLog(pollId: string): Promise<number> {
   const store = getVoteLogStore();
   const poll = await getPoll(pollId);
@@ -474,7 +487,6 @@ export async function recoverVotesFromLog(pollId: string): Promise<number> {
 // ----------------------------------------------------------------------------
 // Update Summary (unchanged from v1)
 // ----------------------------------------------------------------------------
-
 function updateSummary(aggregate: VoteAggregate, vote: Vote, poll: Poll): void {
   switch (vote.type) {
     case 'multiple-choice':
@@ -708,7 +720,6 @@ function recalculateRankedChoice(aggregate: VoteAggregate, poll: Poll): void {
 // ----------------------------------------------------------------------------
 // User & Purchase Storage (unchanged - low contention)
 // ----------------------------------------------------------------------------
-
 export async function getUser(userId: string): Promise<UserDashboard | null> {
   const store = getUserStore();
   try {
@@ -802,7 +813,6 @@ export async function getPurchaseByStripePayment(paymentId: string): Promise<One
 // ----------------------------------------------------------------------------
 // Utility Functions
 // ----------------------------------------------------------------------------
-
 export function generateId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = '';
@@ -843,7 +853,6 @@ export function hashForProtection(value: string): string {
 // ----------------------------------------------------------------------------
 // Export
 // ----------------------------------------------------------------------------
-
 export const storage = {
   // Polls
   savePoll,

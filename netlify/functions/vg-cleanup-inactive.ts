@@ -18,6 +18,13 @@
 import { Handler, schedule } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Retention period: 12 months of NO activity
 const TWELVE_MONTHS_MS = 12 * 30 * 24 * 60 * 60 * 1000;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -30,7 +37,7 @@ interface CleanupStats {
 }
 
 const cleanupHandler: Handler = async (event, context) => {
-    console.log('[Cleanup] Starting scheduled cleanup job...');
+    console.log('[vg-cleanup-inactive] Starting scheduled cleanup job...');
     
     const stats: CleanupStats = {
         pollsScanned: 0,
@@ -39,23 +46,38 @@ const cleanupHandler: Handler = async (event, context) => {
         errors: [],
     };
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('[vg-cleanup-inactive] Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                success: false,
+                error: 'Server configuration error - missing Blobs credentials',
+                stats,
+            }),
+        };
+    }
+
+    console.log('[vg-cleanup-inactive] Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
     try {
         const pollStore = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         const customerStore = getStore({
             name: 'customers',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         const cleanupLogStore = getStore({
             name: 'cleanup-logs',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // List all polls
@@ -94,7 +116,7 @@ const cleanupHandler: Handler = async (event, context) => {
                             // 30 days passed since warning - DELETE
                             await pollStore.delete(blob.key);
                             stats.pollsDeleted++;
-                            console.log(`[Cleanup] Deleted poll ${blob.key} (inactive for 12+ months, 30-day warning expired)`);
+                            console.log(`[vg-cleanup-inactive] Deleted poll ${blob.key} (inactive for 12+ months, 30-day warning expired)`);
 
                             // Update customer's poll list
                             const creatorEmail = poll.creatorEmail;
@@ -117,13 +139,12 @@ const cleanupHandler: Handler = async (event, context) => {
                         poll.deletionReason = 'No activity for 12 months';
                         await pollStore.setJSON(blob.key, poll);
                         stats.pollsMarkedForDeletion++;
-                        console.log(`[Cleanup] Marked poll ${blob.key} for deletion (inactive 12+ months)`);
+                        console.log(`[vg-cleanup-inactive] Marked poll ${blob.key} for deletion (inactive 12+ months)`);
                     }
                 }
-
             } catch (pollError) {
                 stats.errors.push(`Error processing poll ${blob.key}: ${pollError}`);
-                console.error(`[Cleanup] Error with poll ${blob.key}:`, pollError);
+                console.error(`[vg-cleanup-inactive] Error with poll ${blob.key}:`, pollError);
             }
         }
 
@@ -135,7 +156,7 @@ const cleanupHandler: Handler = async (event, context) => {
         
         await cleanupLogStore.setJSON(`run:${Date.now()}`, logEntry);
         
-        console.log('[Cleanup] Completed:', stats);
+        console.log('[vg-cleanup-inactive] Completed:', stats);
 
         return {
             statusCode: 200,
@@ -144,9 +165,8 @@ const cleanupHandler: Handler = async (event, context) => {
                 stats,
             }),
         };
-
     } catch (error) {
-        console.error('[Cleanup] Fatal error:', error);
+        console.error('[vg-cleanup-inactive] Fatal error:', error);
         stats.errors.push(`Fatal error: ${error}`);
         
         return {

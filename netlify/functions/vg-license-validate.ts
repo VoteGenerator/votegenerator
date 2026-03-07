@@ -3,14 +3,19 @@
 // Validates Unlimited license keys and returns license info
 // Also handles license activation (storing in user's browser)
 // ============================================================================
-
 import type { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
 // ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
+// ============================================================================
 // Types
 // ============================================================================
-
 interface License {
   id: string;
   key: string;
@@ -37,6 +42,16 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
+  // Check Blobs credentials FIRST
+  if (!SITE_ID || !BLOB_TOKEN) {
+    console.error('vg-license-validate: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: 'Server configuration error' }) 
+    };
+  }
+
   // GET: Validate a license key
   if (event.httpMethod === 'GET') {
     const licenseKey = event.queryStringParameters?.key;
@@ -50,7 +65,15 @@ export const handler: Handler = async (event) => {
     }
 
     try {
-      const licenseStore = getStore('vg-licenses');
+      console.log('vg-license-validate: Validating license key');
+      console.log('vg-license-validate: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+      const licenseStore = getStore({
+        name: 'vg-licenses',
+        siteID: SITE_ID,
+        token: BLOB_TOKEN
+      });
+
       const license = await licenseStore.get(licenseKey, { type: 'json' }) as License | null;
 
       if (!license) {
@@ -104,7 +127,7 @@ export const handler: Handler = async (event) => {
         }),
       };
     } catch (error: any) {
-      console.error('License validation error:', error);
+      console.error('vg-license-validate: Validation error:', error);
       return {
         statusCode: 500,
         headers,
@@ -127,7 +150,15 @@ export const handler: Handler = async (event) => {
         };
       }
 
-      const licenseStore = getStore('vg-licenses');
+      console.log('vg-license-validate: Processing action:', action, 'for license');
+      console.log('vg-license-validate: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+      const licenseStore = getStore({
+        name: 'vg-licenses',
+        siteID: SITE_ID,
+        token: BLOB_TOKEN
+      });
+
       const license = await licenseStore.get(licenseKey, { type: 'json' }) as License | null;
 
       if (!license) {
@@ -163,6 +194,8 @@ export const handler: Handler = async (event) => {
 
       await licenseStore.setJSON(licenseKey, updatedLicense);
 
+      console.log('vg-license-validate: License updated successfully');
+
       return {
         statusCode: 200,
         headers,
@@ -177,7 +210,7 @@ export const handler: Handler = async (event) => {
         }),
       };
     } catch (error: any) {
-      console.error('License activation error:', error);
+      console.error('vg-license-validate: Activation error:', error);
       return {
         statusCode: 500,
         headers,

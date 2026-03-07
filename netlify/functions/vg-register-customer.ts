@@ -2,10 +2,16 @@
 // vg-register-customer.ts - Register customer from success page (backup for webhook)
 // Location: netlify/functions/vg-register-customer.ts
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import { customAlphabet } from 'nanoid';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 // Generate short dashboard token
 const generateDashboardToken = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_', 16);
@@ -42,11 +48,22 @@ export const handler: Handler = async (event) => {
 
     console.log('>>> vg-register-customer called <<<');
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-register-customer: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Server configuration error' }),
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { sessionId, tier, email } = body;
 
-        console.log('Request body:', { sessionId: sessionId?.substring(0, 20), tier, email: email?.substring(0, 5) });
+        console.log('vg-register-customer: Request body:', { sessionId: sessionId?.substring(0, 20), tier, email: email?.substring(0, 5) });
+        console.log('vg-register-customer: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
         if (!sessionId || !tier) {
             return {
@@ -56,20 +73,10 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const siteId = process.env.VG_SITE_ID;
-        if (!siteId) {
-            console.error('VG_SITE_ID not configured');
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Server configuration error' }),
-            };
-        }
-
         const customerStore = getStore({
             name: 'vg-customers',
-            siteID: siteId,
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // Check if customer already exists (webhook may have worked)
@@ -77,7 +84,7 @@ export const handler: Handler = async (event) => {
         const existing = await customerStore.get(sessionKey, { type: 'json' }) as CustomerData | null;
         
         if (existing && existing.dashboardToken) {
-            console.log('Customer already exists, returning existing token');
+            console.log('vg-register-customer: Customer already exists, returning existing token');
             return {
                 statusCode: 200,
                 headers,
@@ -114,8 +121,8 @@ export const handler: Handler = async (event) => {
         await customerStore.setJSON(`token_${dashboardToken}`, customer);
         await customerStore.setJSON(`session_${sessionId}`, customer);
 
-        console.log('Customer registered successfully');
-        console.log('Dashboard token:', dashboardToken);
+        console.log('vg-register-customer: Customer registered successfully');
+        console.log('vg-register-customer: Dashboard token:', dashboardToken);
 
         return {
             statusCode: 200,
@@ -128,7 +135,7 @@ export const handler: Handler = async (event) => {
             }),
         };
     } catch (error) {
-        console.error('Error registering customer:', error);
+        console.error('vg-register-customer: Error:', error);
         return {
             statusCode: 500,
             headers,

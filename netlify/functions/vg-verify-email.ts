@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'noreply@mail.votegenerator.com';
 const SITE_URL = process.env.URL || 'https://votegenerator.com';
@@ -101,13 +108,13 @@ async function sendVerificationEmail(
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + RESEND_API_KEY,
+                'Authorization': `Bearer ${RESEND_API_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 from: FROM_EMAIL,
                 to: [email],
-                subject: 'Confirm notifications for "' + pollTitle + '"',
+                subject: `Confirm notifications for "${pollTitle}"`,
                 html
             })
         });
@@ -137,6 +144,26 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-verify-email: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        // For GET requests, redirect to error page
+        if (event.httpMethod === 'GET') {
+            return {
+                statusCode: 302,
+                headers: { 'Location': `${SITE_URL}/verify-result?status=error` },
+                body: ''
+            };
+        }
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
+    console.log('vg-verify-email: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
     // GET request = verify token (user clicked link)
     if (event.httpMethod === 'GET') {
         const token = event.queryStringParameters?.token;
@@ -146,19 +173,19 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': SITE_URL + '/verify-result?status=invalid'
+                    'Location': `${SITE_URL}/verify-result?status=invalid`
                 },
                 body: ''
             };
         }
 
         try {
-            // Get Blobs credentials
-            const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
-            const blobToken = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
-            
             // Get verification record
-            const verifyStore = getStore({ name: 'email-verifications', siteID, token: blobToken });
+            const verifyStore = getStore({
+                name: 'email-verifications',
+                siteID: SITE_ID,
+                token: BLOB_TOKEN
+            });
             
             let verification: any = null;
             try {
@@ -171,7 +198,7 @@ export const handler: Handler = async (event) => {
                 return {
                     statusCode: 302,
                     headers: {
-                        'Location': SITE_URL + '/verify-result?status=expired'
+                        'Location': `${SITE_URL}/verify-result?status=expired`
                     },
                     body: ''
                 };
@@ -187,14 +214,18 @@ export const handler: Handler = async (event) => {
                 return {
                     statusCode: 302,
                     headers: {
-                        'Location': SITE_URL + '/verify-result?status=expired'
+                        'Location': `${SITE_URL}/verify-result?status=expired`
                     },
                     body: ''
                 };
             }
 
             // Get poll and update notification settings
-            const pollStore = getStore({ name: 'polls', siteID, token: blobToken });
+            const pollStore = getStore({
+                name: 'polls',
+                siteID: SITE_ID,
+                token: BLOB_TOKEN
+            });
             
             let poll: any = null;
             try {
@@ -208,7 +239,6 @@ export const handler: Handler = async (event) => {
                 const emailIndex = poll.notificationSettings.emails.findIndex(
                     (e: any) => e.email === verification.email
                 );
-
                 if (emailIndex !== -1) {
                     poll.notificationSettings.emails[emailIndex].verified = true;
                     poll.notificationSettings.emails[emailIndex].verifiedAt = new Date().toISOString();
@@ -223,17 +253,16 @@ export const handler: Handler = async (event) => {
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': SITE_URL + '/verify-result?status=success&poll=' + verification.pollId
+                    'Location': `${SITE_URL}/verify-result?status=success&poll=${verification.pollId}`
                 },
                 body: ''
             };
-
         } catch (error) {
-            console.error('Verification error:', error);
+            console.error('vg-verify-email: Verification error:', error);
             return {
                 statusCode: 302,
                 headers: {
-                    'Location': SITE_URL + '/verify-result?status=error'
+                    'Location': `${SITE_URL}/verify-result?status=error`
                 },
                 body: ''
             };
@@ -267,12 +296,12 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        // Get Blobs credentials
-        const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
-        const blobToken = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
-
         // Verify admin access
-        const pollStore = getStore({ name: 'polls', siteID, token: blobToken });
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
         
         let poll: any = null;
         try {
@@ -291,10 +320,14 @@ export const handler: Handler = async (event) => {
 
         // Generate verification token
         const token = generateToken();
-        const verifyUrl = SITE_URL + '/.netlify/functions/vg-verify-email?token=' + token;
+        const verifyUrl = `${SITE_URL}/.netlify/functions/vg-verify-email?token=${token}`;
 
         // Store verification record
-        const verifyStore = getStore({ name: 'email-verifications', siteID, token: blobToken });
+        const verifyStore = getStore({
+            name: 'email-verifications',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
         
         await verifyStore.setJSON(token, {
             pollId,
@@ -354,7 +387,7 @@ export const handler: Handler = async (event) => {
 
         await pollStore.setJSON(pollId, poll);
 
-        console.log('Verification email sent to ' + email + ' for poll ' + pollId);
+        console.log(`vg-verify-email: Verification email sent to ${email} for poll ${pollId}`);
 
         return {
             statusCode: 200,
@@ -364,9 +397,8 @@ export const handler: Handler = async (event) => {
                 message: 'Verification email sent'
             })
         };
-
     } catch (error) {
-        console.error('Send verification error:', error);
+        console.error('vg-verify-email: Send verification error:', error);
         return {
             statusCode: 500,
             headers,

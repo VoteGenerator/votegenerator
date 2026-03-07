@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface VoteAnalytics {
     device: 'mobile' | 'desktop' | 'tablet' | 'unknown';
     country?: string;
@@ -99,6 +106,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-analytics: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const pollId = event.queryStringParameters?.pollId;
         const adminKey = event.queryStringParameters?.adminKey;
@@ -112,10 +129,13 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-analytics: Fetching analytics for poll:', pollId);
+        console.log('vg-analytics: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || ''
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
         });
 
         const poll: Poll | null = await store.get(pollId, { type: 'json' });
@@ -340,7 +360,7 @@ export const handler: Handler = async (event) => {
         };
 
     } catch (error) {
-        console.error('Error fetching analytics:', error);
+        console.error('vg-analytics: Error fetching analytics:', error);
         return {
             statusCode: 500,
             headers,

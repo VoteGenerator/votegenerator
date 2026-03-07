@@ -5,6 +5,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 const SITE_URL = process.env.URL || 'https://votegenerator.com';
 
 // Generate unsubscribe token (used in email links)
@@ -39,62 +46,68 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-unsubscribe: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return {
+            statusCode: 302,
+            headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=error` },
+            body: ''
+        };
+    }
+
     // GET request with token parameter
     const token = event.queryStringParameters?.token;
-
+    
     if (!token) {
         return {
             statusCode: 302,
-            headers: { 'Location': SITE_URL + '/unsubscribe-result?status=invalid' },
+            headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=invalid` },
             body: ''
         };
     }
 
     // Decode token
     const decoded = decodeUnsubscribeToken(token);
+    
     if (!decoded) {
         return {
             statusCode: 302,
-            headers: { 'Location': SITE_URL + '/unsubscribe-result?status=invalid' },
+            headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=invalid` },
             body: ''
         };
     }
 
     const { pollId, email } = decoded;
 
+    console.log('vg-unsubscribe: Processing unsubscribe for poll:', pollId);
+    console.log('vg-unsubscribe: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
     try {
-        // Get Blobs credentials
-        const siteID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
-        const blobToken = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
-
-        if (!siteID || !blobToken) {
-            console.error('[vg-unsubscribe] Missing blob credentials');
-            return {
-                statusCode: 302,
-                headers: { 'Location': SITE_URL + '/unsubscribe-result?status=error' },
-                body: ''
-            };
-        }
-
         // Get poll
-        const pollStore = getStore({ name: 'polls', siteID, token: blobToken });
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
         const poll = await pollStore.get(pollId, { type: 'json' }) as any;
 
         if (!poll) {
-            console.log('[vg-unsubscribe] Poll not found:', pollId);
+            console.log('vg-unsubscribe: Poll not found:', pollId);
             return {
                 statusCode: 302,
-                headers: { 'Location': SITE_URL + '/unsubscribe-result?status=not-found' },
+                headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=not-found` },
                 body: ''
             };
         }
 
         // Check if email exists in notification settings
         if (!poll.notificationSettings?.emails?.length) {
-            console.log('[vg-unsubscribe] No notification emails for poll:', pollId);
+            console.log('vg-unsubscribe: No notification emails for poll:', pollId);
             return {
                 statusCode: 302,
-                headers: { 'Location': SITE_URL + '/unsubscribe-result?status=not-found' },
+                headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=not-found` },
                 body: ''
             };
         }
@@ -104,10 +117,10 @@ export const handler: Handler = async (event) => {
         );
 
         if (emailIndex === -1) {
-            console.log('[vg-unsubscribe] Email not found in poll:', email);
+            console.log('vg-unsubscribe: Email not found in poll:', email);
             return {
                 statusCode: 302,
-                headers: { 'Location': SITE_URL + '/unsubscribe-result?status=not-found' },
+                headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=not-found` },
                 body: ''
             };
         }
@@ -118,20 +131,19 @@ export const handler: Handler = async (event) => {
         // Save updated poll
         await pollStore.setJSON(pollId, poll);
 
-        console.log('[vg-unsubscribe] Successfully unsubscribed:', email, 'from poll:', pollId);
+        console.log('vg-unsubscribe: Successfully unsubscribed:', email, 'from poll:', pollId);
 
         // Redirect to success page
         return {
             statusCode: 302,
-            headers: { 'Location': SITE_URL + '/unsubscribe-result?status=success' },
+            headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=success` },
             body: ''
         };
-
     } catch (error) {
-        console.error('[vg-unsubscribe] Error:', error);
+        console.error('vg-unsubscribe: Error:', error);
         return {
             statusCode: 302,
-            headers: { 'Location': SITE_URL + '/unsubscribe-result?status=error' },
+            headers: { 'Location': `${SITE_URL}/unsubscribe-result?status=error` },
             body: ''
         };
     }

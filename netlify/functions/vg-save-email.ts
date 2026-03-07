@@ -9,6 +9,15 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// NOTE: The bare getStore('name') shorthand only works during builds,
+// NOT in deployed functions! Always pass siteID and token.
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Generate 6-character verification code
 const generateCode = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -79,6 +88,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('[vg-save-email] Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { 
@@ -103,12 +122,26 @@ export const handler: Handler = async (event) => {
 
         const emailLower = email.toLowerCase().trim();
         console.log('[vg-save-email] Action:', action, 'Email:', emailLower.substring(0, 5) + '***');
+        console.log('[vg-save-email] Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
-        // Initialize stores - Netlify auto-injects credentials in deployed environment
-        // DO NOT pass siteID explicitly - it causes MissingBlobsEnvironmentError
-        const verificationStore = getStore('email-verifications');
-        const customerStore = getStore('customers');
-        const pollStore = getStore('polls');
+        // Initialize stores with proper credentials
+        const verificationStore = getStore({
+            name: 'email-verifications',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        const customerStore = getStore({
+            name: 'customers',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // ================================================================
         // ACTION: SEND VERIFICATION CODE

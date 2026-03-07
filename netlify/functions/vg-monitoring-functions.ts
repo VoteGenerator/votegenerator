@@ -5,9 +5,24 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 export const handler: Handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method not allowed' };
+    }
+
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-log-error: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        // Still log to console even if we can't store
+        console.error('[ERROR LOG - NO STORAGE]', event.body);
+        return { statusCode: 500, body: 'Server configuration error' };
     }
 
     try {
@@ -15,8 +30,8 @@ export const handler: Handler = async (event) => {
         
         const errorStore = getStore({
             name: 'error-logs',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // Store error with timestamp-based key
@@ -39,7 +54,6 @@ export const handler: Handler = async (event) => {
     }
 };
 
-
 // ============================================================================
 // vg-health.ts - Health check endpoint for uptime monitoring
 // Location: netlify/functions/vg-health.ts
@@ -51,6 +65,9 @@ export const handler: Handler = async (event) => {
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 export const handler: Handler = async () => {
     const startTime = Date.now();
     
@@ -58,8 +75,8 @@ export const handler: Handler = async () => {
         // Quick blob store check
         const store = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
         
         // Just list (don't fetch all) to verify connection
@@ -95,7 +112,6 @@ export const handler: Handler = async () => {
 };
 */
 
-
 // ============================================================================
 // vg-error-digest.ts - Daily error digest email
 // Location: netlify/functions/vg-error-digest.ts
@@ -109,12 +125,15 @@ export const handler: Handler = async () => {
 import { Handler, schedule } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 const digestHandler: Handler = async () => {
     try {
         const errorStore = getStore({
             name: 'error-logs',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // Get errors from last 24 hours
@@ -207,7 +226,6 @@ View full logs in Netlify dashboard.
 export const handler = schedule('0 9 * * *', digestHandler);
 */
 
-
 // ============================================================================
 // vg-backup.ts - Manual/scheduled backup to external storage
 // Location: netlify/functions/vg-backup.ts
@@ -224,18 +242,21 @@ export const handler = schedule('0 9 * * *', digestHandler);
 import { Handler, schedule } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 const backupHandler: Handler = async (event) => {
     try {
         const pollStore = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
         
         const customerStore = getStore({
             name: 'customers',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // Export all polls
@@ -279,8 +300,8 @@ const backupHandler: Handler = async (event) => {
         // Option 2: Store backup in a separate blob store
         const backupStore = getStore({
             name: 'backups',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
         
         const backupKey = `backup:${new Date().toISOString().split('T')[0]}`;
@@ -316,12 +337,10 @@ const backupHandler: Handler = async (event) => {
 
 // Can be both scheduled and manually triggered
 export const handler = backupHandler;
-
 // To schedule daily, add to netlify.toml:
 // [functions."vg-backup"]
 //   schedule = "0 4 * * *"
 */
-
 
 // ============================================================================
 // vg-recover.ts - Poll recovery via email
@@ -330,6 +349,9 @@ export const handler = backupHandler;
 /*
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 export const handler: Handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -348,14 +370,14 @@ export const handler: Handler = async (event) => {
 
         const customerStore = getStore({
             name: 'customers',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         const pollStore = getStore({
             name: 'polls',
-            siteID: process.env.VG_SITE_ID || '',
-            token: process.env.NETLIFY_AUTH_TOKEN || '',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN,
         });
 
         // Find customer by email

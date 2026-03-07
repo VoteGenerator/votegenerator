@@ -12,6 +12,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // SendGrid for emails
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mail.votegenerator.com';
@@ -75,6 +82,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-recover: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { action, email, code } = body;
@@ -89,10 +106,27 @@ export const handler: Handler = async (event) => {
 
         const normalizedEmail = email.toLowerCase().trim();
 
+        console.log('vg-recover: Action:', action);
+        console.log('vg-recover: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
         // Initialize blob stores
-        const customersStore = getStore({ name: 'customers', siteID: process.env.VG_SITE_ID });
-        const pollsStore = getStore({ name: 'polls', siteID: process.env.VG_SITE_ID });
-        const verificationStore = getStore({ name: 'recovery-verifications', siteID: process.env.VG_SITE_ID });
+        const customersStore = getStore({
+            name: 'customers',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        const pollsStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        const verificationStore = getStore({
+            name: 'recovery-verifications',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // ========================================
         // ACTION: send_code
@@ -352,7 +386,7 @@ export const handler: Handler = async (event) => {
             }
 
             // Log successful recovery
-            console.log(`[RECOVERY] Email ${normalizedEmail.substring(0, 3)}***@*** recovered ${recoveredPolls.length} polls`);
+            console.log(`vg-recover: Email ${normalizedEmail.substring(0, 3)}***@*** recovered ${recoveredPolls.length} polls`);
 
             return {
                 statusCode: 200,
@@ -372,9 +406,8 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({ error: 'Invalid action. Use "send_code" or "verify".' })
         };
-
     } catch (error) {
-        console.error('Recovery error:', error);
+        console.error('vg-recover: Error:', error);
         return {
             statusCode: 500,
             headers,

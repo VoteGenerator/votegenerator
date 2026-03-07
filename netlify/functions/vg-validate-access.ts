@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-validate-access.ts
 // Checks admin key or access token and returns appropriate permissions
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface AccessToken {
     token: string;
@@ -101,6 +107,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-validate-access: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         // Support both GET (query params) and POST (body)
         let pollId: string | null = null;
@@ -135,7 +151,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const pollStore = getStore('polls');
+        console.log('vg-validate-access: Validating access for poll:', pollId);
+        console.log('vg-validate-access: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Fetch the poll
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
@@ -223,9 +246,8 @@ export const handler: Handler = async (event) => {
                 permissions: PERMISSIONS.none,
             }),
         };
-
     } catch (error) {
-        console.error('Validate access error:', error);
+        console.error('vg-validate-access: Error:', error);
         return {
             statusCode: 500,
             headers,

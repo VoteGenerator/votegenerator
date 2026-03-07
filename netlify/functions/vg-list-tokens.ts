@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-list-tokens.ts
 // Returns all tokens for master admin to view/manage
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface AccessToken {
     token: string;
@@ -42,6 +48,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 204, headers, body: '' };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-list-tokens: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         // Support both GET and POST
         let pollId: string | null = null;
@@ -65,7 +81,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const pollStore = getStore('polls');
+        console.log('vg-list-tokens: Listing tokens for poll:', pollId);
+        console.log('vg-list-tokens: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Fetch the poll
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
@@ -107,6 +130,8 @@ export const handler: Handler = async (event) => {
                 isExpired: t.expiresAt ? new Date(t.expiresAt) < new Date() : false,
             }));
 
+        console.log('vg-list-tokens: Found', tokens.length, 'tokens');
+
         return {
             statusCode: 200,
             headers,
@@ -130,9 +155,8 @@ export const handler: Handler = async (event) => {
                 },
             }),
         };
-
     } catch (error) {
-        console.error('List tokens error:', error);
+        console.error('vg-list-tokens: Error:', error);
         return {
             statusCode: 500,
             headers,

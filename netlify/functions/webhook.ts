@@ -2,6 +2,13 @@ import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import Stripe from 'stripe';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Initialize Stripe
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -93,7 +100,7 @@ async function sendDashboardEmail(
   const baseUrl = process.env.URL || 'https://votegenerator.com';
   
   // Use full URL format with both token and session_id (proven to work)
-  const dashboardUrl = baseUrl + '/admin?token=' + dashboardToken + '&session_id=' + sessionId;
+  const dashboardUrl = `${baseUrl}/admin?token=${dashboardToken}&session_id=${sessionId}`;
   
   const days = getTierDays(tier, billing);
   const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
@@ -105,18 +112,18 @@ async function sendDashboardEmail(
   const responseLimit = getResponseLimit(tier);
   
   try {
-    console.log('Sending dashboard email to ' + email.substring(0, 5) + '... with token ' + dashboardToken.substring(0, 10) + '...');
+    console.log(`webhook: Sending dashboard email to ${email.substring(0, 5)}... with token ${dashboardToken.substring(0, 10)}...`);
     
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer ' + RESEND_API_KEY,
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         from: 'VoteGenerator <noreply@mail.votegenerator.com>',
         to: email,
-        subject: '🗳️ Welcome to VoteGenerator ' + tierLabel + '!',
+        subject: `🗳️ Welcome to VoteGenerator ${tierLabel}!`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
             <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
@@ -172,14 +179,14 @@ async function sendDashboardEmail(
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Resend API error:', response.status, errorText);
+      console.error('webhook: Resend API error:', response.status, errorText);
       return false;
     }
     
-    console.log('Dashboard email sent successfully!');
+    console.log('webhook: Dashboard email sent successfully!');
     return true;
   } catch (error) {
-    console.error('Failed to send dashboard email:', error);
+    console.error('webhook: Failed to send dashboard email:', error);
     return false;
   }
 }
@@ -193,8 +200,18 @@ async function tryRegisterCustomer(
   dashboardToken: string,
   billing?: string
 ): Promise<boolean> {
+  // Check credentials before attempting
+  if (!SITE_ID || !BLOB_TOKEN) {
+    console.error('webhook: Missing Blobs credentials for customer registration');
+    return false;
+  }
+
   try {
-    const store = getStore('vg-customers');
+    const store = getStore({
+      name: 'vg-customers',
+      siteID: SITE_ID,
+      token: BLOB_TOKEN
+    });
     
     const days = getTierDays(tier, billing);
     
@@ -210,14 +227,14 @@ async function tryRegisterCustomer(
     };
     
     // Store by both email and token for lookups
-    await store.setJSON('customer_' + email, customerData);
-    await store.setJSON('token_' + dashboardToken, customerData);
-    await store.setJSON('session_' + sessionId, customerData);
+    await store.setJSON(`customer_${email}`, customerData);
+    await store.setJSON(`token_${dashboardToken}`, customerData);
+    await store.setJSON(`session_${sessionId}`, customerData);
     
-    console.log('Customer registered in Blobs');
+    console.log('webhook: Customer registered in Blobs');
     return true;
   } catch (error: any) {
-    console.error('Blobs registration failed (non-fatal):', error.message);
+    console.error('webhook: Blobs registration failed (non-fatal):', error.message);
     return false;
   }
 }
@@ -245,7 +262,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   const sig = event.headers['stripe-signature'];
   
   if (!sig) {
-    console.error('No Stripe signature found');
+    console.error('webhook: No Stripe signature found');
     return {
       statusCode: 400,
       headers,
@@ -262,15 +279,16 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       STRIPE_WEBHOOK_SECRET
     );
   } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+    console.error('webhook: Webhook signature verification failed:', err.message);
     return {
       statusCode: 400,
       headers,
-      body: JSON.stringify({ error: 'Webhook Error: ' + err.message }),
+      body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
     };
   }
 
-  console.log('Webhook received:', stripeEvent.type);
+  console.log('webhook: Received:', stripeEvent.type);
+  console.log('webhook: Using SITE_ID:', SITE_ID ? SITE_ID.slice(0, 8) + '...' : 'NOT SET');
 
   try {
     switch (stripeEvent.type) {
@@ -290,7 +308,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
           tier = getTierFromPriceId(session.line_items.data[0].price.id);
         }
         
-        console.log('Checkout completed:', {
+        console.log('webhook: Checkout completed:', {
           sessionId: session.id,
           tier,
           billing,
@@ -303,14 +321,14 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         // This ensures webhook and CheckoutSuccess generate SAME token!
         // ================================================================
         const dashboardToken = generateDashboardToken(session.id);
-        console.log('Generated dashboard token:', dashboardToken.substring(0, 15) + '...');
+        console.log('webhook: Generated dashboard token:', dashboardToken.substring(0, 15) + '...');
         
         // ================================================================
         // STEP 1: SEND EMAIL FIRST (most important!)
         // ================================================================
         if (customerEmail) {
           const emailSent = await sendDashboardEmail(customerEmail, tier, dashboardToken, session.id, billing);
-          console.log('Dashboard email sent: ' + emailSent);
+          console.log('webhook: Dashboard email sent:', emailSent);
         }
         
         // ================================================================
@@ -325,31 +343,39 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
             dashboardToken,
             billing
           );
-          console.log('Customer registered in Blobs: ' + registered);
+          console.log('webhook: Customer registered in Blobs:', registered);
         }
 
         // ================================================================
         // STEP 3: Handle poll upgrades (if applicable)
         // ================================================================
         if (metadata.pollId && metadata.upgradeType === 'existing_poll') {
-          try {
-            const pollStore = getStore('vg-polls');
-            const pollData = await pollStore.get(metadata.pollId, { type: 'json' }) as Poll | null;
-            
-            if (pollData) {
-              const upgradedPoll: Poll = {
-                ...pollData,
-                originalTier: pollData.tier,
-                tier: metadata.tier,
-                tierUpgradedAt: new Date().toISOString(),
-                stripeSessionId: session.id,
-              };
+          if (!SITE_ID || !BLOB_TOKEN) {
+            console.error('webhook: Missing Blobs credentials for poll upgrade');
+          } else {
+            try {
+              const pollStore = getStore({
+                name: 'vg-polls',
+                siteID: SITE_ID,
+                token: BLOB_TOKEN
+              });
+              const pollData = await pollStore.get(metadata.pollId, { type: 'json' }) as Poll | null;
               
-              await pollStore.setJSON(metadata.pollId, upgradedPoll);
-              console.log('Poll ' + metadata.pollId + ' upgraded to ' + metadata.tier);
+              if (pollData) {
+                const upgradedPoll: Poll = {
+                  ...pollData,
+                  originalTier: pollData.tier,
+                  tier: metadata.tier,
+                  tierUpgradedAt: new Date().toISOString(),
+                  stripeSessionId: session.id,
+                };
+                
+                await pollStore.setJSON(metadata.pollId, upgradedPoll);
+                console.log(`webhook: Poll ${metadata.pollId} upgraded to ${metadata.tier}`);
+              }
+            } catch (error: any) {
+              console.error('webhook: Poll upgrade failed (non-fatal):', error.message);
             }
-          } catch (error: any) {
-            console.error('Poll upgrade failed (non-fatal):', error.message);
           }
         }
 
@@ -357,19 +383,27 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         // STEP 4: Handle Business license (if applicable)
         // ================================================================
         if (metadata.licenseType === 'business' && customerEmail) {
-          try {
-            const licenseStore = getStore('vg-licenses');
-            await licenseStore.setJSON('license_' + customerEmail, {
-              email: customerEmail,
-              type: 'business',
-              purchasedAt: new Date().toISOString(),
-              expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-              stripeCustomerId: session.customer,
-              stripeSessionId: session.id,
-            });
-            console.log('Business license created for ' + customerEmail.substring(0, 5) + '...');
-          } catch (error: any) {
-            console.error('License creation failed (non-fatal):', error.message);
+          if (!SITE_ID || !BLOB_TOKEN) {
+            console.error('webhook: Missing Blobs credentials for license creation');
+          } else {
+            try {
+              const licenseStore = getStore({
+                name: 'vg-licenses',
+                siteID: SITE_ID,
+                token: BLOB_TOKEN
+              });
+              await licenseStore.setJSON(`license_${customerEmail}`, {
+                email: customerEmail,
+                type: 'business',
+                purchasedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                stripeCustomerId: session.customer,
+                stripeSessionId: session.id,
+              });
+              console.log(`webhook: Business license created for ${customerEmail.substring(0, 5)}...`);
+            } catch (error: any) {
+              console.error('webhook: License creation failed (non-fatal):', error.message);
+            }
           }
         }
         
@@ -379,13 +413,13 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = stripeEvent.data.object as Stripe.Subscription;
-        console.log('Subscription event:', stripeEvent.type, subscription.id);
+        console.log('webhook: Subscription event:', stripeEvent.type, subscription.id);
         // Handle subscription changes if needed
         break;
       }
 
       default:
-        console.log('Unhandled event type: ' + stripeEvent.type);
+        console.log('webhook: Unhandled event type:', stripeEvent.type);
     }
 
     // Always return 200 to Stripe to acknowledge receipt
@@ -394,9 +428,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       headers,
       body: JSON.stringify({ received: true }),
     };
-
   } catch (error: any) {
-    console.error('Webhook handler error:', error.message);
+    console.error('webhook: Handler error:', error.message);
     // Still return 200 to prevent Stripe from retrying
     return {
       statusCode: 200,

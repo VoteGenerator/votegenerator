@@ -3,9 +3,15 @@
 // Creates a copy with same settings but no responses
 // Location: netlify/functions/vg-duplicate.ts
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 // Generate secure random ID
 const generateId = (length: number = 12): string => {
@@ -39,16 +45,27 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-duplicate: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { pollId, adminKey } = body;
         
-        console.log('Duplicate request received');
-        console.log('pollId:', pollId);
-        console.log('adminKey provided:', adminKey ? 'yes (length: ' + adminKey.length + ')' : 'no');
+        console.log('vg-duplicate: Request received');
+        console.log('vg-duplicate: pollId:', pollId);
+        console.log('vg-duplicate: adminKey provided:', adminKey ? 'yes (length: ' + adminKey.length + ')' : 'no');
+        console.log('vg-duplicate: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
 
         if (!pollId) {
-            console.log('Missing pollId');
+            console.log('vg-duplicate: Missing pollId');
             return {
                 statusCode: 400,
                 headers,
@@ -57,7 +74,7 @@ export const handler: Handler = async (event) => {
         }
         
         if (!adminKey) {
-            console.log('Missing adminKey');
+            console.log('vg-duplicate: Missing adminKey');
             return {
                 statusCode: 400,
                 headers,
@@ -66,12 +83,17 @@ export const handler: Handler = async (event) => {
         }
 
         // Get poll store
-        const store = getStore('polls');
-        console.log('Fetching poll from store...');
+        const store = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
+        console.log('vg-duplicate: Fetching poll from store...');
         const pollData = await store.get(pollId, { type: 'json' });
 
         if (!pollData) {
-            console.log('Poll not found:', pollId);
+            console.log('vg-duplicate: Poll not found:', pollId);
             return {
                 statusCode: 404,
                 headers,
@@ -80,15 +102,15 @@ export const handler: Handler = async (event) => {
         }
 
         const poll = pollData as any;
-        console.log('Poll found:', poll.title);
-        console.log('Poll adminKey exists:', !!poll.adminKey);
-        console.log('AdminKey comparison:', poll.adminKey === adminKey ? 'MATCH' : 'MISMATCH');
+        console.log('vg-duplicate: Poll found:', poll.title);
+        console.log('vg-duplicate: Poll adminKey exists:', !!poll.adminKey);
+        console.log('vg-duplicate: AdminKey comparison:', poll.adminKey === adminKey ? 'MATCH' : 'MISMATCH');
 
         // Verify admin key
         if (poll.adminKey !== adminKey) {
-            console.log('Admin key mismatch');
-            console.log('Expected length:', poll.adminKey?.length);
-            console.log('Received length:', adminKey?.length);
+            console.log('vg-duplicate: Admin key mismatch');
+            console.log('vg-duplicate: Expected length:', poll.adminKey?.length);
+            console.log('vg-duplicate: Received length:', adminKey?.length);
             return {
                 statusCode: 403,
                 headers,
@@ -129,7 +151,7 @@ export const handler: Handler = async (event) => {
         // Save the duplicate
         await store.setJSON(newPollId, duplicatedPoll);
 
-        console.log(`Duplicated poll ${pollId} -> ${newPollId}`);
+        console.log(`vg-duplicate: Duplicated poll ${pollId} -> ${newPollId}`);
 
         return {
             statusCode: 200,
@@ -141,9 +163,8 @@ export const handler: Handler = async (event) => {
                 message: 'Poll duplicated successfully'
             })
         };
-
     } catch (error) {
-        console.error('Duplicate error:', error);
+        console.error('vg-duplicate: Error:', error);
         return {
             statusCode: 500,
             headers,

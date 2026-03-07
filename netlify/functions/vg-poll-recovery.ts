@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'noreply@mail.votegenerator.com';
 const SITE_URL = process.env.URL || 'https://votegenerator.com';
@@ -259,6 +266,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-poll-recovery: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const body = JSON.parse(event.body || '{}');
         const { action, email, pollId, adminKey, pollData } = body;
@@ -271,7 +288,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const store = getStore({ name: 'polls', siteID: process.env.VG_SITE_ID, token: process.env.BLOB_READ_WRITE_TOKEN });
+        console.log('vg-poll-recovery: Action:', action);
+        console.log('vg-poll-recovery: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const store = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Action: Recover polls by email
         if (action === 'recover') {
@@ -440,9 +464,8 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({ error: 'Invalid action' })
         };
-
     } catch (error) {
-        console.error('Poll recovery error:', error);
+        console.error('vg-poll-recovery: Error:', error);
         return {
             statusCode: 500,
             headers,

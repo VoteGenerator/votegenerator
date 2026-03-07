@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-recover-access.ts
 // Looks up customer by email and sends recovery links via Resend
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface CustomerPoll {
     id: string;
@@ -168,6 +174,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-recover-access: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { email } = JSON.parse(event.body || '{}');
 
@@ -203,7 +219,15 @@ export const handler: Handler = async (event) => {
         }
 
         const normalizedEmail = email.toLowerCase().trim();
-        const customerStore = getStore('customers');
+
+        console.log('vg-recover-access: Looking up customer');
+        console.log('vg-recover-access: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const customerStore = getStore({
+            name: 'customers',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Look up customer by email
         let customer: CustomerRecord | null = null;
@@ -257,7 +281,7 @@ export const handler: Handler = async (event) => {
                 console.error('Resend error:', errorData);
                 // Still return success for security
             } else {
-                console.log(`Recovery email sent to ${normalizedEmail.substring(0, 3)}***`);
+                console.log(`vg-recover-access: Recovery email sent to ${normalizedEmail.substring(0, 3)}***`);
             }
         }
 
@@ -270,9 +294,8 @@ export const handler: Handler = async (event) => {
                 message: 'If an account exists with this email, recovery instructions have been sent.',
             }),
         };
-
     } catch (error) {
-        console.error('Recovery error:', error);
+        console.error('vg-recover-access: Error:', error);
         return {
             statusCode: 500,
             headers,

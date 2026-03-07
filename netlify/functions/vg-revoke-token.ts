@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-revoke-token.ts
 // Removes an access token from a poll (only master admin can revoke)
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface AccessToken {
     token: string;
@@ -48,6 +54,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-revoke-token: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { pollId, adminKey, tokenToRevoke } = JSON.parse(event.body || '{}');
 
@@ -60,7 +76,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const pollStore = getStore('polls');
+        console.log('vg-revoke-token: Revoking token for poll:', pollId);
+        console.log('vg-revoke-token: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Fetch the poll
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
@@ -101,6 +124,8 @@ export const handler: Handler = async (event) => {
         pollData.accessTokens = existingTokens.filter(t => t.token !== tokenToRevoke);
         await pollStore.setJSON(pollId, pollData);
 
+        console.log('vg-revoke-token: Token revoked successfully');
+
         return {
             statusCode: 200,
             headers,
@@ -115,9 +140,8 @@ export const handler: Handler = async (event) => {
                 remainingTokens: pollData.accessTokens.length,
             }),
         };
-
     } catch (error) {
-        console.error('Revoke token error:', error);
+        console.error('vg-revoke-token: Error:', error);
         return {
             statusCode: 500,
             headers,

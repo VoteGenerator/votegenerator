@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Simple in-memory rate limiting (resets on function cold start)
 // In production, use Redis or similar for persistent rate limiting
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -76,6 +83,16 @@ export const handler: Handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
+  // Check Blobs credentials FIRST
+  if (!SITE_ID || !BLOB_TOKEN) {
+    console.error('vg-check-slug: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: 'Server configuration error', available: false }) 
+    };
+  }
+
   // Rate limiting
   const clientIP = event.headers['x-forwarded-for']?.split(',')[0] || 
                    event.headers['client-ip'] || 
@@ -127,11 +144,14 @@ export const handler: Handler = async (event) => {
 
     const normalizedSlug = slug.trim().toLowerCase();
 
+    console.log('vg-check-slug: Checking slug:', normalizedSlug);
+    console.log('vg-check-slug: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
     // Check if slug exists in our index
     const slugStore = getStore({
       name: 'poll-slugs',
-      siteID: process.env.VG_SITE_ID || '',
-      token: process.env.NETLIFY_AUTH_TOKEN || ''
+      siteID: SITE_ID,
+      token: BLOB_TOKEN
     });
 
     const existingPollId = await slugStore.get(normalizedSlug, { type: 'text' });
@@ -169,7 +189,6 @@ export const handler: Handler = async (event) => {
         slug: normalizedSlug
       }),
     };
-
   } catch (error) {
     console.error('Check slug error:', error);
     return {

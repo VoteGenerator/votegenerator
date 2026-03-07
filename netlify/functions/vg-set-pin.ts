@@ -3,12 +3,16 @@
 // Location: netlify/functions/vg-set-pin.ts
 // Handles PIN operations for Unlimited users
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 import crypto from 'crypto';
 
-// Your database imports
-// import { db } from '../lib/database';
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -25,6 +29,16 @@ export const handler: Handler = async (event) => {
         return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-pin-set: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { pollId, adminKey, pin, remove, verify } = JSON.parse(event.body || '{}');
 
@@ -36,8 +50,22 @@ export const handler: Handler = async (event) => {
             };
         }
 
+        console.log('vg-pin-set: Operation for poll:', pollId);
+        console.log('vg-pin-set: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
         // Verify this is the master admin
-        const poll = await getPoll(pollId);
+        let poll: any = null;
+        try {
+            poll = await pollStore.get(pollId, { type: 'json' });
+        } catch (e) {
+            // Poll not found
+        }
 
         if (!poll) {
             return {
@@ -56,17 +84,22 @@ export const handler: Handler = async (event) => {
         }
 
         // Check if user has Unlimited tier
-        if (poll.tier !== 'unlimited') {
+        if (poll.tier !== 'unlimited' && poll.tier !== 'business') {
             return {
                 statusCode: 403,
                 headers,
-                body: JSON.stringify({ error: 'PIN protection requires Unlimited plan' })
+                body: JSON.stringify({ error: 'PIN protection requires Unlimited/Business plan' })
             };
+        }
+
+        // Ensure settings object exists
+        if (!poll.settings) {
+            poll.settings = {};
         }
 
         // VERIFY PIN (for accessing protected admin)
         if (verify) {
-            if (!poll.settings?.adminPinHash) {
+            if (!poll.settings.adminPinHash) {
                 return {
                     statusCode: 200,
                     headers,
@@ -89,10 +122,11 @@ export const handler: Handler = async (event) => {
 
         // REMOVE PIN
         if (remove) {
-            await updatePollSettings(pollId, {
-                adminPinHash: null,
-                adminPinSalt: null
-            });
+            poll.settings.adminPinHash = null;
+            poll.settings.adminPinSalt = null;
+            await pollStore.setJSON(pollId, poll);
+
+            console.log('vg-pin-set: PIN removed for poll:', pollId);
 
             return {
                 statusCode: 200,
@@ -114,19 +148,19 @@ export const handler: Handler = async (event) => {
         const salt = crypto.randomBytes(16).toString('hex');
         const pinHash = hashPin(pin, salt);
 
-        await updatePollSettings(pollId, {
-            adminPinHash: pinHash,
-            adminPinSalt: salt
-        });
+        poll.settings.adminPinHash = pinHash;
+        poll.settings.adminPinSalt = salt;
+        await pollStore.setJSON(pollId, poll);
+
+        console.log('vg-pin-set: PIN set successfully for poll:', pollId);
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({ success: true, message: 'PIN set successfully' })
         };
-
     } catch (error) {
-        console.error('PIN operation error:', error);
+        console.error('vg-pin-set: Error:', error);
         return {
             statusCode: 500,
             headers,
@@ -138,25 +172,9 @@ export const handler: Handler = async (event) => {
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
 function hashPin(pin: string, salt: string): string {
     return crypto
         .createHmac('sha256', salt)
         .update(pin)
         .digest('hex');
-}
-
-// Replace with your actual database implementation
-async function getPoll(pollId: string): Promise<any> {
-    // Example:
-    // return await db.polls.findOne({ id: pollId });
-    return null;
-}
-
-async function updatePollSettings(pollId: string, settings: Record<string, any>): Promise<void> {
-    // Example:
-    // await db.polls.updateOne(
-    //     { id: pollId },
-    //     { $set: { settings: { ...existingSettings, ...settings } } }
-    // );
 }

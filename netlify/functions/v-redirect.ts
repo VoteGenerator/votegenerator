@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 interface CustomSlug {
     slug: string;
     pollId: string;
@@ -20,8 +27,25 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('v-redirect: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return {
+            statusCode: 302,
+            headers: { Location: '/?error=server-error' }
+        };
+    }
+
     try {
-        const store = getStore('custom-slugs');
+        console.log('v-redirect: Looking up slug:', slug);
+        console.log('v-redirect: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const store = getStore({
+            name: 'custom-slugs',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
+
         const data = await store.get(slug, { type: 'json' }) as CustomSlug | null;
 
         if (!data) {
@@ -41,6 +65,8 @@ export const handler: Handler = async (event) => {
             ? `/#id=${data.pollId}&admin=${data.adminKey}`
             : `/#id=${data.pollId}`;
 
+        console.log('v-redirect: Redirecting to poll:', data.pollId);
+
         return {
             statusCode: 302,
             headers: { 
@@ -49,7 +75,7 @@ export const handler: Handler = async (event) => {
             }
         };
     } catch (error) {
-        console.error('Short link redirect error:', error);
+        console.error('v-redirect: Short link redirect error:', error);
         return {
             statusCode: 302,
             headers: { Location: '/' }

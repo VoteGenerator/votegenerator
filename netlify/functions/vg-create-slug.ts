@@ -1,6 +1,13 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
+
 // Validate slug format
 function isValidSlug(slug: string): { valid: boolean; error?: string } {
   if (!slug || typeof slug !== 'string') {
@@ -62,6 +69,16 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  // Check Blobs credentials FIRST
+  if (!SITE_ID || !BLOB_TOKEN) {
+    console.error('vg-create-slug: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: 'Server configuration error' }) 
+    };
+  }
+
   try {
     const { slug, pollId, adminKey } = JSON.parse(event.body || '{}');
 
@@ -86,9 +103,21 @@ export const handler: Handler = async (event) => {
 
     const normalizedSlug = slug.trim().toLowerCase();
 
+    console.log('vg-create-slug: Creating slug:', normalizedSlug, 'for poll:', pollId);
+    console.log('vg-create-slug: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
     // Get stores
-    const pollStore = getStore('polls');
-    const slugStore = getStore('slugs');
+    const pollStore = getStore({
+      name: 'polls',
+      siteID: SITE_ID,
+      token: BLOB_TOKEN
+    });
+
+    const slugStore = getStore({
+      name: 'slugs',
+      siteID: SITE_ID,
+      token: BLOB_TOKEN
+    });
 
     // Verify poll exists and admin key matches
     const pollData = await pollStore.get(pollId, { type: 'json' }) as any;
@@ -138,6 +167,8 @@ export const handler: Handler = async (event) => {
     pollData.customSlug = normalizedSlug;
     await pollStore.set(pollId, JSON.stringify(pollData));
 
+    console.log('vg-create-slug: Slug created successfully:', normalizedSlug);
+
     return {
       statusCode: 200,
       headers,
@@ -147,9 +178,8 @@ export const handler: Handler = async (event) => {
         url: `/p/${normalizedSlug}`
       })
     };
-
   } catch (error) {
-    console.error('Error creating slug:', error);
+    console.error('vg-create-slug: Error:', error);
     return {
       statusCode: 500,
       headers,

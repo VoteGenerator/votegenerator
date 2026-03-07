@@ -3,9 +3,15 @@
 // Location: netlify/functions/vg-link-poll.ts
 // Called after poll creation to associate poll with user's account
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface CustomerRecord {
     email: string;
@@ -47,6 +53,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-link-poll: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { 
             pollId, 
@@ -65,7 +81,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const customerStore = getStore('customers');
+        console.log('vg-link-poll: Linking poll:', pollId);
+        console.log('vg-link-poll: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const customerStore = getStore({
+            name: 'customers',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Find customer by dashboard token
         const customerList = await customerStore.list();
@@ -121,6 +144,8 @@ export const handler: Handler = async (event) => {
 
         await customerStore.setJSON(customerKey, customer);
 
+        console.log('vg-link-poll: Poll linked successfully:', pollId);
+
         return {
             statusCode: 200,
             headers,
@@ -134,9 +159,8 @@ export const handler: Handler = async (event) => {
                 },
             }),
         };
-
     } catch (error) {
-        console.error('Link poll error:', error);
+        console.error('vg-link-poll: Error:', error);
         return {
             statusCode: 500,
             headers,

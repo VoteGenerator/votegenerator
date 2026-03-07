@@ -3,10 +3,16 @@
 // Location: netlify/functions/vg-create-token.ts
 // Creates admin or viewer tokens for Unlimited users
 // ============================================================================
-
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import crypto from 'crypto';
+
+// ============================================================================
+// BLOBS CREDENTIALS - Required for all getStore calls
+// Must match vg-create.ts exactly!
+// ============================================================================
+const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
+const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
 interface AccessToken {
     token: string;
@@ -58,6 +64,16 @@ export const handler: Handler = async (event) => {
         };
     }
 
+    // Check Blobs credentials FIRST
+    if (!SITE_ID || !BLOB_TOKEN) {
+        console.error('vg-create-token: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ error: 'Server configuration error' }) 
+        };
+    }
+
     try {
         const { 
             pollId, 
@@ -92,7 +108,14 @@ export const handler: Handler = async (event) => {
             };
         }
 
-        const pollStore = getStore('polls');
+        console.log('vg-create-token: Creating token for poll:', pollId);
+        console.log('vg-create-token: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+
+        const pollStore = getStore({
+            name: 'polls',
+            siteID: SITE_ID,
+            token: BLOB_TOKEN
+        });
 
         // Fetch the poll
         const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
@@ -164,6 +187,8 @@ export const handler: Handler = async (event) => {
         const baseUrl = process.env.URL || 'https://votegenerator.com';
         const accessUrl = `${baseUrl}/#id=${pollId}&access=${newToken.token}`;
 
+        console.log('vg-create-token: Token created successfully for poll:', pollId);
+
         return {
             statusCode: 200,
             headers,
@@ -178,9 +203,8 @@ export const handler: Handler = async (event) => {
                 maxTokens: MAX_TOKENS_PER_POLL,
             }),
         };
-
     } catch (error) {
-        console.error('Create token error:', error);
+        console.error('vg-create-token: Error:', error);
         return {
             statusCode: 500,
             headers,

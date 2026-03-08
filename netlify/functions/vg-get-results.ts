@@ -173,14 +173,193 @@ export const handler: Handler = async (event) => {
             }
         }
 
+        // Build simpleCounts object for VoteGeneratorResults compatibility
+        const simpleCounts: Record<string, number> = {};
+        optionResults.forEach((opt: any) => {
+            simpleCounts[opt.id] = opt.votes || 0;
+        });
+
+        // Build maybeCounts for meeting polls
+        const maybeCounts: Record<string, number> = {};
+        if (poll.pollType === 'meeting') {
+            votes.forEach((v: any) => {
+                if (v.maybeOptionIds) {
+                    v.maybeOptionIds.forEach((optId: string) => {
+                        maybeCounts[optId] = (maybeCounts[optId] || 0) + 1;
+                    });
+                }
+            });
+        }
+
+        // Build pairwiseScores for pairwise polls
+        let pairwiseScores: Record<string, { wins: number; losses: number; score: number }> | null = null;
+        if (poll.pollType === 'pairwise') {
+            pairwiseScores = {};
+            const optionIds = poll.options?.map((o: any) => o.id) || [];
+            
+            // Initialize all options
+            optionIds.forEach((id: string) => {
+                pairwiseScores![id] = { wins: 0, losses: 0, score: 0 };
+            });
+            
+            // Count wins from pairwise votes
+            votes.forEach((v: any) => {
+                if (v.pairwiseChoices) {
+                    Object.entries(v.pairwiseChoices).forEach(([matchup, winnerId]) => {
+                        if (winnerId && pairwiseScores![winnerId as string]) {
+                            pairwiseScores![winnerId as string].wins++;
+                        }
+                        // Count loss for the other option
+                        const [opt1, opt2] = matchup.split('_vs_');
+                        const loserId = winnerId === opt1 ? opt2 : opt1;
+                        if (loserId && pairwiseScores![loserId]) {
+                            pairwiseScores![loserId].losses++;
+                        }
+                    });
+                }
+            });
+            
+            // Calculate scores (win percentage)
+            Object.keys(pairwiseScores).forEach(id => {
+                const total = pairwiseScores![id].wins + pairwiseScores![id].losses;
+                pairwiseScores![id].score = total > 0 ? (pairwiseScores![id].wins / total) * 100 : 0;
+            });
+        }
+
+        // Build matrixAverages for matrix polls
+        let matrixAverages: Record<string, { x: number; y: number }> | null = null;
+        if (poll.pollType === 'matrix') {
+            matrixAverages = {};
+            const matrixVotes: Record<string, { xSum: number; ySum: number; count: number }> = {};
+            
+            votes.forEach((v: any) => {
+                if (v.matrixVotes) {
+                    Object.entries(v.matrixVotes).forEach(([optId, coords]: [string, any]) => {
+                        if (!matrixVotes[optId]) {
+                            matrixVotes[optId] = { xSum: 0, ySum: 0, count: 0 };
+                        }
+                        matrixVotes[optId].xSum += coords.x || 0;
+                        matrixVotes[optId].ySum += coords.y || 0;
+                        matrixVotes[optId].count++;
+                    });
+                }
+            });
+            
+            Object.entries(matrixVotes).forEach(([optId, data]) => {
+                matrixAverages![optId] = {
+                    x: data.count > 0 ? data.xSum / data.count : 50,
+                    y: data.count > 0 ? data.ySum / data.count : 50,
+                };
+            });
+        }
+
+        // Build budgetStats for budget polls
+        let budgetStats: Record<string, { totalValue: number; purchaseCount: number }> | null = null;
+        if (poll.pollType === 'budget') {
+            budgetStats = {};
+            
+            votes.forEach((v: any) => {
+                if (v.budgetAllocations) {
+                    Object.entries(v.budgetAllocations).forEach(([optId, allocation]: [string, any]) => {
+                        if (!budgetStats![optId]) {
+                            budgetStats![optId] = { totalValue: 0, purchaseCount: 0 };
+                        }
+                        budgetStats![optId].totalValue += allocation.value || allocation.amount || 0;
+                        budgetStats![optId].purchaseCount += allocation.quantity || 1;
+                    });
+                }
+            });
+        }
+
+        // Build rounds for ranked choice voting (instant runoff)
+        let rounds: any[] = [];
+        let winnerId: string | null = null;
+        
+        if (poll.pollType === 'ranked' && votes.length > 0) {
+            // Simulate instant runoff voting
+            const optionIds = poll.options?.map((o: any) => o.id) || [];
+            let remainingOptions = [...optionIds];
+            let ballots = votes.map((v: any) => [...(v.rankedOptionIds || v.selectedOptionIds || [])]);
+            
+            while (remainingOptions.length > 1) {
+                // Count first-choice votes
+                const firstChoiceCounts: Record<string, number> = {};
+                remainingOptions.forEach(id => firstChoiceCounts[id] = 0);
+                
+                ballots.forEach(ballot => {
+                    const firstChoice = ballot.find((id: string) => remainingOptions.includes(id));
+                    if (firstChoice) {
+                        firstChoiceCounts[firstChoice]++;
+                    }
+                });
+                
+                const totalVotesInRound = Object.values(firstChoiceCounts).reduce((a, b) => a + b, 0);
+                
+                // Check for majority winner
+                const sortedOptions = Object.entries(firstChoiceCounts)
+                    .sort(([, a], [, b]) => b - a);
+                
+                rounds.push({
+                    roundNumber: rounds.length + 1,
+                    counts: { ...firstChoiceCounts },
+                    eliminated: null,
+                    total: totalVotesInRound,
+                });
+                
+                if (sortedOptions[0] && sortedOptions[0][1] > totalVotesInRound / 2) {
+                    winnerId = sortedOptions[0][0];
+                    break;
+                }
+                
+                // Eliminate lowest
+                if (sortedOptions.length > 0) {
+                    const lowestId = sortedOptions[sortedOptions.length - 1][0];
+                    rounds[rounds.length - 1].eliminated = lowestId;
+                    remainingOptions = remainingOptions.filter(id => id !== lowestId);
+                }
+                
+                // Safety: prevent infinite loop
+                if (rounds.length > 20) break;
+            }
+            
+            // If no majority winner found, winner is last remaining
+            if (!winnerId && remainingOptions.length === 1) {
+                winnerId = remainingOptions[0];
+            }
+        } else {
+            // For non-ranked polls, winner is option with most votes
+            const maxVotes = Math.max(...Object.values(simpleCounts));
+            if (maxVotes > 0) {
+                winnerId = Object.entries(simpleCounts).find(([, count]) => count === maxVotes)?.[0] || null;
+            }
+        }
+
+        // Extract comments if any
+        const comments = votes
+            .filter((v: any) => v.comment && v.comment.trim())
+            .map((v: any) => ({
+                text: v.comment,
+                timestamp: v.timestamp || v.votedAt,
+                voterName: v.voterName,
+            }));
+
         const response: any = {
             pollId: poll.id,
             title: poll.title || poll.question,
             pollType: poll.pollType,
+            totalVotes: voteCount, // VoteGeneratorResults expects this name
             voteCount,
             responseCount: voteCount,
+            winnerId, // Winner of the poll
+            rounds: rounds.length > 0 ? rounds : [], // For ranked choice voting
             options: optionResults,
-            ratingResults, // Include rating-specific results
+            simpleCounts, // VoteGeneratorResults uses this for vote counts per option
+            maybeCounts: Object.keys(maybeCounts).length > 0 ? maybeCounts : null,
+            pairwiseScores,
+            matrixAverages,
+            budgetStats,
+            ratingStats: ratingResults, // Include rating-specific results (VoteGeneratorResults expects 'ratingStats')
+            comments: comments.length > 0 ? comments : null,
             isSurvey: poll.isSurvey || poll.pollType === 'survey',
             sections: poll.sections,
             surveySettings: poll.surveySettings,

@@ -40,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
     return (
         <footer className="bg-slate-900 text-slate-300 py-12">
             <div className="max-w-6xl mx-auto px-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
                     {/* Product */}
                     <div>
                         <h3 className="font-bold text-white mb-4">Product</h3>
@@ -102,10 +102,21 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                     <div>
                         <h3 className="font-bold text-white mb-4">Resources</h3>
                         <ul className="space-y-2 text-sm">
+                            <li><a href="/blog" className="hover:text-white transition">Blog</a></li>
                             <li><a href="/help" className="hover:text-white transition">Help Center</a></li>
                             <li><a href="/recover" className="hover:text-white transition">Recover Poll Access</a></li>
                             <li><a href="/#manage-subscription" className="hover:text-white transition">Manage Subscription</a></li>
                             <li><a href="/contact" className="hover:text-white transition">Contact Us</a></li>
+                        </ul>
+                    </div>
+                    
+                    {/* For Creators */}
+                    <div>
+                        <h3 className="font-bold text-white mb-4">For Creators</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="/youtube-polls" className="hover:text-white transition">YouTube Creators</a></li>
+                            <li><a href="/twitch-polls" className="hover:text-white transition">Twitch Streamers</a></li>
+                            <li><a href="/reddit-polls" className="hover:text-white transition">Reddit Communities</a></li>
                         </ul>
                     </div>
                     

@@ -3,10 +3,10 @@
 // Conversion-optimized layout showing free users what they're missing
 // Location: src/components/PollDashboard.tsx
 // ============================================================================
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    BarChart3, Share2, Settings, Lock, ChevronDown, ChevronRight,
+    BarChart3, Share2, Settings, Lock, ChevronDown, ChevronRight, ChevronLeft,
     Copy, Check, Globe, MessageCircle, Smartphone, Mail, QrCode, Palette,
     Code, Image as ImageIcon, Link2, Bell, FileSpreadsheet, Download,
     Clock, TrendingUp, LayoutDashboard, Key, Users, Zap,
@@ -14,7 +14,7 @@ import {
     ShieldAlert, X, Sparkles, AlertTriangle, FileDown, MapPin,
     PieChart, Calendar, Filter, MessageSquare, Crown, Star,
     MoreHorizontal, ExternalLink, Trash2, Play, Pause, Radio, XCircle, CopyPlus,
-    HelpCircle, Info, PlusCircle, Menu
+    HelpCircle, Info, PlusCircle, Menu, Send, Target, Timer, CalendarClock, FileText
 } from 'lucide-react';
 import VoteGeneratorResults from './VoteGeneratorResults';
 import SurveyResults from './SurveyResults';
@@ -52,6 +52,320 @@ interface PollDashboardProps {
 }
 
 type TabType = 'results' | 'share' | 'notify' | 'settings' | 'downloads' | 'analytics';
+
+// Check if native share is available (mobile devices)
+const canUseNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+
+// Check if haptic feedback is available
+const canVibrate = typeof navigator !== 'undefined' && !!navigator.vibrate;
+
+// ============================================================================
+// CopyToast Component - Shows "Copied!" notification
+// ============================================================================
+const CopyToast: React.FC<{ show: boolean; message?: string }> = ({ show, message = 'Copied to clipboard!' }) => (
+    <AnimatePresence>
+        {show && (
+            <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 bg-slate-900 text-white rounded-xl shadow-2xl flex items-center gap-2"
+            >
+                <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <Check size={14} />
+                </div>
+                <span className="font-medium">{message}</span>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
+
+// ============================================================================
+// ResponseGoal Component - Visual progress toward target
+// ============================================================================
+const ResponseGoal: React.FC<{
+    current: number;
+    goal: number;
+    onSetGoal: (goal: number) => void;
+    editable?: boolean;
+}> = ({ current, goal, onSetGoal, editable = true }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [inputValue, setInputValue] = useState(goal.toString());
+    const progress = Math.min((current / goal) * 100, 100);
+    const circumference = 2 * Math.PI * 40;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
+    
+    const handleSave = () => {
+        const newGoal = parseInt(inputValue, 10);
+        if (newGoal > 0) onSetGoal(newGoal);
+        setIsEditing(false);
+    };
+    
+    return (
+        <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 flex-shrink-0">
+                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                    <motion.circle cx="50" cy="50" r="40" fill="none"
+                        stroke={progress >= 100 ? '#10b981' : progress >= 75 ? '#f59e0b' : '#6366f1'}
+                        strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference}
+                        initial={{ strokeDashoffset: circumference }}
+                        animate={{ strokeDashoffset }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                    />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className={`text-lg font-bold ${progress >= 100 ? 'text-emerald-600' : 'text-slate-700'}`}>
+                        {Math.round(progress)}%
+                    </span>
+                </div>
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <Target size={16} className="text-indigo-500" />
+                    {isEditing ? (
+                        <div className="flex items-center gap-2">
+                            <input type="number" value={inputValue} onChange={(e) => setInputValue(e.target.value)}
+                                className="w-20 px-2 py-1 text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+                            <button onClick={handleSave} className="text-emerald-600 hover:text-emerald-700"><Check size={16} /></button>
+                            <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-600"><X size={16} /></button>
+                        </div>
+                    ) : (
+                        <span className="text-sm font-semibold text-slate-700">
+                            Goal: {goal.toLocaleString()} responses
+                            {editable && <button onClick={() => setIsEditing(true)} className="ml-2 text-indigo-500 hover:text-indigo-600 text-xs">Edit</button>}
+                        </span>
+                    )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                    {current >= goal ? <span className="text-emerald-600 font-medium">🎉 Goal reached!</span> : <span>{(goal - current).toLocaleString()} more to go</span>}
+                </p>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// ResponseHealth Component - Velocity trend indicator
+// ============================================================================
+const ResponseHealth: React.FC<{ velocityToday: number; velocityYesterday: number; velocityWeek: number }> = ({ velocityToday, velocityYesterday, velocityWeek }) => {
+    const trend = velocityToday > velocityYesterday ? 'up' : velocityToday < velocityYesterday ? 'down' : 'stable';
+    const avgDaily = velocityWeek / 7;
+    let status: 'healthy' | 'warning' | 'critical';
+    let color: string;
+    let label: string;
+    
+    if (velocityToday >= avgDaily * 0.8) { status = 'healthy'; color = 'text-emerald-500 bg-emerald-50'; label = 'Healthy'; }
+    else if (velocityToday >= avgDaily * 0.4) { status = 'warning'; color = 'text-amber-500 bg-amber-50'; label = 'Slowing'; }
+    else { status = 'critical'; color = 'text-red-500 bg-red-50'; label = 'Low activity'; }
+    
+    return (
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${color}`}>
+            <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'healthy' ? 'bg-emerald-400' : status === 'warning' ? 'bg-amber-400' : 'bg-red-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${status === 'healthy' ? 'bg-emerald-500' : status === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}></span>
+            </span>
+            <span className="text-xs font-semibold">{label}</span>
+            {trend !== 'stable' && <span className={`text-xs ${trend === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>{trend === 'up' ? '↑' : '↓'}</span>}
+        </div>
+    );
+};
+
+// ============================================================================
+// Sparkline Component - Mini trend chart
+// ============================================================================
+const Sparkline: React.FC<{ data: number[]; color?: string; height?: number }> = ({ data, color = '#6366f1', height = 24 }) => {
+    if (data.length < 2) return null;
+    const max = Math.max(...data, 1);
+    const min = Math.min(...data, 0);
+    const range = max - min || 1;
+    const width = 60;
+    const padding = 2;
+    const points = data.map((value, index) => {
+        const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return `${x},${y}`;
+    }).join(' ');
+    return (
+        <svg width={width} height={height} className="inline-block">
+            <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+};
+
+// ============================================================================
+// TimeToGoal Component - Estimates when goal will be reached
+// ============================================================================
+const TimeToGoal: React.FC<{ current: number; goal: number; velocity: number }> = ({ current, goal, velocity }) => {
+    if (current >= goal) return <span className="text-emerald-600 text-xs font-medium">✓ Goal reached!</span>;
+    if (velocity <= 0) return <span className="text-slate-400 text-xs">Need more data</span>;
+    const remaining = goal - current;
+    const daysToGoal = Math.ceil(remaining / velocity);
+    if (daysToGoal > 365) return <span className="text-slate-400 text-xs">Over a year at current pace</span>;
+    if (daysToGoal > 30) { const months = Math.round(daysToGoal / 30); return <span className="text-amber-600 text-xs">~{months} month{months > 1 ? 's' : ''} to goal</span>; }
+    if (daysToGoal > 1) return <span className="text-indigo-600 text-xs font-medium">~{daysToGoal} days to goal</span>;
+    return <span className="text-emerald-600 text-xs font-medium">Goal today! 🎯</span>;
+};
+
+// ============================================================================
+// PeakHourHint Component - Shows best time to share
+// ============================================================================
+const PeakHourHint: React.FC<{ votes: any[] }> = ({ votes }) => {
+    const peakHour = useMemo(() => {
+        if (votes.length < 10) return null;
+        const hourCounts: Record<number, number> = {};
+        votes.forEach((v: any) => {
+            const hour = new Date(v.timestamp || v.votedAt || v.submittedAt).getHours();
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        });
+        let maxHour = 0, maxCount = 0;
+        Object.entries(hourCounts).forEach(([hour, count]) => { if (count > maxCount) { maxCount = count; maxHour = parseInt(hour, 10); } });
+        return maxHour;
+    }, [votes]);
+    if (peakHour === null) return null;
+    const formatHour = (hour: number) => { const ampm = hour >= 12 ? 'PM' : 'AM'; const h = hour % 12 || 12; return `${h}${ampm}`; };
+    return (
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <Clock size={14} className="text-amber-600" />
+            <span className="text-xs text-amber-800"><strong>Best time to share:</strong> {formatHour(peakHour)} - {formatHour((peakHour + 2) % 24)}</span>
+        </div>
+    );
+};
+
+// ============================================================================
+// SkeletonLoader Component - Loading placeholder
+// ============================================================================
+const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <div className={`animate-pulse bg-slate-200 rounded ${className}`} />
+);
+const SkeletonCard: React.FC = () => (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+        <div className="flex items-center gap-3"><SkeletonLoader className="w-10 h-10 rounded-xl" /><div className="flex-1 space-y-2"><SkeletonLoader className="h-4 w-1/3" /><SkeletonLoader className="h-3 w-1/2" /></div></div>
+        <SkeletonLoader className="h-32 w-full rounded-xl" />
+        <div className="flex gap-3"><SkeletonLoader className="h-10 flex-1 rounded-xl" /><SkeletonLoader className="h-10 flex-1 rounded-xl" /></div>
+    </div>
+);
+
+// ============================================================================
+// AutoRefreshIndicator Component - Shows countdown to next refresh
+// ============================================================================
+const AutoRefreshIndicator: React.FC<{ secondsLeft: number; isRefreshing: boolean; onManualRefresh: () => void }> = ({ secondsLeft, isRefreshing, onManualRefresh }) => (
+    <button onClick={onManualRefresh} disabled={isRefreshing}
+        className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-full text-xs font-medium text-slate-600 transition-colors"
+        aria-label={isRefreshing ? 'Refreshing...' : `Auto-refresh in ${secondsLeft} seconds`}>
+        {isRefreshing ? (<><Loader2 size={12} className="animate-spin" /><span>Refreshing...</span></>) : (
+            <><div className="relative w-4 h-4"><RefreshCw size={14} className="text-slate-400" />
+            <motion.div className="absolute inset-0 border-2 border-indigo-500 rounded-full" style={{ borderTopColor: 'transparent', borderRightColor: 'transparent' }}
+                animate={{ rotate: 360 }} transition={{ duration: secondsLeft, ease: 'linear', repeat: Infinity }} /></div>
+            <span>Refresh in {secondsLeft}s</span></>
+        )}
+    </button>
+);
+
+// ============================================================================
+// ScheduleCloseDropdown Component - Quick close scheduling
+// ============================================================================
+const ScheduleCloseDropdown: React.FC<{ pollId: string; adminKey: string; currentDeadline?: string; onScheduled: () => void }> = ({ pollId, adminKey, currentDeadline, onScheduled }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isScheduling, setIsScheduling] = useState(false);
+    const scheduleOptions = [{ label: 'In 1 hour', hours: 1 }, { label: 'In 6 hours', hours: 6 }, { label: 'In 24 hours', hours: 24 }, { label: 'In 3 days', hours: 72 }, { label: 'In 1 week', hours: 168 }];
+    
+    const handleSchedule = async (hours: number) => {
+        setIsScheduling(true);
+        try {
+            const deadline = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+            const response = await fetch('/.netlify/functions/vg-update-settings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pollId, adminKey, settings: { deadline } })
+            });
+            if (response.ok) { onScheduled(); setIsOpen(false); }
+        } catch (err) { console.error('Failed to schedule close:', err); }
+        setIsScheduling(false);
+    };
+    
+    const handleClearDeadline = async () => {
+        setIsScheduling(true);
+        try {
+            const response = await fetch('/.netlify/functions/vg-update-settings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pollId, adminKey, settings: { deadline: null } })
+            });
+            if (response.ok) { onScheduled(); setIsOpen(false); }
+        } catch (err) { console.error('Failed to clear deadline:', err); }
+        setIsScheduling(false);
+    };
+    
+    return (
+        <div className="relative">
+            <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium text-white transition-colors">
+                <CalendarClock size={16} /><span className="hidden sm:inline">Schedule Close</span>
+                <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (<>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                    <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50">
+                        <div className="py-1">
+                            {scheduleOptions.map((opt) => (
+                                <button key={opt.hours} onClick={() => handleSchedule(opt.hours)} disabled={isScheduling}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2">
+                                    <Timer size={14} className="text-slate-400" />{opt.label}
+                                </button>
+                            ))}
+                            {currentDeadline && (<>
+                                <div className="border-t border-slate-100 my-1" />
+                                <button onClick={handleClearDeadline} disabled={isScheduling}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 flex items-center gap-2">
+                                    <X size={14} />Remove deadline
+                                </button>
+                            </>)}
+                        </div>
+                    </motion.div>
+                </>)}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// ============================================================================
+// MobileShareSheet Component - Bottom sheet for mobile sharing
+// ============================================================================
+const MobileShareSheet: React.FC<{
+    isOpen: boolean; onClose: () => void; shareUrl: string; pollTitle: string;
+    onCopy: () => void; onWhatsApp: () => void; onSms: () => void; onEmail: () => void; onQr: () => void; onNativeShare: () => void; canNativeShare: boolean;
+}> = ({ isOpen, onClose, shareUrl, pollTitle, onCopy, onWhatsApp, onSms, onEmail, onQr, onNativeShare, canNativeShare }) => (
+    <AnimatePresence>
+        {isOpen && (<>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-auto">
+                <div className="flex justify-center py-3"><div className="w-10 h-1 bg-slate-300 rounded-full" /></div>
+                <div className="px-6 pb-8">
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">Send Poll Link</h3>
+                    <div className="p-3 bg-slate-50 rounded-xl mb-4 flex items-center gap-2">
+                        <Globe size={16} className="text-slate-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-600 truncate flex-1">{shareUrl}</span>
+                        <button onClick={onCopy} className="text-indigo-600 font-medium text-sm">Copy</button>
+                    </div>
+                    {canNativeShare && (
+                        <button onClick={onNativeShare} className="w-full mb-4 flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold">
+                            <Share2 size={20} />More Options...
+                        </button>
+                    )}
+                    <div className="grid grid-cols-4 gap-4">
+                        <button onClick={onWhatsApp} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center"><MessageCircle size={24} className="text-green-600" /></div><span className="text-xs text-slate-600">WhatsApp</span></button>
+                        <button onClick={onSms} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center"><Smartphone size={24} className="text-blue-600" /></div><span className="text-xs text-slate-600">Text</span></button>
+                        <button onClick={onEmail} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center"><Mail size={24} className="text-slate-600" /></div><span className="text-xs text-slate-600">Email</span></button>
+                        <button onClick={onQr} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center"><QrCode size={24} className="text-white" /></div><span className="text-xs text-slate-600">QR Code</span></button>
+                    </div>
+                    <button onClick={onClose} className="w-full mt-6 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                </div>
+            </motion.div>
+        </>)}
+    </AnimatePresence>
+);
 
 // Tab color configurations
 const tabColors: Record<TabType, { active: string; hover: string; icon: string }> = {
@@ -282,6 +596,27 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Keyboard shortcuts help modal
     const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
     
+    // NEW: Copy toast state
+    const [showCopyToast, setShowCopyToast] = useState(false);
+    const [copyToastMessage, setCopyToastMessage] = useState('Copied to clipboard!');
+    
+    // NEW: Mobile share sheet state
+    const [showMobileShareSheet, setShowMobileShareSheet] = useState(false);
+    
+    // NEW: Response Goal state (saved to localStorage)
+    const [responseGoal, setResponseGoal] = useState<number>(() => {
+        const saved = localStorage.getItem(`poll_goal_${poll.id}`);
+        return saved ? parseInt(saved, 10) : 100;
+    });
+    
+    // NEW: Auto-refresh countdown
+    const [autoRefreshSeconds, setAutoRefreshSeconds] = useState(30);
+    const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
+    
+    // NEW: Milestone celebrations
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationMilestone, setCelebrationMilestone] = useState<number | null>(null);
+    
     // Local state for settings toggles (for immediate UI feedback)
     const [localPublicResults, setLocalPublicResults] = useState(poll.settings?.publicResults || false);
     const [localShowShareButton, setLocalShowShareButton] = useState(poll.settings?.showShareButton || false);
@@ -367,11 +702,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         return localStorage.getItem('vg_subscription_tier') || localStorage.getItem('vg_purchased_tier') || 'free';
     }, []);
     
-    // Get subscription expiration for PremiumNav
-    const subscriptionExpiresAt = useMemo(() => {
-        return localStorage.getItem('vg_tier_expires') || localStorage.getItem('vg_expires_at') || undefined;
-    }, []);
-    
     const isPro = tier === 'pro' || tier === 'business';
     const isBusiness = tier === 'business';
     const isFree = tier === 'free';
@@ -380,10 +710,47 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const adminUrl = `${window.location.origin}/#id=${poll.id}&admin=${adminKey}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&bgcolor=ffffff`;
     
-    const voteCount = results.totalVotes || 0;
+    const voteCount = results?.totalVotes ?? 0;
     const maxVotes = isFree ? 100 : (tier === 'pro' ? 10000 : 100000);
     const usagePercentage = (voteCount / maxVotes) * 100;
-    const votes = results.votes || [];
+    const votes = results?.votes || [];
+    
+    // NEW: Velocity calculations for ResponseHealth and TimeToGoal
+    const velocityToday = useMemo(() => {
+        const todayStart = new Date().setHours(0, 0, 0, 0);
+        return votes.filter((v: any) => new Date(v.timestamp || v.votedAt || v.submittedAt).getTime() >= todayStart).length;
+    }, [votes]);
+    
+    const velocityYesterday = useMemo(() => {
+        const todayStart = new Date().setHours(0, 0, 0, 0);
+        const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+        return votes.filter((v: any) => {
+            const time = new Date(v.timestamp || v.votedAt || v.submittedAt).getTime();
+            return time >= yesterdayStart && time < todayStart;
+        }).length;
+    }, [votes]);
+    
+    const velocityWeek = useMemo(() => {
+        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        return votes.filter((v: any) => new Date(v.timestamp || v.votedAt || v.submittedAt).getTime() >= weekAgo).length;
+    }, [votes]);
+    
+    const velocity = useMemo(() => Math.round(velocityWeek / 7), [velocityWeek]);
+    
+    // NEW: Sparkline data (last 7 days)
+    const sparklineData = useMemo(() => {
+        const days: number[] = [];
+        for (let i = 6; i >= 0; i--) {
+            const dayStart = new Date(); dayStart.setDate(dayStart.getDate() - i); dayStart.setHours(0, 0, 0, 0);
+            const dayEnd = new Date(dayStart); dayEnd.setHours(23, 59, 59, 999);
+            const count = votes.filter((v: any) => {
+                const time = new Date(v.timestamp || v.votedAt || v.submittedAt).getTime();
+                return time >= dayStart.getTime() && time <= dayEnd.getTime();
+            }).length;
+            days.push(count);
+        }
+        return days;
+    }, [votes]);
     
     // Calculate what insights free users are missing
     const uniqueCountries = useMemo(() => {
@@ -417,9 +784,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             
             switch (e.key.toLowerCase()) {
                 case 'c':
-                    // Copy share link
+                    // Copy share link with toast
                     navigator.clipboard.writeText(shareUrl);
                     setCopiedShare(true);
+                    triggerCopyToast('Link copied!');
                     setTimeout(() => setCopiedShare(false), 2000);
                     break;
                 case 'r':
@@ -436,6 +804,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                     setShowQuickActions(false);
                     setShowDeleteModal(false);
                     setShowFilters(false);
+                    setShowMobileShareSheet(false);
                     break;
                 case '1':
                     setActiveTab('results');
@@ -461,6 +830,33 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [shareUrl, isRefreshing, onRefresh, isFree]);
+    
+    // NEW: Auto-refresh countdown
+    useEffect(() => {
+        autoRefreshRef.current = setInterval(() => {
+            setAutoRefreshSeconds(prev => {
+                if (prev <= 1) { onRefresh(); return 30; }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => { if (autoRefreshRef.current) clearInterval(autoRefreshRef.current); };
+    }, [onRefresh]);
+    
+    // Reset countdown on manual refresh
+    useEffect(() => { if (isRefreshing) setAutoRefreshSeconds(30); }, [isRefreshing]);
+    
+    // NEW: Milestone celebrations
+    const milestones = [10, 25, 50, 100, 250, 500, 1000];
+    useEffect(() => {
+        const lastSeenCount = parseInt(localStorage.getItem(`milestone_${poll.id}`) || '0', 10);
+        const hitMilestone = milestones.find(m => voteCount >= m && lastSeenCount < m);
+        if (hitMilestone) {
+            setCelebrationMilestone(hitMilestone);
+            setShowCelebration(true);
+            localStorage.setItem(`milestone_${poll.id}`, hitMilestone.toString());
+            setTimeout(() => setShowCelebration(false), 5000);
+        }
+    }, [voteCount, poll.id]);
     
     // Filtered votes (Pro+ feature)
     const filteredVotes = useMemo(() => {
@@ -504,19 +900,57 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
         setFilterComplete('all');
     };
     
+    // NEW: Trigger copy toast with haptic feedback
+    const triggerCopyToast = (message: string = 'Copied to clipboard!') => {
+        setCopyToastMessage(message);
+        setShowCopyToast(true);
+        if (canVibrate) navigator.vibrate(50);
+        setTimeout(() => setShowCopyToast(false), 2000);
+    };
+    
+    // NEW: Native Share API handler
+    const handleNativeShare = async () => {
+        const shareData = { title: poll.title, text: `Vote in my poll: "${poll.title}"`, url: shareUrl };
+        try {
+            await navigator.share(shareData);
+            Analytics.pollShared('native_share');
+        } catch (err) {
+            if ((err as Error).name !== 'AbortError') copyToClipboard(shareUrl, 'share');
+        }
+    };
+    
+    // NEW: Set response goal handler
+    const handleSetGoal = (goal: number) => {
+        setResponseGoal(goal);
+        localStorage.setItem(`poll_goal_${poll.id}`, goal.toString());
+    };
+    
+    // NEW: Save as template handler
+    const handleSaveAsTemplate = async () => {
+        try {
+            const templateData = { title: `${poll.title} (Template)`, type: poll.type, options: poll.options, settings: poll.settings, questions: (poll as any).questions };
+            const templates = JSON.parse(localStorage.getItem('vg_templates') || '[]');
+            templates.push({ id: `template_${Date.now()}`, name: templateData.title, data: templateData, createdAt: new Date().toISOString() });
+            localStorage.setItem('vg_templates', JSON.stringify(templates));
+            triggerCopyToast('Saved as template!');
+        } catch (error) { console.error('Save template error:', error); alert('Failed to save template.'); }
+    };
+    
     // Handlers
     const copyToClipboard = async (text: string, type: 'share' | 'admin' | 'codes') => {
         await navigator.clipboard.writeText(text);
         if (type === 'share') {
             setCopiedShare(true);
+            triggerCopyToast('Link copied!');
             setTimeout(() => setCopiedShare(false), 2000);
-            // Track share
             Analytics.pollShared('copy_link');
         } else if (type === 'admin') {
             setCopiedAdmin(true);
+            triggerCopyToast('Admin link copied!');
             setTimeout(() => setCopiedAdmin(false), 2000);
         } else {
             setCopiedCodes(true);
+            triggerCopyToast('All codes copied!');
             setTimeout(() => setCopiedCodes(false), 2000);
         }
     };
@@ -546,10 +980,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             
             // Build CSV headers
             let csv = 'Vote ID,Timestamp,Choice,Device,Country,Browser,IP Hash';
-            if (poll.settings.allowComments) {
+            if (poll.settings?.allowComments) {
                 csv += ',Comment';
             }
-            if (poll.settings.requireNames) {
+            if (poll.settings?.requireNames) {
                 csv += ',Voter Name';
             }
             csv += '\n';
@@ -565,10 +999,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 
                 csv += `"${vote.id || ''}","${timestamp}","${choice}","${device}","${country}","${browser}","${ipHash}"`;
                 
-                if (poll.settings.allowComments) {
+                if (poll.settings?.allowComments) {
                     csv += `,"${(vote.comment || '').replace(/"/g, '""')}"`;
                 }
-                if (poll.settings.requireNames) {
+                if (poll.settings?.requireNames) {
                     csv += `,"${(vote.voterName || '').replace(/"/g, '""')}"`;
                 }
                 csv += '\n';
@@ -593,9 +1027,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            // Track export
-            Analytics.resultsExported('csv');
         } catch (err) {
             console.error('CSV export error:', err);
             alert('Export failed. Please try again.');
@@ -683,9 +1114,15 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     };
 
     const shareToEmail = () => {
-        const subject = `Vote: ${poll.title}`;
-        const body = `Vote in my poll "${poll.title}": ${shareUrl}`;
-        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+        // On mobile, try native share first for email picker
+        if (canUseNativeShare) {
+            handleNativeShare();
+        } else {
+            const subject = `Vote: ${poll.title}`;
+            const body = `Vote in my poll "${poll.title}": ${shareUrl}`;
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+            Analytics.pollShared('email');
+        }
     };
 
     const openUpgradeModal = (feature: string) => {
@@ -757,26 +1194,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Get current poll status
     const pollStatus = (poll as any).status || 'live';
     
-    // Milestone celebrations
-    const [showCelebration, setShowCelebration] = useState(false);
-    const [celebrationMilestone, setCelebrationMilestone] = useState<number | null>(null);
-    const milestones = [10, 25, 50, 100, 250, 500, 1000];
-    
-    // Check for milestone on mount and vote changes
-    React.useEffect(() => {
-        const lastSeenCount = parseInt(localStorage.getItem(`milestone_${poll.id}`) || '0', 10);
-        const hitMilestone = milestones.find(m => voteCount >= m && lastSeenCount < m);
-        
-        if (hitMilestone) {
-            setCelebrationMilestone(hitMilestone);
-            setShowCelebration(true);
-            localStorage.setItem(`milestone_${poll.id}`, hitMilestone.toString());
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => setShowCelebration(false), 5000);
-        }
-    }, [voteCount, poll.id]);
-    
     // Expiration countdown
     const expirationInfo = useMemo(() => {
         const expiresAt = (poll as any).expiresAt;
@@ -809,15 +1226,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             return { expired: false, text: 'Closing soon!', color: 'text-red-600 bg-red-50 animate-pulse' };
         }
     }, [(poll as any).expiresAt]);
-
-    // Stats calculations
-    const velocity = useMemo(() => {
-        if (votes.length === 0) return 0;
-        const now = Date.now();
-        return votes.filter((v: any) => 
-            new Date(v.timestamp).getTime() > now - 24 * 60 * 60 * 1000
-        ).length;
-    }, [votes]);
 
     // Compute first and last vote dates - direct computation to avoid TypeScript inference issues
     const { firstVoteDateDisplay, lastVoteDateDisplay } = useMemo((): { firstVoteDateDisplay: string; lastVoteDateDisplay: string } => {
@@ -875,7 +1283,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Tabs - Analytics locked for free users
     const tabs = [
         { id: 'results' as TabType, label: 'Results', icon: BarChart3, tooltip: 'View real-time voting results with charts, percentages, and winner analysis.' },
-        { id: 'share' as TabType, label: 'Share', icon: Share2, tooltip: 'Get shareable links, QR codes, embed codes, and social sharing options.' },
+        { id: 'share' as TabType, label: 'Distribute', icon: Send, tooltip: 'Get shareable links, QR codes, embed codes, and distribution options.' },
         { id: 'notify' as TabType, label: 'Notify', icon: Bell, tooltip: 'Set up email notifications for milestones, new responses, and poll closure.' },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings, tooltip: 'Configure vote protection, result visibility, expiration, and custom branding.' },
         { id: 'downloads' as TabType, label: 'Downloads', icon: FileDown, tooltip: 'Export your data as CSV, Excel, or PDF reports for further analysis.' },
@@ -884,6 +1292,24 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
 
     return (
         <>
+            {/* NEW: Copy Toast Notification */}
+            <CopyToast show={showCopyToast} message={copyToastMessage} />
+            
+            {/* NEW: Mobile Share Sheet */}
+            <MobileShareSheet
+                isOpen={showMobileShareSheet}
+                onClose={() => setShowMobileShareSheet(false)}
+                shareUrl={shareUrl}
+                pollTitle={poll.title}
+                onCopy={() => copyToClipboard(shareUrl, 'share')}
+                onWhatsApp={() => { const text = `Vote in my poll "${poll.title}": ${shareUrl}`; window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); }}
+                onSms={() => { const text = `Vote in my poll "${poll.title}": ${shareUrl}`; window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank'); }}
+                onEmail={shareToEmail}
+                onQr={() => { setShowMobileShareSheet(false); setShowQrModal(true); }}
+                onNativeShare={handleNativeShare}
+                canNativeShare={canUseNativeShare}
+            />
+            
             {/* Print-Friendly Styles */}
             <style>{`
                 @media print {
@@ -950,90 +1376,96 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             `}</style>
             
             {/* ================================================================ */}
-            {/* NAVIGATION - Tier-aware */}
+            {/* MOBILE NAVIGATION HEADER */}
             {/* ================================================================ */}
-            {isPro ? (
-                // Paid users get PremiumNav (handles both desktop and mobile)
-                <PremiumNav tier={tier} expiresAt={subscriptionExpiresAt} />
-            ) : (
-                // Free users get NavHeader on desktop, custom mobile nav
-                <>
-                    {/* Desktop: NavHeader */}
-                    <div className="hidden md:block print:hidden">
-                        <NavHeader />
-                    </div>
-                    
-                    {/* Mobile Header for Free Users */}
-                    <header className="md:hidden sticky top-0 z-40 print:hidden bg-white border-b border-slate-200">
-                        <div className="px-4 py-3 flex items-center justify-between">
-                            <a href="/" className="flex items-center gap-2">
-                                <img 
-                                    src="/logo.svg" 
-                                    alt="VoteGenerator" 
-                                    className="w-8 h-8"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
-                                <span className="font-bold text-slate-800">
-                                    VoteGenerator
-                                </span>
-                            </a>
-                            
-                            <button 
-                                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                                className="p-2 rounded-lg transition hover:bg-slate-100 text-slate-600"
-                            >
-                                {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
-                            </button>
+            <header className={`md:hidden sticky top-0 z-40 print:hidden ${
+                tier === 'business' 
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                    : tier === 'pro' 
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600'
+                        : 'bg-white border-b border-slate-200'
+            }`}>
+                <div className="px-4 py-3 flex items-center justify-between">
+                    <a href="/" className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            tier !== 'free' ? 'bg-white/20' : 'bg-indigo-100'
+                        }`}>
+                            <BarChart3 size={16} className={tier !== 'free' ? 'text-white' : 'text-indigo-600'} />
                         </div>
-                        
-                        {/* Mobile Menu Dropdown */}
-                        <AnimatePresence>
-                            {showMobileMenu && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden border-t border-slate-100 bg-white"
+                        <span className={`font-bold ${tier !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                            VoteGenerator
+                        </span>
+                    </a>
+                    
+                    <button 
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                        className={`p-2 rounded-lg transition ${
+                            tier !== 'free' ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-600'
+                        }`}
+                    >
+                        {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                </div>
+                
+                {/* Mobile Menu Dropdown */}
+                <AnimatePresence>
+                    {showMobileMenu && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className={`overflow-hidden ${
+                                tier === 'free' 
+                                    ? 'border-t border-slate-100 bg-white' 
+                                    : tier === 'pro'
+                                        ? 'bg-purple-700'
+                                        : 'bg-amber-600'
+                            }`}
+                        >
+                            <nav className="p-3 space-y-1">
+                                <a 
+                                    href="/admin" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
                                 >
-                                    <nav className="p-3 space-y-1">
-                                        <a 
-                                            href="/admin" 
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
-                                        >
-                                            <LayoutDashboard size={20} /> Back to Dashboard
-                                        </a>
-                                        <a 
-                                            href="/create" 
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
-                                        >
-                                            <PlusCircle size={20} /> Create New Poll
-                                        </a>
-                                        <a 
-                                            href="/templates" 
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
-                                        >
-                                            <Zap size={20} /> Templates
-                                        </a>
-                                        <a 
-                                            href="/help" 
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
-                                        >
-                                            <HelpCircle size={20} /> Help Center
-                                        </a>
-                                        <div className="h-px bg-slate-100 my-2" />
-                                        <a 
-                                            href="/pricing" 
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
-                                        >
-                                            <Crown size={20} /> Upgrade to Pro
-                                        </a>
-                                    </nav>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </header>
-                </>
-            )}
+                                    <LayoutDashboard size={20} /> Back to Dashboard
+                                </a>
+                                <a 
+                                    href="/create" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <PlusCircle size={20} /> Create New Poll
+                                </a>
+                                <a 
+                                    href="/templates" 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${
+                                        tier !== 'free' 
+                                            ? 'text-white/90 hover:bg-white/10 hover:text-white' 
+                                            : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                    }`}
+                                >
+                                    <Zap size={20} /> Templates
+                                </a>
+                                {tier === 'free' && (
+                                    <a 
+                                        href="/pricing" 
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                                    >
+                                        <Crown size={20} /> Upgrade to Pro
+                                    </a>
+                                )}
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </header>
             
             <div className="max-w-5xl mx-auto px-4 py-6">
                 {/* Print Header - Only visible when printing */}
@@ -1118,6 +1550,10 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             {pollStatus === 'paused' && 'Temporarily not accepting responses'}
                             {pollStatus === 'closed' && 'No longer accepting responses'}
                         </span>
+                        {/* NEW: Response Health Indicator */}
+                        {voteCount >= 5 && isPro && pollStatus === 'live' && (
+                            <ResponseHealth velocityToday={velocityToday} velocityYesterday={velocityYesterday} velocityWeek={velocityWeek} />
+                        )}
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -1129,6 +1565,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                             <ExternalLink size={14} />
                             <span className="hidden sm:inline">Preview</span>
                         </button>
+                        
+                        {/* NEW: Schedule Close Dropdown - Pro+ */}
+                        {isPro && pollStatus === 'live' && (
+                            <ScheduleCloseDropdown pollId={poll.id} adminKey={adminKey} currentDeadline={(poll as any).expiresAt || poll.settings?.deadline} onScheduled={onRefresh} />
+                        )}
                         
                         {/* Quick Actions Dropdown */}
                         <div className="relative">
@@ -1191,6 +1632,14 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     )}
                                                     Duplicate {isSurvey ? 'Survey' : 'Poll'}
                                                 </button>
+                                                {/* NEW: Save as Template */}
+                                                <button
+                                                    onClick={() => { handleSaveAsTemplate(); setShowQuickActions(false); }}
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                                                >
+                                                    <FileText size={16} className="text-slate-400" />
+                                                    Save as Template
+                                                </button>
                                                 <div className="border-t border-slate-100 my-1" />
                                                 <button
                                                     onClick={() => {
@@ -1242,13 +1691,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                 <p className="text-slate-500 text-sm line-clamp-2">{poll.description}</p>
                             )}
                         </div>
-                        <button
-                            onClick={onRefresh}
-                            disabled={isRefreshing}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                        >
-                            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-                        </button>
+                        {/* NEW: Auto Refresh Indicator */}
+                        <AutoRefreshIndicator secondsLeft={autoRefreshSeconds} isRefreshing={isRefreshing} onManualRefresh={onRefresh} />
                     </div>
                     
                     {/* Poll Status Toggle - Compact version */}
@@ -1599,9 +2043,11 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         </div>
                     </div>
                     
-                    {/* Active tab indicator text on mobile */}
-                    <p className="sm:hidden text-center text-xs text-indigo-600 font-medium mt-2">
-                        {tabs.find(t => t.id === activeTab)?.label} • Swipe for more
+                    {/* Active tab indicator text on mobile - with direction arrows */}
+                    <p className="sm:hidden text-center text-xs text-indigo-600 font-medium mt-2 flex items-center justify-center gap-2">
+                        <ChevronLeft size={14} className="text-indigo-400" />
+                        <span>{tabs.find(t => t.id === activeTab)?.label}</span>
+                        <ChevronRight size={14} className="text-indigo-400" />
                     </p>
                 </div>
             </div>
@@ -1611,8 +2057,12 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             {/* ================================================================ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-4 border border-indigo-100">
-                    <div className="text-3xl font-black text-indigo-600">
-                        <AnimatedCounter value={voteCount} />
+                    <div className="flex items-center justify-between">
+                        <div className="text-3xl font-black text-indigo-600">
+                            <AnimatedCounter value={voteCount} />
+                        </div>
+                        {/* NEW: Sparkline for Pro+ */}
+                        {isPro && sparklineData.some(d => d > 0) && <Sparkline data={sparklineData} color="#6366f1" />}
                     </div>
                     <div className="text-xs text-indigo-600/70 font-medium mt-1 flex items-center gap-1">
                         Total {isSurvey ? 'Responses' : 'Votes'}
@@ -1625,8 +2075,8 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <span className="text-lg font-semibold text-emerald-400">/day</span>
                     </div>
                     <div className="text-xs text-emerald-600/70 font-medium mt-1 flex items-center gap-1">
-                        Velocity
-                        <HelpTooltip content="Average responses received per day since your poll was created. Higher velocity indicates stronger engagement." position="bottom" />
+                        Avg Daily
+                        <HelpTooltip content="Average responses received per day over the past week. Higher velocity indicates stronger engagement." position="bottom" />
                     </div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 border border-slate-200">
@@ -1647,6 +2097,17 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                         <HelpTooltip content="Most recent activity on your poll. If this is stale, consider re-sharing or promoting your poll." position="bottom" />
                     </div>
                 </div>
+            </div>
+            
+            {/* NEW: Response Goal - All tiers */}
+            <div className="mb-6 bg-white rounded-2xl border border-slate-200 p-4">
+                <ResponseGoal current={voteCount} goal={responseGoal} onSetGoal={handleSetGoal} />
+                {isPro && velocity > 0 && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                        <TimeToGoal current={voteCount} goal={responseGoal} velocity={velocity} />
+                        {votes.length >= 10 && <PeakHourHint votes={votes} />}
+                    </div>
+                )}
             </div>
 
             {/* ================================================================ */}
@@ -3746,9 +4207,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 source="poll_dashboard"
             />
         </div>
-        
-        {/* Footer */}
-        <Footer />
         </>
     );
 };

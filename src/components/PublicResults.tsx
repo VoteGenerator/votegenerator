@@ -289,7 +289,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 useCORS: true,
                 allowTaint: true,
                 // Ignore elements that cause issues
-                ignoreElements: (element) => {
+                ignoreElements: (element: Element) => {
                     return element.classList?.contains('export-ignore') || 
                            element.tagName === 'BUTTON' ||
                            element.classList?.contains('blur-2xl');

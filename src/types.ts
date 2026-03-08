@@ -1,10 +1,8 @@
 // Poll and voting types for VoteGenerator
 // This file must match all properties used across components and services
-
 // ============================================================================
 // MULTI-SECTION SURVEY TYPES
 // ============================================================================
-
 // Question types available in surveys
 export type QuestionType = 
     | 'multiple_choice'   // Single or multiple selection
@@ -22,7 +20,6 @@ export type QuestionType =
     | 'ranking'           // Drag to rank options
     | 'yes_no'            // Simple yes/no
     | 'matrix';           // Grid/matrix question
-
 // Individual question within a section
 export interface SurveyQuestion {
     id: string;
@@ -74,7 +71,6 @@ export interface SurveyQuestion {
         customError?: string;    // Custom error message
     };
 }
-
 // Section containing multiple questions
 export interface SurveySection {
     id: string;
@@ -92,7 +88,6 @@ export interface SurveySection {
         value: string | number | string[];
     };
 }
-
 // Survey-specific settings
 export interface SurveySettings {
     // === INTRO SCREEN ===
@@ -130,7 +125,6 @@ export interface SurveySettings {
     hideResults?: boolean;          // Hide results from respondents (DEFAULT: true for surveys)
     resultsVisibility?: 'admin_only' | 'after_vote' | 'always' | 'never';
 }
-
 // Individual response to a survey
 export interface SurveyResponse {
     id: string;
@@ -149,7 +143,6 @@ export interface SurveyResponse {
     lastSectionId?: string;
     isComplete: boolean;
 }
-
 // Individual answer to a question
 export interface SurveyAnswer {
     questionId: string;
@@ -165,18 +158,15 @@ export interface SurveyAnswer {
     matrix?: Record<string, string>; // For matrix (row ID -> column ID)
     otherText?: string;           // For "Other" option
 }
-
 // ============================================================================
 // EXISTING TYPES (UPDATED)
 // ============================================================================
-
 export interface PollOption {
     id: string;
     text: string;
     cost?: number;
     imageUrl?: string;
 }
-
 export interface PollSettings {
     hideResults: boolean;
     allowMultiple: boolean;
@@ -209,7 +199,6 @@ export interface PollSettings {
     // Business feature: Custom redirect URL after completion
     redirectUrl?: string;
 }
-
 export interface EmailEntry {
     email: string;
     verified: boolean;
@@ -217,7 +206,6 @@ export interface EmailEntry {
     verifiedAt?: string;
     lastSentAt?: string;
 }
-
 export interface NotificationSettings {
     enabled: boolean;
     emails: EmailEntry[];
@@ -230,7 +218,6 @@ export interface NotificationSettings {
         newComment: boolean;
     };
 }
-
 export interface Poll {
     id: string;
     title: string;
@@ -296,7 +283,6 @@ export interface Poll {
     // Voter count (for results)
     voters?: number;
 }
-
 export interface Vote {
     id: string;
     timestamp: string;
@@ -320,7 +306,6 @@ export interface Vote {
         timestamp: string;
     };
 }
-
 export interface RoundLog {
     round?: number;
     roundNumber?: number;
@@ -331,15 +316,12 @@ export interface RoundLog {
     winner?: string | null;
     winnerId?: string | null;
 }
-
 export interface SimpleCounts {
     [optionId: string]: number;
 }
-
 export interface MaybeCounts {
     [optionId: string]: number;
 }
-
 export interface Comment {
     id?: string;
     text: string;  // Required - default ''
@@ -349,14 +331,12 @@ export interface Comment {
     name: string;  // Required - default 'Anonymous'
     date: string;  // Required - default ''
 }
-
 export interface MatrixAverage {
     optionId: string;
     x: number;
     y: number;
     count: number;
 }
-
 export interface PairwiseScore {
     optionId: string;
     wins: number;
@@ -364,7 +344,6 @@ export interface PairwiseScore {
     score: number;
     matches: number;  // Required - always provide at least 0
 }
-
 export interface RatingStat {
     optionId: string;
     optionText?: string;
@@ -372,10 +351,11 @@ export interface RatingStat {
     min: number;
     max: number;
     count: number;
-    stdDev: number;  // Required - always provide at least 0
+    sum?: number;        // Total sum of all ratings (optional for backwards compat)
+    maxRating?: number;  // Maximum possible rating e.g. 5 for 1-5 scale (optional)
+    stdDev: number;      // Required - always provide at least 0
     distribution?: Record<number, number>;
 }
-
 export interface BudgetStat {
     optionId: string;
     optionText?: string;
@@ -385,7 +365,6 @@ export interface BudgetStat {
     purchaseCount: number;
     averageSpent: number;
 }
-
 export interface RunoffResult {
     rounds: RoundLog[];
     winner?: string | null;
@@ -414,7 +393,6 @@ export interface RunoffResult {
     usedCodes?: string[];
     votes?: any[];
 }
-
 export interface AnalyticsData {
     tier: string;
     totalVotes: number;
@@ -454,7 +432,6 @@ export interface AnalyticsData {
         notIncluded: string[];
     };
 }
-
 // Local storage vote record
 export interface StoredVote {
     pollId: string;
@@ -470,11 +447,9 @@ export interface StoredVote {
     surveyAnswers?: Record<string, SurveyAnswer>;
     isSurvey?: boolean;
 }
-
 // ============================================================================
 // COMPONENT PROPS INTERFACES
 // ============================================================================
-
 // SurveyBuilder component props
 export interface SurveyBuilderProps {
     initialSections?: SurveySection[];
@@ -482,14 +457,12 @@ export interface SurveyBuilderProps {
     onChange?: (sections: SurveySection[], settings: SurveySettings) => void;
     tier?: string;
 }
-
 // SurveyVote component props
 export interface SurveyVoteProps {
     poll: Poll;
     onSubmit: (response: SurveyResponse) => Promise<void>;
     voterName?: string;
 }
-
 // SurveyResults component props
 export interface SurveyResultsProps {
     poll: Poll;

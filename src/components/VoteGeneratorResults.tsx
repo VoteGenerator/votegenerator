@@ -1378,9 +1378,10 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         {(() => {
                             const entries = Object.entries(ratingStats);
                             const totalRatings = entries.reduce((sum, [, s]) => sum + s.count, 0);
-                            const totalSum = entries.reduce((sum, [, s]) => sum + s.sum, 0);
+                            // Use sum if available, otherwise calculate from average * count
+                            const totalSum = entries.reduce((sum, [, s]) => sum + ((s as any).sum ?? s.average * s.count), 0);
                             const overallAverage = totalRatings > 0 ? totalSum / totalRatings : 0;
-                            const maxRating = entries[0]?.[1]?.maxRating || 5;
+                            const maxRating = (entries[0]?.[1] as any)?.maxRating || 5;
                             
                             return (
                                 <>
@@ -1425,7 +1426,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             {Object.entries(ratingStats)
                                 .sort(([, a], [, b]) => b.average - a.average)
                                 .map(([id, stats], index) => {
-                                    const maxRating = stats.maxRating || 5;
+                                    const maxRating = (stats as any).maxRating || 5;
                                     const distribution = stats.distribution || {};
                                     
                                     return (
@@ -1994,7 +1995,7 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 .map(([id, score], index) => {
                                 const intensity = maxHeat > 0 ? score / maxHeat : 0;
                                 const isTop = index === 0;
-                                const yesCount = simpleCounts[id] || 0;
+                                const yesCount = simpleCounts?.[id] || 0;
                                 const maybeCount = maybeCounts ? (maybeCounts[id] || 0) : 0;
                                 const noCount = totalVotes - yesCount - maybeCount;
                                 

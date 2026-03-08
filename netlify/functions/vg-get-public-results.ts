@@ -1,14 +1,11 @@
 // ============================================================================
 // vg-get-public-results.ts - Get publicly shared poll results
 // Location: netlify/functions/vg-get-public-results.ts
+// FIXED: Proper data extraction for all poll types
 // ============================================================================
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
-// ============================================================================
-// BLOBS CREDENTIALS - Required for all getStore calls
-// Must match vg-create.ts exactly!
-// ============================================================================
 const SITE_ID = process.env.VG_SITE_ID || process.env.SITE_ID || '';
 const BLOB_TOKEN = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || '';
 
@@ -22,29 +19,12 @@ interface Poll {
     settings?: {
         publicResults?: boolean;
         shareKey?: string;
-        allowedViews?: string[]; // ['bar', 'pie', 'velocity'] - which views are public
+        allowedViews?: string[];
         hideVoteCount?: boolean;
+        showSocialShare?: boolean;
     };
     createdAt: string;
     status: string;
-}
-
-interface Vote {
-    id: string;
-    choices?: string[];
-    selectedOptionIds?: string[];
-    rankedOptionIds?: string[];
-    votedAt: string;
-    analytics?: {
-        country?: string;
-        device?: string;
-    };
-}
-
-interface Results {
-    votes: Vote[];
-    simpleCounts?: Record<string, number>;
-    winnerId?: string;
 }
 
 const handler: Handler = async (event) => {
@@ -59,172 +39,380 @@ const handler: Handler = async (event) => {
     }
 
     if (event.httpMethod !== 'GET') {
-        return {
-            statusCode: 405,
-            headers,
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
-    // Check Blobs credentials FIRST
     if (!SITE_ID || !BLOB_TOKEN) {
-        console.error('vg-get-public-results: Missing Blobs credentials - SITE_ID:', !!SITE_ID, 'BLOB_TOKEN:', !!BLOB_TOKEN);
-        return { 
-            statusCode: 500, 
-            headers, 
-            body: JSON.stringify({ error: 'Server configuration error' }) 
-        };
+        console.error('vg-get-public-results: Missing Blobs credentials');
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error' }) };
     }
 
     try {
         const { pollId, shareKey } = event.queryStringParameters || {};
 
         if (!pollId) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Poll ID is required' })
-            };
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Poll ID is required' }) };
         }
 
-        console.log('vg-get-public-results: Fetching for pollId:', pollId);
-        console.log('vg-get-public-results: Using SITE_ID:', SITE_ID.slice(0, 8) + '...');
+        console.log('vg-get-public-results: Fetching pollId:', pollId);
 
-        // Get poll from store
-        const pollStore = getStore({ 
-            name: 'polls', 
-            siteID: SITE_ID,
-            token: BLOB_TOKEN
-        });
-
-        const pollData = await pollStore.get(pollId, { type: 'json' }) as Poll | null;
-
-        console.log('vg-get-public-results: Poll data found:', pollData ? 'yes' : 'no');
+        const pollStore = getStore({ name: 'polls', siteID: SITE_ID, token: BLOB_TOKEN });
+        const pollData = await pollStore.get(pollId, { type: 'json' }) as any;
 
         if (!pollData) {
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ error: 'Poll not found', pollId })
-            };
+            return { statusCode: 404, headers, body: JSON.stringify({ error: 'Poll not found', pollId }) };
         }
 
-        // Check if results are public
         const settings = pollData.settings || {};
-        console.log('vg-get-public-results: Poll settings:', JSON.stringify(settings));
-        console.log('vg-get-public-results: publicResults value:', settings.publicResults);
         
         if (!settings.publicResults) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'Results are not publicly shared',
-                    hint: 'Enable "Public Results Page" in poll settings'
-                })
+            return { 
+                statusCode: 403, 
+                headers, 
+                body: JSON.stringify({ error: 'Results are not publicly shared', hint: 'Enable "Public Results Page" in poll settings' }) 
             };
         }
 
-        // If share key is required, validate it
         if (settings.shareKey && settings.shareKey !== shareKey) {
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ error: 'Invalid share key' })
-            };
+            return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid share key' }) };
         }
 
-        // Votes are stored directly in the poll object
-        const votes = (pollData as any).votes || [];
-        console.log('vg-get-public-results: Found votes:', votes.length);
+        const votes = pollData.votes || [];
+        const pollType = pollData.pollType || pollData.type || 'multiple-choice';
+        const options = pollData.options || [];
+        const maxRating = pollData.maxRating || pollData.ratingMax || 5;
         
-        // Debug survey data - use same detection as vg-vote
-        const isSurvey = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
-        if (isSurvey) {
-            console.log('vg-get-public-results: Survey detected');
-            console.log('vg-get-public-results: pollData.isSurvey:', (pollData as any).isSurvey);
-            console.log('vg-get-public-results: pollData.type:', pollData.type);
-            console.log('vg-get-public-results: pollData.pollType:', (pollData as any).pollType);
-            console.log('vg-get-public-results: surveyResponses array:', (pollData as any).surveyResponses?.length || 0);
-            console.log('vg-get-public-results: sections:', (pollData as any).sections?.length || 0);
+        console.log('vg-get-public-results: pollType:', pollType, 'votes:', votes.length);
+
+        // =====================================================================
+        // INITIALIZE RESULTS OBJECT
+        // =====================================================================
+        const results: any = {
+            totalVotes: votes.length,
+            simpleCounts: {},
+            votes: [],
+        };
+
+        // Initialize simple counts
+        options.forEach((o: any) => results.simpleCounts[o.id] = 0);
+
+        // =====================================================================
+        // RATING POLL - Calculate averages and distribution
+        // =====================================================================
+        if (pollType === 'rating') {
+            const ratingResults: Record<string, any> = {};
             
-            // Log question keys from sections
-            const questionKeys: string[] = [];
-            (pollData as any).sections?.forEach((s: any) => {
-                s.questions?.forEach((q: any) => {
-                    questionKeys.push(`${q.key || q.name || q.id} (type: ${q.type})`);
+            options.forEach((opt: any) => {
+                ratingResults[opt.id] = {
+                    sum: 0,
+                    count: 0,
+                    average: 0,
+                    distribution: {} as Record<number, number>
+                };
+                // Initialize distribution for each star level
+                for (let i = 1; i <= maxRating; i++) {
+                    ratingResults[opt.id].distribution[i] = 0;
+                }
+            });
+
+            votes.forEach((vote: any) => {
+                // Rating votes can be in different formats
+                const ratings = vote.ratingVotes || vote.ratings || {};
+                
+                Object.entries(ratings).forEach(([optId, rating]) => {
+                    const r = Number(rating);
+                    if (ratingResults[optId] && r >= 1 && r <= maxRating) {
+                        ratingResults[optId].sum += r;
+                        ratingResults[optId].count += 1;
+                        ratingResults[optId].distribution[r] = (ratingResults[optId].distribution[r] || 0) + 1;
+                    }
                 });
             });
-            console.log('vg-get-public-results: Section question keys:', questionKeys);
-            
-            if (votes.length > 0) {
-                console.log('vg-get-public-results: First vote has surveyAnswers:', !!votes[0].surveyAnswers);
-                console.log('vg-get-public-results: First vote has answers:', !!votes[0].answers);
-                console.log('vg-get-public-results: First vote keys:', Object.keys(votes[0]));
-                if (votes[0].surveyAnswers) {
-                    console.log('vg-get-public-results: First vote surveyAnswers keys:', Object.keys(votes[0].surveyAnswers));
-                }
-            }
-        }
 
-        // For rating polls - calculate average ratings
-        let ratingResults: any = null;
-        const pollType = (pollData as any).pollType || pollData.type;
-        if (pollType === 'rating') {
-            const allRatings: Record<string, number[]> = {};
-            
-            votes.forEach((v: any) => {
-                if (v.ratingVotes) {
-                    Object.entries(v.ratingVotes).forEach(([optId, rating]) => {
-                        if (!allRatings[optId]) allRatings[optId] = [];
-                        allRatings[optId].push(rating as number);
-                    });
-                }
+            // Calculate averages
+            Object.keys(ratingResults).forEach(optId => {
+                const data = ratingResults[optId];
+                data.average = data.count > 0 ? Math.round((data.sum / data.count) * 10) / 10 : 0;
             });
-            
-            ratingResults = {};
-            Object.entries(allRatings).forEach(([optId, ratings]) => {
-                const sum = ratings.reduce((a, b) => a + b, 0);
-                ratingResults[optId] = {
-                    average: ratings.length > 0 ? Math.round((sum / ratings.length) * 10) / 10 : 0,
-                    count: ratings.length,
-                    distribution: [1, 2, 3, 4, 5].map(star => 
-                        ratings.filter(r => r === star).length
-                    )
-                };
-            });
+
+            results.ratingResults = ratingResults;
+            results.ratingVotes = votes.map((v: any) => ({
+                id: v.id,
+                ratings: v.ratingVotes || v.ratings || {},
+                votedAt: v.votedAt
+            }));
             
             console.log('vg-get-public-results: Rating results:', JSON.stringify(ratingResults));
         }
 
-        // Prepare public poll data (strip sensitive info)
+        // =====================================================================
+        // RANKED CHOICE - Calculate average ranks
+        // =====================================================================
+        else if (pollType === 'ranked' || pollType === 'ranked-choice') {
+            const rankScores: Record<string, { totalRank: number; count: number }> = {};
+            options.forEach((o: any) => rankScores[o.id] = { totalRank: 0, count: 0 });
+
+            votes.forEach((vote: any) => {
+                const rankings = vote.rankedOptionIds || vote.rankings || vote.ranking || [];
+                rankings.forEach((optId: string, idx: number) => {
+                    if (rankScores[optId]) {
+                        rankScores[optId].totalRank += idx + 1; // 1-indexed rank
+                        rankScores[optId].count += 1;
+                    }
+                });
+            });
+
+            results.rankedResults = {};
+            Object.entries(rankScores).forEach(([optId, data]) => {
+                results.rankedResults[optId] = {
+                    avgRank: data.count > 0 ? Math.round((data.totalRank / data.count) * 100) / 100 : options.length,
+                    count: data.count
+                };
+            });
+
+            results.rankedVotes = votes.map((v: any) => ({
+                id: v.id,
+                rankings: v.rankedOptionIds || v.rankings || v.ranking || [],
+                votedAt: v.votedAt
+            }));
+            
+            console.log('vg-get-public-results: Ranked results:', JSON.stringify(results.rankedResults));
+        }
+
+        // =====================================================================
+        // MEETING POLL - Calculate availability
+        // =====================================================================
+        else if (pollType === 'meeting') {
+            const availability: Record<string, { yes: number; maybe: number; no: number }> = {};
+            options.forEach((o: any) => availability[o.id] = { yes: 0, maybe: 0, no: 0 });
+
+            votes.forEach((vote: any) => {
+                // Meeting votes can have availability per slot
+                const responses = vote.availability || vote.meetingResponses || {};
+                
+                Object.entries(responses).forEach(([slotId, response]) => {
+                    if (availability[slotId]) {
+                        const r = String(response).toLowerCase();
+                        if (r === 'yes' || r === 'available' || r === 'true') {
+                            availability[slotId].yes += 1;
+                        } else if (r === 'maybe' || r === 'tentative') {
+                            availability[slotId].maybe += 1;
+                        } else if (r === 'no' || r === 'unavailable' || r === 'false') {
+                            availability[slotId].no += 1;
+                        }
+                    }
+                });
+
+                // Also check for simple choices (backward compat)
+                const choices = vote.choices || vote.selectedOptionIds || [];
+                choices.forEach((slotId: string) => {
+                    if (availability[slotId]) {
+                        availability[slotId].yes += 1;
+                    }
+                });
+            });
+
+            results.availability = availability;
+            results.meetingVotes = votes.map((v: any) => ({
+                id: v.id,
+                name: v.name || v.voterName,
+                availability: v.availability || v.meetingResponses || {},
+                votedAt: v.votedAt
+            }));
+            
+            console.log('vg-get-public-results: Meeting availability:', JSON.stringify(availability));
+        }
+
+        // =====================================================================
+        // RSVP POLL - Count responses
+        // =====================================================================
+        else if (pollType === 'rsvp') {
+            const rsvpCounts = { yes: 0, no: 0, maybe: 0, attending: 0, 'not-attending': 0 };
+
+            votes.forEach((vote: any) => {
+                const response = vote.rsvpResponse || vote.response || (vote.choices?.[0]) || '';
+                const r = String(response).toLowerCase();
+                
+                if (r === 'yes' || r === 'attending') {
+                    rsvpCounts.yes += 1;
+                    rsvpCounts.attending += 1;
+                } else if (r === 'no' || r === 'not-attending' || r === 'notattending') {
+                    rsvpCounts.no += 1;
+                    rsvpCounts['not-attending'] += 1;
+                } else if (r === 'maybe' || r === 'tentative') {
+                    rsvpCounts.maybe += 1;
+                }
+            });
+
+            results.rsvpCounts = rsvpCounts;
+            results.rsvpVotes = votes.map((v: any) => ({
+                id: v.id,
+                name: v.name || v.voterName,
+                response: v.rsvpResponse || v.response || (v.choices?.[0]),
+                plusOnes: v.plusOnes || 0,
+                votedAt: v.votedAt
+            }));
+            
+            console.log('vg-get-public-results: RSVP counts:', JSON.stringify(rsvpCounts));
+        }
+
+        // =====================================================================
+        // THIS-OR-THAT / PAIRWISE - Count wins
+        // =====================================================================
+        else if (pollType === 'pairwise' || pollType === 'this-or-that' || pollType === 'thisOrThat') {
+            votes.forEach((vote: any) => {
+                const choices = vote.choices || vote.selectedOptionIds || vote.winners || [];
+                choices.forEach((optId: string) => {
+                    if (results.simpleCounts[optId] !== undefined) {
+                        results.simpleCounts[optId] += 1;
+                    }
+                });
+            });
+
+            results.pairwiseResults = { ...results.simpleCounts };
+            results.totalComparisons = Object.values(results.simpleCounts as Record<string, number>).reduce((a, b) => a + b, 0);
+            
+            console.log('vg-get-public-results: Pairwise results:', JSON.stringify(results.pairwiseResults));
+        }
+
+        // =====================================================================
+        // VISUAL POLL - Same as multiple choice, images are in options
+        // =====================================================================
+        else if (pollType === 'visual' || pollType === 'image') {
+            votes.forEach((vote: any) => {
+                const choices = vote.choices || vote.selectedOptionIds || [];
+                choices.forEach((optId: string) => {
+                    if (results.simpleCounts[optId] !== undefined) {
+                        results.simpleCounts[optId] += 1;
+                    }
+                });
+            });
+            
+            console.log('vg-get-public-results: Visual poll counts:', JSON.stringify(results.simpleCounts));
+        }
+
+        // =====================================================================
+        // MULTIPLE CHOICE (DEFAULT)
+        // =====================================================================
+        else {
+            votes.forEach((vote: any) => {
+                const choices = vote.choices || vote.selectedOptionIds || [];
+                choices.forEach((optId: string) => {
+                    if (results.simpleCounts[optId] !== undefined) {
+                        results.simpleCounts[optId] += 1;
+                    }
+                });
+            });
+        }
+
+        // =====================================================================
+        // SURVEY RESPONSES (separate handling)
+        // =====================================================================
+        const isSurvey = pollData.isSurvey || pollData.type === 'survey' || pollData.pollType === 'survey' || pollData.sections?.length > 0;
+        
+        if (isSurvey) {
+            console.log('vg-get-public-results: Processing survey responses');
+            const surveyResponses: any[] = [];
+            
+            for (const vote of votes) {
+                let answers: Record<string, any> = {};
+                
+                if (vote.surveyAnswers && typeof vote.surveyAnswers === 'object') {
+                    answers = vote.surveyAnswers;
+                } else if (vote.answers && typeof vote.answers === 'object') {
+                    answers = vote.answers;
+                } else {
+                    // Look for q_ prefixed keys
+                    Object.keys(vote).forEach(key => {
+                        if (key.startsWith('q_') || key.match(/^[a-f0-9]{8,}/i)) {
+                            answers[key] = vote[key];
+                        }
+                    });
+                }
+                
+                if (Object.keys(answers).length > 0) {
+                    surveyResponses.push({
+                        id: vote.id,
+                        answers,
+                        submittedAt: vote.votedAt || vote.timestamp
+                    });
+                }
+            }
+            
+            // Also check dedicated surveyResponses array
+            const dedicated = pollData.surveyResponses || [];
+            dedicated.forEach((r: any) => {
+                const ans = r.answers || r.surveyAnswers || {};
+                if (Object.keys(ans).length > 0 && !surveyResponses.find(sr => sr.id === r.id)) {
+                    surveyResponses.push({ id: r.id, answers: ans, submittedAt: r.submittedAt });
+                }
+            });
+            
+            results.surveyResponses = surveyResponses;
+            console.log('vg-get-public-results: Survey responses count:', surveyResponses.length);
+        }
+
+        // =====================================================================
+        // DETERMINE WINNER (for simple polls)
+        // =====================================================================
+        let winnerId: string | undefined;
+        let maxVotes = 0;
+        Object.entries(results.simpleCounts).forEach(([id, count]) => {
+            if ((count as number) > maxVotes) {
+                maxVotes = count as number;
+                winnerId = id;
+            }
+        });
+        results.winnerId = winnerId;
+
+        // =====================================================================
+        // PREPARE PUBLIC VOTES (strip sensitive data)
+        // =====================================================================
+        results.votes = votes.map((v: any) => ({
+            id: v.id,
+            choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
+            votedAt: v.votedAt || v.timestamp,
+            ratingVotes: v.ratingVotes || v.ratings,
+            rankings: v.rankedOptionIds || v.rankings || v.ranking,
+            availability: v.availability || v.meetingResponses,
+            rsvpResponse: v.rsvpResponse || v.response,
+            surveyAnswers: v.surveyAnswers || v.answers,
+            analytics: v.analytics ? { country: v.analytics.country, device: v.analytics.device } : undefined
+        }));
+
+        // =====================================================================
+        // PREPARE PUBLIC POLL DATA
+        // =====================================================================
         const publicPoll = {
             id: pollData.id,
             title: pollData.title,
             description: pollData.description,
-            options: pollData.options?.map(o => ({
+            options: options.map((o: any) => ({
                 id: o.id,
                 text: o.text,
-                imageUrl: o.imageUrl
-            })) || [],
+                imageUrl: o.imageUrl,
+                date: o.date,
+                time: o.time
+            })),
             type: pollData.type,
-            pollType: (pollData as any).pollType,
-            isSurvey: (pollData as any).isSurvey,
+            pollType,
+            isSurvey,
             theme: pollData.theme,
             createdAt: pollData.createdAt,
             allowedViews: settings.allowedViews || ['bar', 'pie'],
-            showSocialShare: settings.showSocialShare !== false, // Default true
-            ratingStyle: (pollData as any).ratingStyle, // Include rating style
-            // Include survey sections if it's a survey
-            sections: (pollData as any).sections?.map((s: any) => ({
+            showSocialShare: settings.showSocialShare !== false,
+            ratingStyle: pollData.ratingStyle || 'stars',
+            maxRating,
+            ratingMax: maxRating,
+            sections: pollData.sections?.map((s: any) => ({
                 id: s.id,
                 title: s.title,
                 questions: s.questions?.map((q: any) => ({
                     id: q.id,
-                    key: q.key || q.id,  // Answer key - default to ID since that's what surveys use
+                    key: q.key || q.id,
                     name: q.name,
                     type: q.type,
-                    text: q.text || q.question,  // Support both 'text' and 'question' properties
+                    text: q.text || q.question,
                     options: q.options,
                     maxRating: q.maxRating,
                     max: q.max || q.maxValue,
@@ -237,150 +425,20 @@ const handler: Handler = async (event) => {
                     columns: q.columns
                 }))
             })),
-            // Include tier for ad wall decision
-            tier: (pollData as any).tier || 'free'
+            tier: pollData.tier || 'free'
         };
 
-        // Prepare public votes (strip sensitive data like IPs)
-        const publicVotes = votes.map((v: any) => ({
-            id: v.id,
-            choices: v.choices || v.selectedOptionIds || v.rankedOptionIds || [],
-            votedAt: v.votedAt || v.timestamp,
-            // Include ratingVotes for rating polls
-            ratingVotes: v.ratingVotes,
-            // Include surveyAnswers for survey types
-            surveyAnswers: v.surveyAnswers,
-            answers: v.answers,
-            // Only include basic analytics, no IP
-            analytics: v.analytics ? {
-                country: v.analytics.country,
-                device: v.analytics.device
-            } : undefined
-        }));
-
-        // Calculate simple counts
-        const simpleCounts: Record<string, number> = {};
-        publicPoll.options.forEach(o => simpleCounts[o.id] = 0);
-        
-        votes.forEach((vote: any) => {
-            const choices = vote.choices || vote.selectedOptionIds || [];
-            choices.forEach((id: string) => {
-                if (simpleCounts[id] !== undefined) {
-                    simpleCounts[id]++;
-                }
-            });
-        });
-
-        console.log('vg-get-public-results: Simple counts:', simpleCounts);
-
-        // Determine winner
-        let winnerId: string | undefined;
-        let maxVotes = 0;
-        Object.entries(simpleCounts).forEach(([id, count]) => {
-            if (count > maxVotes) {
-                maxVotes = count;
-                winnerId = id;
-            }
-        });
+        console.log('vg-get-public-results: Returning results for pollType:', pollType);
 
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-                poll: publicPoll,
-                results: {
-                    votes: publicVotes,
-                    simpleCounts,
-                    winnerId,
-                    totalVotes: votes.length,
-                    ratingResults, // Include rating results
-                    // Include survey responses for survey types
-                    // Check ALL possible locations for survey answers
-                    surveyResponses: (() => {
-                        const isSurveyType = (pollData as any).isSurvey || pollData.type === 'survey' || (pollData as any).pollType === 'survey' || (pollData as any).sections?.length > 0;
-                        
-                        if (!isSurveyType) {
-                            return [];
-                        }
-                        
-                        console.log('=== Building surveyResponses ===');
-                        console.log('Total votes to check:', votes.length);
-                        
-                        const surveyResponses: any[] = [];
-                        
-                        // Check each vote for survey answers
-                        for (const vote of votes) {
-                            const voteKeys = Object.keys(vote);
-                            console.log(`Vote ${vote.id} keys:`, voteKeys);
-                            
-                            let answers: Record<string, any> = {};
-                            
-                            // Method 1: vote.surveyAnswers
-                            if (vote.surveyAnswers && typeof vote.surveyAnswers === 'object') {
-                                answers = vote.surveyAnswers;
-                                console.log('Found surveyAnswers:', Object.keys(answers));
-                            }
-                            // Method 2: vote.answers
-                            else if (vote.answers && typeof vote.answers === 'object') {
-                                answers = vote.answers;
-                                console.log('Found answers:', Object.keys(answers));
-                            }
-                            // Method 3: Look for q_ prefixed keys directly on vote
-                            else {
-                                for (const key of voteKeys) {
-                                    if (key.startsWith('q_') || key.match(/^[a-f0-9]{8,}/i)) {
-                                        answers[key] = vote[key];
-                                    }
-                                }
-                                if (Object.keys(answers).length > 0) {
-                                    console.log('Found answers in vote root:', Object.keys(answers));
-                                }
-                            }
-                            
-                            // If we found any answers, add to surveyResponses
-                            if (Object.keys(answers).length > 0) {
-                                surveyResponses.push({
-                                    id: vote.id,
-                                    answers: answers,
-                                    submittedAt: vote.votedAt || vote.timestamp || vote.createdAt
-                                });
-                            }
-                        }
-                        
-                        // Also check dedicated surveyResponses array on pollData
-                        const dedicated = (pollData as any).surveyResponses || [];
-                        if (dedicated.length > 0) {
-                            console.log('Found dedicated surveyResponses array:', dedicated.length);
-                            for (const r of dedicated) {
-                                const ans = r.answers || r.surveyAnswers || {};
-                                if (Object.keys(ans).length > 0 && !surveyResponses.find(sr => sr.id === r.id)) {
-                                    surveyResponses.push({
-                                        id: r.id,
-                                        answers: ans,
-                                        submittedAt: r.submittedAt
-                                    });
-                                }
-                            }
-                        }
-                        
-                        console.log('Final surveyResponses count:', surveyResponses.length);
-                        if (surveyResponses[0]) {
-                            console.log('First response answer keys:', Object.keys(surveyResponses[0].answers));
-                        }
-                        console.log('=== End surveyResponses build ===');
-                        
-                        return surveyResponses;
-                    })()
-                }
-            })
+            body: JSON.stringify({ poll: publicPoll, results })
         };
+
     } catch (error) {
         console.error('Error fetching public results:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Failed to fetch results' })
-        };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to fetch results' }) };
     }
 };
 

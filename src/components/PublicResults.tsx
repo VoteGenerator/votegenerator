@@ -562,12 +562,12 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
                             <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Star size={18} />} value={processedResults.totalRatings} label="Ratings" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.2} />
-                            <StatCard icon={<Trophy size={18} />} value={processedResults.overallAverage.toFixed(1)} label="Average" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.3} />
+                            <StatCard icon={<Star size={18} />} value={processedResults.totalRatings ?? 0} label="Ratings" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.2} />
+                            <StatCard icon={<Trophy size={18} />} value={(processedResults.overallAverage ?? 0).toFixed(1)} label="Average" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.3} />
                             <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
                         </div>
                         
-                        {processedResults.totalRatings > 0 && (
+                        {(processedResults.totalRatings ?? 0) > 0 && (
                             <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6 sm:mb-8">
                                 <div className="relative">
                                     <motion.div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl blur-2xl print:hidden" animate={{ opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 3, repeat: Infinity }} />
@@ -577,10 +577,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                                 <Star size={14} className="text-white" /><span className="text-white font-bold text-xs uppercase tracking-wider">{processedResults.hasMultipleOptions ? 'Overall' : 'Average'} Rating</span>
                                             </motion.div>
                                             <div className="text-5xl sm:text-7xl font-black bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent mb-3 sm:mb-4 print:text-amber-600">
-                                                <AnimatedNumber value={processedResults.overallAverage} decimals={1} /><span className="text-xl sm:text-3xl text-white/40 print:text-amber-400">/{processedResults.maxRating}</span>
+                                                <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className="text-xl sm:text-3xl text-white/40 print:text-amber-400">/{processedResults.maxRating ?? 5}</span>
                                             </div>
-                                            <StarRating rating={processedResults.overallAverage} max={processedResults.maxRating} size="lg" />
-                                            <div className="mt-3 sm:mt-4 text-white/40 text-xs sm:text-sm print:text-amber-600">Based on {processedResults.totalRatings} rating{processedResults.totalRatings !== 1 ? 's' : ''}</div>
+                                            <StarRating rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" />
+                                            <div className="mt-3 sm:mt-4 text-white/40 text-xs sm:text-sm print:text-amber-600">Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
                                         </div>
                                     </div>
                                 </div>

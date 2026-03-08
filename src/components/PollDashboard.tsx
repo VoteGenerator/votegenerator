@@ -1194,26 +1194,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     // Get current poll status
     const pollStatus = (poll as any).status || 'live';
     
-    // Milestone celebrations
-    const [showCelebration, setShowCelebration] = useState(false);
-    const [celebrationMilestone, setCelebrationMilestone] = useState<number | null>(null);
-    const milestones = [10, 25, 50, 100, 250, 500, 1000];
-    
-    // Check for milestone on mount and vote changes
-    React.useEffect(() => {
-        const lastSeenCount = parseInt(localStorage.getItem(`milestone_${poll.id}`) || '0', 10);
-        const hitMilestone = milestones.find(m => voteCount >= m && lastSeenCount < m);
-        
-        if (hitMilestone) {
-            setCelebrationMilestone(hitMilestone);
-            setShowCelebration(true);
-            localStorage.setItem(`milestone_${poll.id}`, hitMilestone.toString());
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => setShowCelebration(false), 5000);
-        }
-    }, [voteCount, poll.id]);
-    
     // Expiration countdown
     const expirationInfo = useMemo(() => {
         const expiresAt = (poll as any).expiresAt;
@@ -1246,15 +1226,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
             return { expired: false, text: 'Closing soon!', color: 'text-red-600 bg-red-50 animate-pulse' };
         }
     }, [(poll as any).expiresAt]);
-
-    // Stats calculations
-    const velocity = useMemo(() => {
-        if (votes.length === 0) return 0;
-        const now = Date.now();
-        return votes.filter((v: any) => 
-            new Date(v.timestamp).getTime() > now - 24 * 60 * 60 * 1000
-        ).length;
-    }, [votes]);
 
     // Compute first and last vote dates - direct computation to avoid TypeScript inference issues
     const { firstVoteDateDisplay, lastVoteDateDisplay } = useMemo((): { firstVoteDateDisplay: string; lastVoteDateDisplay: string } => {
@@ -4235,29 +4206,6 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                 highlightFeature={upgradeHighlight}
                 source="poll_dashboard"
             />
-            
-            {/* NEW: Milestone Celebration Modal */}
-            <AnimatePresence>
-                {showCelebration && celebrationMilestone && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowCelebration(false)}>
-                        <motion.div initial={{ scale: 0.5, opacity: 0, rotate: -10 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ type: 'spring', damping: 15 }}
-                            className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl text-center" onClick={e => e.stopPropagation()}>
-                            <div className="bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 p-8">
-                                <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 0.5, repeat: Infinity }} className="text-7xl mb-4">🎉</motion.div>
-                                <h2 className="text-3xl font-black text-white mb-2">{celebrationMilestone} Responses!</h2>
-                                <p className="text-white/90">You hit a milestone!</p>
-                            </div>
-                            <div className="p-6">
-                                <p className="text-slate-600 mb-4">{celebrationMilestone >= 100 ? "Amazing! Your poll is taking off! 🚀" : "Great start! Keep sharing!"}</p>
-                                <div className="flex gap-3">
-                                    <button onClick={() => setShowCelebration(false)} className="flex-1 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50">Close</button>
-                                    <button onClick={() => { setShowCelebration(false); setActiveTab('share'); }} className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl flex items-center justify-center gap-2"><Send size={18} />Get More!</button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
         </>
     );

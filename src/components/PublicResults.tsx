@@ -102,13 +102,43 @@ const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label:
     // Use static div during export to avoid animation capture issues
     if (isExporting) {
         return (
-            <div className="relative">
-                <div className="relative bg-white rounded-2xl p-3 sm:p-4 shadow-lg border border-slate-200">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className={`w-9 h-9 sm:w-11 sm:h-11 ${gradient} rounded-xl flex items-center justify-center text-white`}>{icon}</div>
-                        <div className="min-w-0">
-                            <div className="text-xl sm:text-2xl font-black text-slate-800 truncate">{value}</div>
-                            <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold">{label}</div>
+            <div style={{ padding: '4px', overflow: 'visible' }}>
+                <div style={{ 
+                    backgroundColor: '#ffffff', 
+                    borderRadius: '16px', 
+                    padding: '16px', 
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    overflow: 'visible'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'visible' }}>
+                        <div className={`${gradient}`} style={{ 
+                            width: '44px', 
+                            height: '44px', 
+                            borderRadius: '12px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            flexShrink: 0
+                        }}>{icon}</div>
+                        <div style={{ overflow: 'visible', minWidth: 0 }}>
+                            <div style={{ 
+                                fontSize: '24px', 
+                                fontWeight: 900, 
+                                color: '#1e293b', 
+                                lineHeight: '1.3',
+                                paddingTop: '2px',
+                                overflow: 'visible'
+                            }}>{value}</div>
+                            <div style={{ 
+                                fontSize: '10px', 
+                                color: '#64748b', 
+                                textTransform: 'uppercase', 
+                                letterSpacing: '0.1em', 
+                                fontWeight: 700,
+                                marginTop: '2px'
+                            }}>{label}</div>
                         </div>
                     </div>
                 </div>
@@ -134,15 +164,20 @@ const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label:
 };
 
 const StarRating: React.FC<{ rating: number; max?: number; size?: 'sm' | 'md' | 'lg'; darkMode?: boolean; isExporting?: boolean }> = ({ rating, max = 5, size = 'md', darkMode = true, isExporting = false }) => {
+    const sizeMap = { sm: '18px', md: '24px', lg: '32px' };
     const sizeClasses = { sm: 'text-lg', md: 'text-2xl', lg: 'text-3xl sm:text-4xl' };
     const emptyStarClass = darkMode ? 'text-white/20' : 'text-slate-300';
     
-    // Use static rendering during export
+    // Use static rendering during export with inline styles
     if (isExporting) {
         return (
-            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'visible' }}>
                 {Array.from({ length: max }, (_, i) => (
-                    <span key={i} className={`${sizeClasses[size]} ${i < Math.round(rating) ? 'text-amber-400' : 'text-slate-300'}`}>★</span>
+                    <span key={i} style={{ 
+                        fontSize: sizeMap[size], 
+                        color: i < Math.round(rating) ? '#fbbf24' : '#cbd5e1',
+                        lineHeight: 1.2
+                    }}>★</span>
                 ))}
             </div>
         );
@@ -669,30 +704,85 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         </div>
                         
                         {(processedResults.totalRatings ?? 0) > 0 && (
-                            <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6 sm:mb-8">
-                                <div className="relative">
-                                    {/* Glow effect - hidden during export and in light mode */}
-                                    {!isExporting && isDark && (
-                                        <motion.div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl blur-2xl print:hidden export-ignore" animate={{ opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 3, repeat: Infinity }} />
-                                    )}
-                                    <div className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl p-1 shadow-xl">
-                                        <div 
-                                            className="rounded-[22px] p-5 sm:p-8 text-center print:bg-amber-50"
-                                            style={{ backgroundColor: isDark ? (isExporting ? '#0f172a' : 'rgba(15,23,42,0.95)') : '#fffbeb' }}
-                                        >
-                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8, type: "spring" }} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full mb-4">
-                                                <Star size={14} className="text-white" /><span className="text-white font-bold text-xs uppercase tracking-wider">{processedResults.hasMultipleOptions ? 'Overall' : 'Average'} Rating</span>
-                                            </motion.div>
-                                            {/* Rating number */}
-                                            <div className={`text-5xl sm:text-7xl font-black mb-3 sm:mb-4 ${isExporting || !isDark ? 'text-amber-500' : 'bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent'} print:text-amber-600`}>
-                                                <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className={`text-xl sm:text-3xl ${isDark ? (isExporting ? 'text-amber-200' : 'text-white/40') : 'text-amber-300'} print:text-amber-400`}>/{processedResults.maxRating ?? 5}</span>
+                            isExporting ? (
+                                // Static version for export
+                                <div style={{ marginBottom: '32px' }}>
+                                    <div style={{ position: 'relative' }}>
+                                        <div style={{ 
+                                            background: 'linear-gradient(to right, #fbbf24, #facc15, #fbbf24)', 
+                                            borderRadius: '24px', 
+                                            padding: '4px',
+                                            boxShadow: '0 10px 25px rgba(251, 191, 36, 0.3)'
+                                        }}>
+                                            <div style={{ 
+                                                backgroundColor: isDark ? '#0f172a' : '#fffbeb',
+                                                borderRadius: '22px', 
+                                                padding: '32px', 
+                                                textAlign: 'center'
+                                            }}>
+                                                <div style={{ 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '8px', 
+                                                    padding: '6px 16px', 
+                                                    background: 'linear-gradient(to right, #f59e0b, #eab308)', 
+                                                    borderRadius: '9999px', 
+                                                    marginBottom: '16px' 
+                                                }}>
+                                                    <Star size={14} style={{ color: 'white' }} />
+                                                    <span style={{ color: 'white', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                        {processedResults.hasMultipleOptions ? 'Overall' : 'Average'} Rating
+                                                    </span>
+                                                </div>
+                                                <div style={{ 
+                                                    fontSize: '56px', 
+                                                    fontWeight: 900, 
+                                                    color: '#f59e0b',
+                                                    lineHeight: 1.1,
+                                                    marginBottom: '16px'
+                                                }}>
+                                                    {(processedResults.overallAverage ?? 0).toFixed(1)}
+                                                    <span style={{ fontSize: '24px', color: isDark ? '#fcd34d' : '#fbbf24' }}>/{processedResults.maxRating ?? 5}</span>
+                                                </div>
+                                                <StarRating isExporting={isExporting} rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
+                                                <div style={{ 
+                                                    marginTop: '16px', 
+                                                    fontSize: '14px', 
+                                                    color: isDark ? 'rgba(255,255,255,0.4)' : '#d97706'
+                                                }}>
+                                                    Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}
+                                                </div>
                                             </div>
-                                            <StarRating isExporting={isExporting} rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
-                                            <div className={`mt-3 sm:mt-4 text-xs sm:text-sm print:text-amber-600 ${isDark ? 'text-white/40' : 'text-amber-600'}`}>Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
                                         </div>
                                     </div>
                                 </div>
-                            </motion.div>
+                            ) : (
+                                // Animated version for normal view
+                                <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6 sm:mb-8">
+                                    <div className="relative">
+                                        {/* Glow effect - hidden during export and in light mode */}
+                                        {!isExporting && isDark && (
+                                            <motion.div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl blur-2xl print:hidden export-ignore" animate={{ opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 3, repeat: Infinity }} />
+                                        )}
+                                        <div className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl p-1 shadow-xl">
+                                            <div 
+                                                className="rounded-[22px] p-5 sm:p-8 text-center print:bg-amber-50"
+                                                style={{ backgroundColor: isDark ? (isExporting ? '#0f172a' : 'rgba(15,23,42,0.95)') : '#fffbeb' }}
+                                            >
+                                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8, type: "spring" }} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full mb-4">
+                                                    <Star size={14} className="text-white" /><span className="text-white font-bold text-xs uppercase tracking-wider">{processedResults.hasMultipleOptions ? 'Overall' : 'Average'} Rating</span>
+                                                </motion.div>
+                                                {/* Rating number */}
+                                                <div className={`text-5xl sm:text-7xl font-black mb-3 sm:mb-4 ${isExporting || !isDark ? 'text-amber-500' : 'bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent'} print:text-amber-600`}>
+                                                    <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className={`text-xl sm:text-3xl ${isDark ? (isExporting ? 'text-amber-200' : 'text-white/40') : 'text-amber-300'} print:text-amber-400`}>/{processedResults.maxRating ?? 5}</span>
+                                                </div>
+                                                <StarRating isExporting={isExporting} rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
+                                                <div className={`mt-3 sm:mt-4 text-xs sm:text-sm print:text-amber-600 ${isDark ? 'text-white/40' : 'text-amber-600'}`}>Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )
                         )}
                         
                         <motion.div 

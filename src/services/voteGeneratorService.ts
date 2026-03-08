@@ -273,22 +273,15 @@ export const getResults = async (pollId: string, adminKey?: string): Promise<Run
                 ...r,
                 counts: r.counts || r.votes || {}
             }));
-            // Ensure all ratingStats have stdDev
-            const ratingStats = data.ratingStats?.map((s: any) => ({
-                ...s,
-                stdDev: s.stdDev ?? 0
-            }));
-            // Ensure all budgetStats have totalValue and totalQuantity
-            const budgetStats = data.budgetStats?.map((s: any) => ({
-                ...s,
-                totalValue: s.totalValue ?? s.totalSpent ?? 0,
-                totalQuantity: s.totalQuantity ?? s.purchaseCount ?? 0
-            }));
-            // Ensure all pairwiseScores have matches
-            const pairwiseScores = data.pairwiseScores?.map((s: any) => ({
-                ...s,
-                matches: s.matches ?? ((s.wins || 0) + (s.losses || 0))
-            }));
+            // ratingStats is an object keyed by optionId, not an array
+            // Just pass through directly - no transformation needed
+            const ratingStats = data.ratingStats || undefined;
+            
+            // budgetStats is also an object keyed by optionId
+            const budgetStats = data.budgetStats || undefined;
+            
+            // pairwiseScores is also an object keyed by optionId
+            const pairwiseScores = data.pairwiseScores || undefined;
             // Ensure all comments have required fields
             const comments: Comment[] = (data.comments || []).map((c: any) => ({
                 name: c.name || c.voterName || 'Anonymous',

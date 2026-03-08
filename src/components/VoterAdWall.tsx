@@ -1,6 +1,6 @@
 // ============================================================================
-// VoterAdWall.tsx - Ad wall shown to voters after voting (FREE polls only)
-// For polls created by Pro/Business users, show branded transition instead
+// VoterAdWall.tsx - Ad wall shown to voters (FREE polls only)
+// For polls created by Pro/Business users, show fun generating animation
 // Location: src/components/VoterAdWall.tsx
 // ============================================================================
 import React, { useState, useEffect } from 'react';
@@ -8,8 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight, Sparkles, ExternalLink, Clock, Zap } from 'lucide-react';
 
 interface VoterAdWallProps {
-    onContinue: () => void;
+    // Existing interface (backward compatible)
+    variant?: 'before-poll' | 'after-vote';
     pollTitle?: string;
+    onComplete: () => void;
+    countdownSeconds?: number;
     // NEW: Pass the poll creator's tier to determine if ads should show
     creatorTier?: 'free' | 'pro' | 'business';
     // Alternative: Pass hideBranding directly from poll settings
@@ -19,7 +22,13 @@ interface VoterAdWallProps {
 }
 
 // Fun generating messages for paid users
-const generatingMessages = [
+const generatingMessagesBefore = [
+    { text: "Preparing your poll...", icon: "📋" },
+    { text: "Loading options...", icon: "✨" },
+    { text: "Almost ready...", icon: "🚀" },
+];
+
+const generatingMessagesAfter = [
     { text: "Recording your vote...", icon: "✓" },
     { text: "Crunching the numbers...", icon: "🔢" },
     { text: "Tallying all responses...", icon: "📊" },
@@ -28,21 +37,26 @@ const generatingMessages = [
 ];
 
 const VoterAdWall: React.FC<VoterAdWallProps> = ({ 
-    onContinue, 
+    variant = 'after-vote',
     pollTitle = 'the poll',
+    onComplete,
+    countdownSeconds = 5,
     creatorTier = 'free',
     hideBranding = false,
     redirectUrl
 }) => {
-    const [countdown, setCountdown] = useState(5);
+    const [countdown, setCountdown] = useState(countdownSeconds);
     const [canContinue, setCanContinue] = useState(false);
     const [messageIndex, setMessageIndex] = useState(0);
     
     // Determine if this is a paid poll (no ads)
     const isPaidPoll = creatorTier === 'pro' || creatorTier === 'business' || hideBranding;
     
-    // For paid polls, show fun generating messages (3 seconds feels premium but quick)
-    const waitTime = isPaidPoll ? 3 : 5;
+    // For paid polls, shorter wait time (3 seconds with fun messages)
+    const waitTime = isPaidPoll ? 3 : countdownSeconds;
+    
+    // Choose messages based on variant
+    const generatingMessages = variant === 'before-poll' ? generatingMessagesBefore : generatingMessagesAfter;
     
     useEffect(() => {
         setCountdown(waitTime);
@@ -71,13 +85,13 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
         
         const messageTimer = setInterval(() => {
             setMessageIndex(prev => (prev + 1) % generatingMessages.length);
-        }, 600); // Change message every 600ms
+        }, 600);
         
         return () => clearInterval(messageTimer);
-    }, [isPaidPoll]);
+    }, [isPaidPoll, generatingMessages.length]);
     
     // ========================================================================
-    // PAID POLL: Show branded transition (no ads)
+    // PAID POLL: Show fun generating animation (no ads)
     // ========================================================================
     if (isPaidPoll) {
         return (
@@ -87,14 +101,22 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     className="max-w-md w-full text-center"
                 >
-                    {/* Success Animation */}
+                    {/* Success/Loading Animation */}
                     <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', damping: 15, delay: 0.2 }}
-                        className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-200"
+                        className={`w-24 h-24 mx-auto mb-6 ${
+                            variant === 'after-vote' 
+                                ? 'bg-gradient-to-br from-emerald-400 to-teal-500' 
+                                : 'bg-gradient-to-br from-indigo-400 to-purple-500'
+                        } rounded-full flex items-center justify-center shadow-xl`}
                     >
-                        <CheckCircle size={48} className="text-white" />
+                        {variant === 'after-vote' ? (
+                            <CheckCircle size={48} className="text-white" />
+                        ) : (
+                            <Sparkles size={48} className="text-white" />
+                        )}
                     </motion.div>
                     
                     <motion.h1
@@ -103,7 +125,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                         transition={{ delay: 0.4 }}
                         className="text-3xl font-bold text-slate-800 mb-3"
                     >
-                        Vote Recorded!
+                        {variant === 'after-vote' ? 'Vote Recorded!' : 'One Moment...'}
                     </motion.h1>
                     
                     <motion.p
@@ -112,7 +134,10 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                         transition={{ delay: 0.5 }}
                         className="text-slate-600 mb-6"
                     >
-                        Thank you for participating in {pollTitle}
+                        {variant === 'after-vote' 
+                            ? `Thank you for participating in ${pollTitle}` 
+                            : `Loading ${pollTitle}`
+                        }
                     </motion.p>
                     
                     {/* Fun generating messages while waiting */}
@@ -128,7 +153,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                                     className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full"
                                     initial={{ width: '0%' }}
                                     animate={{ width: '100%' }}
-                                    transition={{ duration: 3, ease: 'easeInOut' }}
+                                    transition={{ duration: waitTime, ease: 'easeInOut' }}
                                 />
                             </div>
                             
@@ -157,10 +182,10 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                             <motion.button
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                onClick={onContinue}
+                                onClick={onComplete}
                                 className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto"
                             >
-                                View Results
+                                {variant === 'after-vote' ? 'View Results' : 'Continue to Poll'}
                                 <ArrowRight size={20} />
                             </motion.button>
                         )}
@@ -191,8 +216,17 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
             <div className="bg-white border-b border-slate-200 px-4 py-3">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <CheckCircle size={20} className="text-emerald-500" />
-                        <span className="font-semibold text-slate-700">Vote Submitted!</span>
+                        {variant === 'after-vote' ? (
+                            <>
+                                <CheckCircle size={20} className="text-emerald-500" />
+                                <span className="font-semibold text-slate-700">Vote Submitted!</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles size={20} className="text-indigo-500" />
+                                <span className="font-semibold text-slate-700">Loading Poll...</span>
+                            </>
+                        )}
                     </div>
                     {!canContinue && (
                         <div className="flex items-center gap-2 text-slate-500">
@@ -206,20 +240,32 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
             {/* Main Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-4">
                 <div className="max-w-lg w-full">
-                    {/* Success message */}
+                    {/* Success/Loading message */}
                     <div className="text-center mb-8">
                         <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center"
+                            className={`w-16 h-16 mx-auto mb-4 ${
+                                variant === 'after-vote' ? 'bg-emerald-100' : 'bg-indigo-100'
+                            } rounded-full flex items-center justify-center`}
                         >
-                            <CheckCircle size={32} className="text-emerald-600" />
+                            {variant === 'after-vote' ? (
+                                <CheckCircle size={32} className="text-emerald-600" />
+                            ) : (
+                                <Sparkles size={32} className="text-indigo-600" />
+                            )}
                         </motion.div>
                         <h2 className="text-xl font-bold text-slate-800 mb-2">
-                            Your vote has been recorded
+                            {variant === 'after-vote' 
+                                ? 'Your vote has been recorded' 
+                                : 'Preparing your poll'
+                            }
                         </h2>
                         <p className="text-slate-500 text-sm">
-                            Results will be available in a moment
+                            {variant === 'after-vote' 
+                                ? 'Results will be available in a moment' 
+                                : 'Please wait a moment'
+                            }
                         </p>
                     </div>
                     
@@ -266,7 +312,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                     
                     {/* Continue button */}
                     <motion.button
-                        onClick={onContinue}
+                        onClick={onComplete}
                         disabled={!canContinue}
                         className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
                             canContinue
@@ -276,7 +322,7 @@ const VoterAdWall: React.FC<VoterAdWallProps> = ({
                     >
                         {canContinue ? (
                             <>
-                                View Results
+                                {variant === 'after-vote' ? 'View Results' : 'Continue to Poll'}
                                 <ArrowRight size={20} />
                             </>
                         ) : (

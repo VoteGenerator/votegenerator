@@ -187,6 +187,17 @@ export const handler: Handler = async (event) => {
                 security: poll.settings?.security || 'none',
                 allowComments: poll.settings?.allowComments || false,
                 anonymousMode: poll.settings?.anonymousMode || false,
+                // Public Results settings (admin-accessible)
+                publicResults: poll.settings?.publicResults || false,
+                showShareButton: poll.settings?.showShareButton || false,
+                allowedViews: poll.settings?.allowedViews || ['bar', 'pie'],
+                showSocialShare: poll.settings?.showSocialShare !== false,
+                // Other settings
+                deadline: poll.settings?.deadline,
+                timezone: poll.settings?.timezone,
+                dotBudget: poll.settings?.dotBudget,
+                budgetLimit: poll.settings?.budgetLimit,
+                redirectUrl: poll.settings?.redirectUrl,
             },
             voteCount: poll.voteCount || poll.votes?.length || 0,
             responseCount: poll.responseCount || poll.voteCount || poll.votes?.length || 0,

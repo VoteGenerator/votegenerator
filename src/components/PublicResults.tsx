@@ -96,27 +96,58 @@ const ConfettiExplosion: React.FC<{ show: boolean }> = ({ show }) => {
     );
 };
 
-const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label: string; gradient: string; delay?: number }> = ({ 
-    icon, value, label, gradient, delay = 0 
-}) => (
-    <motion.div initial={{ opacity: 0, y: 40, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className="relative group cursor-default print:!opacity-100 print:!transform-none">
-        <div className={`absolute inset-0 ${gradient} rounded-2xl blur-2xl opacity-30 group-hover:opacity-50 transition-all duration-500 print:hidden`} />
-        <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-2xl border border-white/50 print:shadow-none print:border-gray-200">
-            <div className="flex items-center gap-2 sm:gap-3">
-                <div className={`w-9 h-9 sm:w-11 sm:h-11 ${gradient} rounded-xl flex items-center justify-center text-white shadow-lg print:shadow-none`}>{icon}</div>
-                <div className="min-w-0">
-                    <div className="text-xl sm:text-2xl font-black text-slate-800 truncate">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold">{label}</div>
+const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label: string; gradient: string; delay?: number; isExporting?: boolean }> = ({ 
+    icon, value, label, gradient, delay = 0, isExporting = false 
+}) => {
+    // Use static div during export to avoid animation capture issues
+    if (isExporting) {
+        return (
+            <div className="relative">
+                <div className="relative bg-white rounded-2xl p-3 sm:p-4 shadow-lg border border-slate-200">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className={`w-9 h-9 sm:w-11 sm:h-11 ${gradient} rounded-xl flex items-center justify-center text-white`}>{icon}</div>
+                        <div className="min-w-0">
+                            <div className="text-xl sm:text-2xl font-black text-slate-800 truncate">{value}</div>
+                            <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold">{label}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </motion.div>
-);
+        );
+    }
+    
+    return (
+        <motion.div initial={{ opacity: 0, y: 40, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className="relative group cursor-default print:!opacity-100 print:!transform-none">
+            <div className={`absolute inset-0 ${gradient} rounded-2xl blur-2xl opacity-30 group-hover:opacity-50 transition-all duration-500 print:hidden`} />
+            <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-2xl border border-white/50 print:shadow-none print:border-gray-200">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 ${gradient} rounded-xl flex items-center justify-center text-white shadow-lg print:shadow-none`}>{icon}</div>
+                    <div className="min-w-0">
+                        <div className="text-xl sm:text-2xl font-black text-slate-800 truncate">{typeof value === 'number' ? <AnimatedNumber value={value} /> : value}</div>
+                        <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-bold">{label}</div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
 
-const StarRating: React.FC<{ rating: number; max?: number; size?: 'sm' | 'md' | 'lg'; darkMode?: boolean }> = ({ rating, max = 5, size = 'md', darkMode = true }) => {
+const StarRating: React.FC<{ rating: number; max?: number; size?: 'sm' | 'md' | 'lg'; darkMode?: boolean; isExporting?: boolean }> = ({ rating, max = 5, size = 'md', darkMode = true, isExporting = false }) => {
     const sizeClasses = { sm: 'text-lg', md: 'text-2xl', lg: 'text-3xl sm:text-4xl' };
     const emptyStarClass = darkMode ? 'text-white/20' : 'text-slate-300';
+    
+    // Use static rendering during export
+    if (isExporting) {
+        return (
+            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                {Array.from({ length: max }, (_, i) => (
+                    <span key={i} className={`${sizeClasses[size]} ${i < Math.round(rating) ? 'text-amber-400' : 'text-slate-300'}`}>★</span>
+                ))}
+            </div>
+        );
+    }
+    
     return (
         <div className="flex items-center justify-center gap-0.5 sm:gap-1">
             {Array.from({ length: max }, (_, i) => (
@@ -631,10 +662,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'rating' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Star size={18} />} value={processedResults.totalRatings ?? 0} label="Ratings" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.2} />
-                            <StatCard icon={<Trophy size={18} />} value={(processedResults.overallAverage ?? 0).toFixed(1)} label="Average" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.3} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<Star size={18} />} value={processedResults.totalRatings ?? 0} label="Ratings" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Trophy size={18} />} value={(processedResults.overallAverage ?? 0).toFixed(1)} label="Average" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
                         </div>
                         
                         {(processedResults.totalRatings ?? 0) > 0 && (
@@ -656,7 +687,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             <div className={`text-5xl sm:text-7xl font-black mb-3 sm:mb-4 ${isExporting || !isDark ? 'text-amber-500' : 'bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent'} print:text-amber-600`}>
                                                 <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className={`text-xl sm:text-3xl ${isDark ? (isExporting ? 'text-amber-200' : 'text-white/40') : 'text-amber-300'} print:text-amber-400`}>/{processedResults.maxRating ?? 5}</span>
                                             </div>
-                                            <StarRating rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
+                                            <StarRating isExporting={isExporting} rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
                                             <div className={`mt-3 sm:mt-4 text-xs sm:text-sm print:text-amber-600 ${isDark ? 'text-white/40' : 'text-amber-600'}`}>Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
                                         </div>
                                     </div>
@@ -680,7 +711,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                     {processedResults.hasMultipleOptions && (
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                                             <span className={`font-bold text-sm sm:text-lg print:text-slate-900 ${theme.text}`}>{option.text}</span>
-                                            <div className="flex items-center gap-2"><StarRating rating={option.average} max={option.maxRating} size="sm" darkMode={isDark} /><span className="text-amber-500 font-bold text-lg">{option.average.toFixed(1)}</span></div>
+                                            <div className="flex items-center gap-2"><StarRating isExporting={isExporting} rating={option.average} max={option.maxRating} size="sm" darkMode={isDark} /><span className="text-amber-500 font-bold text-lg">{option.average.toFixed(1)}</span></div>
                                         </div>
                                     )}
                                     <div className="space-y-2">
@@ -730,9 +761,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'ranked' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Voters" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<ListOrdered size={18} />} value={processedResults.optionRanks.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Voters" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<ListOrdered size={18} />} value={processedResults.optionRanks.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
                         </div>
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 border border-white/20 mb-6 sm:mb-8 print:bg-white print:border-gray-200">
                             <h3 className="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 print:text-slate-900"><Trophy size={18} className="text-amber-400" />Final Rankings</h3>
@@ -755,9 +786,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'meeting' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Calendar size={18} />} value={processedResults.timeSlots.length} label="Time Slots" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<Calendar size={18} />} value={processedResults.timeSlots.length} label="Time Slots" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
                         </div>
                         {processedResults.bestSlot && processedResults.bestSlot.yes > 0 && (
                             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }} className="mb-6 sm:mb-8 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-3xl p-4 sm:p-6 border border-emerald-500/30 text-center print:bg-emerald-50 print:border-emerald-200">
@@ -793,10 +824,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'rsvp' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<ThumbsUp size={18} />} value={processedResults.attending} label="Attending" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Minus size={18} />} value={processedResults.maybe} label="Maybe" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
-                            <StatCard icon={<ThumbsDown size={18} />} value={processedResults.notAttending} label="Can't Make It" gradient="bg-gradient-to-br from-red-500 to-rose-600" delay={0.4} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Responses" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<ThumbsUp size={18} />} value={processedResults.attending} label="Attending" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Minus size={18} />} value={processedResults.maybe} label="Maybe" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<ThumbsDown size={18} />} value={processedResults.notAttending} label="Can't Make It" gradient="bg-gradient-to-br from-red-500 to-rose-600" delay={0.4} />
                         </div>
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 border border-white/20 mb-6 sm:mb-8 print:bg-white print:border-gray-200">
                             <div className="h-6 sm:h-8 flex rounded-full overflow-hidden mb-4">
@@ -823,9 +854,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'pairwise' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Voters" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Vote size={18} />} value={processedResults.totalComparisons} label="Comparisons" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Voters" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<Vote size={18} />} value={processedResults.totalComparisons} label="Comparisons" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.3} />
                         </div>
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 border border-white/20 mb-6 sm:mb-8 print:bg-white print:border-gray-200">
                             <h3 className="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 print:text-slate-900"><Trophy size={18} className="text-amber-400" />Win Rankings</h3>
@@ -858,10 +889,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'visual' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Votes" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Image size={18} />} value={processedResults.sortedOptions.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Trophy size={18} />} value={`${Math.round(processedResults.winner?.percentage || 0)}%`} label="Leader" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Votes" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<Image size={18} />} value={processedResults.sortedOptions.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Trophy size={18} />} value={`${Math.round(processedResults.winner?.percentage || 0)}%`} label="Leader" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
                         </div>
                         
                         {processedResults.winner && processedResults.totalVotes > 0 && processedResults.winner.imageUrl && (
@@ -910,10 +941,10 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {processedResults.type === 'multiple-choice' && (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
-                            <StatCard icon={<Users size={18} />} value={processedResults.totalVotes} label="Votes" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
-                            <StatCard icon={<Vote size={18} />} value={processedResults.sortedOptions.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
-                            <StatCard icon={<Trophy size={18} />} value={`${Math.round(processedResults.winner?.percentage || 0)}%`} label="Leader" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
-                            <StatCard icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
+                            <StatCard isExporting={isExporting} icon={<Users size={18} />} value={processedResults.totalVotes} label="Votes" gradient="bg-gradient-to-br from-indigo-500 to-purple-600" delay={0.1} />
+                            <StatCard isExporting={isExporting} icon={<Vote size={18} />} value={processedResults.sortedOptions.length} label="Options" gradient="bg-gradient-to-br from-emerald-500 to-teal-600" delay={0.2} />
+                            <StatCard isExporting={isExporting} icon={<Trophy size={18} />} value={`${Math.round(processedResults.winner?.percentage || 0)}%`} label="Leader" gradient="bg-gradient-to-br from-amber-500 to-orange-600" delay={0.3} />
+                            <StatCard isExporting={isExporting} icon={<Sparkles size={18} />} value="Live" label="Status" gradient="bg-gradient-to-br from-pink-500 to-rose-600" delay={0.4} />
                         </div>
                         
                         {processedResults.winner && processedResults.totalVotes > 0 && (

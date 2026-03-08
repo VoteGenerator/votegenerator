@@ -10,7 +10,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
     Trophy, Users, BarChart3, PieChart, Share2, Copy, Check, Twitter, Linkedin, Facebook,
     Sparkles, Vote, Crown, ArrowRight, Eye, Clock, Zap, Star, Calendar, ThumbsUp, ThumbsDown,
-    Minus, ListOrdered, Image, Download, Code, Printer, RefreshCw, ExternalLink, X
+    Minus, ListOrdered, Image, Download, Code, Printer, RefreshCw, ExternalLink, X, Sun, Moon
 } from 'lucide-react';
 
 // ============================================================================
@@ -114,14 +114,15 @@ const StatCard: React.FC<{ icon: React.ReactNode; value: string | number; label:
     </motion.div>
 );
 
-const StarRating: React.FC<{ rating: number; max?: number; size?: 'sm' | 'md' | 'lg' }> = ({ rating, max = 5, size = 'md' }) => {
+const StarRating: React.FC<{ rating: number; max?: number; size?: 'sm' | 'md' | 'lg'; darkMode?: boolean }> = ({ rating, max = 5, size = 'md', darkMode = true }) => {
     const sizeClasses = { sm: 'text-lg', md: 'text-2xl', lg: 'text-3xl sm:text-4xl' };
+    const emptyStarClass = darkMode ? 'text-white/20' : 'text-slate-300';
     return (
         <div className="flex items-center justify-center gap-0.5 sm:gap-1">
             {Array.from({ length: max }, (_, i) => (
                 <motion.span key={i} initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }}
                     transition={{ delay: 0.3 + i * 0.1, type: "spring" }}
-                    className={`${sizeClasses[size]} ${i < Math.round(rating) ? 'text-amber-400' : 'text-white/20 print:text-gray-300'}`}>★</motion.span>
+                    className={`${sizeClasses[size]} ${i < Math.round(rating) ? 'text-amber-400' : `${emptyStarClass} print:text-gray-300`}`}>★</motion.span>
             ))}
         </div>
     );
@@ -181,8 +182,25 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showEmbedModal, setShowEmbedModal] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isExporting, setIsExporting] = useState(false); // For export-safe styling
+    const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark'); // Theme toggle
     
     const resultsRef = useRef<HTMLDivElement>(null);
+    
+    // Theme colors - dynamic based on colorMode
+    const isDark = colorMode === 'dark';
+    const theme = {
+        bg: isDark ? 'bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950' : 'bg-gradient-to-br from-slate-50 via-white to-indigo-50',
+        cardBg: isDark ? (isExporting ? '#1e293b' : 'rgba(255,255,255,0.1)') : (isExporting ? '#ffffff' : 'rgba(255,255,255,0.9)'),
+        cardBorder: isDark ? (isExporting ? '#334155' : 'rgba(255,255,255,0.2)') : (isExporting ? '#e2e8f0' : 'rgba(0,0,0,0.1)'),
+        text: isDark ? 'text-white' : 'text-slate-900',
+        textMuted: isDark ? 'text-white/60' : 'text-slate-500',
+        textFaint: isDark ? 'text-white/40' : 'text-slate-400',
+        badgeBg: isDark ? (isExporting ? '#334155' : 'rgba(255,255,255,0.1)') : (isExporting ? '#f1f5f9' : 'rgba(0,0,0,0.05)'),
+        inputBg: isDark ? 'bg-white/10' : 'bg-slate-100',
+        ratingCardBg: isDark ? 'bg-slate-900/95' : 'bg-white',
+        barTrack: isDark ? (isExporting ? '#334155' : 'rgba(255,255,255,0.05)') : (isExporting ? '#e2e8f0' : 'rgba(0,0,0,0.05)'),
+    };
     
     const isFreeTier = poll?.tier === 'free' || !poll?.tier;
     const isSurvey = poll?.isSurvey || poll?.type === 'survey' || poll?.pollType === 'survey' || poll?.sections?.length > 0;
@@ -245,6 +263,11 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
     const downloadAsPng = async () => {
         if (!resultsRef.current) return;
         setIsDownloading(true);
+        setIsExporting(true); // Enable export-safe styles
+        
+        // Wait for React to re-render with export-safe styles
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         try {
             // Load html2canvas from CDN if not already loaded
             let html2canvas = (window as any).html2canvas;
@@ -260,10 +283,17 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             }
             
             const canvas = await html2canvas(resultsRef.current, {
-                backgroundColor: '#1e1b4b',
+                backgroundColor: isDark ? '#1e1b4b' : '#f8fafc',
                 scale: 2,
                 logging: false,
-                useCORS: true
+                useCORS: true,
+                allowTaint: true,
+                // Ignore elements that cause issues
+                ignoreElements: (element: Element) => {
+                    return element.classList?.contains('export-ignore') || 
+                           element.tagName === 'BUTTON' ||
+                           element.classList?.contains('blur-2xl');
+                }
             });
             const link = document.createElement('a');
             link.download = `${poll?.title?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'results'}-${pollId}.png`;
@@ -273,6 +303,7 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
             console.error('Failed to download:', err);
             alert('Download failed. Please try again.');
         } finally {
+            setIsExporting(false); // Restore normal styles
             setIsDownloading(false);
         }
     };
@@ -485,58 +516,97 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 {showEmbedModal && <EmbedModal pollId={pollId} onClose={() => setShowEmbedModal(false)} />}
             </AnimatePresence>
             
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 print:bg-white relative overflow-hidden">
-                <FloatingParticles />
+            <div className={`min-h-screen ${theme.bg} print:bg-white relative overflow-hidden transition-colors duration-500`}>
+                {isDark && <FloatingParticles />}
                 <ConfettiExplosion show={showConfetti} />
                 
-                <div className="absolute inset-0 overflow-hidden pointer-events-none print:hidden">
-                    <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/20 rounded-full blur-[120px]" />
-                    <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-500/20 rounded-full blur-[120px]" />
-                </div>
+                {/* Background glow effects - only in dark mode */}
+                {isDark && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none print:hidden">
+                        <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-indigo-500/20 rounded-full blur-[120px]" />
+                        <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-500/20 rounded-full blur-[120px]" />
+                    </div>
+                )}
+                {/* Light mode subtle pattern */}
+                {!isDark && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none print:hidden opacity-50">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100 rounded-full blur-[100px]" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-100 rounded-full blur-[100px]" />
+                    </div>
+                )}
                 
                 <div className="relative z-10 max-w-4xl mx-auto px-4 py-6 sm:py-12" ref={resultsRef}>
-                    {/* TOOLBAR - Auto-refresh indicator, Download, Embed, Print */}
-                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} 
-                        className="flex flex-wrap items-center justify-between gap-3 mb-6 print:hidden">
-                        {/* Live indicator */}
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-white/60">
-                            <motion.div animate={{ scale: isRefreshing ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.5 }}>
-                                <RefreshCw size={14} className={`${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
-                            </motion.div>
-                            <span>Updated {formatTimeAgo(secondsAgo)}</span>
-                            <span className="text-white/30">• Auto-refreshes</span>
-                        </div>
-                        
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-2">
-                            <button onClick={downloadAsPng} disabled={isDownloading}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50">
-                                {isDownloading ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
-                                <span className="hidden sm:inline">{isDownloading ? 'Saving...' : 'Save PNG'}</span>
-                            </button>
-                            <button onClick={() => setShowEmbedModal(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs sm:text-sm font-medium transition-colors">
-                                <Code size={14} /><span className="hidden sm:inline">Embed</span>
-                            </button>
-                            <button onClick={printResults}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white/80 text-xs sm:text-sm font-medium transition-colors">
-                                <Printer size={14} /><span className="hidden sm:inline">Print</span>
-                            </button>
-                        </div>
-                    </motion.div>
+                    {/* TOOLBAR - Theme toggle, Auto-refresh, Download, Embed, Print - Hidden during export */}
+                    {!isExporting && (
+                        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} 
+                            className="flex flex-wrap items-center justify-between gap-3 mb-6 print:hidden">
+                            {/* Left side: Theme toggle + Live indicator */}
+                            <div className="flex items-center gap-3">
+                                {/* Theme Toggle - Beautiful pill design */}
+                                <div className={`flex items-center p-1 rounded-full ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                                    <button 
+                                        onClick={() => setColorMode('light')}
+                                        className={`p-2 rounded-full transition-all ${!isDark ? 'bg-white shadow-md text-amber-500' : 'text-white/50 hover:text-white/80'}`}
+                                        title="Light mode"
+                                    >
+                                        <Sun size={14} />
+                                    </button>
+                                    <button 
+                                        onClick={() => setColorMode('dark')}
+                                        className={`p-2 rounded-full transition-all ${isDark ? 'bg-indigo-500 shadow-md text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                                        title="Dark mode"
+                                    >
+                                        <Moon size={14} />
+                                    </button>
+                                </div>
+                                
+                                {/* Live indicator */}
+                                <div className={`flex items-center gap-2 text-xs sm:text-sm ${theme.textMuted}`}>
+                                    <motion.div animate={{ scale: isRefreshing ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.5 }}>
+                                        <RefreshCw size={14} className={`${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
+                                    </motion.div>
+                                    <span>Updated {formatTimeAgo(secondsAgo)}</span>
+                                    <span className={theme.textFaint}>• Auto-refreshes</span>
+                                </div>
+                            </div>
+                            
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2">
+                                <button onClick={downloadAsPng} disabled={isDownloading}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 ${isDark ? 'bg-white/10 hover:bg-white/20 text-white/80' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}>
+                                    {isDownloading ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
+                                    <span className="hidden sm:inline">{isDownloading ? 'Saving...' : 'Save PNG'}</span>
+                                </button>
+                                <button onClick={() => setShowEmbedModal(true)}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${isDark ? 'bg-white/10 hover:bg-white/20 text-white/80' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}>
+                                    <Code size={14} /><span className="hidden sm:inline">Embed</span>
+                                </button>
+                                <button onClick={printResults}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${isDark ? 'bg-white/10 hover:bg-white/20 text-white/80' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}>
+                                    <Printer size={14} /><span className="hidden sm:inline">Print</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
                     
                     {/* HEADER */}
                     <motion.header className="text-center mb-6 sm:mb-8" initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }}>
-                        <motion.div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-4 sm:mb-5 print:bg-indigo-100 print:border-indigo-200">
-                            <motion.div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-400 rounded-full print:bg-emerald-500" animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
-                            <span className="text-white/90 text-xs sm:text-sm font-semibold print:text-indigo-700">Live Results</span>
+                        <motion.div 
+                            className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border mb-4 sm:mb-5 print:bg-indigo-100 print:border-indigo-200`}
+                            style={{ 
+                                backgroundColor: theme.badgeBg,
+                                borderColor: theme.cardBorder
+                            }}
+                        >
+                            <motion.div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-400 rounded-full print:bg-emerald-500" animate={isExporting ? {} : { scale: [1, 1.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
+                            <span className={`text-xs sm:text-sm font-semibold print:text-indigo-700 ${isDark ? 'text-white/90' : 'text-slate-700'}`}>Live Results</span>
                         </motion.div>
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-2 sm:mb-3 leading-tight px-2 print:text-slate-900">{poll.title}</h1>
-                        {poll.description && <p className="text-sm sm:text-lg text-white/50 max-w-xl mx-auto px-4 print:text-slate-600">{poll.description}</p>}
+                        <h1 className={`text-2xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-3 leading-tight px-2 print:text-slate-900 ${theme.text}`}>{poll.title}</h1>
+                        {poll.description && <p className={`text-sm sm:text-lg max-w-xl mx-auto px-4 print:text-slate-600 ${theme.textMuted}`}>{poll.description}</p>}
                     </motion.header>
                     
-                    {/* VOTE NOW CTA - If poll is still open */}
-                    {isPollOpen && (
+                    {/* VOTE NOW CTA - If poll is still open (hidden during export) */}
+                    {isPollOpen && !isExporting && (
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
                             className="mb-6 sm:mb-8 print:hidden">
                             <a href={voteUrl} 
@@ -570,31 +640,47 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                         {(processedResults.totalRatings ?? 0) > 0 && (
                             <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6 sm:mb-8">
                                 <div className="relative">
-                                    <motion.div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl blur-2xl print:hidden" animate={{ opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 3, repeat: Infinity }} />
-                                    <div className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl p-1">
-                                        <div className="bg-slate-900/95 rounded-[22px] p-5 sm:p-8 text-center print:bg-amber-50">
+                                    {/* Glow effect - hidden during export and in light mode */}
+                                    {!isExporting && isDark && (
+                                        <motion.div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl blur-2xl print:hidden export-ignore" animate={{ opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 3, repeat: Infinity }} />
+                                    )}
+                                    <div className="relative bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-3xl p-1 shadow-xl">
+                                        <div 
+                                            className="rounded-[22px] p-5 sm:p-8 text-center print:bg-amber-50"
+                                            style={{ backgroundColor: isDark ? (isExporting ? '#0f172a' : 'rgba(15,23,42,0.95)') : '#fffbeb' }}
+                                        >
                                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8, type: "spring" }} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full mb-4">
                                                 <Star size={14} className="text-white" /><span className="text-white font-bold text-xs uppercase tracking-wider">{processedResults.hasMultipleOptions ? 'Overall' : 'Average'} Rating</span>
                                             </motion.div>
-                                            <div className="text-5xl sm:text-7xl font-black bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent mb-3 sm:mb-4 print:text-amber-600">
-                                                <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className="text-xl sm:text-3xl text-white/40 print:text-amber-400">/{processedResults.maxRating ?? 5}</span>
+                                            {/* Rating number */}
+                                            <div className={`text-5xl sm:text-7xl font-black mb-3 sm:mb-4 ${isExporting || !isDark ? 'text-amber-500' : 'bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent'} print:text-amber-600`}>
+                                                <AnimatedNumber value={processedResults.overallAverage ?? 0} decimals={1} /><span className={`text-xl sm:text-3xl ${isDark ? (isExporting ? 'text-amber-200' : 'text-white/40') : 'text-amber-300'} print:text-amber-400`}>/{processedResults.maxRating ?? 5}</span>
                                             </div>
-                                            <StarRating rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" />
-                                            <div className="mt-3 sm:mt-4 text-white/40 text-xs sm:text-sm print:text-amber-600">Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
+                                            <StarRating rating={processedResults.overallAverage ?? 0} max={processedResults.maxRating ?? 5} size="lg" darkMode={isDark} />
+                                            <div className={`mt-3 sm:mt-4 text-xs sm:text-sm print:text-amber-600 ${isDark ? 'text-white/40' : 'text-amber-600'}`}>Based on {processedResults.totalRatings ?? 0} rating{(processedResults.totalRatings ?? 0) !== 1 ? 's' : ''}</div>
                                         </div>
                                     </div>
                                 </div>
                             </motion.div>
                         )}
                         
-                        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 border border-white/20 mb-6 sm:mb-8 print:bg-white print:border-gray-200">
-                            <h3 className="text-base sm:text-lg font-bold text-white mb-4 sm:mb-6 flex items-center gap-2 print:text-slate-900"><BarChart3 size={18} className="text-amber-400" />{processedResults.hasMultipleOptions ? 'Ratings by Item' : 'Rating Distribution'}</h3>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 30 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            transition={{ delay: 0.7 }} 
+                            className="rounded-3xl p-4 sm:p-8 border mb-6 sm:mb-8 print:bg-white print:border-gray-200 shadow-xl"
+                            style={{ 
+                                backgroundColor: theme.cardBg,
+                                borderColor: theme.cardBorder
+                            }}
+                        >
+                            <h3 className={`text-base sm:text-lg font-bold mb-4 sm:mb-6 flex items-center gap-2 print:text-slate-900 ${theme.text}`}><BarChart3 size={18} className="text-amber-400" />{processedResults.hasMultipleOptions ? 'Ratings by Item' : 'Rating Distribution'}</h3>
                             {processedResults.optionRatings.map((option: any, idx: number) => (
-                                <motion.div key={option.id} initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + idx * 0.1 }} className="mb-6 last:mb-0">
+                                <motion.div key={option.id} initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: isExporting ? 0 : 0.8 + idx * 0.1 }} className="mb-6 last:mb-0">
                                     {processedResults.hasMultipleOptions && (
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
-                                            <span className="font-bold text-white text-sm sm:text-lg print:text-slate-900">{option.text}</span>
-                                            <div className="flex items-center gap-2"><StarRating rating={option.average} max={option.maxRating} size="sm" /><span className="text-amber-400 font-bold text-lg">{option.average.toFixed(1)}</span></div>
+                                            <span className={`font-bold text-sm sm:text-lg print:text-slate-900 ${theme.text}`}>{option.text}</span>
+                                            <div className="flex items-center gap-2"><StarRating rating={option.average} max={option.maxRating} size="sm" darkMode={isDark} /><span className="text-amber-500 font-bold text-lg">{option.average.toFixed(1)}</span></div>
                                         </div>
                                     )}
                                     <div className="space-y-2">
@@ -602,20 +688,36 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                                             const rating = option.maxRating - i;
                                             const count = option.distribution?.[rating] || 0;
                                             const pct = option.count > 0 ? (count / option.count) * 100 : 0;
+                                            const barWidth = `${Math.max(pct, count > 0 ? 3 : 0)}%`;
                                             return (
                                                 <div key={rating} className="flex items-center gap-2 sm:gap-3">
-                                                    <div className="flex items-center gap-1 w-12 sm:w-16 justify-end flex-shrink-0"><span className="text-amber-400 text-xs sm:text-sm font-medium print:text-amber-600">{rating}</span><Star size={12} className="text-amber-400 fill-amber-400" /></div>
-                                                    <div className="flex-1 h-5 sm:h-7 bg-white/5 rounded-lg overflow-hidden print:bg-gray-100">
-                                                        <motion.div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg flex items-center justify-end pr-2" initial={{ width: 0 }} animate={{ width: `${Math.max(pct, count > 0 ? 3 : 0)}%` }} transition={{ delay: 0.9 + idx * 0.1 + i * 0.05, duration: 0.8 }}>
-                                                            {pct > 20 && <span className="text-white text-[10px] sm:text-xs font-bold">{Math.round(pct)}%</span>}
-                                                        </motion.div>
+                                                    <div className="flex items-center gap-1 w-12 sm:w-16 justify-end flex-shrink-0"><span className="text-amber-500 text-xs sm:text-sm font-medium print:text-amber-600">{rating}</span><Star size={12} className="text-amber-400 fill-amber-400" /></div>
+                                                    <div className="flex-1 h-5 sm:h-7 rounded-lg overflow-hidden print:bg-gray-100" style={{ backgroundColor: theme.barTrack }}>
+                                                        {/* Use static width during export, animated otherwise */}
+                                                        {isExporting ? (
+                                                            <div 
+                                                                className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg flex items-center justify-end pr-2"
+                                                                style={{ width: barWidth }}
+                                                            >
+                                                                {pct > 20 && <span className="text-white text-[10px] sm:text-xs font-bold">{Math.round(pct)}%</span>}
+                                                            </div>
+                                                        ) : (
+                                                            <motion.div 
+                                                                className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg flex items-center justify-end pr-2" 
+                                                                initial={{ width: 0 }} 
+                                                                animate={{ width: barWidth }} 
+                                                                transition={{ delay: 0.9 + idx * 0.1 + i * 0.05, duration: 0.8 }}
+                                                            >
+                                                                {pct > 20 && <span className="text-white text-[10px] sm:text-xs font-bold">{Math.round(pct)}%</span>}
+                                                            </motion.div>
+                                                        )}
                                                     </div>
-                                                    <span className="text-white/40 text-xs sm:text-sm w-6 sm:w-8 text-right flex-shrink-0 print:text-slate-600">{count}</span>
+                                                    <span className={`text-xs sm:text-sm w-6 sm:w-8 text-right flex-shrink-0 print:text-slate-600 ${theme.textFaint}`}>{count}</span>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    {option.count === 0 && <div className="text-center py-6 text-white/40"><Star size={24} className="mx-auto mb-2 opacity-50" /><p className="text-sm">No ratings yet</p></div>}
+                                    {option.count === 0 && <div className={`text-center py-6 ${theme.textFaint}`}><Star size={24} className="mx-auto mb-2 opacity-50" /><p className="text-sm">No ratings yet</p></div>}
                                 </motion.div>
                             ))}
                         </motion.div>
@@ -895,9 +997,9 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                 )}
                 
                 {/* ============================================================= */}
-                {/* SOCIAL SHARE */}
+                {/* SOCIAL SHARE - Hidden during export */}
                 {/* ============================================================= */}
-                {poll.showSocialShare !== false && (
+                {poll.showSocialShare !== false && !isExporting && (
                     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 border border-white/20 mb-6 sm:mb-8 print:hidden">
                         <div className="text-center mb-4 sm:mb-5"><h3 className="text-base sm:text-xl font-bold text-white mb-1 flex items-center justify-center gap-2"><Share2 size={18} className="text-indigo-400" />Share Results</h3><p className="text-white/40 text-xs sm:text-sm">Spread the word!</p></div>
                         <div className="flex flex-col sm:flex-row gap-2 mb-4 sm:mb-5">
@@ -912,13 +1014,22 @@ const PublicResults: React.FC<PublicResultsProps> = ({ pollId, shareKey }) => {
                     </motion.div>
                 )}
                 
-                {/* CTA */}
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="text-center print:hidden">
-                    <a href="/" className="inline-flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-indigo-500/30 transition-all group text-sm sm:text-base">
-                        <Sparkles size={16} />Create Your Own Poll<ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                    </a>
-                    <p className="mt-4 sm:mt-5 text-white/20 text-xs">Powered by <span className="font-semibold text-white/40">VoteGenerator.com</span></p>
-                </motion.div>
+                {/* CTA - Hidden during export */}
+                {!isExporting && (
+                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }} className="text-center print:hidden">
+                        <a href="/" className="inline-flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-indigo-500/30 transition-all group text-sm sm:text-base">
+                            <Sparkles size={16} />Create Your Own Poll<ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </a>
+                        <p className="mt-4 sm:mt-5 text-white/20 text-xs">Powered by <span className="font-semibold text-white/40">VoteGenerator.com</span></p>
+                    </motion.div>
+                )}
+                
+                {/* Export Footer - Only shown in PNG */}
+                {isExporting && (
+                    <div className="mt-8 pt-4 border-t border-white/10 text-center">
+                        <p className="text-white/40 text-sm">VoteGenerator.com • {new Date().toLocaleDateString()}</p>
+                    </div>
+                )}
                 
                 {/* Print Footer */}
                 <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">

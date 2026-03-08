@@ -355,29 +355,56 @@ function calculatePairwiseScores(poll: Poll): Record<string, number> {
 }
 
 /**
- * Calculate rating stats
+ * Calculate rating stats with distribution breakdown
  */
-function calculateRatingStats(poll: Poll): Record<string, { average: number; count: number; sum: number }> {
-    const stats: Record<string, { sum: number; count: number }> = {};
-    poll.options.forEach(o => stats[o.id] = { sum: 0, count: 0 });
+function calculateRatingStats(poll: Poll): Record<string, { average: number; count: number; sum: number; distribution: Record<number, number>; maxRating: number; stdDev: number }> {
+    const maxRating = poll.maxRating || poll.ratingMax || 5;
+    const stats: Record<string, { sum: number; count: number; ratings: number[] }> = {};
+    poll.options.forEach(o => stats[o.id] = { sum: 0, count: 0, ratings: [] });
     
     for (const vote of poll.votes) {
         if (vote.ratingVotes) {
             for (const [optionId, rating] of Object.entries(vote.ratingVotes)) {
                 if (stats[optionId]) {
-                    stats[optionId].sum += rating;
+                    const numRating = Number(rating);
+                    stats[optionId].sum += numRating;
                     stats[optionId].count++;
+                    stats[optionId].ratings.push(numRating);
                 }
             }
         }
     }
     
-    const result: Record<string, { average: number; count: number; sum: number }> = {};
+    const result: Record<string, { average: number; count: number; sum: number; distribution: Record<number, number>; maxRating: number; stdDev: number }> = {};
     for (const [id, data] of Object.entries(stats)) {
+        // Calculate distribution
+        const distribution: Record<number, number> = {};
+        for (let i = 1; i <= maxRating; i++) {
+            distribution[i] = 0;
+        }
+        for (const r of data.ratings) {
+            if (r >= 1 && r <= maxRating) {
+                distribution[r] = (distribution[r] || 0) + 1;
+            }
+        }
+        
+        // Calculate average
+        const average = data.count > 0 ? Math.round((data.sum / data.count) * 10) / 10 : 0;
+        
+        // Calculate standard deviation
+        let stdDev = 0;
+        if (data.count > 1) {
+            const variance = data.ratings.reduce((acc, r) => acc + Math.pow(r - average, 2), 0) / data.count;
+            stdDev = Math.round(Math.sqrt(variance) * 10) / 10;
+        }
+        
         result[id] = {
-            average: data.count > 0 ? Math.round((data.sum / data.count) * 10) / 10 : 0,
+            average,
             count: data.count,
-            sum: data.sum
+            sum: data.sum,
+            distribution,
+            maxRating,
+            stdDev
         };
     }
     

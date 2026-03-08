@@ -1,247 +1,56 @@
 // ============================================================================
-// AdWall.tsx - Premium Ad interstitial with animated charts & features
-// For poll CREATORS (free tier) before accessing dashboard
+// AdWall.tsx - Ad wall shown before public results (FREE polls only)
+// For polls created by Pro/Business users, show branded loading instead
 // Location: src/components/AdWall.tsx
 // ============================================================================
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import {
-    Clock, Zap, Crown, Check, ArrowRight,
-    BarChart3, TrendingUp, Shield, Palette, 
-    Download, Users, Infinity as InfinityIcon, Eye, Sparkles,
-    LineChart, PieChart
-} from 'lucide-react';
-import { Analytics } from '../utils/analytics';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart3, ArrowRight, Sparkles, ExternalLink, Clock, Zap, PieChart, TrendingUp } from 'lucide-react';
 
-// Animated Line Chart Component
-const AnimatedLineChart: React.FC = () => {
-    const points = [20, 45, 35, 60, 50, 75, 65, 90, 80, 95];
-    const width = 280;
-    const height = 100;
-    const padding = 10;
-    
-    const xStep = (width - padding * 2) / (points.length - 1);
-    const yScale = (height - padding * 2) / 100;
-    
-    const pathData = points
-        .map((point, i) => {
-            const x = padding + i * xStep;
-            const y = height - padding - point * yScale;
-            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-        })
-        .join(' ');
-    
-    const areaPath = `${pathData} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
+interface AdWallProps {
+    onContinue: () => void;
+    pollTitle?: string;
+    // NEW: Pass the poll creator's tier to determine if ads should show
+    creatorTier?: 'free' | 'pro' | 'business';
+    // Alternative: Pass hideBranding directly from poll settings
+    hideBranding?: boolean;
+    // Vote count preview
+    voteCount?: number;
+}
 
-    return (
-        <div className="relative">
-            <svg width="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-                {/* Grid lines */}
-                {[0, 25, 50, 75, 100].map((y) => (
-                    <line
-                        key={y}
-                        x1={padding}
-                        y1={height - padding - y * yScale}
-                        x2={width - padding}
-                        y2={height - padding - y * yScale}
-                        stroke="rgba(255,255,255,0.05)"
-                        strokeDasharray="4 4"
-                    />
-                ))}
-                
-                {/* Gradient area fill */}
-                <defs>
-                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-                    </linearGradient>
-                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="50%" stopColor="#ec4899" />
-                        <stop offset="100%" stopColor="#f59e0b" />
-                    </linearGradient>
-                </defs>
-                
-                {/* Area fill */}
-                <motion.path
-                    d={areaPath}
-                    fill="url(#areaGradient)"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8, duration: 0.5 }}
-                />
-                
-                {/* Main line */}
-                <motion.path
-                    d={pathData}
-                    fill="none"
-                    stroke="url(#lineGradient)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
-                />
-                
-                {/* Animated dot at end */}
-                <motion.circle
-                    cx={width - padding}
-                    cy={height - padding - points[points.length - 1] * yScale}
-                    r="6"
-                    fill="#f59e0b"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: [0, 1.5, 1] }}
-                    transition={{ delay: 2, duration: 0.5 }}
-                />
-                <motion.circle
-                    cx={width - padding}
-                    cy={height - padding - points[points.length - 1] * yScale}
-                    r="12"
-                    fill="#f59e0b"
-                    initial={{ scale: 0, opacity: 0.5 }}
-                    animate={{ scale: [0, 2, 2.5], opacity: [0.5, 0.2, 0] }}
-                    transition={{ delay: 2, duration: 1.5, repeat: Infinity }}
-                />
-            </svg>
-            
-            {/* Growth indicator */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2.2 }}
-                className="absolute top-0 right-0 flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full text-xs font-bold"
-            >
-                <TrendingUp size={12} />
-                +127%
-            </motion.div>
-        </div>
-    );
-};
+// Fun generating messages for paid users
+const generatingMessages = [
+    { text: "Gathering all responses...", icon: "📥" },
+    { text: "Analyzing voting patterns...", icon: "🔍" },
+    { text: "Calculating percentages...", icon: "📊" },
+    { text: "Determining the winner...", icon: "🏆" },
+    { text: "Rendering beautiful charts...", icon: "✨" },
+];
 
-// Animated Pie Segments
-const AnimatedPieChart: React.FC = () => {
-    const segments = [
-        { value: 40, color: '#6366f1', label: 'Desktop' },
-        { value: 35, color: '#ec4899', label: 'Mobile' },
-        { value: 25, color: '#10b981', label: 'Tablet' },
-    ];
-    
-    return (
-        <div className="flex items-center gap-4">
-            <div className="relative w-20 h-20">
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    {(() => {
-                        let currentAngle = 0;
-                        return segments.map((segment, idx) => {
-                            const angle = (segment.value / 100) * 360;
-                            const startAngle = currentAngle;
-                            currentAngle += angle;
-                            
-                            const startRad = (startAngle * Math.PI) / 180;
-                            const endRad = ((startAngle + angle) * Math.PI) / 180;
-                            
-                            const x1 = 50 + 40 * Math.cos(startRad);
-                            const y1 = 50 + 40 * Math.sin(startRad);
-                            const x2 = 50 + 40 * Math.cos(endRad);
-                            const y2 = 50 + 40 * Math.sin(endRad);
-                            
-                            const largeArc = angle > 180 ? 1 : 0;
-                            
-                            return (
-                                <motion.path
-                                    key={idx}
-                                    d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                                    fill={segment.color}
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 1 + idx * 0.15, duration: 0.4 }}
-                                />
-                            );
-                        });
-                    })()}
-                    <circle cx="50" cy="50" r="20" fill="#0f172a" />
-                </svg>
-            </div>
-            <div className="space-y-1">
-                {segments.map((seg, idx) => (
-                    <motion.div 
-                        key={idx}
-                        className="flex items-center gap-2 text-xs"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.3 + idx * 0.1 }}
-                    >
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seg.color }} />
-                        <span className="text-white/60">{seg.label}</span>
-                        <span className="text-white font-bold">{seg.value}%</span>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-// Animated Counter
-const AnimatedCounter: React.FC<{ value: number; suffix?: string; prefix?: string }> = ({ 
-    value, suffix = '', prefix = '' 
+const AdWall: React.FC<AdWallProps> = ({ 
+    onContinue, 
+    pollTitle = 'Poll Results',
+    creatorTier = 'free',
+    hideBranding = false,
+    voteCount = 0
 }) => {
-    const [count, setCount] = useState(0);
+    const [countdown, setCountdown] = useState(5);
+    const [canContinue, setCanContinue] = useState(false);
+    const [messageIndex, setMessageIndex] = useState(0);
+    
+    // Determine if this is a paid poll (no ads)
+    const isPaidPoll = creatorTier === 'pro' || creatorTier === 'business' || hideBranding;
+    
+    // For paid polls, show fun generating messages (3 seconds)
+    const waitTime = isPaidPoll ? 3 : 5;
     
     useEffect(() => {
-        const duration = 2000;
-        const steps = 60;
-        const increment = value / steps;
-        let current = 0;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= value) {
-                setCount(value);
-                clearInterval(timer);
-            } else {
-                setCount(Math.floor(current));
-            }
-        }, duration / steps);
-        
-        return () => clearInterval(timer);
-    }, [value]);
-    
-    return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
-};
-
-// Feature Pill
-const FeaturePill: React.FC<{ 
-    icon: React.ReactNode; 
-    text: string; 
-    delay: number;
-}> = ({ icon, text, delay }) => (
-    <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay, type: "spring" }}
-        className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-full border border-white/10"
-    >
-        <div className="text-emerald-400">{icon}</div>
-        <span className="text-white/80 text-sm font-medium">{text}</span>
-    </motion.div>
-);
-
-const AdWall: React.FC = () => {
-    const [countdown, setCountdown] = useState(10);
-    const [canSkip, setCanSkip] = useState(false);
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectUrl = urlParams.get('redirect') || '/admin';
-    
-    useEffect(() => {
-        // Track ad wall shown
-        Analytics.adWallShown('poll_created_free');
-        
+        setCountdown(waitTime);
         const timer = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
-                    setCanSkip(true);
                     clearInterval(timer);
+                    setCanContinue(true);
                     return 0;
                 }
                 return prev - 1;
@@ -249,258 +58,249 @@ const AdWall: React.FC = () => {
         }, 1000);
         
         return () => clearInterval(timer);
-    }, []);
+    }, [waitTime, isPaidPoll, onContinue]);
     
-    const handleContinue = () => {
-        // Track ad wall completed
-        Analytics.adWallCompleted();
-        window.location.href = decodeURIComponent(redirectUrl);
-    };
+    // Cycle through generating messages for paid users
+    useEffect(() => {
+        if (!isPaidPoll) return;
+        
+        const messageTimer = setInterval(() => {
+            setMessageIndex(prev => (prev + 1) % generatingMessages.length);
+        }, 600); // Change message every 600ms
+        
+        return () => clearInterval(messageTimer);
+    }, [isPaidPoll]);
     
-    const handleUpgrade = () => {
-        window.location.href = '/pricing';
-    };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Animated background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div 
-                    className="absolute -top-1/3 -right-1/3 w-2/3 h-2/3 bg-indigo-500/20 rounded-full blur-[150px]"
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
-                    transition={{ duration: 10, repeat: Infinity }}
-                />
-                <motion.div 
-                    className="absolute -bottom-1/3 -left-1/3 w-2/3 h-2/3 bg-purple-500/20 rounded-full blur-[150px]"
-                    animate={{ scale: [1.2, 1, 1.2], opacity: [0.15, 0.25, 0.15] }}
-                    transition={{ duration: 10, repeat: Infinity, delay: 2 }}
-                />
-                <motion.div 
-                    className="absolute top-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]"
-                    animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
-                    transition={{ duration: 15, repeat: Infinity }}
-                />
-            </div>
-            
-            <div className="max-w-5xl w-full relative z-10">
-                {/* Header */}
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-8"
-                >
-                    {/* Countdown */}
-                    <div className="relative w-20 h-20 mx-auto mb-4">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
-                            <motion.circle
-                                cx="50" cy="50" r="45"
-                                fill="none"
-                                stroke="url(#timerGradient)"
-                                strokeWidth="6"
-                                strokeLinecap="round"
-                                strokeDasharray="283"
-                                initial={{ strokeDashoffset: 0 }}
-                                animate={{ strokeDashoffset: 283 - (283 * (5 - countdown) / 5) }}
-                                transition={{ duration: 0.5 }}
-                            />
-                            <defs>
-                                <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#6366f1" />
-                                    <stop offset="50%" stopColor="#ec4899" />
-                                    <stop offset="100%" stopColor="#f59e0b" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-2xl font-black text-white">
-                                {canSkip ? <Check size={28} /> : countdown}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
-                        Your Poll is Ready! 🎉
-                    </h1>
-                    <p className="text-white/60">
-                        Discover what Pro can do for your polls
-                    </p>
-                </motion.div>
-                
-                {/* Main Content */}
+    // ========================================================================
+    // PAID POLL: Show branded loading with fun messages (no ads)
+    // ========================================================================
+    if (isPaidPoll) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="grid lg:grid-cols-2 gap-6 mb-8"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full text-center"
                 >
-                    {/* Left - Charts Showcase */}
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                                <LineChart size={20} className="text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-white font-bold">Real-Time Analytics</h3>
-                                <p className="text-white/50 text-sm">Track responses as they come in</p>
-                            </div>
+                    {/* Loading Animation */}
+                    <motion.div
+                        className="w-24 h-24 mx-auto mb-6 relative"
+                    >
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <div className="absolute inset-2 bg-white rounded-xl flex items-center justify-center">
+                            <BarChart3 size={32} className="text-indigo-600" />
                         </div>
-                        
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                            <AnimatedLineChart />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                            <AnimatedPieChart />
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 1.8 }}
-                                className="text-right"
-                            >
-                                <div className="text-3xl font-black text-white">
-                                    <AnimatedCounter value={2847} />
-                                </div>
-                                <div className="text-white/50 text-sm">Total Responses</div>
-                            </motion.div>
-                        </div>
-                    </div>
+                    </motion.div>
                     
-                    {/* Right - Features & CTA */}
-                    <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-pink-500/10 backdrop-blur-xl border border-amber-500/20 rounded-3xl p-6">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-2xl font-bold text-slate-800 mb-2"
+                    >
+                        {pollTitle}
+                    </motion.h1>
+                    
+                    {voteCount > 0 && (
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-slate-500 text-sm mb-6"
+                        >
+                            {voteCount.toLocaleString()} response{voteCount !== 1 ? 's' : ''} recorded
+                        </motion.p>
+                    )}
+                    
+                    {/* Fun generating messages */}
+                    {!canContinue && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4 }}
-                            className="text-center mb-6"
+                            className="mb-6"
                         >
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-full border border-amber-500/30 mb-4">
-                                <Crown size={16} className="text-amber-400" />
-                                <span className="text-amber-300 text-sm font-bold">UPGRADE TO PRO</span>
+                            {/* Progress bar */}
+                            <div className="w-64 h-2 bg-slate-200 rounded-full mx-auto mb-4 overflow-hidden">
+                                <motion.div
+                                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full"
+                                    initial={{ width: '0%' }}
+                                    animate={{ width: '100%' }}
+                                    transition={{ duration: 3, ease: 'easeInOut' }}
+                                />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Unlock Full Potential</h2>
-                            <p className="text-white/60">Everything you need to run professional polls</p>
-                        </motion.div>
-                        
-                        {/* Features Grid */}
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <FeaturePill icon={<Check size={14} />} text="Unlimited Polls" delay={0.6} />
-                            <FeaturePill icon={<Check size={14} />} text="No Ads" delay={0.7} />
-                            <FeaturePill icon={<Check size={14} />} text="Advanced Analytics" delay={0.8} />
-                            <FeaturePill icon={<Check size={14} />} text="Custom Branding" delay={0.9} />
-                            <FeaturePill icon={<Check size={14} />} text="Export Data" delay={1.0} />
-                            <FeaturePill icon={<Check size={14} />} text="Priority Support" delay={1.1} />
-                        </div>
-                        
-                        {/* Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1.2 }}
-                            className="grid grid-cols-3 gap-3 mb-6"
-                        >
-                            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
-                                <div className="text-xl font-black text-white">
-                                    <AnimatedCounter value={10} suffix="K" />
-                                </div>
-                                <div className="text-white/40 text-xs">Responses/mo</div>
-                            </div>
-                            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
-                                <div className="text-xl font-black text-white flex items-center justify-center gap-1">
-                                    <InfinityIcon size={20} />
-                                </div>
-                                <div className="text-white/40 text-xs">Polls</div>
-                            </div>
-                            <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
-                                <div className="text-xl font-black text-white">15+</div>
-                                <div className="text-white/40 text-xs">Themes</div>
-                            </div>
-                        </motion.div>
-                        
-                        {/* CTA */}
-                        <motion.button
-                            onClick={handleUpgrade}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1.4 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full py-4 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-white font-bold text-lg rounded-2xl shadow-lg shadow-orange-500/30 hover:shadow-xl transition-all relative overflow-hidden"
-                        >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                <Zap size={20} />
-                                View Plans
-                            </span>
-                            <motion.div
-                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                                initial={{ x: '-100%' }}
-                                animate={{ x: '200%' }}
-                                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                            />
-                        </motion.button>
-                    </div>
-                </motion.div>
-                
-                {/* Skip Notice & Button */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-center"
-                >
-                    {!canSkip && (
-                        <motion.div 
-                            className="inline-flex items-center gap-2 text-white/60 text-sm mb-4"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
-                            <Sparkles size={14} className="text-amber-400" />
-                            <span>Skip the wait -</span>
-                            <button 
-                                onClick={handleUpgrade}
-                                className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
-                            >
-                                Upgrade to Pro
-                            </button>
-                            <span>for instant access!</span>
+                            
+                            {/* Cycling messages */}
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={messageIndex}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center justify-center gap-2"
+                                >
+                                    <span className="text-lg">{generatingMessages[messageIndex].icon}</span>
+                                    <span className="text-sm font-medium text-slate-600">
+                                        {generatingMessages[messageIndex].text}
+                                    </span>
+                                </motion.div>
+                            </AnimatePresence>
                         </motion.div>
                     )}
                     
-                    <motion.button
-                        onClick={handleContinue}
-                        disabled={!canSkip}
-                        whileHover={canSkip ? { scale: 1.02 } : {}}
-                        whileTap={canSkip ? { scale: 0.98 } : {}}
-                        className={`px-10 py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 mx-auto ${
-                            canSkip 
-                                ? 'bg-white text-slate-900 hover:shadow-2xl shadow-lg' 
-                                : 'bg-white/10 text-white/40 cursor-not-allowed border border-white/10'
-                        }`}
-                    >
-                        {canSkip ? (
-                            <>
-                                <Eye size={22} />
-                                Continue to Dashboard
-                                <ArrowRight size={22} />
-                            </>
-                        ) : (
-                            <>
-                                <Clock size={22} />
-                                Wait {countdown}s to continue
-                            </>
+                    {/* Continue button when ready */}
+                    <AnimatePresence>
+                        {canContinue && (
+                            <motion.button
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                onClick={onContinue}
+                                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto"
+                            >
+                                View Results
+                                <ArrowRight size={20} />
+                            </motion.button>
                         )}
-                    </motion.button>
+                    </AnimatePresence>
                     
-                    {canSkip && (
-                        <motion.p 
+                    {/* Subtle branding for Pro */}
+                    {creatorTier === 'pro' && !hideBranding && (
+                        <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="text-white/40 text-sm mt-4"
+                            transition={{ delay: 0.8 }}
+                            className="mt-8 text-xs text-slate-400"
                         >
-                            Your poll dashboard is ready
+                            Powered by <a href="/" className="text-indigo-500 hover:text-indigo-600">VoteGenerator</a>
                         </motion.p>
                     )}
                 </motion.div>
+            </div>
+        );
+    }
+    
+    // ========================================================================
+    // FREE POLL: Show ad wall with countdown
+    // ========================================================================
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 px-4 py-3">
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <PieChart size={20} className="text-indigo-500" />
+                        <span className="font-semibold text-slate-700">View Results</span>
+                    </div>
+                    {!canContinue && (
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <Clock size={16} />
+                            <span className="text-sm font-medium">{countdown}s</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
+                <div className="max-w-lg w-full">
+                    {/* Results preview */}
+                    <div className="text-center mb-8">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-20 h-20 mx-auto mb-4 bg-indigo-100 rounded-2xl flex items-center justify-center"
+                        >
+                            <TrendingUp size={36} className="text-indigo-600" />
+                        </motion.div>
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">
+                            {pollTitle}
+                        </h2>
+                        {voteCount > 0 && (
+                            <p className="text-slate-500 text-sm">
+                                {voteCount.toLocaleString()} vote{voteCount !== 1 ? 's' : ''} recorded
+                            </p>
+                        )}
+                    </div>
+                    
+                    {/* Ad placeholder */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-sm">
+                        <p className="text-xs text-slate-400 uppercase tracking-wide mb-3 text-center">
+                            Sponsored
+                        </p>
+                        
+                        {/* AdSense container */}
+                        <div 
+                            className="min-h-[250px] bg-slate-50 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-200"
+                            id="results-ad-container"
+                        >
+                            <div className="text-center text-slate-400">
+                                <Sparkles size={32} className="mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">Advertisement</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Promo for VoteGenerator */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-6 border border-indigo-100">
+                        <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Zap size={20} className="text-indigo-600" />
+                            </div>
+                            <div>
+                                <p className="font-semibold text-slate-800 text-sm">
+                                    Need to run a poll or survey?
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Free • No signup • Instant results
+                                </p>
+                                <a 
+                                    href="/" 
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 mt-2 hover:text-indigo-700"
+                                >
+                                    Create Free Poll <ExternalLink size={12} />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Continue button */}
+                    <motion.button
+                        onClick={onContinue}
+                        disabled={!canContinue}
+                        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
+                            canContinue
+                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02]'
+                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                    >
+                        {canContinue ? (
+                            <>
+                                View Results
+                                <ArrowRight size={20} />
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-sm font-bold">
+                                    {countdown}
+                                </div>
+                                Loading results...
+                            </>
+                        )}
+                    </motion.button>
+                </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="bg-white border-t border-slate-200 px-4 py-3">
+                <div className="max-w-2xl mx-auto text-center">
+                    <p className="text-xs text-slate-400">
+                        Powered by <a href="/" className="text-indigo-500 hover:text-indigo-600 font-medium">VoteGenerator</a>
+                    </p>
+                </div>
             </div>
         </div>
     );

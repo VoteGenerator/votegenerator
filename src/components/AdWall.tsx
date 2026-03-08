@@ -1,6 +1,6 @@
 // ============================================================================
-// AdWall.tsx - Ad wall shown before public results (FREE polls only)
-// For polls created by Pro/Business users, show branded loading instead
+// AdWall.tsx - Ad wall / interstitial page
+// Can be used as: 1) Standalone page at /ad-wall, or 2) Overlay before results
 // Location: src/components/AdWall.tsx
 // ============================================================================
 import React, { useState, useEffect } from 'react';
@@ -8,9 +8,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart3, ArrowRight, Sparkles, ExternalLink, Clock, Zap, PieChart, TrendingUp } from 'lucide-react';
 
 interface AdWallProps {
-    onContinue: () => void;
+    // Optional - if not provided, redirects to homepage after countdown
+    onContinue?: () => void;
     pollTitle?: string;
-    // NEW: Pass the poll creator's tier to determine if ads should show
+    // Pass the poll creator's tier to determine if ads should show
     creatorTier?: 'free' | 'pro' | 'business';
     // Alternative: Pass hideBranding directly from poll settings
     hideBranding?: boolean;
@@ -28,7 +29,7 @@ const generatingMessages = [
 ];
 
 const AdWall: React.FC<AdWallProps> = ({ 
-    onContinue, 
+    onContinue,
     pollTitle = 'Poll Results',
     creatorTier = 'free',
     hideBranding = false,
@@ -44,6 +45,16 @@ const AdWall: React.FC<AdWallProps> = ({
     // For paid polls, show fun generating messages (3 seconds)
     const waitTime = isPaidPoll ? 3 : 5;
     
+    // Default handler if none provided (standalone page mode)
+    const handleContinue = () => {
+        if (onContinue) {
+            onContinue();
+        } else {
+            // Standalone page mode - redirect to homepage
+            window.location.href = '/';
+        }
+    };
+    
     useEffect(() => {
         setCountdown(waitTime);
         const timer = setInterval(() => {
@@ -58,7 +69,7 @@ const AdWall: React.FC<AdWallProps> = ({
         }, 1000);
         
         return () => clearInterval(timer);
-    }, [waitTime, isPaidPoll, onContinue]);
+    }, [waitTime]);
     
     // Cycle through generating messages for paid users
     useEffect(() => {
@@ -66,7 +77,7 @@ const AdWall: React.FC<AdWallProps> = ({
         
         const messageTimer = setInterval(() => {
             setMessageIndex(prev => (prev + 1) % generatingMessages.length);
-        }, 600); // Change message every 600ms
+        }, 600);
         
         return () => clearInterval(messageTimer);
     }, [isPaidPoll]);
@@ -158,7 +169,7 @@ const AdWall: React.FC<AdWallProps> = ({
                             <motion.button
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                onClick={onContinue}
+                                onClick={handleContinue}
                                 className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto"
                             >
                                 View Results
@@ -269,7 +280,7 @@ const AdWall: React.FC<AdWallProps> = ({
                     
                     {/* Continue button */}
                     <motion.button
-                        onClick={onContinue}
+                        onClick={handleContinue}
                         disabled={!canContinue}
                         className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
                             canContinue

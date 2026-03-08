@@ -338,7 +338,6 @@ const VoteGeneratorApp: React.FC = () => {
                     setViewState({ type: 'vote', poll });
                 }
             }
-
         } catch (error) {
             console.error('Failed to load poll:', error);
             
@@ -375,17 +374,14 @@ const VoteGeneratorApp: React.FC = () => {
     // Auto-refresh logic for results view
     useEffect(() => {
         window.clearInterval(pollInterval.current);
-
         if (viewState.type === 'results' || viewState.type === 'survey-results') {
             // Refresh every 8 seconds
             pollInterval.current = window.setInterval(() => {
                loadView(true); // silent reload
             }, 8000);
         }
-
         return () => window.clearInterval(pollInterval.current);
     }, [viewState.type, loadView]);
-
 
     const handleVoteSuccess = async () => {
         const { pollId, adminKey } = parseHash();
@@ -741,7 +737,7 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
-                    {/* Ad-Wall Before Poll - FREE tier voters only */}
+                    {/* Ad-Wall Before Poll - Shows ad for FREE, fun animation for PRO/BUSINESS */}
                     {viewState.type === 'ad-wall-before' && (
                         <motion.div 
                             key="ad-wall-before" 
@@ -754,6 +750,7 @@ const VoteGeneratorApp: React.FC = () => {
                                 pollTitle={viewState.poll.title}
                                 onComplete={handleAdWallBeforeComplete}
                                 countdownSeconds={10}
+                                creatorTier={(viewState.poll as any).tier || 'free'}
                             />
                         </motion.div>
                     )}
@@ -792,7 +789,7 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
-                    {/* Ad-Wall After Vote - FREE tier voters only */}
+                    {/* Ad-Wall After Vote - Shows ad for FREE, fun animation for PRO/BUSINESS */}
                     {viewState.type === 'ad-wall-after' && (
                         <motion.div 
                             key="ad-wall-after" 
@@ -805,6 +802,7 @@ const VoteGeneratorApp: React.FC = () => {
                                 pollTitle={viewState.poll.title}
                                 onComplete={handleAdWallAfterComplete}
                                 countdownSeconds={10}
+                                creatorTier={(viewState.poll as any).tier || 'free'}
                             />
                         </motion.div>
                     )}
@@ -820,7 +818,8 @@ const VoteGeneratorApp: React.FC = () => {
                     )}
 
                     {/* SURVEY VIEWS */}
-                    {/* Survey Ad-Wall Before - FREE tier only */}
+                    
+                    {/* Survey Ad-Wall Before - Shows ad for FREE, fun animation for PRO/BUSINESS */}
                     {viewState.type === 'survey-ad-wall-before' && (
                         <motion.div 
                             key="survey-ad-wall-before" 
@@ -839,6 +838,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     setViewState({ type: 'survey-vote', poll: viewState.poll });
                                 }}
                                 countdownSeconds={10}
+                                creatorTier={(viewState.poll as any).tier || 'free'}
                             />
                         </motion.div>
                     )}
@@ -948,7 +948,7 @@ const VoteGeneratorApp: React.FC = () => {
                         </motion.div>
                     )}
 
-                    {/* Survey Ad-Wall After - FREE tier only */}
+                    {/* Survey Ad-Wall After - Shows ad for FREE, fun animation for PRO/BUSINESS */}
                     {viewState.type === 'survey-ad-wall-after' && (
                         <motion.div 
                             key="survey-ad-wall-after" 
@@ -961,6 +961,7 @@ const VoteGeneratorApp: React.FC = () => {
                                 pollTitle={viewState.poll.title}
                                 onComplete={() => loadView()}
                                 countdownSeconds={10}
+                                creatorTier={(viewState.poll as any).tier || 'free'}
                             />
                         </motion.div>
                     )}
@@ -1002,7 +1003,6 @@ const VoteGeneratorApp: React.FC = () => {
                                             {isRefreshing ? 'Refreshing...' : 'Refresh'}
                                         </button>
                                     </div>
-
                                     <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-sm">
                                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 text-center">
                                             {viewState.poll.title}
@@ -1115,7 +1115,6 @@ const VoteGeneratorApp: React.FC = () => {
                                             {isRefreshing ? 'Refreshing...' : 'Refresh Votes'}
                                         </button>
                                     </div>
-
                                     <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-sm">
                                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 text-center">
                                             {viewState.poll.title}

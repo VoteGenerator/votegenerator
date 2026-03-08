@@ -571,6 +571,7 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
     const [copiedShare, setCopiedShare] = useState(false);
     const [copiedAdmin, setCopiedAdmin] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
+    const [copiedPublicResults, setCopiedPublicResults] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showShareCards, setShowShareCards] = useState(false);
     const [showEmbedModal, setShowEmbedModal] = useState(false);
@@ -2889,17 +2890,17 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                 <motion.button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(`${window.location.origin}/#results=${poll.id}`);
-                                                        setCopiedShare(true);
-                                                        setTimeout(() => setCopiedShare(false), 2000);
+                                                        setCopiedPublicResults(true);
+                                                        setTimeout(() => setCopiedPublicResults(false), 2000);
                                                     }}
                                                     className={`px-5 rounded-xl font-bold transition-all ${
-                                                        copiedShare 
+                                                        copiedPublicResults 
                                                             ? 'bg-emerald-500 text-white' 
                                                             : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                                     }`}
                                                     whileTap={{ scale: 0.95 }}
                                                 >
-                                                    {copiedShare ? <Check size={18} /> : <Copy size={18} />}
+                                                    {copiedPublicResults ? <Check size={18} /> : <Copy size={18} />}
                                                 </motion.button>
                                             </div>
                                         </div>
@@ -2985,24 +2986,68 @@ const PollDashboard: React.FC<PollDashboardProps> = ({
                                                     Choose which views visitors can see:
                                                 </label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['bar', 'pie'].map(view => (
-                                                        <label key={view} className={`flex items-center gap-2 px-4 py-2 bg-white border border-purple-200 rounded-lg cursor-pointer hover:border-purple-400 transition-colors ${settingsUpdating ? 'opacity-50' : ''}`}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={localAllowedViews.includes(view)}
-                                                                disabled={settingsUpdating}
-                                                                onChange={(e) => {
-                                                                    const updated = e.target.checked 
-                                                                        ? [...localAllowedViews, view]
-                                                                        : localAllowedViews.filter((v: string) => v !== view);
-                                                                    setLocalAllowedViews(updated);
-                                                                    updatePollSetting('allowedViews', updated);
-                                                                }}
-                                                                className="w-4 h-4 text-purple-600 rounded"
-                                                            />
-                                                            <span className="text-sm text-slate-700 capitalize">{view} Chart</span>
-                                                        </label>
-                                                    ))}
+                                                    {(() => {
+                                                        // Dynamic view options based on poll type
+                                                        const pollType = poll.pollType || 'multiple_choice';
+                                                        let viewOptions: { id: string; label: string }[] = [];
+                                                        
+                                                        if (pollType === 'ranked') {
+                                                            viewOptions = [
+                                                                { id: 'bar', label: 'Bar Chart' },
+                                                                { id: 'flow', label: 'Flow Diagram' },
+                                                                { id: 'pie', label: 'Pie Chart' },
+                                                            ];
+                                                        } else if (pollType === 'rating') {
+                                                            viewOptions = [
+                                                                { id: 'rating', label: 'Rating Display' },
+                                                                { id: 'bar', label: 'Bar Chart' },
+                                                            ];
+                                                        } else if (pollType === 'pairwise') {
+                                                            viewOptions = [
+                                                                { id: 'pairwise', label: 'Matchup Grid' },
+                                                                { id: 'bar', label: 'Bar Chart' },
+                                                            ];
+                                                        } else if (pollType === 'meeting') {
+                                                            viewOptions = [
+                                                                { id: 'heatmap', label: 'Availability Heatmap' },
+                                                            ];
+                                                        } else if (pollType === 'matrix') {
+                                                            viewOptions = [
+                                                                { id: 'matrix', label: 'Matrix View' },
+                                                            ];
+                                                        } else if (pollType === 'image' || pollType === 'visual') {
+                                                            viewOptions = [
+                                                                { id: 'grid', label: 'Image Grid' },
+                                                                { id: 'bar', label: 'Bar Chart' },
+                                                                { id: 'pie', label: 'Pie Chart' },
+                                                            ];
+                                                        } else {
+                                                            // Default: multiple choice, NPS, etc.
+                                                            viewOptions = [
+                                                                { id: 'bar', label: 'Bar Chart' },
+                                                                { id: 'pie', label: 'Pie Chart' },
+                                                            ];
+                                                        }
+                                                        
+                                                        return viewOptions.map(view => (
+                                                            <label key={view.id} className={`flex items-center gap-2 px-4 py-2 bg-white border border-purple-200 rounded-lg cursor-pointer hover:border-purple-400 transition-colors ${settingsUpdating ? 'opacity-50' : ''}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={localAllowedViews.includes(view.id)}
+                                                                    disabled={settingsUpdating}
+                                                                    onChange={(e) => {
+                                                                        const updated = e.target.checked 
+                                                                            ? [...localAllowedViews, view.id]
+                                                                            : localAllowedViews.filter((v: string) => v !== view.id);
+                                                                        setLocalAllowedViews(updated);
+                                                                        updatePollSetting('allowedViews', updated);
+                                                                    }}
+                                                                    className="w-4 h-4 text-purple-600 rounded"
+                                                                />
+                                                                <span className="text-sm text-slate-700">{view.label}</span>
+                                                            </label>
+                                                        ));
+                                                    })()}
                                                 </div>
                                             </div>
                                         )}

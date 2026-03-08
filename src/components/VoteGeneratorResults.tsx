@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText, Crown, Lock } from 'lucide-react';
+import { Trophy, Users, BarChart, LayoutGrid, PieChart, Settings, GitMerge, MessageSquare, Quote, Calendar, TrendingUp, Coins, Activity, Map as MapIcon, Info, GitCompare, SlidersHorizontal, DollarSign, Check, Smartphone, Monitor, Clock, Globe, ChevronDown, ChevronUp, Zap, Download, ExternalLink, FileText, Crown, Lock, Star, BarChart3 } from 'lucide-react';
 import { RunoffResult, Poll, SurveyResponse } from '../types';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SurveyResults from './SurveyResults';
@@ -1374,60 +1374,127 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, y: -10 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                <SlidersHorizontal size={24} className="text-indigo-500"/> Average Ratings
-                            </h3>
-                            <div className="text-xs text-slate-500 flex items-center gap-2">
-                                <span className="w-4 h-1 bg-black/20 rounded"></span> Error bars = Standard Deviation
-                            </div>
-                        </div>
+                        {/* Overall Stats Header */}
+                        {(() => {
+                            const entries = Object.entries(ratingStats);
+                            const totalRatings = entries.reduce((sum, [, s]) => sum + s.count, 0);
+                            const totalSum = entries.reduce((sum, [, s]) => sum + s.sum, 0);
+                            const overallAverage = totalRatings > 0 ? totalSum / totalRatings : 0;
+                            const maxRating = entries[0]?.[1]?.maxRating || 5;
+                            
+                            return (
+                                <>
+                                    {/* Overall Average Card */}
+                                    <div className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 rounded-2xl p-1 mb-6">
+                                        <div className="bg-slate-900 rounded-xl p-6 text-center">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full mb-3">
+                                                <Star size={14} className="text-white fill-white" />
+                                                <span className="text-white font-bold text-xs uppercase tracking-wider">
+                                                    {entries.length > 1 ? 'Overall' : 'Average'} Rating
+                                                </span>
+                                            </div>
+                                            <div className="text-5xl font-black text-amber-400 mb-2">
+                                                {overallAverage.toFixed(1)}
+                                                <span className="text-2xl text-white/40">/{maxRating}</span>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-1 mb-2">
+                                                {Array.from({ length: maxRating }, (_, i) => (
+                                                    <Star 
+                                                        key={i} 
+                                                        size={24} 
+                                                        className={i < Math.round(overallAverage) ? 'text-amber-400 fill-amber-400' : 'text-white/20'} 
+                                                    />
+                                                ))}
+                                            </div>
+                                            <div className="text-white/40 text-sm">
+                                                Based on {totalRatings} rating{totalRatings !== 1 ? 's' : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Individual Items */}
+                                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                                        <BarChart3 size={20} className="text-amber-500" />
+                                        {entries.length > 1 ? 'Ratings by Item' : 'Rating Distribution'}
+                                    </h3>
+                                </>
+                            );
+                        })()}
                         
                         <div className="space-y-6">
                             {Object.entries(ratingStats)
                                 .sort(([, a], [, b]) => b.average - a.average)
                                 .map(([id, stats], index) => {
+                                    const maxRating = stats.maxRating || 5;
+                                    const distribution = stats.distribution || {};
+                                    
                                     return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
+                                        <div key={id} className="relative break-inside-avoid bg-slate-50 rounded-xl p-4">
+                                            {/* Item Header */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {index + 1}
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-500'}`}>
+                                                        {index === 0 ? <Crown size={16} /> : index + 1}
                                                     </div>
                                                     <span className="text-slate-800 font-bold text-lg">
                                                         {getOptionText(id)}
                                                     </span>
                                                 </div>
-                                                <span className="text-slate-600 font-bold">
-                                                    {stats.average.toFixed(1)} <span className="text-slate-400 font-normal text-xs ml-1">/ 100</span>
-                                                </span>
-                                            </div>
-                                            <div className="relative h-8 bg-slate-100 rounded-lg mt-2 overflow-visible print:border print:border-slate-200">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${stats.average}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className={`absolute top-0 left-0 h-full rounded-lg ${getBarColorClass(id)} opacity-90`}
-                                                />
-                                                {stats.count > 1 && typeof stats.stdDev === 'number' && (() => {
-                                                    const stdDev = stats.stdDev || 0;
-                                                    return (
-                                                    <div 
-                                                        className="absolute top-1/2 -translate-y-1/2 h-1 bg-black/20 rounded-full"
-                                                        style={{ 
-                                                            left: `${Math.max(0, stats.average - stdDev)}%`, 
-                                                            width: `${Math.min(100 - (stats.average - stdDev), stdDev * 2)}%`
-                                                        }}
-                                                    >
-                                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
-                                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-black/30"></div>
-                                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-4 bg-black/40 rounded-full"></div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-0.5">
+                                                        {Array.from({ length: maxRating }, (_, i) => (
+                                                            <Star 
+                                                                key={i} 
+                                                                size={16} 
+                                                                className={i < Math.round(stats.average) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'} 
+                                                            />
+                                                        ))}
                                                     </div>
-                                                )})()}
+                                                    <span className="text-amber-600 font-bold text-lg ml-1">
+                                                        {stats.average.toFixed(1)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="text-xs text-slate-400 mt-1 flex justify-between">
-                                                <span>Std Dev: {(stats.stdDev || 0).toFixed(1)}</span>
-                                                <span>{stats.count} votes</span>
+                                            
+                                            {/* Distribution Bars */}
+                                            <div className="space-y-2">
+                                                {Array.from({ length: maxRating }, (_, i) => {
+                                                    const rating = maxRating - i;
+                                                    const count = distribution[rating] || 0;
+                                                    const pct = stats.count > 0 ? (count / stats.count) * 100 : 0;
+                                                    
+                                                    return (
+                                                        <div key={rating} className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1 w-14 justify-end flex-shrink-0">
+                                                                <span className="text-amber-600 text-sm font-medium">{rating}</span>
+                                                                <Star size={14} className="text-amber-400 fill-amber-400" />
+                                                            </div>
+                                                            <div className="flex-1 h-6 bg-slate-200 rounded-lg overflow-hidden">
+                                                                <motion.div
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${Math.max(pct, count > 0 ? 2 : 0)}%` }}
+                                                                    transition={{ duration: 0.8, delay: index * 0.1 + i * 0.05 }}
+                                                                    className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-lg flex items-center justify-end pr-2"
+                                                                >
+                                                                    {pct > 15 && (
+                                                                        <span className="text-white text-xs font-bold">{Math.round(pct)}%</span>
+                                                                    )}
+                                                                </motion.div>
+                                                            </div>
+                                                            <span className="text-slate-400 text-sm w-8 text-right flex-shrink-0">
+                                                                {count}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            
+                                            {/* Stats Footer */}
+                                            <div className="flex justify-between mt-3 pt-3 border-t border-slate-200 text-xs text-slate-500">
+                                                <span>{stats.count} rating{stats.count !== 1 ? 's' : ''}</span>
+                                                {stats.stdDev > 0 && (
+                                                    <span>Std Dev: ±{stats.stdDev.toFixed(1)}</span>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -1445,38 +1512,114 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, y: -10 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
                     >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <GitCompare size={24} className="text-indigo-500"/> Comparison Leaderboard
-                        </h3>
+                        {/* Tournament Header */}
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 mb-6 text-white text-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <GitCompare size={28} />
+                                <h3 className="text-2xl font-black">Head-to-Head Results</h3>
+                            </div>
+                            <p className="text-indigo-200 text-sm">Each option was compared against all others. Higher win rate = better performance.</p>
+                        </div>
                         
-                        <div className="space-y-4">
+                        {/* Stats Summary */}
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            {(() => {
+                                const entries = Object.entries(pairwiseScores);
+                                const totalMatches = entries.reduce((sum, [, d]) => sum + (d.matches || 0), 0) / 2;
+                                const topScore = entries.length > 0 ? Math.max(...entries.map(([, d]) => d.score)) : 0;
+                                return (
+                                    <>
+                                        <div className="bg-slate-50 rounded-xl p-4 text-center">
+                                            <div className="text-2xl font-black text-indigo-600">{entries.length}</div>
+                                            <div className="text-xs text-slate-500 uppercase tracking-wide">Competitors</div>
+                                        </div>
+                                        <div className="bg-slate-50 rounded-xl p-4 text-center">
+                                            <div className="text-2xl font-black text-emerald-600">{totalMatches || totalVotes}</div>
+                                            <div className="text-xs text-slate-500 uppercase tracking-wide">Matchups</div>
+                                        </div>
+                                        <div className="bg-slate-50 rounded-xl p-4 text-center">
+                                            <div className="text-2xl font-black text-amber-600">{topScore.toFixed(0)}%</div>
+                                            <div className="text-xs text-slate-500 uppercase tracking-wide">Top Win Rate</div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                        
+                        {/* Leaderboard */}
+                        <div className="space-y-3">
                             {Object.entries(pairwiseScores)
                                 .sort(([, a], [, b]) => b.score - a.score)
                                 .map(([id, data], index) => {
+                                    const isChampion = index === 0;
+                                    const isRunnerUp = index === 1;
+                                    const isThird = index === 2;
+                                    
                                     return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                        {index + 1}
+                                        <motion.div 
+                                            key={id} 
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className={`relative break-inside-avoid p-4 rounded-xl transition-all ${
+                                                isChampion 
+                                                    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 shadow-lg' 
+                                                    : isRunnerUp
+                                                    ? 'bg-slate-100 border border-slate-200'
+                                                    : 'bg-slate-50 border border-slate-100'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    {/* Rank Badge */}
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-md ${
+                                                        isChampion ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-900' :
+                                                        isRunnerUp ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700' :
+                                                        isThird ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-800' :
+                                                        'bg-slate-200 text-slate-500'
+                                                    }`}>
+                                                        {isChampion ? <Crown size={20} /> : `#${index + 1}`}
                                                     </div>
-                                                    <span className="text-slate-800 font-bold text-lg">
-                                                        {getOptionText(id)}
-                                                    </span>
+                                                    <div>
+                                                        <div className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                                            {getOptionText(id)}
+                                                            {isChampion && (
+                                                                <span className="px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full">
+                                                                    CHAMPION
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-sm text-slate-500">
+                                                            {data.wins} win{data.wins !== 1 ? 's' : ''} 
+                                                            {data.losses !== undefined && ` • ${data.losses} loss${data.losses !== 1 ? 'es' : ''}`}
+                                                            {data.matches && ` • ${data.matches} match${data.matches !== 1 ? 'es' : ''}`}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <span className="text-slate-600 font-bold">
-                                                    {data.score.toFixed(1)}% <span className="text-slate-400 font-normal text-xs ml-1">({data.wins} wins{data.matches ? ` / ${data.matches} matches` : ''})</span>
-                                                </span>
+                                                
+                                                {/* Win Rate Circle */}
+                                                <div className="relative w-16 h-16">
+                                                    <svg className="w-full h-full transform -rotate-90">
+                                                        <circle cx="32" cy="32" r="28" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+                                                        <motion.circle 
+                                                            cx="32" cy="32" r="28" 
+                                                            fill="none" 
+                                                            stroke={isChampion ? '#f59e0b' : '#6366f1'} 
+                                                            strokeWidth="6"
+                                                            strokeLinecap="round"
+                                                            initial={{ strokeDasharray: '0 176' }}
+                                                            animate={{ strokeDasharray: `${data.score * 1.76} 176` }}
+                                                            transition={{ duration: 1, delay: index * 0.1 }}
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className={`text-sm font-black ${isChampion ? 'text-amber-600' : 'text-indigo-600'}`}>
+                                                            {data.score.toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="h-4 bg-slate-100 rounded-full overflow-hidden print:border print:border-slate-200">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${data.score}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className={`h-full rounded-full ${getBarColorClass(id)} opacity-90`}
-                                                />
-                                            </div>
-                                        </div>
+                                        </motion.div>
                                     );
                                 })}
                         </div>
@@ -1491,42 +1634,92 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
                     >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <LayoutGrid size={24} className="text-indigo-500"/> Priority Matrix Results
-                        </h3>
-                        
-                        <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden">
-                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-                                <div className="bg-emerald-50/50 flex items-start justify-start p-2"><span className="text-[10px] font-bold text-emerald-800 opacity-40 uppercase">Quick Wins</span></div>
-                                <div className="bg-blue-50/50 flex items-start justify-end p-2"><span className="text-[10px] font-bold text-blue-800 opacity-40 uppercase">Major Projects</span></div>
-                                <div className="bg-slate-50/50 flex items-end justify-start p-2"><span className="text-[10px] font-bold text-slate-500 opacity-40 uppercase">Fill Ins</span></div>
-                                <div className="bg-red-50/50 flex items-end justify-end p-2"><span className="text-[10px] font-bold text-red-800 opacity-40 uppercase">Thankless Tasks</span></div>
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-6 mb-6 text-white text-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <LayoutGrid size={28} />
+                                <h3 className="text-2xl font-black">Priority Matrix</h3>
                             </div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-px bg-slate-300"></div></div>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="h-full w-px bg-slate-300"></div></div>
-                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">High Impact</div>
-                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded backdrop-blur-sm">Low Impact</div>
-                            <div className="absolute top-1/2 left-2 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">Low Effort</div>
-                            <div className="absolute top-1/2 right-2 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/80 px-2 rounded origin-center backdrop-blur-sm">High Effort</div>
-                             {Object.entries(matrixAverages).map(([id, coords]) => {
+                            <p className="text-blue-100 text-sm">
+                                {poll.options.length} items plotted by average Impact (Y) vs Effort (X) ratings
+                            </p>
+                        </div>
+                        
+                        {/* Quadrant Legend */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6 text-xs">
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center">
+                                <div className="font-bold text-emerald-700">⭐ Quick Wins</div>
+                                <div className="text-emerald-600">High Impact, Low Effort</div>
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+                                <div className="font-bold text-blue-700">🚀 Major Projects</div>
+                                <div className="text-blue-600">High Impact, High Effort</div>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+                                <div className="font-bold text-slate-600">📝 Fill Ins</div>
+                                <div className="text-slate-500">Low Impact, Low Effort</div>
+                            </div>
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                <div className="font-bold text-red-700">⚠️ Reconsider</div>
+                                <div className="text-red-600">Low Impact, High Effort</div>
+                            </div>
+                        </div>
+                        
+                        <div className="relative aspect-square bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-inner">
+                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                                <div className="bg-emerald-50/70 flex items-start justify-start p-3"><span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Quick Wins</span></div>
+                                <div className="bg-blue-50/70 flex items-start justify-end p-3"><span className="text-xs font-bold text-blue-700 uppercase tracking-wide">Major Projects</span></div>
+                                <div className="bg-slate-50/70 flex items-end justify-start p-3"><span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Fill Ins</span></div>
+                                <div className="bg-red-50/70 flex items-end justify-end p-3"><span className="text-xs font-bold text-red-700 uppercase tracking-wide">Reconsider</span></div>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-0.5 bg-slate-300"></div></div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="h-full w-0.5 bg-slate-300"></div></div>
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-600 uppercase tracking-widest bg-white/90 px-3 py-1 rounded-full shadow-sm">↑ High Impact</div>
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/90 px-3 py-1 rounded-full shadow-sm">↓ Low Impact</div>
+                            <div className="absolute top-1/2 left-3 -translate-y-1/2 -rotate-90 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white/90 px-3 py-1 rounded-full origin-center shadow-sm">← Low Effort</div>
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2 rotate-90 text-xs font-bold text-slate-600 uppercase tracking-widest bg-white/90 px-3 py-1 rounded-full origin-center shadow-sm">High Effort →</div>
+                             {Object.entries(matrixAverages).map(([id, coords], index) => {
                                  const top = 100 - coords.y;
+                                 const isQuickWin = coords.y > 50 && coords.x < 50;
                                  return (
-                                     <div key={id} className="absolute -ml-3 -mt-3 w-6 h-6 bg-indigo-600 rounded-full border-2 border-white shadow-md flex items-center justify-center z-10 group cursor-help transition-all hover:scale-125 hover:z-20" style={{ left: `${coords.x}%`, top: `${top}%` }}>
-                                         <span className="text-[10px] text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
-                                         <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                                     <motion.div 
+                                         key={id} 
+                                         initial={{ scale: 0, opacity: 0 }}
+                                         animate={{ scale: 1, opacity: 1 }}
+                                         transition={{ delay: index * 0.1, type: "spring" }}
+                                         className={`absolute -ml-4 -mt-4 w-8 h-8 rounded-full border-3 shadow-lg flex items-center justify-center z-10 group cursor-help transition-all hover:scale-150 hover:z-20 ${
+                                             isQuickWin 
+                                                 ? 'bg-gradient-to-br from-emerald-500 to-teal-500 border-white' 
+                                                 : 'bg-gradient-to-br from-indigo-500 to-purple-500 border-white'
+                                         }`} 
+                                         style={{ left: `${coords.x}%`, top: `${top}%` }}
+                                     >
+                                         <span className="text-xs text-white font-bold">{poll.options.findIndex(o => o.id === id) + 1}</span>
+                                         <div className="absolute bottom-full mb-2 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-xl">
                                              {getOptionText(id)}
+                                             {isQuickWin && <span className="ml-1 text-emerald-400">⭐</span>}
                                          </div>
-                                     </div>
+                                     </motion.div>
                                  )
                              })}
                         </div>
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-slate-500">
-                             {poll.options.map((opt, i) => (
-                                 <div key={opt.id} className="flex items-center gap-2">
-                                     <span className="w-4 h-4 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-[9px]">{i + 1}</span>
-                                     <span className="truncate">{opt.text}</span>
-                                 </div>
-                             ))}
+                        
+                        {/* Legend */}
+                        <div className="mt-6 bg-slate-50 rounded-xl p-4">
+                            <h4 className="font-bold text-slate-700 mb-3 text-sm">Items Plotted</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                                 {poll.options.map((opt, i) => {
+                                     const coords = matrixAverages[opt.id];
+                                     const isQuickWin = coords && coords.y > 50 && coords.x < 50;
+                                     return (
+                                         <div key={opt.id} className={`flex items-center gap-2 p-2 rounded-lg ${isQuickWin ? 'bg-emerald-100' : ''}`}>
+                                             <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs text-white ${isQuickWin ? 'bg-emerald-500' : 'bg-indigo-500'}`}>{i + 1}</span>
+                                             <span className={`truncate ${isQuickWin ? 'font-bold text-emerald-700' : 'text-slate-600'}`}>{opt.text}</span>
+                                             {isQuickWin && <span className="text-emerald-500 text-xs">⭐</span>}
+                                         </div>
+                                     );
+                                 })}
+                            </div>
                         </div>
                      </motion.div>
                 )}
@@ -1547,6 +1740,30 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                             boxShadow: `0 0 40px ${theme.primary}25, 0 0 80px ${theme.primary}10`
                         } : undefined}
                     >
+                        {/* Stats Summary Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white text-center">
+                                <Users size={20} className="mx-auto mb-1 opacity-80" />
+                                <div className="text-2xl font-black">{totalVotes}</div>
+                                <div className="text-xs uppercase tracking-wide opacity-80">Total Votes</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white text-center">
+                                <BarChart size={20} className="mx-auto mb-1 opacity-80" />
+                                <div className="text-2xl font-black">{poll.options.length}</div>
+                                <div className="text-xs uppercase tracking-wide opacity-80">Options</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white text-center">
+                                <Trophy size={20} className="mx-auto mb-1 opacity-80" />
+                                <div className="text-2xl font-black">{topVoteCount}</div>
+                                <div className="text-xs uppercase tracking-wide opacity-80">Top Votes</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 text-white text-center">
+                                <Activity size={20} className="mx-auto mb-1 opacity-80" />
+                                <div className="text-2xl font-black">{totalVotes > 0 ? Math.round(topVoteCount / totalVotes * 100) : 0}%</div>
+                                <div className="text-xs uppercase tracking-wide opacity-80">Leader Share</div>
+                            </div>
+                        </div>
+
                         <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
                             <BarChart size={24} style={{ color: theme.primary }}/> 
                             {isRanked ? 'First Preference Votes' : isDot ? 'Points Distribution' : isBudget ? 'Value Allocated' : 'Vote Breakdown'}
@@ -1558,30 +1775,71 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                                 .map(([id, value], index) => {
                                     const denominator = isDot || isBudget ? Object.values(barChartData).reduce((a,b)=>a+b,0) : totalVotes;
                                     const percentage = denominator > 0 ? (value / denominator) * 100 : 0;
+                                    const isWinner = index === 0 && value > 0;
+                                    const isRunnerUp = index === 1 && value > 0;
+                                    const isThird = index === 2 && value > 0;
                                     
                                     return (
-                                        <div key={id} className="relative break-inside-avoid">
-                                            <div className="flex justify-between text-sm font-medium mb-1">
-                                                <span className={`font-bold text-lg ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
-                                                    {getOptionText(id)}
-                                                </span>
-                                                <span className={`font-bold ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : ''} <span className={`font-normal text-xs ml-1 ${isDarkTheme ? 'text-slate-500' : 'text-slate-400'}`}>({percentage.toFixed(0)}%)</span>
+                                        <motion.div 
+                                            key={id} 
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className={`relative break-inside-avoid p-4 rounded-xl transition-all ${
+                                                isWinner 
+                                                    ? (isDarkTheme ? 'bg-amber-500/10 border-2 border-amber-500/30' : 'bg-amber-50 border-2 border-amber-200')
+                                                    : (isDarkTheme ? 'bg-slate-800/50' : 'bg-slate-50')
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    {/* Rank Badge */}
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                                        isWinner ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-900' :
+                                                        isRunnerUp ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700' :
+                                                        isThird ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-800' :
+                                                        (isDarkTheme ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500')
+                                                    }`}>
+                                                        {isWinner ? <Crown size={16} /> : index + 1}
+                                                    </div>
+                                                    <span className={`font-bold text-lg ${isDarkTheme ? 'text-white' : 'text-slate-800'}`}>
+                                                        {getOptionText(id)}
+                                                    </span>
+                                                    {isWinner && !isTie && (
+                                                        <span className="px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full">
+                                                            WINNER
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={`font-bold text-lg ${isDarkTheme ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                    {isBudget ? `$${value.toLocaleString()}` : value} {isDot ? 'pts' : 'votes'}
                                                 </span>
                                             </div>
-                                            <div className={`h-6 rounded-lg overflow-hidden print:border print:border-slate-200 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                                            <div className={`h-8 rounded-lg overflow-hidden print:border print:border-slate-200 ${isDarkTheme ? 'bg-slate-800' : 'bg-slate-200'}`}>
                                                 <motion.div
                                                     initial={{ width: 0 }}
-                                                    animate={{ width: `${percentage}%` }}
-                                                    transition={{ duration: 1, ease: "easeOut" }}
-                                                    className="h-full rounded-lg print:bg-slate-600"
+                                                    animate={{ width: `${Math.max(percentage, value > 0 ? 3 : 0)}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 }}
+                                                    className="h-full rounded-lg print:bg-slate-600 flex items-center justify-end pr-3"
                                                     style={{ 
-                                                        backgroundColor: index === 0 ? theme.primary : theme.accent || theme.secondary,
-                                                        opacity: 1 - (index * 0.1)
+                                                        background: isWinner 
+                                                            ? `linear-gradient(90deg, ${theme.primary}, #f59e0b)` 
+                                                            : `linear-gradient(90deg, ${theme.primary}cc, ${theme.accent || theme.secondary}cc)`,
                                                     }}
-                                                />
+                                                >
+                                                    {percentage > 10 && (
+                                                        <span className="text-white text-sm font-bold drop-shadow-sm">
+                                                            {percentage.toFixed(0)}%
+                                                        </span>
+                                                    )}
+                                                </motion.div>
                                             </div>
-                                        </div>
+                                            {percentage <= 10 && percentage > 0 && (
+                                                <span className={`text-xs font-medium mt-1 block text-right ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                    {percentage.toFixed(1)}%
+                                                </span>
+                                            )}
+                                        </motion.div>
                                     );
                                 })}
                         </div>
@@ -1597,20 +1855,81 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         exit={{ opacity: 0, y: -10 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 overflow-x-auto"
                     >
-                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <GitMerge size={24} className="text-indigo-500"/>
-                            Vote Transfer Flow
-                        </h3>
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-6 mb-6 text-white">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <GitMerge size={28} />
+                                <h3 className="text-2xl font-black">Ranked Choice Voting</h3>
+                            </div>
+                            <p className="text-indigo-100 text-sm text-center">
+                                Watch how votes transfer as lowest-ranked options are eliminated each round
+                            </p>
+                        </div>
                         
-                        <div className="min-w-[600px] h-[450px]">
+                        {/* Round Summary Cards */}
+                        <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+                            {rounds.map((round, idx) => {
+                                const eliminated = round.eliminated ? getOptionText(round.eliminated) : null;
+                                const isLastRound = idx === rounds.length - 1;
+                                
+                                return (
+                                    <motion.div 
+                                        key={idx}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        className={`flex-shrink-0 w-48 rounded-xl p-4 border-2 ${
+                                            isLastRound 
+                                                ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-300' 
+                                                : 'bg-slate-50 border-slate-200'
+                                        }`}
+                                    >
+                                        <div className={`text-xs font-bold uppercase tracking-wide mb-2 ${
+                                            isLastRound ? 'text-amber-600' : 'text-slate-400'
+                                        }`}>
+                                            {isLastRound ? '🏆 Final Round' : `Round ${idx + 1}`}
+                                        </div>
+                                        
+                                        {eliminated && !isLastRound && (
+                                            <div className="mb-2">
+                                                <div className="text-xs text-slate-500 mb-1">Eliminated:</div>
+                                                <div className="text-sm font-bold text-red-600 truncate">
+                                                    ❌ {eliminated}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {isLastRound && winnerId && (
+                                            <div className="mb-2">
+                                                <div className="text-xs text-amber-600 mb-1">Winner:</div>
+                                                <div className="text-sm font-bold text-amber-700 truncate flex items-center gap-1">
+                                                    <Crown size={14} /> {getOptionText(winnerId)}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="text-xs text-slate-400">
+                                            {Object.keys(round.counts || {}).length} options remaining
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                        
+                        {/* Sankey Diagram */}
+                        <div className="min-w-[600px] h-[450px] bg-slate-50 rounded-xl p-4">
                             {renderSankeySVG()}
                         </div>
                         
-                        <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <Info size={16} className="text-indigo-500"/>
-                            <span>
-                                This diagram shows how votes from eliminated candidates (faded lines) are transferred to their next choice in subsequent rounds.
-                            </span>
+                        {/* Info Box */}
+                        <div className="mt-4 flex items-start gap-3 text-sm text-slate-600 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <Info size={20} className="text-indigo-500 flex-shrink-0 mt-0.5"/>
+                            <div>
+                                <div className="font-bold text-indigo-700 mb-1">How Ranked Choice Works</div>
+                                <span>
+                                    Voters rank options by preference. If no option has a majority, the option with fewest votes is eliminated and those votes transfer to voters' next choices. This continues until one option wins with a majority.
+                                </span>
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -1623,25 +1942,125 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
                     >
-                         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <Calendar size={24} className="text-indigo-500"/> Availability Heatmap
-                        </h3>
-                        {isMeeting && <p className="text-sm text-slate-500 mb-4">Intensity based on: Yes = 1, Maybe = 0.5</p>}
+                        {/* Header Card */}
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 mb-6 text-white">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <Calendar size={28} />
+                                <h3 className="text-2xl font-black">Availability Overview</h3>
+                            </div>
+                            <p className="text-emerald-100 text-sm text-center">
+                                Scores: <span className="font-bold">Yes = 1 point</span> • <span className="font-bold">Maybe = 0.5 points</span> • Higher = More Available
+                            </p>
+                        </div>
+
+                        {/* Stats Summary */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                            <div className="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
+                                <div className="text-2xl font-black text-emerald-600">{totalVotes}</div>
+                                <div className="text-xs text-emerald-600 uppercase tracking-wide">Respondents</div>
+                            </div>
+                            <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                                <div className="text-2xl font-black text-slate-600">{poll.options.length}</div>
+                                <div className="text-xs text-slate-500 uppercase tracking-wide">Time Slots</div>
+                            </div>
+                            <div className="bg-amber-50 rounded-xl p-4 text-center border border-amber-100">
+                                <div className="text-2xl font-black text-amber-600">{Math.max(...Object.values(meetingScoreData)).toFixed(1)}</div>
+                                <div className="text-xs text-amber-600 uppercase tracking-wide">Best Score</div>
+                            </div>
+                            <div className="bg-indigo-50 rounded-xl p-4 text-center border border-indigo-100">
+                                <div className="text-2xl font-black text-indigo-600">
+                                    {Object.values(meetingScoreData).filter(s => s >= maxHeat * 0.8).length}
+                                </div>
+                                <div className="text-xs text-indigo-600 uppercase tracking-wide">Top Options</div>
+                            </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-6 mb-6 text-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded bg-emerald-500"></div>
+                                <span className="text-slate-600">High Availability</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded bg-emerald-200"></div>
+                                <span className="text-slate-600">Low Availability</span>
+                            </div>
+                        </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {Object.entries(meetingScoreData).map(([id, score]) => {
-                                const intensity = score / maxHeat;
+                        {/* Heatmap Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Object.entries(meetingScoreData)
+                                .sort(([, a], [, b]) => b - a)
+                                .map(([id, score], index) => {
+                                const intensity = maxHeat > 0 ? score / maxHeat : 0;
+                                const isTop = index === 0;
+                                const yesCount = simpleCounts[id] || 0;
+                                const maybeCount = maybeCounts ? (maybeCounts[id] || 0) : 0;
+                                const noCount = totalVotes - yesCount - maybeCount;
+                                
                                 return (
-                                    <div key={id} className="relative group overflow-hidden rounded-xl border border-slate-100 aspect-video flex flex-col items-center justify-center p-4 text-center transition-all hover:scale-105"
-                                         style={{ backgroundColor: `rgba(16, 185, 129, ${0.05 + (intensity * 0.4)})` }}>
-                                        <div className="font-bold text-slate-800 mb-1 leading-tight">{getOptionText(id)}</div>
-                                        <div className="text-2xl font-black text-emerald-600">{score}</div>
-                                        <div className="text-xs text-emerald-400 font-bold uppercase tracking-wide">Score</div>
-                                        {/* Intensity Bar */}
-                                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-100">
-                                            <div className="h-full bg-emerald-500" style={{ width: `${(score / (totalVotes || 1)) * 100}%` }}></div>
+                                    <motion.div 
+                                        key={id} 
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className={`relative group overflow-hidden rounded-2xl border-2 p-5 transition-all hover:scale-[1.02] hover:shadow-lg ${
+                                            isTop 
+                                                ? 'border-emerald-400 shadow-lg shadow-emerald-100' 
+                                                : 'border-slate-100'
+                                        }`}
+                                        style={{ 
+                                            background: `linear-gradient(135deg, rgba(16, 185, 129, ${0.05 + (intensity * 0.25)}) 0%, rgba(20, 184, 166, ${0.05 + (intensity * 0.2)}) 100%)`
+                                        }}
+                                    >
+                                        {isTop && (
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                                                <Crown size={12} /> BEST
+                                            </div>
+                                        )}
+                                        
+                                        <div className="font-bold text-slate-800 mb-3 pr-16 leading-tight">
+                                            {getOptionText(id)}
                                         </div>
-                                    </div>
+                                        
+                                        {/* Score Display */}
+                                        <div className="flex items-end justify-between mb-3">
+                                            <div>
+                                                <div className="text-3xl font-black text-emerald-600">{score.toFixed(1)}</div>
+                                                <div className="text-xs text-emerald-500 font-bold uppercase tracking-wide">Score</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-slate-600">{Math.round(intensity * 100)}%</div>
+                                                <div className="text-xs text-slate-400">of max</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Yes/Maybe/No Breakdown */}
+                                        <div className="flex gap-2 text-xs">
+                                            <div className="flex-1 bg-emerald-100 rounded-lg p-2 text-center">
+                                                <div className="font-bold text-emerald-700">{yesCount}</div>
+                                                <div className="text-emerald-600">Yes</div>
+                                            </div>
+                                            <div className="flex-1 bg-amber-100 rounded-lg p-2 text-center">
+                                                <div className="font-bold text-amber-700">{maybeCount}</div>
+                                                <div className="text-amber-600">Maybe</div>
+                                            </div>
+                                            <div className="flex-1 bg-slate-100 rounded-lg p-2 text-center">
+                                                <div className="font-bold text-slate-600">{Math.max(0, noCount)}</div>
+                                                <div className="text-slate-500">No</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Intensity Bar */}
+                                        <div className="mt-3 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <motion.div 
+                                                className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${intensity * 100}%` }}
+                                                transition={{ duration: 0.8, delay: index * 0.05 }}
+                                            />
+                                        </div>
+                                    </motion.div>
                                 )
                             })}
                         </div>
@@ -1655,94 +2074,125 @@ const VoteGeneratorResults: React.FC<Props> = ({ poll, results, onEdit, adminKey
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 flex flex-col md:flex-row items-center gap-8 justify-center min-h-[400px]"
+                        className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8"
                     >
-                         <motion.div 
-                            className="relative w-64 h-64 shrink-0"
-                            initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
-                            animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                         >
-                             {/* SVG Pie Chart for better PNG export */}
-                             <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                                 {pieData.map((d, i) => {
-                                     const startAngle = d.startAngle * (Math.PI / 180);
-                                     const endAngle = (d.startAngle + d.angle) * (Math.PI / 180);
-                                     const largeArcFlag = d.angle > 180 ? 1 : 0;
-                                     const x1 = 50 + 48 * Math.cos(startAngle);
-                                     const y1 = 50 + 48 * Math.sin(startAngle);
-                                     const x2 = 50 + 48 * Math.cos(endAngle);
-                                     const y2 = 50 + 48 * Math.sin(endAngle);
-                                     
-                                     // Handle full circle case
-                                     if (d.angle >= 359.9) {
-                                         return (
-                                             <circle
-                                                 key={d.id}
-                                                 cx="50"
-                                                 cy="50"
-                                                 r="48"
-                                                 fill={d.color}
-                                                 stroke="#fff"
-                                                 strokeWidth="1"
-                                             />
-                                         );
-                                     }
-                                     
-                                     const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-                                     return (
-                                         <path
-                                             key={d.id}
-                                             d={pathData}
-                                             fill={d.color}
-                                             stroke="#fff"
-                                             strokeWidth="1"
-                                         />
-                                     );
-                                 })}
-                             </svg>
-                             <motion.div 
-                                className="absolute inset-0 flex items-center justify-center"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                             >
-                                 <div className="w-16 h-16 bg-white rounded-full shadow flex items-center justify-center font-bold text-slate-600 text-lg">
-                                     {isDot || isBudget ? <Coins size={24} /> : totalVotes}
-                                 </div>
-                             </motion.div>
-                         </motion.div>
-                         
-                         <div className="flex-1 w-full max-w-sm">
-                             <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
-                                 {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
-                             </h3>
-                             <div className="space-y-3">
-                                 {pieData.map((d, i) => (
-                                     <motion.div 
-                                        key={d.id} 
-                                        className="flex items-center justify-between group"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.3 + (i * 0.1), duration: 0.3 }}
-                                     >
-                                         <div className="flex items-center gap-3">
-                                             <motion.div 
-                                                className="w-4 h-4 rounded-full" 
-                                                style={{ backgroundColor: d.color }}
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
-                                             />
-                                             <span className="font-medium text-slate-700">{getOptionText(d.id)}</span>
-                                         </div>
-                                         <div className="text-sm font-bold text-slate-500">
-                                             {d.percentage.toFixed(1)}%
-                                         </div>
-                                     </motion.div>
-                                 ))}
-                             </div>
-                         </div>
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-6 mb-6 text-white text-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <PieChart size={28} />
+                                <h3 className="text-2xl font-black">
+                                    {isRanked ? 'First Preference Distribution' : isDot || isBudget ? 'Value Share' : 'Vote Distribution'}
+                                </h3>
+                            </div>
+                            <p className="text-pink-100 text-sm">
+                                {totalVotes} total {isDot ? 'points allocated' : isBudget ? 'dollars spent' : 'votes cast'}
+                            </p>
+                        </div>
+                        
+                        <div className="flex flex-col md:flex-row items-center gap-8 justify-center">
+                            {/* Pie Chart */}
+                            <motion.div 
+                                className="relative w-64 h-64 shrink-0"
+                                initial={{ rotate: -90, scale: 0.8, opacity: 0 }}
+                                animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                            >
+                                {/* SVG Pie Chart for better PNG export */}
+                                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 drop-shadow-lg">
+                                    {pieData.map((d, i) => {
+                                        const startAngle = d.startAngle * (Math.PI / 180);
+                                        const endAngle = (d.startAngle + d.angle) * (Math.PI / 180);
+                                        const largeArcFlag = d.angle > 180 ? 1 : 0;
+                                        const x1 = 50 + 48 * Math.cos(startAngle);
+                                        const y1 = 50 + 48 * Math.sin(startAngle);
+                                        const x2 = 50 + 48 * Math.cos(endAngle);
+                                        const y2 = 50 + 48 * Math.sin(endAngle);
+                                        
+                                        // Handle full circle case
+                                        if (d.angle >= 359.9) {
+                                            return (
+                                                <circle
+                                                    key={d.id}
+                                                    cx="50"
+                                                    cy="50"
+                                                    r="48"
+                                                    fill={d.color}
+                                                    stroke="#fff"
+                                                    strokeWidth="2"
+                                                />
+                                            );
+                                        }
+                                        
+                                        const pathData = `M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                                        return (
+                                            <path
+                                                key={d.id}
+                                                d={pathData}
+                                                fill={d.color}
+                                                stroke="#fff"
+                                                strokeWidth="2"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                                <motion.div 
+                                    className="absolute inset-0 flex items-center justify-center"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                                >
+                                    <div className="w-20 h-20 bg-white rounded-full shadow-lg flex flex-col items-center justify-center">
+                                        <span className="font-black text-2xl text-slate-800">
+                                            {isDot || isBudget ? <Coins size={24} className="text-amber-500" /> : totalVotes}
+                                        </span>
+                                        {!isDot && !isBudget && (
+                                            <span className="text-xs text-slate-400">votes</span>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                            
+                            {/* Legend */}
+                            <div className="flex-1 w-full max-w-sm">
+                                <div className="space-y-2">
+                                    {pieData.map((d, i) => {
+                                        const isWinner = i === 0;
+                                        return (
+                                            <motion.div 
+                                                key={d.id} 
+                                                className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                                                    isWinner 
+                                                        ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200' 
+                                                        : 'bg-slate-50 hover:bg-slate-100'
+                                                }`}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: 0.3 + (i * 0.1), duration: 0.3 }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <motion.div 
+                                                        className="w-5 h-5 rounded-full shadow-sm" 
+                                                        style={{ backgroundColor: d.color }}
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        transition={{ delay: 0.4 + (i * 0.1), type: "spring" }}
+                                                    />
+                                                    <span className={`font-medium ${isWinner ? 'text-amber-800' : 'text-slate-700'}`}>
+                                                        {getOptionText(d.id)}
+                                                    </span>
+                                                    {isWinner && (
+                                                        <Crown size={14} className="text-amber-500" />
+                                                    )}
+                                                </div>
+                                                <div className={`text-sm font-black ${isWinner ? 'text-amber-600' : 'text-slate-500'}`}>
+                                                    {d.percentage.toFixed(1)}%
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </motion.div>
                 )}
 

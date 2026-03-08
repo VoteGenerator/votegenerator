@@ -24,7 +24,7 @@ import TermsPage from './components/TermsPage';
 import RefundPage from './components/RefundPage';
 
 // SEO Landing Pages
-import FAQPage from './pages/FAQPage';
+import FAQPage from './components/FAQPage';
 import EmployeeSurveyPage from './pages/EmployeeSurveyPage';
 import CustomerFeedbackPage from './pages/CustomerFeedbackPage';
 import RankedChoicePage from './pages/RankedChoicePage';
@@ -82,9 +82,9 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
                 {/* Logo */}
                 <a href="/" className="flex items-center gap-2 font-bold text-white/90 hover:text-white transition-colors">
                     <img 
-                        src="/logo.svg" 
+                        src="/logooutline.svg" 
                         alt="VoteGenerator" 
-                        className="h-8 w-8 brightness-0 invert"
+                        className="h-8 w-8"
                         onError={(e) => {
                             e.currentTarget.style.display = 'none';
                         }}

@@ -106,17 +106,17 @@ const HeroSection: React.FC = () => {
                         {/* CTA */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             
-                                href="/create"
+                               <a href="/create"
                                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-red-600 font-bold text-lg rounded-xl hover:bg-red-50 transition shadow-xl shadow-black/20"
                             >
                                 Create Your First Poll
                                 <ArrowRight size={20} />
                             </a>
                             
-                                href="#how-it-works"
+                                <a href="#how-it-works"
                                 className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition"
                             >
-                                See How It Works
+                             See How It Works
                             </a>
                         </div>
                     </motion.div>
@@ -589,7 +589,7 @@ const TemplatesSection: React.FC = () => {
 
                 <div className="text-center">
                     
-                        href="/templates"
+                       <a href="/templates"
                         className="inline-flex items-center gap-2 text-red-600 font-medium hover:text-red-700"
                     >
                         Browse all templates
@@ -628,7 +628,7 @@ const FinalCTASection: React.FC = () => {
                 </p>
 
                 
-                    href="/create"
+                    <a href="/create"
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-red-600 font-bold text-lg rounded-xl hover:bg-red-50 transition shadow-xl"
                 >
                     Create Your First Poll

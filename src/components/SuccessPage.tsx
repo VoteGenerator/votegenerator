@@ -21,16 +21,6 @@ import {
   Shield,
 } from 'lucide-react';
 
-useEffect(() => {
-  const link = document.createElement('link');
-  link.rel = 'canonical';
-  link.href = 'https://votegenerator.com/survey';
-  document.head.appendChild(link);
-  return () => { document.head.removeChild(link); };
-}, []);
-
-
-
 // ============================================================================
 // Types
 // ============================================================================

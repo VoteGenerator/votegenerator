@@ -7,16 +7,6 @@ import React from 'react';
 import BlogLayout, { EarlyCTA, InlineCTA, EndCTA, Callout } from './BlogLayout';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 
-useEffect(() => {
-  const link = document.createElement('link');
-  link.rel = 'canonical';
-  link.href = 'https://votegenerator.com/blog/employee-survey-questions';
-  document.head.appendChild(link);
-  return () => { document.head.removeChild(link); };
-}, []);
-
-
-
 const BlogPostAnonymousSurvey: React.FC = () => {
     return (
         <BlogLayout

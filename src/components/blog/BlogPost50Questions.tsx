@@ -3,7 +3,7 @@
 // CTA Strategy: After intro, after question 20, after question 40, end
 // ============================================================================
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import BlogLayout, { EarlyCTA, InlineCTA, EndCTA, Callout, QuestionItem } from './BlogLayout';
 
 // Clean section header
@@ -20,6 +20,15 @@ const Section: React.FC<{ title: string; subtitle: string; children: React.React
 );
 
 const BlogPost50Questions: React.FC = () => {
+
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = 'https://votegenerator.com/blog/employee-survey-questions';
+        document.head.appendChild(link);
+        return () => { document.head.removeChild(link); };
+    }, []);
+
     return (
         <BlogLayout
             title="50 Employee Survey Questions That Get Honest Answers"

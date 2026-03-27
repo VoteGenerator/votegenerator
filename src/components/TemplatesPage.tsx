@@ -10,6 +10,14 @@ import Footer from './Footer';
 import TemplateSelector from './TemplateSelector';
 import { PollTemplate } from './pollTemplates';
 
+useEffect(() => {
+  const link = document.createElement('link');
+  link.rel = 'canonical';
+  link.href = 'https://votegenerator.com/templates';
+  document.head.appendChild(link);
+  return () => { document.head.removeChild(link); };
+}, []);
+
 const TemplatesPage: React.FC = () => {
     const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
 

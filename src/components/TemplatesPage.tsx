@@ -13,12 +13,21 @@ import { PollTemplate } from './pollTemplates';
 const TemplatesPage: React.FC = () => {
     const [tier, setTier] = useState<'free' | 'pro' | 'business'>('free');
 
+    // Canonical tag
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = 'https://votegenerator.com/templates';
+        document.head.appendChild(link);
+        return () => { document.head.removeChild(link); };
+    }, []);
+
     // Detect tier from localStorage
     useEffect(() => {
         const savedTier = localStorage.getItem('vg_subscription_tier') || 
                           localStorage.getItem('vg_purchased_tier');
         if (savedTier === 'pro' || savedTier === 'business') {
-            setTier(savedTier);
+            setTier(savedTier as 'pro' | 'business');
         }
     }, []);
     

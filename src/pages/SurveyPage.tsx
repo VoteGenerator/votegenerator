@@ -669,6 +669,15 @@ const SurveyPage: React.FC = () => {
     const [showBuilder, setShowBuilder] = useState(false);
     const [selectedDepartments, setSelectedDepartments] = useState<string[]>(DEPARTMENT_OPTIONS.map(d => d.id));
     
+    // Canonical tag
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = 'https://votegenerator.com/survey';
+        document.head.appendChild(link);
+        return () => { document.head.removeChild(link); };
+    }, []);
+
     // Check URL for template parameter
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);

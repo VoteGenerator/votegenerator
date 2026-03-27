@@ -26,6 +26,16 @@ import NavHeader from './NavHeader';
 import PremiumNav from './PremiumNav';
 import Footer from './Footer';
 
+useEffect(() => {
+  const link = document.createElement('link');
+  link.rel = 'canonical';
+  link.href = 'https://votegenerator.com/reddit-polls';
+  document.head.appendChild(link);
+  return () => { document.head.removeChild(link); };
+}, []);
+
+
+
 // Custom Reddit icon component
 const RedditIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
     <svg 

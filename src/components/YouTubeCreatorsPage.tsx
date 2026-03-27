@@ -24,6 +24,16 @@ import {
 import NavHeader from './NavHeader';
 import Footer from './Footer';
 
+useEffect(() => {
+  const link = document.createElement('link');
+  link.rel = 'canonical';
+  link.href = 'https://votegenerator.com/youtube-polls';
+  document.head.appendChild(link);
+  return () => { document.head.removeChild(link); };
+}, []);
+
+
+
 // ============================================================================
 // HERO SECTION
 // ============================================================================

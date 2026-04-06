@@ -23,8 +23,7 @@ import {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const EMAIL_HASH_SECRET = process.env.EMAIL_HASH_SECRET || 'change-me-in-production';
-
+const EMAIL_HASH_SECRET = process.env.EMAIL_HASH_SECRET || (() => { throw new Error('EMAIL_HASH_SECRET env var not set'); })();
 const RATE_LIMITS = {
   // Max verification requests per IP per hour
   perIP: { max: 10, windowMs: 3600000 },

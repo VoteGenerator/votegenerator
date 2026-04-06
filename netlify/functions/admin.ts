@@ -8,11 +8,36 @@ import type { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
 // Admin password from environment variable (set in Netlify dashboard)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'votegen2024';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+import { createHmac, timingSafeEqual } from 'crypto';
+
+// Generate a signed token: base64(timestamp):hmac
+function generateAdminToken(): string {
+  if (!ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD not set');
+  const ts = Date.now().toString();
+  const hmac = createHmac('sha256', ADMIN_PASSWORD).update(ts).digest('hex');
+  return `${ts}:${hmac}`;
+}
+
+// Verify token is valid and not older than 8 hours
+function verifyAdminToken(token: string | undefined): boolean {
+  if (!ADMIN_PASSWORD || !token) return false;
+  const parts = token.split(':');
+  if (parts.length !== 2) return false;
+  const [ts, providedHmac] = parts;
+  const expectedHmac = createHmac('sha256', ADMIN_PASSWORD).update(ts).digest('hex');
+  try {
+    const valid = timingSafeEqual(Buffer.from(providedHmac, 'hex'), Buffer.from(expectedHmac, 'hex'));
+    const age = Date.now() - parseInt(ts, 10);
+    return valid && age < 8 * 60 * 60 * 1000; // 8 hours
+  } catch {
+    return false;
+  }
+}
 
 const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Auth',
+  'Access-Control-Allow-Origin': 'https://votegenerator.com',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Auth, X-Admin-Token',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json',
 };
@@ -27,10 +52,7 @@ function generateId(): string {
   return id;
 }
 
-// Generate a simple token
-function generateToken(): string {
-  return `admin_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-}
+
 
 export const handler: Handler = async (event) => {
   // Handle CORS
@@ -42,6 +64,15 @@ export const handler: Handler = async (event) => {
   const path = event.path.replace('/.netlify/functions/admin', '').replace('/api/admin', '');
 
   try {
+    // Guard: require env var to be set
+    if (!ADMIN_PASSWORD) {
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({ error: 'Admin not configured. Set ADMIN_PASSWORD in Netlify environment variables.' }),
+      };
+    }
+
     // ==========================================
     // POST /api/admin/verify - Verify password
     // ==========================================
@@ -54,7 +85,7 @@ export const handler: Handler = async (event) => {
           headers,
           body: JSON.stringify({ 
             success: true, 
-            token: generateToken()
+            token: generateAdminToken()
           }),
         };
       } else {
@@ -66,9 +97,15 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // For all other endpoints, could add token verification here
-    // const authToken = event.headers['x-admin-token'];
-    // if (!authToken) return { statusCode: 401, ... }
+    // All endpoints below this line require a valid admin token
+    const adminToken = event.headers['x-admin-token'];
+    if (!verifyAdminToken(adminToken)) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: 'Unauthorized. Invalid or expired admin token.' }),
+      };
+    }
 
     const store = getStore('purchases');
 

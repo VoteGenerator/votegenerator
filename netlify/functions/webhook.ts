@@ -33,9 +33,9 @@ interface Poll {
 // Both webhook and CheckoutSuccess use this same formula
 // ============================================================================
 function generateDashboardToken(sessionId: string): string {
-  // Use session ID directly - it's unique and both sides know it
-  // Add a prefix for easy identification
-  return 'vg_' + sessionId.replace('cs_', '').substring(0, 32);
+    const secret = process.env.VOTE_TOKEN_SECRET;
+    if (!secret) throw new Error('VOTE_TOKEN_SECRET not set');
+    return 'vg_' + createHmac('sha256', secret).update(sessionId).digest('hex').substring(0, 32);
 }
 
 // Map price IDs to tiers (update with your actual price IDs)

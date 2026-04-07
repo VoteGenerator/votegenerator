@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Make an Anonymous Survey (And Why It Gets Better Answers)</title>
+    <meta name="description" content="Create a truly anonymous survey in minutes. Learn what makes surveys anonymous vs confidential, how to set one up free, and when not to use anonymity.">
+    <meta name="keywords" content="how to make an anonymous survey, anonymous survey tool, anonymous poll, free anonymous survey, anonymous feedback">
+    <link rel="canonical" href="https://votegenerator.com/blog/anonymous-survey-guide">
+    <meta property="og:title" content="How to Make an Anonymous Survey (And Why It Gets Better Answers)">
+    <meta property="og:description" content="Create a truly anonymous survey in minutes. Learn what makes surveys anonymous vs confidential, and how to set one up free.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/anonymous-survey-guide">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"How to Make an Anonymous Survey (And Why It Gets Better Answers)","description":"Create a truly anonymous survey in minutes. Learn what makes surveys anonymous vs confidential, and how to set one up free.","author":{"@type":"Organization","name":"VoteGenerator"},"publisher":{"@type":"Organization","name":"VoteGenerator"},"datePublished":"2026-01-25"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What exactly makes a survey truly anonymous?","acceptedAnswer":{"@type":"Answer","text":"A truly anonymous survey collects no identifying information: no emails, no IP addresses, no login accounts. The respondent's answer is completely disconnected from any way to identify them. Even the survey creator cannot trace responses back to specific people."}},{"@type":"Question","name":"Why do anonymous surveys get better answers?","acceptedAnswer":{"@type":"Answer","text":"When respondents know they are truly anonymous, they answer more honestly. They share critical feedback, admit problems, and disagree without fear of consequences. Non-anonymous surveys tend to produce socially desirable answers where people say what they think is expected rather than what they actually believe."}},{"@type":"Question","name":"What is the difference between anonymous and confidential surveys?","acceptedAnswer":{"@type":"Answer","text":"Anonymous means no one can identify responses, not even the survey creator. Confidential means the creator can identify responses but promises not to share that information. Anonymous is stronger privacy protection. Many surveys claim to be anonymous but are actually only confidential."}},{"@type":"Question","name":"Can I make an employee survey truly anonymous?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use a tool that requires no signup to respond, such as VoteGenerator. Do not collect employee IDs, emails, or other identifying details in your questions. Tell employees explicitly that responses are anonymous and cannot be traced. For small teams, report only aggregate findings to avoid inadvertently identifying individuals."}},{"@type":"Question","name":"Should I use anonymous surveys for customer feedback?","acceptedAnswer":{"@type":"Answer","text":"It depends on what you are asking. For sensitive feedback such as service complaints or candid opinions, anonymity encourages more honest answers. For support requests or feature ideas that need follow-up, you need identifiable responses."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --teal: #0d6475;
+            --teal-mid: #0f7b8b;
+            --teal-light: #14b8c8;
+            --teal-pale: #f0fafb;
+            --teal-border: #a5f3fc;
+            --teal-medium: #cffafe;
+            --amber: #b45309;
+            --amber-pale: #fffbeb;
+            --amber-border: #fde68a;
+            --red: #b91c1c;
+            --red-pale: #fef2f2;
+            --red-border: #fecaca;
+            --green: #15803d;
+            --green-pale: #f0fdf4;
+            --green-border: #bbf7d0;
+            --slate: #1e3a4a;
+            --body: #2d4a58;
+            --muted: #5d7a87;
+            --rule: #d6edf2;
+            --bg: #f7fbfc;
+            --paper: #ffffff;
+            --nav: #1e3a4a;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--body); line-height: 1.75; font-size: 17px; }
+
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--teal), var(--teal-light)); transform-origin: left; transform: scaleX(0); z-index: 300; transition: transform 0.08s linear; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 200; background: var(--nav); }
+        .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-brand img { height: 28px; width: auto; }
+        .nav-brand-name { font-family: 'Newsreader', serif; font-size: 18px; font-weight: 600; color: white; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: rgba(255,255,255,0.45); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+        .nav-link:hover { color: white; }
+        .nav-cta { background: var(--teal-mid); color: white; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
+        .nav-cta:hover { background: var(--teal); }
+
+        /* HERO */
+        .hero { background: var(--nav); padding: 80px 32px 72px; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 50%, rgba(13,100,117,0.4) 0%, transparent 65%); }
+        .hero::after { content: '🔒'; position: absolute; right: 60px; top: 50%; transform: translateY(-50%); font-size: 180px; opacity: 0.05; line-height: 1; }
+        .hero-inner { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
+        .hero-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+        .hero-tag { background: rgba(13,100,117,0.3); border: 1px solid rgba(20,184,200,0.4); color: #67e8f9; padding: 4px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+        .hero-date { font-size: 13px; color: rgba(255,255,255,0.35); }
+        .hero h1 { font-family: 'Newsreader', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; color: white; line-height: 1.15; margin-bottom: 18px; letter-spacing: -0.01em; }
+        .hero h1 em { font-style: italic; color: #67e8f9; }
+        .hero-deck { font-size: 18px; color: rgba(255,255,255,0.55); line-height: 1.65; margin-bottom: 32px; }
+        .hero-cta { display: inline-flex; align-items: center; gap: 8px; background: var(--teal-mid); color: white; padding: 13px 28px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-cta:hover { background: var(--teal); transform: translateY(-1px); }
+
+        /* ANSWER BOX -- prominent "the answer" at top of key sections */
+        .answer-box { background: var(--teal-pale); border: 2px solid var(--teal-border); border-radius: 16px; padding: 22px 26px; margin-bottom: 32px; }
+        .answer-box-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-mid); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .answer-box p { font-family: 'Newsreader', serif; font-size: 17px; color: var(--slate); line-height: 1.7; margin: 0; }
+
+        /* PAGE LAYOUT */
+        .page-wrap { max-width: 1280px; margin: 0 auto; padding: 64px 32px; display: grid; grid-template-columns: 1fr 268px; gap: 80px; align-items: start; }
+        .article { min-width: 0; }
+
+        /* TYPOGRAPHY */
+        .article h2 { font-family: 'Newsreader', serif; font-size: 1.85rem; font-weight: 700; color: var(--slate); margin: 56px 0 16px; letter-spacing: -0.01em; scroll-margin-top: 76px; }
+        .article h2:first-child { margin-top: 0; }
+        .article h3 { font-size: 1.05rem; font-weight: 700; color: var(--teal); margin: 26px 0 10px; letter-spacing: -0.01em; }
+        .article p { font-size: 17px; color: var(--body); margin-bottom: 18px; line-height: 1.82; }
+        .article p:last-child { margin-bottom: 0; }
+        strong { color: var(--slate); font-weight: 600; }
+        .article a { color: var(--teal-mid); }
+        .article ul, .article ol { list-style: none; margin: 0 0 20px; }
+        .article ul li, .article ol li { padding: 8px 0 8px 22px; position: relative; border-bottom: 1px solid var(--rule); font-size: 16px; }
+        .article ul li:last-child, .article ol li:last-child { border-bottom: none; }
+        .article ul li::before { content: '·'; position: absolute; left: 2px; color: var(--teal-mid); font-size: 20px; line-height: 1; top: 5px; }
+        .article ol { counter-reset: o; }
+        .article ol li::before { counter-increment: o; content: counter(o); position: absolute; left: 0; width: 18px; height: 18px; background: var(--teal-pale); border: 1px solid var(--teal-border); border-radius: 4px; color: var(--teal-mid); font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; top: 10px; }
+
+        /* INTRO */
+        .intro-block { font-size: 18px; color: var(--body); line-height: 1.85; border-left: 4px solid var(--teal-mid); padding-left: 24px; margin-bottom: 52px; }
+        .intro-block p { margin-bottom: 16px; }
+        .intro-block p:last-child { margin-bottom: 0; }
+
+        /* INFO / WARNING BOXES */
+        .info-box { background: var(--teal-pale); border: 1px solid var(--teal-border); border-radius: 12px; padding: 16px 20px; margin: 18px 0; display: flex; gap: 12px; }
+        .info-box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+        .info-box-text { font-size: 15px; color: var(--body); line-height: 1.65; }
+        .info-box-text strong { color: var(--teal); }
+        .warning-box { background: var(--amber-pale); border: 1px solid var(--amber-border); border-radius: 12px; padding: 16px 20px; margin: 18px 0; display: flex; gap: 12px; }
+        .warning-box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+        .warning-box-text { font-size: 15px; color: var(--body); line-height: 1.65; }
+        .warning-box-text strong { color: var(--amber); }
+        .danger-box { background: var(--red-pale); border: 1px solid var(--red-border); border-radius: 12px; padding: 16px 20px; margin: 18px 0; display: flex; gap: 12px; }
+        .danger-box-icon { font-size: 18px; flex-shrink: 0; }
+        .danger-box-text { font-size: 15px; color: var(--body); line-height: 1.65; }
+        .danger-box-text strong { color: var(--red); }
+
+        /* ANON VS CONFIDENTIAL -- the signature component */
+        .comparison-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 28px 0; }
+        .compare-card { border-radius: 16px; overflow: hidden; }
+        .compare-card.anon { border: 2px solid var(--teal-border); }
+        .compare-card.conf { border: 2px solid var(--amber-border); }
+        .compare-card-head { padding: 16px 20px; display: flex; align-items: center; gap: 10px; }
+        .anon .compare-card-head { background: var(--teal-pale); }
+        .conf .compare-card-head { background: var(--amber-pale); }
+        .compare-card-icon { font-size: 24px; }
+        .compare-card-title { font-size: 16px; font-weight: 700; }
+        .anon .compare-card-title { color: var(--teal); }
+        .conf .compare-card-title { color: var(--amber); }
+        .compare-card-body { background: white; padding: 18px 20px; }
+        .compare-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
+        .compare-row:last-child { border-bottom: none; }
+        .compare-row-label { font-weight: 600; color: var(--slate); min-width: 80px; flex-shrink: 0; font-size: 12px; }
+        .compare-row-val { color: var(--body); line-height: 1.5; }
+
+        /* THREE EXAMPLES */
+        .example-trio { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+        .eg-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+        .eg-head { padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
+        .eg-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.04em; }
+        .eg-badge.anon { background: var(--teal-pale); color: var(--teal); border: 1px solid var(--teal-border); }
+        .eg-badge.conf { background: var(--amber-pale); color: var(--amber); border: 1px solid var(--amber-border); }
+        .eg-badge.false { background: var(--red-pale); color: var(--red); border: 1px solid var(--red-border); }
+        .eg-head-title { font-weight: 700; font-size: 14px; color: var(--slate); }
+        .eg-body { padding: 14px 18px; font-size: 15px; color: var(--body); line-height: 1.7; border-top: 1px solid var(--rule); }
+
+        /* STEPS */
+        .steps { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
+        .step { display: grid; grid-template-columns: 56px 1fr; gap: 24px; }
+        .step + .step { position: relative; }
+        .step + .step::before { content: ''; position: absolute; left: 27px; top: -10px; width: 2px; height: 10px; background: var(--rule); }
+        .step-num-wrap { display: flex; flex-direction: column; align-items: center; }
+        .step-num { width: 56px; height: 56px; border-radius: 16px; background: var(--teal); display: flex; align-items: center; justify-content: center; font-family: 'Newsreader', serif; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0; }
+        .step-body { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; padding: 24px 26px; }
+        .step-title { font-family: 'Newsreader', serif; font-size: 1.2rem; font-weight: 700; color: var(--slate); margin-bottom: 12px; }
+        .step-body p { font-size: 16px; margin-bottom: 14px; line-height: 1.75; }
+        .step-body p:last-child { margin-bottom: 0; }
+        .step-body ul { list-style: none; margin: 10px 0; }
+        .step-body ul li { padding: 6px 0 6px 18px; position: relative; border-bottom: 1px solid var(--rule); font-size: 14px; }
+        .step-body ul li:last-child { border-bottom: none; }
+        .step-body ul li::before { content: '·'; position: absolute; left: 2px; color: var(--teal-mid); font-size: 18px; line-height: 1; top: 4px; }
+
+        /* INTERACTIVE CHECKLIST */
+        .checklist { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin: 24px 0; }
+        .checklist-head { background: var(--teal); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+        .checklist-head-label { font-size: 13px; font-weight: 700; color: white; letter-spacing: 0.04em; }
+        .checklist-progress { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+        .checklist-items { padding: 8px 0; }
+        .check-item { display: flex; align-items: flex-start; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--rule); cursor: pointer; transition: background 0.1s; }
+        .check-item:last-child { border-bottom: none; }
+        .check-item:hover { background: #fafffe; }
+        .check-item.checked { background: var(--green-pale); }
+        .check-box { width: 20px; height: 20px; border: 2px solid var(--rule); border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.15s; }
+        .check-item.checked .check-box { background: var(--green); border-color: var(--green); }
+        .check-tick { display: none; color: white; font-size: 13px; font-weight: 700; }
+        .check-item.checked .check-tick { display: block; }
+        .check-text { font-size: 15px; color: var(--body); line-height: 1.55; }
+        .check-item.checked .check-text { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.2); }
+        .check-text strong { color: var(--slate); font-weight: 600; }
+        .check-item.checked .check-text strong { color: var(--muted); }
+
+        /* WHEN NOT TO */
+        .not-to { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+        .nt-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; border-left: 4px solid var(--red-border); }
+        .nt-title { font-weight: 700; font-size: 14px; color: var(--slate); margin-bottom: 6px; }
+        .nt-body { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+        /* CTA */
+        .cta-strip { background: var(--teal-pale); border: 1px solid var(--teal-border); border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 40px 0; flex-wrap: wrap; }
+        .cta-strip p { font-family: 'Newsreader', serif; font-size: 16px; font-style: italic; color: var(--teal); margin: 0; }
+        .cta-strip a { display: inline-flex; align-items: center; gap: 6px; background: var(--teal-mid); color: white; padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; white-space: nowrap; transition: background 0.2s; }
+        .cta-strip a:hover { background: var(--teal); }
+        .cta-block { background: var(--nav); border-radius: 20px; padding: 44px 36px; text-align: center; margin: 52px 0; position: relative; overflow: hidden; }
+        .cta-block::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(13,100,117,0.35) 0%, transparent 65%); }
+        .cta-block h3 { font-family: 'Newsreader', serif; font-size: 2rem; color: white; margin-bottom: 10px; position: relative; }
+        .cta-block p { color: rgba(255,255,255,0.45); margin-bottom: 26px; position: relative; }
+        .cta-block a { display: inline-flex; align-items: center; gap: 8px; background: var(--teal-mid); color: white; padding: 14px 32px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; position: relative; }
+        .cta-block a:hover { background: var(--teal); transform: translateY(-2px); }
+
+        /* DECISION BOX */
+        .decision-box { background: var(--teal-pale); border: 1px solid var(--teal-border); border-radius: 14px; padding: 22px 26px; margin: 24px 0; }
+        .decision-box h4 { font-weight: 700; color: var(--teal); margin-bottom: 14px; font-size: 14px; letter-spacing: 0.04em; }
+        .decision-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.07); font-size: 15px; }
+        .decision-row:last-child { border-bottom: none; }
+        .decision-arrow { color: var(--teal-mid); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+        .decision-text { color: var(--body); line-height: 1.55; }
+
+        /* FAQ */
+        .faq { display: flex; flex-direction: column; gap: 6px; }
+        details.faq-item { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--teal-border); box-shadow: 0 0 0 3px rgba(13,100,117,0.06); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 20px; font-weight: 600; font-size: 16px; color: var(--slate); cursor: pointer; list-style: none; user-select: none; line-height: 1.4; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 26px; height: 26px; border-radius: 7px; background: var(--teal-pale); border: 1px solid var(--teal-border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--teal-mid); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--teal-mid); border-color: var(--teal-mid); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 4px 20px 18px; font-size: 15px; color: var(--body); line-height: 1.75; }
+
+        /* RELATED */
+        .related { margin-top: 56px; padding-top: 40px; border-top: 2px solid var(--rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; text-decoration: none; color: var(--slate); font-weight: 600; font-size: 15px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--teal-border); transform: translateX(4px); color: var(--teal-mid); }
+        .related-arrow { color: var(--teal-mid); }
+
+        /* SIDEBAR */
+        .sidebar { position: sticky; top: 76px; }
+        .toc-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+        .toc-head { background: var(--nav); padding: 14px 18px; display: flex; align-items: center; gap: 8px; }
+        .toc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-light); box-shadow: 0 0 6px rgba(20,184,200,0.6); }
+        .toc-head-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+        .toc-links { padding: 10px; }
+        .toc-link { display: block; padding: 7px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 500; color: var(--muted); transition: background 0.15s, color 0.15s; }
+        .toc-link:hover, .toc-link.active { background: var(--teal-pale); color: var(--teal-mid); }
+        .sidebar-cta { background: var(--nav); border-radius: 16px; padding: 24px; }
+        .sidebar-cta-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 8px; }
+        .sidebar-cta-title { font-family: 'Newsreader', serif; font-size: 1.15rem; font-weight: 600; color: white; margin-bottom: 6px; }
+        .sidebar-cta-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 18px; line-height: 1.5; }
+        .sidebar-cta-btn { display: flex; align-items: center; justify-content: center; background: var(--teal-mid); color: white; padding: 11px; border-radius: 9px; font-weight: 600; font-size: 14px; text-decoration: none; transition: background 0.2s; }
+        .sidebar-cta-btn:hover { background: var(--teal); }
+
+        /* FOOTER */
+        .foot { background: var(--nav); color: rgba(255,255,255,0.35); text-align: center; padding: 36px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 14px; }
+        .foot-links a:hover { color: white; }
+
+        @media (max-width: 1040px) { .page-wrap { grid-template-columns: 1fr; gap: 48px; } .sidebar { position: static; } .toc-card { display: none; } .comparison-cards { grid-template-columns: 1fr; } .not-to { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .hero { padding: 56px 20px 52px; } .page-wrap { padding: 40px 20px; } .step { grid-template-columns: 1fr; } .step-num-wrap { display: none; } .nav-link { display: none; } .cta-strip { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-brand">
+            <img src="/logo.svg" alt="VoteGenerator">
+            <span class="nav-brand-name">VoteGenerator</span>
+        </a>
+        <div class="nav-links">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="nav-link">Survey Guide</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create a Survey Free</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow">
+            <span class="hero-tag">Privacy Guide</span>
+            <span class="hero-date">January 25, 2026 &nbsp;&middot;&nbsp; 8 min read</span>
+        </div>
+        <h1>How to Make an <em>Anonymous Survey</em></h1>
+        <p class="hero-deck">There is a secret in survey research: people give different answers when they think someone is watching. This guide explains how to make a survey that is truly anonymous -- and why it gets you more honest data.</p>
+        <a href="https://votegenerator.com/create" class="hero-cta">Create an Anonymous Survey Free &rarr;</a>
+    </div>
+</section>
+
+<div class="page-wrap">
+    <article class="article">
+
+        <div class="intro-block">
+            <p>Ask employees "How satisfied are you with your manager?" in a non-anonymous survey, and most will give a carefully diplomatic answer regardless of what they actually think. Ask the same question anonymously, and you get the truth: the real issues, the frustrations people are afraid to say out loud, the gap between what leadership believes and what is actually happening.</p>
+            <p>This is not cynicism. It is a well-documented psychological effect. Research on employee and customer feedback consistently shows that anonymity produces more critical and more honest responses. The mechanism is simple: when people fear consequences, they self-censor. Remove that fear, and they tell you what they genuinely think.</p>
+            <p>This guide explains what genuine anonymity requires technically, how to set it up, and how to avoid the common mistakes that claim to be anonymous but are not.</p>
+        </div>
+
+        <!-- WHY IT MATTERS -->
+        <h2 id="why-matters">Why Anonymity Produces Better Feedback</h2>
+
+        <div class="answer-box">
+            <div class="answer-box-label">🔑 The core reason</div>
+            <p>When respondents believe their identity could be traced, they answer based on what makes them look good or stay safe -- not what they actually believe. Anonymity removes that social pressure entirely.</p>
+        </div>
+
+        <h3>The social desirability effect</h3>
+        <p>People are socially conditioned to be agreeable. In any identified survey, respondents ask themselves an implicit question before answering: "What does this person want to hear?" That question, not their genuine opinion, shapes the response. Anonymity suppresses that effect because there is no one to please and no consequence to fear.</p>
+
+        <h3>Fear of retaliation in workplace surveys</h3>
+        <p>In employee surveys especially, even a small, irrational worry that feedback will be traced to them changes how people respond. They soften criticisms. They upgrade satisfaction ratings by one point. They skip the open-ended question entirely. Truly anonymous surveys remove that worry completely because the technical architecture makes tracing impossible -- not just unlikely.</p>
+
+        <h3>Permission to be honest about disagreement</h3>
+        <p>People are reluctant to disagree in social contexts. This means satisfaction surveys run through identified channels consistently overstate satisfaction. The data is not wrong because people are dishonest -- it is wrong because the social context makes honesty feel unsafe. Anonymity changes the context.</p>
+
+        <div class="cta-strip">
+            <p>Ready to get honest feedback?</p>
+            <a href="https://votegenerator.com/create">Create an Anonymous Survey &rarr;</a>
+        </div>
+
+        <!-- WHAT MAKES IT TRULY ANONYMOUS -->
+        <h2 id="what-makes-anonymous">What Makes a Survey Truly Anonymous</h2>
+        <p>This is where many survey tools mislead. They use the word "anonymous" loosely, when the more accurate term is "confidential." Understanding the technical requirements of true anonymity protects you and your respondents.</p>
+
+        <h3>No email required to respond</h3>
+        <p>If someone must provide an email to access or submit the survey, it is not anonymous. The email is identifying information, even if it is not stored alongside the response. VoteGenerator requires no email at any point in the process.</p>
+
+        <div class="info-box"><span class="info-box-icon">✓</span><div class="info-box-text"><strong>What to test:</strong> Can someone click your link and answer without providing any identifying information? If no, it is not truly anonymous.</div></div>
+
+        <h3>No IP address stored with responses</h3>
+        <p>Every web request includes an IP address, which can identify a person's location and network. A truly anonymous survey tool should not store IP addresses linked to individual responses. VoteGenerator does not store IP addresses with responses.</p>
+
+        <div class="warning-box"><span class="warning-box-icon">⚠️</span><div class="warning-box-text"><strong>Important nuance:</strong> Your internet service provider and network administrator can still see what sites you access. True anonymity from your employer's IT team requires different measures entirely. What survey anonymity provides is protection from the survey creator, not from network monitoring.</div></div>
+
+        <h3>No login account required</h3>
+        <p>If a respondent must log in to a platform to take the survey, that platform knows who they are. Even if the survey creator cannot see who answered what, the platform can. That is not the same as anonymous.</p>
+
+        <h3>Responses not linked to respondent identity</h3>
+        <p>The core requirement: when someone submits a response, there should be no technical mechanism connecting that answer to any identifiable information about the person. Not an email. Not a user ID. Not a timestamp that combined with access logs could identify them.</p>
+
+        <!-- ANONYMOUS VS CONFIDENTIAL -->
+        <h2 id="anonymous-vs-confidential">Anonymous vs Confidential: The Difference That Matters</h2>
+        <p>These two terms are often used interchangeably in everyday conversation, but they describe fundamentally different levels of privacy protection.</p>
+
+        <div class="comparison-cards">
+            <div class="compare-card anon">
+                <div class="compare-card-head"><span class="compare-card-icon">🔒</span><div><div class="compare-card-title">Anonymous</div></div></div>
+                <div class="compare-card-body">
+                    <div class="compare-row"><span class="compare-row-label">Who can identify</span><span class="compare-row-val">No one. Not even the survey creator.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Data collected</span><span class="compare-row-val">No identifying information at any point.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Protection</span><span class="compare-row-val">Structural. Built into the technical architecture.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Follow-up</span><span class="compare-row-val">Not possible. Respondent cannot be reached.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Best for</span><span class="compare-row-val">Sensitive topics, leadership feedback, honest criticism.</span></div>
+                </div>
+            </div>
+            <div class="compare-card conf">
+                <div class="compare-card-head"><span class="compare-card-icon">🔐</span><div><div class="compare-card-title">Confidential</div></div></div>
+                <div class="compare-card-body">
+                    <div class="compare-row"><span class="compare-row-label">Who can identify</span><span class="compare-row-val">The creator can, but promises not to share.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Data collected</span><span class="compare-row-val">Identifying info collected but kept separate from responses.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Protection</span><span class="compare-row-val">Promise-based. Relies on the creator's honesty.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Follow-up</span><span class="compare-row-val">Possible. Creator can reach respondents if needed.</span></div>
+                    <div class="compare-row"><span class="compare-row-label">Best for</span><span class="compare-row-val">Feedback where follow-up may be needed.</span></div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Three real-world examples</h3>
+        <div class="example-trio">
+            <div class="eg-card">
+                <div class="eg-head"><span class="eg-badge anon">Truly Anonymous</span><span class="eg-head-title">Manager uses VoteGenerator for leadership feedback</span></div>
+                <div class="eg-body">Employees click a link, answer without any account or email. The manager sees aggregate results: 60% Excellent, 30% Good, 10% Needs Improvement. No way exists to know which team member gave which rating. Employees know this technically, so they answer honestly.</div>
+            </div>
+            <div class="eg-card">
+                <div class="eg-head"><span class="eg-badge conf">Confidential</span><span class="eg-head-title">Google Form sent to specific employees who are signed in</span></div>
+                <div class="eg-body">Each employee is logged into their Google account when they respond. The manager has promised not to look at who said what, but Google's system knows. If the manager wanted to, they could request that data. The protection is the manager's promise, not the technology. Employees who know this will still self-censor on sensitive questions.</div>
+            </div>
+            <div class="eg-card">
+                <div class="eg-head"><span class="eg-badge false">False Anonymity</span><span class="eg-head-title">Survey tool claims "anonymous" but requires signup</span></div>
+                <div class="eg-body">Employees create accounts to access the survey. Responses appear to lack names, but the platform's backend knows which account submitted which response. The survey creator may genuinely believe it is anonymous -- but the tool's architecture makes it traceable. This is the most common source of broken trust in workplace surveys.</div>
+            </div>
+        </div>
+
+        <div class="info-box"><span class="info-box-icon">💡</span><div class="info-box-text"><strong>Key principle:</strong> If respondents had to provide any identifying information to access the survey -- even just to create an account -- the survey is not truly anonymous, even if their name does not appear next to their response.</div></div>
+
+        <!-- HOW TO CREATE -->
+        <h2 id="how-to-create">Step-by-Step: Create a Truly Anonymous Survey</h2>
+        <p>Follow these five steps to make a survey where anonymity is structural, not just promised.</p>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-num-wrap"><div class="step-num">1</div></div>
+                <div class="step-body">
+                    <div class="step-title">Choose a tool that requires no signup to respond</div>
+                    <p>The simplest way to ensure anonymity is to use a tool that requires no login at any point. VoteGenerator is designed for exactly this: respondents click a link and answer with no account, email, or registration.</p>
+                    <p>Note: Google Forms can be configured to allow anonymous responses when the creator turns off the "Collect email addresses" setting and ensures the form does not require sign-in. However, the default settings in many Google Workspace organisations require sign-in, which makes the survey confidential rather than anonymous. Check your settings carefully.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num-wrap"><div class="step-num">2</div></div>
+                <div class="step-body">
+                    <div class="step-title">Do not ask for identifying information in your questions</div>
+                    <p>Even if your tool is anonymous, you can undermine that by asking for identifying details directly.</p>
+                    <div class="danger-box"><span class="danger-box-icon">✗</span><div class="danger-box-text"><strong>Avoid these questions:</strong> "What is your name?" &nbsp;·&nbsp; "What is your employee ID?" &nbsp;·&nbsp; "What is your email?" &nbsp;·&nbsp; "Which team are you on?" (in small teams where this identifies someone)</div></div>
+                    <p>Instead, collect only what you need for pattern analysis: "How long have you worked here?" (tenure brackets, not names), "Which department?" (only useful in large organisations where department alone does not identify), "Are you a manager or individual contributor?" (role, not identity).</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num-wrap"><div class="step-num">3</div></div>
+                <div class="step-body">
+                    <div class="step-title">Be explicit about anonymity in the survey introduction</div>
+                    <p>Use the word "anonymous" directly. Do not just say "private" or "confidential" -- those mean something different.</p>
+                    <div class="info-box" style="margin:12px 0;"><span class="info-box-icon">✓</span><div class="info-box-text"><strong>Good introduction text:</strong> "This is an anonymous survey. You do not need to provide your name, email, or any identifying information. Responses cannot be traced back to specific individuals."</div></div>
+                    <p>Explicit statements about anonymity increase participation and honesty, particularly in workplace contexts where trust may already be low.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num-wrap"><div class="step-num">4</div></div>
+                <div class="step-body">
+                    <div class="step-title">Distribute without targeting individuals</div>
+                    <p>How you share the survey affects how safe respondents feel, even if the technology is genuinely anonymous. A survey sent as "Hi John, please fill this in" still makes John feel identified.</p>
+                    <ul>
+                        <li>Share the link in a Slack channel without @-mentioning individuals</li>
+                        <li>Display a QR code and say "Scan this to share your feedback"</li>
+                        <li>Post the link on an internal noticeboard or intranet</li>
+                        <li>If distributing by email, send to a group alias rather than a named list</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num-wrap"><div class="step-num">5</div></div>
+                <div class="step-body">
+                    <div class="step-title">Report aggregate results only, especially for small groups</div>
+                    <p>With a small team of five to ten people, anonymity can break down in the reporting even if collection was genuinely anonymous. If there are three people in Department A and you report that "33% of Department A said the manager is ineffective," the one person who gave that answer may be identifiable by elimination.</p>
+                    <p>For small groups: combine into broader categories, report only organisation-wide findings, and avoid cross-tabulations that narrow down to fewer than ten respondents.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-strip">
+            <p>Set up a truly anonymous survey now.</p>
+            <a href="https://votegenerator.com/create">Create Yours at VoteGenerator &rarr;</a>
+        </div>
+
+        <!-- CHECKLIST -->
+        <h2 id="checklist">Anonymous Survey Checklist</h2>
+        <p>Use this checklist before sharing your survey. Check each item to confirm your survey is genuinely anonymous.</p>
+
+        <div class="checklist" id="anon-checklist">
+            <div class="checklist-head">
+                <span class="checklist-head-label">Anonymous Survey Checklist</span>
+                <span class="checklist-progress" id="checklist-count">0 / 8 complete</span>
+            </div>
+            <div class="checklist-items">
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>No email required.</strong> Respondents can click the link and answer without any signup, login, or email address.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>No account login required.</strong> The tool does not ask respondents to create or log into an account to respond.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>No identifying questions.</strong> The survey questions themselves do not ask for name, employee ID, email, or other direct identifiers.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>Anonymity stated explicitly.</strong> The survey introduction uses the word "anonymous" and explains that responses cannot be traced.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>Distributed without targeting.</strong> The link was shared in a channel or public context, not sent to named individuals with personalised invitations.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>Small group protection planned.</strong> If any group has fewer than 10 respondents, their results will be aggregated rather than reported separately.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>Results will be shared.</strong> A plan exists to share aggregate results with respondents after collection ends.</div></div>
+                <div class="check-item" onclick="toggleCheck(this)"><div class="check-box"><span class="check-tick">✓</span></div><div class="check-text"><strong>Follow-up is not required.</strong> If any responses will need follow-up or identification, use a confidential survey instead of claiming anonymity.</div></div>
+            </div>
+        </div>
+
+        <!-- BEST PRACTICES -->
+        <h2 id="best-practices">Best Practices for Anonymous Surveys</h2>
+        <p><strong>Share aggregate results publicly.</strong> After collection closes, share the findings with respondents. This closes the loop, demonstrates that feedback was heard, and builds participation for future surveys.</p>
+        <p><strong>Act on the feedback.</strong> Anonymous surveys that generate no visible change erode trust. If you ask and do not act, people stop answering. Even a simple "Based on your feedback, we are doing X" maintains the relationship.</p>
+        <p><strong>Do not attempt to identify respondents from content clues.</strong> If critical anonymous feedback contains details that narrow down who wrote it, resist the impulse to investigate. Treat it as a pattern signal, not an individual accusation.</p>
+        <p><strong>Repeat on a schedule.</strong> One-off anonymous surveys are useful. Quarterly or annual anonymous surveys build a track record of trust. Consistent repetition signals that feedback is part of how decisions get made.</p>
+        <p><strong>Combine structured questions with one open question.</strong> Include "What is the single most important thing we could improve?" as a free-text field. Respondents are more willing to give candid open-ended responses in anonymous surveys than in identified ones.</p>
+
+        <!-- WHEN NOT TO -->
+        <h2 id="when-not-to">When NOT to Use Anonymous Surveys</h2>
+        <p>Anonymity is a powerful tool but it is not right for every situation. Use these guidelines to decide when confidential or identified surveys are more appropriate.</p>
+
+        <div class="not-to">
+            <div class="nt-card"><div class="nt-title">When you need to follow up</div><div class="nt-body">If a respondent reports a technical problem or support issue, you need to know who they are to help them. Anonymous surveys cannot support issue resolution.</div></div>
+            <div class="nt-card"><div class="nt-title">When you want to credit respondents</div><div class="nt-body">If you plan to implement a feature request and want to credit the person who suggested it, you need their identity. Use confidential surveys instead.</div></div>
+            <div class="nt-card"><div class="nt-title">When context matters for analysis</div><div class="nt-body">If you need to know "which department is struggling?" but cannot ask department in the survey without identifying people, anonymous surveys limit your analysis.</div></div>
+            <div class="nt-card"><div class="nt-title">When compliance requires a record</div><div class="nt-body">If you need documented proof that someone received and confirmed a policy or training module, you need an audit trail. Anonymous surveys cannot provide one.</div></div>
+        </div>
+
+        <div class="decision-box">
+            <h4>Decision Framework: Which Survey Type to Use</h4>
+            <div class="decision-row"><span class="decision-arrow">&#8594;</span><span class="decision-text"><strong>Honest feedback about systems, leadership, or culture:</strong> Use anonymous surveys.</span></div>
+            <div class="decision-row"><span class="decision-arrow">&#8594;</span><span class="decision-text"><strong>Feedback where follow-up may be needed:</strong> Use confidential surveys. Be explicit about what "confidential" actually means.</span></div>
+            <div class="decision-row"><span class="decision-arrow">&#8594;</span><span class="decision-text"><strong>Compliance confirmation or legal records:</strong> Use identified surveys with explicit consent and audit trails.</span></div>
+            <div class="decision-row"><span class="decision-arrow">&#8594;</span><span class="decision-text"><strong>Unsure which to use:</strong> Default to anonymous for sensitive topics. You can always follow up with a non-anonymous channel for respondents who want to be identified.</span></div>
+        </div>
+
+        <div class="cta-block">
+            <h3>Create Your Anonymous Survey</h3>
+            <p>No signup required. Respondents click the link and answer immediately.</p>
+            <a href="https://votegenerator.com/create">Get Started at VoteGenerator &rarr;</a>
+        </div>
+
+        <!-- FAQ -->
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <div class="faq">
+            <details class="faq-item"><summary>What exactly makes a survey truly anonymous? <span class="faq-ico">+</span></summary><div class="faq-ans">A truly anonymous survey collects no identifying information at any stage: no emails, no IP addresses stored with responses, no login accounts. The respondent's submission is completely disconnected from any way to identify them. Even the survey creator cannot trace which person gave which answer. This requires both technical design (no email or account required to respond) and question design (not asking for names or other identifiers).</div></details>
+            <details class="faq-item"><summary>Why do anonymous surveys get more honest answers? <span class="faq-ico">+</span></summary><div class="faq-ans">When respondents believe their identity might be traced, they unconsciously shift their answers toward what will make them look good or avoid consequences. This is called social desirability bias. Anonymity removes that social pressure entirely because there is no one to please and no consequence to manage. The result is more candid feedback, especially on sensitive topics like leadership quality or workplace culture.</div></details>
+            <details class="faq-item"><summary>What is the difference between anonymous and confidential surveys? <span class="faq-ico">+</span></summary><div class="faq-ans">Anonymous means no one can identify responses, not even the survey creator. It is a technical property built into how the survey works. Confidential means the creator can identify responses but promises not to share that information with others. Anonymous is stronger privacy. Many surveys claim to be anonymous when they are actually only confidential -- the creator could identify responses if they chose to.</div></details>
+            <details class="faq-item"><summary>Can I make an employee survey truly anonymous? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. Use a tool that requires no signup or login to respond, such as VoteGenerator. Do not collect employee IDs, names, or emails in the questions. Tell employees explicitly and clearly that responses are anonymous and cannot be traced. For small teams, report only organisation-wide aggregate findings rather than department-level data that could narrow down to specific individuals.</div></details>
+            <details class="faq-item"><summary>Is a Google Form anonymous? <span class="faq-ico">+</span></summary><div class="faq-ans">It depends on how it is configured. Google Forms can be set to allow anonymous responses by turning off "Collect email addresses" and not requiring sign-in. However, the default settings in many Google Workspace organisations require respondents to be logged in, which means Google knows who answered. If respondents must log into a Google account to access the form, it is confidential rather than truly anonymous. Always verify your settings and test by attempting to access the form while not logged in.</div></details>
+            <details class="faq-item"><summary>Should I use anonymous surveys for customer feedback? <span class="faq-ico">+</span></summary><div class="faq-ans">It depends on what you are asking. For sensitive feedback such as candid opinions about your product, service complaints, or feature criticisms, anonymity encourages honesty. For support requests, bug reports, or feature ideas you want to attribute and follow up on, you need identifiable responses. Consider using a confidential survey (where you can identify respondents but promise not to penalise them) when the feedback requires follow-up.</div></details>
+            <details class="faq-item"><summary>What if someone gives harmful feedback in an anonymous survey? <span class="faq-ico">+</span></summary><div class="faq-ans">Anonymous surveys can occasionally include extreme opinions or inappropriate comments. Best practice: focus on patterns in the data, not on individual responses. If feedback suggests a real systemic issue, investigate through other means rather than trying to identify the respondent. Treat individual anonymous responses as signals worth exploring, not accusations requiring attribution.</div></details>
+            <details class="faq-item"><summary>How do I increase participation in my anonymous surveys? <span class="faq-ico">+</span></summary><div class="faq-ans">Be explicit about anonymity in the introduction. Keep the survey short (5 to 10 questions maximum). Share results publicly after collection ends to show feedback is heard. Act on the results visibly and communicate what you changed. Repeat the survey on a regular schedule to demonstrate that it is an ongoing process rather than a one-off exercise. Each of these actions builds the trust that drives participation.</div></details>
+        </div>
+
+        <div class="related">
+            <p class="related-label">Continue Reading</p>
+            <div class="related-links">
+                <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="related-link">How to Create a Survey: Step-by-Step <span class="related-arrow">&rarr;</span></a>
+                <a href="https://votegenerator.com/blog/how-to-write-survey-questions.html" class="related-link">How to Write Survey Questions That Get Answered <span class="related-arrow">&rarr;</span></a>
+                <a href="https://votegenerator.com/blog/free-survey-maker-tools.html" class="related-link">Free Survey Maker Tools: 10 Tested <span class="related-arrow">&rarr;</span></a>
+            </div>
+        </div>
+
+    </article>
+
+    <aside class="sidebar">
+        <div class="toc-card">
+            <div class="toc-head"><div class="toc-dot"></div><span class="toc-head-label">In This Guide</span></div>
+            <div class="toc-links">
+                <a href="#why-matters" class="toc-link">Why anonymity gets better feedback</a>
+                <a href="#what-makes-anonymous" class="toc-link">What makes a survey truly anonymous</a>
+                <a href="#anonymous-vs-confidential" class="toc-link">Anonymous vs confidential</a>
+                <a href="#how-to-create" class="toc-link">5-step setup guide</a>
+                <a href="#checklist" class="toc-link">Anonymous survey checklist</a>
+                <a href="#best-practices" class="toc-link">Best practices</a>
+                <a href="#when-not-to" class="toc-link">When NOT to use anonymity</a>
+                <a href="#faq" class="toc-link">FAQ</a>
+            </div>
+        </div>
+        <div class="sidebar-cta">
+            <div class="sidebar-cta-label">Free &middot; No signup</div>
+            <div class="sidebar-cta-title">Create an Anonymous Survey</div>
+            <div class="sidebar-cta-sub">Respondents click a link and answer immediately. No accounts, no tracking.</div>
+            <a href="https://votegenerator.com/create" class="sidebar-cta-btn">Get Started &rarr;</a>
+        </div>
+    </aside>
+</div>
+
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Survey</a>
+        <a href="https://votegenerator.com">VoteGenerator</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>&copy; 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => { const d = document.documentElement; prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')'; }, { passive: true });
+
+    const sections = document.querySelectorAll('[id]');
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const io = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { tocLinks.forEach(l => l.classList.remove('active')); const m = document.querySelector('.toc-link[href="#' + e.target.id + '"]'); if (m) m.classList.add('active'); } }); }, { rootMargin: '-15% 0px -75% 0px' });
+    sections.forEach(s => io.observe(s));
+
+    function toggleCheck(el) {
+        el.classList.toggle('checked');
+        const total = document.querySelectorAll('.check-item').length;
+        const done = document.querySelectorAll('.check-item.checked').length;
+        document.getElementById('checklist-count').textContent = done + ' / ' + total + ' complete';
+    }
+</script>
+</body>
+</html>

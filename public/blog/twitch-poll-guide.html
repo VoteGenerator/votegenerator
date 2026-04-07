@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Run a Poll on Twitch (2026): Built-In vs External Tools | VoteGenerator</title>
+    <meta name="description" content="Step-by-step guide to Twitch polls. Compare built-in Twitch polls vs VoteGenerator — more poll types, ranked choice, no Affiliate requirement. Free, no signup.">
+    <meta name="keywords" content="how to run a poll on twitch, twitch poll, twitch poll tools, streamer poll ideas, twitch polling guide 2026">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/twitch-poll-guide.html">
+    <meta property="og:title" content="How to Run a Poll on Twitch (2026): Built-In vs External Tools">
+    <meta property="og:description" content="Compare Twitch's native polls vs VoteGenerator. More poll types, ranked choice, no Affiliate needed. Free and no signup.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/twitch-poll-guide">
+    <meta property="og:image" content="https://votegenerator.com/og-image.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "How to Run a Poll on Twitch (2026): Built-In vs External Tools",
+        "description": "Compare Twitch's native polls vs VoteGenerator for streamers. More poll types, ranked choice, no Affiliate needed.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/twitch-poll-guide" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How do I run a poll on Twitch without being an Affiliate?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Twitch's built-in polls require Affiliate or Partner status. If you are not yet an Affiliate, use an external tool like VoteGenerator. Create a poll at votegenerator.com with no signup, copy the link, and share it in your Twitch chat." }
+            },
+            {
+                "@type": "Question",
+                "name": "How many options can Twitch polls have?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Twitch's native polls allow up to 5 options. If you need more than 5 options, use an external poll tool like VoteGenerator which has no option limit." }
+            },
+            {
+                "@type": "Question",
+                "name": "How long can a Twitch poll run?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Twitch's native polls run from 15 seconds up to 10 minutes maximum. External tools like VoteGenerator allow polls to stay open indefinitely or close after any time limit you choose." }
+            },
+            {
+                "@type": "Question",
+                "name": "Do viewers need a Twitch account to vote in an external poll?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. VoteGenerator polls require no account from anyone. Viewers click the link and vote immediately — no sign-up, no login. Lower friction means more participation." }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I do ranked choice voting on Twitch?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Twitch's native polls do not support ranked choice voting. VoteGenerator includes ranked choice (instant runoff) as a free poll type — viewers drag to rank options and the algorithm finds the true consensus winner." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Mulish:ital,wght@0,300;0,400;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg:       #0b0118;
+            --bg-card:  #130228;
+            --bg-mid:   #1c0340;
+            --vg:       #7c3aed;
+            --vg-lt:    #a78bfa;
+            --vg-glow:  rgba(124,58,237,0.2);
+            --cyan:     #22d3ee;
+            --cyan-dim: rgba(34,211,238,0.1);
+            --white:    #ffffff;
+            --text:     #e2d9f3;
+            --text-soft:#9d89c4;
+            --border:   rgba(124,58,237,0.25);
+            --green:    #4ade80;
+            --red:      #f87171;
+            --mono:     'DM Mono', monospace;
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Mulish',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--vg),var(--cyan)); z-index:2000; transition:width 0.1s linear; }
+
+        /* Sticky */
+        .sticky { position:fixed; top:0; left:0; right:0; z-index:1000; background:rgba(11,1,24,0.95); backdrop-filter:blur(12px); height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; transform:translateY(-100%); transition:transform 0.25s ease; border-bottom:1px solid var(--border); }
+        .sticky.on { transform:translateY(0); }
+        .sticky-label { font-family:'Rajdhani',sans-serif; font-size:0.85rem; font-weight:700; color:var(--vg-lt); letter-spacing:0.04em; }
+        .sticky-btn { background:var(--vg); color:#fff; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.8rem; letter-spacing:0.06em; padding:7px 16px; border-radius:4px; text-decoration:none; }
+        .sticky-btn:hover { background:var(--vg-lt); }
+
+        /* Nav */
+        .nav { background:var(--bg-card); border-bottom:1px solid var(--border); height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1rem; color:#fff; letter-spacing:0.04em; }
+        .nav-div { width:1px; height:20px; background:var(--border); margin:0 6px; }
+        .nav-tag { font-family:'Rajdhani',sans-serif; font-size:0.72rem; font-weight:600; color:var(--text-soft); letter-spacing:0.1em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Rajdhani',sans-serif; font-size:0.82rem; font-weight:700; color:var(--cyan); text-decoration:none; letter-spacing:0.06em; }
+        .nav-cta:hover { color:#fff; }
+
+        /* Hero */
+        .hero { background:var(--bg-card); padding:72px 24px 60px; position:relative; overflow:hidden; border-bottom:1px solid var(--border); }
+        .hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(124,58,237,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.07) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; }
+        .hero-glow { position:absolute; top:-80px; right:-60px; width:500px; height:500px; background:radial-gradient(circle,rgba(124,58,237,0.2) 0%,transparent 65%); pointer-events:none; }
+        .hero-inner { max-width:860px; margin:0 auto; position:relative; }
+        .hero-kicker { font-family:'Rajdhani',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--cyan); margin-bottom:14px; }
+        .hero h1 { font-family:'Rajdhani',sans-serif; font-size:clamp(2rem,5.5vw,3.4rem); font-weight:700; line-height:1.1; letter-spacing:0.01em; color:#fff; margin-bottom:18px; }
+        .hero h1 em { font-style:normal; color:var(--vg-lt); }
+        .hero-sub { font-family:'Mulish',serif; font-size:1.05rem; line-height:1.7; color:var(--text-soft); max-width:580px; font-weight:300; margin-bottom:24px; }
+        .hero-chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .hchip { font-family:'Rajdhani',sans-serif; font-size:0.73rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-soft); background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:3px; padding:4px 10px; }
+        .hero-meta { margin-top:22px; display:flex; gap:18px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'Rajdhani',sans-serif; font-size:0.76rem; color:rgba(255,255,255,0.25); font-weight:600; letter-spacing:0.04em; }
+        .hero-meta span strong { color:rgba(255,255,255,0.55); }
+
+        /* Page */
+        .page { max-width:900px; margin:0 auto; padding:52px 24px 80px; display:grid; grid-template-columns:1fr 240px; gap:48px; align-items:start; }
+
+        /* Article */
+        .article h2 { font-family:'Rajdhani',sans-serif; font-size:1.6rem; font-weight:700; color:#fff; margin:52px 0 16px; letter-spacing:0.02em; line-height:1.2; }
+        .article h2:first-child { margin-top:0; }
+        .article h3 { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:1.05rem; color:var(--vg-lt); margin:26px 0 10px; letter-spacing:0.04em; }
+        .article p { font-size:1.02rem; line-height:1.82; color:var(--text); margin-bottom:18px; font-weight:300; }
+        .article p strong { color:#fff; font-weight:700; }
+        .lead { font-size:1.1rem!important; line-height:1.78!important; font-weight:400!important; margin-bottom:28px!important; color:var(--text)!important; }
+        .accuracy { font-family:'Rajdhani',sans-serif; font-size:0.76rem; color:var(--text-soft); background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:4px; padding:9px 14px; margin-bottom:28px; }
+
+        /* Twitch vs VG comparison header */
+        .vs-banner { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:24px 0; }
+        .vs-side { border-radius:8px; padding:18px 20px; }
+        .vs-twitch { background:rgba(145,70,255,0.12); border:1px solid rgba(145,70,255,0.3); }
+        .vs-vg { background:var(--vg-glow); border:1px solid var(--border); }
+        .vs-tool { font-family:'Rajdhani',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px; }
+        .vs-twitch .vs-tool { color:#9146ff; }
+        .vs-vg .vs-tool { color:var(--vg-lt); }
+        .vs-verdict { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.9rem; color:#fff; margin-bottom:6px; }
+        .vs-sub { font-family:'Mulish',sans-serif; font-size:0.82rem; color:var(--text-soft); line-height:1.55; font-weight:300; }
+
+        /* Limitation items */
+        .limit-list { display:flex; flex-direction:column; gap:10px; margin:20px 0; }
+        .limit-item { background:rgba(248,113,113,0.06); border-left:3px solid var(--red); border-radius:4px; padding:12px 16px; }
+        .limit-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.9rem; color:var(--red); margin-bottom:3px; letter-spacing:0.02em; }
+        .limit-desc { font-family:'Mulish',sans-serif; font-size:0.88rem; color:var(--text-soft); line-height:1.55; font-weight:300; }
+
+        /* Feature list */
+        .feat-list { list-style:none; display:flex; flex-direction:column; gap:7px; margin:16px 0; }
+        .feat-list li { font-family:'Mulish',sans-serif; font-size:0.95rem; color:var(--text); padding-left:18px; position:relative; line-height:1.6; font-weight:300; }
+        .feat-list li::before { content:'✓'; position:absolute; left:0; color:var(--green); font-weight:700; }
+        .feat-list.bad li::before { content:'✕'; color:var(--red); }
+
+        /* Steps */
+        .steps { display:flex; flex-direction:column; gap:0; margin:20px 0; }
+        .step { display:flex; gap:16px; position:relative; }
+        .step:not(:last-child)::after { content:''; position:absolute; left:18px; top:40px; width:2px; height:calc(100% - 16px); background:linear-gradient(to bottom,var(--vg),transparent); }
+        .step-n { width:36px; height:36px; background:var(--vg); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.9rem; color:#fff; flex-shrink:0; }
+        .step-body { padding:4px 0 28px; }
+        .step-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1rem; color:#fff; margin-bottom:4px; letter-spacing:0.02em; }
+        .step-desc { font-family:'Mulish',sans-serif; font-size:0.92rem; color:var(--text-soft); line-height:1.6; font-weight:300; }
+        .step-desc a { color:var(--vg-lt); text-decoration:none; }
+
+        /* Poll ideas grid */
+        .ideas-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:20px 0; }
+        .idea-card { background:var(--bg-mid); border:1px solid var(--border); border-radius:7px; padding:16px 18px; }
+        .idea-type { font-family:'Rajdhani',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--cyan); margin-bottom:5px; }
+        .idea-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.95rem; color:#fff; margin-bottom:5px; }
+        .idea-ex { font-family:'Mulish',sans-serif; font-size:0.82rem; color:var(--text-soft); line-height:1.5; font-style:italic; font-weight:300; }
+
+        /* Comparison table */
+        .tw { overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin:20px 0; }
+        table.comp { width:100%; border-collapse:collapse; min-width:480px; }
+        table.comp thead tr { background:var(--bg-mid); }
+        table.comp th { font-family:'Rajdhani',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:12px 14px; text-align:left; color:var(--text-soft); }
+        table.comp th:nth-child(3) { color:var(--vg-lt); }
+        table.comp td { padding:10px 14px; border-bottom:1px solid rgba(124,58,237,0.1); font-family:'Mulish',sans-serif; font-size:0.88rem; vertical-align:middle; color:var(--text); }
+        table.comp tbody tr:last-child td { border-bottom:none; }
+        table.comp td:first-child { font-family:'Rajdhani',sans-serif; font-weight:600; color:rgba(255,255,255,0.8); }
+        .cw { color:var(--green); font-weight:700; font-family:'Rajdhani',sans-serif; }
+        .cl { color:var(--red); font-family:'Rajdhani',sans-serif; font-weight:600; }
+        .cn { display:block; font-size:0.72rem; color:var(--text-soft); margin-top:1px; }
+
+        /* Tips */
+        .tip-list { display:flex; flex-direction:column; gap:10px; margin:20px 0; }
+        .tip { background:var(--bg-mid); border:1px solid var(--border); border-radius:6px; padding:14px 18px; display:flex; gap:14px; align-items:flex-start; }
+        .tip-icon { font-size:1.2rem; flex-shrink:0; margin-top:2px; }
+        .tip-title { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.92rem; color:#fff; margin-bottom:3px; letter-spacing:0.02em; }
+        .tip-desc { font-family:'Mulish',sans-serif; font-size:0.86rem; color:var(--text-soft); line-height:1.55; font-weight:300; }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--bg-mid); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        details.faq[open] { border-color:var(--vg); }
+        details.faq summary { padding:14px 18px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.96rem; color:#fff; cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; letter-spacing:0.02em; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--vg-lt); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .fa { padding:4px 18px 16px; font-family:'Mulish',sans-serif; font-size:0.93rem; line-height:1.75; color:var(--text-soft); font-weight:300; }
+
+        /* CTA */
+        .cta { background:linear-gradient(135deg,var(--bg-mid) 0%,rgba(124,58,237,0.3) 100%); border:1px solid var(--vg); border-radius:10px; padding:36px 32px; text-align:center; margin:52px 0; }
+        .cta h3 { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.6rem; color:#fff; margin-bottom:8px; letter-spacing:0.02em; }
+        .cta p { font-family:'Mulish',sans-serif; font-size:1rem; color:var(--text-soft); margin-bottom:22px; font-weight:300; }
+        .cta-btn { display:inline-block; background:var(--vg); color:#fff; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.95rem; letter-spacing:0.08em; padding:13px 30px; border-radius:5px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px var(--vg-glow); background:var(--vg-lt); }
+
+        /* Sidebar */
+        .sidebar { position:sticky; top:64px; display:flex; flex-direction:column; gap:14px; }
+        .toc-card { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        .toc-head { background:var(--bg-mid); padding:12px 16px; }
+        .toc-head span { font-family:'Rajdhani',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); }
+        .toc-links { list-style:none; padding:6px 0; }
+        .toc-links a { display:block; padding:7px 16px; font-family:'Rajdhani',sans-serif; font-size:0.83rem; font-weight:600; color:var(--text-soft); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; letter-spacing:0.02em; }
+        .toc-links a:hover,.toc-links a.active { color:var(--vg-lt); background:var(--vg-glow); border-left-color:var(--vg-lt); }
+
+        .compare-card { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:16px; }
+        .cc-title { font-family:'Rajdhani',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); margin-bottom:10px; }
+        .cc-row { display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; border-bottom:1px solid rgba(124,58,237,0.1); }
+        .cc-row:last-child { border-bottom:none; }
+        .cc-k { font-family:'Mulish',sans-serif; font-size:0.79rem; color:var(--text-soft); }
+        .cc-twitch { font-family:var(--mono); font-size:0.76rem; font-weight:500; color:#9146ff; }
+        .cc-vg { font-family:var(--mono); font-size:0.76rem; font-weight:500; color:var(--vg-lt); }
+
+        .sb-cta { background:var(--vg); border-radius:6px; padding:16px; text-align:center; }
+        .sb-cta p { font-family:'Rajdhani',sans-serif; font-size:0.85rem; font-weight:600; color:rgba(255,255,255,0.85); line-height:1.5; margin-bottom:10px; letter-spacing:0.02em; }
+        .sb-cta a { display:block; background:#fff; color:var(--vg); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.82rem; letter-spacing:0.06em; padding:9px; border-radius:4px; text-decoration:none; }
+        .sb-cta a:hover { background:var(--vg-lt); color:#fff; }
+
+        .sb-related { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
+        .sb-related-hd { font-family:'Rajdhani',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); margin-bottom:10px; }
+        .sb-related ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .sb-related a { font-family:'Rajdhani',sans-serif; font-size:0.82rem; font-weight:600; color:var(--vg-lt); text-decoration:none; letter-spacing:0.02em; }
+        .sb-related a:hover { color:#fff; }
+
+        /* Footer */
+        .footer { background:var(--bg-card); border-top:1px solid var(--border); color:var(--text-soft); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.1rem; color:#fff; margin-bottom:6px; letter-spacing:0.06em; }
+        .footer p { font-family:'Mulish',sans-serif; font-size:0.83rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:18px; }
+        .footer-links a { font-family:'Rajdhani',sans-serif; font-size:0.8rem; font-weight:600; color:var(--text-soft); text-decoration:none; letter-spacing:0.04em; }
+        .footer-links a:hover { color:#fff; }
+
+        @media(max-width:860px) {
+            .page { grid-template-columns:1fr; }
+            .sidebar { position:static; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+            .vs-banner,.ideas-grid { grid-template-columns:1fr; }
+        }
+        @media(max-width:540px) { .sidebar { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<div class="sticky" id="sticky">
+    <span class="sticky-label">Twitch Poll Guide &mdash; VoteGenerator</span>
+    <a href="https://votegenerator.com/create" class="sticky-btn">Try Free &rarr;</a>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Streamers</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Create Poll &rarr;</a>
+</nav>
+
+<header class="hero" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+        <p class="hero-kicker">Twitch Poll Guide &middot; 2026</p>
+        <h1>How to Run a Poll on Twitch<br><em>Built-In vs External Tools</em></h1>
+        <p class="hero-sub">Twitch's native polls are quick but limited — 5 options max, 10 minutes max, Affiliates only. Here is the full picture, plus how to use VoteGenerator for ranked choice, more options, and no Affiliate requirement.</p>
+        <div class="hero-chips">
+            <span class="hchip">Step-by-Step</span>
+            <span class="hchip">No Affiliate Needed</span>
+            <span class="hchip">8 Poll Types</span>
+            <span class="hchip">Poll Ideas</span>
+        </div>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Updated <strong>April 2026</strong></span>
+        </div>
+    </div>
+</header>
+
+<div class="page">
+<main class="article" id="article">
+
+    <p class="lead">Twitch has solid built-in polls for basic voting. But they require Affiliate status, cap at 5 options, and only run up to 10 minutes. If you need ranked choice voting, more options, or you are not yet an Affiliate — external tools are the answer.</p>
+
+    <!-- Twitch built-in -->
+    <h2 id="builtin">Twitch's Built-In Polls</h2>
+    <p>Twitch native polls are available to Affiliates and Partners. Create a poll in your dashboard, set a duration from 15 seconds to 10 minutes, and it appears directly in your chat and stream sidebar. Viewers vote with one click without leaving Twitch — which is the main advantage.</p>
+
+    <div class="vs-banner">
+        <div class="vs-side vs-twitch">
+            <div class="vs-tool">Twitch Native Polls</div>
+            <div class="vs-verdict">Quick, embedded, Affiliate only</div>
+            <div class="vs-sub">No extra link needed. Voters stay in Twitch. But limited to 5 options, 10-minute max, multiple choice only.</div>
+        </div>
+        <div class="vs-side vs-vg">
+            <div class="vs-tool">VoteGenerator</div>
+            <div class="vs-verdict">More types, no Affiliate needed</div>
+            <div class="vs-sub">Share a link in chat. Ranked choice, visual polls, unlimited options. Works for any streamer, any channel size.</div>
+        </div>
+    </div>
+
+    <h3>Twitch poll limitations</h3>
+    <div class="limit-list">
+        <div class="limit-item">
+            <div class="limit-title">Affiliate / Partner Only</div>
+            <div class="limit-desc">Twitch's native poll feature requires Affiliate or Partner status. New streamers without verification cannot use it at all.</div>
+        </div>
+        <div class="limit-item">
+            <div class="limit-title">Maximum 5 Options</div>
+            <div class="limit-desc">You can only add up to 5 voting choices. Polls with more options — 6 games to vote on, 8 loadouts — are impossible natively.</div>
+        </div>
+        <div class="limit-item">
+            <div class="limit-title">Maximum 10-Minute Duration</div>
+            <div class="limit-desc">Twitch polls run from 15 seconds to 10 minutes. You cannot leave a poll open overnight, across multiple streams, or for a community decision that needs days of input.</div>
+        </div>
+        <div class="limit-item">
+            <div class="limit-title">Multiple Choice Only</div>
+            <div class="limit-desc">No ranked choice voting, no rating scales, no visual image polls. Every Twitch poll is a basic "pick one" vote.</div>
+        </div>
+        <div class="limit-item">
+            <div class="limit-title">No Data Export</div>
+            <div class="limit-desc">Results live inside Twitch. You cannot export vote data or analyse it outside the platform.</div>
+        </div>
+    </div>
+
+    <!-- When to use external -->
+    <h2 id="when">When to Use an External Poll Tool</h2>
+    <p>Use an external tool like VoteGenerator when:</p>
+    <ul class="feat-list">
+        <li>You are not yet a Twitch Affiliate</li>
+        <li>You need more than 5 options</li>
+        <li>You want ranked choice — let chat rank their top games</li>
+        <li>You want the poll to stay open longer than 10 minutes</li>
+        <li>You want visual polls — vote on thumbnails or character art</li>
+        <li>You want to share one poll across Twitch, Discord, and Twitter</li>
+        <li>You want real-time results visible before voting</li>
+    </ul>
+
+    <!-- How to use VG on Twitch -->
+    <h2 id="how">How to Use VoteGenerator on Twitch</h2>
+    <div class="steps">
+        <div class="step">
+            <div class="step-n">1</div>
+            <div class="step-body">
+                <div class="step-title">Go to VoteGenerator</div>
+                <div class="step-desc">Visit <a href="https://votegenerator.com/create">votegenerator.com/create</a>. No account needed — start immediately.</div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-n">2</div>
+            <div class="step-body">
+                <div class="step-title">Choose your poll type</div>
+                <div class="step-desc">Multiple Choice for quick votes. Ranked Choice to find true consensus. Visual Poll to vote on images. This or That for A vs B decisions. RSVP for event attendance.</div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-n">3</div>
+            <div class="step-body">
+                <div class="step-title">Add your question and options</div>
+                <div class="step-desc">"What game should I play next?" Add as many options as you want — no 5-option cap. Use emoji to make choices stand out in chat.</div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-n">4</div>
+            <div class="step-body">
+                <div class="step-title">Set a time limit (optional)</div>
+                <div class="step-desc">Leave the poll open indefinitely, or set it to close after 2 minutes, 10 minutes, an hour — your call.</div>
+            </div>
+        </div>
+        <div class="step" style="">
+            <div class="step-n">5</div>
+            <div class="step-body" style="padding-bottom:0;">
+                <div class="step-title">Share the link in chat</div>
+                <div class="step-desc">Copy the poll URL and paste it in chat. Viewers click, vote, see results update in real time. No Twitch account needed from them — just the link.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison table -->
+    <h2 id="comparison">Twitch Polls vs VoteGenerator</h2>
+    <div class="tw">
+        <table class="comp">
+            <thead>
+                <tr>
+                    <th style="width:38%;">Feature</th>
+                    <th style="width:28%;">Twitch Native</th>
+                    <th style="width:34%;">VoteGenerator</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Affiliate required</td><td><span class="cl">Yes</span></td><td><span class="cw">No — any streamer</span></td></tr>
+                <tr><td>Max options</td><td><span class="cl">5 options</span></td><td><span class="cw">Unlimited</span></td></tr>
+                <tr><td>Maximum duration</td><td><span class="cl">10 minutes</span></td><td><span class="cw">Unlimited / your choice</span></td></tr>
+                <tr><td>Ranked choice voting</td><td><span class="cl">No</span></td><td><span class="cw">Yes — instant runoff</span></td></tr>
+                <tr><td>Visual / image polls</td><td><span class="cl">No</span></td><td><span class="cw">Yes</span></td></tr>
+                <tr><td>Rating scale</td><td><span class="cl">No</span></td><td><span class="cw">Yes</span></td></tr>
+                <tr><td>RSVP poll</td><td><span class="cl">No</span></td><td><span class="cw">Yes</span></td></tr>
+                <tr><td>This or That (A vs B)</td><td><span class="cl">No</span></td><td><span class="cw">Yes</span></td></tr>
+                <tr><td>Total poll types</td><td><span class="cl">1 (multiple choice)</span></td><td><span class="cw">8 types</span></td></tr>
+                <tr><td>Results before voting</td><td><span class="cl">Hidden until vote</span></td><td><span class="cw">Visible in real time</span></td></tr>
+                <tr><td>Viewer needs account</td><td><span class="cl">Twitch account</span></td><td><span class="cw">No account needed</span></td></tr>
+                <tr><td>Share to Discord / Twitter</td><td><span class="cl">No (Twitch only)</span></td><td><span class="cw">Yes — one link anywhere</span></td></tr>
+                <tr><td>PNG export of results</td><td><span class="cl">No</span></td><td><span class="cw">Yes — free</span></td></tr>
+                <tr><td>CSV data export</td><td><span class="cl">No</span></td><td>Paid plan ($19/mo)<span class="cn">PNG export is free</span></td></tr>
+                <tr><td>Cost to creator</td><td>Free (with Affiliate)</td><td><span class="cw">Free</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Poll ideas -->
+    <h2 id="ideas">Poll Ideas for Streamers</h2>
+    <div class="ideas-grid">
+        <div class="idea-card">
+            <div class="idea-type">Multiple Choice</div>
+            <div class="idea-title">Game Selection</div>
+            <div class="idea-ex">"What should I play next?" — add all the options, let chat decide. No 5-option cap.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">Ranked Choice</div>
+            <div class="idea-title">True Consensus</div>
+            <div class="idea-ex">"Rank your top 5 games for this month" — instant runoff finds the real community favourite.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">This or That</div>
+            <div class="idea-title">Character / Loadout</div>
+            <div class="idea-ex">"Character A vs Character B" — pairwise voting for quick head-to-head decisions.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">Visual Poll</div>
+            <div class="idea-title">Thumbnail Voting</div>
+            <div class="idea-ex">"Which thumbnail should I use?" — let chat vote on actual images, not just text descriptions.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">Rating Scale</div>
+            <div class="idea-title">Stream Feedback</div>
+            <div class="idea-ex">"Rate today's stream 1–5 stars" — get a real satisfaction score after each session.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">RSVP</div>
+            <div class="idea-title">Event Attendance</div>
+            <div class="idea-ex">"Can you make Saturday's charity stream?" — Yes / No / Maybe with instant headcount.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">Multiple Choice</div>
+            <div class="idea-title">Schedule Preference</div>
+            <div class="idea-ex">"Best time for weekend streams?" — share across Discord and Twitter for more responses.</div>
+        </div>
+        <div class="idea-card">
+            <div class="idea-type">Multiple Choice</div>
+            <div class="idea-title">Quick Engagement</div>
+            <div class="idea-ex">"Will I beat this boss on the first try?" — prediction polls build investment during gameplay.</div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <h2 id="tips">Tips for Maximum Chat Engagement</h2>
+    <div class="tip-list">
+        <div class="tip">
+            <div class="tip-icon">📢</div>
+            <div>
+                <div class="tip-title">Announce polls out loud</div>
+                <div class="tip-desc">Don't just drop a link in chat. Say "Poll live — link in chat, vote now." Voice announcements get 2–3x more participation than text-only.</div>
+            </div>
+        </div>
+        <div class="tip">
+            <div class="tip-icon">⚡</div>
+            <div>
+                <div class="tip-title">Keep voting windows short</div>
+                <div class="tip-desc">30 seconds to 2 minutes is the sweet spot for live polls. Longer windows lose momentum. Close the poll, announce the result, move on.</div>
+            </div>
+        </div>
+        <div class="tip">
+            <div class="tip-icon">🎯</div>
+            <div>
+                <div class="tip-title">Actually act on results</div>
+                <div class="tip-desc">If you ask chat what to play and they vote, play it. Empty polls that change nothing train your chat to ignore future polls.</div>
+            </div>
+        </div>
+        <div class="tip">
+            <div class="tip-icon">🖥️</div>
+            <div>
+                <div class="tip-title">Show results on stream</div>
+                <div class="tip-desc">Pull up the results URL in a browser and put it on stream as an OBS scene or picture-in-picture. Watching votes come in live drives participation.</div>
+            </div>
+        </div>
+        <div class="tip">
+            <div class="tip-icon">🔗</div>
+            <div>
+                <div class="tip-title">Share the same poll everywhere</div>
+                <div class="tip-desc">Post the link to Discord, Twitter, and your community hub at the same time. One VoteGenerator link works across all platforms — more votes, more engagement.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Start Your First Twitch Poll</h3>
+        <p>No Affiliate required. No signup. 8 poll types, free.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">CREATE YOUR POLL &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>How do I run a Twitch poll without being an Affiliate?</summary>
+            <div class="fa">Twitch's built-in polls require Affiliate or Partner status. If you are not yet an Affiliate, use VoteGenerator — create a poll at votegenerator.com with no account needed, copy the link, and share it in your chat. Viewers click and vote without any signup.</div>
+        </details>
+        <details class="faq">
+            <summary>How many options can a Twitch poll have?</summary>
+            <div class="fa">Twitch's native polls allow up to 5 options. If you need more than 5 choices — voting on 6+ games, characters, or loadouts — use VoteGenerator which has no option limit.</div>
+        </details>
+        <details class="faq">
+            <summary>How long can a Twitch poll run?</summary>
+            <div class="fa">Twitch native polls run from 15 seconds to a maximum of 10 minutes. VoteGenerator polls can stay open indefinitely or close after any time limit you set — useful for community decisions that need days of input from your Discord or Twitter audience too.</div>
+        </details>
+        <details class="faq">
+            <summary>Do viewers need a Twitch account to vote?</summary>
+            <div class="fa">For Twitch's native polls, viewers vote inside Twitch without extra signup. For VoteGenerator polls shared as a link, viewers click the URL and vote with no account required from anyone — lower friction usually means higher participation from viewers who might not be logged in.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I do ranked choice voting on Twitch?</summary>
+            <div class="fa">Twitch's native polls do not support ranked choice. VoteGenerator includes ranked choice (instant runoff) as a free poll type — chat drags options to rank them and the algorithm finds the true consensus winner across all preferences, not just the plurality pick.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I prevent the same viewer from voting twice?</summary>
+            <div class="fa">VoteGenerator uses browser-based duplicate detection to prevent repeat votes from the same device. For most Twitch streams this is sufficient. If you need stricter vote control for high-stakes community decisions, consider enabling one-time vote codes (paid feature).</div>
+        </details>
+    </div>
+
+</main>
+
+<aside class="sidebar">
+    <div class="toc-card">
+        <div class="toc-head"><span>Contents</span></div>
+        <ul class="toc-links" id="toc-links">
+            <li><a href="#builtin">Twitch Built-In Polls</a></li>
+            <li><a href="#when">When to Use External</a></li>
+            <li><a href="#how">How to Use VoteGenerator</a></li>
+            <li><a href="#comparison">Full Comparison</a></li>
+            <li><a href="#ideas">Poll Ideas</a></li>
+            <li><a href="#tips">Tips</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </div>
+
+    <div class="compare-card">
+        <div class="cc-title">At a Glance</div>
+        <div class="cc-row"><span class="cc-k">Max options</span><span class="cc-twitch">5</span></div>
+        <div class="cc-row"><span class="cc-k">VG options</span><span class="cc-vg">Unlimited</span></div>
+        <div class="cc-row"><span class="cc-k">Twitch duration</span><span class="cc-twitch">10 min max</span></div>
+        <div class="cc-row"><span class="cc-k">VG duration</span><span class="cc-vg">Any / indefinite</span></div>
+        <div class="cc-row"><span class="cc-k">Ranked choice</span><span class="cc-vg">VG only</span></div>
+        <div class="cc-row"><span class="cc-k">Affiliate needed</span><span class="cc-twitch">Twitch only</span></div>
+    </div>
+
+    <div class="sb-cta">
+        <p>No Affiliate needed. Free. 8 poll types.</p>
+        <a href="https://votegenerator.com/create">Create Your Poll &rarr;</a>
+    </div>
+
+    <div class="sb-related">
+        <div class="sb-related-hd">Related</div>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/reddit-poll-alternative.html">Reddit Poll Alternative</a></li>
+            <li><a href="https://votegenerator.com/blog/ranked-choice-voting.html">Ranked Choice Voting</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-poll.html">How to Create a Poll</a></li>
+            <li><a href="https://votegenerator.com/blog/poll-types-guide.html">All Poll Types</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>8 poll types. No signup. Free for streamers of any size.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Poll</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const bar=document.getElementById('prog'),sticky=document.getElementById('sticky'),hero=document.getElementById('hero');
+window.addEventListener('scroll',()=>{
+    const d=document.documentElement;
+    bar.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';
+    sticky.classList.toggle('on',hero.getBoundingClientRect().bottom<0);
+});
+const links=document.querySelectorAll('#toc-links a');
+const targets=Array.from(links).map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.remove('active'));const a=document.querySelector(`#toc-links a[href="#${e.target.id}"]`);if(a)a.classList.add('active');}});
+},{rootMargin:'-20% 0px -70% 0px'});
+targets.forEach(t=>obs.observe(t));
+</script>
+</body>
+</html>

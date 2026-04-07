@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rating Scale Survey Guide (2026): Types, Mistakes & Free Templates | VoteGenerator</title>
+    <meta name="description" content="Likert, numeric, star, and emoji rating scales compared with live demos you can click. Includes a quick 'which scale?' picker, common mistakes, scale length guide, and free survey templates.">
+    <meta name="keywords" content="rating scale survey, Likert scale, 1-5 rating survey, star rating survey, emoji scale, how to design a rating scale, rating scale survey templates 2026">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/rating-scale-survey.html">
+    <meta property="og:title" content="Rating Scale Survey Guide: Types, Mistakes & Free Templates">
+    <meta property="og:description" content="Compare Likert, numeric, star, and emoji scales with live demos. Quick picker to find the right scale. Free survey question templates.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/rating-scale-survey">
+    <meta property="og:image" content="https://votegenerator.com/og-image.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Rating Scale Survey Guide (2026): Types, Mistakes & Free Templates",
+        "description": "Complete guide to rating scale surveys. Compares Likert, numeric, star, and emoji formats with interactive demos and free templates.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/rating-scale-survey" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is a rating scale survey?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A rating scale survey asks respondents to evaluate something on a fixed scale — such as 1 to 5 or Strongly Disagree to Strongly Agree — rather than writing a free-text answer. This produces structured, quantifiable data you can average, compare, and track over time. The four main formats are Likert scales, numeric scales, star ratings, and emoji scales." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the difference between a Likert scale and a rating scale?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A Likert scale is a specific type of rating scale that measures agreement with a statement using labels like Strongly Disagree, Disagree, Neutral, Agree, Strongly Agree. A rating scale is the broader category. All Likert scales are rating scales, but not all rating scales are Likert scales — numeric (1-10) and star ratings are also rating scales." }
+            },
+            {
+                "@type": "Question",
+                "name": "Should a rating scale use 5 or 7 points?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Five-point scales are the research-validated default for most business and customer surveys. They are fast to answer, widely understood, and produce data that is easy to communicate. Seven-point scales add granularity useful in academic research but the practical difference in data quality is small for most business applications. Use 5 points unless you have a specific reason for more." }
+            },
+            {
+                "@type": "Question",
+                "name": "Should a rating scale include a neutral midpoint?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, for most surveys. Removing the neutral option forces respondents without a genuine opinion to choose a side, which creates inaccurate data. Only remove the neutral option when you specifically want to force a directional response, such as in A/B preference testing." }
+            },
+            {
+                "@type": "Question",
+                "name": "When should you use an emoji rating scale instead of a Likert scale?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Emoji scales work best for quick point-of-experience feedback (restaurant tables, retail kiosks, app ratings), multilingual audiences where text labels may translate poorly, and informal employee pulse surveys. They are language-agnostic and faster to respond to. For formal research, Likert scales are more conventional and defensible." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --forest:    #14532d;
+            --forest-lt: #166534;
+            --forest-md: #15803d;
+            --forest-dim: rgba(20,83,45,0.08);
+            --forest-pale: #f0fdf4;
+            --amber:     #b45309;
+            --amber-bg:  #fffbeb;
+            --amber-lt:  #d97706;
+            --ink:       #0d1a0f;
+            --ink-mid:   #1c3024;
+            --ink-soft:  #4a6854;
+            --bg:        #faf9f5;
+            --white:     #ffffff;
+            --border:    #d4e6d8;
+            --warm:      #f4f8f4;
+            --red:       #b91c1c;
+            --red-bg:    #fef2f2;
+            --mono:      'IBM Plex Mono', monospace;
+            --vg:        #6C3CE1;
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--ink); overflow-x:hidden; }
+
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--forest),var(--amber-lt)); z-index:2000; transition:width 0.1s linear; }
+
+        /* Sticky */
+        .sticky { position:fixed; top:0; left:0; right:0; z-index:1000; background:var(--ink); height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; transform:translateY(-100%); transition:transform 0.25s ease; border-bottom:2px solid var(--forest-md); }
+        .sticky.on { transform:translateY(0); }
+        .sticky-label { font-family:'Zilla Slab',serif; font-size:0.9rem; color:rgba(255,255,255,0.65); }
+        .sticky-btn { background:var(--forest); color:#fff; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.77rem; letter-spacing:0.04em; padding:7px 14px; border-radius:4px; text-decoration:none; }
+        .sticky-btn:hover { background:var(--forest-md); }
+
+        /* Nav */
+        .nav { background:var(--ink); height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Zilla Slab',serif; font-weight:700; font-size:1rem; color:#fff; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'IBM Plex Sans',sans-serif; font-size:0.7rem; font-weight:500; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'IBM Plex Sans',sans-serif; font-size:0.8rem; font-weight:600; color:#86efac; text-decoration:none; }
+        .nav-cta:hover { color:#fff; }
+
+        /* Hero */
+        .hero { background:var(--ink); padding:64px 24px 52px; position:relative; overflow:hidden; }
+        .hero-bg { position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(20,83,45,0.12) 59px,rgba(20,83,45,0.12) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(20,83,45,0.06) 59px,rgba(20,83,45,0.06) 60px); pointer-events:none; }
+        .hero-glow { position:absolute; top:-60px; right:-60px; width:500px; height:500px; background:radial-gradient(circle,rgba(20,83,45,0.25) 0%,transparent 65%); pointer-events:none; }
+        .hero-inner { max-width:900px; margin:0 auto; position:relative; }
+        .hero-kicker { font-family:'IBM Plex Sans',sans-serif; font-size:0.68rem; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:#86efac; margin-bottom:14px; }
+        .hero h1 { font-family:'Zilla Slab',serif; font-size:clamp(2rem,5vw,3.2rem); font-weight:700; line-height:1.15; color:#fff; margin-bottom:16px; }
+        .hero h1 em { font-style:italic; color:#86efac; }
+        .hero-sub { font-family:'IBM Plex Sans',sans-serif; font-size:1.02rem; line-height:1.7; color:rgba(255,255,255,0.6); max-width:600px; font-weight:300; margin-bottom:22px; }
+        .hero-meta { display:flex; gap:18px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'IBM Plex Sans',sans-serif; font-size:0.76rem; color:rgba(255,255,255,0.35); }
+        .hero-meta span strong { color:rgba(255,255,255,0.6); }
+
+        /* Quick answer box */
+        .qa-wrap { max-width:900px; margin:0 auto; padding:32px 24px 0; }
+        .qa-box { background:var(--forest-pale); border:2px solid var(--forest-md); border-radius:8px; padding:22px 28px; }
+        .qa-label { font-family:'IBM Plex Sans',sans-serif; font-size:0.67rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--forest); margin-bottom:8px; }
+        .qa-title { font-family:'Zilla Slab',serif; font-size:1.1rem; color:var(--ink-mid); margin-bottom:10px; font-weight:600; }
+        .qa-body { font-family:'IBM Plex Sans',sans-serif; font-size:0.96rem; line-height:1.72; color:var(--ink-mid); font-weight:300; }
+
+        /* Page layout */
+        .page { max-width:1060px; margin:0 auto; padding:48px 24px 80px; display:grid; grid-template-columns:1fr 244px; gap:52px; align-items:start; }
+
+        /* Article */
+        .article h2 { font-family:'Zilla Slab',serif; font-size:1.65rem; font-weight:700; color:var(--ink); margin:56px 0 18px; line-height:1.25; }
+        .article h2:first-child { margin-top:0; }
+        .article h3 { font-family:'Zilla Slab',serif; font-weight:600; font-size:1.05rem; color:var(--forest); margin:26px 0 10px; }
+        .article p { font-size:1.04rem; line-height:1.82; color:var(--ink-mid); margin-bottom:18px; font-weight:300; }
+        .article p strong { color:var(--ink); font-weight:600; }
+        .lead { font-size:1.12rem!important; line-height:1.78!important; font-weight:400!important; margin-bottom:28px!important; }
+
+        /* SCALE PICKER */
+        .picker { background:var(--white); border:2px solid var(--border); border-radius:10px; overflow:hidden; margin:24px 0; }
+        .picker-head { background:var(--forest); padding:16px 22px; display:flex; align-items:center; gap:12px; }
+        .picker-head-icon { font-size:1.2rem; }
+        .picker-head-text { font-family:'Zilla Slab',serif; font-weight:600; font-size:1rem; color:#fff; }
+        .picker-head-sub { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.65); font-weight:300; }
+        .picker-body { padding:20px 22px; }
+        .picker-q { font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.88rem; color:var(--ink-mid); margin-bottom:8px; letter-spacing:0.01em; }
+        .picker-opts { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+        .picker-opt { font-family:'IBM Plex Sans',sans-serif; font-size:0.82rem; font-weight:500; padding:6px 14px; border:1.5px solid var(--border); border-radius:4px; cursor:pointer; background:var(--white); color:var(--ink-mid); transition:all 0.15s; }
+        .picker-opt:hover { border-color:var(--forest); color:var(--forest); }
+        .picker-opt.picked { background:var(--forest); color:#fff; border-color:var(--forest); }
+        .picker-result { background:var(--forest-pale); border:1px solid var(--forest-md); border-radius:6px; padding:14px 18px; display:none; }
+        .picker-result.show { display:block; }
+        .pr-rec { font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--forest); margin-bottom:4px; }
+        .pr-scale { font-family:'Zilla Slab',serif; font-weight:700; font-size:1.1rem; color:var(--ink); margin-bottom:4px; }
+        .pr-why { font-family:'IBM Plex Sans',sans-serif; font-size:0.88rem; color:var(--ink-mid); line-height:1.6; font-weight:300; }
+
+        /* LIVE SCALE DEMOS */
+        .scales-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:24px 0; }
+        .scale-demo { background:var(--white); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+        .sd-head { padding:14px 18px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; }
+        .sd-name { font-family:'Zilla Slab',serif; font-weight:700; font-size:1rem; color:var(--ink); }
+        .sd-tag { font-family:var(--mono); font-size:0.68rem; color:var(--ink-soft); }
+        .sd-body { padding:16px 18px; }
+        .sd-q { font-family:'IBM Plex Sans',sans-serif; font-size:0.85rem; color:var(--ink-mid); margin-bottom:12px; font-weight:300; font-style:italic; }
+
+        /* Likert demo */
+        .likert-opts { display:flex; gap:6px; flex-wrap:wrap; }
+        .likert-opt { flex:1; min-width:0; padding:8px 4px; border:1.5px solid var(--border); border-radius:5px; text-align:center; cursor:pointer; transition:all 0.15s; user-select:none; }
+        .likert-opt span { display:block; font-family:'IBM Plex Sans',sans-serif; font-size:0.72rem; color:var(--ink-soft); line-height:1.35; }
+        .likert-opt:hover { border-color:var(--forest); background:var(--forest-pale); }
+        .likert-opt:hover span { color:var(--forest); }
+        .likert-opt.sel { border-color:var(--forest); background:var(--forest); }
+        .likert-opt.sel span { color:#fff; }
+
+        /* Numeric demo */
+        .numeric-opts { display:flex; gap:4px; flex-wrap:wrap; }
+        .num-opt { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--border); border-radius:5px; font-family:var(--mono); font-size:0.85rem; color:var(--ink-soft); cursor:pointer; transition:all 0.15s; user-select:none; }
+        .num-opt:hover { border-color:var(--forest); color:var(--forest); background:var(--forest-pale); }
+        .num-opt.sel { background:var(--forest); border-color:var(--forest); color:#fff; }
+        .num-anchors { display:flex; justify-content:space-between; font-family:'IBM Plex Sans',sans-serif; font-size:0.72rem; color:var(--ink-soft); margin-top:6px; }
+
+        /* Star demo */
+        .star-row { display:flex; gap:6px; align-items:center; }
+        .star { font-size:1.8rem; cursor:pointer; transition:transform 0.1s; user-select:none; filter:grayscale(1) opacity(0.35); }
+        .star:hover { transform:scale(1.1); }
+        .star.lit { filter:none; }
+        .star-label { font-family:'IBM Plex Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); margin-left:8px; font-weight:300; }
+
+        /* Emoji demo */
+        .emoji-row { display:flex; gap:8px; align-items:center; justify-content:space-around; }
+        .emo { font-size:1.8rem; cursor:pointer; transition:transform 0.15s; user-select:none; opacity:0.5; }
+        .emo:hover { transform:scale(1.2); opacity:1; }
+        .emo.sel { transform:scale(1.25); opacity:1; }
+        .emoji-labels { display:flex; justify-content:space-between; padding:0 4px; margin-top:6px; }
+        .emoji-labels span { font-family:'IBM Plex Sans',sans-serif; font-size:0.68rem; color:var(--ink-soft); }
+
+        .sd-best { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); margin-top:14px; padding-top:12px; border-top:1px solid var(--border); font-weight:300; }
+        .sd-best strong { color:var(--forest); font-weight:600; }
+
+        /* Scale type detail list */
+        .type-list { display:flex; flex-direction:column; gap:14px; margin:20px 0; }
+        .type-item { background:var(--white); border:1px solid var(--border); border-left:4px solid var(--forest); border-radius:5px; padding:16px 20px; }
+        .ti-head { font-family:'Zilla Slab',serif; font-weight:700; font-size:1rem; color:var(--ink); margin-bottom:4px; }
+        .ti-best { font-family:var(--mono); font-size:0.73rem; color:var(--forest); margin-bottom:8px; }
+        .ti-desc { font-family:'IBM Plex Sans',sans-serif; font-size:0.91rem; color:var(--ink-mid); line-height:1.68; font-weight:300; }
+
+        /* When to use */
+        .use-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .use-col { border-radius:7px; overflow:hidden; }
+        .uc-hd { padding:12px 16px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase; }
+        .use-col.yes .uc-hd { background:var(--forest); color:#fff; }
+        .use-col.no .uc-hd { background:var(--ink); color:#fff; }
+        .uc-body { background:var(--white); border:1px solid var(--border); border-top:none; border-radius:0 0 7px 7px; padding:14px 16px; }
+        .uc-body ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .uc-body li { font-family:'IBM Plex Sans',sans-serif; font-size:0.9rem; color:var(--ink-mid); padding-left:16px; position:relative; line-height:1.5; font-weight:300; }
+        .use-col.yes .uc-body li::before { content:'✓'; position:absolute; left:0; color:var(--forest); font-weight:700; }
+        .use-col.no .uc-body li::before { content:'×'; position:absolute; left:0; color:var(--red); font-weight:700; }
+
+        /* Scale length visual */
+        .length-track { position:relative; margin:32px 0 16px; }
+        .length-bar { height:4px; background:linear-gradient(90deg,var(--forest-pale),var(--forest)); border-radius:2px; position:relative; }
+        .length-points { display:flex; justify-content:space-between; margin-top:-2px; position:relative; }
+        .lp { display:flex; flex-direction:column; align-items:center; gap:0; }
+        .lp-dot { width:12px; height:12px; border-radius:50%; border:2px solid var(--forest); background:var(--white); margin-bottom:8px; }
+        .lp-n { font-family:var(--mono); font-size:0.75rem; font-weight:500; color:var(--forest); }
+        .lp-label { font-family:'IBM Plex Sans',sans-serif; font-size:0.7rem; color:var(--ink-soft); text-align:center; max-width:80px; line-height:1.35; }
+        .lp-rec { font-family:'IBM Plex Sans',sans-serif; font-size:0.65rem; font-weight:600; color:var(--white); background:var(--forest); border-radius:2px; padding:1px 5px; margin-top:3px; }
+        .length-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:20px; }
+        .lc { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:12px 14px; }
+        .lc.rec { border-color:var(--forest); background:var(--forest-pale); }
+        .lc-n { font-family:var(--mono); font-weight:500; font-size:0.82rem; color:var(--forest); margin-bottom:4px; }
+        .lc-name { font-family:'Zilla Slab',serif; font-weight:600; font-size:0.9rem; color:var(--ink); margin-bottom:3px; }
+        .lc-desc { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); line-height:1.5; font-weight:300; }
+        .lc-badge { font-family:'IBM Plex Sans',sans-serif; font-size:0.65rem; font-weight:600; color:var(--forest); background:#dcfce7; border-radius:2px; padding:1px 6px; display:inline-block; margin-top:4px; }
+
+        /* Mistakes */
+        .mistake-list { display:flex; flex-direction:column; gap:12px; margin:20px 0; }
+        .mistake { background:var(--white); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+        .m-head { background:var(--red-bg); padding:10px 18px; border-bottom:1px solid #fecaca; display:flex; align-items:center; gap:8px; }
+        .m-icon { font-size:0.9rem; }
+        .m-title { font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.88rem; color:var(--red); }
+        .m-body { padding:14px 18px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .m-col {}
+        .m-col-lbl { font-family:var(--mono); font-size:0.65rem; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+        .m-col.bad .m-col-lbl { color:var(--red); }
+        .m-col.fix .m-col-lbl { color:var(--forest); }
+        .m-example { font-family:'IBM Plex Sans',sans-serif; font-size:0.86rem; line-height:1.55; font-weight:300; padding:8px 10px; border-radius:4px; }
+        .m-col.bad .m-example { background:#fef2f2; color:var(--red); }
+        .m-col.fix .m-example { background:var(--forest-pale); color:var(--forest-lt); }
+        .m-note { padding:10px 18px 14px; font-family:'IBM Plex Sans',sans-serif; font-size:0.84rem; color:var(--ink-mid); line-height:1.6; font-weight:300; border-top:1px solid var(--border); }
+
+        /* Templates */
+        .tpl-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .tpl { background:var(--white); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+        .tpl-hd { background:var(--warm); padding:12px 16px; border-bottom:1px solid var(--border); }
+        .tpl-name { font-family:'Zilla Slab',serif; font-weight:600; font-size:0.95rem; color:var(--ink); }
+        .tpl-use { font-family:'IBM Plex Sans',sans-serif; font-size:0.74rem; color:var(--ink-soft); font-weight:300; margin-top:2px; }
+        .tpl-body { padding:14px 16px; }
+        .tpl-q { display:flex; flex-direction:column; gap:6px; }
+        .tq { border-left:2px solid var(--border); padding:6px 10px; }
+        .tq-text { font-family:'IBM Plex Sans',sans-serif; font-size:0.86rem; color:var(--ink-mid); line-height:1.5; font-weight:300; }
+        .tq-scale { font-family:var(--mono); font-size:0.68rem; color:var(--forest); margin-top:2px; }
+
+        /* Callout */
+        .callout { background:var(--amber-bg); border-left:3px solid var(--amber); border-radius:4px; padding:14px 18px; margin:20px 0; }
+        .callout p { font-size:0.97rem; color:var(--ink-mid); margin:0; font-weight:300; }
+        .callout p strong { color:var(--ink); font-weight:600; }
+
+        /* Analyzing section */
+        .analysis-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:20px 0; }
+        .ag-card { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:14px; }
+        .ag-range { font-family:var(--mono); font-size:1.1rem; font-weight:500; color:var(--forest); margin-bottom:4px; }
+        .ag-label { font-family:'Zilla Slab',serif; font-weight:600; font-size:0.9rem; color:var(--ink); margin-bottom:4px; }
+        .ag-desc { font-family:'IBM Plex Sans',sans-serif; font-size:0.8rem; color:var(--ink-soft); line-height:1.5; font-weight:300; }
+
+        /* CTA */
+        .cta { background:var(--forest); border-radius:10px; padding:36px 32px; text-align:center; margin:52px 0; position:relative; overflow:hidden; }
+        .cta::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(135deg,transparent,transparent 20px,rgba(255,255,255,0.03) 20px,rgba(255,255,255,0.03) 21px); }
+        .cta h3 { font-family:'Zilla Slab',serif; font-size:1.5rem; color:#fff; margin-bottom:8px; position:relative; }
+        .cta p { font-family:'IBM Plex Sans',sans-serif; font-size:0.97rem; color:rgba(255,255,255,0.7); margin-bottom:22px; font-weight:300; position:relative; }
+        .cta-btn { display:inline-block; background:#fff; color:var(--forest); font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.9rem; letter-spacing:0.03em; padding:13px 30px; border-radius:5px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,0.2); background:#f0fdf4; }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--white); border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--forest); }
+        details.faq summary { padding:14px 18px; font-family:'Zilla Slab',serif; font-weight:600; font-size:0.98rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--forest); flex-shrink:0; transition:transform 0.2s; font-family:'IBM Plex Sans',sans-serif; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .fa { padding:4px 18px 16px; font-family:'IBM Plex Sans',sans-serif; font-size:0.95rem; line-height:1.75; color:var(--ink-mid); font-weight:300; }
+
+        /* Sidebar */
+        .sidebar { position:sticky; top:64px; display:flex; flex-direction:column; gap:14px; }
+        .toc-card { background:var(--white); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        .toc-head { background:var(--ink); padding:12px 16px; }
+        .toc-head span { font-family:'IBM Plex Sans',sans-serif; font-size:0.65rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
+        .toc-links { list-style:none; padding:6px 0; }
+        .toc-links a { display:block; padding:7px 16px; font-family:'IBM Plex Sans',sans-serif; font-size:0.82rem; font-weight:500; color:var(--ink-soft); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; }
+        .toc-links a:hover,.toc-links a.active { color:var(--forest); background:var(--forest-dim); border-left-color:var(--forest); }
+        .sb-cta { background:var(--forest); border-radius:6px; padding:16px; text-align:center; }
+        .sb-cta p { font-family:'Zilla Slab',serif; font-size:0.95rem; font-style:italic; color:rgba(255,255,255,0.9); line-height:1.5; margin-bottom:10px; }
+        .sb-cta a { display:block; background:#fff; color:var(--forest); font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.8rem; padding:10px; border-radius:4px; text-decoration:none; }
+        .sb-cta a:hover { background:var(--forest-pale); }
+        .sb-related { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
+        .sb-related-hd { font-family:'IBM Plex Sans',sans-serif; font-size:0.65rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:10px; }
+        .sb-related ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+        .sb-related a { font-family:'IBM Plex Sans',sans-serif; font-size:0.83rem; font-weight:500; color:var(--forest); text-decoration:none; }
+        .sb-related a:hover { text-decoration:underline; }
+
+        /* Footer */
+        .footer { background:var(--ink); color:rgba(255,255,255,0.4); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Zilla Slab',serif; font-size:1.1rem; color:#fff; margin-bottom:6px; font-weight:700; }
+        .footer p { font-family:'IBM Plex Sans',sans-serif; font-size:0.83rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:18px; }
+        .footer-links a { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.5); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+
+        @media(max-width:860px) {
+            .page { grid-template-columns:1fr; }
+            .sidebar { position:static; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+            .scales-grid,.use-cols,.tpl-grid { grid-template-columns:1fr; }
+            .length-cards { grid-template-columns:1fr 1fr; }
+            .analysis-grid { grid-template-columns:1fr; }
+        }
+        @media(max-width:540px) {
+            .sidebar { grid-template-columns:1fr; }
+            .m-body { grid-template-columns:1fr; }
+            .length-cards { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="sticky" id="sticky">
+    <span class="sticky-label">Rating Scale Survey Guide — VoteGenerator</span>
+    <a href="https://votegenerator.com/create" class="sticky-btn">Build a Rating Survey &rarr;</a>
+</div>
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Survey Guide</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Try free &rarr;</a>
+</nav>
+
+<header class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+        <p class="hero-kicker">Survey Design Guide &middot; 2026</p>
+        <h1>Rating Scale Survey:<br><em>Types, Mistakes &amp; Templates</em></h1>
+        <p class="hero-sub">Likert, numeric, star, and emoji scales compared with interactive demos you can click. Includes a quick picker to find the right scale, scale length guide, common mistakes, and free survey question templates.</p>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Updated <strong>April 2026</strong></span>
+            <span><strong>8 min</strong> read</span>
+        </div>
+    </div>
+</header>
+
+<div class="qa-wrap">
+    <div class="qa-box">
+        <div class="qa-label">Quick Answer</div>
+        <div class="qa-title">What is a rating scale survey?</div>
+        <div class="qa-body">A rating scale survey asks respondents to evaluate something on a fixed scale — such as 1–5 or Strongly Disagree to Strongly Agree — rather than writing free text. This produces structured, quantifiable data you can average, trend, and compare across groups. The four formats are Likert scales (agreement labels), numeric scales (plain numbers), star ratings (visual), and emoji scales (icons). <strong>A 5-point Likert scale is the research-validated default for most business surveys.</strong></div>
+    </div>
+</div>
+
+<div class="page">
+<main class="article" id="article">
+
+    <p class="lead">Rating scales are the most efficient tool in survey research. Done right, they give you data you can track over months, segment by audience, and present to stakeholders. Done wrong, they produce noise that leads to bad decisions. Here is everything you need to do it right.</p>
+
+    <!-- SCALE PICKER -->
+    <h2 id="picker">Which Scale Should I Use?</h2>
+    <p>Answer two quick questions and get a recommendation:</p>
+
+    <div class="picker">
+        <div class="picker-head">
+            <span class="picker-head-icon">🎯</span>
+            <div>
+                <div class="picker-head-text">Scale Picker</div>
+                <div class="picker-head-sub">Two questions → your recommended scale</div>
+            </div>
+        </div>
+        <div class="picker-body">
+            <div class="picker-q">1. What are you measuring?</div>
+            <div class="picker-opts" id="pq1">
+                <div class="picker-opt" data-q="1" data-v="agreement">Agreement / attitude</div>
+                <div class="picker-opt" data-q="1" data-v="satisfaction">Satisfaction / CSAT</div>
+                <div class="picker-opt" data-q="1" data-v="likelihood">Likelihood to recommend</div>
+                <div class="picker-opt" data-q="1" data-v="quick">Quick emotional reaction</div>
+                <div class="picker-opt" data-q="1" data-v="product">Product quality / review</div>
+            </div>
+            <div class="picker-q">2. Who is your audience?</div>
+            <div class="picker-opts" id="pq2">
+                <div class="picker-opt" data-q="2" data-v="professional">Business / professional</div>
+                <div class="picker-opt" data-q="2" data-v="consumer">General consumers</div>
+                <div class="picker-opt" data-q="2" data-v="multilingual">Multilingual / global</div>
+                <div class="picker-opt" data-q="2" data-v="academic">Academic research</div>
+            </div>
+            <div class="picker-result" id="picker-result">
+                <div class="pr-rec">Recommended scale</div>
+                <div class="pr-scale" id="pr-scale">—</div>
+                <div class="pr-why" id="pr-why">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SCALE DEMOS -->
+    <h2 id="types">The 4 Rating Scale Types — Click to Try</h2>
+    <p>These are live demos — click the options to see how each scale feels from the respondent's perspective.</p>
+
+    <div class="scales-grid">
+        <!-- Likert -->
+        <div class="scale-demo">
+            <div class="sd-head">
+                <span class="sd-name">Likert Scale</span>
+                <span class="sd-tag">Agreement-based</span>
+            </div>
+            <div class="sd-body">
+                <div class="sd-q">"This product is easy to use."</div>
+                <div class="likert-opts" id="likert-demo">
+                    <div class="likert-opt" onclick="pick(this,'likert-demo')"><span>Strongly Disagree</span></div>
+                    <div class="likert-opt" onclick="pick(this,'likert-demo')"><span>Disagree</span></div>
+                    <div class="likert-opt" onclick="pick(this,'likert-demo')"><span>Neutral</span></div>
+                    <div class="likert-opt" onclick="pick(this,'likert-demo')"><span>Agree</span></div>
+                    <div class="likert-opt" onclick="pick(this,'likert-demo')"><span>Strongly Agree</span></div>
+                </div>
+                <div class="sd-best"><strong>Best for:</strong> Agreement, attitude, and opinion measurement. Pair with a statement, not a question.</div>
+            </div>
+        </div>
+
+        <!-- Numeric -->
+        <div class="scale-demo">
+            <div class="sd-head">
+                <span class="sd-name">Numeric Scale</span>
+                <span class="sd-tag">NPS / CSAT</span>
+            </div>
+            <div class="sd-body">
+                <div class="sd-q">"How likely are you to recommend us?"</div>
+                <div class="numeric-opts" id="num-demo">
+                    <div class="num-opt" onclick="pick(this,'num-demo')">0</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">1</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">2</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">3</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">4</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">5</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">6</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">7</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">8</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">9</div>
+                    <div class="num-opt" onclick="pick(this,'num-demo')">10</div>
+                </div>
+                <div class="num-anchors"><span>Not at all likely</span><span>Extremely likely</span></div>
+                <div class="sd-best"><strong>Best for:</strong> NPS, likelihood, and frequency questions. Always label the 0 and 10 anchors explicitly.</div>
+            </div>
+        </div>
+
+        <!-- Star -->
+        <div class="scale-demo">
+            <div class="sd-head">
+                <span class="sd-name">Star Rating</span>
+                <span class="sd-tag">Visual / reviews</span>
+            </div>
+            <div class="sd-body">
+                <div class="sd-q">"How would you rate your purchase experience?"</div>
+                <div class="star-row" id="star-demo">
+                    <span class="star" onclick="pickStar(1)">★</span>
+                    <span class="star" onclick="pickStar(2)">★</span>
+                    <span class="star" onclick="pickStar(3)">★</span>
+                    <span class="star" onclick="pickStar(4)">★</span>
+                    <span class="star" onclick="pickStar(5)">★</span>
+                    <span class="star-label" id="star-label">Click a star</span>
+                </div>
+                <div class="sd-best"><strong>Best for:</strong> Product reviews, quick satisfaction checks. Universally understood without explanation.</div>
+            </div>
+        </div>
+
+        <!-- Emoji -->
+        <div class="scale-demo">
+            <div class="sd-head">
+                <span class="sd-name">Emoji Scale</span>
+                <span class="sd-tag">Pulse / global</span>
+            </div>
+            <div class="sd-body">
+                <div class="sd-q">"How was your experience today?"</div>
+                <div class="emoji-row" id="emoji-demo">
+                    <span class="emo" onclick="pickEmoji(this,'emoji-demo','Terrible')">😢</span>
+                    <span class="emo" onclick="pickEmoji(this,'emoji-demo','Poor')">😕</span>
+                    <span class="emo" onclick="pickEmoji(this,'emoji-demo','OK')">😐</span>
+                    <span class="emo" onclick="pickEmoji(this,'emoji-demo','Good')">🙂</span>
+                    <span class="emo" onclick="pickEmoji(this,'emoji-demo','Excellent')">😄</span>
+                </div>
+                <div class="emoji-labels"><span>Terrible</span><span>Excellent</span></div>
+                <div class="sd-best"><strong>Best for:</strong> Multilingual audiences, point-of-experience kiosks, employee pulse surveys. Language-agnostic.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- When to use -->
+    <h2 id="when">When to Use Rating Scales</h2>
+    <div class="use-cols">
+        <div class="use-col yes">
+            <div class="uc-hd">Use a rating scale when</div>
+            <div class="uc-body"><ul>
+                <li>You need quantifiable, comparable data</li>
+                <li>You want to track trends over time</li>
+                <li>You need fast responses from busy people</li>
+                <li>You are measuring satisfaction, agreement, or likelihood</li>
+                <li>You have enough respondents to average (10+)</li>
+                <li>You want data you can chart and present</li>
+            </ul></div>
+        </div>
+        <div class="use-col no">
+            <div class="uc-hd">Don't use a rating scale when</div>
+            <div class="uc-body"><ul>
+                <li>You need to understand <em>why</em> people feel a way</li>
+                <li>You want to know which option people prefer (use multiple choice)</li>
+                <li>The topic is too nuanced for a single score</li>
+                <li>You need open-ended suggestions</li>
+                <li>The question has no natural order or spectrum</li>
+            </ul></div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <p><strong>Rule of thumb:</strong> End every rating scale survey with one open text question — "What is the one thing we could improve?" A rating tells you <em>what</em> people think; the open question tells you <em>why</em>. The combination consistently produces the most actionable data.</p>
+    </div>
+
+    <!-- Scale length -->
+    <h2 id="points">Choosing the Right Number of Points</h2>
+    <div class="length-cards">
+        <div class="lc">
+            <div class="lc-n">3 points</div>
+            <div class="lc-name">Simple / binary</div>
+            <div class="lc-desc">Good / OK / Bad. Fast, but lacks nuance. Respondents cluster around the middle. Use for very quick kiosk-style feedback only.</div>
+        </div>
+        <div class="lc rec">
+            <div class="lc-n">5 points</div>
+            <div class="lc-name">Standard Likert</div>
+            <div class="lc-desc">The research-proven default. Widely understood, balanced, and easy to analyse. Right for most business surveys.</div>
+            <span class="lc-badge">Recommended</span>
+        </div>
+        <div class="lc">
+            <div class="lc-n">7 points</div>
+            <div class="lc-name">Research-grade</div>
+            <div class="lc-desc">More granularity for academic research. Practical difference in data quality over 5-point is small for most business use. Respondents find it harder to distinguish adjacent options.</div>
+        </div>
+        <div class="lc">
+            <div class="lc-n">10 points</div>
+            <div class="lc-name">NPS standard</div>
+            <div class="lc-desc">The established format for Net Promoter Score (0–10). Use for NPS specifically. Otherwise overkill — most people can't reliably differentiate 6 from 7.</div>
+        </div>
+    </div>
+
+    <!-- Mistakes -->
+    <h2 id="mistakes">5 Common Rating Scale Mistakes</h2>
+    <div class="mistake-list">
+        <div class="mistake">
+            <div class="m-head"><span class="m-icon">⚠️</span><span class="m-title">Unbalanced scale options</span></div>
+            <div class="m-body">
+                <div class="m-col bad"><div class="m-col-lbl">Wrong</div><div class="m-example">Excellent / Good / Fair / Poor / Terrible / Awful</div></div>
+                <div class="m-col fix"><div class="m-col-lbl">Fixed</div><div class="m-example">Excellent / Good / Fair / Poor / Terrible</div></div>
+            </div>
+            <div class="m-note">Scales must be symmetric around the midpoint. Stacking more negative options than positive ones biases your data toward negative results.</div>
+        </div>
+        <div class="mistake">
+            <div class="m-head"><span class="m-icon">⚠️</span><span class="m-title">Unlabelled numeric anchors</span></div>
+            <div class="m-body">
+                <div class="m-col bad"><div class="m-col-lbl">Wrong</div><div class="m-example">"Rate this experience 1–10" (no labels)</div></div>
+                <div class="m-col fix"><div class="m-col-lbl">Fixed</div><div class="m-example">"1 = Very dissatisfied, 10 = Very satisfied"</div></div>
+            </div>
+            <div class="m-note">Without labels, some respondents treat 10 as the worst score. Always label both ends of any numeric scale.</div>
+        </div>
+        <div class="mistake">
+            <div class="m-head"><span class="m-icon">⚠️</span><span class="m-title">Leading question wording</span></div>
+            <div class="m-body">
+                <div class="m-col bad"><div class="m-col-lbl">Wrong</div><div class="m-example">"How pleased are you with our excellent service?"</div></div>
+                <div class="m-col fix"><div class="m-col-lbl">Fixed</div><div class="m-example">"How satisfied are you with the service?"</div></div>
+            </div>
+            <div class="m-note">Words like "pleased," "excellent," and "amazing" prime respondents toward positive ratings. Always use neutral phrasing.</div>
+        </div>
+        <div class="mistake">
+            <div class="m-head"><span class="m-icon">⚠️</span><span class="m-title">Mixing scale lengths in one survey</span></div>
+            <div class="m-body">
+                <div class="m-col bad"><div class="m-col-lbl">Wrong</div><div class="m-example">Q1 on 1–5 scale, Q2 on 1–10 scale</div></div>
+                <div class="m-col fix"><div class="m-col-lbl">Fixed</div><div class="m-example">All questions on the same scale throughout</div></div>
+            </div>
+            <div class="m-note">Switching scales mid-survey forces respondents to recalibrate their mental model with every question. This increases errors and respondent fatigue.</div>
+        </div>
+        <div class="mistake">
+            <div class="m-head"><span class="m-icon">⚠️</span><span class="m-title">Removing the neutral midpoint</span></div>
+            <div class="m-body">
+                <div class="m-col bad"><div class="m-col-lbl">Wrong</div><div class="m-example">Only: Disagree / Slightly Disagree / Slightly Agree / Agree</div></div>
+                <div class="m-col fix"><div class="m-col-lbl">Fixed</div><div class="m-example">Include: Disagree / Neutral / Agree (midpoint)</div></div>
+            </div>
+            <div class="m-note">Forcing respondents without a genuine opinion to choose a side creates inaccurate data. A neutral option is essential for most business and research surveys.</div>
+        </div>
+    </div>
+
+    <!-- Analyzing results -->
+    <h2 id="analyzing">How to Interpret Rating Scale Results</h2>
+    <p>Once you have responses, the most useful number is the <strong>mean score</strong>. Here is a rough benchmark for a 5-point Likert scale:</p>
+    <div class="analysis-grid">
+        <div class="ag-card">
+            <div class="ag-range">4.5 – 5.0</div>
+            <div class="ag-label">Excellent</div>
+            <div class="ag-desc">Very strong positive sentiment. Worth publicising in marketing and maintaining carefully.</div>
+        </div>
+        <div class="ag-card">
+            <div class="ag-range">3.5 – 4.4</div>
+            <div class="ag-label">Good — room to improve</div>
+            <div class="ag-desc">Positive but not remarkable. Identify the lowest-scoring items and prioritise those for improvement.</div>
+        </div>
+        <div class="ag-card">
+            <div class="ag-range">2.5 – 3.4</div>
+            <div class="ag-label">Neutral / mixed</div>
+            <div class="ag-desc">Significant room for improvement. Read open-text responses to understand the core problem.</div>
+        </div>
+        <div class="ag-card">
+            <div class="ag-range">1.0 – 2.4</div>
+            <div class="ag-label">Urgent issue</div>
+            <div class="ag-desc">Strongly negative. Requires immediate investigation. Do not wait for the next survey cycle.</div>
+        </div>
+        <div class="ag-card">
+            <div class="ag-range">Trend &gt; score</div>
+            <div class="ag-label">Watch the direction</div>
+            <div class="ag-desc">A score of 3.8 rising to 4.2 over three months is more valuable than a one-time 4.5. Track over time.</div>
+        </div>
+        <div class="ag-card">
+            <div class="ag-range">Segment first</div>
+            <div class="ag-label">Don't just average</div>
+            <div class="ag-desc">An overall 4.0 can hide a 2.5 from one group and 5.0 from another. Segment by team, role, or region.</div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <h2 id="templates">Free Rating Scale Templates</h2>
+    <div class="tpl-grid">
+        <div class="tpl">
+            <div class="tpl-hd">
+                <div class="tpl-name">Customer Satisfaction (CSAT)</div>
+                <div class="tpl-use">After purchase, support call, or service delivery</div>
+            </div>
+            <div class="tpl-body">
+                <div class="tpl-q">
+                    <div class="tq"><div class="tq-text">How satisfied are you with the quality of this product?</div><div class="tq-scale">1–5 Likert (Very Dissatisfied → Very Satisfied)</div></div>
+                    <div class="tq"><div class="tq-text">This product met my expectations.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">How likely are you to recommend us to a colleague?</div><div class="tq-scale">0–10 NPS scale (label anchors)</div></div>
+                    <div class="tq"><div class="tq-text">What is the one thing we could improve?</div><div class="tq-scale">Open text</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="tpl">
+            <div class="tpl-hd">
+                <div class="tpl-name">Employee Engagement Pulse</div>
+                <div class="tpl-use">Monthly or quarterly to track workplace sentiment</div>
+            </div>
+            <div class="tpl-body">
+                <div class="tpl-q">
+                    <div class="tq"><div class="tq-text">I find my work meaningful and engaging.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">I feel supported by my direct manager.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">I would recommend this company as a great place to work.</div><div class="tq-scale">0–10 eNPS scale</div></div>
+                    <div class="tq"><div class="tq-text">What is one thing that would make your work better?</div><div class="tq-scale">Open text</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="tpl">
+            <div class="tpl-hd">
+                <div class="tpl-name">Product Feature Feedback</div>
+                <div class="tpl-use">After launching or updating a feature</div>
+            </div>
+            <div class="tpl-body">
+                <div class="tpl-q">
+                    <div class="tq"><div class="tq-text">This feature is easy to use.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">This feature is useful to my day-to-day work.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">How likely are you to use this feature regularly?</div><div class="tq-scale">1–10 numeric (label anchors)</div></div>
+                    <div class="tq"><div class="tq-text">What would make this feature more useful?</div><div class="tq-scale">Open text</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="tpl">
+            <div class="tpl-hd">
+                <div class="tpl-name">Event / Training Feedback</div>
+                <div class="tpl-use">Immediately after an event, webinar, or training</div>
+            </div>
+            <div class="tpl-body">
+                <div class="tpl-q">
+                    <div class="tq"><div class="tq-text">How would you rate the overall quality of this event?</div><div class="tq-scale">1–5 stars</div></div>
+                    <div class="tq"><div class="tq-text">The content was relevant to my role and work.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">The presenter was clear and easy to follow.</div><div class="tq-scale">Strongly Disagree → Strongly Agree</div></div>
+                    <div class="tq"><div class="tq-text">What topic would you most like us to cover next?</div><div class="tq-scale">Open text</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Build Your Rating Scale Survey</h3>
+        <p>VoteGenerator's Rating Scale poll type is free. No signup required from anyone who responds — up to 100 responses on the free plan.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create a Rating Survey Free &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>What is the difference between a Likert scale and a rating scale?</summary>
+            <div class="fa">A Likert scale is a specific type of rating scale that measures agreement with a statement — from Strongly Disagree to Strongly Agree. A rating scale is the broader category that includes Likert, numeric (1–10), star, and emoji formats. All Likert scales are rating scales, but not all rating scales are Likert scales.</div>
+        </details>
+        <details class="faq">
+            <summary>Should I use 5 or 7 points?</summary>
+            <div class="fa">Five-point scales are the research-validated default for most business surveys. They are fast to answer, widely understood, and produce data that is easy to communicate to stakeholders. Seven-point scales add granularity useful in academic research where small effect sizes matter, but the practical difference in data quality is small for most product, HR, and customer research applications.</div>
+        </details>
+        <details class="faq">
+            <summary>Should I include a neutral midpoint option?</summary>
+            <div class="fa">Yes, for most surveys. A neutral option reduces frustration from respondents who genuinely have no strong opinion. Forcing them to choose a side produces inaccurate data. The only exception is when you specifically want to force a directional response — for example, in A/B preference tests where you need to know which option they lean toward.</div>
+        </details>
+        <details class="faq">
+            <summary>When should I use an emoji scale instead of a Likert scale?</summary>
+            <div class="fa">Emoji scales work best for quick point-of-experience feedback (restaurant tables, retail kiosks, in-app prompts), multilingual audiences where text labels may translate poorly, and informal employee pulse surveys where formality could suppress honest answers. For formal research, academic contexts, or data you will share with senior stakeholders, Likert scales are more conventional and defensible.</div>
+        </details>
+        <details class="faq">
+            <summary>How many respondents do I need?</summary>
+            <div class="fa">For internal pulse surveys or product feature testing, 30–50 responses gives reliable patterns you can act on. For customer satisfaction research across audience segments, 100+ is better. For statistically significant conclusions about a population, calculate a proper sample size based on your margin of error — most online calculators handle this in under a minute.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I use VoteGenerator to run a rating scale survey?</summary>
+            <div class="fa">Yes. Rating Scale is one of VoteGenerator's 8 built-in poll types. Create a rating scale poll — 1 to 5 or 1 to 10 — with no signup required from respondents. The free tier allows up to 100 responses per poll. For more responses, CSV export, and advanced analytics, a Pro plan starts at $19/month.</div>
+        </details>
+    </div>
+
+</main>
+<aside class="sidebar">
+    <div class="toc-card">
+        <div class="toc-head"><span>Contents</span></div>
+        <ul class="toc-links" id="toc-links">
+            <li><a href="#picker">Which Scale?</a></li>
+            <li><a href="#types">4 Scale Types</a></li>
+            <li><a href="#when">When to Use</a></li>
+            <li><a href="#points">Scale Length</a></li>
+            <li><a href="#mistakes">Common Mistakes</a></li>
+            <li><a href="#analyzing">Analyzing Results</a></li>
+            <li><a href="#templates">Free Templates</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </div>
+    <div class="sb-cta">
+        <p>Build a free rating scale survey — no signup from respondents.</p>
+        <a href="https://votegenerator.com/create">Create Survey &rarr;</a>
+    </div>
+    <div class="sb-related">
+        <div class="sb-related-hd">Related Guides</div>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/nps-survey-guide.html">NPS Survey Guide</a></li>
+            <li><a href="https://votegenerator.com/blog/customer-satisfaction-survey.html">CSAT Survey Guide</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-write-survey-questions.html">Writing Survey Questions</a></li>
+            <li><a href="https://votegenerator.com/blog/rsvp-poll-guide.html">RSVP Poll Guide</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Rating scale surveys, free. No signup required from respondents.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Survey</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+// Progress + sticky
+const bar=document.getElementById('prog'),sticky=document.getElementById('sticky'),hero=document.getElementById('hero');
+window.addEventListener('scroll',()=>{
+    const d=document.documentElement;
+    bar.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';
+    sticky.classList.toggle('on',hero.getBoundingClientRect().bottom<0);
+});
+
+// Sidebar TOC active
+const tocLinks=document.querySelectorAll('#toc-links a');
+const tocTargets=Array.from(tocLinks).map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const tocObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){tocLinks.forEach(l=>l.classList.remove('active'));const a=document.querySelector(`#toc-links a[href="#${e.target.id}"]`);if(a)a.classList.add('active');}});
+},{rootMargin:'-20% 0px -70% 0px'});
+tocTargets.forEach(t=>tocObs.observe(t));
+
+// Likert / numeric pick
+function pick(el, groupId) {
+    document.querySelectorAll('#'+groupId+' .likert-opt, #'+groupId+' .num-opt').forEach(o=>o.classList.remove('sel'));
+    el.classList.add('sel');
+}
+
+// Star rating
+const starLabels=['','1 star — Poor','2 stars — Fair','3 stars — OK','4 stars — Good','5 stars — Excellent'];
+function pickStar(n) {
+    const stars=document.querySelectorAll('#star-demo .star');
+    stars.forEach((s,i)=>s.classList.toggle('lit',i<n));
+    document.getElementById('star-label').textContent=starLabels[n];
+}
+
+// Emoji pick
+function pickEmoji(el, groupId, label) {
+    document.querySelectorAll('#'+groupId+' .emo').forEach(e=>e.classList.remove('sel'));
+    el.classList.add('sel');
+}
+
+// Scale picker logic
+const pickerState = {1: null, 2: null};
+const recommendations = {
+    'agreement+professional': ['5-point Likert Scale', 'Agreement measured with statement-based questions ("This product is easy to use") on a 5-point scale is the professional standard for business surveys. Widely understood and produces data you can share with stakeholders directly.'],
+    'agreement+consumer': ['5-point Likert Scale', 'A 5-point agreement scale works universally across consumer audiences. Keep labels simple: Strongly Disagree to Strongly Agree. This is the most widely understood survey format globally.'],
+    'agreement+multilingual': ['Emoji Scale (5-point)', 'For multilingual audiences, emoji scales avoid translation ambiguity. The 5-emoji set (😢😕😐🙂😄) conveys the sentiment spectrum without relying on word labels.'],
+    'agreement+academic': ['7-point Likert Scale', 'Academic research benefits from the additional granularity of 7 points. This allows detection of smaller effect sizes and is the standard for peer-reviewed survey research.'],
+    'satisfaction+professional': ['5-point Likert Scale or CSAT 1–5', 'A 5-point satisfaction scale ("Very Dissatisfied → Very Satisfied") is the CSAT standard. For organisational surveys, pair it with one open text question. Consistency across surveys allows trend tracking.'],
+    'satisfaction+consumer': ['Star Rating (1–5)', 'Consumers recognise star ratings intuitively from years of online reviews. A 5-star scale requires no explanation and gets faster responses in post-purchase or in-app feedback contexts.'],
+    'satisfaction+multilingual': ['Emoji Scale (5-point)', 'Emoji satisfaction scales are language-agnostic. The smiley face spectrum is universally understood across cultures without translation, making it ideal for global customer feedback.'],
+    'satisfaction+academic': ['5-point Likert Scale', 'For academic research on satisfaction, a validated 5-point Likert scale is the standard. Pair with established instruments like the CSQ-8 or your own validated items.'],
+    'likelihood+professional': ['0–10 Numeric Scale (NPS)', 'Likelihood to recommend is the Net Promoter Score question. The 0–10 format is the established industry standard. Label: 0 = Not at all likely, 10 = Extremely likely. This enables NPS benchmarking.'],
+    'likelihood+consumer': ['0–10 Numeric Scale (NPS)', 'The 0–10 NPS format is globally recognised in consumer research. Its familiarity from customer surveys means respondents answer quickly and reliably.'],
+    'likelihood+multilingual': ['0–10 Numeric Scale', 'Numbers are universal. A 0–10 numeric scale with labelled anchors avoids language issues entirely. Clearly mark 0 = Not likely and 10 = Very likely at each end.'],
+    'likelihood+academic': ['0–10 or 1–7 Numeric Scale', 'For academic research on likelihood, a 0–10 scale (NPS-style) or 1–7 numeric scale are both well-established. Choose based on your research instrument requirements.'],
+    'quick+professional': ['Emoji Scale (3 or 5-point)', 'For quick point-of-experience feedback in professional settings (post-meeting, post-training), a 3 or 5-emoji scale gets responses in one click. Fast, informal, and surprisingly accurate for trend tracking.'],
+    'quick+consumer': ['Emoji Scale (5-point) or Star Rating', 'At retail kiosks, in apps, or post-transaction, emoji or star scales get the fastest responses. Both work on any device with one tap. Use emoji for emotional feedback, stars for quality ratings.'],
+    'quick+multilingual': ['Emoji Scale (5-point)', 'Emoji scales are the clear choice for quick multilingual feedback. No translation needed. Works reliably in global retail, hospitality, and app contexts.'],
+    'quick+academic': ['3-point or 5-point Likert', 'For academic pulse surveys requiring speed, a validated 3 or 5-point scale maintains methodological rigour while keeping completion time under 30 seconds.'],
+    'product+professional': ['5-point Likert Scale', 'Product quality in professional B2B contexts is best measured with a 5-point Likert scale. Statements like "This product is reliable" and "This product meets my business needs" give you actionable data by feature.'],
+    'product+consumer': ['Star Rating (1–5)', 'Consumer product reviews use star ratings as the universal standard. Familiarity means high completion rates and honest fast responses. Use star ratings for overall quality and Likert for specific attributes.'],
+    'product+multilingual': ['Star Rating + Emoji', 'For global product feedback, combine a 5-star quality rating with a 5-emoji satisfaction scale. Both are understood universally without translation.'],
+    'product+academic': ['7-point Likert Scale', 'Academic product quality research typically uses validated 7-point Likert instruments. This allows detection of small quality differences across product versions or segments.'],
+};
+
+document.querySelectorAll('.picker-opt').forEach(opt=>{
+    opt.addEventListener('click',function(){
+        const q=this.dataset.q, v=this.dataset.v;
+        document.querySelectorAll(`.picker-opt[data-q="${q}"]`).forEach(o=>o.classList.remove('picked'));
+        this.classList.add('picked');
+        pickerState[q]=v;
+        if(pickerState[1]&&pickerState[2]){
+            const key=pickerState[1]+'+'+pickerState[2];
+            const rec=recommendations[key]||['5-point Likert Scale','A 5-point Likert scale is the standard default for most survey contexts. Adjust based on your specific audience and measurement goal.'];
+            document.getElementById('pr-scale').textContent=rec[0];
+            document.getElementById('pr-why').textContent=rec[1];
+            document.getElementById('picker-result').classList.add('show');
+        }
+    });
+});
+</script>
+</body>
+</html>

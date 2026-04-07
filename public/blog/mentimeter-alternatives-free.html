@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5 Best Free Mentimeter Alternatives (2026) — No Account Needed | VoteGenerator</title>
+    <meta name="description" content="5 free Mentimeter alternatives compared: VoteGenerator, Slido, AhaSlides, Poll Everywhere, and Kahoot. See free tier limits, poll types, and which is best for your use case.">
+    <meta name="keywords" content="mentimeter alternative free, menti alternative, free live polling tool, audience engagement tool free, mentimeter free alternative 2026">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/mentimeter-alternatives-free.html">
+    <meta property="og:title" content="5 Best Free Mentimeter Alternatives (2026)">
+    <meta property="og:description" content="5 free Mentimeter alternatives compared: limits, poll types, setup, and which is best for your situation.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/mentimeter-alternatives-free">
+    <meta property="og:image" content="https://votegenerator.com/og-image.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "5 Best Free Mentimeter Alternatives (2026)",
+        "description": "5 free Mentimeter alternatives compared: VoteGenerator, Slido, AhaSlides, Poll Everywhere, and Kahoot. Free tier limits, poll types, and best use cases.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "image": "https://votegenerator.com/og-image.png",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/mentimeter-alternatives-free" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is the best free alternative to Mentimeter?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator is the best free alternative if you want no signup required, ranked choice voting, or multiple poll types beyond multiple choice. Slido is better for professional events with Q&A sessions. AhaSlides is better if you want to build presentation slides alongside polls." }
+            },
+            {
+                "@type": "Question",
+                "name": "Is Mentimeter really free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Mentimeter has a free tier but it is very restricted: typically 2 quiz slides and 5 quick slides per presentation. For any presentation with more than a few polls, you will hit the limit. Paid plans start around $11.99 per month." }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I use VoteGenerator for live event polling?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Create a poll, display the results on screen, and share the link with the audience. VoteGenerator's free tier allows 100 responses per poll with no signup required from attendees. Results update in real time. It does not have presentation slide integration like Mentimeter or AhaSlides." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the easiest Mentimeter alternative to set up?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator is the fastest: no account required, create a poll in under 60 seconds, share the link. Kahoot and AhaSlides require account creation but are intuitive once set up. Poll Everywhere and Slido have more features but a slightly steeper initial setup." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,400;0,600;0,700;1,600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --indigo:    #1e1b4b;
+            --indigo-lt: #4338ca;
+            --indigo-dim: rgba(67,56,202,0.07);
+            --indigo-pale: #eef2ff;
+            --orange:    #ea580c;
+            --orange-lt: #f97316;
+            --orange-dim: rgba(234,88,12,0.07);
+            --ink:       #0e0d16;
+            --ink-mid:   #1e1b35;
+            --ink-soft:  #4a4565;
+            --bg:        #faf9ff;
+            --white:     #ffffff;
+            --border:    #e0dff0;
+            --green:     #15803d;
+            --green-bg:  #f0fdf4;
+            --red:       #dc2626;
+            --amber:     #d97706;
+            --vg:        #6C3CE1;
+            --mono:      'DM Mono', monospace;
+            /* Tool accent colors */
+            --c1: #6C3CE1; /* VoteGenerator */
+            --c2: #0057e7; /* Slido */
+            --c3: #e83d8b; /* AhaSlides */
+            --c4: #1a73e8; /* Poll Everywhere */
+            --c5: #ff5200; /* Kahoot */
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Merriweather',Georgia,serif; background:var(--bg); color:var(--ink); overflow-x:hidden; }
+
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--indigo-lt),var(--orange-lt)); z-index:2000; transition:width 0.1s linear; }
+
+        /* Sticky */
+        .sticky { position:fixed; top:0; left:0; right:0; z-index:1000; background:var(--indigo); height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; transform:translateY(-100%); transition:transform 0.25s ease; border-bottom:2px solid var(--orange-lt); }
+        .sticky.on { transform:translateY(0); }
+        .sticky-label { font-family:'Josefin Sans',sans-serif; font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.7); letter-spacing:0.04em; }
+        .sticky-btn { background:var(--orange); color:#fff; font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.77rem; letter-spacing:0.06em; padding:7px 14px; border-radius:4px; text-decoration:none; }
+        .sticky-btn:hover { background:var(--orange-lt); }
+
+        /* Nav */
+        .nav { background:var(--indigo); height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.95rem; color:#fff; letter-spacing:0.06em; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'Josefin Sans',sans-serif; font-size:0.7rem; font-weight:700; color:rgba(255,255,255,0.4); letter-spacing:0.12em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Josefin Sans',sans-serif; font-size:0.8rem; font-weight:700; color:#fca5a5; text-decoration:none; letter-spacing:0.04em; }
+        .nav-cta:hover { color:#fff; }
+
+        /* Hero */
+        .hero { background:var(--indigo); color:#fff; padding:64px 24px 56px; position:relative; overflow:hidden; }
+        .hero-dots { position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1.5px,transparent 1.5px); background-size:28px 28px; pointer-events:none; }
+        .hero::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--orange-lt),transparent); opacity:0.5; }
+        .hero-inner { max-width:900px; margin:0 auto; position:relative; }
+        .hero-kicker { font-family:'Josefin Sans',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#fca5a5; margin-bottom:14px; }
+        .hero h1 { font-family:'Josefin Sans',sans-serif; font-size:clamp(1.9rem,5vw,3.1rem); font-weight:700; line-height:1.1; letter-spacing:-0.01em; margin-bottom:16px; }
+        .hero h1 em { font-style:normal; color:#fbbf24; }
+        .hero-sub { font-family:'Merriweather',serif; font-size:1.05rem; line-height:1.7; color:rgba(255,255,255,0.62); max-width:580px; font-weight:300; margin-bottom:24px; }
+        .hero-chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .hchip { font-family:'Josefin Sans',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.06em; color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:4px 12px; }
+        .hero-meta { margin-top:20px; display:flex; gap:18px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'Josefin Sans',sans-serif; font-size:0.76rem; color:rgba(255,255,255,0.35); font-weight:700; }
+        .hero-meta span strong { color:rgba(255,255,255,0.65); }
+
+        /* Quick answer */
+        .qa-wrap { max-width:900px; margin:0 auto; padding:32px 24px 0; }
+        .qa-box { background:var(--indigo-pale); border:2px solid var(--indigo-lt); border-radius:8px; padding:22px 28px; }
+        .qa-label { font-family:'Josefin Sans',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--indigo-lt); margin-bottom:8px; }
+        .qa-title { font-family:'Josefin Sans',sans-serif; font-size:1.1rem; font-weight:700; color:var(--indigo); margin-bottom:12px; }
+        .qa-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .qa-cell { background:var(--white); border-radius:6px; padding:14px 16px; border-top:3px solid; }
+        .qa-cell:nth-child(1) { border-color:var(--c1); }
+        .qa-cell:nth-child(2) { border-color:var(--c2); }
+        .qa-cell:nth-child(3) { border-color:var(--c3); }
+        .qa-pick { font-family:'Josefin Sans',sans-serif; font-size:0.64rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:4px; }
+        .qa-tool-n { font-family:'Josefin Sans',sans-serif; font-size:0.9rem; font-weight:700; color:var(--ink); margin-bottom:5px; }
+        .qa-why { font-family:'Josefin Sans',sans-serif; font-size:0.78rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* Page */
+        .page { max-width:900px; margin:0 auto; padding:48px 24px 80px; }
+
+        /* Section heads */
+        .sh { margin:52px 0 20px; }
+        .sh h2 { font-family:'Josefin Sans',sans-serif; font-size:1.5rem; font-weight:700; color:var(--ink); letter-spacing:-0.01em; line-height:1.2; }
+        .sh:first-child { margin-top:0; }
+
+        /* Body text */
+        .article p { font-size:1.06rem; line-height:1.82; color:var(--ink-mid); margin-bottom:18px; font-weight:300; }
+        .article p strong { color:var(--ink); font-weight:700; }
+        .lead { font-size:1.14rem!important; line-height:1.78!important; font-weight:400!important; margin-bottom:28px!important; }
+        .accuracy { font-family:'Josefin Sans',sans-serif; font-size:0.74rem; color:var(--ink-soft); background:var(--white); border:1px solid var(--border); border-radius:4px; padding:9px 14px; margin-bottom:28px; }
+
+        /* Why Menti section */
+        .why-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .why-card { background:var(--white); border:1px solid var(--border); border-radius:6px; padding:16px 18px; }
+        .why-label { font-family:'Josefin Sans',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px; }
+        .why-card ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
+        .why-card li { font-family:'Josefin Sans',sans-serif; font-size:0.85rem; color:var(--ink-mid); padding-left:16px; position:relative; line-height:1.5; }
+        .why-card.bad li::before { content:'×'; position:absolute; left:0; color:var(--red); font-weight:700; }
+        .why-card.good li::before { content:'✓'; position:absolute; left:0; color:var(--green); font-weight:700; }
+
+        /* Tool cards */
+        .tool-card { background:var(--white); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:20px 0; }
+        .tc-head { padding:20px 24px 16px; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+        .tc-num { font-family:'Josefin Sans',sans-serif; font-size:2.8rem; font-weight:700; line-height:1; color:var(--border); flex-shrink:0; }
+        .tc-info {}
+        .tc-tag { font-family:'Josefin Sans',sans-serif; font-size:0.64rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:4px; }
+        .tc-name { font-family:'Josefin Sans',sans-serif; font-size:1.3rem; font-weight:700; color:var(--ink); margin-bottom:4px; }
+        .tc-tagline { font-family:'Merriweather',serif; font-size:0.9rem; color:var(--ink-soft); font-style:italic; }
+        .tc-verdict { font-family:'Josefin Sans',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; border-radius:3px; padding:4px 10px; flex-shrink:0; align-self:flex-start; margin-top:4px; }
+        .tc-body { padding:20px 24px; }
+        .tc-body p { font-size:1rem !important; margin-bottom:14px !important; }
+
+        /* Tool 1 = VG */
+        .tc1 .tc-head { border-top:4px solid var(--c1); }
+        .tc1 .tc-tag { color:var(--c1); }
+        .tc1 .tc-verdict { background:rgba(108,60,225,0.08); color:var(--c1); border:1px solid rgba(108,60,225,0.25); }
+        /* Tool 2 = Slido */
+        .tc2 .tc-head { border-top:4px solid var(--c2); }
+        .tc2 .tc-tag { color:var(--c2); }
+        .tc2 .tc-verdict { background:rgba(0,87,231,0.08); color:var(--c2); border:1px solid rgba(0,87,231,0.25); }
+        /* Tool 3 = AhaSlides */
+        .tc3 .tc-head { border-top:4px solid var(--c3); }
+        .tc3 .tc-tag { color:var(--c3); }
+        .tc3 .tc-verdict { background:rgba(232,61,139,0.08); color:var(--c3); border:1px solid rgba(232,61,139,0.25); }
+        /* Tool 4 = Poll Everywhere */
+        .tc4 .tc-head { border-top:4px solid var(--c4); }
+        .tc4 .tc-tag { color:var(--c4); }
+        .tc4 .tc-verdict { background:rgba(26,115,232,0.08); color:var(--c4); border:1px solid rgba(26,115,232,0.25); }
+        /* Tool 5 = Kahoot */
+        .tc5 .tc-head { border-top:4px solid var(--c5); }
+        .tc5 .tc-tag { color:var(--c5); }
+        .tc5 .tc-verdict { background:rgba(255,82,0,0.08); color:var(--c5); border:1px solid rgba(255,82,0,0.25); }
+
+        /* Limits strip */
+        .limits-strip { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0 4px; }
+        .lim { background:var(--bg); border-radius:5px; padding:10px 14px; }
+        .lim-key { font-family:'Josefin Sans',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:3px; }
+        .lim-val { font-family:var(--mono); font-size:0.85rem; font-weight:500; }
+        .lv-ok { color:var(--green); }
+        .lv-warn { color:var(--amber); }
+        .lv-bad { color:var(--red); }
+        .lv-n { color:var(--ink-soft); }
+
+        /* Pros/cons in tool card */
+        .pc { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+        .pc-box { border-radius:5px; padding:12px 14px; }
+        .pc-pros { background:var(--green-bg); }
+        .pc-cons { background:#fef2f2; }
+        .pc-lbl { font-family:'Josefin Sans',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+        .pc-pros .pc-lbl { color:var(--green); }
+        .pc-cons .pc-lbl { color:var(--red); }
+        .pc-box ul { list-style:none; display:flex; flex-direction:column; gap:4px; }
+        .pc-box li { font-family:'Josefin Sans',sans-serif; font-size:0.8rem; color:var(--ink-mid); padding-left:14px; position:relative; line-height:1.5; }
+        .pc-pros li::before { content:'✓'; position:absolute; left:0; color:var(--green); font-weight:700; }
+        .pc-cons li::before { content:'×'; position:absolute; left:0; color:var(--red); font-weight:700; }
+
+        /* Comparison table */
+        .tw { overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:20px 0; }
+        table.comp { width:100%; border-collapse:collapse; min-width:600px; }
+        table.comp thead tr { background:var(--indigo); }
+        table.comp th { font-family:'Josefin Sans',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:12px 14px; text-align:left; color:rgba(255,255,255,0.65); }
+        table.comp th:nth-child(2) { color:#c4b5fd; }
+        table.comp td { padding:10px 14px; border-bottom:1px solid var(--border); font-family:'Josefin Sans',sans-serif; font-size:0.84rem; vertical-align:middle; color:var(--ink-mid); }
+        table.comp tbody tr:last-child td { border-bottom:none; }
+        table.comp tbody tr:nth-child(even) { background:#fafaf9; }
+        table.comp td:first-child { font-weight:700; color:var(--ink); }
+        .tb-vg { background:rgba(108,60,225,0.04); }
+        .tb-w { color:var(--green); font-weight:700; font-size:0.82rem; }
+        .tb-l { color:#94a3b8; font-size:0.82rem; }
+        .tb-n { font-size:0.82rem; }
+        .tb-note { display:block; font-size:0.72rem; color:#94a3b8; margin-top:1px; font-weight:400; }
+
+        /* Choose section */
+        .choose-list { display:flex; flex-direction:column; gap:12px; margin:20px 0; }
+        .choose-row { background:var(--white); border:1px solid var(--border); border-radius:7px; overflow:hidden; display:flex; }
+        .cr-num { background:var(--indigo); color:rgba(255,255,255,0.5); font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.72rem; padding:0 16px; display:flex; align-items:center; writing-mode:initial; flex-shrink:0; }
+        .cr-tool { font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.88rem; color:var(--ink); min-width:140px; padding:14px 16px; border-right:1px solid var(--border); display:flex; align-items:center; flex-shrink:0; }
+        .cr-when { font-family:'Josefin Sans',sans-serif; font-size:0.82rem; color:var(--ink-soft); padding:14px 16px; line-height:1.55; display:flex; align-items:center; }
+
+        /* Callout */
+        .callout { background:var(--indigo-dim); border-left:3px solid var(--indigo-lt); border-radius:4px; padding:16px 20px; margin:20px 0; }
+        .callout p { font-size:1rem!important; color:var(--ink-mid)!important; margin:0!important; }
+
+        /* CTA */
+        .cta { background:var(--indigo); border-radius:10px; padding:36px 32px; text-align:center; margin:48px 0; position:relative; overflow:hidden; }
+        .cta::before { content:''; position:absolute; bottom:-40px; right:-40px; width:240px; height:240px; background:radial-gradient(circle,rgba(234,88,12,0.2) 0%,transparent 70%); pointer-events:none; }
+        .cta h3 { font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:8px; position:relative; }
+        .cta p { font-family:'Merriweather',serif; font-size:1rem; color:rgba(255,255,255,0.6); margin-bottom:22px; font-weight:300; position:relative; }
+        .cta-btn { display:inline-block; background:var(--orange); color:#fff; font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.9rem; letter-spacing:0.04em; padding:13px 30px; border-radius:5px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(234,88,12,0.4); }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--white); border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--indigo-lt); }
+        details.faq summary { padding:15px 20px; font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.93rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; letter-spacing:0.01em; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--indigo-lt); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .fa { padding:4px 20px 18px; font-family:'Merriweather',serif; font-size:0.97rem; line-height:1.78; color:var(--ink-mid); font-weight:300; }
+
+        /* Related */
+        .related { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin-top:36px; }
+        .related h3 { font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:0.95rem; color:var(--ink); margin-bottom:12px; }
+        .related ul { list-style:none; display:flex; flex-wrap:wrap; gap:10px; }
+        .related a { font-family:'Josefin Sans',sans-serif; font-size:0.82rem; font-weight:700; color:var(--indigo-lt); text-decoration:none; background:var(--indigo-dim); border:1px solid rgba(67,56,202,0.2); border-radius:4px; padding:5px 12px; }
+        .related a:hover { background:var(--indigo-pale); }
+
+        /* Footer */
+        .footer { background:var(--indigo); color:rgba(255,255,255,0.4); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Josefin Sans',sans-serif; font-weight:700; font-size:1rem; color:#fff; margin-bottom:6px; letter-spacing:0.06em; }
+        .footer p { font-family:'Josefin Sans',sans-serif; font-size:0.82rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:18px; }
+        .footer-links a { font-family:'Josefin Sans',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.5); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+
+        @media(max-width:720px) {
+            .qa-grid { grid-template-columns:1fr; }
+            .why-grid,.limits-strip,.pc { grid-template-columns:1fr; }
+            .choose-row { flex-direction:column; }
+            .cr-num { writing-mode:initial; padding:10px 16px 0; }
+            .cr-tool { border-right:none; border-bottom:1px solid var(--border); min-width:auto; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<div class="sticky" id="sticky">
+    <span class="sticky-label">5 Free Mentimeter Alternatives — 2026</span>
+    <a href="https://votegenerator.com/create" class="sticky-btn">Try VoteGenerator Free &rarr;</a>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Alternatives</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Try free &rarr;</a>
+</nav>
+
+<header class="hero" id="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+        <p class="hero-kicker">Mentimeter Alternatives &middot; 2026</p>
+        <h1>5 Free Mentimeter Alternatives<br><em>(No Account Needed)</em></h1>
+        <p class="hero-sub">Mentimeter's free tier is limited to a handful of slides per presentation. These five alternatives are genuinely functional for free — compared by limits, poll types, and setup speed.</p>
+        <div class="hero-chips">
+            <span class="hchip">5 Tools</span>
+            <span class="hchip">Verified Free Limits</span>
+            <span class="hchip">Live Audience Polling</span>
+            <span class="hchip">No Account Options</span>
+        </div>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Updated <strong>April 2026</strong></span>
+        </div>
+    </div>
+</header>
+
+<div class="qa-wrap">
+    <div class="qa-box">
+        <div class="qa-label">Quick Answer — Which Alternative?</div>
+        <div class="qa-title">The right Mentimeter alternative depends on what you specifically need:</div>
+        <div class="qa-grid">
+            <div class="qa-cell">
+                <div class="qa-pick">No signup &amp; quick setup</div>
+                <div class="qa-tool-n">VoteGenerator</div>
+                <div class="qa-why">8 poll types, 100 free responses, no account needed for anyone</div>
+            </div>
+            <div class="qa-cell">
+                <div class="qa-pick">Professional events &amp; Q&amp;A</div>
+                <div class="qa-tool-n">Slido</div>
+                <div class="qa-why">Live Q&amp;A sessions, presentation integration, conference-grade</div>
+            </div>
+            <div class="qa-cell">
+                <div class="qa-pick">Slides + polling in one tool</div>
+                <div class="qa-tool-n">AhaSlides</div>
+                <div class="qa-why">Build presentation slides and polls together, lower cost than Menti</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="page article" id="article">
+
+    <div class="accuracy"><strong>Data accuracy:</strong> VoteGenerator limits verified from the April 2026 codebase. Free tier limits for Slido, AhaSlides, Poll Everywhere, and Kahoot are based on publicly available information at publication — these tools update their free tiers frequently. Verify current limits at each tool's pricing page before committing.</div>
+
+    <!-- Why look -->
+    <div class="sh" id="why"><h2>Why Look for Mentimeter Alternatives?</h2></div>
+    <p class="lead">Mentimeter's free tier typically allows only 2 quiz slides and 5 quick slides per presentation. For anything beyond a very brief demo, you hit the wall quickly. Paid plans start around $11.99–$24.99/month — reasonable for regular use, but not if you present once a year or are on a tight budget.</p>
+
+    <div class="why-grid">
+        <div class="why-card bad">
+            <div class="why-label">Mentimeter free tier limitations</div>
+            <ul>
+                <li>Limited to ~2 quiz slides per presentation</li>
+                <li>Limited to ~5 quick slides per presentation</li>
+                <li>Signup required to create</li>
+                <li>No ranked choice or meeting polls</li>
+                <li>Paid plans from $11.99/month</li>
+            </ul>
+        </div>
+        <div class="why-card good">
+            <div class="why-label">What to look for in an alternative</div>
+            <ul>
+                <li>Functional free tier without per-slide limits</li>
+                <li>Real-time audience results display</li>
+                <li>No respondent signup required</li>
+                <li>Works on any device in the audience</li>
+                <li>Reasonable free response limits</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tool 1: VoteGenerator -->
+    <div class="sh" id="votegenerator"><h2>The 5 Alternatives</h2></div>
+
+    <div class="tool-card tc1">
+        <div class="tc-head">
+            <div class="tc-num">01</div>
+            <div class="tc-info">
+                <div class="tc-tag">VoteGenerator</div>
+                <div class="tc-name">VoteGenerator</div>
+                <div class="tc-tagline">Best for: Quick setup, no signup, 8 poll types</div>
+            </div>
+            <div class="tc-verdict">Best for No-Signup</div>
+        </div>
+        <div class="tc-body">
+            <p>VoteGenerator is built around live polling with no friction. Create a poll, project the results URL, share the voting link with your audience, and results update in real time. No account is required from you or anyone in the audience.</p>
+            <p>Unlike Mentimeter, VoteGenerator does not have presentation slide integration — you would display it alongside your slides in a browser tab rather than embedded in PowerPoint. For pure audience polling, it is faster to set up than any tool in this list.</p>
+            <div class="limits-strip">
+                <div class="lim"><div class="lim-key">Free responses</div><div class="lim-val lv-warn">100 per poll</div></div>
+                <div class="lim"><div class="lim-key">Poll types free</div><div class="lim-val lv-ok">8 types</div></div>
+                <div class="lim"><div class="lim-key">Creator signup</div><div class="lim-val lv-ok">Not required</div></div>
+                <div class="lim"><div class="lim-key">Audience signup</div><div class="lim-val lv-ok">Never required</div></div>
+                <div class="lim"><div class="lim-key">Paid from</div><div class="lim-val lv-n">$19/month</div></div>
+                <div class="lim"><div class="lim-key">Slide integration</div><div class="lim-val lv-bad">No</div></div>
+            </div>
+            <div class="pc">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Fastest setup — under 60 seconds</li>
+                        <li>No signup for anyone</li>
+                        <li>8 poll types including ranked choice</li>
+                        <li>Meeting scheduling polls (Doodle-style)</li>
+                        <li>Visual polls with image options</li>
+                        <li>Anonymous by default</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>100-response cap on free tier</li>
+                        <li>No slide presentation integration</li>
+                        <li>No word clouds or open-ended display</li>
+                        <li>No Q&amp;A session mode</li>
+                        <li>CSV export requires paid plan</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 2: Slido -->
+    <div class="tool-card tc2" id="slido">
+        <div class="tc-head">
+            <div class="tc-num">02</div>
+            <div class="tc-info">
+                <div class="tc-tag">Slido</div>
+                <div class="tc-name">Slido</div>
+                <div class="tc-tagline">Best for: Professional conferences, live Q&amp;A, PowerPoint integration</div>
+            </div>
+            <div class="tc-verdict">Best for Events</div>
+        </div>
+        <div class="tc-body">
+            <p>Slido (owned by Cisco) is the closest Mentimeter competitor in the professional space. It was purpose-built for conferences and corporate presentations. Live Q&amp;A — where audience members submit and upvote questions — is Slido's standout feature not found in most alternatives.</p>
+            <p>The free tier has become more restrictive since Cisco's acquisition. Verify current free limits at slido.com before counting on specific numbers — the free offering has changed before and may change again.</p>
+            <div class="limits-strip">
+                <div class="lim"><div class="lim-key">Free events/mo</div><div class="lim-val lv-warn">Limited — verify</div></div>
+                <div class="lim"><div class="lim-key">Free responses</div><div class="lim-val lv-warn">Limited — verify</div></div>
+                <div class="lim"><div class="lim-key">Creator signup</div><div class="lim-val lv-bad">Required</div></div>
+                <div class="lim"><div class="lim-key">Audience signup</div><div class="lim-val lv-ok">Not required</div></div>
+                <div class="lim"><div class="lim-key">Slide integration</div><div class="lim-val lv-ok">PowerPoint / GSlides</div></div>
+                <div class="lim"><div class="lim-key">Paid from</div><div class="lim-val lv-n">~$99/month</div></div>
+            </div>
+            <div class="pc">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Live Q&amp;A with audience upvoting</li>
+                        <li>PowerPoint and Google Slides integration</li>
+                        <li>Word clouds and open-ended questions</li>
+                        <li>Professional conference-grade experience</li>
+                        <li>Mobile-friendly voting</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Creator signup required</li>
+                        <li>Free tier increasingly restricted — verify</li>
+                        <li>Full features expensive ($99+/mo)</li>
+                        <li>Overkill for classroom or casual use</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 3: AhaSlides -->
+    <div class="tool-card tc3" id="ahaslides">
+        <div class="tc-head">
+            <div class="tc-num">03</div>
+            <div class="tc-info">
+                <div class="tc-tag">AhaSlides</div>
+                <div class="tc-name">AhaSlides</div>
+                <div class="tc-tagline">Best for: Training, education, and full presentation + polling in one tool</div>
+            </div>
+            <div class="tc-verdict">Best Mentimeter Clone</div>
+        </div>
+        <div class="tc-body">
+            <p>AhaSlides is the most direct Mentimeter alternative in terms of feature parity. You build your presentation slides inside the tool, then embed live polls, word clouds, quiz slides, and Q&amp;A directly into the deck. The end result is a Mentimeter-like experience at a significantly lower price point.</p>
+            <p>The free tier is restrictive but functional for a single presentation — verify the current limit at ahaslides.com, as it has changed. For regular presenters, the paid plans are cheaper than Mentimeter's equivalent tiers.</p>
+            <div class="limits-strip">
+                <div class="lim"><div class="lim-key">Free presentations</div><div class="lim-val lv-warn">Very limited — verify</div></div>
+                <div class="lim"><div class="lim-key">Question types</div><div class="lim-val lv-ok">30+</div></div>
+                <div class="lim"><div class="lim-key">Creator signup</div><div class="lim-val lv-bad">Required</div></div>
+                <div class="lim"><div class="lim-key">Audience signup</div><div class="lim-val lv-ok">Not required</div></div>
+                <div class="lim"><div class="lim-key">Slide integration</div><div class="lim-val lv-ok">Built-in slides</div></div>
+                <div class="lim"><div class="lim-key">Paid from</div><div class="lim-val lv-n">~$7.95/month</div></div>
+            </div>
+            <div class="pc">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Closest feature match to Mentimeter</li>
+                        <li>30+ interactive question types</li>
+                        <li>Leaderboards and gamification built in</li>
+                        <li>Lower paid pricing than Mentimeter</li>
+                        <li>Spinner wheel, quiz, word cloud included</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Signup required to create</li>
+                        <li>Free tier very limited — verify current limits</li>
+                        <li>Less polished UI than Mentimeter</li>
+                        <li>Slower setup than VoteGenerator</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 4: Poll Everywhere -->
+    <div class="tool-card tc4" id="polleverywhere">
+        <div class="tc-head">
+            <div class="tc-num">04</div>
+            <div class="tc-info">
+                <div class="tc-tag">Poll Everywhere</div>
+                <div class="tc-name">Poll Everywhere</div>
+                <div class="tc-tagline">Best for: Classroom use, universities, and education settings</div>
+            </div>
+            <div class="tc-verdict">Best for Education</div>
+        </div>
+        <div class="tc-body">
+            <p>Poll Everywhere has been in university classrooms since 2007. It is the default choice for higher education polling in many institutions. Its text-message voting option (audience texts a code) is genuinely useful in settings where some participants do not have smartphones with reliable data.</p>
+            <p>The free participant limit has varied over the years — verify the current limit at polleverywhere.com. For larger classes, the per-seat pricing can add up quickly.</p>
+            <div class="limits-strip">
+                <div class="lim"><div class="lim-key">Free participants</div><div class="lim-val lv-warn">Limited — verify</div></div>
+                <div class="lim"><div class="lim-key">Poll types</div><div class="lim-val lv-n">5+</div></div>
+                <div class="lim"><div class="lim-key">Creator signup</div><div class="lim-val lv-bad">Required</div></div>
+                <div class="lim"><div class="lim-key">Text voting</div><div class="lim-val lv-ok">Yes — unique feature</div></div>
+                <div class="lim"><div class="lim-key">Slide integration</div><div class="lim-val lv-ok">PowerPoint / GSlides</div></div>
+                <div class="lim"><div class="lim-key">Paid from</div><div class="lim-val lv-n">~$50/month</div></div>
+            </div>
+            <div class="pc">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Text-message voting — no app needed</li>
+                        <li>Trusted in higher education for 15+ years</li>
+                        <li>Attendance tracking for classes</li>
+                        <li>PowerPoint and Slides integration</li>
+                        <li>Works with any device, even basic phones</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Signup required to create</li>
+                        <li>Free participant cap — verify current limit</li>
+                        <li>Older, less polished interface</li>
+                        <li>Pricing complex for larger audiences</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 5: Kahoot -->
+    <div class="tool-card tc5" id="kahoot">
+        <div class="tc-head">
+            <div class="tc-num">05</div>
+            <div class="tc-info">
+                <div class="tc-tag">Kahoot</div>
+                <div class="tc-name">Kahoot</div>
+                <div class="tc-tagline">Best for: Gamified quizzes, training, and classroom engagement</div>
+            </div>
+            <div class="tc-verdict">Best for Gamification</div>
+        </div>
+        <div class="tc-body">
+            <p>Kahoot is not really a Mentimeter replacement — it is a gamified quiz platform. Points, timers, leaderboards, and competitive energy are central to the experience. If your goal is a fun, high-energy audience engagement rather than neutral polling, Kahoot delivers something the other tools here do not.</p>
+            <p>It is less appropriate for sensitive surveys, anonymous feedback, or settings where competition is not wanted. The free tier is reasonably generous for smaller groups.</p>
+            <div class="limits-strip">
+                <div class="lim"><div class="lim-key">Free participants</div><div class="lim-val lv-warn">Limited — verify</div></div>
+                <div class="lim"><div class="lim-key">Creator signup</div><div class="lim-val lv-bad">Required</div></div>
+                <div class="lim"><div class="lim-key">Audience signup</div><div class="lim-val lv-ok">Not required</div></div>
+                <div class="lim"><div class="lim-key">Gamification</div><div class="lim-val lv-ok">Yes — leaderboards</div></div>
+                <div class="lim"><div class="lim-key">Poll types</div><div class="lim-val lv-n">4+ (quiz-focused)</div></div>
+                <div class="lim"><div class="lim-key">Paid from</div><div class="lim-val lv-n">~$9.99/month</div></div>
+            </div>
+            <div class="pc">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Competitive, high-energy format</li>
+                        <li>Real-time leaderboard visible to everyone</li>
+                        <li>Students engage actively</li>
+                        <li>Easy to import existing quiz content</li>
+                        <li>Mobile app for participants</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Signup required to create</li>
+                        <li>Game format unsuitable for serious polling</li>
+                        <li>No anonymous/sensitive survey mode</li>
+                        <li>Limited to quiz question types</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="sh" id="comparison"><h2>Comparison Table</h2></div>
+    <div class="tw">
+        <table class="comp">
+            <thead>
+                <tr>
+                    <th style="width:20%;">Tool</th>
+                    <th style="width:16%;">Free Limit</th>
+                    <th style="width:12%;">Signup</th>
+                    <th style="width:14%;">Poll Types</th>
+                    <th style="width:14%;">Slide Integration</th>
+                    <th style="width:24%;">Best Use Case</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="tb-vg">VoteGenerator</td>
+                    <td class="tb-vg"><span class="tb-n">100 responses</span></td>
+                    <td class="tb-vg"><span class="tb-w">No</span></td>
+                    <td class="tb-vg"><span class="tb-w">8 types</span></td>
+                    <td class="tb-vg"><span class="tb-l">None</span></td>
+                    <td class="tb-vg"><span class="tb-n">Quick polls, ranked choice, no signup</span></td>
+                </tr>
+                <tr>
+                    <td>Slido</td>
+                    <td><span class="tb-n">Verify current<span class="tb-note">Limits have changed</span></span></td>
+                    <td><span class="tb-l">Yes</span></td>
+                    <td><span class="tb-n">8+</span></td>
+                    <td><span class="tb-w">PPT / GSlides</span></td>
+                    <td><span class="tb-n">Professional events, live Q&amp;A</span></td>
+                </tr>
+                <tr>
+                    <td>AhaSlides</td>
+                    <td><span class="tb-n">Verify current<span class="tb-note">Very limited free</span></span></td>
+                    <td><span class="tb-l">Yes</span></td>
+                    <td><span class="tb-w">30+</span></td>
+                    <td><span class="tb-w">Built-in slides</span></td>
+                    <td><span class="tb-n">Mentimeter replacement, training</span></td>
+                </tr>
+                <tr>
+                    <td>Poll Everywhere</td>
+                    <td><span class="tb-n">Verify current<span class="tb-note">Was 40 participants</span></span></td>
+                    <td><span class="tb-l">Yes</span></td>
+                    <td><span class="tb-n">5+</span></td>
+                    <td><span class="tb-w">PPT / GSlides</span></td>
+                    <td><span class="tb-n">Universities, classrooms, text voting</span></td>
+                </tr>
+                <tr>
+                    <td>Kahoot</td>
+                    <td><span class="tb-n">Verify current<span class="tb-note">Was 50 participants</span></span></td>
+                    <td><span class="tb-l">Yes</span></td>
+                    <td><span class="tb-n">4+ (quiz)</span></td>
+                    <td><span class="tb-l">Limited</span></td>
+                    <td><span class="tb-n">Gamified quizzes, classroom energy</span></td>
+                </tr>
+                <tr>
+                    <td>Mentimeter</td>
+                    <td><span class="tb-l">~2 quiz + 5 quick slides</span></td>
+                    <td><span class="tb-l">Yes</span></td>
+                    <td><span class="tb-n">6+</span></td>
+                    <td><span class="tb-w">PPT / GSlides</span></td>
+                    <td><span class="tb-n">Professional presentations</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="callout">
+        <p><strong>Free tier limits for Slido, AhaSlides, Poll Everywhere, and Kahoot are noted as "verify current" — these tools update their free tiers without announcement, and listing specific numbers that later become wrong is worse than prompting you to check.</strong> Always verify at each tool's pricing page before presenting at an event.</p>
+    </div>
+
+    <!-- Which to choose -->
+    <div class="sh" id="which"><h2>Which Alternative Should You Choose?</h2></div>
+    <div class="choose-list">
+        <div class="choose-row">
+            <div class="cr-num">01</div>
+            <div class="cr-tool">VoteGenerator</div>
+            <div class="cr-when">You want zero setup friction, no signup for anyone, and need ranked choice, meeting scheduling, or simple audience polling under 100 people. Best for team meetings, small classes, and casual events.</div>
+        </div>
+        <div class="choose-row">
+            <div class="cr-num">02</div>
+            <div class="cr-tool">Slido</div>
+            <div class="cr-when">You are running a professional conference or corporate presentation where live Q&amp;A with audience upvoting matters, and you want PowerPoint or Google Slides integration. Worth the cost for regular event use.</div>
+        </div>
+        <div class="choose-row">
+            <div class="cr-num">03</div>
+            <div class="cr-tool">AhaSlides</div>
+            <div class="cr-when">You want a genuine Mentimeter replacement with slides built in, word clouds, quiz slides, and a lower subscription price. Best for trainers, teachers, and presenters who need the full interactive presentation experience.</div>
+        </div>
+        <div class="choose-row">
+            <div class="cr-num">04</div>
+            <div class="cr-tool">Poll Everywhere</div>
+            <div class="cr-when">You are a university lecturer or teacher whose classes are within the free participant limit. The text-message voting option is unique and valuable in settings where students may not have reliable mobile data.</div>
+        </div>
+        <div class="choose-row">
+            <div class="cr-num">05</div>
+            <div class="cr-tool">Kahoot</div>
+            <div class="cr-when">Your goal is gamified, competitive quiz energy rather than neutral polling. Training sessions, review classes, and onboarding where engagement and fun matter more than sensitive feedback.</div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Try VoteGenerator Free</h3>
+        <p>8 poll types, 100 free responses, no signup required from you or your audience.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create a Poll in 60 Seconds &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <div class="sh" id="faq"><h2>Frequently Asked Questions</h2></div>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>What is the best free alternative to Mentimeter?</summary>
+            <div class="fa">VoteGenerator is the strongest option if you want no signup required and a wide variety of poll types including ranked choice, meeting scheduling, and visual polls. If you need slides built into the tool alongside polls, AhaSlides is the closest Mentimeter replacement at a lower price. For professional conferences with live Q&amp;A, Slido is the best-in-class alternative.</div>
+        </details>
+        <details class="faq">
+            <summary>Is Mentimeter really free?</summary>
+            <div class="fa">Mentimeter has a free tier but it is very restricted — typically around 2 quiz slides and 5 quick slides per presentation. For any real presentation, you will hit this limit. Paid plans start around $11.99–$24.99 per month. It is more accurate to call Mentimeter free tier a demo than a working free product.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I use VoteGenerator for a live event presentation?</summary>
+            <div class="fa">Yes. Create a poll before the event, project the results URL to your screen, and share the voting URL with the audience (via QR code or a short link). Results update in real time as people vote. VoteGenerator does not integrate into PowerPoint or Google Slides — you would display it in a browser tab alongside your presentation. For events under 100 people, the free tier covers this completely.</div>
+        </details>
+        <details class="faq">
+            <summary>Which Mentimeter alternative requires no account to use?</summary>
+            <div class="fa">VoteGenerator is the only tool in this comparison that requires no account from the creator or the audience. Every other tool (Slido, AhaSlides, Poll Everywhere, Kahoot) requires at least a creator account. For audience members, most tools in this list do not require respondents to sign up.</div>
+        </details>
+        <details class="faq">
+            <summary>What is the easiest Mentimeter alternative to set up?</summary>
+            <div class="fa">VoteGenerator: no account, create in under 60 seconds, share a link. Kahoot is next — quick to set up once you have an account, familiar game-based interface. AhaSlides and Slido take a bit more initial setup but are well-designed. Poll Everywhere has a slightly steeper learning curve than the others.</div>
+        </details>
+    </div>
+
+    <div class="related">
+        <h3>Related Comparisons &amp; Guides</h3>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/votegenerator-vs-strawpoll.html">VoteGenerator vs StrawPoll</a></li>
+            <li><a href="https://votegenerator.com/blog/votegenerator-vs-surveymonkey.html">VoteGenerator vs SurveyMonkey</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-poll.html">How to Create a Poll</a></li>
+            <li><a href="https://votegenerator.com/blog/poll-types-guide.html">All Poll Types Explained</a></li>
+        </ul>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>8 poll types. No signup. 100 free responses.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Poll</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const bar = document.getElementById('prog');
+const sticky = document.getElementById('sticky');
+const hero = document.getElementById('hero');
+window.addEventListener('scroll', () => {
+    const d = document.documentElement;
+    bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+    sticky.classList.toggle('on', hero.getBoundingClientRect().bottom < 0);
+});
+</script>
+</body>
+</html>

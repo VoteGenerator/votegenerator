@@ -143,7 +143,8 @@ export const handler: Handler = async (event) => {
       const purchases = [];
       
       for (const blob of blobs) {
-        if (blob.key.startsWith('stripe:')) continue; // Skip stripe mappings
+        if (blob.key.startsWith('stripe:')) continue;
+        if (purchases.length >= 20) break; // Cap results — admin lookup, not a bulk export
         try {
           const purchase = await store.get(blob.key, { type: 'json' }) as any;
           if (purchase && (
